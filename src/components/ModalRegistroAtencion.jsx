@@ -1,0 +1,305 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+
+function aInputDatetimeLocal(fecha) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}T${pad(
+    fecha.getHours(),
+  )}:${pad(fecha.getMinutes())}`
+}
+
+function formularioVacio() {
+  return {
+    servicioId: '',
+    clienteId: '',
+    precio: '',
+    fecha: aInputDatetimeLocal(new Date()),
+    nota: '',
+  }
+}
+
+function formularioDesdeRegistro(registro) {
+  return {
+    servicioId: registro.servicio_id ?? '',
+    clienteId: registro.cliente_id ?? '',
+    precio: String(registro.precio ?? ''),
+    fecha: aInputDatetimeLocal(new Date(registro.fecha)),
+    nota: registro.nota ?? '',
+  }
+}
+
+function Etiqueta({ children, obligatorio }) {
+  return (
+    <label className="mb-1 block text-xs text-ink/50">
+      {children}
+      {obligatorio && <span className="text-red"> *</span>}
+    </label>
+  )
+}
+
+function validar(formulario) {
+  if (!formulario.servicioId) return 'Selecciona un servicio.'
+  if (!formulario.clienteId) return 'Selecciona un cliente.'
+
+  const precio = parseFloat(formulario.precio)
+  if (Number.isNaN(precio) || precio < 0) return 'El precio debe ser un número válido.'
+
+  if (!formulario.fecha) return 'Selecciona una fecha y hora.'
+
+  return null
+}
+
+export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }) {
+  const { usuario, rol } = useAuth()
+  const esAdmin = rol === 'ADMINISTRADOR'
+  const esEdicion = Boolean(registro)
+
+  const [servicios, setServicios] = useState([])
+  const [clientes, setClientes] = useState([])
+  const [cargandoListas, setCargandoListas] = useState(true)
+
+  const [miAsistenteId, setMiAsistenteId] = useState(null)
+  const [porcentajeActual, setPorcentajeActual] = useState(null)
+
+  const [formulario, setFormulario] = useState(() =>
+    esEdicion ? formularioDesdeRegistro(registro) : formularioVacio(),
+  )
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState(null)
+
+  useCerrarConEscape(onCerrar)
+
+  useEffect(() => {
+    async function cargarListas() {
+      const [resServicios, resClientes] = await Promise.all([
+        supabase.from('servicios').select('id, nombre, precio').order('nombre'),
+        supabase.from('clientes').select('id, nombre').order('nombre'),
+      ])
+      setServicios(resServicios.data ?? [])
+      setClientes(resClientes.data ?? [])
+      setCargandoListas(false)
+    }
+    cargarListas()
+  }, [])
+
+  useEffect(() => {
+    if (esAdmin) return
+    async function cargarMiAsistente() {
+      const { data } = await supabase
+        .from('asistentes')
+        .select('id')
+        .eq('usuario_id', usuario.id)
+        .maybeSingle()
+      setMiAsistenteId(data?.id ?? null)
+    }
+    cargarMiAsistente()
+  }, [esAdmin, usuario.id])
+
+  useEffect(() => {
+    async function cargarPorcentaje() {
+      if (!formulario.servicioId) {
+        setPorcentajeActual(null)
+        return
+      }
+      if (esAdmin) {
+        setPorcentajeActual(100)
+        return
+      }
+      if (!miAsistenteId) {
+        setPorcentajeActual(null)
+        return
+      }
+      const { data } = await supabase
+        .from('porcentajes')
+        .select('porcentaje')
+        .eq('servicio_id', formulario.servicioId)
+        .eq('asistente_id', miAsistenteId)
+        .maybeSingle()
+      setPorcentajeActual(data?.porcentaje ?? null)
+    }
+    cargarPorcentaje()
+  }, [formulario.servicioId, esAdmin, miAsistenteId])
+
+  const precioNumero = parseFloat(formulario.precio)
+  const pagoCalculado =
+    porcentajeActual != null && !Number.isNaN(precioNumero)
+      ? (precioNumero * porcentajeActual) / 100
+      : null
+
+  function actualizarCampo(campo, valor) {
+    setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
+  }
+
+  function seleccionarServicio(servicioId) {
+    const servicio = servicios.find((s) => s.id === servicioId)
+    setFormulario((anterior) => ({
+      ...anterior,
+      servicioId,
+      precio: servicio ? String(servicio.precio) : anterior.precio,
+    }))
+  }
+
+  async function guardar(evento) {
+    evento.preventDefault()
+
+    const mensajeError = validar(formulario)
+    if (mensajeError) {
+      setError(mensajeError)
+      return
+    }
+
+    setGuardando(true)
+    setError(null)
+
+    const precio = parseFloat(formulario.precio)
+
+    const datos = {
+      servicio_id: formulario.servicioId,
+      cliente_id: formulario.clienteId,
+      precio,
+      fecha: new Date(formulario.fecha).toISOString(),
+      nota: formulario.nota.trim() || null,
+      porcentaje_aplicado: porcentajeActual,
+      pago_asistente: porcentajeActual != null ? (precio * porcentajeActual) / 100 : null,
+    }
+
+    const { error: errorGuardado } = esEdicion
+      ? await supabase.from('registro_servicios').update(datos).eq('id', registro.id)
+      : await supabase.from('registro_servicios').insert({ ...datos, usuario_id: usuario.id })
+
+    setGuardando(false)
+
+    if (errorGuardado) {
+      setError('No se pudo guardar la atención. Intenta de nuevo.')
+      return
+    }
+
+    onGuardado()
+  }
+
+  return (
+    <div
+      onClick={onCerrar}
+      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
+    >
+      <form
+        onSubmit={guardar}
+        onClick={(evento) => evento.stopPropagation()}
+        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+      >
+        <h2 className="text-base font-semibold text-ink">
+          {esEdicion ? 'Editar atención' : 'Registrar atención'}
+        </h2>
+
+        {cargandoListas ? (
+          <p className="mt-4 text-center font-mono text-sm text-ink/40">Cargando...</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <div>
+              <Etiqueta obligatorio>Servicio</Etiqueta>
+              <select
+                value={formulario.servicioId}
+                onChange={(evento) => seleccionarServicio(evento.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+              >
+                <option value="">Selecciona un servicio</option>
+                {servicios.map((servicio) => (
+                  <option key={servicio.id} value={servicio.id}>
+                    {servicio.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Etiqueta obligatorio>Cliente</Etiqueta>
+              <select
+                value={formulario.clienteId}
+                onChange={(evento) => actualizarCampo('clienteId', evento.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+              >
+                <option value="">Selecciona un cliente</option>
+                {clientes.map((cliente) => (
+                  <option key={cliente.id} value={cliente.id}>
+                    {cliente.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Etiqueta obligatorio>Precio</Etiqueta>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                value={formulario.precio}
+                onChange={(evento) => actualizarCampo('precio', evento.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
+              />
+              {formulario.servicioId &&
+                (porcentajeActual == null ? (
+                  <p className="mt-1.5 text-xs text-orange-400">
+                    Sin porcentaje asignado para este servicio — se guardará sin comisión.
+                  </p>
+                ) : (
+                  !Number.isNaN(precioNumero) && (
+                    <p className="mt-1.5 font-mono text-xs text-ink/40">
+                      {precioNumero} × {porcentajeActual}% = {pagoCalculado.toFixed(2)}
+                    </p>
+                  )
+                ))}
+            </div>
+
+            <div>
+              <Etiqueta obligatorio>Fecha y hora</Etiqueta>
+              <input
+                type="datetime-local"
+                value={formulario.fecha}
+                onChange={(evento) => actualizarCampo('fecha', evento.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
+              />
+            </div>
+
+            <div>
+              <Etiqueta>Nota</Etiqueta>
+              <textarea
+                value={formulario.nota}
+                onChange={(evento) => actualizarCampo('nota', evento.target.value)}
+                placeholder="Opcional"
+                rows={3}
+                className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              />
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={onCerrar}
+            disabled={guardando}
+            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={guardando || cargandoListas}
+            className="flex-1 rounded-lg bg-purple-300 py-2 text-sm font-semibold text-bg disabled:opacity-40"
+          >
+            {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

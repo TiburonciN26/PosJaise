@@ -1,0 +1,41 @@
+import {
+  ShoppingCart,
+  Package,
+  History,
+  Scissors,
+  LayoutDashboard,
+  UserCircle,
+  BarChart3,
+  ShieldCheck,
+  Users,
+  Percent,
+  Wallet,
+  UserCog,
+} from 'lucide-react'
+
+export const secciones = [
+  { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ['ADMINISTRADOR', 'ASISTENTE'] },
+  { path: '/inventario', label: 'Inventario', icono: Package, roles: ['ADMINISTRADOR', 'ASISTENTE'] },
+  { path: '/historial', label: 'Historial', icono: History, roles: ['ADMINISTRADOR', 'ASISTENTE'] },
+  { path: '/servicios', label: 'Servicios', icono: Scissors, roles: ['ADMINISTRADOR', 'ASISTENTE'] },
+  {
+    path: '/dashboard',
+    label: 'Dashboard',
+    icono: LayoutDashboard,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rosa',
+  },
+  {
+    path: '/mi-panel',
+    label: 'Mi Panel',
+    icono: UserCircle,
+    roles: ['ADMINISTRADOR', 'ASISTENTE'],
+    tema: 'rosa',
+  },
+  { path: '/estadisticas', label: 'Estadísticas', icono: BarChart3, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/auditoria', label: 'Auditoría', icono: ShieldCheck, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/clientes', label: 'Clientes', icono: Users, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/porcentajes', label: 'Porcentajes', icono: Percent, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/asistentes', label: 'Asistentes', icono: UserCog, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+]

@@ -1,0 +1,203 @@
+@import 'tailwindcss';
+
+/*
+ * Tema POS — Negocio 2
+ * Estas variables generan utilidades de Tailwind automáticamente:
+ * --color-x  -> bg-x / text-x / border-x
+ * --font-x   -> font-x
+ */
+@theme {
+  /* Fondos y superficies */
+  --color-bg: #0d0d0d;
+  --color-surface: #161616;
+  --color-surface-2: #1e1e1e;
+  --color-surface-3: #262626;
+
+  /* Bordes */
+  --color-border: #2e2e2e;
+  --color-border-strong: #3a3a3a;
+
+  /* Texto */
+  --color-ink: #f0ede6;
+
+  /* Acentos */
+  --color-amber: #f5a623;
+  --color-green: #3ecf6a;
+  --color-blue: #5b9cf6;
+  --color-red: #f06565;
+
+  /* Tipografías */
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Feedback: fila recién agregada al ticket */
+  --animate-flash-verde: flash-verde 450ms ease-out;
+  /* Feedback: fila recién quitada del ticket */
+  --animate-flash-rojo: flash-rojo 450ms ease-out;
+  /* Header: nombre de pestaña deslizándose detrás del botón menú */
+  --animate-deslizar-pestana: deslizar-pestana 300ms ease-out;
+  /* Barra de punto de equilibrio: brillo en bucle al llegar al 100% */
+  --animate-brillo-barra: brillo-barra 8.5s linear infinite;
+  /* Texto de punto de equilibrio: brillo en bucle recorriendo solo las letras */
+  --animate-brillo-texto: brillo-texto 8.5s linear infinite;
+  /* Tarjeta de punto de equilibrio: brillo rosa tenue de fondo, detrás del contenido */
+  --animate-brillo-tarjeta: brillo-tarjeta 8.5s linear infinite;
+  /* Flechita verde: sube y se desvanece, con pausa antes de repetir */
+  --animate-elevar-flecha: elevar-flecha 3s ease-out infinite;
+}
+
+@keyframes flash-verde {
+  from {
+    background-color: rgba(62, 207, 106, 0.3);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-rojo {
+  from {
+    background-color: rgba(240, 101, 101, 0.3);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes deslizar-pestana {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes brillo-barra {
+  0% {
+    transform: translateX(-100%);
+  }
+  41% {
+    transform: translateX(350%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes brillo-texto {
+  0% {
+    background-position: 160% 0;
+  }
+  41% {
+    background-position: -60% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes brillo-tarjeta {
+  0% {
+    transform: translateX(-100%);
+  }
+  41% {
+    transform: translateX(300%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes elevar-flecha {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  33% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flash-verde,
+  .animate-flash-rojo,
+  .animate-deslizar-pestana,
+  .animate-brillo-barra,
+  .animate-brillo-texto,
+  .animate-brillo-tarjeta,
+  .animate-elevar-flecha {
+    animation: none;
+  }
+}
+
+:root {
+  /* Radio de borde estándar del proyecto: usar rounded-lg (8px) en componentes */
+  --radius: 8px;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Scrollbars sutiles y delgadas, sin flechitas, en cualquier
+   contenedor con scroll (Firefox + navegadores basados en Chromium) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Impresión de tickets: el ticket se monta vía portal directo en
+   document.body (fuera de #root), así que basta con ocultar toda
+   la app al imprimir — lo único que queda visible es el ticket. */
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  #root {
+    display: none;
+  }
+}
