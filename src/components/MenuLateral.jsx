@@ -55,7 +55,7 @@ export default function MenuLateral({ abierto, onCerrar }) {
         <div className="mt-auto border-t border-border px-4 pt-3">
           <p className="truncate text-sm text-ink">{usuario?.nombre_completo}</p>
           <p className="font-mono text-xs text-amber">{rol}</p>
-          <p className="mt-1 truncate font-mono text-xs text-ink/40">{usuario?.email}</p>
+          <p className="mt-1 truncate font-mono text-xs text-ink/60">{usuario?.email}</p>
           <button
             type="button"
             onClick={cerrarSesion}

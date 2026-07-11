@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Pencil, Trash2, Plus, X, Mic } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import { formatearSoles } from '../lib/moneda.js'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
@@ -39,15 +38,11 @@ function ordenarServicios(servicios, orden) {
   }
 }
 
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
 function formatearDuracion(minutos) {
   return minutos != null ? `${minutos} min` : '—'
 }
 
-export default function Servicios() {
+export default function Servicios({ activo = true }) {
   const { rol } = useAuth()
   const { mostrarToast } = useToast()
   const esAdmin = rol === 'ADMINISTRADOR'
@@ -60,15 +55,18 @@ export default function Servicios() {
   const [modalServicio, setModalServicio] = useState(null) // null | 'nuevo' | servicio
   const [servicioAEliminar, setServicioAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
+  const primeraCargaHecha = useRef(false)
 
   useCerrarConEscape(() => setServicioAEliminar(null), Boolean(servicioAEliminar))
 
-  async function cargarServicios() {
-    setCargando(true)
+  async function cargarServicios(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('servicios')
       .select('id, nombre, categoria, precio, duracion_min, activo')
       .order('nombre')
+
+    if (!vigente.actual) return
 
     if (errorConsulta) {
       setError('No se pudo cargar el catálogo de servicios.')
@@ -80,8 +78,15 @@ export default function Servicios() {
   }
 
   useEffect(() => {
-    cargarServicios()
-  }, [])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarServicios(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo])
 
   async function confirmarEliminar() {
     if (!servicioAEliminar) return
@@ -121,59 +126,16 @@ export default function Servicios() {
     (a, b) => a.localeCompare(b),
   )
 
-  const placeholderBuscador = useTextoEscritura('Buscar servicio...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
-
   return (
     <div className="p-3 pb-6">
       {/* Buscador + Nuevo servicio: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-amber"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {vozSoportada && (
-          <button
-            type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-amber hover:text-amber'
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-        )}
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar servicio..."
+          tema="amber"
+        />
 
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
 
@@ -181,7 +143,7 @@ export default function Servicios() {
           <button
             type="button"
             onClick={() => setModalServicio('nuevo')}
-            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-amber px-3 py-2.5 text-sm font-semibold text-bg md:flex"
+            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-amber px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
           >
             <Plus className="h-4 w-4" />
             <span>Nuevo servicio</span>
@@ -196,15 +158,15 @@ export default function Servicios() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando servicios...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando servicios...</p>
       ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           No se encontraron servicios.
         </p>
       ) : (
         <>
           {/* Tarjetas: solo móvil */}
-          <div className="mt-4 grid grid-cols-1 gap-3 md:hidden">
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
             {filtradosOrdenados.map((servicio) => (
               <div key={servicio.id} className="rounded-lg border border-border bg-surface p-3">
                 <div className="flex items-center justify-between gap-2">
@@ -220,7 +182,7 @@ export default function Servicios() {
                   <div className="flex shrink-0 items-center gap-1.5">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/40'
+                        servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
                       }`}
                     >
                       {servicio.activo ? 'Activo' : 'Inactivo'}
@@ -253,10 +215,10 @@ export default function Servicios() {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/40">
+                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Servicio</th>
                   <th className="px-3 py-2 font-normal">Categoría</th>
                   <th className="px-3 py-2 text-right font-normal">Precio</th>
@@ -279,7 +241,7 @@ export default function Servicios() {
                     <td className="px-3 py-2.5 text-right">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/40'
+                          servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
                         }`}
                       >
                         {servicio.activo ? 'Activo' : 'Inactivo'}

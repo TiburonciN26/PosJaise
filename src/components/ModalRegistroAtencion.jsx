@@ -52,15 +52,21 @@ function validar(formulario) {
 }
 
 export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }) {
-  const { usuario, rol } = useAuth()
-  const esAdmin = rol === 'ADMINISTRADOR'
+  const { usuario } = useAuth()
   const esEdicion = Boolean(registro)
+
+  // El % de comisión depende de quién es DUEÑO del registro (a nombre de
+  // quién queda guardado), no de quién lo está editando. Antes, un admin
+  // editando la atención de una asistente pisaba su comisión real con 100%
+  // porque el cálculo miraba el rol de quien editaba en vez del dueño.
+  const idDueno = esEdicion ? registro.usuario_id : usuario.id
 
   const [servicios, setServicios] = useState([])
   const [clientes, setClientes] = useState([])
   const [cargandoListas, setCargandoListas] = useState(true)
 
-  const [miAsistenteId, setMiAsistenteId] = useState(null)
+  const [asistenteIdDueno, setAsistenteIdDueno] = useState(null)
+  const [cargandoAsistenteDueno, setCargandoAsistenteDueno] = useState(true)
   const [porcentajeActual, setPorcentajeActual] = useState(null)
 
   const [formulario, setFormulario] = useState(() =>
@@ -84,43 +90,50 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
     cargarListas()
   }, [])
 
+  // Ficha de asistente del DUEÑO del registro (no de quien edita). Si el
+  // dueño no tiene ficha de asistente (p. ej. es el propio admin), se asume
+  // que se queda con el 100% — igual que antes, pero ahora basado en el
+  // dueño real y no en el rol de quien abrió el modal.
   useEffect(() => {
-    if (esAdmin) return
-    async function cargarMiAsistente() {
+    let vigente = true
+    async function cargarAsistenteDueno() {
+      setCargandoAsistenteDueno(true)
       const { data } = await supabase
         .from('asistentes')
         .select('id')
-        .eq('usuario_id', usuario.id)
+        .eq('usuario_id', idDueno)
         .maybeSingle()
-      setMiAsistenteId(data?.id ?? null)
+      if (vigente) {
+        setAsistenteIdDueno(data?.id ?? null)
+        setCargandoAsistenteDueno(false)
+      }
     }
-    cargarMiAsistente()
-  }, [esAdmin, usuario.id])
+    cargarAsistenteDueno()
+    return () => {
+      vigente = false
+    }
+  }, [idDueno])
 
   useEffect(() => {
     async function cargarPorcentaje() {
-      if (!formulario.servicioId) {
+      if (!formulario.servicioId || cargandoAsistenteDueno) {
         setPorcentajeActual(null)
         return
       }
-      if (esAdmin) {
+      if (!asistenteIdDueno) {
         setPorcentajeActual(100)
-        return
-      }
-      if (!miAsistenteId) {
-        setPorcentajeActual(null)
         return
       }
       const { data } = await supabase
         .from('porcentajes')
         .select('porcentaje')
         .eq('servicio_id', formulario.servicioId)
-        .eq('asistente_id', miAsistenteId)
+        .eq('asistente_id', asistenteIdDueno)
         .maybeSingle()
       setPorcentajeActual(data?.porcentaje ?? null)
     }
     cargarPorcentaje()
-  }, [formulario.servicioId, esAdmin, miAsistenteId])
+  }, [formulario.servicioId, asistenteIdDueno, cargandoAsistenteDueno])
 
   const precioNumero = parseFloat(formulario.precio)
   const pagoCalculado =
@@ -194,7 +207,7 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
         </h2>
 
         {cargandoListas ? (
-          <p className="mt-4 text-center font-mono text-sm text-ink/40">Cargando...</p>
+          <p className="mt-4 text-center font-mono text-sm text-ink/60">Cargando...</p>
         ) : (
           <div className="mt-4 space-y-3">
             <div>
@@ -246,7 +259,7 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
                   </p>
                 ) : (
                   !Number.isNaN(precioNumero) && (
-                    <p className="mt-1.5 font-mono text-xs text-ink/40">
+                    <p className="mt-1.5 font-mono text-xs text-ink/60">
                       {precioNumero} × {porcentajeActual}% = {pagoCalculado.toFixed(2)}
                     </p>
                   )
@@ -270,7 +283,7 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
                 onChange={(evento) => actualizarCampo('nota', evento.target.value)}
                 placeholder="Opcional"
                 rows={3}
-                className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+                className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
               />
             </div>
           </div>
@@ -293,7 +306,7 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
           </button>
           <button
             type="submit"
-            disabled={guardando || cargandoListas}
+            disabled={guardando || cargandoListas || cargandoAsistenteDueno}
             className="flex-1 rounded-lg bg-purple-300 py-2 text-sm font-semibold text-bg disabled:opacity-40"
           >
             {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar'}

@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Pencil,
   Trash2,
   Plus,
-  X,
   Phone,
   Mail,
   MapPin,
@@ -13,15 +12,14 @@ import {
   KeyRound,
   MessageCircle,
   ArrowBigDown,
-  Mic,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalAsistente from '../components/ModalAsistente.jsx'
@@ -91,7 +89,7 @@ function coloresCompletitud(porcentaje) {
 function DatoAsistente({ icono: Icono, children, mono }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5 text-sm text-ink/60">
-      <Icono className="h-3.5 w-3.5 shrink-0 text-ink/40" />
+      <Icono className="h-3.5 w-3.5 shrink-0 text-ink/60" />
       <span className={`min-w-0 truncate ${mono ? 'font-mono' : ''}`}>{children}</span>
     </div>
   )
@@ -112,19 +110,7 @@ function BarraCompletitud({ porcentaje, colores }) {
   )
 }
 
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
-}
-
-export default function Asistentes() {
+export default function Asistentes({ activo = true }) {
   const { mostrarToast } = useToast()
 
   const [asistentes, setAsistentes] = useState([])
@@ -137,17 +123,20 @@ export default function Asistentes() {
   const [asistenteAEliminar, setAsistenteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [abiertos, setAbiertos] = useState(() => new Set())
+  const primeraCargaHecha = useRef(false)
 
   useCerrarConEscape(() => setAsistenteAEliminar(null), Boolean(asistenteAEliminar))
 
-  async function cargarAsistentes() {
-    setCargando(true)
+  async function cargarAsistentes(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('asistentes')
       .select(
         'id, usuario_id, nombres_completos, telefono, email, direccion, contacto_emergencia, cumpleanos, fecha_ingreso, activo',
       )
       .order('nombres_completos')
+
+    if (!vigente.actual) return
 
     if (errorConsulta) {
       setError('No se pudo cargar el directorio de asistentes.')
@@ -168,9 +157,16 @@ export default function Asistentes() {
   }
 
   useEffect(() => {
-    cargarAsistentes()
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarAsistentes(vigente, silencioso)
     cargarUsuariosAsistente()
-  }, [])
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo])
 
   function alternarAbierto(id) {
     setAbiertos((anterior) => {
@@ -215,66 +211,23 @@ export default function Asistentes() {
 
   const filtradosOrdenados = ordenarAsistentes(filtrados, orden)
 
-  const placeholderBuscador = useTextoEscritura('Buscar por nombre...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
-
   return (
     <div className="p-3 pb-6">
       {/* Buscador + Nueva asistente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-purple-300"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {vozSoportada && (
-          <button
-            type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-        )}
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar por nombre..."
+          tema="purple-300"
+        />
 
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
 
         <button
           type="button"
           onClick={() => setModalAsistente('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg md:flex"
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
         >
           <Plus className="h-4 w-4" />
           <span>Nueva asistente</span>
@@ -293,9 +246,9 @@ export default function Asistentes() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando asistentes...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando asistentes...</p>
       ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           No se encontraron asistentes.
         </p>
       ) : (
@@ -310,6 +263,10 @@ export default function Asistentes() {
                 <div className="flex items-center gap-3 p-3">
                   <div
                     onClick={() => alternarAbierto(asistente.id)}
+                    onKeyDown={manejarActivacionTeclado(() => alternarAbierto(asistente.id))}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={abierto}
                     className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300">
@@ -324,14 +281,14 @@ export default function Asistentes() {
                           className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                             asistente.activo
                               ? 'bg-green/15 text-green'
-                              : 'bg-surface-2 text-ink/40'
+                              : 'bg-surface-2 text-ink/60'
                           }`}
                         >
                           {asistente.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
                       {asistente.usuario_id && (
-                        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-ink/40">
+                        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-ink/60">
                           <KeyRound className="h-3 w-3 shrink-0" />
                           <span>Vinculada a una cuenta</span>
                         </div>
@@ -358,7 +315,7 @@ export default function Asistentes() {
                       className="p-1.5"
                     >
                       <ArrowBigDown
-                        className={`h-4 w-4 text-ink/40 transition-transform duration-300 ${
+                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
                           abierto ? 'rotate-180' : ''
                         }`}
                       />

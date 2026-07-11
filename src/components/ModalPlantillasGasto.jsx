@@ -2,11 +2,8 @@ import { useState } from 'react'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { formatearSoles } from '../lib/moneda.js'
 import BotonAccion from './BotonAccion.jsx'
-
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
 
 export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio }) {
   const [modo, setModo] = useState('lista') // 'lista' | 'form' | 'eliminar'
@@ -129,7 +126,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
             </div>
 
             {plantillas.length === 0 ? (
-              <p className="mt-6 text-center font-mono text-sm text-ink/40">
+              <p className="mt-6 text-center font-mono text-sm text-ink/60">
                 No hay plantillas registradas.
               </p>
             ) : (
@@ -145,7 +142,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
                         <span className="text-purple-300">{formatearSoles(plantilla.monto)}</span>
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                            plantilla.activo ? 'bg-green/15 text-green' : 'bg-surface text-ink/40'
+                            plantilla.activo ? 'bg-green/15 text-green' : 'bg-surface text-ink/60'
                           }`}
                         >
                           {plantilla.activo ? 'Activo' : 'Inactivo'}

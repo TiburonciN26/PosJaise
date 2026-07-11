@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Pencil,
   Trash2,
@@ -10,40 +10,22 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Mic,
-  X,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
+import { formatearSoles } from '../lib/moneda.js'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
+import FiltrosFecha from '../components/FiltrosFecha.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 
 const OPCION_TODOS = 'todos'
-
-const FILTROS = [
-  { id: 'hoy', label: 'Hoy' },
-  { id: 'semana', label: 'Esta semana' },
-  { id: 'mes', label: 'Este mes' },
-  { id: 'personalizado', label: 'Personalizado' },
-]
-
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
-function formatearFechaISO(fecha) {
-  const anio = fecha.getFullYear()
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  return `${anio}-${mes}-${dia}`
-}
 
 function formatearHora(fechaIso) {
   const fecha = new Date(fechaIso)
@@ -59,12 +41,16 @@ function capitalizar(texto) {
 }
 
 function formatearTituloDia(fecha) {
-  const diaSemana = capitalizar(new Intl.DateTimeFormat('es-PE', { weekday: 'long' }).format(fecha))
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  const mes = capitalizar(
-    new Intl.DateTimeFormat('es-PE', { month: 'short' }).format(fecha).replace('.', ''),
+  const diaSemana = capitalizar(
+    new Intl.DateTimeFormat('es-PE', { weekday: 'long', timeZone: 'America/Lima' }).format(fecha),
   )
-  const anio = fecha.getFullYear()
+  const dia = String(aLima(fecha).getUTCDate()).padStart(2, '0')
+  const mes = capitalizar(
+    new Intl.DateTimeFormat('es-PE', { month: 'short', timeZone: 'America/Lima' })
+      .format(fecha)
+      .replace('.', ''),
+  )
+  const anio = aLima(fecha).getUTCFullYear()
   return `${diaSemana} ${dia} ${mes} ${anio}`
 }
 
@@ -72,63 +58,11 @@ function agruparPorDia(registros) {
   const grupos = new Map()
   for (const registro of registros) {
     const fecha = new Date(registro.fecha)
-    const clave = `${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`
+    const clave = claveDiaLima(fecha)
     if (!grupos.has(clave)) grupos.set(clave, { clave, fecha, registros: [] })
     grupos.get(clave).registros.push(registro)
   }
   return Array.from(grupos.values())
-}
-
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
-}
-
-function iniciarDia(fecha) {
-  const copia = new Date(fecha)
-  copia.setHours(0, 0, 0, 0)
-  return copia
-}
-
-function sumarDias(fecha, dias) {
-  const copia = new Date(fecha)
-  copia.setDate(copia.getDate() + dias)
-  return copia
-}
-
-function calcularRango(filtro, personalizado) {
-  const hoy = iniciarDia(new Date())
-
-  if (filtro === 'semana') {
-    const diaSemana = hoy.getDay()
-    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1
-    const lunes = sumarDias(hoy, -diasDesdeLunes)
-    return { desde: lunes, hasta: sumarDias(lunes, 7) }
-  }
-
-  if (filtro === 'mes') {
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    const inicioMesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
-    return { desde: inicioMes, hasta: inicioMesSiguiente }
-  }
-
-  if (filtro === 'personalizado') {
-    const desde = personalizado.desde ? iniciarDia(new Date(`${personalizado.desde}T00:00:00`)) : hoy
-    const hastaBase = personalizado.hasta
-      ? iniciarDia(new Date(`${personalizado.hasta}T00:00:00`))
-      : hoy
-    return { desde, hasta: sumarDias(hastaBase, 1) }
-  }
-
-  // 'hoy'
-  return { desde: hoy, hasta: sumarDias(hoy, 1) }
 }
 
 function montoDeRegistro(registro, esAdmin) {
@@ -141,7 +75,7 @@ function nombreUsuarioDe(registro) {
   return Array.isArray(usuarios) ? (usuarios[0]?.nombre_completo ?? null) : (usuarios.nombre_completo ?? null)
 }
 
-export default function MiPanel() {
+export default function MiPanel({ activo = true }) {
   const { usuario, rol } = useAuth()
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
@@ -166,6 +100,7 @@ export default function MiPanel() {
   const [registroACancelar, setRegistroACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
+  const primeraCargaHecha = useRef(false)
 
   useCerrarConEscape(() => setRegistroAEliminar(null), Boolean(registroAEliminar))
   useCerrarConEscape(() => setRegistroACancelar(null), Boolean(registroACancelar))
@@ -186,9 +121,9 @@ export default function MiPanel() {
     ...asistentesUsuarios.map((a) => ({ id: a.id, label: a.nombre_completo })),
   ]
 
-  async function cargarRegistros() {
+  async function cargarRegistros(vigente = { actual: true }, silencioso = false) {
     if (!usuario) return
-    setCargando(true)
+    if (!silencioso) setCargando(true)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
     let consulta = supabase
@@ -209,6 +144,8 @@ export default function MiPanel() {
 
     const { data, error: errorConsulta } = await consulta
 
+    if (!vigente.actual) return
+
     if (errorConsulta) {
       setError('No se pudo cargar tus atenciones.')
       setRegistros([])
@@ -220,9 +157,16 @@ export default function MiPanel() {
   }
 
   useEffect(() => {
-    cargarRegistros()
-    setDiasAbiertos(new Set())
-  }, [usuario, filtro, personalizado.desde, personalizado.hasta, usuarioFiltro])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarRegistros(vigente, silencioso)
+    if (!silencioso) setDiasAbiertos(new Set())
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, usuario, filtro, personalizado.desde, personalizado.hasta, usuarioFiltro])
 
   function alternarDia(clave) {
     setDiasAbiertos((anterior) => {
@@ -290,59 +234,16 @@ export default function MiPanel() {
   )
   const grupos = agruparPorDia(registrosFiltrados)
 
-  const placeholderBuscador = useTextoEscritura('Buscar por servicio o cliente...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
-
   return (
     <div className="p-3 pb-6">
       {/* Buscador: fijo arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-purple-300"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {vozSoportada && (
-          <button
-            type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-        )}
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar por servicio o cliente..."
+          tema="purple-300"
+        />
 
         {esAdmin && (
           <SelectorOrden
@@ -357,22 +258,12 @@ export default function MiPanel() {
       </div>
 
       {/* Filtros de fecha */}
-      <div className="mt-3 grid grid-cols-4 gap-1">
-        {FILTROS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => setFiltro(f.id)}
-            className={`min-w-0 overflow-visible whitespace-nowrap rounded-full px-1 py-2 text-center text-xs transition-colors sm:px-3 sm:text-sm ${
-              filtro === f.id
-                ? 'bg-purple-300 font-semibold text-bg'
-                : 'border border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <FiltrosFecha.Botones
+        filtro={filtro}
+        onCambiarFiltro={setFiltro}
+        tema="purple-300"
+        className="mt-3"
+      />
 
       {/* Resumen del período + Registrar atención (desktop) */}
       <div className="mt-3 flex items-center justify-between gap-2">
@@ -388,35 +279,19 @@ export default function MiPanel() {
         <button
           type="button"
           onClick={() => setModalRegistro('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2 text-sm font-semibold text-bg md:flex"
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2 text-sm font-semibold text-bg lg:flex"
         >
           <Plus className="h-4 w-4" />
           <span>Registrar atención</span>
         </button>
       </div>
 
-      {filtro === 'personalizado' && (
-        <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-x-auto">
-          <label className="shrink-0 text-xs text-ink/50">Desde</label>
-          <input
-            type="date"
-            value={personalizado.desde}
-            onChange={(evento) =>
-              setPersonalizado((anterior) => ({ ...anterior, desde: evento.target.value }))
-            }
-            className="min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-          />
-          <label className="shrink-0 text-xs text-ink/50">Hasta</label>
-          <input
-            type="date"
-            value={personalizado.hasta}
-            onChange={(evento) =>
-              setPersonalizado((anterior) => ({ ...anterior, hasta: evento.target.value }))
-            }
-            className="min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-          />
-        </div>
-      )}
+      <FiltrosFecha.CamposPersonalizado
+        filtro={filtro}
+        personalizado={personalizado}
+        onCambiarPersonalizado={setPersonalizado}
+        tema="purple-300"
+      />
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -425,9 +300,9 @@ export default function MiPanel() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando atenciones...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando atenciones...</p>
       ) : registrosFiltrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           {busqueda.trim()
             ? 'No se encontraron atenciones.'
             : 'No hay atenciones registradas en este período.'}
@@ -454,7 +329,7 @@ export default function MiPanel() {
                       <p className="text-sm font-medium text-ink">
                         {formatearTituloDia(grupo.fecha)}
                       </p>
-                      <span className="text-xs text-ink/40">
+                      <span className="text-xs text-ink/60">
                         {registrosActivosDia.length} servicio
                         {registrosActivosDia.length === 1 ? '' : 's'}
                       </span>
@@ -464,7 +339,7 @@ export default function MiPanel() {
                     {formatearSoles(totalDia)}
                   </span>
                   <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/40 transition-transform duration-300 ${
+                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
                       abierto ? 'rotate-180' : ''
                     }`}
                   />
@@ -539,11 +414,11 @@ export default function MiPanel() {
                                 </span>
                               )}
                               <span className="flex items-center gap-1">
-                                <User className="h-3.5 w-3.5 text-ink/40" />
+                                <User className="h-3.5 w-3.5 text-ink/60" />
                                 {registro.clientes?.nombre ?? 'Cliente eliminado'}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5 text-ink/40" />
+                                <Clock className="h-3.5 w-3.5 text-ink/60" />
                                 {formatearHora(registro.fecha)}
                               </span>
                               {esAdmin && !cancelado && (

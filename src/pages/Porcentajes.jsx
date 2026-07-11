@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { X, Lock, Unlock, ArrowBigDown, Mic } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Lock, Unlock, ArrowBigDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -41,22 +40,10 @@ function ordenarServicios(servicios, orden, asistentesActivos, porcentajesMap) {
 }
 
 function coloresIndicador(asignados, total) {
-  if (total === 0) return { pill: 'bg-surface-2 text-ink/40' }
+  if (total === 0) return { pill: 'bg-surface-2 text-ink/60' }
   if (asignados === total) return { pill: 'bg-green/15 text-green' }
   if (asignados / total >= 0.5) return { pill: 'bg-purple-300/15 text-purple-300' }
   return { pill: 'bg-surface-2 text-ink/50' }
-}
-
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
 }
 
 function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGuardar }) {
@@ -95,15 +82,15 @@ function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGu
             onKeyDown={(evento) => {
               if (evento.key === 'Enter') evento.target.blur()
             }}
-            className="w-14 rounded-lg border border-border bg-surface px-2 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:text-ink/40"
+            className="w-14 rounded-lg border border-border bg-surface px-2 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:text-ink/60"
           />
-          <span className="text-xs text-ink/40">%</span>
+          <span className="text-xs text-ink/60">%</span>
         </div>
         <button
           type="button"
           onClick={() => (bloqueado ? setBloqueado(false) : confirmarYBloquear())}
           aria-label={bloqueado ? 'Desbloquear' : 'Bloquear y guardar'}
-          className="p-1 text-ink/40 transition-colors hover:text-purple-300"
+          className="p-1 text-ink/60 transition-colors hover:text-purple-300"
         >
           {bloqueado ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5 text-purple-300" />}
         </button>
@@ -133,7 +120,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
           {asignados}/{total}
         </span>
         <ArrowBigDown
-          className={`h-4 w-4 shrink-0 text-ink/40 transition-transform duration-300 ${
+          className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
             abierto ? 'rotate-180' : ''
           }`}
         />
@@ -142,7 +129,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
       <CampoColapsable abierto={abierto}>
         <div className="space-y-2 border-t border-border p-3">
           {total === 0 ? (
-            <p className="text-center text-sm text-ink/40">No hay asistentes activas.</p>
+            <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
           ) : (
             asistentesActivos.map((asistente) => (
               <FilaAsistentePorcentaje
@@ -160,7 +147,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
   )
 }
 
-export default function Porcentajes() {
+export default function Porcentajes({ activo = true }) {
   const { mostrarToast } = useToast()
 
   const [servicios, setServicios] = useState([])
@@ -170,9 +157,10 @@ export default function Porcentajes() {
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('nombre-asc')
+  const primeraCargaHecha = useRef(false)
 
-  async function cargarTodo() {
-    setCargando(true)
+  async function cargarTodo(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
     const [resServicios, resAsistentes, resPorcentajes] = await Promise.all([
       supabase.from('servicios').select('id, nombre').order('nombre'),
       supabase
@@ -182,6 +170,8 @@ export default function Porcentajes() {
         .order('nombres_completos'),
       supabase.from('porcentajes').select('servicio_id, asistente_id, porcentaje'),
     ])
+
+    if (!vigente.actual) return
 
     if (resServicios.error || resAsistentes.error || resPorcentajes.error) {
       setError('No se pudo cargar la información de porcentajes.')
@@ -203,8 +193,15 @@ export default function Porcentajes() {
   }
 
   useEffect(() => {
-    cargarTodo()
-  }, [])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarTodo(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo])
 
   const porcentajesMap = useMemo(() => {
     const mapa = new Map()
@@ -265,59 +262,16 @@ export default function Porcentajes() {
 
   const filtradosOrdenados = ordenarServicios(filtrados, orden, asistentes, porcentajesMap)
 
-  const placeholderBuscador = useTextoEscritura('Buscar servicio...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
-
   return (
     <div className="p-3 pb-6">
       {/* Buscador: fijo arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-purple-300"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {vozSoportada && (
-          <button
-            type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-        )}
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar servicio..."
+          tema="purple-300"
+        />
 
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
       </div>
@@ -329,9 +283,9 @@ export default function Porcentajes() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando servicios...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando servicios...</p>
       ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           No se encontraron servicios.
         </p>
       ) : (

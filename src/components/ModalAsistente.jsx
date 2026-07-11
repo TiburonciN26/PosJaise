@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 
@@ -28,9 +28,9 @@ function formularioDesdeAsistente(asistente) {
   }
 }
 
-function Etiqueta({ children, obligatorio }) {
+function Etiqueta({ children, obligatorio, htmlFor }) {
   return (
-    <label className="mb-1 block text-xs text-ink/50">
+    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/50">
       {children}
       {obligatorio && <span className="text-red"> *</span>}
     </label>
@@ -43,6 +43,7 @@ function validar(formulario) {
 }
 
 export default function ModalAsistente({ asistente, usuariosDisponibles, onCerrar, onGuardado }) {
+  const idBase = useId()
   const esEdicion = Boolean(asistente)
 
   const [formulario, setFormulario] = useState(() =>
@@ -128,7 +129,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 
@@ -139,7 +140,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.email}
               onChange={(evento) => actualizarCampo('email', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 
@@ -150,7 +151,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.direccion}
               onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 
@@ -161,13 +162,14 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.contactoEmergencia}
               onChange={(evento) => actualizarCampo('contactoEmergencia', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 
           <div>
-            <Etiqueta>Fecha de cumpleaños</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-cumpleanos`}>Fecha de cumpleaños</Etiqueta>
             <input
+              id={`${idBase}-cumpleanos`}
               type="date"
               value={formulario.cumpleanos}
               onChange={(evento) => actualizarCampo('cumpleanos', evento.target.value)}
@@ -176,8 +178,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
-            <Etiqueta>Fecha de ingreso</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-fecha-ingreso`}>Fecha de ingreso</Etiqueta>
             <input
+              id={`${idBase}-fecha-ingreso`}
               type="date"
               value={formulario.fechaIngreso}
               onChange={(evento) => actualizarCampo('fechaIngreso', evento.target.value)}
@@ -199,7 +202,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-ink/40">
+            <p className="mt-1 text-xs text-ink/60">
               Vincula esta profesional con su cuenta de login para que su % de comisión funcione
               en Mi Panel.
             </p>

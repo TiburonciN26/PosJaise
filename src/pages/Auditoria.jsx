@@ -1,18 +1,11 @@
-import { useEffect, useState } from 'react'
-import { PlusCircle, Pencil, Trash2, Ban, Package, ArrowBigDown, Mic, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { PlusCircle, Pencil, Trash2, Ban, Package, ArrowBigDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { useToast } from '../context/ToastContext.jsx'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
-
-const FILTROS = [
-  { id: 'hoy', label: 'Hoy' },
-  { id: 'semana', label: 'Esta semana' },
-  { id: 'mes', label: 'Este mes' },
-  { id: 'personalizado', label: 'Personalizado' },
-]
+import FiltrosFecha from '../components/FiltrosFecha.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 
 const TABLA_LABELS = {
   usuarios: 'Usuarios',
@@ -31,13 +24,6 @@ const TABLA_LABELS = {
 const OPCION_TODAS_TABLAS = 'todas'
 const TAMANO_PAGINA = 50
 
-function formatearFechaISO(fecha) {
-  const anio = fecha.getFullYear()
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  return `${anio}-${mes}-${dia}`
-}
-
 function formatearHora(fechaIso) {
   const fecha = new Date(fechaIso)
   return new Intl.DateTimeFormat('es-PE', {
@@ -52,76 +38,28 @@ function capitalizar(texto) {
 }
 
 function formatearTituloDia(fecha) {
-  const diaSemana = capitalizar(new Intl.DateTimeFormat('es-PE', { weekday: 'long' }).format(fecha))
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  const mes = capitalizar(
-    new Intl.DateTimeFormat('es-PE', { month: 'short' }).format(fecha).replace('.', ''),
+  const diaSemana = capitalizar(
+    new Intl.DateTimeFormat('es-PE', { weekday: 'long', timeZone: 'America/Lima' }).format(fecha),
   )
-  const anio = fecha.getFullYear()
+  const dia = String(aLima(fecha).getUTCDate()).padStart(2, '0')
+  const mes = capitalizar(
+    new Intl.DateTimeFormat('es-PE', { month: 'short', timeZone: 'America/Lima' })
+      .format(fecha)
+      .replace('.', ''),
+  )
+  const anio = aLima(fecha).getUTCFullYear()
   return `${diaSemana} ${dia} ${mes} ${anio}`
-}
-
-function iniciarDia(fecha) {
-  const copia = new Date(fecha)
-  copia.setHours(0, 0, 0, 0)
-  return copia
-}
-
-function sumarDias(fecha, dias) {
-  const copia = new Date(fecha)
-  copia.setDate(copia.getDate() + dias)
-  return copia
-}
-
-function calcularRango(filtro, personalizado) {
-  const hoy = iniciarDia(new Date())
-
-  if (filtro === 'semana') {
-    const diaSemana = hoy.getDay()
-    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1
-    const lunes = sumarDias(hoy, -diasDesdeLunes)
-    return { desde: lunes, hasta: sumarDias(lunes, 7) }
-  }
-
-  if (filtro === 'mes') {
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    const inicioMesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
-    return { desde: inicioMes, hasta: inicioMesSiguiente }
-  }
-
-  if (filtro === 'personalizado') {
-    const desde = personalizado.desde ? iniciarDia(new Date(`${personalizado.desde}T00:00:00`)) : hoy
-    const hastaBase = personalizado.hasta
-      ? iniciarDia(new Date(`${personalizado.hasta}T00:00:00`))
-      : hoy
-    return { desde, hasta: sumarDias(hastaBase, 1) }
-  }
-
-  // 'hoy'
-  return { desde: hoy, hasta: sumarDias(hoy, 1) }
 }
 
 function agruparPorDia(entradas) {
   const grupos = new Map()
   for (const entrada of entradas) {
     const fecha = new Date(entrada.fecha)
-    const clave = `${fecha.getFullYear()}-${fecha.getMonth()}-${fecha.getDate()}`
+    const clave = claveDiaLima(fecha)
     if (!grupos.has(clave)) grupos.set(clave, { clave, fecha, entradas: [] })
     grupos.get(clave).entradas.push(entrada)
   }
   return Array.from(grupos.values())
-}
-
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
 }
 
 function accionDe(entrada) {
@@ -168,9 +106,7 @@ function descripcionEntrada(entrada) {
   return `${tablaLabel} · ${entrada.descripcion ?? entrada.registro_id} — ${formatearCampo(entrada.campo)}: ${formatearValor(entrada.valor_anterior)} → ${formatearValor(entrada.valor_nuevo)}`
 }
 
-export default function Auditoria() {
-  const { mostrarToast } = useToast()
-
+export default function Auditoria({ activo = true }) {
   const [filtro, setFiltro] = useState('hoy')
   const [personalizado, setPersonalizado] = useState(() => {
     const hoyStr = formatearFechaISO(new Date())
@@ -184,9 +120,10 @@ export default function Auditoria() {
   const [tablaFiltro, setTablaFiltro] = useState(OPCION_TODAS_TABLAS)
   const [cantidadVisible, setCantidadVisible] = useState(TAMANO_PAGINA)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
+  const primeraCargaHecha = useRef(false)
 
-  async function cargarEntradas() {
-    setCargando(true)
+  async function cargarEntradas(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
     setError(null)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
@@ -206,6 +143,8 @@ export default function Auditoria() {
         .lt('fecha', hasta.toISOString())
         .order('fecha', { ascending: false }),
     ])
+
+    if (!vigente.actual) return
 
     if (resAuditoria.error || resStock.error) {
       setError('No se pudo cargar la auditoría.')
@@ -248,9 +187,16 @@ export default function Auditoria() {
   }
 
   useEffect(() => {
-    cargarEntradas()
-    setDiasAbiertos(new Set())
-  }, [filtro, personalizado.desde, personalizado.hasta])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarEntradas(vigente, silencioso)
+    if (!silencioso) setDiasAbiertos(new Set())
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, filtro, personalizado.desde, personalizado.hasta])
 
   function alternarDia(clave) {
     setDiasAbiertos((anterior) => {
@@ -283,60 +229,17 @@ export default function Auditoria() {
   const grupos = agruparPorDia(entradasVisibles)
   const hayMasPorMostrar = entradasFiltradas.length > entradasVisibles.length
 
-  const placeholderBuscador = useTextoEscritura('Buscar por usuario, tabla o contenido...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
-
   return (
     <div className="p-3 pb-6">
       {/* Buscador + orden + filtros de fecha: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 space-y-3 bg-bg px-3 py-2">
         <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-              <IconoBuscar />
-            </span>
-            <input
-              type="text"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              onKeyDown={(evento) => {
-                if (evento.key === 'Escape') setBusqueda('')
-              }}
-              placeholder={placeholderBuscador}
-              className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-purple-300"
-            />
-            {busqueda && (
-              <button
-                type="button"
-                onClick={() => setBusqueda('')}
-                aria-label="Limpiar búsqueda"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          {vozSoportada && (
-            <button
-              type="button"
-              onClick={alternarVoz}
-              aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-              className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-                escuchando
-                  ? 'animate-pulse border-red bg-red/10 text-red'
-                  : 'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-              }`}
-            >
-              <Mic className="h-4 w-4" />
-            </button>
-          )}
+          <BarraBusqueda
+            valor={busqueda}
+            onCambiar={setBusqueda}
+            placeholder="Buscar por usuario, tabla o contenido..."
+            tema="purple-300"
+          />
 
           <SelectorOrden
             opciones={opcionesTabla}
@@ -347,46 +250,15 @@ export default function Auditoria() {
           />
         </div>
 
-        <div className="grid grid-cols-4 gap-1">
-          {FILTROS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFiltro(f.id)}
-              className={`min-w-0 overflow-visible whitespace-nowrap rounded-full px-1 py-2 text-center text-xs transition-colors sm:px-3 sm:text-sm ${
-                filtro === f.id
-                  ? 'bg-purple-300 font-semibold text-bg'
-                  : 'border border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <FiltrosFecha.Botones filtro={filtro} onCambiarFiltro={setFiltro} tema="purple-300" />
       </div>
 
-      {filtro === 'personalizado' && (
-        <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-x-auto">
-          <label className="shrink-0 text-xs text-ink/50">Desde</label>
-          <input
-            type="date"
-            value={personalizado.desde}
-            onChange={(evento) =>
-              setPersonalizado((anterior) => ({ ...anterior, desde: evento.target.value }))
-            }
-            className="min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-          />
-          <label className="shrink-0 text-xs text-ink/50">Hasta</label>
-          <input
-            type="date"
-            value={personalizado.hasta}
-            onChange={(evento) =>
-              setPersonalizado((anterior) => ({ ...anterior, hasta: evento.target.value }))
-            }
-            className="min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-          />
-        </div>
-      )}
+      <FiltrosFecha.CamposPersonalizado
+        filtro={filtro}
+        personalizado={personalizado}
+        onCambiarPersonalizado={setPersonalizado}
+        tema="purple-300"
+      />
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -395,9 +267,9 @@ export default function Auditoria() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando auditoría...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando auditoría...</p>
       ) : entradasFiltradas.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           {busqueda.trim() || tablaFiltro !== OPCION_TODAS_TABLAS
             ? 'No se encontraron registros.'
             : 'No hay actividad registrada en este período.'}
@@ -420,13 +292,13 @@ export default function Auditoria() {
                         <p className="text-sm font-medium text-ink">
                           {formatearTituloDia(grupo.fecha)}
                         </p>
-                        <span className="text-xs text-ink/40">
+                        <span className="text-xs text-ink/60">
                           {grupo.entradas.length} {grupo.entradas.length === 1 ? 'cambio' : 'cambios'}
                         </span>
                       </div>
                     </div>
                     <ArrowBigDown
-                      className={`h-4 w-4 shrink-0 text-ink/40 transition-transform duration-300 ${
+                      className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
                         abierto ? 'rotate-180' : ''
                       }`}
                     />

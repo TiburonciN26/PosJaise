@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Pencil, Trash2, Plus, X, Mic } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { formatearSoles } from '../lib/moneda.js'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import ModalProducto from '../components/ModalProducto.jsx'
 import ModalAgregarStock from '../components/ModalAgregarStock.jsx'
@@ -23,26 +23,50 @@ const OPCIONES_ORDEN = [
   { id: 'stock-desc', label: 'Stock (mayor a menor)' },
 ]
 
-function ordenarProductos(productos, orden) {
-  const ordenados = [...productos]
-  switch (orden) {
-    case 'nombre-desc':
-      return ordenados.sort((a, b) => b.nombre.localeCompare(a.nombre))
-    case 'precio-asc':
-      return ordenados.sort((a, b) => a.precio - b.precio)
-    case 'precio-desc':
-      return ordenados.sort((a, b) => b.precio - a.precio)
-    case 'stock-asc':
-      return ordenados.sort((a, b) => a.stock_actual - b.stock_actual)
-    case 'stock-desc':
-      return ordenados.sort((a, b) => b.stock_actual - a.stock_actual)
-    default:
-      return ordenados.sort((a, b) => a.nombre.localeCompare(b.nombre))
-  }
+const ORDEN_A_COLUMNA = {
+  'nombre-asc': { columna: 'nombre', ascending: true },
+  'nombre-desc': { columna: 'nombre', ascending: false },
+  'precio-asc': { columna: 'precio', ascending: true },
+  'precio-desc': { columna: 'precio', ascending: false },
+  'stock-asc': { columna: 'stock_actual', ascending: true },
+  'stock-desc': { columna: 'stock_actual', ascending: false },
 }
 
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
+const TAMANO_PAGINA = 50
+
+const SELECT_PRODUCTOS =
+  'id, codigo_barras, nombre, categoria, precio, costo, stock_actual, stock_minimo, proveedor, activo'
+
+const RESUMEN_VACIO = {
+  total: 0,
+  bajoStock: 0,
+  sinStock: 0,
+  valorTotal: 0,
+  ganancias: 0,
+  capitalInvertido: 0,
+  categorias: [],
+}
+
+// Quita caracteres que rompen la sintaxis del filtro .or() de PostgREST
+// (coma separa condiciones, paréntesis agrupa) si aparecen en lo que
+// escribe el usuario.
+function terminoSeguro(texto) {
+  return texto.replace(/[%,()]/g, '')
+}
+
+function construirConsultaProductos({ busqueda, orden, filtroStock }) {
+  let consulta = supabase.from('productos_vista').select(SELECT_PRODUCTOS)
+
+  const termino = terminoSeguro(busqueda.trim())
+  if (termino) {
+    consulta = consulta.or(`nombre.ilike.%${termino}%,codigo_barras.ilike.%${termino}%`)
+  }
+
+  if (filtroStock === 'bajo') consulta = consulta.eq('stock_bajo', true)
+  if (filtroStock === 'sin_stock') consulta = consulta.eq('sin_stock', true)
+
+  const { columna, ascending } = ORDEN_A_COLUMNA[orden] ?? ORDEN_A_COLUMNA['nombre-asc']
+  return consulta.order(columna, { ascending })
 }
 
 function formatearNumero(monto) {
@@ -55,45 +79,100 @@ function claseColorStock(producto) {
   return 'text-green'
 }
 
-export default function Inventario() {
+export default function Inventario({ activo = true }) {
   const { rol } = useAuth()
   const { mostrarToast } = useToast()
   const esAdmin = rol === 'ADMINISTRADOR'
 
   const [productos, setProductos] = useState([])
+  const [resumen, setResumen] = useState(RESUMEN_VACIO)
+  const [hayMas, setHayMas] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const busquedaDebounced = useDebounce(busqueda, 300)
   const [orden, setOrden] = useState('nombre-asc')
   const [filtroStock, setFiltroStock] = useState('todos') // 'todos' | 'bajo' | 'sin_stock'
   const [modalProducto, setModalProducto] = useState(null) // null | 'nuevo' | producto
   const [productoAEliminar, setProductoAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [productoParaAgregarStock, setProductoParaAgregarStock] = useState(null)
+  const primeraCargaHecha = useRef(false)
 
   useCerrarConEscape(() => setProductoAEliminar(null), Boolean(productoAEliminar))
 
-  async function cargarProductos() {
-    setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('productos_vista')
-      .select(
-        'id, codigo_barras, nombre, categoria, precio, costo, stock_actual, stock_minimo, proveedor, activo',
-      )
-      .order('nombre')
+  async function cargarProductos(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
+    const filtros = { busqueda: busquedaDebounced, orden, filtroStock }
 
-    if (errorConsulta) {
+    const [productosRes, resumenRes] = await Promise.all([
+      construirConsultaProductos(filtros).range(0, TAMANO_PAGINA - 1),
+      supabase.rpc('resumen_inventario'),
+    ])
+
+    if (!vigente.actual) return
+
+    if (productosRes.error) {
       setError('No se pudo cargar el inventario.')
-    } else {
-      setError(null)
-      setProductos(data ?? [])
+      setProductos([])
+      setCargando(false)
+      return
     }
+
+    setError(null)
+    setProductos(productosRes.data ?? [])
+    setHayMas((productosRes.data ?? []).length === TAMANO_PAGINA)
+
+    const filaResumen = resumenRes.data?.[0]
+    setResumen(
+      filaResumen
+        ? {
+            total: filaResumen.total ?? 0,
+            bajoStock: filaResumen.bajo_stock ?? 0,
+            sinStock: filaResumen.sin_stock ?? 0,
+            valorTotal: filaResumen.valor_total ?? 0,
+            ganancias: filaResumen.ganancias ?? 0,
+            capitalInvertido: filaResumen.capital_invertido ?? 0,
+            categorias: filaResumen.categorias ?? [],
+          }
+        : RESUMEN_VACIO,
+    )
+
     setCargando(false)
   }
 
+  async function cargarMasProductos() {
+    if (cargandoMas || !hayMas) return
+    setCargandoMas(true)
+    const filtros = { busqueda: busquedaDebounced, orden, filtroStock }
+
+    const { data, error: errorMas } = await construirConsultaProductos(filtros).range(
+      productos.length,
+      productos.length + TAMANO_PAGINA - 1,
+    )
+
+    setCargandoMas(false)
+
+    if (errorMas) {
+      mostrarToast('No se pudieron cargar más productos.', 'error')
+      return
+    }
+
+    setProductos((anterior) => [...anterior, ...(data ?? [])])
+    setHayMas((data ?? []).length === TAMANO_PAGINA)
+  }
+
   useEffect(() => {
-    cargarProductos()
-  }, [])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarProductos(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, busquedaDebounced, orden, filtroStock])
 
   async function confirmarEliminar() {
     if (!productoAEliminar) return
@@ -118,95 +197,26 @@ export default function Inventario() {
     cargarProductos()
   }
 
-  const filtrados = productos.filter((producto) => {
-    if (busqueda.trim()) {
-      const termino = busqueda.trim().toLowerCase()
-      const coincide =
-        producto.nombre.toLowerCase().includes(termino) ||
-        (producto.codigo_barras ?? '').toLowerCase().includes(termino)
-      if (!coincide) return false
-    }
-
-    if (filtroStock === 'bajo') {
-      return producto.stock_actual > 0 && producto.stock_actual <= producto.stock_minimo
-    }
-    if (filtroStock === 'sin_stock') {
-      return producto.stock_actual <= 0
-    }
-    return true
-  })
-
-  const filtradosOrdenados = ordenarProductos(filtrados, orden)
-
-  const totalProductos = productos.length
-  const bajoStockCount = productos.filter(
-    (p) => p.stock_actual > 0 && p.stock_actual <= p.stock_minimo,
-  ).length
-  const sinStockCount = productos.filter((p) => p.stock_actual <= 0).length
-  const valorTotal = productos.reduce((acc, p) => acc + p.precio * p.stock_actual, 0)
-  const ganancias = productos.reduce(
-    (acc, p) => acc + (p.precio - (p.costo ?? 0)) * p.stock_actual,
-    0,
-  )
-  const capitalInvertido = productos.reduce((acc, p) => acc + (p.costo ?? 0) * p.stock_actual, 0)
-
-  const categoriasExistentes = [...new Set(productos.map((p) => p.categoria).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b),
-  )
-
-  const placeholderBuscador = useTextoEscritura('Buscar producto...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
+  // Búsqueda, orden y filtro de stock ya vienen resueltos por el servidor
+  // (construirConsultaProductos) — productos ya es la página a mostrar.
+  const totalProductos = resumen.total
+  const bajoStockCount = resumen.bajoStock
+  const sinStockCount = resumen.sinStock
+  const valorTotal = resumen.valorTotal
+  const ganancias = resumen.ganancias
+  const capitalInvertido = resumen.capitalInvertido
+  const categoriasExistentes = resumen.categorias
 
   return (
     <div className="p-3 pb-6">
       {/* Buscador + Nuevo producto: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-amber"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {vozSoportada && (
-          <button
-            type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-amber hover:text-amber'
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-        )}
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar producto..."
+          tema="amber"
+        />
 
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
 
@@ -214,7 +224,7 @@ export default function Inventario() {
           <button
             type="button"
             onClick={() => setModalProducto('nuevo')}
-            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-amber px-3 py-2.5 text-sm font-semibold text-bg md:flex"
+            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-amber px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
           >
             <Plus className="h-4 w-4" />
             <span>Nuevo producto</span>
@@ -239,7 +249,7 @@ export default function Inventario() {
               <p className="font-mono text-lg font-semibold text-ink sm:text-xl">
                 {totalProductos}
               </p>
-              <p className="text-[10px] text-ink/40">Total</p>
+              <p className="text-[10px] text-ink/60">Total</p>
             </button>
             <button
               type="button"
@@ -251,7 +261,7 @@ export default function Inventario() {
               <p className="font-mono text-lg font-semibold text-orange-400 sm:text-xl">
                 {bajoStockCount}
               </p>
-              <p className="text-[10px] text-ink/40">Bajo</p>
+              <p className="text-[10px] text-ink/60">Bajo</p>
             </button>
             <button
               type="button"
@@ -263,7 +273,7 @@ export default function Inventario() {
               <p className="font-mono text-lg font-semibold text-red sm:text-xl">
                 {sinStockCount}
               </p>
-              <p className="text-[10px] text-ink/40">Sin stock</p>
+              <p className="text-[10px] text-ink/60">Sin stock</p>
             </button>
           </div>
         </div>
@@ -273,7 +283,7 @@ export default function Inventario() {
             <TarjetaResumen
               etiqueta="Capital invertido"
               valor={formatearSoles(capitalInvertido)}
-              claseValor="text-ink/40"
+              claseValor="text-ink/60"
               padding="px-2.5 py-2"
             />
             <TarjetaResumen
@@ -297,16 +307,16 @@ export default function Inventario() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando inventario...</p>
-      ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando inventario...</p>
+      ) : productos.length === 0 ? (
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           No se encontraron productos.
         </p>
       ) : (
         <>
           {/* Tarjetas: solo móvil */}
-          <div className="mt-4 grid grid-cols-1 gap-3 md:hidden">
-            {filtradosOrdenados.map((producto) => (
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
+            {productos.map((producto) => (
               <div
                 key={producto.id}
                 className="rounded-lg border border-border bg-surface p-3"
@@ -315,7 +325,7 @@ export default function Inventario() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{producto.nombre}</p>
                     <div className="mt-0.5 flex items-center gap-2 overflow-visible">
-                      <p className="shrink-0 whitespace-nowrap font-mono text-xs text-ink/40">
+                      <p className="shrink-0 whitespace-nowrap font-mono text-xs text-ink/60">
                         {producto.codigo_barras || 'Sin código'}
                       </p>
                       {producto.categoria && (
@@ -366,7 +376,7 @@ export default function Inventario() {
 
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-sm text-ink/70">
                   {esAdmin && (
-                    <span>Costo <span className="text-ink/40">{formatearNumero(producto.costo ?? 0)}</span></span>
+                    <span>Costo <span className="text-ink/60">{formatearNumero(producto.costo ?? 0)}</span></span>
                   )}
                   <span>Venta <span className="text-amber">{formatearNumero(producto.precio)}</span></span>
                   {esAdmin && (
@@ -378,10 +388,10 @@ export default function Inventario() {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/40">
+                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Producto</th>
                   <th className="px-3 py-2 font-normal">Categoría</th>
                   {esAdmin && <th className="px-3 py-2 text-right font-normal">Costo</th>}
@@ -392,7 +402,7 @@ export default function Inventario() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtradosOrdenados.map((producto) => (
+                {productos.map((producto) => (
                   <tr key={producto.id} className="bg-surface">
                     <td className="px-3 py-2.5">
                       <p className="text-ink">
@@ -403,13 +413,13 @@ export default function Inventario() {
                           </span>
                         )}
                       </p>
-                      <p className="font-mono text-xs text-ink/40">
+                      <p className="font-mono text-xs text-ink/60">
                         {producto.codigo_barras || 'Sin código'}
                       </p>
                     </td>
                     <td className="px-3 py-2.5 text-ink/60">{producto.categoria || '—'}</td>
                     {esAdmin && (
-                      <td className="px-3 py-2.5 text-right font-mono text-ink/40">
+                      <td className="px-3 py-2.5 text-right font-mono text-ink/60">
                         {formatearSoles(producto.costo ?? 0)}
                       </td>
                     )}
@@ -455,6 +465,17 @@ export default function Inventario() {
               </tbody>
             </table>
           </div>
+
+          {hayMas && (
+            <button
+              type="button"
+              onClick={cargarMasProductos}
+              disabled={cargandoMas}
+              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+            >
+              {cargandoMas ? 'Cargando...' : 'Cargar más'}
+            </button>
+          )}
         </>
       )}
 

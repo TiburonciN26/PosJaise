@@ -164,7 +164,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               value={formulario.codigoBarras}
               onChange={(evento) => actualizarCampo('codigoBarras', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
             />
           </div>
 
@@ -191,7 +191,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
                 onChange={(evento) => actualizarCampo('categoriaNueva', evento.target.value)}
                 placeholder="Nombre de la nueva categoría"
                 autoFocus
-                className="mt-2 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+                className="mt-2 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
               />
             )}
           </div>

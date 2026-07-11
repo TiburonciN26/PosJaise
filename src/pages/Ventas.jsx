@@ -2,14 +2,16 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { X, ShoppingCart, Check, User, Camera, Mic } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
 import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
 import { useCarrito } from '../context/CarritoContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { formatearSoles } from '../lib/moneda.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
+import InputBusqueda from '../components/InputBusqueda.jsx'
 import ModalBuscarServicio from '../components/ModalBuscarServicio.jsx'
 import ModalBuscarCliente from '../components/ModalBuscarCliente.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 
 // El lector de códigos de barras (@zxing) pesa varios cientos de KB;
 // se carga solo cuando se abre el escáner, no en el bundle principal.
@@ -44,22 +46,6 @@ const metodosPago = [
     clasesActivo: 'border-purple-300 bg-purple-300/10 text-purple-300',
   },
 ]
-
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity,margin-top] duration-300 ease-in-out ${
-        abierto ? 'mt-3 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
-}
 
 function useContadorAnimado(valorObjetivo, duracionMs = 350) {
   const [valorMostrado, setValorMostrado] = useState(valorObjetivo)
@@ -130,7 +116,7 @@ function FilaTicket({
           <span className="truncate text-sm text-ink">{item.nombre}</span>
         </div>
         {item.tipo === 'SERVICIO' ? (
-          <div className="mt-0.5 flex items-center gap-1 font-mono text-xs text-ink/40">
+          <div className="mt-0.5 flex items-center gap-1 font-mono text-xs text-ink/60">
             <span>S/</span>
             <input
               type="number"
@@ -143,7 +129,7 @@ function FilaTicket({
             <span>c/u</span>
           </div>
         ) : (
-          <span className="font-mono text-xs text-ink/40">
+          <span className="font-mono text-xs text-ink/60">
             {formatearSoles(item.precioUnitario)} c/u
           </span>
         )}
@@ -191,7 +177,7 @@ function FilaTicket({
   )
 }
 
-export default function Ventas() {
+export default function Ventas({ activo = true }) {
   const { mostrarToast } = useToast()
   const {
     carrito,
@@ -228,15 +214,36 @@ export default function Ventas() {
   )
 
   useEffect(() => {
-    if (refPanelTicket.current) {
-      setTopPanelTicket(refPanelTicket.current.getBoundingClientRect().top)
+    // Re-medir en resize/orientationchange (rotar el teléfono, split-screen)
+    // para que el panel no quede mal posicionado hasta cambiar de pestaña —
+    // pero no mientras hay un input enfocado, porque abrir el teclado
+    // también dispara "resize" y ahí sí queremos que el top quede congelado
+    // (ese es justamente el motivo de fijarlo, ver comentario de arriba).
+    function remedirTop() {
+      const activo = document.activeElement
+      const hayInputEnfocado =
+        activo && (activo.tagName === 'INPUT' || activo.tagName === 'TEXTAREA')
+      if (hayInputEnfocado) return
+      if (refPanelTicket.current) {
+        setTopPanelTicket(refPanelTicket.current.getBoundingClientRect().top)
+      }
     }
+
+    remedirTop()
 
     const mediaMovil = window.matchMedia('(max-width: 639px)')
     const actualizarEsMovil = () => setEsMovil(mediaMovil.matches)
     actualizarEsMovil()
     mediaMovil.addEventListener('change', actualizarEsMovil)
-    return () => mediaMovil.removeEventListener('change', actualizarEsMovil)
+
+    window.addEventListener('resize', remedirTop)
+    window.addEventListener('orientationchange', remedirTop)
+
+    return () => {
+      mediaMovil.removeEventListener('change', actualizarEsMovil)
+      window.removeEventListener('resize', remedirTop)
+      window.removeEventListener('orientationchange', remedirTop)
+    }
   }, [])
 
   useCerrarConEscape(() => setConfirmandoCancelar(false), confirmandoCancelar)
@@ -255,9 +262,10 @@ export default function Ventas() {
   const [modalServiciosAbierto, setModalServiciosAbierto] = useState(false)
   const [modalClienteAbierto, setModalClienteAbierto] = useState(false)
   const [modalEscanerAbierto, setModalEscanerAbierto] = useState(false)
+  const primeraCargaCatalogoHecha = useRef(false)
 
-  async function cargarCatalogo() {
-    setCargandoCatalogo(true)
+  async function cargarCatalogo(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargandoCatalogo(true)
     const [productosRes, serviciosRes, clientesRes] = await Promise.all([
       supabase
         .from('productos_vista')
@@ -272,6 +280,8 @@ export default function Ventas() {
       supabase.from('clientes').select('id, nombre, telefono').order('nombre'),
     ])
 
+    if (!vigente.actual) return
+
     if (productosRes.error || serviciosRes.error) {
       setErrorCatalogo('No se pudo cargar el catálogo. Revisa tu conexión.')
     } else {
@@ -284,8 +294,22 @@ export default function Ventas() {
   }
 
   useEffect(() => {
-    cargarCatalogo()
-  }, [])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaCatalogoHecha.current
+    primeraCargaCatalogoHecha.current = true
+    cargarCatalogo(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo])
+
+  // Si el escáner de cámara quedó abierto y el usuario cambia de pestaña
+  // desde el menú (la página sigue montada, solo oculta), hay que cerrarlo:
+  // si no, la cámara sigue encendida en segundo plano.
+  useEffect(() => {
+    if (!activo) setModalEscanerAbierto(false)
+  }, [activo])
 
   const sugerencias =
     busqueda.trim().length > 0
@@ -301,8 +325,6 @@ export default function Ventas() {
   const totalMostrado = useContadorAnimado(total)
   const recibidoNumerico = parseFloat(montoRecibido) || 0
   const vuelto = recibidoNumerico - total
-
-  const placeholderBuscador = useTextoEscritura('Buscar producto o escanear código de barras...')
 
   const {
     soportado: vozSoportada,
@@ -562,11 +584,10 @@ export default function Ventas() {
       <div className="border-b border-border bg-surface p-3">
         <div className="relative flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink/40">
+          <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink/60">
             <IconoBuscar />
           </span>
-          <input
-            type="text"
+          <InputBusqueda
             value={busqueda}
             disabled={cargandoCatalogo}
             onChange={(evento) => {
@@ -577,8 +598,11 @@ export default function Ventas() {
             onKeyDown={manejarKeyDown}
             onFocus={() => busqueda && setMostrarSugerencias(true)}
             onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}
-            placeholder={cargandoCatalogo ? 'Cargando catálogo...' : placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-8 pr-[41px] font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-amber disabled:opacity-60"
+            textoPlaceholder={
+              cargandoCatalogo ? 'Cargando catálogo...' : 'Buscar producto o escanear código de barras...'
+            }
+            animar={activo && !cargandoCatalogo}
+            className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-8 pr-[41px] font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber disabled:opacity-60"
           />
           {busqueda && (
             <button
@@ -589,7 +613,7 @@ export default function Ventas() {
                 setIndiceActivo(-1)
               }}
               aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
             >
               <X className="h-4 w-4" />
             </button>
@@ -612,7 +636,7 @@ export default function Ventas() {
               >
                 <span className="truncate">{producto.nombre}</span>
                 <span className="flex shrink-0 items-center gap-2 font-mono">
-                  <span className="text-xs text-ink/40">Stock: {producto.stock_actual}</span>
+                  <span className="text-xs text-ink/60">Stock: {producto.stock_actual}</span>
                   <span className="text-amber">{formatearSoles(producto.precio)}</span>
                 </span>
               </button>
@@ -688,7 +712,7 @@ export default function Ventas() {
           </button>
           <button
             type="button"
-            className="shrink-0 whitespace-nowrap rounded-lg border border-dashed border-border-strong px-1.5 py-1.5 text-xs text-ink/40"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-dashed border-border-strong px-1.5 py-1.5 text-xs text-ink/60"
           >
             + Añadir cupón
           </button>
@@ -757,7 +781,7 @@ export default function Ventas() {
               </span>
             </div>
 
-            <CampoColapsable abierto={metodoPago === 'Efectivo'}>
+            <CampoColapsable abierto={metodoPago === 'Efectivo'} margen>
               <div
                 className={`flex items-center justify-between pt-1.5 text-sm ${
                   vuelto < 0 ? 'text-red' : 'text-green'
@@ -798,7 +822,7 @@ export default function Ventas() {
               </div>
             </div>
 
-            <CampoColapsable abierto={metodoPago === 'Efectivo'}>
+            <CampoColapsable abierto={metodoPago === 'Efectivo'} margen>
               <div>
                 <label className="mb-1 block text-xs text-white">Recibido</label>
                 <input

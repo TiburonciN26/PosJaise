@@ -155,7 +155,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
                 {formulario.tipo === 'FIJO' ? 'Fijo' : 'Variable'}
               </span>
               {formulario.tipo === 'FIJO' && (
-                <p className="mt-1 text-xs text-ink/40">
+                <p className="mt-1 text-xs text-ink/60">
                   Los gastos fijos se generan desde las plantillas; aquí solo puedes editar el
                   nombre y el monto. El período queda fijo.
                 </p>
@@ -209,7 +209,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
             </div>
           </div>
           {periodoBloqueado && (
-            <p className="text-xs text-ink/40">
+            <p className="text-xs text-ink/60">
               El período no se puede modificar en un gasto fijo generado.
             </p>
           )}

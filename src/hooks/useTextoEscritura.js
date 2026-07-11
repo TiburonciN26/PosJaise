@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 
-export function useTextoEscritura(textoCompleto, velocidadMs = 45, pausaMs = 5000) {
+// activo=false pausa el ciclo por completo (ej. cuando el placeholder no se
+// ve porque el campo ya tiene texto) — evita un setState cada 45ms sin
+// ningún efecto visual, que en un componente grande sale caro re-renderizar.
+export function useTextoEscritura(textoCompleto, velocidadMs = 45, pausaMs = 5000, activo = true) {
   const [texto, setTexto] = useState(textoCompleto.slice(0, 1))
 
   useEffect(() => {
+    if (!activo) return undefined
+
     let indice = 1
     let cancelado = false
     let temporizador
@@ -28,7 +33,7 @@ export function useTextoEscritura(textoCompleto, velocidadMs = 45, pausaMs = 500
       cancelado = true
       clearTimeout(temporizador)
     }
-  }, [textoCompleto, velocidadMs, pausaMs])
+  }, [textoCompleto, velocidadMs, pausaMs, activo])
 
   return texto
 }

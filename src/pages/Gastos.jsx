@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Pencil, Trash2, Plus, ArrowBigDown } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Pencil, Trash2, Plus, ArrowBigDown, Download } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { formatearSoles } from '../lib/moneda.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { aCSV, descargarArchivo } from '../lib/csv.js'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
@@ -11,10 +15,6 @@ import ModalPlantillasGasto from '../components/ModalPlantillasGasto.jsx'
 
 const MAX_NOMBRES_VISIBLES = 3
 
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
 function resumenNombres(items) {
   const nombres = items.map((g) => g.nombre)
   if (nombres.length <= MAX_NOMBRES_VISIBLES) return nombres.join(', ')
@@ -22,19 +22,7 @@ function resumenNombres(items) {
   return `${visibles.join(', ')} +${nombres.length - MAX_NOMBRES_VISIBLES} más`
 }
 
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
-}
-
-export default function Gastos() {
+export default function Gastos({ activo = true }) {
   const { mostrarToast } = useToast()
   const hoy = new Date()
 
@@ -55,17 +43,20 @@ export default function Gastos() {
 
   const [fijosAbiertos, setFijosAbiertos] = useState(false)
   const [variablesAbiertos, setVariablesAbiertos] = useState(false)
+  const primeraCargaHecha = useRef(false)
 
   useCerrarConEscape(() => setGastoAEliminar(null), Boolean(gastoAEliminar))
 
-  async function cargarGastos() {
-    setCargando(true)
+  async function cargarGastos(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('gastos')
       .select('id, nombre, tipo, monto, mes, anio')
       .eq('mes', mes)
       .eq('anio', anio)
       .order('nombre')
+
+    if (!vigente.actual) return
 
     if (errorConsulta) {
       setError('No se pudo cargar los gastos.')
@@ -86,10 +77,19 @@ export default function Gastos() {
   }
 
   useEffect(() => {
-    cargarGastos()
-    setFijosAbiertos(false)
-    setVariablesAbiertos(false)
-  }, [mes, anio])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarGastos(vigente, silencioso)
+    if (!silencioso) {
+      setFijosAbiertos(false)
+      setVariablesAbiertos(false)
+    }
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, mes, anio])
 
   useEffect(() => {
     cargarPlantillas()
@@ -172,6 +172,17 @@ export default function Gastos() {
     cargarGastos()
   }
 
+  function exportarCSV() {
+    if (gastos.length === 0) {
+      mostrarToast('No hay gastos para exportar en este período.', 'info')
+      return
+    }
+    descargarArchivo(
+      `gastos_${anio}-${String(mes).padStart(2, '0')}.csv`,
+      aCSV(gastos, ['nombre', 'tipo', 'monto', 'mes', 'anio']),
+    )
+  }
+
   const fijos = gastos.filter((g) => g.tipo === 'FIJO')
   const variables = gastos.filter((g) => g.tipo === 'VARIABLE')
 
@@ -217,8 +228,18 @@ export default function Gastos() {
 
         <button
           type="button"
+          onClick={exportarCSV}
+          aria-label="Exportar CSV del mes"
+          title="Exportar CSV del mes"
+          className="flex shrink-0 items-center justify-center rounded-lg border border-dashed border-border-strong p-2.5 text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300"
+        >
+          <Download className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
           onClick={() => setModalGasto('nuevo')}
-          className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg md:flex"
+          className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
         >
           <Plus className="h-4 w-4" />
           <span>Nuevo gasto var.</span>
@@ -251,15 +272,15 @@ export default function Gastos() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando gastos...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando gastos...</p>
       ) : gastos.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           No hay gastos registrados en {MESES[mes - 1]} {anio}.
         </p>
       ) : (
         <>
           {/* Tarjetas: solo móvil */}
-          <div className="mt-4 grid grid-cols-1 gap-3 md:hidden">
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
             {fijos.length > 0 && (
               <div className="rounded-lg border border-blue/40 bg-surface">
                 <button
@@ -283,7 +304,7 @@ export default function Gastos() {
                     </div>
                   </div>
                   <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/40 transition-transform duration-300 ${
+                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
                       fijosAbiertos ? 'rotate-180' : ''
                     }`}
                   />
@@ -346,7 +367,7 @@ export default function Gastos() {
                     </div>
                   </div>
                   <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/40 transition-transform duration-300 ${
+                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
                       variablesAbiertos ? 'rotate-180' : ''
                     }`}
                   />
@@ -388,10 +409,10 @@ export default function Gastos() {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/40">
+                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Gasto</th>
                   <th className="px-3 py-2 font-normal">Tipo</th>
                   <th className="px-3 py-2 font-normal">Período</th>
@@ -405,6 +426,10 @@ export default function Gastos() {
                     <tr
                       className="cursor-pointer bg-surface hover:bg-surface-2"
                       onClick={() => setFijosAbiertos((abierto) => !abierto)}
+                      onKeyDown={manejarActivacionTeclado(() => setFijosAbiertos((abierto) => !abierto))}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={fijosAbiertos}
                     >
                       <td className="px-3 py-2.5 text-ink">
                         <div className="flex items-center gap-2">
@@ -425,7 +450,7 @@ export default function Gastos() {
                       <td className="px-3 py-2.5">
                         <div className="flex justify-end">
                           <ArrowBigDown
-                            className={`h-4 w-4 text-ink/40 transition-transform duration-300 ${
+                            className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
                               fijosAbiertos ? 'rotate-180' : ''
                             }`}
                           />
@@ -475,6 +500,10 @@ export default function Gastos() {
                     <tr
                       className="cursor-pointer bg-surface hover:bg-surface-2"
                       onClick={() => setVariablesAbiertos((abierto) => !abierto)}
+                      onKeyDown={manejarActivacionTeclado(() => setVariablesAbiertos((abierto) => !abierto))}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={variablesAbiertos}
                     >
                       <td className="px-3 py-2.5 text-ink">
                         <div className="flex items-center gap-2">
@@ -495,7 +524,7 @@ export default function Gastos() {
                       <td className="px-3 py-2.5">
                         <div className="flex justify-end">
                           <ArrowBigDown
-                            className={`h-4 w-4 text-ink/40 transition-transform duration-300 ${
+                            className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
                               variablesAbiertos ? 'rotate-180' : ''
                             }`}
                           />

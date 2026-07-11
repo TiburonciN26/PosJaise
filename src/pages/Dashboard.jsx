@@ -1,14 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowUp } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { anioMesEnLima, calcularRango, diaSemanaLima, formatearFechaISO, sumarDias } from '../lib/fechas.js'
+import { formatearSoles } from '../lib/moneda.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
-
-const FILTROS = [
-  { id: 'hoy', label: 'Hoy' },
-  { id: 'semana', label: 'Esta semana' },
-  { id: 'mes', label: 'Este mes' },
-  { id: 'personalizado', label: 'Personalizado' },
-]
+import FiltrosFecha from '../components/FiltrosFecha.jsx'
 
 const METRICAS_VACIAS = {
   ingresoProductos: 0,
@@ -18,29 +14,6 @@ const METRICAS_VACIAS = {
   serviciosRealizados: 0,
   cantidadVentas: 0,
   gastosMes: 0,
-}
-
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
-function formatearFechaISO(fecha) {
-  const anio = fecha.getFullYear()
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  return `${anio}-${mes}-${dia}`
-}
-
-function iniciarDia(fecha) {
-  const copia = new Date(fecha)
-  copia.setHours(0, 0, 0, 0)
-  return copia
-}
-
-function sumarDias(fecha, dias) {
-  const copia = new Date(fecha)
-  copia.setDate(copia.getDate() + dias)
-  return copia
 }
 
 function diasHabilesDelMes(anio, mesIndiceCero) {
@@ -55,7 +28,7 @@ function diasHabilesDelMes(anio, mesIndiceCero) {
 function diasHabilesEnRango(desde, hastaExclusiva) {
   let habiles = 0
   for (let cursor = new Date(desde); cursor < hastaExclusiva; cursor = sumarDias(cursor, 1)) {
-    if (cursor.getDay() !== 0) habiles++
+    if (diaSemanaLima(cursor) !== 0) habiles++
   }
   return habiles
 }
@@ -76,7 +49,7 @@ function calcularGastosProrrateados({ filtro, gastosMesTotal, anio, mes, desde, 
   }
 
   // 'hoy'
-  return desde.getDay() === 0 ? 0 : gastoDiario
+  return diaSemanaLima(desde) === 0 ? 0 : gastoDiario
 }
 
 const ETIQUETA_GASTOS = {
@@ -91,34 +64,6 @@ const ETIQUETA_COBERTURA = {
   semana: 'Gastos semanales cubiertos',
   mes: 'Gastos del mes cubiertos',
   personalizado: 'Gastos del período cubiertos',
-}
-
-function calcularRango(filtro, personalizado) {
-  const hoy = iniciarDia(new Date())
-
-  if (filtro === 'semana') {
-    const diaSemana = hoy.getDay()
-    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1
-    const lunes = sumarDias(hoy, -diasDesdeLunes)
-    return { desde: lunes, hasta: sumarDias(lunes, 7) }
-  }
-
-  if (filtro === 'mes') {
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    const inicioMesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
-    return { desde: inicioMes, hasta: inicioMesSiguiente }
-  }
-
-  if (filtro === 'personalizado') {
-    const desde = personalizado.desde ? iniciarDia(new Date(`${personalizado.desde}T00:00:00`)) : hoy
-    const hastaBase = personalizado.hasta
-      ? iniciarDia(new Date(`${personalizado.hasta}T00:00:00`))
-      : hoy
-    return { desde, hasta: sumarDias(hastaBase, 1) }
-  }
-
-  // 'hoy'
-  return { desde: hoy, hasta: sumarDias(hoy, 1) }
 }
 
 function Brillo({ activo }) {
@@ -211,7 +156,7 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard({ activo = true }) {
   const [filtro, setFiltro] = useState('semana')
   const [personalizado, setPersonalizado] = useState(() => {
     const hoyStr = formatearFechaISO(new Date())
@@ -221,18 +166,24 @@ export default function Dashboard() {
   const [metricas, setMetricas] = useState(METRICAS_VACIAS)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+  const primeraCargaHecha = useRef(false)
 
-  async function cargarDatos() {
-    setCargando(true)
+  async function cargarDatos(vigente, silencioso) {
+    if (!silencioso) setCargando(true)
     setError(null)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
+    // venta_items va embebido en el select en vez de un .in('venta_id', [...])
+    // aparte — con un mes muy vendedor esa lista de UUIDs puede reventar el
+    // límite de longitud de la URL (mismo problema resuelto en Historial).
     const { data: ventasActivas, error: errorVentas } = await supabase
       .from('ventas')
-      .select('id')
+      .select('id, venta_items(tipo, cantidad, subtotal, producto_id)')
       .eq('estado', 'ACTIVA')
       .gte('fecha', desde.toISOString())
       .lt('fecha', hasta.toISOString())
+
+    if (!vigente.actual) return
 
     if (errorVentas) {
       setError('No se pudo cargar el dashboard.')
@@ -241,7 +192,7 @@ export default function Dashboard() {
       return
     }
 
-    const idsVentas = (ventasActivas ?? []).map((v) => v.id)
+    const items = (ventasActivas ?? []).flatMap((venta) => venta.venta_items ?? [])
 
     let ingresoProductos = 0
     let ingresoServicios = 0
@@ -249,24 +200,14 @@ export default function Dashboard() {
     let productosVendidos = 0
     let serviciosRealizados = 0
 
-    if (idsVentas.length > 0) {
-      const { data: items, error: errorItems } = await supabase
-        .from('venta_items')
-        .select('tipo, cantidad, subtotal, producto_id')
-        .in('venta_id', idsVentas)
-
-      if (errorItems) {
-        setError('No se pudo cargar el dashboard.')
-        setMetricas(METRICAS_VACIAS)
-        setCargando(false)
-        return
-      }
-
+    if (items.length > 0) {
       // productos.costo no es visible por columna para "authenticated"; se pide
       // por productos_vista (que sí lo expone) en vez de embeberlo en venta_items.
+      // Acá sí es seguro seguir usando .in(): son productos distintos, acotados
+      // por el tamaño del catálogo, no por la cantidad de ventas del período.
       const idsProductos = [
         ...new Set(
-          (items ?? [])
+          items
             .filter((item) => item.tipo === 'PRODUCTO' && item.producto_id)
             .map((item) => item.producto_id),
         ),
@@ -278,10 +219,11 @@ export default function Dashboard() {
           .from('productos_vista')
           .select('id, costo')
           .in('id', idsProductos)
+        if (!vigente.actual) return
         costoPorProducto = new Map((productosData ?? []).map((p) => [p.id, p.costo]))
       }
 
-      for (const item of items ?? []) {
+      for (const item of items) {
         if (item.tipo === 'PRODUCTO') {
           ingresoProductos += item.subtotal
           productosVendidos += item.cantidad
@@ -296,14 +238,14 @@ export default function Dashboard() {
     // Mes de referencia para los gastos: el mes actual para Hoy/Semana/Mes,
     // o el mes donde empieza el rango para Personalizado.
     const mesReferencia = filtro === 'personalizado' ? desde : new Date()
-    const anioReferencia = mesReferencia.getFullYear()
-    const mesReferenciaIndice = mesReferencia.getMonth()
+    const { anio: anioReferencia, mes: mesReferenciaIndice } = anioMesEnLima(mesReferencia)
 
     const { data: gastosData } = await supabase
       .from('gastos')
       .select('monto')
       .eq('mes', mesReferenciaIndice + 1)
       .eq('anio', anioReferencia)
+    if (!vigente.actual) return
     const gastosMesTotal = (gastosData ?? []).reduce((acumulado, g) => acumulado + g.monto, 0)
 
     const gastosProrrateados = calcularGastosProrrateados({
@@ -321,15 +263,22 @@ export default function Dashboard() {
       costoProductos,
       productosVendidos,
       serviciosRealizados,
-      cantidadVentas: idsVentas.length,
+      cantidadVentas: (ventasActivas ?? []).length,
       gastosMes: gastosProrrateados,
     })
     setCargando(false)
   }
 
   useEffect(() => {
-    cargarDatos()
-  }, [filtro, personalizado.desde, personalizado.hasta])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarDatos(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, filtro, personalizado.desde, personalizado.hasta])
 
   const ingresoBruto = metricas.ingresoProductos + metricas.ingresoServicios
   const gananciaProductos = metricas.ingresoProductos - metricas.costoProductos
@@ -355,51 +304,16 @@ export default function Dashboard() {
   return (
     <div className="p-3 pb-6">
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-3 bg-bg px-3 py-2">
-        <div className="grid grid-cols-4 gap-1">
-          {FILTROS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFiltro(f.id)}
-              className={`min-w-0 overflow-visible whitespace-nowrap rounded-full px-1 py-2 text-center text-xs transition-colors sm:px-4 sm:py-1.5 sm:text-sm ${
-                filtro === f.id
-                  ? 'bg-purple-300 font-semibold text-bg'
-                  : 'border border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {filtro === 'personalizado' && (
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <div>
-            <label className="mb-1 block text-xs text-ink/50">Desde</label>
-            <input
-              type="date"
-              value={personalizado.desde}
-              onChange={(evento) =>
-                setPersonalizado((anterior) => ({ ...anterior, desde: evento.target.value }))
-              }
-              className="rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-ink/50">Hasta</label>
-            <input
-              type="date"
-              value={personalizado.hasta}
-              onChange={(evento) =>
-                setPersonalizado((anterior) => ({ ...anterior, hasta: evento.target.value }))
-              }
-              className="rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-            />
-          </div>
-        </div>
-      )}
+      <FiltrosFecha
+        filtro={filtro}
+        onCambiarFiltro={setFiltro}
+        personalizado={personalizado}
+        onCambiarPersonalizado={setPersonalizado}
+        tema="purple-300"
+        padding="ancha"
+        disenoFechas="apilado"
+        sticky
+      />
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -408,7 +322,7 @@ export default function Dashboard() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando dashboard...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando dashboard...</p>
       ) : (
         <>
           {/* Punto de equilibrio: barra tipo termómetro */}

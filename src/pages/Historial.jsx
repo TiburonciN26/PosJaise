@@ -1,21 +1,18 @@
-import { Fragment, useEffect, useState } from 'react'
-import { ArrowBigDown, Mic, X } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { ArrowBigDown, Download } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
+import { calcularRango, formatearFechaISO, sumarDias } from '../lib/fechas.js'
+import { formatearSoles } from '../lib/moneda.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { aCSV, descargarArchivo } from '../lib/csv.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
-
-const FILTROS = [
-  { id: 'hoy', label: 'Hoy' },
-  { id: 'semana', label: 'Esta semana' },
-  { id: 'mes', label: 'Este mes' },
-  { id: 'personalizado', label: 'Personalizado' },
-]
+import FiltrosFecha from '../components/FiltrosFecha.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'fecha-desc', label: 'Más recientes primero' },
@@ -34,6 +31,13 @@ const METODO_POR_ID_ORDEN = {
   'metodo-transferencia': 'Transferencia',
   'metodo-yape': 'Yape',
 }
+
+const TAMANO_PAGINA = 50
+
+const SELECT_VENTAS =
+  'id, codigo, fecha, estado, total, metodo_pago, clientes(nombre), venta_items(tipo, cantidad)'
+
+const RESUMEN_VACIO = { cantidadVentas: 0, totalRecaudado: 0, productosVendidos: 0 }
 
 function filtrarPorMetodo(ventas, orden) {
   const metodo = METODO_POR_ID_ORDEN[orden]
@@ -61,17 +65,6 @@ const CLASE_METODO_PAGO_PILL = {
   Yape: 'border border-purple-300/40 bg-purple-300/15 text-purple-300',
 }
 
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
-function formatearFechaISO(fecha) {
-  const anio = fecha.getFullYear()
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  return `${anio}-${mes}-${dia}`
-}
-
 function formatearFechaHora(fechaIso) {
   const fecha = new Date(fechaIso)
   const fechaStr = new Intl.DateTimeFormat('es-PE', {
@@ -87,69 +80,17 @@ function formatearFechaHora(fechaIso) {
   return `${fechaStr} ${horaStr}`
 }
 
-function iniciarDia(fecha) {
-  const copia = new Date(fecha)
-  copia.setHours(0, 0, 0, 0)
-  return copia
-}
-
-function sumarDias(fecha, dias) {
-  const copia = new Date(fecha)
-  copia.setDate(copia.getDate() + dias)
-  return copia
-}
-
-function calcularRango(filtro, personalizado) {
-  const hoy = iniciarDia(new Date())
-
-  if (filtro === 'semana') {
-    const diaSemana = hoy.getDay()
-    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1
-    const lunes = sumarDias(hoy, -diasDesdeLunes)
-    return { desde: lunes, hasta: sumarDias(lunes, 7) }
-  }
-
-  if (filtro === 'mes') {
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    const inicioMesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
-    return { desde: inicioMes, hasta: inicioMesSiguiente }
-  }
-
-  if (filtro === 'personalizado') {
-    const desde = personalizado.desde ? iniciarDia(new Date(`${personalizado.desde}T00:00:00`)) : hoy
-    const hastaBase = personalizado.hasta
-      ? iniciarDia(new Date(`${personalizado.hasta}T00:00:00`))
-      : hoy
-    return { desde, hasta: sumarDias(hastaBase, 1) }
-  }
-
-  // 'hoy'
-  return { desde: hoy, hasta: sumarDias(hoy, 1) }
-}
-
 function nombreClienteDeVenta(venta) {
   const clientes = venta?.clientes
   if (!clientes) return ''
   return Array.isArray(clientes) ? (clientes[0]?.nombre ?? '') : (clientes.nombre ?? '')
 }
 
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
-}
-
 function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, onConfirmarAnular }) {
   const { cargando, error, detalle, items, vendedorNombre, confirmandoAnular, anulando } = estado
 
   if (cargando) {
-    return <p className="py-4 text-center font-mono text-sm text-ink/40">Cargando detalle...</p>
+    return <p className="py-4 text-center font-mono text-sm text-ink/60">Cargando detalle...</p>
   }
 
   if (error) {
@@ -180,7 +121,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
       {/* Items */}
       <div className="mt-3 rounded-lg border border-border bg-bg">
-        <div className="grid grid-cols-[1fr_3rem_4.5rem] gap-2 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-ink/40">
+        <div className="grid grid-cols-[1fr_3rem_4.5rem] gap-2 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-ink/60">
           <span>Producto</span>
           <span className="text-center">Cant.</span>
           <span className="text-right">Subtotal</span>
@@ -197,7 +138,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
                   )}
                   <span className="truncate text-sm text-ink">{item.nombre}</span>
                 </div>
-                <span className="font-mono text-[10px] text-ink/40">
+                <span className="font-mono text-[10px] text-ink/60">
                   {formatearSoles(item.precio_unitario)} c/u
                 </span>
               </div>
@@ -274,7 +215,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
   )
 }
 
-export default function Historial() {
+export default function Historial({ activo = true }) {
   const { rol } = useAuth()
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
@@ -286,7 +227,9 @@ export default function Historial() {
   })
 
   const [ventas, setVentas] = useState([])
-  const [itemsPorVenta, setItemsPorVenta] = useState({})
+  const [resumen, setResumen] = useState(RESUMEN_VACIO)
+  const [hayMas, setHayMas] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
@@ -295,6 +238,8 @@ export default function Historial() {
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [detalles, setDetalles] = useState({})
   const [ventaParaImprimir, setVentaParaImprimir] = useState(null)
+  const [exportando, setExportando] = useState(false)
+  const primeraCargaHecha = useRef(false)
 
   async function cargarDetalleVenta(ventaId) {
     setDetalles((anterior) => ({
@@ -420,65 +365,145 @@ export default function Historial() {
   }
 
   const filtroEfectivo = esAdmin ? filtro : 'hoy'
+  // Con búsqueda de texto o filtro por método activos, paginar rompería el
+  // resultado (podría "no encontrar" algo que existe más adelante, sin
+  // cargar). En esos casos se trae todo el período (ya acotado por la fecha)
+  // en vez de paginar; si no hay ningún filtro activo, sí se pagina de verdad.
+  const filtroActivo = Boolean(busqueda.trim()) || Boolean(METODO_POR_ID_ORDEN[orden])
 
-  async function cargarVentas() {
-    setCargando(true)
+  async function cargarVentas(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
     const { desde, hasta } = calcularRango(filtroEfectivo, personalizado)
 
-    const { data: ventasData, error: errorVentas } = await supabase
+    let consultaVentas = supabase
       .from('ventas')
-      .select('id, codigo, fecha, estado, total, metodo_pago, clientes(nombre)')
+      .select(SELECT_VENTAS)
       .gte('fecha', desde.toISOString())
       .lt('fecha', hasta.toISOString())
       .order('fecha', { ascending: false })
 
-    if (errorVentas) {
+    if (!filtroActivo) {
+      consultaVentas = consultaVentas.range(0, TAMANO_PAGINA - 1)
+    }
+
+    const [ventasRes, resumenRes] = await Promise.all([
+      consultaVentas,
+      supabase.rpc('resumen_historial', {
+        p_desde: desde.toISOString(),
+        p_hasta: hasta.toISOString(),
+      }),
+    ])
+
+    if (!vigente.actual) return
+
+    if (ventasRes.error) {
       setError('No se pudo cargar el historial.')
       setVentas([])
-      setItemsPorVenta({})
       setCargando(false)
       return
     }
 
     setError(null)
-    setVentas(ventasData ?? [])
+    setVentas(ventasRes.data ?? [])
+    setHayMas(!filtroActivo && (ventasRes.data ?? []).length === TAMANO_PAGINA)
 
-    const idsVentas = (ventasData ?? []).map((venta) => venta.id)
-    if (idsVentas.length === 0) {
-      setItemsPorVenta({})
-      setCargando(false)
-      return
-    }
+    const filaResumen = resumenRes.data?.[0]
+    setResumen(
+      filaResumen
+        ? {
+            cantidadVentas: filaResumen.cantidad_ventas ?? 0,
+            totalRecaudado: filaResumen.total_recaudado ?? 0,
+            productosVendidos: filaResumen.productos_vendidos ?? 0,
+          }
+        : RESUMEN_VACIO,
+    )
 
-    const { data: itemsData, error: errorItems } = await supabase
-      .from('venta_items')
-      .select('venta_id, tipo, cantidad')
-      .in('venta_id', idsVentas)
-
-    const mapa = {}
-    if (!errorItems) {
-      for (const item of itemsData ?? []) {
-        if (!mapa[item.venta_id]) mapa[item.venta_id] = []
-        mapa[item.venta_id].push(item)
-      }
-    }
-    setItemsPorVenta(mapa)
     setCargando(false)
   }
 
-  useEffect(() => {
-    cargarVentas()
-  }, [filtroEfectivo, personalizado.desde, personalizado.hasta])
+  async function cargarMasVentas() {
+    if (cargandoMas || !hayMas || filtroActivo) return
+    setCargandoMas(true)
+    const { desde, hasta } = calcularRango(filtroEfectivo, personalizado)
 
-  const ventasActivas = ventas.filter((venta) => venta.estado === 'ACTIVA')
-  const totalRecaudado = ventasActivas.reduce((acumulado, venta) => acumulado + venta.total, 0)
-  const productosVendidos = ventasActivas.reduce((acumulado, venta) => {
-    const items = itemsPorVenta[venta.id] ?? []
-    const cantidadProductos = items
-      .filter((item) => item.tipo === 'PRODUCTO')
-      .reduce((acc, item) => acc + item.cantidad, 0)
-    return acumulado + cantidadProductos
-  }, 0)
+    const { data, error: errorMas } = await supabase
+      .from('ventas')
+      .select(SELECT_VENTAS)
+      .gte('fecha', desde.toISOString())
+      .lt('fecha', hasta.toISOString())
+      .order('fecha', { ascending: false })
+      .range(ventas.length, ventas.length + TAMANO_PAGINA - 1)
+
+    setCargandoMas(false)
+
+    if (errorMas) {
+      mostrarToast('No se pudieron cargar más ventas.', 'error')
+      return
+    }
+
+    setVentas((anterior) => [...anterior, ...(data ?? [])])
+    setHayMas((data ?? []).length === TAMANO_PAGINA)
+  }
+
+  // A diferencia de cargarVentas/cargarMasVentas (paginadas), acá siempre se
+  // trae el período completo sin .range() — un export parcial sin avisar
+  // sería peor que el problema que esto intenta resolver (M7 de la auditoría).
+  async function exportarCSV() {
+    if (exportando) return
+    setExportando(true)
+    const { desde, hasta } = calcularRango(filtroEfectivo, personalizado)
+
+    const { data, error: errorExport } = await supabase
+      .from('ventas')
+      .select(SELECT_VENTAS)
+      .gte('fecha', desde.toISOString())
+      .lt('fecha', hasta.toISOString())
+      .order('fecha', { ascending: false })
+
+    setExportando(false)
+
+    if (errorExport) {
+      mostrarToast('No se pudo exportar el historial.', 'error')
+      return
+    }
+
+    const ventasExport = data ?? []
+    const itemsExport = ventasExport.flatMap((venta) =>
+      (venta.venta_items ?? []).map((item) => ({ venta_codigo: venta.codigo, ...item })),
+    )
+
+    const sufijo = `${formatearFechaISO(desde)}_a_${formatearFechaISO(sumarDias(hasta, -1))}`
+    descargarArchivo(
+      `ventas_${sufijo}.csv`,
+      aCSV(ventasExport, [
+        'id',
+        'codigo',
+        'fecha',
+        'estado',
+        'total',
+        'metodo_pago',
+        'monto_recibido',
+        'vendedor_id',
+        'cliente_id',
+      ]),
+    )
+    descargarArchivo(
+      `venta_items_${sufijo}.csv`,
+      aCSV(itemsExport, ['venta_codigo', 'tipo', 'nombre', 'cantidad', 'precio_unitario', 'subtotal']),
+    )
+    mostrarToast(`Exportadas ${ventasExport.length} ventas.`, 'exito')
+  }
+
+  useEffect(() => {
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarVentas(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, filtroEfectivo, personalizado.desde, personalizado.hasta, filtroActivo])
 
   const ventasFiltradas = busqueda.trim()
     ? ventas.filter((venta) => {
@@ -491,74 +516,45 @@ export default function Historial() {
     : ventas
   const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, orden), orden)
 
-  const placeholderBuscador = useTextoEscritura('Buscar por código o cliente...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
-
   return (
     <div className="p-3 pb-6">
       {/* Buscador + orden: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-amber"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar por código o cliente..."
+          tema="amber"
+        />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
 
-        {vozSoportada && (
+        {esAdmin && (
           <button
             type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-amber hover:text-amber'
-            }`}
+            onClick={exportarCSV}
+            disabled={exportando}
+            aria-label="Exportar CSV del período"
+            title="Exportar CSV del período"
+            className="flex shrink-0 items-center justify-center rounded-lg border border-dashed border-border-strong p-2.5 text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
           >
-            <Mic className="h-4 w-4" />
+            <Download className="h-4 w-4" />
           </button>
         )}
-
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
       </div>
 
-      {/* Resumen del período */}
+      {/* Resumen del período: viene de una función SQL (resumen_historial),
+          no del array cargado — así sigue exacto aunque la lista de abajo
+          esté paginada */}
       <div className="grid grid-cols-3 gap-3">
         <TarjetaResumen
           etiqueta="Ventas realizadas"
-          valor={ventasActivas.length}
+          valor={resumen.cantidadVentas}
           compacto
           padding="p-2"
         />
         <TarjetaResumen
           etiqueta="Total recaudado"
-          valor={totalRecaudado.toFixed(2)}
+          valor={resumen.totalRecaudado.toFixed(2)}
           claseValor="text-green"
           compacto
           apilarCompacto
@@ -566,7 +562,7 @@ export default function Historial() {
         />
         <TarjetaResumen
           etiqueta="Productos vendidos"
-          valor={productosVendidos}
+          valor={resumen.productosVendidos}
           claseValor="text-purple-300"
           compacto
           padding="p-2"
@@ -576,47 +572,15 @@ export default function Historial() {
       {/* Filtros de fecha */}
       <div className="mt-4">
         {esAdmin ? (
-          <div className="grid grid-cols-4 gap-1">
-            {FILTROS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFiltro(f.id)}
-                className={`min-w-0 overflow-visible whitespace-nowrap rounded-full px-1 py-2 text-center text-xs transition-colors sm:px-3 sm:text-sm ${
-                  filtro === f.id
-                    ? 'bg-amber font-semibold text-bg'
-                    : 'border border-border-strong text-ink/70 hover:border-amber hover:text-amber'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <FiltrosFecha
+            filtro={filtro}
+            onCambiarFiltro={setFiltro}
+            personalizado={personalizado}
+            onCambiarPersonalizado={setPersonalizado}
+            tema="amber"
+          />
         ) : (
           <p className="font-mono text-xs text-ink/50">Mostrando ventas de hoy</p>
-        )}
-
-        {esAdmin && filtro === 'personalizado' && (
-          <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-x-auto">
-            <label className="shrink-0 text-xs text-ink/50">Desde</label>
-            <input
-              type="date"
-              value={personalizado.desde}
-              onChange={(evento) =>
-                setPersonalizado((anterior) => ({ ...anterior, desde: evento.target.value }))
-              }
-              className="min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
-            />
-            <label className="shrink-0 text-xs text-ink/50">Hasta</label>
-            <input
-              type="date"
-              value={personalizado.hasta}
-              onChange={(evento) =>
-                setPersonalizado((anterior) => ({ ...anterior, hasta: evento.target.value }))
-              }
-              className="min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
-            />
-          </div>
         )}
       </div>
 
@@ -627,15 +591,15 @@ export default function Historial() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando historial...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando historial...</p>
       ) : ventasOrdenadas.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           {busqueda.trim() ? 'No se encontraron ventas.' : 'No hay ventas en este período.'}
         </p>
       ) : (
         <>
           {/* Lista: solo móvil */}
-          <div className="mt-4 -mx-3 border-t border-border md:hidden">
+          <div className="mt-4 -mx-3 border-t border-border lg:hidden">
             {ventasOrdenadas.map((venta, indice) => {
               const anulada = venta.estado === 'ANULADA'
               const esUltimo = indice === ventasOrdenadas.length - 1
@@ -651,6 +615,10 @@ export default function Historial() {
                 >
                   <div
                     onClick={() => alternarAbierto(venta.id)}
+                    onKeyDown={manejarActivacionTeclado(() => alternarAbierto(venta.id))}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={abierto}
                     className="flex cursor-pointer items-center justify-between gap-2 px-3 py-3 transition-colors hover:bg-surface-2"
                   >
                     <div className="flex min-w-0 items-center gap-2">
@@ -666,7 +634,7 @@ export default function Historial() {
                           Anulada
                         </span>
                       )}
-                      <span className="truncate font-mono text-xs text-ink/40">
+                      <span className="truncate font-mono text-xs text-ink/60">
                         {formatearFechaHora(venta.fecha)}
                       </span>
                     </div>
@@ -687,7 +655,7 @@ export default function Historial() {
                         {venta.metodo_pago}
                       </span>
                       <ArrowBigDown
-                        className={`h-4 w-4 shrink-0 text-ink/40 transition-transform duration-300 ${
+                        className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
                           abierto ? 'rotate-180' : ''
                         }`}
                       />
@@ -709,10 +677,10 @@ export default function Historial() {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border md:block">
+          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/40">
+                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Código</th>
                   <th className="px-3 py-2 font-normal">Fecha</th>
                   <th className="px-3 py-2 font-normal">Método</th>
@@ -725,7 +693,7 @@ export default function Historial() {
               <tbody className="divide-y divide-border">
                 {ventasOrdenadas.map((venta) => {
                   const anulada = venta.estado === 'ANULADA'
-                  const cantidadItems = (itemsPorVenta[venta.id] ?? []).length
+                  const cantidadItems = (venta.venta_items ?? []).length
                   const abierto = abiertos.has(venta.id)
                   const infoDetalle = detalles[venta.id] ?? { cargando: false }
 
@@ -733,6 +701,10 @@ export default function Historial() {
                     <Fragment key={venta.id}>
                       <tr
                         onClick={() => alternarAbierto(venta.id)}
+                        onKeyDown={manejarActivacionTeclado(() => alternarAbierto(venta.id))}
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={abierto}
                         className={`cursor-pointer bg-surface transition-colors hover:bg-surface-2 ${
                           anulada ? 'opacity-70' : ''
                         }`}
@@ -779,7 +751,7 @@ export default function Historial() {
                         </td>
                         <td className="px-3 py-2.5 text-right">
                           <ArrowBigDown
-                            className={`ml-auto h-4 w-4 text-ink/40 transition-transform duration-300 ${
+                            className={`ml-auto h-4 w-4 text-ink/60 transition-transform duration-300 ${
                               abierto ? 'rotate-180' : ''
                             }`}
                           />
@@ -804,6 +776,17 @@ export default function Historial() {
               </tbody>
             </table>
           </div>
+
+          {hayMas && (
+            <button
+              type="button"
+              onClick={cargarMasVentas}
+              disabled={cargandoMas}
+              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+            >
+              {cargandoMas ? 'Cargando...' : 'Cargar más'}
+            </button>
+          )}
         </>
       )}
 

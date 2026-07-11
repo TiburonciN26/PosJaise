@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { formatearSoles } from '../lib/moneda.js'
 import IconoBuscar from './IconoBuscar.jsx'
-
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
 
 export default function ModalBuscarServicio({ servicios, onSeleccionar, onCerrar }) {
   const [busqueda, setBusqueda] = useState('')
@@ -85,7 +82,7 @@ export default function ModalBuscarServicio({ servicios, onSeleccionar, onCerrar
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="text-ink/40 transition-colors hover:text-ink"
+            className="text-ink/60 transition-colors hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>
@@ -93,7 +90,7 @@ export default function ModalBuscarServicio({ servicios, onSeleccionar, onCerrar
 
         <div className="border-b border-border p-3">
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/60">
               <IconoBuscar />
             </span>
             <input
@@ -103,14 +100,14 @@ export default function ModalBuscarServicio({ servicios, onSeleccionar, onCerrar
               onChange={(evento) => manejarCambioBusqueda(evento.target.value)}
               onKeyDown={manejarKeyDown}
               placeholder="Buscar servicio..."
-              className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-amber"
+              className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber"
             />
             {busqueda && (
               <button
                 type="button"
                 onClick={() => manejarCambioBusqueda('')}
                 aria-label="Limpiar búsqueda"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -167,7 +164,7 @@ export default function ModalBuscarServicio({ servicios, onSeleccionar, onCerrar
                 <div className="min-w-0">
                   <p className="truncate text-sm">{servicio.nombre}</p>
                   {servicio.categoria && (
-                    <p className="truncate text-xs text-ink/40">{servicio.categoria}</p>
+                    <p className="truncate text-xs text-ink/60">{servicio.categoria}</p>
                   )}
                 </div>
                 <span className="shrink-0 font-mono text-sm text-amber">

@@ -1,24 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Pencil,
   Trash2,
   Plus,
-  X,
   Phone,
   IdCard,
   Cake,
   StickyNote,
   MessageCircle,
   ArrowBigDown,
-  Mic,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { useTextoEscritura } from '../hooks/useTextoEscritura.js'
-import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
-import IconoBuscar from '../components/IconoBuscar.jsx'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalCliente from '../components/ModalCliente.jsx'
@@ -32,18 +31,34 @@ const OPCIONES_ORDEN = [
   { id: 'completitud-desc', label: 'Datos completos (mayor a menor)' },
 ]
 
+const TAMANO_PAGINA = 50
+const SELECT_CLIENTES = 'id, nombre, telefono, dni, cumpleanos, notas'
+
+// "Datos completos" no se puede pedir ordenado al servidor (no es una
+// columna, se calcula acá) — se sigue reordenando en el cliente sobre lo que
+// ya está cargado. A diferencia de la búsqueda, un orden que solo reordena
+// (no oculta filas) es seguro de dejar así con paginación: "Cargar más" trae
+// el resto y el orden se recalcula sobre el total cargado hasta ese momento.
 function ordenarClientes(clientes, orden) {
-  const ordenados = [...clientes]
-  switch (orden) {
-    case 'nombre-desc':
-      return ordenados.sort((a, b) => b.nombre.localeCompare(a.nombre))
-    case 'completitud-asc':
-      return ordenados.sort((a, b) => completitud(a) - completitud(b))
-    case 'completitud-desc':
-      return ordenados.sort((a, b) => completitud(b) - completitud(a))
-    default:
-      return ordenados.sort((a, b) => a.nombre.localeCompare(b.nombre))
+  if (orden === 'completitud-asc') return [...clientes].sort((a, b) => completitud(a) - completitud(b))
+  if (orden === 'completitud-desc') return [...clientes].sort((a, b) => completitud(b) - completitud(a))
+  return clientes
+}
+
+// Quita caracteres que rompen la sintaxis del filtro .or() de PostgREST.
+function terminoSeguro(texto) {
+  return texto.replace(/[%,()]/g, '')
+}
+
+function construirConsultaClientes({ busqueda, orden }) {
+  let consulta = supabase.from('clientes').select(SELECT_CLIENTES)
+
+  const termino = terminoSeguro(busqueda.trim())
+  if (termino) {
+    consulta = consulta.or(`nombre.ilike.%${termino}%,telefono.ilike.%${termino}%`)
   }
+
+  return consulta.order('nombre', { ascending: orden !== 'nombre-desc' })
 }
 
 function formatearFecha(fechaIso) {
@@ -81,7 +96,7 @@ function coloresCompletitud(porcentaje) {
 function DatoCliente({ icono: Icono, children, mono }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5 text-sm text-ink/60">
-      <Icono className="h-3.5 w-3.5 shrink-0 text-ink/40" />
+      <Icono className="h-3.5 w-3.5 shrink-0 text-ink/60" />
       <span className={`min-w-0 truncate ${mono ? 'font-mono' : ''}`}>{children}</span>
     </div>
   )
@@ -102,52 +117,82 @@ function BarraCompletitud({ porcentaje, colores }) {
   )
 }
 
-function CampoColapsable({ abierto, children }) {
-  return (
-    <div
-      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-        abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="overflow-hidden">{children}</div>
-    </div>
-  )
-}
-
-export default function Clientes() {
+export default function Clientes({ activo = true }) {
   const { mostrarToast } = useToast()
 
   const [clientes, setClientes] = useState([])
+  const [totalClientes, setTotalClientes] = useState(0)
+  const [hayMas, setHayMas] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const busquedaDebounced = useDebounce(busqueda, 300)
   const [orden, setOrden] = useState('nombre-asc')
   const [modalCliente, setModalCliente] = useState(null) // null | 'nuevo' | cliente
   const [clienteAEliminar, setClienteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [abiertos, setAbiertos] = useState(() => new Set())
+  const primeraCargaHecha = useRef(false)
 
   useCerrarConEscape(() => setClienteAEliminar(null), Boolean(clienteAEliminar))
 
-  async function cargarClientes() {
-    setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('clientes')
-      .select('id, nombre, telefono, dni, cumpleanos, notas')
-      .order('nombre')
+  async function cargarClientes(vigente = { actual: true }, silencioso = false) {
+    if (!silencioso) setCargando(true)
+    const filtros = { busqueda: busquedaDebounced, orden }
 
-    if (errorConsulta) {
+    const [clientesRes, totalRes] = await Promise.all([
+      construirConsultaClientes(filtros).range(0, TAMANO_PAGINA - 1),
+      supabase.from('clientes').select('id', { count: 'exact', head: true }),
+    ])
+
+    if (!vigente.actual) return
+
+    if (clientesRes.error) {
       setError('No se pudo cargar el directorio de clientes.')
-    } else {
-      setError(null)
-      setClientes(data ?? [])
+      setClientes([])
+      setCargando(false)
+      return
     }
+
+    setError(null)
+    setClientes(clientesRes.data ?? [])
+    setHayMas((clientesRes.data ?? []).length === TAMANO_PAGINA)
+    if (!totalRes.error) setTotalClientes(totalRes.count ?? 0)
     setCargando(false)
   }
 
+  async function cargarMasClientes() {
+    if (cargandoMas || !hayMas) return
+    setCargandoMas(true)
+    const filtros = { busqueda: busquedaDebounced, orden }
+
+    const { data, error: errorMas } = await construirConsultaClientes(filtros).range(
+      clientes.length,
+      clientes.length + TAMANO_PAGINA - 1,
+    )
+
+    setCargandoMas(false)
+
+    if (errorMas) {
+      mostrarToast('No se pudieron cargar más clientes.', 'error')
+      return
+    }
+
+    setClientes((anterior) => [...anterior, ...(data ?? [])])
+    setHayMas((data ?? []).length === TAMANO_PAGINA)
+  }
+
   useEffect(() => {
-    cargarClientes()
-  }, [])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarClientes(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, busquedaDebounced, orden])
 
   function alternarAbierto(id) {
     setAbiertos((anterior) => {
@@ -178,78 +223,25 @@ export default function Clientes() {
     cargarClientes()
   }
 
-  const filtrados = busqueda.trim()
-    ? clientes.filter((cliente) => {
-        const texto = busqueda.trim().toLowerCase()
-        return (
-          cliente.nombre.toLowerCase().includes(texto) ||
-          (cliente.telefono ?? '').toLowerCase().includes(texto)
-        )
-      })
-    : clientes
-
-  const filtradosOrdenados = ordenarClientes(filtrados, orden)
-
-  const placeholderBuscador = useTextoEscritura('Buscar por nombre o teléfono...')
-  const { soportado: vozSoportada, escuchando, alternar: alternarVoz, onErrorRef: onErrorVozRef } =
-    useReconocimientoVoz((texto) => setBusqueda(texto))
-  onErrorVozRef.current = (codigoError) => {
-    if (codigoError === 'not-allowed' || codigoError === 'audio-capture') {
-      mostrarToast('No se pudo acceder al micrófono.', 'error')
-    }
-  }
+  const clientesOrdenados = ordenarClientes(clientes, orden)
 
   return (
     <div className="p-3 pb-6">
       {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
-        <div className="relative min-w-0 flex-1">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40">
-            <IconoBuscar />
-          </span>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(evento) => setBusqueda(evento.target.value)}
-            onKeyDown={(evento) => {
-              if (evento.key === 'Escape') setBusqueda('')
-            }}
-            placeholder={placeholderBuscador}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/40 focus:border-purple-300"
-          />
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda('')}
-              aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 transition-colors hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {vozSoportada && (
-          <button
-            type="button"
-            onClick={alternarVoz}
-            aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-              escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-        )}
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Buscar por nombre o teléfono..."
+          tema="purple-300"
+        />
 
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
 
         <button
           type="button"
           onClick={() => setModalCliente('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg md:flex"
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
         >
           <Plus className="h-4 w-4" />
           <span>Nuevo cliente</span>
@@ -257,7 +249,7 @@ export default function Clientes() {
       </div>
 
       <p className="mt-3 text-sm text-ink/60">
-        Clientes: <span className="font-mono font-semibold text-purple-300">{clientes.length}</span>
+        Clientes: <span className="font-mono font-semibold text-purple-300">{totalClientes}</span>
       </p>
 
       {error && (
@@ -267,14 +259,14 @@ export default function Clientes() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando clientes...</p>
-      ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando clientes...</p>
+      ) : clientesOrdenados.length === 0 ? (
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">
           No se encontraron clientes.
         </p>
       ) : (
         <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtradosOrdenados.map((cliente) => {
+          {clientesOrdenados.map((cliente) => {
             const abierto = abiertos.has(cliente.id)
             const porcentaje = completitud(cliente)
             const colores = coloresCompletitud(porcentaje)
@@ -284,6 +276,10 @@ export default function Clientes() {
                 <div className="flex items-center gap-3 p-3">
                   <div
                     onClick={() => alternarAbierto(cliente.id)}
+                    onKeyDown={manejarActivacionTeclado(() => alternarAbierto(cliente.id))}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={abierto}
                     className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300">
@@ -313,7 +309,7 @@ export default function Clientes() {
                       className="p-1.5"
                     >
                       <ArrowBigDown
-                        className={`h-4 w-4 text-ink/40 transition-transform duration-300 ${
+                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
                           abierto ? 'rotate-180' : ''
                         }`}
                       />
@@ -360,6 +356,17 @@ export default function Clientes() {
             )
           })}
         </div>
+      )}
+
+      {hayMas && (
+        <button
+          type="button"
+          onClick={cargarMasClientes}
+          disabled={cargandoMas}
+          className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+        >
+          {cargandoMas ? 'Cargando...' : 'Cargar más'}
+        </button>
       )}
 
       <BotonFlotanteAgregar

@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-
-const FILTROS = [
-  { id: 'hoy', label: 'Hoy' },
-  { id: 'semana', label: 'Esta semana' },
-  { id: 'mes', label: 'Este mes' },
-  { id: 'personalizado', label: 'Personalizado' },
-]
+import {
+  anioMesEnLima,
+  calcularRango,
+  formatearFechaISO,
+  iniciarMesLima,
+  parsearFechaISOLima,
+  sumarDias,
+} from '../lib/fechas.js'
+import { formatearSoles } from '../lib/moneda.js'
+import FiltrosFecha from '../components/FiltrosFecha.jsx'
 
 const CLASE_METODO_PAGO = {
   Efectivo: 'bg-green',
@@ -18,71 +21,17 @@ const CLASE_METODO_PAGO = {
 
 const RESUMEN_VACIO = { ingresoBruto: 0, gananciaFinal: 0, cantidadVentas: 0, ticketPromedio: 0, ventas: [] }
 
-function formatearSoles(monto) {
-  return `S/ ${monto.toFixed(2)}`
-}
-
-function formatearFechaISO(fecha) {
-  const anio = fecha.getFullYear()
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
-  const dia = String(fecha.getDate()).padStart(2, '0')
-  return `${anio}-${mes}-${dia}`
-}
-
 function formatearFechaCorta(fechaIso) {
-  const fecha = new Date(`${fechaIso}T00:00:00`)
-  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' })
+  const fecha = parsearFechaISOLima(fechaIso)
+  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', timeZone: 'America/Lima' })
     .format(fecha)
     .replace('.', '')
 }
 
-function iniciarDia(fecha) {
-  const copia = new Date(fecha)
-  copia.setHours(0, 0, 0, 0)
-  return copia
-}
-
-function sumarDias(fecha, dias) {
-  const copia = new Date(fecha)
-  copia.setDate(copia.getDate() + dias)
-  return copia
-}
-
-function calcularRango(filtro, personalizado) {
-  const hoy = iniciarDia(new Date())
-
-  if (filtro === 'semana') {
-    const diaSemana = hoy.getDay()
-    const diasDesdeLunes = diaSemana === 0 ? 6 : diaSemana - 1
-    const lunes = sumarDias(hoy, -diasDesdeLunes)
-    return { desde: lunes, hasta: sumarDias(lunes, 7) }
-  }
-
-  if (filtro === 'mes') {
-    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
-    const inicioMesSiguiente = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)
-    return { desde: inicioMes, hasta: inicioMesSiguiente }
-  }
-
-  if (filtro === 'personalizado') {
-    const desde = personalizado.desde ? iniciarDia(new Date(`${personalizado.desde}T00:00:00`)) : hoy
-    const hastaBase = personalizado.hasta
-      ? iniciarDia(new Date(`${personalizado.hasta}T00:00:00`))
-      : hoy
-    return { desde, hasta: sumarDias(hastaBase, 1) }
-  }
-
-  // 'hoy'
-  return { desde: hoy, hasta: sumarDias(hoy, 1) }
-}
-
 function calcularRangoAnterior(filtro, rangoActual) {
   if (filtro === 'mes') {
-    const inicioMesAnterior = new Date(
-      rangoActual.desde.getFullYear(),
-      rangoActual.desde.getMonth() - 1,
-      1,
-    )
+    const { anio, mes } = anioMesEnLima(rangoActual.desde)
+    const inicioMesAnterior = mes === 0 ? iniciarMesLima(anio - 1, 11) : iniciarMesLima(anio, mes - 1)
     return { desde: inicioMesAnterior, hasta: rangoActual.desde }
   }
 
@@ -107,36 +56,35 @@ function calcularGananciaFinal(ingresoBruto, costoProductos, gastosMes, incluirG
 }
 
 async function resumenPeriodo(desde, hasta, incluirGastos) {
+  // venta_items va embebido (en vez de un .in('venta_id', [...]) aparte) para
+  // no arriesgar el límite de longitud de la URL en un período muy vendedor
+  // — misma corrección que en Historial/Dashboard. De paso, cargarDatos
+  // reutiliza estos mismos items embebidos para el ranking de productos y
+  // servicios, así que esa consulta separada ya no hace falta.
   const { data: ventas } = await supabase
     .from('ventas')
-    .select('id, fecha, total, metodo_pago')
+    .select('id, fecha, total, metodo_pago, venta_items(tipo, nombre, cantidad, subtotal, producto_id)')
     .eq('estado', 'ACTIVA')
     .gte('fecha', desde.toISOString())
     .lt('fecha', hasta.toISOString())
 
   const ventasActivas = ventas ?? []
-  const ids = ventasActivas.map((v) => v.id)
+  const itemsProducto = ventasActivas.flatMap(
+    (v) => (v.venta_items ?? []).filter((i) => i.tipo === 'PRODUCTO'),
+  )
 
   let costoProductos = 0
-  if (ids.length > 0) {
-    const { data: items } = await supabase
-      .from('venta_items')
-      .select('cantidad, producto_id')
-      .in('venta_id', ids)
-      .eq('tipo', 'PRODUCTO')
-
-    const idsProductos = [...new Set((items ?? []).map((i) => i.producto_id).filter(Boolean))]
-    if (idsProductos.length > 0) {
-      const { data: productosData } = await supabase
-        .from('productos_vista')
-        .select('id, costo')
-        .in('id', idsProductos)
-      const costoPorProducto = new Map((productosData ?? []).map((p) => [p.id, p.costo]))
-      costoProductos = (items ?? []).reduce(
-        (acc, i) => acc + (costoPorProducto.get(i.producto_id) ?? 0) * i.cantidad,
-        0,
-      )
-    }
+  const idsProductos = [...new Set(itemsProducto.map((i) => i.producto_id).filter(Boolean))]
+  if (idsProductos.length > 0) {
+    const { data: productosData } = await supabase
+      .from('productos_vista')
+      .select('id, costo')
+      .in('id', idsProductos)
+    const costoPorProducto = new Map((productosData ?? []).map((p) => [p.id, p.costo]))
+    costoProductos = itemsProducto.reduce(
+      (acc, i) => acc + (costoPorProducto.get(i.producto_id) ?? 0) * i.cantidad,
+      0,
+    )
   }
 
   let gastosMes = 0
@@ -182,10 +130,10 @@ function TarjetaComparativa({ etiqueta, valor, anterior, esMoneda = true }) {
         <div className={`mt-0.5 flex items-center gap-1 text-xs ${subio ? 'text-green' : 'text-red'}`}>
           {subio ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
           <span className="font-mono">{Math.abs(delta).toFixed(0)}%</span>
-          <span className="text-ink/40">vs. período anterior</span>
+          <span className="text-ink/60">vs. período anterior</span>
         </div>
       ) : (
-        <p className="mt-0.5 text-xs text-ink/40">Sin datos del período anterior</p>
+        <p className="mt-0.5 text-xs text-ink/60">Sin datos del período anterior</p>
       )}
     </div>
   )
@@ -234,7 +182,7 @@ function GraficoTendencia({ dias }) {
                 }`}
                 style={{ height: `${alturaPct}%` }}
               />
-              <span className="mt-1 font-mono text-[9px] text-ink/40">
+              <span className="mt-1 font-mono text-[9px] text-ink/60">
                 {formatearFechaCorta(dia.fecha)}
               </span>
             </div>
@@ -245,7 +193,7 @@ function GraficoTendencia({ dias }) {
   )
 }
 
-export default function Estadisticas() {
+export default function Estadisticas({ activo = true }) {
   const [filtro, setFiltro] = useState('mes')
   const [personalizado, setPersonalizado] = useState(() => {
     const hoyStr = formatearFechaISO(new Date())
@@ -261,9 +209,10 @@ export default function Estadisticas() {
   const [metodosPago, setMetodosPago] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
+  const primeraCargaHecha = useRef(false)
 
-  async function cargarDatos() {
-    setCargando(true)
+  async function cargarDatos(vigente, silencioso) {
+    if (!silencioso) setCargando(true)
     setError(null)
 
     try {
@@ -275,11 +224,10 @@ export default function Estadisticas() {
         resumenPeriodo(rangoActual.desde, rangoActual.hasta, incluirGastos),
         resumenPeriodo(rangoAnterior.desde, rangoAnterior.hasta, incluirGastos),
       ])
+      if (!vigente.actual) return
 
       setActual(resumenActual)
       setAnterior(resumenAnterior)
-
-      const idsVentas = resumenActual.ventas.map((v) => v.id)
 
       // Tendencia diaria (siempre, aunque sea un solo día)
       const mapaDias = new Map()
@@ -310,16 +258,14 @@ export default function Estadisticas() {
       }
       setMetodosPago([...mapaMetodos.values()].sort((a, b) => b.monto - a.monto))
 
-      // Rankings de productos y servicios (desde las líneas de venta)
-      if (idsVentas.length > 0) {
-        const { data: items } = await supabase
-          .from('venta_items')
-          .select('tipo, nombre, cantidad, subtotal')
-          .in('venta_id', idsVentas)
+      // Rankings de productos y servicios (reutiliza los venta_items ya
+      // embebidos en resumenActual.ventas, sin una consulta aparte)
+      const itemsPeriodo = resumenActual.ventas.flatMap((v) => v.venta_items ?? [])
 
+      if (itemsPeriodo.length > 0) {
         const mapaProductos = new Map()
         const mapaServicios = new Map()
-        for (const item of items ?? []) {
+        for (const item of itemsPeriodo) {
           const mapa = item.tipo === 'PRODUCTO' ? mapaProductos : mapaServicios
           const fila = mapa.get(item.nombre) ?? { nombre: item.nombre, cantidad: 0, ingreso: 0 }
           fila.cantidad += item.cantidad
@@ -340,6 +286,7 @@ export default function Estadisticas() {
         .gte('fecha', rangoActual.desde.toISOString())
         .lt('fecha', rangoActual.hasta.toISOString())
         .neq('estado', 'CANCELADO')
+      if (!vigente.actual) return
 
       const mapaAsistentes = new Map()
       for (const r of registros ?? []) {
@@ -363,8 +310,15 @@ export default function Estadisticas() {
   }
 
   useEffect(() => {
-    cargarDatos()
-  }, [filtro, personalizado.desde, personalizado.hasta])
+    if (!activo) return undefined
+    const vigente = { actual: true }
+    const silencioso = primeraCargaHecha.current
+    primeraCargaHecha.current = true
+    cargarDatos(vigente, silencioso)
+    return () => {
+      vigente.actual = false
+    }
+  }, [activo, filtro, personalizado.desde, personalizado.hasta])
 
   const maximoProductos = Math.max(...topProductos.map((p) => p.cantidad), 1)
   const maximoServicios = Math.max(...topServicios.map((s) => s.cantidad), 1)
@@ -374,51 +328,16 @@ export default function Estadisticas() {
   return (
     <div className="p-3 pb-6">
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-3 bg-bg px-3 py-2">
-        <div className="grid grid-cols-4 gap-1">
-          {FILTROS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFiltro(f.id)}
-              className={`min-w-0 overflow-visible whitespace-nowrap rounded-full px-1 py-2 text-center text-xs transition-colors sm:px-4 sm:py-1.5 sm:text-sm ${
-                filtro === f.id
-                  ? 'bg-purple-300 font-semibold text-bg'
-                  : 'border border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {filtro === 'personalizado' && (
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <div>
-            <label className="mb-1 block text-xs text-ink/50">Desde</label>
-            <input
-              type="date"
-              value={personalizado.desde}
-              onChange={(evento) =>
-                setPersonalizado((anterior) => ({ ...anterior, desde: evento.target.value }))
-              }
-              className="rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-ink/50">Hasta</label>
-            <input
-              type="date"
-              value={personalizado.hasta}
-              onChange={(evento) =>
-                setPersonalizado((anterior) => ({ ...anterior, hasta: evento.target.value }))
-              }
-              className="rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-            />
-          </div>
-        </div>
-      )}
+      <FiltrosFecha
+        filtro={filtro}
+        onCambiarFiltro={setFiltro}
+        personalizado={personalizado}
+        onCambiarPersonalizado={setPersonalizado}
+        tema="purple-300"
+        padding="ancha"
+        disenoFechas="apilado"
+        sticky
+      />
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -427,7 +346,7 @@ export default function Estadisticas() {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/40">Cargando estadísticas...</p>
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando estadísticas...</p>
       ) : (
         <>
           {/* 1. KPIs comparativos */}
@@ -459,7 +378,7 @@ export default function Estadisticas() {
           <div className="mt-4 rounded-lg border border-border bg-surface p-4">
             <h2 className="text-sm font-semibold text-ink">Tendencia de ventas</h2>
             {tendencia.length === 0 || tendencia.every((d) => d.monto === 0) ? (
-              <p className="mt-4 text-center font-mono text-sm text-ink/40">
+              <p className="mt-4 text-center font-mono text-sm text-ink/60">
                 No hay ventas en este período.
               </p>
             ) : (
@@ -474,7 +393,7 @@ export default function Estadisticas() {
             <div className="rounded-lg border border-border bg-surface p-4">
               <h2 className="text-sm font-semibold text-ink">Productos más vendidos</h2>
               {topProductos.length === 0 ? (
-                <p className="mt-4 text-center font-mono text-sm text-ink/40">Sin datos.</p>
+                <p className="mt-4 text-center font-mono text-sm text-ink/60">Sin datos.</p>
               ) : (
                 <div className="mt-3 space-y-3">
                   {topProductos.map((p) => (
@@ -494,7 +413,7 @@ export default function Estadisticas() {
             <div className="rounded-lg border border-border bg-surface p-4">
               <h2 className="text-sm font-semibold text-ink">Servicios más realizados</h2>
               {topServicios.length === 0 ? (
-                <p className="mt-4 text-center font-mono text-sm text-ink/40">Sin datos.</p>
+                <p className="mt-4 text-center font-mono text-sm text-ink/60">Sin datos.</p>
               ) : (
                 <div className="mt-3 space-y-3">
                   {topServicios.map((s) => (
@@ -516,7 +435,7 @@ export default function Estadisticas() {
           <div className="mt-4 rounded-lg border border-border bg-surface p-4">
             <h2 className="text-sm font-semibold text-ink">Rendimiento por asistente</h2>
             {porAsistente.length === 0 ? (
-              <p className="mt-4 text-center font-mono text-sm text-ink/40">
+              <p className="mt-4 text-center font-mono text-sm text-ink/60">
                 No hay atenciones registradas en este período.
               </p>
             ) : (
@@ -539,7 +458,7 @@ export default function Estadisticas() {
           <div className="mt-4 rounded-lg border border-border bg-surface p-4">
             <h2 className="text-sm font-semibold text-ink">Métodos de pago</h2>
             {metodosPago.length === 0 ? (
-              <p className="mt-4 text-center font-mono text-sm text-ink/40">Sin datos.</p>
+              <p className="mt-4 text-center font-mono text-sm text-ink/60">Sin datos.</p>
             ) : (
               <div className="mt-3 space-y-3">
                 {metodosPago.map((m) => (

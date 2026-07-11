@@ -99,7 +99,7 @@ export default function ModalEscanerCodigoBarras({ productos, onProductoEncontra
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="text-ink/40 transition-colors hover:text-ink"
+            className="text-ink/60 transition-colors hover:text-ink"
           >
             <X className="h-5 w-5" />
           </button>
@@ -126,7 +126,7 @@ export default function ModalEscanerCodigoBarras({ productos, onProductoEncontra
             {error}
           </p>
         ) : (
-          <p className="mt-3 text-center text-xs text-ink/40">
+          <p className="mt-3 text-center text-xs text-ink/60">
             Apunta la cámara al código de barras del producto.
           </p>
         )}

@@ -1,0 +1,43 @@
+name: Backup mensual de ventas y gastos
+
+# M7 de la auditoría técnica: el negocio no puede depender solo de los
+# backups limitados del plan free de Supabase. Este workflow corre solo
+# (gratis, en la infraestructura de GitHub) el 1º de cada mes, exporta las
+# ventas/venta_items/gastos del mes anterior a CSV y los comitea al repo
+# (privado) — así queda una copia fuera de Supabase, con historial completo
+# en git.
+on:
+  schedule:
+    # 05:00 UTC del día 1 = medianoche en Lima (UTC-5, sin horario de verano)
+    - cron: '0 5 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Exportar backup del mes anterior
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/exportar-backup.js
+
+      - name: Comitear el backup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backups/
+          git diff --staged --quiet || git commit -m "Backup automático de ventas y gastos"
+          git push

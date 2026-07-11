@@ -46,6 +46,42 @@
   --animate-elevar-flecha: elevar-flecha 3s ease-out infinite;
 }
 
+/*
+ * Convención de breakpoints (M3 de la auditoría técnica)
+ * =========================================================
+ * Tres zonas: móvil <640px (sm), tablet 640–1024px (sm a lg),
+ * desktop ≥1024px (lg). Un cambio de LAYOUT (no cosmético) —
+ * tarjetas↔tabla, mostrar/ocultar FAB, hamburguesa↔nav completo —
+ * tiene que anclarse a uno de los dos bordes reales de esas
+ * zonas: `sm` (móvil→tablet) o `lg` (tablet→desktop). Nunca a
+ * `md` — no es el borde de ninguna zona, solo un punto arbitrario
+ * a la mitad de "tablet", y mezclar `md` con `sm`/`lg` en la misma
+ * pantalla es lo que generaba estados mezclados en tablet vertical
+ * (~600–800px): tarjetas de móvil + botón "Nuevo X" ya en modo
+ * escritorio + header en modo hamburguesa, los tres a la vez.
+ *
+ * - Tarjetas móviles ↔ tabla de escritorio, FAB, botón "Nuevo X",
+ *   texto de BotonAccion: todos migrados a `lg` (antes `md` en
+ *   varias pantallas) — la tabla necesita el ancho de escritorio
+ *   real, tablet se queda con las tarjetas.
+ * - Header / MenúLateral (hamburguesa ↔ nav completo): ya usaba
+ *   `lg`, es la referencia.
+ * - Ventas.jsx (panel de cobro) usa `sm` Y `lg` a propósito: hoja
+ *   fija abajo en móvil, panel en flujo normal en tablet (`sm`),
+ *   barra lateral de ancho fijo en desktop (`lg`). Es el único caso
+ *   con 3 estados reales — motivo válido para usar ambos bordes,
+ *   a diferencia de usar `md` sin razón.
+ * - `sm`/`md`/`lg` para densidad de grillas (ej. grid-cols-2 → 4)
+ *   o ajustes de espaciado no son un "cambio de layout" en este
+ *   sentido — esos se dejan como estén, esta convención es sobre
+ *   mostrar/ocultar u ocupar el lugar de otra estructura.
+ *
+ * Migración: ya aplicada a los casos md→lg identificados en la
+ * auditoría (Inventario/Servicios/Historial/Gastos/Clientes/
+ * Asistentes/MiPanel, BotonAccion, BotonFlotanteAgregar). Si se
+ * agrega un nuevo cambio de layout, seguir esta misma regla.
+ */
+
 @keyframes flash-verde {
   from {
     background-color: rgba(62, 207, 106, 0.3);

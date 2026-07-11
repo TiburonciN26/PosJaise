@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 
@@ -20,9 +20,9 @@ function formularioDesdeCliente(cliente) {
   }
 }
 
-function Etiqueta({ children, obligatorio }) {
+function Etiqueta({ children, obligatorio, htmlFor }) {
   return (
-    <label className="mb-1 block text-xs text-ink/50">
+    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/50">
       {children}
       {obligatorio && <span className="text-red"> *</span>}
     </label>
@@ -35,6 +35,7 @@ function validar(formulario) {
 }
 
 export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
+  const idBase = useId()
   const esEdicion = Boolean(cliente)
 
   const [formulario, setFormulario] = useState(() =>
@@ -116,7 +117,7 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 
@@ -127,13 +128,14 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
               value={formulario.dni}
               onChange={(evento) => actualizarCampo('dni', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 
           <div>
-            <Etiqueta>Fecha de cumpleaños</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-cumpleanos`}>Fecha de cumpleaños</Etiqueta>
             <input
+              id={`${idBase}-cumpleanos`}
               type="date"
               value={formulario.cumpleanos}
               onChange={(evento) => actualizarCampo('cumpleanos', evento.target.value)}
@@ -148,7 +150,7 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
               onChange={(evento) => actualizarCampo('notas', evento.target.value)}
               placeholder="Opcional"
               rows={3}
-              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-purple-300"
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
         </div>
