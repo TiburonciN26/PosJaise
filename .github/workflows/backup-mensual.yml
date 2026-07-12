@@ -3,17 +3,15 @@ name: Backup mensual de ventas y gastos
 # M7 de la auditoría técnica: el negocio no puede depender solo de los
 # backups limitados del plan free de Supabase. Este workflow corre solo
 # (gratis, en la infraestructura de GitHub) el 1º de cada mes, exporta las
-# ventas/venta_items/gastos del mes anterior a CSV y los comitea al repo
-# (privado) — así queda una copia fuera de Supabase, con historial completo
-# en git.
+# ventas/venta_items/gastos del mes anterior a CSV y los sube al repo
+# PRIVADO TiburonciN26/PosJaise-backups — separado de este repo (que es
+# público, para poder usar GitHub Pages gratis) porque contiene datos
+# financieros reales del negocio.
 on:
   schedule:
     # 05:00 UTC del día 1 = medianoche en Lima (UTC-5, sin horario de verano)
     - cron: '0 5 1 * *'
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   backup:
@@ -34,10 +32,15 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/exportar-backup.js
 
-      - name: Comitear el backup
+      - name: Clonar el repo privado de backups
+        run: git clone "https://x-access-token:${{ secrets.BACKUPS_REPO_TOKEN }}@github.com/TiburonciN26/PosJaise-backups.git" backups-repo
+
+      - name: Copiar y comitear el backup
         run: |
+          cp -r backups/. backups-repo/
+          cd backups-repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add backups/
+          git add .
           git diff --staged --quiet || git commit -m "Backup automático de ventas y gastos"
           git push

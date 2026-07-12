@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>POS Negocio 2</title>
+    <script>
+      // Truco estándar de SPA para GitHub Pages (rafgraph/spa-github-pages):
+      // GitHub Pages no soporta fallback de rutas del lado del cliente (un
+      // refresh en /PosJaise/historial da 404 real), así que esta página
+      // redirige a index.html codificando la ruta pedida en la query string;
+      // el script de index.html la decodifica y la restaura con
+      // history.replaceState antes de que React Router la vea.
+      var pathSegmentsToKeep = 1 // mantiene "/PosJaise" como base del proyecto
+      var l = window.location
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      )
+    </script>
+  </head>
+  <body></body>
+</html>

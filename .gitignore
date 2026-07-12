@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Backups de ventas/gastos: van al repo privado PosJaise-backups, nunca a
+# este repo (que es público, para poder usar GitHub Pages gratis).
+backups/
+
 # Variables de entorno (claves de Supabase)
 .env
 .env.*
