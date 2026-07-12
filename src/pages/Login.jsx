@@ -19,8 +19,19 @@ export default function Login() {
     setEnviando(true)
     try {
       await iniciarSesion(email, password)
-    } catch {
-      setError('Correo o contraseña incorrectos.')
+    } catch (errorLogin) {
+      // M6 de la 3ª auditoría: distinguir credenciales incorrectas de un fallo
+      // de red. Supabase adjunta un status HTTP 4xx cuando el correo/clave son
+      // inválidos; un fallo de conexión (fetch falla, AuthRetryableFetchError)
+      // llega sin status numérico. Antes todo caía en "credenciales
+      // incorrectas" y el usuario reintentaba datos que sí eran correctos.
+      const status = errorLogin?.status
+      const esCredenciales = typeof status === 'number' && status >= 400 && status < 500
+      setError(
+        esCredenciales
+          ? 'Correo o contraseña incorrectos.'
+          : 'No se pudo conectar. Revisa tu conexión a internet.',
+      )
     } finally {
       setEnviando(false)
     }

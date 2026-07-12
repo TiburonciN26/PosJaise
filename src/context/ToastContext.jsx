@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 
 const ToastContext = createContext(null)
 
@@ -35,8 +35,15 @@ export function ToastProvider({ children }) {
     }, DURACION_VISIBLE)
   }, [])
 
+  // Memoizado: sin esto, cada toast que se muestra/oculta (setToast/setVisible
+  // dispara un re-render del provider) crearía un value nuevo y re-renderizaría
+  // a TODOS los consumidores de useToast — que con el keep-alive de pestañas
+  // son casi todas las páginas montadas. mostrarToast ya es estable (useCallback),
+  // así que el value no cambia entre esos re-renders (M5 de la 3ª auditoría).
+  const value = useMemo(() => ({ mostrarToast }), [mostrarToast])
+
   return (
-    <ToastContext.Provider value={{ mostrarToast }}>
+    <ToastContext.Provider value={value}>
       {children}
 
       {toast && (

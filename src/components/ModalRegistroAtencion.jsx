@@ -2,20 +2,14 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-
-function aInputDatetimeLocal(fecha) {
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}T${pad(
-    fecha.getHours(),
-  )}:${pad(fecha.getMinutes())}`
-}
+import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
 
 function formularioVacio() {
   return {
     servicioId: '',
     clienteId: '',
     precio: '',
-    fecha: aInputDatetimeLocal(new Date()),
+    fecha: aInputDatetimeLima(new Date()),
     nota: '',
   }
 }
@@ -25,7 +19,7 @@ function formularioDesdeRegistro(registro) {
     servicioId: registro.servicio_id ?? '',
     clienteId: registro.cliente_id ?? '',
     precio: String(registro.precio ?? ''),
-    fecha: aInputDatetimeLocal(new Date(registro.fecha)),
+    fecha: aInputDatetimeLima(new Date(registro.fecha)),
     nota: registro.nota ?? '',
   }
 }
@@ -172,7 +166,7 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
       servicio_id: formulario.servicioId,
       cliente_id: formulario.clienteId,
       precio,
-      fecha: new Date(formulario.fecha).toISOString(),
+      fecha: deInputDatetimeLima(formulario.fecha).toISOString(),
       nota: formulario.nota.trim() || null,
       porcentaje_aplicado: porcentajeActual,
       pago_asistente: porcentajeActual != null ? (precio * porcentajeActual) / 100 : null,

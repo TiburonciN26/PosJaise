@@ -3,6 +3,7 @@ import { Pencil, Trash2, Plus, ArrowBigDown, Download } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { anioMesEnLima } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { aCSV, descargarArchivo } from '../lib/csv.js'
@@ -24,10 +25,12 @@ function resumenNombres(items) {
 
 export default function Gastos({ activo = true }) {
   const { mostrarToast } = useToast()
-  const hoy = new Date()
+  // Mes/año iniciales en hora de Lima, no la del dispositivo (M3 de la 3ª
+  // auditoría) — el resto de la app ya deriva el período con anioMesEnLima.
+  const { anio: anioLima, mes: mesLimaIndice } = anioMesEnLima(new Date())
 
-  const [mes, setMes] = useState(hoy.getMonth() + 1)
-  const [anio, setAnio] = useState(hoy.getFullYear())
+  const [mes, setMes] = useState(mesLimaIndice + 1)
+  const [anio, setAnio] = useState(anioLima)
 
   const [gastos, setGastos] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -222,7 +225,7 @@ export default function Gastos({ activo = true }) {
           type="number"
           inputMode="numeric"
           value={anio}
-          onChange={(evento) => setAnio(parseInt(evento.target.value, 10) || hoy.getFullYear())}
+          onChange={(evento) => setAnio(parseInt(evento.target.value, 10) || anioLima)}
           className="w-20 shrink-0 rounded-lg border border-border bg-surface-2 px-3 py-2.5 font-mono text-sm text-ink outline-none focus:border-purple-300"
         />
 

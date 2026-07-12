@@ -10,11 +10,13 @@ function formatearFechaHora(fechaIso) {
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
+    timeZone: 'America/Lima',
   }).format(fecha)
   const horaStr = new Intl.DateTimeFormat('es-PE', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: 'America/Lima',
   }).format(fecha)
   return `${fechaStr} ${horaStr}`
 }

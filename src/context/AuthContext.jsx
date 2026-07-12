@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   // Supabase respondió bien y el perfil de verdad no existe o está inactivo.
   // maybeSingle() (no single()) para que "0 filas" llegue como data null,
   // no mezclado con los errores de red.
-  async function cargarPerfil(userId) {
+  const cargarPerfil = useCallback(async (userId) => {
     const { data, error } = await supabase
       .from('usuarios')
       .select('id, email, nombre_completo, rol, activo')
@@ -38,16 +38,16 @@ export function AuthProvider({ children }) {
 
     setErrorPerfil(false)
     setUsuario(data)
-  }
+  }, [])
 
-  async function reintentarPerfil() {
+  const reintentarPerfil = useCallback(async () => {
     const { data: { session: sesionActual } } = await supabase.auth.getSession()
     if (sesionActual?.user) {
       setCargando(true)
       await cargarPerfil(sesionActual.user.id)
       setCargando(false)
     }
-  }
+  }, [cargarPerfil])
 
   useEffect(() => {
     let vigente = true
@@ -77,27 +77,32 @@ export function AuthProvider({ children }) {
       vigente = false
       listener.subscription.unsubscribe()
     }
-  }, [])
+  }, [cargarPerfil])
 
-  async function iniciarSesion(email, password) {
+  const iniciarSesion = useCallback(async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
-  }
+  }, [])
 
-  async function cerrarSesion() {
+  const cerrarSesion = useCallback(async () => {
     await supabase.auth.signOut()
-  }
+  }, [])
 
-  const value = {
-    session,
-    usuario,
-    rol: usuario?.rol ?? null,
-    cargando,
-    errorPerfil,
-    reintentarPerfil,
-    iniciarSesion,
-    cerrarSesion,
-  }
+  // Memoizado (M5): el value solo cambia cuando cambia sesión/usuario/estado,
+  // no en cada render — las funciones ya son estables por useCallback.
+  const value = useMemo(
+    () => ({
+      session,
+      usuario,
+      rol: usuario?.rol ?? null,
+      cargando,
+      errorPerfil,
+      reintentarPerfil,
+      iniciarSesion,
+      cerrarSesion,
+    }),
+    [session, usuario, cargando, errorPerfil, reintentarPerfil, iniciarSesion, cerrarSesion],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

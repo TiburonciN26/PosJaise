@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useDebounce } from '../hooks/useDebounce.js'
 import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -26,6 +27,10 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 
 const OPCION_TODOS = 'todos'
+const TAMANO_PAGINA = 50
+const SELECT_REGISTROS =
+  'id, usuario_id, servicio_id, cliente_id, precio, fecha, nota, estado, porcentaje_aplicado, pago_asistente, servicios(nombre), clientes(nombre), usuarios(nombre_completo)'
+const RESUMEN_VACIO = { cantidad: 0, total: 0 }
 
 function formatearHora(fechaIso) {
   const fecha = new Date(fechaIso)
@@ -33,6 +38,7 @@ function formatearHora(fechaIso) {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: 'America/Lima',
   }).format(fecha)
 }
 
@@ -87,9 +93,13 @@ export default function MiPanel({ activo = true }) {
   })
 
   const [registros, setRegistros] = useState([])
+  const [resumen, setResumen] = useState(RESUMEN_VACIO)
+  const [hayMas, setHayMas] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const busquedaDebounced = useDebounce(busqueda, 300)
 
   const [asistentesUsuarios, setAsistentesUsuarios] = useState([])
   const [usuarioFiltro, setUsuarioFiltro] = useState(OPCION_TODOS)
@@ -121,39 +131,99 @@ export default function MiPanel({ activo = true }) {
     ...asistentesUsuarios.map((a) => ({ id: a.id, label: a.nombre_completo })),
   ]
 
+  // Con búsqueda de texto activa, paginar rompería el resultado (la búsqueda
+  // es sobre lo cargado en el cliente; podría "no encontrar" algo que existe
+  // más adelante sin traerlo). Ahí se trae el período completo, ya acotado
+  // por fecha; sin búsqueda, se pagina de verdad. Mismo criterio que Historial.
+  const filtroActivo = Boolean(busquedaDebounced.trim())
+
+  // A quién apunta el resumen del header: el admin puede filtrar por
+  // asistente (o "Todos" = null); un no-admin siempre a sí mismo (aunque la
+  // RLS ya lo limitaría, se pasa explícito).
+  const usuarioIdResumen = esAdmin
+    ? usuarioFiltro !== OPCION_TODOS
+      ? usuarioFiltro
+      : null
+    : (usuario?.id ?? null)
+
+  function construirConsultaRegistros(desde, hasta) {
+    let consulta = supabase
+      .from('registro_servicios')
+      .select(SELECT_REGISTROS)
+      .gte('fecha', desde.toISOString())
+      .lt('fecha', hasta.toISOString())
+      .order('fecha', { ascending: false })
+
+    if (esAdmin && usuarioFiltro !== OPCION_TODOS) {
+      consulta = consulta.eq('usuario_id', usuarioFiltro)
+    } else if (!esAdmin) {
+      consulta = consulta.eq('usuario_id', usuario.id)
+    }
+    return consulta
+  }
+
   async function cargarRegistros(vigente = { actual: true }, silencioso = false) {
     if (!usuario) return
     if (!silencioso) setCargando(true)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
-    let consulta = supabase
-      .from('registro_servicios')
-      .select(
-        'id, usuario_id, servicio_id, cliente_id, precio, fecha, nota, estado, porcentaje_aplicado, pago_asistente, servicios(nombre), clientes(nombre), usuarios(nombre_completo)',
-      )
-      .gte('fecha', desde.toISOString())
-      .lt('fecha', hasta.toISOString())
-      .order('fecha', { ascending: false })
+    let consultaLista = construirConsultaRegistros(desde, hasta)
+    if (!filtroActivo) consultaLista = consultaLista.range(0, TAMANO_PAGINA - 1)
 
-    consulta =
-      esAdmin && usuarioFiltro !== OPCION_TODOS
-        ? consulta.eq('usuario_id', usuarioFiltro)
-        : esAdmin
-          ? consulta
-          : consulta.eq('usuario_id', usuario.id)
-
-    const { data, error: errorConsulta } = await consulta
+    const [listaRes, resumenRes] = await Promise.all([
+      consultaLista,
+      supabase.rpc('resumen_mi_panel', {
+        p_desde: desde.toISOString(),
+        p_hasta: hasta.toISOString(),
+        p_usuario_id: usuarioIdResumen,
+      }),
+    ])
 
     if (!vigente.actual) return
 
-    if (errorConsulta) {
+    if (listaRes.error) {
       setError('No se pudo cargar tus atenciones.')
       setRegistros([])
-    } else {
-      setError(null)
-      setRegistros(data ?? [])
+      setHayMas(false)
+      setCargando(false)
+      return
     }
+
+    setError(null)
+    setRegistros(listaRes.data ?? [])
+    setHayMas(!filtroActivo && (listaRes.data ?? []).length === TAMANO_PAGINA)
+
+    const filaResumen = resumenRes.data?.[0]
+    setResumen(
+      filaResumen
+        ? {
+            cantidad: filaResumen.cantidad ?? 0,
+            total: esAdmin ? (filaResumen.total_precio ?? 0) : (filaResumen.total_pago_asistente ?? 0),
+          }
+        : RESUMEN_VACIO,
+    )
     setCargando(false)
+  }
+
+  async function cargarMasRegistros() {
+    if (cargandoMas || !hayMas || filtroActivo) return
+    setCargandoMas(true)
+    const { desde, hasta } = calcularRango(filtro, personalizado)
+
+    const { data, error: errorMas } = await construirConsultaRegistros(desde, hasta).range(
+      registros.length,
+      registros.length + TAMANO_PAGINA - 1,
+    )
+
+    setCargandoMas(false)
+
+    if (errorMas) {
+      mostrarToast('No se pudieron cargar más atenciones.', 'error')
+      return
+    }
+
+    setRegistros((anterior) => [...anterior, ...(data ?? [])])
+    setHayMas((data ?? []).length === TAMANO_PAGINA)
   }
 
   useEffect(() => {
@@ -166,7 +236,7 @@ export default function MiPanel({ activo = true }) {
     return () => {
       vigente.actual = false
     }
-  }, [activo, usuario, filtro, personalizado.desde, personalizado.hasta, usuarioFiltro])
+  }, [activo, usuario, filtro, personalizado.desde, personalizado.hasta, usuarioFiltro, filtroActivo])
 
   function alternarDia(clave) {
     setDiasAbiertos((anterior) => {
@@ -227,8 +297,6 @@ export default function MiPanel({ activo = true }) {
       })
     : registros
 
-  const registrosActivos = registrosFiltrados.filter((r) => r.estado !== 'CANCELADO')
-  const totalPeriodo = sumarMontos(registrosActivos, (r) => montoDeRegistro(r, esAdmin))
   const grupos = agruparPorDia(registrosFiltrados)
 
   return (
@@ -264,12 +332,14 @@ export default function MiPanel({ activo = true }) {
 
       {/* Resumen del período + Registrar atención (desktop) */}
       <div className="mt-3 flex items-center justify-between gap-2">
+        {/* Resumen del período: viene del RPC resumen_mi_panel, no del array
+            cargado — así sigue exacto aunque la lista de abajo esté paginada. */}
         <div className="flex flex-1 items-center gap-3 text-sm">
           <span className="text-ink/60">
-            Atenciones: <span className="font-mono font-semibold text-ink">{registrosActivos.length}</span>
+            Atenciones: <span className="font-mono font-semibold text-ink">{resumen.cantidad}</span>
           </span>
           <span className="text-ink/60">
-            Total: <span className="font-mono font-semibold text-green">{formatearSoles(totalPeriodo)}</span>
+            Total: <span className="font-mono font-semibold text-green">{formatearSoles(resumen.total)}</span>
           </span>
         </div>
 
@@ -455,6 +525,17 @@ export default function MiPanel({ activo = true }) {
               </div>
             )
           })}
+
+          {hayMas && (
+            <button
+              type="button"
+              onClick={cargarMasRegistros}
+              disabled={cargandoMas}
+              className="w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+            >
+              {cargandoMas ? 'Cargando...' : 'Cargar más'}
+            </button>
+          )}
         </div>
       )}
 

@@ -108,3 +108,23 @@ export function claveDiaLima(fecha) {
   const enLima = aLima(fecha)
   return `${enLima.getUTCFullYear()}-${enLima.getUTCMonth()}-${enLima.getUTCDate()}`
 }
+
+// Valor "YYYY-MM-DDTHH:mm" para un <input type="datetime-local"> con la hora
+// de pared de Lima (no la del dispositivo). Un datetime-local muestra y lee
+// hora local, así que sin fijar Lima un celular con otra zona mostraría/
+// guardaría una hora corrida. Pareja de deInputDatetimeLima (inversa).
+export function aInputDatetimeLima(fecha) {
+  const enLima = aLima(fecha)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${enLima.getUTCFullYear()}-${pad(enLima.getUTCMonth() + 1)}-${pad(enLima.getUTCDate())}T${pad(enLima.getUTCHours())}:${pad(enLima.getUTCMinutes())}`
+}
+
+// Inversa: interpreta el string del input como hora de pared de Lima y
+// devuelve el instante UTC real (sin pasar por new Date(str), que lo leería
+// en la zona del dispositivo).
+export function deInputDatetimeLima(valor) {
+  const [fechaParte, horaParte] = valor.split('T')
+  const [anio, mes, dia] = fechaParte.split('-').map(Number)
+  const [hora, minuto] = horaParte.split(':').map(Number)
+  return deLima(new Date(Date.UTC(anio, mes - 1, dia, hora, minuto)))
+}

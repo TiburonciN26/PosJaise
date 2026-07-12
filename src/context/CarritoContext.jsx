@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 
 const CarritoContext = createContext(null)
 
@@ -8,16 +8,21 @@ export function CarritoProvider({ children }) {
   const [montoRecibido, setMontoRecibido] = useState('')
   const [cliente, setCliente] = useState(null)
 
-  const value = {
-    carrito,
-    setCarrito,
-    metodoPago,
-    setMetodoPago,
-    montoRecibido,
-    setMontoRecibido,
-    cliente,
-    setCliente,
-  }
+  // Memoizado (M5): los setState de React ya son estables, así que el value
+  // solo cambia cuando cambia algún dato real del carrito, no en cada render.
+  const value = useMemo(
+    () => ({
+      carrito,
+      setCarrito,
+      metodoPago,
+      setMetodoPago,
+      montoRecibido,
+      setMontoRecibido,
+      cliente,
+      setCliente,
+    }),
+    [carrito, metodoPago, montoRecibido, cliente],
+  )
 
   return <CarritoContext.Provider value={value}>{children}</CarritoContext.Provider>
 }
