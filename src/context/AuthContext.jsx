@@ -7,21 +7,46 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [usuario, setUsuario] = useState(null)
   const [cargando, setCargando] = useState(true)
+  const [errorPerfil, setErrorPerfil] = useState(false)
 
+  // A2 de la 3ª auditoría: un fallo de red al leer el perfil NO cierra la
+  // sesión — antes cualquier error del select disparaba signOut(), y un
+  // parpadeo de conexión expulsaba al usuario. Solo se cierra sesión cuando
+  // Supabase respondió bien y el perfil de verdad no existe o está inactivo.
+  // maybeSingle() (no single()) para que "0 filas" llegue como data null,
+  // no mezclado con los errores de red.
   async function cargarPerfil(userId) {
     const { data, error } = await supabase
       .from('usuarios')
       .select('id, email, nombre_completo, rol, activo')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
-    if (error || !data || !data.activo) {
+    if (error) {
+      // Transitorio (red, timeout): se conserva la sesión y el perfil ya
+      // cargado si lo hay; App muestra "reintentar" si aún no había perfil.
+      setErrorPerfil(true)
+      return
+    }
+
+    if (!data || !data.activo) {
       setUsuario(null)
+      setErrorPerfil(false)
       await supabase.auth.signOut()
       return
     }
 
+    setErrorPerfil(false)
     setUsuario(data)
+  }
+
+  async function reintentarPerfil() {
+    const { data: { session: sesionActual } } = await supabase.auth.getSession()
+    if (sesionActual?.user) {
+      setCargando(true)
+      await cargarPerfil(sesionActual.user.id)
+      setCargando(false)
+    }
   }
 
   useEffect(() => {
@@ -68,6 +93,8 @@ export function AuthProvider({ children }) {
     usuario,
     rol: usuario?.rol ?? null,
     cargando,
+    errorPerfil,
+    reintentarPerfil,
     iniciarSesion,
     cerrarSesion,
   }

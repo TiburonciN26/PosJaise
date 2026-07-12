@@ -18,10 +18,31 @@ function CargandoPantalla() {
 }
 
 function App() {
-  const { cargando } = useAuth()
+  const { cargando, session, usuario, errorPerfil, reintentarPerfil } = useAuth()
 
   if (cargando) {
     return <CargandoPantalla />
+  }
+
+  // Hay sesión válida pero el perfil no se pudo leer (fallo de red): sin
+  // esto, RutaProtegida rebotaría al login aunque la sesión siga viva —
+  // pantalla de reintento en vez de pedir credenciales que ya son correctas.
+  if (session && !usuario && errorPerfil) {
+    return (
+      <main className="flex min-h-svh flex-col items-center justify-center gap-4 bg-bg p-6 text-center">
+        <p className="text-lg font-semibold text-ink">Sin conexión</p>
+        <p className="max-w-sm text-sm text-ink/60">
+          No se pudo cargar tu perfil. Revisa tu conexión a internet e intenta de nuevo.
+        </p>
+        <button
+          type="button"
+          onClick={reintentarPerfil}
+          className="rounded-lg bg-amber px-4 py-2 text-sm font-semibold text-bg"
+        >
+          Reintentar
+        </button>
+      </main>
+    )
   }
 
   return (

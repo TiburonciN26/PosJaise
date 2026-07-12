@@ -138,87 +138,34 @@ export default function Dashboard({ activo = true }) {
     setError(null)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
-    // venta_items va embebido en el select en vez de un .in('venta_id', [...])
-    // aparte — con un mes muy vendedor esa lista de UUIDs puede reventar el
-    // límite de longitud de la URL (mismo problema resuelto en Historial).
-    const { data: ventasActivas, error: errorVentas } = await supabase
-      .from('ventas')
-      .select('id, venta_items(tipo, cantidad, subtotal, producto_id)')
-      .eq('estado', 'ACTIVA')
-      .gte('fecha', desde.toISOString())
-      .lt('fecha', hasta.toISOString())
+    // Mes de referencia para los gastos: el mes donde empieza el rango
+    // evaluado (mismo criterio para los 4 filtros, y para el período
+    // "anterior" que calcula Estadísticas).
+    const { anio: anioReferencia, mes: mesReferenciaIndice } = anioMesEnLima(desde)
+
+    // A3 de la 3ª auditoría: antes traía todas las ventas del período con
+    // venta_items embebidos (+ una consulta a productos_vista por el costo)
+    // solo para sumar en el navegador. resumen_dashboard() hace esas sumas
+    // en Postgres y devuelve 6 escalares — nunca las filas crudas.
+    const [resumenRes, gastosRes] = await Promise.all([
+      supabase.rpc('resumen_dashboard', {
+        p_desde: desde.toISOString(),
+        p_hasta: hasta.toISOString(),
+      }),
+      supabase.from('gastos').select('monto').eq('mes', mesReferenciaIndice + 1).eq('anio', anioReferencia),
+    ])
 
     if (!vigente.actual) return
 
-    if (errorVentas) {
+    if (resumenRes.error) {
       setError('No se pudo cargar el dashboard.')
       setMetricas(METRICAS_VACIAS)
       setCargando(false)
       return
     }
 
-    const items = (ventasActivas ?? []).flatMap((venta) => venta.venta_items ?? [])
-
-    let ingresoProductos = 0
-    let ingresoServicios = 0
-    let costoProductos = 0
-    let productosVendidos = 0
-    let serviciosRealizados = 0
-
-    if (items.length > 0) {
-      // productos.costo no es visible por columna para "authenticated"; se pide
-      // por productos_vista (que sí lo expone) en vez de embeberlo en venta_items.
-      // Acá sí es seguro seguir usando .in(): son productos distintos, acotados
-      // por el tamaño del catálogo, no por la cantidad de ventas del período.
-      const idsProductos = [
-        ...new Set(
-          items
-            .filter((item) => item.tipo === 'PRODUCTO' && item.producto_id)
-            .map((item) => item.producto_id),
-        ),
-      ]
-
-      let costoPorProducto = new Map()
-      if (idsProductos.length > 0) {
-        const { data: productosData } = await supabase
-          .from('productos_vista')
-          .select('id, costo')
-          .in('id', idsProductos)
-        if (!vigente.actual) return
-        costoPorProducto = new Map((productosData ?? []).map((p) => [p.id, p.costo]))
-      }
-
-      for (const item of items) {
-        if (item.tipo === 'PRODUCTO') {
-          ingresoProductos += item.subtotal
-          productosVendidos += item.cantidad
-          costoProductos += (costoPorProducto.get(item.producto_id) ?? 0) * item.cantidad
-        } else {
-          ingresoServicios += item.subtotal
-          serviciosRealizados += item.cantidad
-        }
-      }
-
-      // Se redondea acá (una sola vez, al cerrar la suma) y no en cada paso
-      // del for — alcanza para que nunca se vea un residuo de float en
-      // pantalla, sin tener que reescribir el loop en céntimos enteros.
-      ingresoProductos = redondear2(ingresoProductos)
-      ingresoServicios = redondear2(ingresoServicios)
-      costoProductos = redondear2(costoProductos)
-    }
-
-    // Mes de referencia para los gastos: el mes donde empieza el rango
-    // evaluado (mismo criterio para los 4 filtros, y para el período
-    // "anterior" que calcula Estadísticas).
-    const { anio: anioReferencia, mes: mesReferenciaIndice } = anioMesEnLima(desde)
-
-    const { data: gastosData } = await supabase
-      .from('gastos')
-      .select('monto')
-      .eq('mes', mesReferenciaIndice + 1)
-      .eq('anio', anioReferencia)
-    if (!vigente.actual) return
-    const gastosMesTotal = sumarMontos(gastosData ?? [], (g) => g.monto)
+    const fila = resumenRes.data?.[0]
+    const gastosMesTotal = sumarMontos(gastosRes.data ?? [], (g) => g.monto)
 
     const gastosProrrateados = calcularGastosProrrateados({
       filtro,
@@ -230,12 +177,12 @@ export default function Dashboard({ activo = true }) {
     })
 
     setMetricas({
-      ingresoProductos,
-      ingresoServicios,
-      costoProductos,
-      productosVendidos,
-      serviciosRealizados,
-      cantidadVentas: (ventasActivas ?? []).length,
+      ingresoProductos: redondear2(fila?.ingreso_productos ?? 0),
+      ingresoServicios: redondear2(fila?.ingreso_servicios ?? 0),
+      costoProductos: redondear2(fila?.costo_productos ?? 0),
+      productosVendidos: fila?.productos_vendidos ?? 0,
+      serviciosRealizados: fila?.servicios_realizados ?? 0,
+      cantidadVentas: fila?.cantidad_ventas ?? 0,
       gastosMes: gastosProrrateados,
     })
     setCargando(false)
