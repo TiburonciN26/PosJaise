@@ -71,7 +71,7 @@ function CamposPersonalizado({ filtro, personalizado, onCambiarPersonalizado, te
     return (
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <div>
-          <label htmlFor={idDesde} className="mb-1 block text-xs text-ink/50">
+          <label htmlFor={idDesde} className="mb-1 block text-xs text-ink/60">
             Desde
           </label>
           <input
@@ -85,7 +85,7 @@ function CamposPersonalizado({ filtro, personalizado, onCambiarPersonalizado, te
           />
         </div>
         <div>
-          <label htmlFor={idHasta} className="mb-1 block text-xs text-ink/50">
+          <label htmlFor={idHasta} className="mb-1 block text-xs text-ink/60">
             Hasta
           </label>
           <input
@@ -104,7 +104,7 @@ function CamposPersonalizado({ filtro, personalizado, onCambiarPersonalizado, te
 
   return (
     <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-x-auto">
-      <label htmlFor={idDesde} className="shrink-0 text-xs text-ink/50">
+      <label htmlFor={idDesde} className="shrink-0 text-xs text-ink/60">
         Desde
       </label>
       <input
@@ -116,7 +116,7 @@ function CamposPersonalizado({ filtro, personalizado, onCambiarPersonalizado, te
         }
         className={`min-w-0 shrink rounded-lg border border-border bg-surface-2 px-2.5 py-2 font-mono text-sm text-ink outline-none ${clases.focusInput}`}
       />
-      <label htmlFor={idHasta} className="shrink-0 text-xs text-ink/50">
+      <label htmlFor={idHasta} className="shrink-0 text-xs text-ink/60">
         Hasta
       </label>
       <input

@@ -3,7 +3,7 @@ import { Pencil, Trash2, Plus, ArrowBigDown, Download } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
-import { formatearSoles } from '../lib/moneda.js'
+import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { aCSV, descargarArchivo } from '../lib/csv.js'
 import CampoColapsable from '../components/CampoColapsable.jsx'
@@ -186,8 +186,8 @@ export default function Gastos({ activo = true }) {
   const fijos = gastos.filter((g) => g.tipo === 'FIJO')
   const variables = gastos.filter((g) => g.tipo === 'VARIABLE')
 
-  const totalFijos = fijos.reduce((acumulado, g) => acumulado + g.monto, 0)
-  const totalVariables = variables.reduce((acumulado, g) => acumulado + g.monto, 0)
+  const totalFijos = sumarMontos(fijos, (g) => g.monto)
+  const totalVariables = sumarMontos(variables, (g) => g.monto)
 
   return (
     <div className="p-3 pb-6">

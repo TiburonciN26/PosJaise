@@ -237,7 +237,7 @@ export default function Inventario({ activo = true }) {
         <div
           className={`rounded-lg border border-border bg-surface px-3 py-2 ${!esAdmin ? 'col-span-2 md:col-span-4' : ''}`}
         >
-          <p className="text-xs text-ink/50">Productos</p>
+          <p className="text-xs text-ink/60">Productos</p>
           <div className="mt-1 grid grid-cols-3 gap-2 text-center">
             <button
               type="button"
@@ -369,7 +369,7 @@ export default function Inventario({ activo = true }) {
                 </div>
 
                 {!producto.activo && (
-                  <span className="mt-1 inline-block rounded border border-border-strong px-1.5 py-0.5 text-[10px] text-ink/50">
+                  <span className="mt-1 inline-block rounded border border-border-strong px-1.5 py-0.5 text-[10px] text-ink/60">
                     Inactivo
                   </span>
                 )}
@@ -408,7 +408,7 @@ export default function Inventario({ activo = true }) {
                       <p className="text-ink">
                         {producto.nombre}
                         {!producto.activo && (
-                          <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[10px] text-ink/50">
+                          <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[10px] text-ink/60">
                             Inactivo
                           </span>
                         )}

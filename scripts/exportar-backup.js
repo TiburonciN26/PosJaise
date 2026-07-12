@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { anioMesEnLima, iniciarMesLima } from '../src/lib/fechas.js'
+import { aCSV } from '../src/lib/csv.js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -32,16 +33,6 @@ function rangoMesAnteriorLima() {
     anio: anioMesAnterior,
     etiqueta: `${anioMesAnterior}-${String(mesAnteriorIndice + 1).padStart(2, '0')}`,
   }
-}
-
-function aCSV(filas, columnas) {
-  function escapar(valor) {
-    if (valor == null) return ''
-    const texto = String(valor)
-    return /[",\n]/.test(texto) ? `"${texto.replace(/"/g, '""')}"` : texto
-  }
-  const lineas = filas.map((fila) => columnas.map((c) => escapar(fila[c])).join(','))
-  return [columnas.join(','), ...lineas].join('\n')
 }
 
 async function main() {

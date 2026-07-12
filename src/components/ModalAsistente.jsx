@@ -30,7 +30,7 @@ function formularioDesdeAsistente(asistente) {
 
 function Etiqueta({ children, obligatorio, htmlFor }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/50">
+    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/60">
       {children}
       {obligatorio && <span className="text-red"> *</span>}
     </label>

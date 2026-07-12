@@ -5,7 +5,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
 import { useCarrito } from '../context/CarritoContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { formatearSoles } from '../lib/moneda.js'
+import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
 import InputBusqueda from '../components/InputBusqueda.jsx'
 import ModalBuscarServicio from '../components/ModalBuscarServicio.jsx'
@@ -20,29 +20,32 @@ const ModalEscanerCodigoBarras = lazy(() => import('../components/ModalEscanerCo
 // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
 const DURACION_SALIDA = 300
 
+// Rutas con BASE_URL (no "/icons/..." a secas): en GitHub Pages la app vive
+// bajo /PosJaise/ y Vite no reescribe strings dentro de JSX — con la ruta
+// absoluta estos íconos daban 404 en producción (A1 de la 3ª auditoría).
 const metodosPago = [
   {
     nombre: 'Efectivo',
     nombreCorto: 'Efect.',
-    icono: '/icons/efectivo.svg',
+    icono: `${import.meta.env.BASE_URL}icons/efectivo.svg`,
     clasesActivo: 'border-green bg-green/10 text-green',
   },
   {
     nombre: 'Tarjeta',
     nombreCorto: 'Tarjeta',
-    icono: '/icons/targueta.svg',
+    icono: `${import.meta.env.BASE_URL}icons/targueta.svg`,
     clasesActivo: 'border-blue bg-blue/10 text-blue',
   },
   {
     nombre: 'Transferencia',
     nombreCorto: 'Transf.',
-    icono: '/icons/transferencia.svg',
+    icono: `${import.meta.env.BASE_URL}icons/transferencia.svg`,
     clasesActivo: 'border-gray-300 bg-gray-300/10 text-gray-300',
   },
   {
     nombre: 'Yape',
     nombreCorto: 'Yape',
-    icono: '/icons/yape.svg',
+    icono: `${import.meta.env.BASE_URL}icons/yape.svg`,
     clasesActivo: 'border-purple-300 bg-purple-300/10 text-purple-300',
   },
 ]
@@ -200,6 +203,29 @@ export default function Ventas({ activo = true }) {
   const [ventaConfirmada, setVentaConfirmada] = useState(null)
   const [ventaParaImprimir, setVentaParaImprimir] = useState(null)
 
+  // setTimeout "sueltos" (fuera de un useEffect: quitar fila, cancelar
+  // venta, cerrar sugerencias al perder foco) que si el componente se
+  // desmonta antes de tiempo, quedan corriendo igual. Inofensivo en React
+  // 18+ (el setState de un componente desmontado ya no hace nada), pero se
+  // limpian igual — es la forma correcta de hacerlo.
+  const temporizadoresRef = useRef(new Set())
+
+  useEffect(() => {
+    const temporizadores = temporizadoresRef.current
+    return () => {
+      temporizadores.forEach((id) => clearTimeout(id))
+      temporizadores.clear()
+    }
+  }, [])
+
+  function conTemporizador(fn, ms) {
+    const id = setTimeout(() => {
+      temporizadoresRef.current.delete(id)
+      fn()
+    }, ms)
+    temporizadoresRef.current.add(id)
+  }
+
   // Posición del panel de total/pago/confirmar congelada al montar (antes de
   // que se pueda abrir el teclado). Al abrir el teclado del buscador, el
   // navegador encoge el viewport y un position:fixed con bottom:0 "sigue" ese
@@ -264,6 +290,14 @@ export default function Ventas({ activo = true }) {
   const [modalEscanerAbierto, setModalEscanerAbierto] = useState(false)
   const primeraCargaCatalogoHecha = useRef(false)
 
+  // M5 de la 2ª auditoría: decisión explícita, no por omisión — Ventas es
+  // la única lista que NO pagina (a diferencia de Historial/Inventario/
+  // Clientes/Auditoría, M1/M2). El escáner de código de barras y el buscador
+  // de productos/servicios/clientes necesitan matchear en memoria sin ida y
+  // vuelta al servidor por cada tecla o escaneo, y hoy el catálogo es chico.
+  // Si productos + servicios + clientes llegan a varios miles de filas
+  // combinadas, esto hay que revisarlo (ej. paginar clientes aparte, que es
+  // el más numeroso y el menos usado en el flujo de venta en sí).
   async function cargarCatalogo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargandoCatalogo(true)
     const [productosRes, serviciosRes, clientesRes] = await Promise.all([
@@ -318,13 +352,10 @@ export default function Ventas({ activo = true }) {
         )
       : []
 
-  const total = carrito.reduce(
-    (acumulado, item) => acumulado + item.cantidad * item.precioUnitario,
-    0,
-  )
+  const total = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
   const totalMostrado = useContadorAnimado(total)
   const recibidoNumerico = parseFloat(montoRecibido) || 0
-  const vuelto = recibidoNumerico - total
+  const vuelto = redondear2(recibidoNumerico - total)
 
   const {
     soportado: vozSoportada,
@@ -439,7 +470,7 @@ export default function Ventas({ activo = true }) {
 
   function quitarItem(id) {
     setIdsSaliendo((anterior) => new Set(anterior).add(id))
-    setTimeout(() => {
+    conTemporizador(() => {
       setCarrito((anterior) => anterior.filter((item) => item.id !== id))
       setIdsSaliendo((anterior) => {
         const siguiente = new Set(anterior)
@@ -457,7 +488,7 @@ export default function Ventas({ activo = true }) {
   function confirmarCancelarVenta() {
     setConfirmandoCancelar(false)
     setIdsSaliendo(new Set(carrito.map((item) => item.id)))
-    setTimeout(() => {
+    conTemporizador(() => {
       setCarrito([])
       setMontoRecibido('')
       setMetodoPago(null)
@@ -597,7 +628,7 @@ export default function Ventas({ activo = true }) {
             }}
             onKeyDown={manejarKeyDown}
             onFocus={() => busqueda && setMostrarSugerencias(true)}
-            onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}
+            onBlur={() => conTemporizador(() => setMostrarSugerencias(false), 150)}
             textoPlaceholder={
               cargandoCatalogo ? 'Cargando catálogo...' : 'Buscar producto o escanear código de barras...'
             }
@@ -888,7 +919,7 @@ export default function Ventas({ activo = true }) {
         <Suspense
           fallback={
             <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/80">
-              <p className="font-mono text-sm text-ink/50">Cargando cámara...</p>
+              <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
             </div>
           }
         >

@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
-import { formatearSoles } from '../lib/moneda.js'
+import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
@@ -228,10 +228,7 @@ export default function MiPanel({ activo = true }) {
     : registros
 
   const registrosActivos = registrosFiltrados.filter((r) => r.estado !== 'CANCELADO')
-  const totalPeriodo = registrosActivos.reduce(
-    (acumulado, r) => acumulado + montoDeRegistro(r, esAdmin),
-    0,
-  )
+  const totalPeriodo = sumarMontos(registrosActivos, (r) => montoDeRegistro(r, esAdmin))
   const grupos = agruparPorDia(registrosFiltrados)
 
   return (
@@ -312,10 +309,7 @@ export default function MiPanel({ activo = true }) {
           {grupos.map((grupo) => {
             const abierto = diasAbiertos.has(grupo.clave)
             const registrosActivosDia = grupo.registros.filter((r) => r.estado !== 'CANCELADO')
-            const totalDia = registrosActivosDia.reduce(
-              (acumulado, r) => acumulado + montoDeRegistro(r, esAdmin),
-              0,
-            )
+            const totalDia = sumarMontos(registrosActivosDia, (r) => montoDeRegistro(r, esAdmin))
 
             return (
               <div key={grupo.clave} className="rounded-lg border border-border bg-surface">
@@ -451,7 +445,7 @@ export default function MiPanel({ activo = true }) {
                           </div>
 
                           {registro.nota && (
-                            <p className="mt-1.5 truncate text-xs text-ink/50">{registro.nota}</p>
+                            <p className="mt-1.5 truncate text-xs text-ink/60">{registro.nota}</p>
                           )}
                         </div>
                       )

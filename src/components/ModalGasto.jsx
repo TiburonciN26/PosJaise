@@ -40,7 +40,7 @@ function formularioDesdeGasto(gasto) {
 
 function Etiqueta({ children, obligatorio }) {
   return (
-    <label className="mb-1 block text-xs text-ink/50">
+    <label className="mb-1 block text-xs text-ink/60">
       {children}
       {obligatorio && <span className="text-red"> *</span>}
     </label>
@@ -187,7 +187,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
                 value={formulario.mes}
                 onChange={(evento) => actualizarCampo('mes', evento.target.value)}
                 disabled={periodoBloqueado}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300 disabled:cursor-not-allowed disabled:text-ink/50"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300 disabled:cursor-not-allowed disabled:text-ink/60"
               >
                 {MESES.map((nombreMes, indice) => (
                   <option key={nombreMes} value={indice + 1}>
@@ -204,7 +204,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
                 value={formulario.anio}
                 onChange={(evento) => actualizarCampo('anio', evento.target.value)}
                 disabled={periodoBloqueado}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:cursor-not-allowed disabled:text-ink/50"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:cursor-not-allowed disabled:text-ink/60"
               />
             </div>
           </div>

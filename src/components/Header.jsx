@@ -25,7 +25,7 @@ export default function Header({ menuAbierto, onToggleMenu }) {
           </button>
 
           <div className="hidden items-center gap-3 lg:flex">
-            <img src="/icon-512.png" alt="" className="h-6 w-6 rounded-lg object-cover" />
+            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="" className="h-6 w-6 rounded-lg object-cover" />
             <span className="font-semibold text-ink">Pos Jaise</span>
           </div>
 
@@ -38,7 +38,7 @@ export default function Header({ menuAbierto, onToggleMenu }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 lg:hidden">
-          <img src="/icon-512.png" alt="" className="h-6 w-6 rounded-lg object-cover" />
+          <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="" className="h-6 w-6 rounded-lg object-cover" />
           <span className="font-semibold text-ink">Pos Jaise</span>
         </div>
 

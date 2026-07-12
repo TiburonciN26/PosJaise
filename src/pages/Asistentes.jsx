@@ -83,7 +83,7 @@ function completitud(asistente) {
 function coloresCompletitud(porcentaje) {
   if (porcentaje === 100) return { barra: 'bg-green', texto: 'text-green' }
   if (porcentaje >= 50) return { barra: 'bg-purple-300', texto: 'text-purple-300' }
-  return { barra: 'bg-ink/30', texto: 'text-ink/50' }
+  return { barra: 'bg-ink/30', texto: 'text-ink/60' }
 }
 
 function DatoAsistente({ icono: Icono, children, mono }) {
@@ -97,7 +97,7 @@ function DatoAsistente({ icono: Icono, children, mono }) {
 
 function BarraCompletitud({ porcentaje, colores }) {
   return (
-    <div className="flex items-center gap-2 px-3 pb-3 text-xs text-ink/50">
+    <div className="flex items-center gap-2 px-3 pb-3 text-xs text-ink/60">
       <span className="shrink-0">Datos completos</span>
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
         <div

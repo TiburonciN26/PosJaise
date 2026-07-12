@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUp } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { anioMesEnLima, calcularRango, diaSemanaLima, formatearFechaISO, sumarDias } from '../lib/fechas.js'
-import { formatearSoles } from '../lib/moneda.js'
+import { anioMesEnLima, calcularRango, formatearFechaISO } from '../lib/fechas.js'
+import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
+import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/finanzas.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 
@@ -14,42 +15,6 @@ const METRICAS_VACIAS = {
   serviciosRealizados: 0,
   cantidadVentas: 0,
   gastosMes: 0,
-}
-
-function diasHabilesDelMes(anio, mesIndiceCero) {
-  const diasEnMes = new Date(anio, mesIndiceCero + 1, 0).getDate()
-  let habiles = 0
-  for (let dia = 1; dia <= diasEnMes; dia++) {
-    if (new Date(anio, mesIndiceCero, dia).getDay() !== 0) habiles++
-  }
-  return habiles
-}
-
-function diasHabilesEnRango(desde, hastaExclusiva) {
-  let habiles = 0
-  for (let cursor = new Date(desde); cursor < hastaExclusiva; cursor = sumarDias(cursor, 1)) {
-    if (diaSemanaLima(cursor) !== 0) habiles++
-  }
-  return habiles
-}
-
-// Los gastos fijos + variables del mes se prorratean para que Hoy/Semana/
-// Personalizado también carguen su parte proporcional (antes solo se restaban
-// en "Este mes", lo que inflaba la ganancia mostrada en los demás filtros).
-// Los domingos (negocio cerrado) no cuentan como día hábil al prorratear.
-function calcularGastosProrrateados({ filtro, gastosMesTotal, anio, mes, desde, hasta }) {
-  if (filtro === 'mes') return gastosMesTotal
-  if (filtro === 'semana') return gastosMesTotal / 4
-
-  const habilesDelMes = diasHabilesDelMes(anio, mes)
-  const gastoDiario = habilesDelMes > 0 ? gastosMesTotal / habilesDelMes : 0
-
-  if (filtro === 'personalizado') {
-    return gastoDiario * diasHabilesEnRango(desde, hasta)
-  }
-
-  // 'hoy'
-  return diaSemanaLima(desde) === 0 ? 0 : gastoDiario
 }
 
 const ETIQUETA_GASTOS = {
@@ -125,7 +90,7 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
         >
           Punto de equilibrio
         </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/50">
+        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/60">
           {superado && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
           <TextoBrillante activo={llegoAlTope} color="rgba(240,237,230,0.5)">
             {ingresoBruto.toFixed(2)} - {meta.toFixed(2)}
@@ -145,7 +110,7 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
         <TextoBrillante activo={llegoAlTope} color="rgba(240,237,230,0.6)" className="text-xs">
           {ETIQUETA_COBERTURA[filtro]}
         </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/50">
+        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/60">
           {porcentaje > 100 && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
           <TextoBrillante activo={llegoAlTope} color="rgba(240,237,230,0.5)">
             {Math.round(porcentaje)}% - 100%
@@ -233,12 +198,19 @@ export default function Dashboard({ activo = true }) {
           serviciosRealizados += item.cantidad
         }
       }
+
+      // Se redondea acá (una sola vez, al cerrar la suma) y no en cada paso
+      // del for — alcanza para que nunca se vea un residuo de float en
+      // pantalla, sin tener que reescribir el loop en céntimos enteros.
+      ingresoProductos = redondear2(ingresoProductos)
+      ingresoServicios = redondear2(ingresoServicios)
+      costoProductos = redondear2(costoProductos)
     }
 
-    // Mes de referencia para los gastos: el mes actual para Hoy/Semana/Mes,
-    // o el mes donde empieza el rango para Personalizado.
-    const mesReferencia = filtro === 'personalizado' ? desde : new Date()
-    const { anio: anioReferencia, mes: mesReferenciaIndice } = anioMesEnLima(mesReferencia)
+    // Mes de referencia para los gastos: el mes donde empieza el rango
+    // evaluado (mismo criterio para los 4 filtros, y para el período
+    // "anterior" que calcula Estadísticas).
+    const { anio: anioReferencia, mes: mesReferenciaIndice } = anioMesEnLima(desde)
 
     const { data: gastosData } = await supabase
       .from('gastos')
@@ -246,7 +218,7 @@ export default function Dashboard({ activo = true }) {
       .eq('mes', mesReferenciaIndice + 1)
       .eq('anio', anioReferencia)
     if (!vigente.actual) return
-    const gastosMesTotal = (gastosData ?? []).reduce((acumulado, g) => acumulado + g.monto, 0)
+    const gastosMesTotal = sumarMontos(gastosData ?? [], (g) => g.monto)
 
     const gastosProrrateados = calcularGastosProrrateados({
       filtro,
@@ -283,16 +255,12 @@ export default function Dashboard({ activo = true }) {
   const ingresoBruto = metricas.ingresoProductos + metricas.ingresoServicios
   const gananciaProductos = metricas.ingresoProductos - metricas.costoProductos
 
-  // 1. Ingreso bruto → 2. −10% gastos operativos (estimado, sobre el ingreso bruto) →
-  // 3. −Costo de productos → 4. −Gastos reales del mes (solo si filtro = "mes") = Utilidad neta →
-  // 5. −10% diezmo (sobre la utilidad neta, en cascada) = Ganancia final.
-  const gastosOperativos = ingresoBruto * 0.1
-  const saldoTrasOperativos = ingresoBruto - gastosOperativos
-  const saldoTrasCosto = saldoTrasOperativos - metricas.costoProductos
-  const utilidadNeta = saldoTrasCosto - metricas.gastosMes
-  const montoDiezmo = utilidadNeta * 0.1
-  const gananciaFinal = utilidadNeta - montoDiezmo
-  const metaEquilibrio = gastosOperativos + metricas.costoProductos + metricas.gastosMes
+  const { gastosOperativos, utilidadNeta, montoDiezmo, gananciaFinal, metaEquilibrio } =
+    calcularCascadaGanancia({
+      ingresoBruto,
+      costoProductos: metricas.costoProductos,
+      gastosMes: metricas.gastosMes,
+    })
 
   const pasosPrevios = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto },

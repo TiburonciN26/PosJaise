@@ -50,14 +50,17 @@ function terminoSeguro(texto) {
   return texto.replace(/[%,()]/g, '')
 }
 
-function construirConsultaClientes({ busqueda, orden }) {
-  let consulta = supabase.from('clientes').select(SELECT_CLIENTES)
-
+// Compartido entre construirConsultaClientes (trae filas) y el conteo
+// del header (B3 de la 2ª auditoría: antes usaba el total global de la
+// tabla incluso con una búsqueda activa — "Clientes: 200" con 3 resultados
+// visibles confundía).
+function aplicarFiltroBusqueda(consulta, busqueda) {
   const termino = terminoSeguro(busqueda.trim())
-  if (termino) {
-    consulta = consulta.or(`nombre.ilike.%${termino}%,telefono.ilike.%${termino}%`)
-  }
+  return termino ? consulta.or(`nombre.ilike.%${termino}%,telefono.ilike.%${termino}%`) : consulta
+}
 
+function construirConsultaClientes({ busqueda, orden }) {
+  const consulta = aplicarFiltroBusqueda(supabase.from('clientes').select(SELECT_CLIENTES), busqueda)
   return consulta.order('nombre', { ascending: orden !== 'nombre-desc' })
 }
 
@@ -90,7 +93,7 @@ function completitud(cliente) {
 function coloresCompletitud(porcentaje) {
   if (porcentaje === 100) return { barra: 'bg-green', texto: 'text-green' }
   if (porcentaje >= 50) return { barra: 'bg-purple-300', texto: 'text-purple-300' }
-  return { barra: 'bg-ink/30', texto: 'text-ink/50' }
+  return { barra: 'bg-ink/30', texto: 'text-ink/60' }
 }
 
 function DatoCliente({ icono: Icono, children, mono }) {
@@ -104,7 +107,7 @@ function DatoCliente({ icono: Icono, children, mono }) {
 
 function BarraCompletitud({ porcentaje, colores }) {
   return (
-    <div className="flex items-center gap-2 px-3 pb-3 text-xs text-ink/50">
+    <div className="flex items-center gap-2 px-3 pb-3 text-xs text-ink/60">
       <span className="shrink-0">Datos completos</span>
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
         <div
@@ -143,7 +146,10 @@ export default function Clientes({ activo = true }) {
 
     const [clientesRes, totalRes] = await Promise.all([
       construirConsultaClientes(filtros).range(0, TAMANO_PAGINA - 1),
-      supabase.from('clientes').select('id', { count: 'exact', head: true }),
+      aplicarFiltroBusqueda(
+        supabase.from('clientes').select('id', { count: 'exact', head: true }),
+        busquedaDebounced,
+      ),
     ])
 
     if (!vigente.actual) return

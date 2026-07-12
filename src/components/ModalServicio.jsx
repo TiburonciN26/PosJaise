@@ -26,7 +26,7 @@ function formularioDesdeServicio(servicio) {
 
 function Etiqueta({ children, obligatorio }) {
   return (
-    <label className="mb-1 block text-xs text-ink/50">
+    <label className="mb-1 block text-xs text-ink/60">
       {children}
       {obligatorio && <span className="text-red"> *</span>}
     </label>

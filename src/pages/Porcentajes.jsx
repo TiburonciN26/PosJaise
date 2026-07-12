@@ -43,7 +43,7 @@ function coloresIndicador(asignados, total) {
   if (total === 0) return { pill: 'bg-surface-2 text-ink/60' }
   if (asignados === total) return { pill: 'bg-green/15 text-green' }
   if (asignados / total >= 0.5) return { pill: 'bg-purple-300/15 text-purple-300' }
-  return { pill: 'bg-surface-2 text-ink/50' }
+  return { pill: 'bg-surface-2 text-ink/60' }
 }
 
 function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGuardar }) {

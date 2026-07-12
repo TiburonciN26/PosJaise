@@ -1,11 +1,12 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Download } from 'lucide-react'
+import { ArrowBigDown, Download, Filter } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { calcularRango, formatearFechaISO, sumarDias } from '../lib/fechas.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { useDebounce } from '../hooks/useDebounce.js'
 import { aCSV, descargarArchivo } from '../lib/csv.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
@@ -17,31 +18,35 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 const OPCIONES_ORDEN = [
   { id: 'fecha-desc', label: 'Más recientes primero' },
   { id: 'fecha-asc', label: 'Más antiguas primero' },
-  { id: 'total-desc', label: 'Monto mayor ' },
-  { id: 'total-asc', label: 'Monto menor ' },
-  { id: 'metodo-efectivo', label: ' Efectivo', separador: true },
-  { id: 'metodo-tarjeta', label: ' Tarjeta' },
-  { id: 'metodo-transferencia', label: ' Transferencia' },
-  { id: 'metodo-yape', label: ' Yape' },
+  { id: 'total-desc', label: 'Monto mayor' },
+  { id: 'total-asc', label: 'Monto menor' },
 ]
 
-const METODO_POR_ID_ORDEN = {
-  'metodo-efectivo': 'Efectivo',
-  'metodo-tarjeta': 'Tarjeta',
-  'metodo-transferencia': 'Transferencia',
-  'metodo-yape': 'Yape',
-}
+const OPCIONES_METODO = [
+  { id: 'todos', label: 'Todos los métodos' },
+  { id: 'Efectivo', label: 'Efectivo' },
+  { id: 'Tarjeta', label: 'Tarjeta' },
+  { id: 'Transferencia', label: 'Transferencia' },
+  { id: 'Yape', label: 'Yape' },
+]
 
 const TAMANO_PAGINA = 50
 
 const SELECT_VENTAS =
   'id, codigo, fecha, estado, total, metodo_pago, clientes(nombre), venta_items(tipo, cantidad)'
 
+// Select propio para exportarCSV(): la lista paginada no necesita
+// monto_recibido/vendedor_id ni los detalles de cada item, pero el CSV sí
+// declara esas columnas — reutilizar SELECT_VENTAS ahí las dejaba vacías sin
+// ningún error visible (C1 de la 2ª auditoría). "id"/"cliente_id" no hacen
+// falta: el código ya identifica la venta y el cliente va embebido por nombre.
+const SELECT_VENTAS_EXPORT =
+  'codigo, fecha, estado, total, metodo_pago, monto_recibido, vendedor_id, clientes(nombre), venta_items(tipo, nombre, cantidad, precio_unitario, subtotal)'
+
 const RESUMEN_VACIO = { cantidadVentas: 0, totalRecaudado: 0, productosVendidos: 0 }
 
-function filtrarPorMetodo(ventas, orden) {
-  const metodo = METODO_POR_ID_ORDEN[orden]
-  return metodo ? ventas.filter((venta) => venta.metodo_pago === metodo) : ventas
+function filtrarPorMetodo(ventas, metodo) {
+  return metodo === 'todos' ? ventas : ventas.filter((venta) => venta.metodo_pago === metodo)
 }
 
 function ordenarVentas(ventas, orden) {
@@ -110,11 +115,11 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
   return (
     <div className="px-[17px] pb-[17px] pt-[5px]">
-      <p className="text-xs text-ink/50">
+      <p className="text-xs text-ink/60">
         Vendedor: <span className="text-ink/80">{vendedorNombre ?? '—'}</span>
       </p>
       {nombreCliente && (
-        <p className="mt-0.5 text-xs text-ink/50">
+        <p className="mt-0.5 text-xs text-ink/60">
           Cliente: <span className="text-ink/80">{nombreCliente}</span>
         </p>
       )}
@@ -234,6 +239,7 @@ export default function Historial({ activo = true }) {
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('fecha-desc')
+  const [filtroMetodo, setFiltroMetodo] = useState('todos')
 
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [detalles, setDetalles] = useState({})
@@ -365,11 +371,18 @@ export default function Historial({ activo = true }) {
   }
 
   const filtroEfectivo = esAdmin ? filtro : 'hoy'
+  // Debounced: filtroActivo decide si se pagina o se trae el período
+  // completo (ver comentario abajo), así que el primer carácter no puede
+  // disparar ese refetch pesado de inmediato — solo tras una pausa al
+  // escribir (mismo patrón que Inventario/Clientes). El filtrado en pantalla
+  // de `ventasFiltradas` sigue usando `busqueda` sin debounce: se siente
+  // instantáneo sobre lo que ya está cargado mientras se espera el refetch.
+  const busquedaDebounced = useDebounce(busqueda, 300)
   // Con búsqueda de texto o filtro por método activos, paginar rompería el
   // resultado (podría "no encontrar" algo que existe más adelante, sin
   // cargar). En esos casos se trae todo el período (ya acotado por la fecha)
   // en vez de paginar; si no hay ningún filtro activo, sí se pagina de verdad.
-  const filtroActivo = Boolean(busqueda.trim()) || Boolean(METODO_POR_ID_ORDEN[orden])
+  const filtroActivo = Boolean(busquedaDebounced.trim()) || filtroMetodo !== 'todos'
 
   async function cargarVentas(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -455,43 +468,76 @@ export default function Historial({ activo = true }) {
 
     const { data, error: errorExport } = await supabase
       .from('ventas')
-      .select(SELECT_VENTAS)
+      .select(SELECT_VENTAS_EXPORT)
       .gte('fecha', desde.toISOString())
       .lt('fecha', hasta.toISOString())
       .order('fecha', { ascending: false })
 
-    setExportando(false)
-
     if (errorExport) {
+      setExportando(false)
       mostrarToast('No se pudo exportar el historial.', 'error')
       return
     }
 
     const ventasExport = data ?? []
-    const itemsExport = ventasExport.flatMap((venta) =>
-      (venta.venta_items ?? []).map((item) => ({ venta_codigo: venta.codigo, ...item })),
+
+    // vendedor_id no viene embebido (mismo motivo que cargarDetalleVenta):
+    // se resuelve aparte para no dejar un UUID en crudo en el CSV.
+    const idsVendedores = [...new Set(ventasExport.map((v) => v.vendedor_id).filter(Boolean))]
+    let nombrePorVendedor = new Map()
+    if (idsVendedores.length > 0) {
+      const { data: usuariosData } = await supabase
+        .from('usuarios')
+        .select('id, nombre_completo')
+        .in('id', idsVendedores)
+      nombrePorVendedor = new Map((usuariosData ?? []).map((u) => [u.id, u.nombre_completo]))
+    }
+
+    setExportando(false)
+
+    // Un solo archivo, una fila por producto/servicio vendido (los datos de
+    // la venta se repiten en cada fila) — antes eran 2 archivos separados
+    // (ventas.csv + venta_items.csv), y el segundo download quedaba
+    // bloqueado por el navegador salvo que el usuario aprobara "descargas
+    // múltiples" (M6 de la 2ª auditoría).
+    const filas = ventasExport.flatMap((venta) =>
+      (venta.venta_items ?? []).map((item) => ({
+        codigo: venta.codigo,
+        fecha: venta.fecha,
+        estado: venta.estado,
+        metodo_pago: venta.metodo_pago,
+        monto_recibido: venta.monto_recibido,
+        vendedor: nombrePorVendedor.get(venta.vendedor_id) ?? '',
+        cliente: nombreClienteDeVenta(venta),
+        total_venta: venta.total,
+        tipo_item: item.tipo,
+        producto_servicio: item.nombre,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio_unitario,
+        subtotal_item: item.subtotal,
+      })),
     )
 
     const sufijo = `${formatearFechaISO(desde)}_a_${formatearFechaISO(sumarDias(hasta, -1))}`
     descargarArchivo(
       `ventas_${sufijo}.csv`,
-      aCSV(ventasExport, [
-        'id',
+      aCSV(filas, [
         'codigo',
         'fecha',
         'estado',
-        'total',
         'metodo_pago',
         'monto_recibido',
-        'vendedor_id',
-        'cliente_id',
+        'vendedor',
+        'cliente',
+        'total_venta',
+        'tipo_item',
+        'producto_servicio',
+        'cantidad',
+        'precio_unitario',
+        'subtotal_item',
       ]),
     )
-    descargarArchivo(
-      `venta_items_${sufijo}.csv`,
-      aCSV(itemsExport, ['venta_codigo', 'tipo', 'nombre', 'cantidad', 'precio_unitario', 'subtotal']),
-    )
-    mostrarToast(`Exportadas ${ventasExport.length} ventas.`, 'exito')
+    mostrarToast(`Exportadas ${ventasExport.length} ventas (${filas.length} filas).`, 'exito')
   }
 
   useEffect(() => {
@@ -514,7 +560,7 @@ export default function Historial({ activo = true }) {
         )
       })
     : ventas
-  const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, orden), orden)
+  const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, filtroMetodo), orden)
 
   return (
     <div className="p-3 pb-6">
@@ -527,6 +573,14 @@ export default function Historial({ activo = true }) {
           tema="amber"
         />
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
+        <SelectorOrden
+          opciones={OPCIONES_METODO}
+          valor={filtroMetodo}
+          onCambiar={setFiltroMetodo}
+          tema="amber"
+          icono={Filter}
+          ariaLabel="Filtrar por método de pago"
+        />
 
         {esAdmin && (
           <button
@@ -580,7 +634,7 @@ export default function Historial({ activo = true }) {
             tema="amber"
           />
         ) : (
-          <p className="font-mono text-xs text-ink/50">Mostrando ventas de hoy</p>
+          <p className="font-mono text-xs text-ink/60">Mostrando ventas de hoy</p>
         )}
       </div>
 
@@ -663,13 +717,19 @@ export default function Historial({ activo = true }) {
                   </div>
 
                   <CampoColapsable abierto={abierto}>
-                    <DetalleVenta
-                      estado={infoDetalle}
-                      onImprimir={() => imprimirVenta(venta.id)}
-                      onIniciarAnular={() => iniciarAnular(venta.id)}
-                      onCancelarAnular={() => cancelarAnular(venta.id)}
-                      onConfirmarAnular={() => confirmarAnular(venta.id)}
-                    />
+                    {/* Solo se monta el detalle de filas que se abrieron
+                        alguna vez — no las 50 de la página, evita duplicar
+                        nodos DOM (tabla de items + botones) por cada fila
+                        que nadie llegó a expandir. */}
+                    {(abierto || detalles[venta.id]) && (
+                      <DetalleVenta
+                        estado={infoDetalle}
+                        onImprimir={() => imprimirVenta(venta.id)}
+                        onIniciarAnular={() => iniciarAnular(venta.id)}
+                        onCancelarAnular={() => cancelarAnular(venta.id)}
+                        onConfirmarAnular={() => confirmarAnular(venta.id)}
+                      />
+                    )}
                   </CampoColapsable>
                 </div>
               )
@@ -760,13 +820,15 @@ export default function Historial({ activo = true }) {
                       <tr className="bg-surface">
                         <td colSpan={7} className="p-0">
                           <CampoColapsable abierto={abierto}>
-                            <DetalleVenta
-                              estado={infoDetalle}
-                              onImprimir={() => imprimirVenta(venta.id)}
-                              onIniciarAnular={() => iniciarAnular(venta.id)}
-                              onCancelarAnular={() => cancelarAnular(venta.id)}
-                              onConfirmarAnular={() => confirmarAnular(venta.id)}
-                            />
+                            {(abierto || detalles[venta.id]) && (
+                              <DetalleVenta
+                                estado={infoDetalle}
+                                onImprimir={() => imprimirVenta(venta.id)}
+                                onIniciarAnular={() => iniciarAnular(venta.id)}
+                                onCancelarAnular={() => cancelarAnular(venta.id)}
+                                onConfirmarAnular={() => confirmarAnular(venta.id)}
+                              />
+                            )}
                           </CampoColapsable>
                         </td>
                       </tr>

@@ -90,6 +90,26 @@ function formatearCampo(campo) {
   return campo.replaceAll('_', ' ')
 }
 
+// Mapea una fila del RPC auditoria_paginada() (que ya viene fusionada y
+// ordenada por fecha desde Postgres) a la misma forma de "entrada" que antes
+// armaban deAuditoria/deStock a mano en el cliente.
+function mapearEntradaRpc(fila) {
+  const prefijo = fila.origen === 'stock' ? 's' : 'a'
+  return {
+    id: `${prefijo}-${fila.id}`,
+    fecha: fila.fecha,
+    usuarioEmail: fila.usuario_email,
+    tabla: fila.tabla,
+    registro_id: fila.registro_id,
+    descripcion: fila.descripcion,
+    campo: fila.campo,
+    valor_anterior: fila.valor_anterior,
+    valor_nuevo: fila.valor_nuevo,
+    cantidad_agregada: fila.cantidad_agregada,
+    nota: fila.nota,
+  }
+}
+
 function descripcionEntrada(entrada) {
   const accion = accionDe(entrada)
   const tablaLabel = TABLA_LABELS[entrada.tabla] ?? entrada.tabla
@@ -114,76 +134,137 @@ export default function Auditoria({ activo = true }) {
   })
 
   const [entradas, setEntradas] = useState([])
+  const [hayMas, setHayMas] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [tablaFiltro, setTablaFiltro] = useState(OPCION_TODAS_TABLAS)
-  const [cantidadVisible, setCantidadVisible] = useState(TAMANO_PAGINA)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
+
+  // Con búsqueda de texto o filtro de tabla activos, paginar rompería el
+  // resultado (podría "no encontrar" algo que existe más adelante sin
+  // cargarlo) — se trae el período completo, ya acotado por fecha (mismo
+  // criterio que Historial). Sin filtros, sí se pagina de verdad en servidor.
+  const filtroActivo = Boolean(busqueda.trim()) || tablaFiltro !== OPCION_TODAS_TABLAS
 
   async function cargarEntradas(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     setError(null)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
-    const [resAuditoria, resStock] = await Promise.all([
-      supabase
-        .from('auditoria')
-        .select('id, fecha, usuario_email, tabla, registro_id, descripcion, campo, valor_anterior, valor_nuevo')
-        .gte('fecha', desde.toISOString())
-        .lt('fecha', hasta.toISOString())
-        .order('fecha', { ascending: false }),
-      supabase
-        .from('movimientos_stock')
-        .select(
-          'id, fecha, cantidad_agregada, stock_anterior, stock_nuevo, nota, productos(nombre), usuarios(email)',
-        )
-        .gte('fecha', desde.toISOString())
-        .lt('fecha', hasta.toISOString())
-        .order('fecha', { ascending: false }),
-    ])
+    if (filtroActivo) {
+      const [resAuditoria, resStock] = await Promise.all([
+        supabase
+          .from('auditoria')
+          .select('id, fecha, usuario_email, tabla, registro_id, descripcion, campo, valor_anterior, valor_nuevo')
+          .gte('fecha', desde.toISOString())
+          .lt('fecha', hasta.toISOString())
+          .order('fecha', { ascending: false }),
+        supabase
+          .from('movimientos_stock')
+          .select(
+            'id, fecha, cantidad_agregada, stock_anterior, stock_nuevo, nota, productos(nombre), usuarios(email)',
+          )
+          .gte('fecha', desde.toISOString())
+          .lt('fecha', hasta.toISOString())
+          .order('fecha', { ascending: false }),
+      ])
 
-    if (!vigente.actual) return
+      if (!vigente.actual) return
 
-    if (resAuditoria.error || resStock.error) {
-      setError('No se pudo cargar la auditoría.')
-      setEntradas([])
+      if (resAuditoria.error || resStock.error) {
+        setError('No se pudo cargar la auditoría.')
+        setEntradas([])
+        setHayMas(false)
+        setCargando(false)
+        return
+      }
+
+      const deAuditoria = (resAuditoria.data ?? []).map((fila) => ({
+        id: `a-${fila.id}`,
+        fecha: fila.fecha,
+        usuarioEmail: fila.usuario_email,
+        tabla: fila.tabla,
+        registro_id: fila.registro_id,
+        descripcion: fila.descripcion,
+        campo: fila.campo,
+        valor_anterior: fila.valor_anterior,
+        valor_nuevo: fila.valor_nuevo,
+      }))
+
+      const deStock = (resStock.data ?? []).map((fila) => ({
+        id: `s-${fila.id}`,
+        fecha: fila.fecha,
+        usuarioEmail: fila.usuarios?.email ?? null,
+        tabla: 'stock',
+        descripcion: fila.productos?.nombre ?? 'Producto eliminado',
+        cantidad_agregada: fila.cantidad_agregada,
+        valor_anterior: fila.stock_anterior,
+        valor_nuevo: fila.stock_nuevo,
+        nota: fila.nota,
+      }))
+
+      const combinadas = [...deAuditoria, ...deStock].sort(
+        (a, b) => new Date(b.fecha) - new Date(a.fecha),
+      )
+
+      setEntradas(combinadas)
+      setHayMas(false)
       setCargando(false)
       return
     }
 
-    const deAuditoria = (resAuditoria.data ?? []).map((fila) => ({
-      id: `a-${fila.id}`,
-      fecha: fila.fecha,
-      usuarioEmail: fila.usuario_email,
-      tabla: fila.tabla,
-      registro_id: fila.registro_id,
-      descripcion: fila.descripcion,
-      campo: fila.campo,
-      valor_anterior: fila.valor_anterior,
-      valor_nuevo: fila.valor_nuevo,
-    }))
+    // Sin filtros: el RPC ya trae auditoria + movimientos_stock fusionados,
+    // ordenados y recortados a una sola página — no un .range() por tabla
+    // (no alcanzaría para saber cuántas filas de cada una caen en la
+    // página 1 sin conocer la otra).
+    const { data, error: errorPagina } = await supabase.rpc('auditoria_paginada', {
+      p_desde: desde.toISOString(),
+      p_hasta: hasta.toISOString(),
+      p_offset: 0,
+      p_limite: TAMANO_PAGINA,
+    })
 
-    const deStock = (resStock.data ?? []).map((fila) => ({
-      id: `s-${fila.id}`,
-      fecha: fila.fecha,
-      usuarioEmail: fila.usuarios?.email ?? null,
-      tabla: 'stock',
-      descripcion: fila.productos?.nombre ?? 'Producto eliminado',
-      cantidad_agregada: fila.cantidad_agregada,
-      valor_anterior: fila.stock_anterior,
-      valor_nuevo: fila.stock_nuevo,
-      nota: fila.nota,
-    }))
+    if (!vigente.actual) return
 
-    const combinadas = [...deAuditoria, ...deStock].sort(
-      (a, b) => new Date(b.fecha) - new Date(a.fecha),
-    )
+    if (errorPagina) {
+      setError('No se pudo cargar la auditoría.')
+      setEntradas([])
+      setHayMas(false)
+      setCargando(false)
+      return
+    }
 
-    setEntradas(combinadas)
-    setCantidadVisible(TAMANO_PAGINA)
+    const pagina = (data ?? []).map(mapearEntradaRpc)
+    setEntradas(pagina)
+    setHayMas(pagina.length === TAMANO_PAGINA)
     setCargando(false)
+  }
+
+  async function cargarMasEntradas() {
+    if (cargandoMas || !hayMas || filtroActivo) return
+    setCargandoMas(true)
+    const { desde, hasta } = calcularRango(filtro, personalizado)
+
+    const { data, error: errorMas } = await supabase.rpc('auditoria_paginada', {
+      p_desde: desde.toISOString(),
+      p_hasta: hasta.toISOString(),
+      p_offset: entradas.length,
+      p_limite: TAMANO_PAGINA,
+    })
+
+    setCargandoMas(false)
+
+    if (errorMas) {
+      setError('No se pudieron cargar más registros.')
+      return
+    }
+
+    const siguientes = (data ?? []).map(mapearEntradaRpc)
+    setEntradas((anterior) => [...anterior, ...siguientes])
+    setHayMas(siguientes.length === TAMANO_PAGINA)
   }
 
   useEffect(() => {
@@ -196,7 +277,7 @@ export default function Auditoria({ activo = true }) {
     return () => {
       vigente.actual = false
     }
-  }, [activo, filtro, personalizado.desde, personalizado.hasta])
+  }, [activo, filtro, personalizado.desde, personalizado.hasta, filtroActivo])
 
   function alternarDia(clave) {
     setDiasAbiertos((anterior) => {
@@ -207,10 +288,12 @@ export default function Auditoria({ activo = true }) {
     })
   }
 
-  const tablasPresentes = [...new Set(entradas.map((e) => e.tabla))]
+  // Lista fija (no derivada de `entradas`): con la lista paginada, las
+  // primeras 50 filas cargadas podrían no incluir todas las tablas con
+  // actividad en el período, y el filtro se vería "encogido" al abrir.
   const opcionesTabla = [
     { id: OPCION_TODAS_TABLAS, label: 'Todas las tablas' },
-    ...tablasPresentes.map((t) => ({ id: t, label: TABLA_LABELS[t] ?? t })),
+    ...Object.entries(TABLA_LABELS).map(([id, label]) => ({ id, label })),
   ]
 
   const entradasFiltradas = entradas.filter((entrada) => {
@@ -225,9 +308,7 @@ export default function Auditoria({ activo = true }) {
     )
   })
 
-  const entradasVisibles = entradasFiltradas.slice(0, cantidadVisible)
-  const grupos = agruparPorDia(entradasVisibles)
-  const hayMasPorMostrar = entradasFiltradas.length > entradasVisibles.length
+  const grupos = agruparPorDia(entradasFiltradas)
 
   return (
     <div className="p-3 pb-6">
@@ -319,7 +400,7 @@ export default function Auditoria({ activo = true }) {
                               </span>
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm text-ink">{descripcionEntrada(entrada)}</p>
-                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink/50">
+                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink/60">
                                   <span>{entrada.usuarioEmail ?? 'Sistema'}</span>
                                   <span>·</span>
                                   <span className="font-mono">{formatearHora(entrada.fecha)}</span>
@@ -336,13 +417,14 @@ export default function Auditoria({ activo = true }) {
             })}
           </div>
 
-          {hayMasPorMostrar && (
+          {hayMas && (
             <button
               type="button"
-              onClick={() => setCantidadVisible((anterior) => anterior + TAMANO_PAGINA)}
-              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300"
+              onClick={cargarMasEntradas}
+              disabled={cargandoMas}
+              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
             >
-              Cargar más
+              {cargandoMas ? 'Cargando...' : 'Cargar más'}
             </button>
           )}
         </>

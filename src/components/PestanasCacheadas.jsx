@@ -1,19 +1,26 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { secciones } from '../config/navegacion.js'
 import Ventas from '../pages/Ventas.jsx'
-import Inventario from '../pages/Inventario.jsx'
-import Historial from '../pages/Historial.jsx'
-import Servicios from '../pages/Servicios.jsx'
-import Dashboard from '../pages/Dashboard.jsx'
-import MiPanel from '../pages/MiPanel.jsx'
-import Estadisticas from '../pages/Estadisticas.jsx'
-import Auditoria from '../pages/Auditoria.jsx'
-import Clientes from '../pages/Clientes.jsx'
-import Porcentajes from '../pages/Porcentajes.jsx'
-import Gastos from '../pages/Gastos.jsx'
-import Asistentes from '../pages/Asistentes.jsx'
+
+// Ventas queda con import normal (no lazy): es la pestaña de aterrizaje de
+// TODOS los usuarios (index redirige ahí), así que no vale la pena pagar una
+// ida y vuelta de red extra solo para achicar el bundle inicial. Las demás
+// —sobre todo las 7 exclusivas de admin— sí van con React.lazy: una
+// asistente nunca llega a pedir ese código, y el admin lo pide recién cuando
+// entra a esa pestaña, no todo junto al abrir la app.
+const Inventario = lazy(() => import('../pages/Inventario.jsx'))
+const Historial = lazy(() => import('../pages/Historial.jsx'))
+const Servicios = lazy(() => import('../pages/Servicios.jsx'))
+const Dashboard = lazy(() => import('../pages/Dashboard.jsx'))
+const MiPanel = lazy(() => import('../pages/MiPanel.jsx'))
+const Estadisticas = lazy(() => import('../pages/Estadisticas.jsx'))
+const Auditoria = lazy(() => import('../pages/Auditoria.jsx'))
+const Clientes = lazy(() => import('../pages/Clientes.jsx'))
+const Porcentajes = lazy(() => import('../pages/Porcentajes.jsx'))
+const Gastos = lazy(() => import('../pages/Gastos.jsx'))
+const Asistentes = lazy(() => import('../pages/Asistentes.jsx'))
 
 const PAGINAS = {
   '/ventas': Ventas,
@@ -32,6 +39,14 @@ const PAGINAS = {
 
 function puedeVer(seccion, rol) {
   return Boolean(seccion) && seccion.roles.includes(rol)
+}
+
+function CargandoPagina() {
+  return (
+    <div className="flex h-full items-center justify-center p-6">
+      <p className="font-mono text-sm text-ink/60">Cargando...</p>
+    </div>
+  )
 }
 
 // Cada pestaña visitada queda montada (oculta con display:none, no
@@ -64,7 +79,9 @@ export default function PestanasCacheadas() {
         const activa = ruta === pathname
         return (
           <div key={ruta} className={activa ? 'contents' : 'hidden'}>
-            <Pagina activo={activa} />
+            <Suspense fallback={<CargandoPagina />}>
+              <Pagina activo={activa} />
+            </Suspense>
           </div>
         )
       })}

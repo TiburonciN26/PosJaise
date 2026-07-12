@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 
@@ -27,12 +27,19 @@ export default function SelectorOrden({
   useCerrarConEscape(() => setAbierto(false), abierto)
   const clases = TEMA_CLASES[tema]
 
+  const temporizadorBlurRef = useRef(null)
+  useEffect(() => {
+    return () => clearTimeout(temporizadorBlurRef.current)
+  }, [])
+
   return (
     <div className="relative shrink-0">
       <button
         type="button"
         onClick={() => setAbierto((valorAnterior) => !valorAnterior)}
-        onBlur={() => setTimeout(() => setAbierto(false), 150)}
+        onBlur={() => {
+          temporizadorBlurRef.current = setTimeout(() => setAbierto(false), 150)
+        }}
         aria-label={ariaLabel}
         aria-expanded={abierto}
         className={`flex items-center justify-center rounded-lg border p-2.5 transition-colors ${
@@ -45,22 +52,20 @@ export default function SelectorOrden({
       {abierto && (
         <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-lg">
           {opciones.map((opcion) => (
-            <Fragment key={opcion.id}>
-              {opcion.separador && <div className="my-1 border-t border-border" />}
-              <button
-                type="button"
-                onMouseDown={(evento) => evento.preventDefault()}
-                onClick={() => {
-                  onCambiar(opcion.id)
-                  setAbierto(false)
-                }}
-                className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
-                  valor === opcion.id ? clases.opcionActiva : 'text-ink hover:bg-surface-3'
-                }`}
-              >
-                {opcion.label}
-              </button>
-            </Fragment>
+            <button
+              key={opcion.id}
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => {
+                onCambiar(opcion.id)
+                setAbierto(false)
+              }}
+              className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
+                valor === opcion.id ? clases.opcionActiva : 'text-ink hover:bg-surface-3'
+              }`}
+            >
+              {opcion.label}
+            </button>
           ))}
         </div>
       )}

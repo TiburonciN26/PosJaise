@@ -50,7 +50,7 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
 
         <div className="mt-4 space-y-3">
           <div>
-            <label className="mb-1 block text-xs text-ink/50">
+            <label className="mb-1 block text-xs text-ink/60">
               Cantidad a agregar<span className="text-red"> *</span>
             </label>
             <input
@@ -65,7 +65,7 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-ink/50">Nota</label>
+            <label className="mb-1 block text-xs text-ink/60">Nota</label>
             <input
               type="text"
               value={nota}

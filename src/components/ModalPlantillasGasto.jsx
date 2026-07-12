@@ -186,7 +186,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
 
             <div className="mt-4 space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-ink/50">
+                <label className="mb-1 block text-xs text-ink/60">
                   Nombre
                   <span className="text-red"> *</span>
                 </label>
@@ -200,7 +200,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
               </div>
 
               <div>
-                <label className="mb-1 block text-xs text-ink/50">
+                <label className="mb-1 block text-xs text-ink/60">
                   Monto
                   <span className="text-red"> *</span>
                 </label>
@@ -215,7 +215,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
               </div>
 
               <div>
-                <label className="mb-1 block text-xs text-ink/50">Estado</label>
+                <label className="mb-1 block text-xs text-ink/60">Estado</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"

@@ -9,7 +9,8 @@ import {
   parsearFechaISOLima,
   sumarDias,
 } from '../lib/fechas.js'
-import { formatearSoles } from '../lib/moneda.js'
+import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
+import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/finanzas.js'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 
 const CLASE_METODO_PAGO = {
@@ -19,7 +20,16 @@ const CLASE_METODO_PAGO = {
   Yape: 'bg-purple-300',
 }
 
-const RESUMEN_VACIO = { ingresoBruto: 0, gananciaFinal: 0, cantidadVentas: 0, ticketPromedio: 0, ventas: [] }
+const RESUMEN_VACIO = {
+  ingresoBruto: 0,
+  gananciaFinal: 0,
+  cantidadVentas: 0,
+  ticketPromedio: 0,
+  tendencia: [],
+  topProductos: [],
+  topServicios: [],
+  metodosPago: [],
+}
 
 function formatearFechaCorta(fechaIso) {
   const fecha = parsearFechaISOLima(fechaIso)
@@ -42,73 +52,56 @@ function calcularRangoAnterior(filtro, rangoActual) {
   }
 }
 
-// Misma cascada de ganancia que el Dashboard: -10% gastos operativos (sobre
-// el ingreso bruto), -costo de productos, -gastos reales del mes (si aplica)
-// = utilidad neta, -10% diezmo (sobre la utilidad neta) = ganancia final.
-function calcularGananciaFinal(ingresoBruto, costoProductos, gastosMes, incluirGastos) {
-  const gastosOperativos = ingresoBruto * 0.1
-  const saldoTrasOperativos = ingresoBruto - gastosOperativos
-  const saldoTrasCosto = saldoTrasOperativos - costoProductos
-  const gastosReales = incluirGastos ? gastosMes : 0
-  const utilidadNeta = saldoTrasCosto - gastosReales
-  const diezmo = utilidadNeta * 0.1
-  return utilidadNeta - diezmo
-}
+// M3 de la 2ª auditoría: antes traía todas las ventas del período con
+// venta_items embebidos (dos veces: actual + anterior) solo para sumar y
+// agrupar en el navegador. resumen_estadisticas() hace esas sumas/GROUP BY
+// en Postgres y devuelve ya agregado — nunca las filas crudas.
+async function resumenPeriodo(desde, hasta, filtro) {
+  const { data, error } = await supabase.rpc('resumen_estadisticas', {
+    p_desde: desde.toISOString(),
+    p_hasta: hasta.toISOString(),
+  })
+  if (error) throw error
 
-async function resumenPeriodo(desde, hasta, incluirGastos) {
-  // venta_items va embebido (en vez de un .in('venta_id', [...]) aparte) para
-  // no arriesgar el límite de longitud de la URL en un período muy vendedor
-  // — misma corrección que en Historial/Dashboard. De paso, cargarDatos
-  // reutiliza estos mismos items embebidos para el ranking de productos y
-  // servicios, así que esa consulta separada ya no hace falta.
-  const { data: ventas } = await supabase
-    .from('ventas')
-    .select('id, fecha, total, metodo_pago, venta_items(tipo, nombre, cantidad, subtotal, producto_id)')
-    .eq('estado', 'ACTIVA')
-    .gte('fecha', desde.toISOString())
-    .lt('fecha', hasta.toISOString())
+  const fila = data?.[0]
+  const ingresoBruto = fila?.ingreso_bruto ?? 0
+  const cantidadVentas = fila?.cantidad_ventas ?? 0
+  const costoProductos = fila?.costo_productos ?? 0
 
-  const ventasActivas = ventas ?? []
-  const itemsProducto = ventasActivas.flatMap(
-    (v) => (v.venta_items ?? []).filter((i) => i.tipo === 'PRODUCTO'),
-  )
+  const { anio, mes } = anioMesEnLima(desde)
+  const { data: gastosData } = await supabase
+    .from('gastos')
+    .select('monto')
+    .eq('mes', mes + 1)
+    .eq('anio', anio)
+  const gastosMesTotal = sumarMontos(gastosData ?? [], (g) => g.monto)
+  const gastosMes = calcularGastosProrrateados({ filtro, gastosMesTotal, anio, mes, desde, hasta })
 
-  let costoProductos = 0
-  const idsProductos = [...new Set(itemsProducto.map((i) => i.producto_id).filter(Boolean))]
-  if (idsProductos.length > 0) {
-    const { data: productosData } = await supabase
-      .from('productos_vista')
-      .select('id, costo')
-      .in('id', idsProductos)
-    const costoPorProducto = new Map((productosData ?? []).map((p) => [p.id, p.costo]))
-    costoProductos = itemsProducto.reduce(
-      (acc, i) => acc + (costoPorProducto.get(i.producto_id) ?? 0) * i.cantidad,
-      0,
-    )
+  const { gananciaFinal } = calcularCascadaGanancia({ ingresoBruto, costoProductos, gastosMes })
+  const ticketPromedio = cantidadVentas > 0 ? redondear2(ingresoBruto / cantidadVentas) : 0
+
+  return {
+    ingresoBruto,
+    gananciaFinal,
+    cantidadVentas,
+    ticketPromedio,
+    tendencia: fila?.tendencia ?? [],
+    topProductos: fila?.top_productos ?? [],
+    topServicios: fila?.top_servicios ?? [],
+    metodosPago: fila?.metodos_pago ?? [],
   }
-
-  let gastosMes = 0
-  if (incluirGastos) {
-    const { data: gastosData } = await supabase
-      .from('gastos')
-      .select('monto')
-      .eq('mes', desde.getMonth() + 1)
-      .eq('anio', desde.getFullYear())
-    gastosMes = (gastosData ?? []).reduce((acc, g) => acc + g.monto, 0)
-  }
-
-  const ingresoBruto = ventasActivas.reduce((acc, v) => acc + v.total, 0)
-  const cantidadVentas = ventasActivas.length
-  const gananciaFinal = calcularGananciaFinal(ingresoBruto, costoProductos, gastosMes, incluirGastos)
-  const ticketPromedio = cantidadVentas > 0 ? ingresoBruto / cantidadVentas : 0
-
-  return { ingresoBruto, gananciaFinal, cantidadVentas, ticketPromedio, ventas: ventasActivas }
 }
 
 function nombreUsuario(registro) {
   const usuarios = registro?.usuarios
   if (!usuarios) return 'Sin nombre'
   return Array.isArray(usuarios) ? (usuarios[0]?.nombre_completo ?? 'Sin nombre') : (usuarios.nombre_completo ?? 'Sin nombre')
+}
+
+function rolUsuario(registro) {
+  const usuarios = registro?.usuarios
+  if (!usuarios) return null
+  return Array.isArray(usuarios) ? (usuarios[0]?.rol ?? null) : (usuarios.rol ?? null)
 }
 
 function variacion(actual, anterior) {
@@ -122,7 +115,7 @@ function TarjetaComparativa({ etiqueta, valor, anterior, esMoneda = true }) {
 
   return (
     <div className="rounded-lg border border-border bg-surface p-2.5">
-      <p className="text-xs text-ink/50">{etiqueta}</p>
+      <p className="text-xs text-ink/60">{etiqueta}</p>
       <p className="mt-1 font-mono text-lg font-semibold text-ink sm:text-xl">
         {esMoneda ? formatearSoles(valor) : valor}
       </p>
@@ -170,6 +163,8 @@ function GraficoTendencia({ dias }) {
               onMouseEnter={() => setActivo(indice)}
               onMouseLeave={() => setActivo(null)}
               onTouchStart={() => setActivo(indice)}
+              onTouchEnd={() => setActivo(null)}
+              onTouchCancel={() => setActivo(null)}
             >
               {activo === indice && (
                 <div className="absolute -top-7 z-10 whitespace-nowrap rounded border border-border bg-surface-2 px-1.5 py-1 font-mono text-[10px] text-ink shadow-lg">
@@ -218,18 +213,19 @@ export default function Estadisticas({ activo = true }) {
     try {
       const rangoActual = calcularRango(filtro, personalizado)
       const rangoAnterior = calcularRangoAnterior(filtro, rangoActual)
-      const incluirGastos = filtro === 'mes'
 
       const [resumenActual, resumenAnterior] = await Promise.all([
-        resumenPeriodo(rangoActual.desde, rangoActual.hasta, incluirGastos),
-        resumenPeriodo(rangoAnterior.desde, rangoAnterior.hasta, incluirGastos),
+        resumenPeriodo(rangoActual.desde, rangoActual.hasta, filtro),
+        resumenPeriodo(rangoAnterior.desde, rangoAnterior.hasta, filtro),
       ])
       if (!vigente.actual) return
 
       setActual(resumenActual)
       setAnterior(resumenAnterior)
 
-      // Tendencia diaria (siempre, aunque sea un solo día)
+      // Tendencia diaria (siempre, aunque sea un solo día): resumen_estadisticas
+      // solo devuelve los días con ventas, así que los días vacíos del rango
+      // se rellenan con 0 acá antes de superponer los datos reales.
       const mapaDias = new Map()
       for (
         let cursor = new Date(rangoActual.desde);
@@ -238,51 +234,28 @@ export default function Estadisticas({ activo = true }) {
       ) {
         mapaDias.set(formatearFechaISO(cursor), 0)
       }
-      for (const venta of resumenActual.ventas) {
-        const clave = formatearFechaISO(new Date(venta.fecha))
-        mapaDias.set(clave, (mapaDias.get(clave) ?? 0) + venta.total)
+      for (const dia of resumenActual.tendencia) {
+        mapaDias.set(dia.fecha, redondear2(dia.monto))
       }
       setTendencia([...mapaDias.entries()].map(([fecha, monto]) => ({ fecha, monto })))
 
-      // Métodos de pago
-      const mapaMetodos = new Map()
-      for (const venta of resumenActual.ventas) {
-        const m = mapaMetodos.get(venta.metodo_pago) ?? {
-          metodo: venta.metodo_pago,
-          cantidad: 0,
-          monto: 0,
-        }
-        m.cantidad += 1
-        m.monto += venta.total
-        mapaMetodos.set(venta.metodo_pago, m)
-      }
-      setMetodosPago([...mapaMetodos.values()].sort((a, b) => b.monto - a.monto))
+      // Métodos de pago y rankings de productos/servicios ya vienen agregados
+      // y ordenados desde resumen_estadisticas (top 5 por cantidad).
+      setMetodosPago(
+        resumenActual.metodosPago
+          .map((m) => ({ ...m, monto: redondear2(m.monto) }))
+          .sort((a, b) => b.monto - a.monto),
+      )
+      setTopProductos(resumenActual.topProductos.map((p) => ({ ...p, ingreso: redondear2(p.ingreso) })))
+      setTopServicios(resumenActual.topServicios.map((s) => ({ ...s, ingreso: redondear2(s.ingreso) })))
 
-      // Rankings de productos y servicios (reutiliza los venta_items ya
-      // embebidos en resumenActual.ventas, sin una consulta aparte)
-      const itemsPeriodo = resumenActual.ventas.flatMap((v) => v.venta_items ?? [])
-
-      if (itemsPeriodo.length > 0) {
-        const mapaProductos = new Map()
-        const mapaServicios = new Map()
-        for (const item of itemsPeriodo) {
-          const mapa = item.tipo === 'PRODUCTO' ? mapaProductos : mapaServicios
-          const fila = mapa.get(item.nombre) ?? { nombre: item.nombre, cantidad: 0, ingreso: 0 }
-          fila.cantidad += item.cantidad
-          fila.ingreso += item.subtotal
-          mapa.set(item.nombre, fila)
-        }
-        setTopProductos([...mapaProductos.values()].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5))
-        setTopServicios([...mapaServicios.values()].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5))
-      } else {
-        setTopProductos([])
-        setTopServicios([])
-      }
-
-      // Rendimiento por asistente (desde registro_servicios, como en Mi Panel)
+      // Rendimiento por asistente (desde registro_servicios, como en Mi Panel).
+      // Se pide también el rol del usuario dueño del registro para excluir
+      // al admin: si el admin registra/edita una atención bajo su propio
+      // usuario, no es una "asistente" y mezclarlo en el ranking confunde.
       const { data: registros } = await supabase
         .from('registro_servicios')
-        .select('usuario_id, precio, pago_asistente, estado, fecha, usuarios(nombre_completo)')
+        .select('usuario_id, precio, pago_asistente, estado, fecha, usuarios(nombre_completo, rol)')
         .gte('fecha', rangoActual.desde.toISOString())
         .lt('fecha', rangoActual.hasta.toISOString())
         .neq('estado', 'CANCELADO')
@@ -290,6 +263,7 @@ export default function Estadisticas({ activo = true }) {
 
       const mapaAsistentes = new Map()
       for (const r of registros ?? []) {
+        if (rolUsuario(r) !== 'ASISTENTE') continue
         const fila = mapaAsistentes.get(r.usuario_id) ?? {
           nombre: nombreUsuario(r),
           servicios: 0,
@@ -301,7 +275,11 @@ export default function Estadisticas({ activo = true }) {
         fila.comision += r.pago_asistente ?? 0
         mapaAsistentes.set(r.usuario_id, fila)
       }
-      setPorAsistente([...mapaAsistentes.values()].sort((a, b) => b.monto - a.monto))
+      setPorAsistente(
+        [...mapaAsistentes.values()]
+          .map((a) => ({ ...a, monto: redondear2(a.monto), comision: redondear2(a.comision) }))
+          .sort((a, b) => b.monto - a.monto),
+      )
     } catch {
       setError('No se pudo cargar las estadísticas.')
     }
@@ -323,7 +301,7 @@ export default function Estadisticas({ activo = true }) {
   const maximoProductos = Math.max(...topProductos.map((p) => p.cantidad), 1)
   const maximoServicios = Math.max(...topServicios.map((s) => s.cantidad), 1)
   const maximoAsistente = Math.max(...porAsistente.map((a) => a.monto), 1)
-  const totalMetodos = metodosPago.reduce((acc, m) => acc + m.monto, 0)
+  const totalMetodos = sumarMontos(metodosPago, (m) => m.monto)
 
   return (
     <div className="p-3 pb-6">
