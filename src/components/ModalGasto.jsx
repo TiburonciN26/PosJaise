@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { anioMesEnLima } from '../lib/fechas.js'
 
 export const MESES = [
   'Enero',
@@ -17,14 +18,19 @@ export const MESES = [
   'Diciembre',
 ]
 
+// B2 de la 4ª auditoría: fallback en hora de Lima, no la del dispositivo —
+// hoy Gastos.jsx siempre pasa mesInicial/anioInicial, así que este fallback
+// es latente (nunca se usa en la práctica), pero si alguna vez el modal se
+// abre sin esas props, no debe depender del reloj del celular (mismo
+// criterio que el resto de la app desde el M3 de la 3ª auditoría).
 function formularioVacio(mesInicial, anioInicial) {
-  const hoy = new Date()
+  const { anio: anioLima, mes: mesLimaIndice } = anioMesEnLima(new Date())
   return {
     nombre: '',
     tipo: 'VARIABLE',
     monto: '',
-    mes: String(mesInicial ?? hoy.getMonth() + 1),
-    anio: String(anioInicial ?? hoy.getFullYear()),
+    mes: String(mesInicial ?? mesLimaIndice + 1),
+    anio: String(anioInicial ?? anioLima),
   }
 }
 

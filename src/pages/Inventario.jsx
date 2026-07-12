@@ -99,6 +99,10 @@ export default function Inventario({ activo = true }) {
   const [eliminando, setEliminando] = useState(false)
   const [productoParaAgregarStock, setProductoParaAgregarStock] = useState(null)
   const primeraCargaHecha = useRef(false)
+  // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
+  // cargarMasProductos descarte una respuesta que llega tarde de un
+  // filtro/búsqueda que ya no está activo (ver Historial.jsx).
+  const vigenteRef = useRef({ actual: true })
 
   useCerrarConEscape(() => setProductoAEliminar(null), Boolean(productoAEliminar))
 
@@ -144,6 +148,7 @@ export default function Inventario({ activo = true }) {
 
   async function cargarMasProductos() {
     if (cargandoMas || !hayMas) return
+    const vigente = vigenteRef.current
     setCargandoMas(true)
     const filtros = { busqueda: busquedaDebounced, orden, filtroStock }
 
@@ -153,6 +158,7 @@ export default function Inventario({ activo = true }) {
     )
 
     setCargandoMas(false)
+    if (!vigente.actual) return
 
     if (errorMas) {
       mostrarToast('No se pudieron cargar más productos.', 'error')
@@ -166,6 +172,7 @@ export default function Inventario({ activo = true }) {
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
+    vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarProductos(vigente, silencioso)

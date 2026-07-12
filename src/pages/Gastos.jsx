@@ -3,6 +3,7 @@ import { Pencil, Trash2, Plus, ArrowBigDown, Download } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useDebounce } from '../hooks/useDebounce.js'
 import { anioMesEnLima } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
@@ -51,6 +52,14 @@ export default function Gastos({ activo = true }) {
     if (anioTexto.trim() === '' || Number.isNaN(parseado)) setAnioTexto(String(anio))
   }
 
+  // M3 de la 4ª auditoría: "anio" ya no salta de valor mientras se escribe
+  // (B9), pero seguía disparando un refetch por cada dígito válido de un año
+  // de 4 cifras (2 -> 20 -> 202 -> 2026 = 4 consultas). anioDebounced es lo
+  // único que alimenta la carga de datos y todo lo que depende de "qué
+  // período está cargado ahora mismo" (encabezados, el CSV, el modal) — el
+  // input en sí sigue respondiendo al instante vía anioTexto/anio.
+  const anioDebounced = useDebounce(anio, 500)
+
   const [gastos, setGastos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
@@ -75,7 +84,7 @@ export default function Gastos({ activo = true }) {
       .from('gastos')
       .select('id, nombre, tipo, monto, mes, anio')
       .eq('mes', mes)
-      .eq('anio', anio)
+      .eq('anio', anioDebounced)
       .order('nombre')
 
     if (!vigente.actual) return
@@ -111,7 +120,7 @@ export default function Gastos({ activo = true }) {
     return () => {
       vigente.actual = false
     }
-  }, [activo, mes, anio])
+  }, [activo, mes, anioDebounced])
 
   useEffect(() => {
     cargarPlantillas()
@@ -125,7 +134,7 @@ export default function Gastos({ activo = true }) {
       .select('nombre')
       .eq('tipo', 'FIJO')
       .eq('mes', mes)
-      .eq('anio', anio)
+      .eq('anio', anioDebounced)
 
     if (errorConsulta) {
       setGenerando(false)
@@ -154,7 +163,7 @@ export default function Gastos({ activo = true }) {
       tipo: 'FIJO',
       monto: p.monto,
       mes,
-      anio,
+      anio: anioDebounced,
     }))
 
     const { error: errorInsercion } = await supabase.from('gastos').insert(filas)
@@ -200,7 +209,7 @@ export default function Gastos({ activo = true }) {
       return
     }
     descargarArchivo(
-      `gastos_${anio}-${String(mes).padStart(2, '0')}.csv`,
+      `gastos_${anioDebounced}-${String(mes).padStart(2, '0')}.csv`,
       aCSV(gastos, ['nombre', 'tipo', 'monto', 'mes', 'anio']),
     )
   }
@@ -298,7 +307,7 @@ export default function Gastos({ activo = true }) {
         <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando gastos...</p>
       ) : gastos.length === 0 ? (
         <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          No hay gastos registrados en {MESES[mes - 1]} {anio}.
+          No hay gastos registrados en {MESES[mes - 1]} {anioDebounced}.
         </p>
       ) : (
         <>
@@ -322,7 +331,7 @@ export default function Gastos({ activo = true }) {
                     <div className="mt-1.5 flex items-center gap-4 font-mono text-sm">
                       <span className="text-purple-300">{formatearSoles(totalFijos)}</span>
                       <span className="text-ink/60">
-                        {MESES[mes - 1]} {anio}
+                        {MESES[mes - 1]} {anioDebounced}
                       </span>
                     </div>
                   </div>
@@ -385,7 +394,7 @@ export default function Gastos({ activo = true }) {
                     <div className="mt-1.5 flex items-center gap-4 font-mono text-sm">
                       <span className="text-purple-300">{formatearSoles(totalVariables)}</span>
                       <span className="text-ink/60">
-                        {MESES[mes - 1]} {anio}
+                        {MESES[mes - 1]} {anioDebounced}
                       </span>
                     </div>
                   </div>
@@ -465,7 +474,7 @@ export default function Gastos({ activo = true }) {
                       </td>
                       <td className="px-3 py-2.5" />
                       <td className="px-3 py-2.5 text-ink/60">
-                        {MESES[mes - 1]} {anio}
+                        {MESES[mes - 1]} {anioDebounced}
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono text-purple-300">
                         {formatearSoles(totalFijos)}
@@ -539,7 +548,7 @@ export default function Gastos({ activo = true }) {
                       </td>
                       <td className="px-3 py-2.5" />
                       <td className="px-3 py-2.5 text-ink/60">
-                        {MESES[mes - 1]} {anio}
+                        {MESES[mes - 1]} {anioDebounced}
                       </td>
                       <td className="px-3 py-2.5 text-right font-mono text-purple-300">
                         {formatearSoles(totalVariables)}
@@ -607,7 +616,7 @@ export default function Gastos({ activo = true }) {
         <ModalGasto
           gasto={modalGasto === 'nuevo' ? null : modalGasto}
           mesInicial={mes}
-          anioInicial={anio}
+          anioInicial={anioDebounced}
           onCerrar={() => setModalGasto(null)}
           onGuardado={() => {
             const esNuevo = modalGasto === 'nuevo'

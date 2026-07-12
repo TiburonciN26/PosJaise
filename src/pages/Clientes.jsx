@@ -137,6 +137,10 @@ export default function Clientes({ activo = true }) {
   const [eliminando, setEliminando] = useState(false)
   const [abiertos, setAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
+  // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
+  // cargarMasClientes descarte una respuesta que llega tarde de una
+  // búsqueda/orden que ya no está activo (ver Historial.jsx).
+  const vigenteRef = useRef({ actual: true })
 
   useCerrarConEscape(() => setClienteAEliminar(null), Boolean(clienteAEliminar))
 
@@ -170,6 +174,7 @@ export default function Clientes({ activo = true }) {
 
   async function cargarMasClientes() {
     if (cargandoMas || !hayMas) return
+    const vigente = vigenteRef.current
     setCargandoMas(true)
     const filtros = { busqueda: busquedaDebounced, orden }
 
@@ -179,6 +184,7 @@ export default function Clientes({ activo = true }) {
     )
 
     setCargandoMas(false)
+    if (!vigente.actual) return
 
     if (errorMas) {
       mostrarToast('No se pudieron cargar más clientes.', 'error')
@@ -192,6 +198,7 @@ export default function Clientes({ activo = true }) {
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
+    vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarClientes(vigente, silencioso)

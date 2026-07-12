@@ -5,10 +5,12 @@ import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import AvisoActualizacionPWA from './components/AvisoActualizacionPWA.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
+      <AvisoActualizacionPWA />
       <AuthProvider>
         <ToastProvider>
           <App />

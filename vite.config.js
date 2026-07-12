@@ -16,7 +16,16 @@ export default defineConfig(({ command }) => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // A2 de la 4ª auditoría: con 'autoUpdate' la versión nueva se activa
+        // recién al recargar, sin avisar — un POS suele quedar abierto todo
+        // el día, y una migración de RPC que cambia de firma (como pasó con
+        // resumen_estadisticas en el ciclo anterior) rompe la pantalla en
+        // cualquier celular que siga con el bundle viejo hasta que alguien
+        // recargue por su cuenta. 'prompt' + injectRegister:false entrega el
+        // control a AvisoActualizacionPWA (src/components), que muestra un
+        // aviso explícito con botón "Actualizar" en vez de actualizar solo.
+        registerType: 'prompt',
+        injectRegister: false,
         // Solo precachea el shell estático (JS/CSS/HTML/íconos) generado por
         // el build. Nunca intercepta las consultas a Supabase — esas siguen
         // yendo siempre a la red, para no arriesgar mostrar datos viejos del
@@ -25,8 +34,8 @@ export default defineConfig(({ command }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         },
         manifest: {
-          name: 'POS Negocio 2',
-          short_name: 'POS Negocio',
+          name: 'Pos Jaise',
+          short_name: 'Pos Jaise',
           description: 'Sistema de punto de venta para el negocio.',
           lang: 'es',
           theme_color: '#0d0d0d',

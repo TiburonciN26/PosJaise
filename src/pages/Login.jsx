@@ -2,6 +2,21 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
+// Hallazgo crítico reportado por el usuario (no numerado en ninguna
+// auditoría formal): al cerrar sesión, el navegador autocompletaba el
+// login con el correo/contraseña de quien acababa de salir — grave en un
+// POS donde varios empleados comparten el mismo dispositivo/navegador: el
+// siguiente en usarlo podía entrar como el anterior sin saber su clave. No
+// era un bug de estado de React (email/password acá siempre arrancan en
+// '', y Login se desmonta/remonta entero en cada logout, no persiste
+// nada) — era el propio navegador guardando y ofreciendo la contraseña,
+// invitado exactamente por los atributos autoComplete="email"/
+// "current-password" que tenían estos inputs. autoComplete="off" (form +
+// email) y "new-password" (el truco estándar para que Chrome/Firefox no
+// sugieran una contraseña guardada) lo reducen — no hay forma 100%
+// garantizada de bloquear el autocompletado vía estándares web, así que en
+// un dispositivo compartido conviene además que el personal rechace el
+// "¿Guardar contraseña?" del navegador.
 export default function Login() {
   const { usuario, iniciarSesion } = useAuth()
   const [email, setEmail] = useState('')
@@ -41,10 +56,11 @@ export default function Login() {
     <main className="flex min-h-svh items-center justify-center bg-bg p-4">
       <form
         onSubmit={manejarSubmit}
+        autoComplete="off"
         className="w-full max-w-sm rounded-lg border border-border bg-surface p-8"
       >
         <h1 className="mb-1 text-center text-xl font-semibold text-ink">
-          POS Negocio 2
+          Pos Jaise
         </h1>
         <p className="mb-6 text-center font-mono text-sm text-ink/60">
           Iniciar sesión
@@ -57,7 +73,7 @@ export default function Login() {
           id="email"
           type="email"
           required
-          autoComplete="email"
+          autoComplete="off"
           value={email}
           onChange={(evento) => setEmail(evento.target.value)}
           placeholder="tucorreo@ejemplo.com"
@@ -71,7 +87,7 @@ export default function Login() {
           id="password"
           type="password"
           required
-          autoComplete="current-password"
+          autoComplete="new-password"
           value={password}
           onChange={(evento) => setPassword(evento.target.value)}
           placeholder="••••••••"

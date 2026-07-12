@@ -38,6 +38,24 @@ function formatearFechaCorta(fechaIso) {
     .replace('.', '')
 }
 
+// B4 de la 4ª auditoría: GraficoTendencia dibuja una barra por día sin
+// ningún tope — un rango personalizado de un año son ~365 barras con scroll
+// horizontal eterno, inutilizable. Más de 60 días (± 2 meses) se agrupa en
+// buckets semanales; la fecha del primer día de cada bucket queda como
+// etiqueta (mismo formato corto que ya usa el eje).
+function agruparTendenciaLarga(dias, tamanoBucket = 7) {
+  if (dias.length <= 60) return dias
+  const grupos = []
+  for (let i = 0; i < dias.length; i += tamanoBucket) {
+    const bucket = dias.slice(i, i + tamanoBucket)
+    grupos.push({
+      fecha: bucket[0].fecha,
+      monto: redondear2(bucket.reduce((acumulado, d) => acumulado + d.monto, 0)),
+    })
+  }
+  return grupos
+}
+
 function calcularRangoAnterior(filtro, rangoActual) {
   if (filtro === 'mes') {
     const { anio, mes } = anioMesEnLima(rangoActual.desde)
@@ -91,18 +109,6 @@ async function resumenPeriodo(desde, hasta, filtro, incluirDetalle = true) {
     topServicios: fila?.top_servicios ?? [],
     metodosPago: fila?.metodos_pago ?? [],
   }
-}
-
-function nombreUsuario(registro) {
-  const usuarios = registro?.usuarios
-  if (!usuarios) return 'Sin nombre'
-  return Array.isArray(usuarios) ? (usuarios[0]?.nombre_completo ?? 'Sin nombre') : (usuarios.nombre_completo ?? 'Sin nombre')
-}
-
-function rolUsuario(registro) {
-  const usuarios = registro?.usuarios
-  if (!usuarios) return null
-  return Array.isArray(usuarios) ? (usuarios[0]?.rol ?? null) : (usuarios.rol ?? null)
 }
 
 // B6 de la 3ª auditoría: "anterior === 0" mezclaba dos casos distintos —
@@ -250,7 +256,9 @@ export default function Estadisticas({ activo = true }) {
       for (const dia of resumenActual.tendencia) {
         mapaDias.set(dia.fecha, redondear2(dia.monto))
       }
-      setTendencia([...mapaDias.entries()].map(([fecha, monto]) => ({ fecha, monto })))
+      setTendencia(
+        agruparTendenciaLarga([...mapaDias.entries()].map(([fecha, monto]) => ({ fecha, monto }))),
+      )
 
       // Métodos de pago y rankings de productos/servicios ya vienen agregados
       // y ordenados desde resumen_estadisticas (top 5 por cantidad).
@@ -262,35 +270,23 @@ export default function Estadisticas({ activo = true }) {
       setTopProductos(resumenActual.topProductos.map((p) => ({ ...p, ingreso: redondear2(p.ingreso) })))
       setTopServicios(resumenActual.topServicios.map((s) => ({ ...s, ingreso: redondear2(s.ingreso) })))
 
-      // Rendimiento por asistente (desde registro_servicios, como en Mi Panel).
-      // Se pide también el rol del usuario dueño del registro para excluir
-      // al admin: si el admin registra/edita una atención bajo su propio
-      // usuario, no es una "asistente" y mezclarlo en el ranking confunde.
-      const { data: registros } = await supabase
-        .from('registro_servicios')
-        .select('usuario_id, precio, pago_asistente, estado, fecha, usuarios(nombre_completo, rol)')
-        .gte('fecha', rangoActual.desde.toISOString())
-        .lt('fecha', rangoActual.hasta.toISOString())
-        .neq('estado', 'CANCELADO')
+      // M2 de la 4ª auditoría: resumen_asistentes_periodo() agrupa en
+      // Postgres — antes traía todos los registro_servicios del período
+      // para agrupar por asistente en el navegador.
+      const { data: porAsistenteData } = await supabase.rpc('resumen_asistentes_periodo', {
+        p_desde: rangoActual.desde.toISOString(),
+        p_hasta: rangoActual.hasta.toISOString(),
+      })
       if (!vigente.actual) return
 
-      const mapaAsistentes = new Map()
-      for (const r of registros ?? []) {
-        if (rolUsuario(r) !== 'ASISTENTE') continue
-        const fila = mapaAsistentes.get(r.usuario_id) ?? {
-          nombre: nombreUsuario(r),
-          servicios: 0,
-          monto: 0,
-          comision: 0,
-        }
-        fila.servicios += 1
-        fila.monto += r.precio ?? 0
-        fila.comision += r.pago_asistente ?? 0
-        mapaAsistentes.set(r.usuario_id, fila)
-      }
       setPorAsistente(
-        [...mapaAsistentes.values()]
-          .map((a) => ({ ...a, monto: redondear2(a.monto), comision: redondear2(a.comision) }))
+        (porAsistenteData ?? [])
+          .map((a) => ({
+            nombre: a.nombre,
+            servicios: a.servicios ?? 0,
+            monto: redondear2(a.monto ?? 0),
+            comision: redondear2(a.comision ?? 0),
+          }))
           .sort((a, b) => b.monto - a.monto),
       )
     } catch {

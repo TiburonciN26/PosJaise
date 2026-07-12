@@ -143,6 +143,10 @@ export default function Auditoria({ activo = true }) {
   const [tablaFiltro, setTablaFiltro] = useState(OPCION_TODAS_TABLAS)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
+  // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
+  // cargarMasEntradas descarte una respuesta que llega tarde de un
+  // filtro/búsqueda que ya no está activo (ver Historial.jsx).
+  const vigenteRef = useRef({ actual: true })
 
   // Con búsqueda de texto o filtro de tabla activos, paginar rompería el
   // resultado (podría "no encontrar" algo que existe más adelante sin
@@ -246,6 +250,7 @@ export default function Auditoria({ activo = true }) {
 
   async function cargarMasEntradas() {
     if (cargandoMas || !hayMas || filtroActivo) return
+    const vigente = vigenteRef.current
     setCargandoMas(true)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
@@ -257,6 +262,7 @@ export default function Auditoria({ activo = true }) {
     })
 
     setCargandoMas(false)
+    if (!vigente.actual) return
 
     if (errorMas) {
       setError('No se pudieron cargar más registros.')
@@ -271,6 +277,7 @@ export default function Auditoria({ activo = true }) {
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
+    vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarEntradas(vigente, silencioso)

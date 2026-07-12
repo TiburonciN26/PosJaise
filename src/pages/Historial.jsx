@@ -248,6 +248,14 @@ export default function Historial({ activo = true }) {
   const [ventaParaImprimir, setVentaParaImprimir] = useState(null)
   const [exportando, setExportando] = useState(false)
   const primeraCargaHecha = useRef(false)
+  // M1 de la 4ª auditoría: cargarMasVentas no llevaba el mismo guard
+  // `vigente` que ya usa la carga inicial — si cambiabas de filtro/búsqueda
+  // mientras la página siguiente viajaba, esa respuesta vieja se appendeaba
+  // igual sobre la lista ya reemplazada por el filtro nuevo, mezclando
+  // ventas de dos períodos. Este ref guarda el token vigente actual (el
+  // mismo que crea el efecto de carga) para que cargarMasVentas pueda
+  // descartar una respuesta que llegó tarde.
+  const vigenteRef = useRef({ actual: true })
 
   async function cargarDetalleVenta(ventaId) {
     setDetalles((anterior) => ({
@@ -438,6 +446,7 @@ export default function Historial({ activo = true }) {
 
   async function cargarMasVentas() {
     if (cargandoMas || !hayMas || filtroActivo) return
+    const vigente = vigenteRef.current
     setCargandoMas(true)
     const { desde, hasta } = calcularRango(filtroEfectivo, personalizado)
 
@@ -450,6 +459,10 @@ export default function Historial({ activo = true }) {
       .range(ventas.length, ventas.length + TAMANO_PAGINA - 1)
 
     setCargandoMas(false)
+    // El filtro/búsqueda pudo cambiar mientras esta página viajaba — una
+    // respuesta que llega tarde de un período/filtro que ya no está activo
+    // se descarta en vez de appendearse sobre la lista ya reemplazada.
+    if (!vigente.actual) return
 
     if (errorMas) {
       mostrarToast('No se pudieron cargar más ventas.', 'error')
@@ -545,6 +558,7 @@ export default function Historial({ activo = true }) {
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
+    vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarVentas(vigente, silencioso)

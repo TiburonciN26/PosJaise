@@ -61,17 +61,26 @@ export function AuthProvider({ children }) {
       if (vigente) setCargando(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_evento, sesionNueva) => {
+    // A1 de la 4ª auditoría: la documentación de supabase-js advierte no
+    // hacer await de llamadas de Supabase (incluida signOut, que cargarPerfil
+    // puede disparar) DENTRO del callback de onAuthStateChange — corre
+    // sosteniendo el lock interno de auth, y una llamada que necesite ese
+    // mismo lock puede colgarse ahí. Se manifestaba como un "Cargando..."
+    // infinito intermitente, sin poder reproducirlo a voluntad. El
+    // setTimeout(0) saca todo el trabajo async fuera de ese contexto antes
+    // de tocar Supabase.
+    const { data: listener } = supabase.auth.onAuthStateChange((_evento, sesionNueva) => {
+      setTimeout(async () => {
+        if (!vigente) return
         setSession(sesionNueva)
         if (sesionNueva?.user) {
           await cargarPerfil(sesionNueva.user.id)
         } else {
           setUsuario(null)
         }
-        setCargando(false)
-      },
-    )
+        if (vigente) setCargando(false)
+      }, 0)
+    })
 
     return () => {
       vigente = false

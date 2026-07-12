@@ -111,6 +111,10 @@ export default function MiPanel({ activo = true }) {
   const [cancelando, setCancelando] = useState(false)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
+  // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
+  // cargarMasRegistros descarte una respuesta que llega tarde de un
+  // filtro/búsqueda que ya no está activo (ver Historial.jsx).
+  const vigenteRef = useRef({ actual: true })
 
   useCerrarConEscape(() => setRegistroAEliminar(null), Boolean(registroAEliminar))
   useCerrarConEscape(() => setRegistroACancelar(null), Boolean(registroACancelar))
@@ -207,6 +211,7 @@ export default function MiPanel({ activo = true }) {
 
   async function cargarMasRegistros() {
     if (cargandoMas || !hayMas || filtroActivo) return
+    const vigente = vigenteRef.current
     setCargandoMas(true)
     const { desde, hasta } = calcularRango(filtro, personalizado)
 
@@ -216,6 +221,7 @@ export default function MiPanel({ activo = true }) {
     )
 
     setCargandoMas(false)
+    if (!vigente.actual) return
 
     if (errorMas) {
       mostrarToast('No se pudieron cargar más atenciones.', 'error')
@@ -229,6 +235,7 @@ export default function MiPanel({ activo = true }) {
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
+    vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarRegistros(vigente, silencioso)

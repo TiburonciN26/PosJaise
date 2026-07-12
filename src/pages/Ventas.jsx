@@ -538,6 +538,13 @@ export default function Ventas({ activo = true }) {
     const venta = Array.isArray(data) ? data[0] : data
     setVentaConfirmada(venta)
 
+    // B3 de la 4ª auditoría: se imprime con los items que devuelve el
+    // servidor (venta.items — nombre/precio ya resueltos contra el
+    // catálogo, lo que de verdad quedó guardado), no con el carrito local.
+    // Si el precio de un producto cambió entre cargar el catálogo y
+    // confirmar, el carrito seguía teniendo el valor viejo — antes eso
+    // imprimía líneas que no cuadraban con el TOTAL (que sí venía del
+    // servidor desde el C1 de la 3ª auditoría).
     setVentaParaImprimir({
       detalle: {
         codigo: venta.codigo,
@@ -548,14 +555,7 @@ export default function Ventas({ activo = true }) {
         monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
         clientes: cliente ? { nombre: cliente.nombre } : null,
       },
-      items: carrito.map((item) => ({
-        id: item.id,
-        tipo: item.tipo,
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        precio_unitario: item.precioUnitario,
-        subtotal: item.cantidad * item.precioUnitario,
-      })),
+      items: (venta.items ?? []).map((item, indice) => ({ id: indice, ...item })),
     })
 
     setCarrito([])
