@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useDebounce } from '../hooks/useDebounce.js'
-import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
+import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
@@ -415,6 +415,12 @@ export default function MiPanel({ activo = true }) {
                       const tieneComision =
                         registro.porcentaje_aplicado != null && registro.pago_asistente != null
                       const cancelado = registro.estado === 'CANCELADO'
+                      // B4 de la 3ª auditoría: la RLS de registro_servicios_update
+                      // solo deja a un no-admin cancelar atenciones de HOY (mismo
+                      // criterio que es_hoy() en el servidor) — antes el botón
+                      // aparecía igual en días pasados y el intento fallaba con
+                      // un toast de error confuso.
+                      const puedeCancelar = esAdmin || esHoyLima(new Date(registro.fecha))
 
                       return (
                         <div
@@ -451,12 +457,14 @@ export default function MiPanel({ activo = true }) {
                                     onClick={() => setModalRegistro(registro)}
                                   />
                                 )}
-                                <BotonAccion
-                                  icono={Ban}
-                                  texto="Cancelar"
-                                  color="rojo"
-                                  onClick={() => setRegistroACancelar(registro)}
-                                />
+                                {puedeCancelar && (
+                                  <BotonAccion
+                                    icono={Ban}
+                                    texto="Cancelar"
+                                    color="rojo"
+                                    onClick={() => setRegistroACancelar(registro)}
+                                  />
+                                )}
                                 {esAdmin && (
                                   <BotonAccion
                                     icono={Trash2}

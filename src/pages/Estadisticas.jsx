@@ -56,10 +56,11 @@ function calcularRangoAnterior(filtro, rangoActual) {
 // venta_items embebidos (dos veces: actual + anterior) solo para sumar y
 // agrupar en el navegador. resumen_estadisticas() hace esas sumas/GROUP BY
 // en Postgres y devuelve ya agregado — nunca las filas crudas.
-async function resumenPeriodo(desde, hasta, filtro) {
+async function resumenPeriodo(desde, hasta, filtro, incluirDetalle = true) {
   const { data, error } = await supabase.rpc('resumen_estadisticas', {
     p_desde: desde.toISOString(),
     p_hasta: hasta.toISOString(),
+    p_incluir_detalle: incluirDetalle,
   })
   if (error) throw error
 
@@ -104,14 +105,22 @@ function rolUsuario(registro) {
   return Array.isArray(usuarios) ? (usuarios[0]?.rol ?? null) : (usuarios.rol ?? null)
 }
 
+// B6 de la 3ª auditoría: "anterior === 0" mezclaba dos casos distintos —
+// un período anterior que de verdad no tuvo ventas (0 real, hay variación
+// que mostrar) contra la ausencia total de datos. Ambos períodos siempre
+// están cargados acá (no hay estado "todavía sin cargar" visible), así que
+// null queda reservado para el único caso sin nada que comparar (0 vs 0);
+// un salto real desde 0 se marca como "Nuevo" en vez de un % indefinido.
 function variacion(actual, anterior) {
-  if (anterior === 0) return null
+  if (anterior === 0 && actual === 0) return null
+  if (anterior === 0) return Infinity
   return ((actual - anterior) / Math.abs(anterior)) * 100
 }
 
 function TarjetaComparativa({ etiqueta, valor, anterior, esMoneda = true }) {
   const delta = variacion(valor, anterior)
   const subio = delta != null && delta >= 0
+  const esNuevo = delta === Infinity
 
   return (
     <div className="rounded-lg border border-border bg-surface p-2.5">
@@ -122,7 +131,7 @@ function TarjetaComparativa({ etiqueta, valor, anterior, esMoneda = true }) {
       {delta != null ? (
         <div className={`mt-0.5 flex items-center gap-1 text-xs ${subio ? 'text-green' : 'text-red'}`}>
           {subio ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          <span className="font-mono">{Math.abs(delta).toFixed(0)}%</span>
+          <span className="font-mono">{esNuevo ? 'Nuevo' : `${Math.abs(delta).toFixed(0)}%`}</span>
           <span className="text-ink/60">vs. período anterior</span>
         </div>
       ) : (
@@ -214,9 +223,13 @@ export default function Estadisticas({ activo = true }) {
       const rangoActual = calcularRango(filtro, personalizado)
       const rangoAnterior = calcularRangoAnterior(filtro, rangoActual)
 
+      // B5 de la 3ª auditoría: el período anterior solo alimenta los 4 KPIs
+      // comparativos — tendencia/top-5/métodos de ESE período nunca se
+      // muestran (la UI solo grafica el período actual), así que no hace
+      // falta pedirlos.
       const [resumenActual, resumenAnterior] = await Promise.all([
-        resumenPeriodo(rangoActual.desde, rangoActual.hasta, filtro),
-        resumenPeriodo(rangoAnterior.desde, rangoAnterior.hasta, filtro),
+        resumenPeriodo(rangoActual.desde, rangoActual.hasta, filtro, true),
+        resumenPeriodo(rangoAnterior.desde, rangoAnterior.hasta, filtro, false),
       ])
       if (!vigente.actual) return
 

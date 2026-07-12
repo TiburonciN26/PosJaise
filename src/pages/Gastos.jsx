@@ -31,6 +31,25 @@ export default function Gastos({ activo = true }) {
 
   const [mes, setMes] = useState(mesLimaIndice + 1)
   const [anio, setAnio] = useState(anioLima)
+  // B9 de la 3ª auditoría: texto del input separado del año numérico — antes
+  // el input escribía directo sobre "anio" y, al borrar el campo para
+  // escribir uno nuevo, el fallback (parseInt(...) || anioLima) saltaba al
+  // año actual en cada tecla del borrado, antes de que el usuario terminara
+  // de escribir. Acá "anio" (el que se usa en las consultas) solo cambia
+  // cuando el texto es un número válido; si el campo queda vacío/inválido,
+  // el blur lo revierte a mostrar el último año válido, sin tocar "anio".
+  const [anioTexto, setAnioTexto] = useState(String(anioLima))
+
+  function actualizarAnioTexto(texto) {
+    setAnioTexto(texto)
+    const parseado = parseInt(texto, 10)
+    if (texto.trim() !== '' && !Number.isNaN(parseado)) setAnio(parseado)
+  }
+
+  function confirmarAnioTexto() {
+    const parseado = parseInt(anioTexto, 10)
+    if (anioTexto.trim() === '' || Number.isNaN(parseado)) setAnioTexto(String(anio))
+  }
 
   const [gastos, setGastos] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -224,8 +243,9 @@ export default function Gastos({ activo = true }) {
         <input
           type="number"
           inputMode="numeric"
-          value={anio}
-          onChange={(evento) => setAnio(parseInt(evento.target.value, 10) || anioLima)}
+          value={anioTexto}
+          onChange={(evento) => actualizarAnioTexto(evento.target.value)}
+          onBlur={confirmarAnioTexto}
           className="w-20 shrink-0 rounded-lg border border-border bg-surface-2 px-3 py-2.5 font-mono text-sm text-ink outline-none focus:border-purple-300"
         />
 

@@ -322,7 +322,16 @@ export default function Ventas({ activo = true }) {
       setErrorCatalogo(null)
       setCatalogoProductos(productosRes.data ?? [])
       setCatalogoServicios(serviciosRes.data ?? [])
-      setCatalogoClientes(clientesRes.data ?? [])
+      // B2 de la 3ª auditoría: antes un fallo acá quedaba en silencio (la
+      // lista de clientes simplemente quedaba vacía). No bloquea la venta
+      // como productos/servicios (cliente es opcional en el ticket), pero
+      // sí avisa — si no, "no aparece ningún cliente" parece un catálogo
+      // vacío de verdad, no un error de red.
+      if (clientesRes.error) {
+        mostrarToast('No se pudo cargar la lista de clientes.', 'error')
+      } else {
+        setCatalogoClientes(clientesRes.data ?? [])
+      }
     }
     setCargandoCatalogo(false)
   }
@@ -741,12 +750,6 @@ export default function Ventas({ activo = true }) {
           >
             + Agregar servicio
           </button>
-          <button
-            type="button"
-            className="shrink-0 whitespace-nowrap rounded-lg border border-dashed border-border-strong px-1.5 py-1.5 text-xs text-ink/60"
-          >
-            + Añadir cupón
-          </button>
         </div>
 
         {errorCatalogo && (
@@ -764,7 +767,7 @@ export default function Ventas({ activo = true }) {
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
             <div className="-mx-3 flex min-h-0 flex-1 flex-col border-t border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none">
-              <div className="grid grid-cols-[1fr_5rem_4rem_1.5rem] gap-3 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-white">
+              <div className="grid grid-cols-[1fr_5rem_4rem_1.5rem] gap-3 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-ink">
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
                 <span className="text-right">Subtotal</span>
@@ -806,7 +809,7 @@ export default function Ventas({ activo = true }) {
             style={esMovil && topPanelTicket != null ? { top: `${topPanelTicket}px`, bottom: 'auto' } : undefined}
           >
             <div className="flex items-baseline justify-between">
-              <span className="text-[19px] text-white">Total</span>
+              <span className="text-[19px] text-ink">Total</span>
               <span className="font-mono text-2xl font-semibold text-amber">
                 {formatearSoles(totalMostrado)}
               </span>
@@ -827,7 +830,7 @@ export default function Ventas({ activo = true }) {
             </CampoColapsable>
 
             <div className="mt-3">
-              <p className="mb-1.5 text-xs text-white">Método de pago</p>
+              <p className="mb-1.5 text-xs text-ink">Método de pago</p>
               <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-2">
                 {metodosPago.map((metodo) => (
                   <button
@@ -840,7 +843,7 @@ export default function Ventas({ activo = true }) {
                     className={`rounded-lg border px-1 py-2 text-[11px] transition-colors sm:px-2 sm:text-sm ${
                       metodoPago === metodo.nombre
                         ? metodo.clasesActivo
-                        : 'border-border bg-surface-2 text-white hover:border-border-strong'
+                        : 'border-border bg-surface-2 text-ink hover:border-border-strong'
                     }`}
                   >
                     <span className="flex items-center justify-center gap-1">
@@ -855,7 +858,7 @@ export default function Ventas({ activo = true }) {
 
             <CampoColapsable abierto={metodoPago === 'Efectivo'} margen>
               <div>
-                <label className="mb-1 block text-xs text-white">Recibido</label>
+                <label className="mb-1 block text-xs text-ink">Recibido</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -878,7 +881,7 @@ export default function Ventas({ activo = true }) {
               onClick={confirmarVenta}
               disabled={!puedeCobrar || cobrando}
               className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-lg font-bold transition-colors ${
-                puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-surface-3 text-white'
+                puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-surface-3 text-ink'
               }`}
             >
               <Check className="h-5 w-5" />

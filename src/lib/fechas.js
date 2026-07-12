@@ -109,6 +109,14 @@ export function claveDiaLima(fecha) {
   return `${enLima.getUTCFullYear()}-${enLima.getUTCMonth()}-${enLima.getUTCDate()}`
 }
 
+// Mismo criterio que es_hoy() en Postgres (12_fix_zona_horaria_es_hoy.sql):
+// compara el día calendario en Lima, no en la zona del dispositivo. Para
+// que la UI oculte acciones que el servidor igual va a rechazar por RLS
+// (ej. una asistente cancelando una atención de un día pasado).
+export function esHoyLima(fecha) {
+  return claveDiaLima(fecha) === claveDiaLima(new Date())
+}
+
 // Valor "YYYY-MM-DDTHH:mm" para un <input type="datetime-local"> con la hora
 // de pared de Lima (no la del dispositivo). Un datetime-local muestra y lee
 // hora local, así que sin fijar Lima un celular con otra zona mostraría/
