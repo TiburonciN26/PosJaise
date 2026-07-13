@@ -12,9 +12,16 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" href="/icon-512.png" />
+    <!-- interactive-widget=resizes-visual (el default): al abrir el teclado
+         SOLO se encoge el viewport visual, no el layout — así los elementos
+         position:fixed con bottom:0 (el panel de cobro en Ventas) se quedan
+         anclados al fondo físico de la pantalla y el teclado los tapa, en vez
+         de "subir" por encima del teclado y tapar el resto de la pantalla al
+         buscar un producto. (Con resizes-content el layout se encogía y el
+         panel subía completo — no era lo que se quería.) -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
     />
     <meta name="theme-color" content="#0d0d0d" />
     <meta name="mobile-web-app-capable" content="yes" />

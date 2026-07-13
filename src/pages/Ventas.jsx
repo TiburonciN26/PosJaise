@@ -227,18 +227,17 @@ export default function Ventas({ activo = true }) {
   }
 
   // El panel de total/pago/confirmar va anclado al fondo (position:fixed
-  // bottom:0) SIN congelar su posición. index.html declara el viewport con
-  // interactive-widget=resizes-content, así que al abrir el teclado el
-  // viewport se encoge y el panel sube completo, quedando justo encima del
-  // teclado; al cerrarlo, vuelve al fondo. Como está anclado abajo y crece
-  // hacia arriba, cuando aparece el campo "Recibido" (método Efectivo)
-  // empuja el Total y los botones de método de pago hacia arriba en vez de
-  // mandar Confirmar/Cancelar hacia abajo (debajo del teclado).
+  // bottom:0) SIN congelar su posición ni medir nada en JS.
   //
-  // Antes se fijaba con un "top" en píxeles medido una vez para que no
-  // "siguiera" al teclado — pero eso hacía que "Recibido" creciera hacia
-  // abajo (tapado por el teclado) y que al rotar el panel quedara anclado a
-  // la posición de la orientación anterior. Se quitó todo ese mecanismo.
+  // - Al abrir el teclado NO sube: index.html usa interactive-widget=
+  //   resizes-visual, así el layout no se encoge y el panel se queda pegado
+  //   al fondo físico; el teclado simplemente lo tapa (al buscar un producto,
+  //   el buscador está arriba y el teclado tapa el panel de abajo, sin que
+  //   este suba a tapar la pantalla).
+  // - Como está anclado abajo y crece hacia arriba, cuando aparece el campo
+  //   "Recibido" (método Efectivo) empuja el Total y los botones de método de
+  //   pago hacia arriba, no manda Confirmar/Cancelar hacia abajo.
+  // - Al rotar no hay nada congelado que quede desalineado; se re-acomoda solo.
 
   useCerrarConEscape(() => setConfirmandoCancelar(false), confirmandoCancelar)
   useCerrarConEscape(() => setVentaConfirmada(null), Boolean(ventaConfirmada))
