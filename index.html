@@ -2,7 +2,15 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- El favicon.svg original era un rayo genérico (ni siquiera el logo
+         real) — reemplazado por el logo real, generado a los tamaños que
+         cada contexto necesita: favicon.ico como fallback clásico (algunos
+         navegadores lo piden en /favicon.ico sin importar los <link> de
+         acá), 16/32 para la pestaña en PC, y el apple-touch-icon a 512
+         para cuando se agrega a la pantalla de inicio en iOS. -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" href="/icon-512.png" />
     <meta
       name="viewport"

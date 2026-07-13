@@ -43,9 +43,27 @@ export default defineConfig(({ command }) => {
           display: 'standalone',
           start_url: base,
           scope: base,
+          // "any" es el logo tal cual (sin recortes, se ve completo en el
+          // launcher/instalador). "maskable" es una versión aparte con el
+          // logo al 60% del lienzo sobre fondo sólido — el logo original no
+          // tenía margen (tocaba el borde en los 4 lados), así que un
+          // launcher que recorta a círculo/squircle (Android) le cortaba la
+          // chispa o la cola de la "J" si se reusaba la misma imagen.
           icons: [
-            { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png' },
-            { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+            {
+              src: `${base}icon-192-maskable.png`,
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+            {
+              src: `${base}icon-512-maskable.png`,
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
           ],
         },
       }),

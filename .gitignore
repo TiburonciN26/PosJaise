@@ -21,6 +21,10 @@ backups/
 .env.*
 !.env.example
 
+# Scripts de reset/entrega con datos reales de un cliente (correos, etc.)
+# hardcodeados — nunca al repo público.
+supabase/sql/RESET_*.sql
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

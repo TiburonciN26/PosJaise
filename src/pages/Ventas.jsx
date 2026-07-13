@@ -240,11 +240,11 @@ export default function Ventas({ activo = true }) {
   )
 
   useEffect(() => {
-    // Re-medir en resize/orientationchange (rotar el teléfono, split-screen)
-    // para que el panel no quede mal posicionado hasta cambiar de pestaña —
-    // pero no mientras hay un input enfocado, porque abrir el teclado
-    // también dispara "resize" y ahí sí queremos que el top quede congelado
-    // (ese es justamente el motivo de fijarlo, ver comentario de arriba).
+    // Re-medir en resize (abrir/cerrar teclado) para que el panel no quede
+    // mal posicionado — pero no mientras hay un input enfocado, porque
+    // abrir el teclado también dispara "resize" y ahí sí queremos que el
+    // top quede congelado (ese es justamente el motivo de fijarlo, ver
+    // comentario de arriba).
     function remedirTop() {
       const activo = document.activeElement
       const hayInputEnfocado =
@@ -255,6 +255,22 @@ export default function Ventas({ activo = true }) {
       }
     }
 
+    // A diferencia del resize por teclado, rotar el celular SIEMPRE tiene
+    // que remedir, tenga o no foco un input: antes, si quedaba un campo
+    // enfocado (ej. "Recibido") al rotar, el guard de arriba bloqueaba el
+    // recálculo y el panel se quedaba con el "top" de la orientación
+    // anterior — totalmente fuera de lugar en la nueva (el bug de "todo
+    // sube arriba y tapa todo" al volver a vertical). requestAnimationFrame
+    // da tiempo a que el layout ya haya terminado de re-fluir en la nueva
+    // orientación antes de medir.
+    function remedirTopForzado() {
+      requestAnimationFrame(() => {
+        if (refPanelTicket.current) {
+          setTopPanelTicket(refPanelTicket.current.getBoundingClientRect().top)
+        }
+      })
+    }
+
     remedirTop()
 
     const mediaMovil = window.matchMedia('(max-width: 639px)')
@@ -263,12 +279,12 @@ export default function Ventas({ activo = true }) {
     mediaMovil.addEventListener('change', actualizarEsMovil)
 
     window.addEventListener('resize', remedirTop)
-    window.addEventListener('orientationchange', remedirTop)
+    window.addEventListener('orientationchange', remedirTopForzado)
 
     return () => {
       mediaMovil.removeEventListener('change', actualizarEsMovil)
       window.removeEventListener('resize', remedirTop)
-      window.removeEventListener('orientationchange', remedirTop)
+      window.removeEventListener('orientationchange', remedirTopForzado)
     }
   }, [])
 
@@ -805,8 +821,20 @@ export default function Ventas({ activo = true }) {
               barra lateral fija en desktop (lg+) */}
           <div
             ref={refPanelTicket}
-            className="fixed inset-x-0 bottom-0 z-20 w-full rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:pb-3 lg:w-[340px] lg:flex-none"
-            style={esMovil && topPanelTicket != null ? { top: `${topPanelTicket}px`, bottom: 'auto' } : undefined}
+            className="fixed inset-x-0 bottom-0 z-20 w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:pb-3 lg:w-[340px] lg:flex-none"
+            style={
+              esMovil && topPanelTicket != null
+                ? // Tope de altura: sin esto, cuando aparece el campo "Recibido"
+                  // (método Efectivo) el panel simplemente crecía hacia abajo sin
+                  // límite, empujando Confirmar/Cancelar por debajo del teclado —
+                  // ahí quedaban inalcanzables porque un position:fixed no entra
+                  // en el "scroll into view" automático del navegador. 100dvh ya
+                  // descuenta el teclado en los navegadores móviles actuales, así
+                  // que el tope se achica solo cuando el teclado ocupa pantalla, y
+                  // el contenido que no entra se scrollea dentro del panel.
+                  { top: `${topPanelTicket}px`, bottom: 'auto', maxHeight: `calc(100dvh - ${topPanelTicket}px)` }
+                : undefined
+            }
           >
             <div className="flex items-baseline justify-between">
               <span className="text-[19px] text-ink">Total</span>
