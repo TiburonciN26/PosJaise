@@ -226,67 +226,19 @@ export default function Ventas({ activo = true }) {
     temporizadoresRef.current.add(id)
   }
 
-  // Posición del panel de total/pago/confirmar congelada al montar (antes de
-  // que se pueda abrir el teclado). Al abrir el teclado del buscador, el
-  // navegador encoge el viewport y un position:fixed con bottom:0 "sigue" ese
-  // borde inferior móvil, subiendo y tapando los resultados de búsqueda. Acá
-  // fijamos el panel con un "top" en píxeles (el borde superior de la
-  // pantalla nunca se mueve por el teclado), así se queda abajo en su lugar
-  // y, si el teclado la tapa, que la tape — no debe reacomodarse.
-  const refPanelTicket = useRef(null)
-  const [topPanelTicket, setTopPanelTicket] = useState(null)
-  const [esMovil, setEsMovil] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth < 640 : true,
-  )
-
-  useEffect(() => {
-    // Re-medir en resize (abrir/cerrar teclado) para que el panel no quede
-    // mal posicionado — pero no mientras hay un input enfocado, porque
-    // abrir el teclado también dispara "resize" y ahí sí queremos que el
-    // top quede congelado (ese es justamente el motivo de fijarlo, ver
-    // comentario de arriba).
-    function remedirTop() {
-      const activo = document.activeElement
-      const hayInputEnfocado =
-        activo && (activo.tagName === 'INPUT' || activo.tagName === 'TEXTAREA')
-      if (hayInputEnfocado) return
-      if (refPanelTicket.current) {
-        setTopPanelTicket(refPanelTicket.current.getBoundingClientRect().top)
-      }
-    }
-
-    // A diferencia del resize por teclado, rotar el celular SIEMPRE tiene
-    // que remedir, tenga o no foco un input: antes, si quedaba un campo
-    // enfocado (ej. "Recibido") al rotar, el guard de arriba bloqueaba el
-    // recálculo y el panel se quedaba con el "top" de la orientación
-    // anterior — totalmente fuera de lugar en la nueva (el bug de "todo
-    // sube arriba y tapa todo" al volver a vertical). requestAnimationFrame
-    // da tiempo a que el layout ya haya terminado de re-fluir en la nueva
-    // orientación antes de medir.
-    function remedirTopForzado() {
-      requestAnimationFrame(() => {
-        if (refPanelTicket.current) {
-          setTopPanelTicket(refPanelTicket.current.getBoundingClientRect().top)
-        }
-      })
-    }
-
-    remedirTop()
-
-    const mediaMovil = window.matchMedia('(max-width: 639px)')
-    const actualizarEsMovil = () => setEsMovil(mediaMovil.matches)
-    actualizarEsMovil()
-    mediaMovil.addEventListener('change', actualizarEsMovil)
-
-    window.addEventListener('resize', remedirTop)
-    window.addEventListener('orientationchange', remedirTopForzado)
-
-    return () => {
-      mediaMovil.removeEventListener('change', actualizarEsMovil)
-      window.removeEventListener('resize', remedirTop)
-      window.removeEventListener('orientationchange', remedirTopForzado)
-    }
-  }, [])
+  // El panel de total/pago/confirmar va anclado al fondo (position:fixed
+  // bottom:0) SIN congelar su posición. index.html declara el viewport con
+  // interactive-widget=resizes-content, así que al abrir el teclado el
+  // viewport se encoge y el panel sube completo, quedando justo encima del
+  // teclado; al cerrarlo, vuelve al fondo. Como está anclado abajo y crece
+  // hacia arriba, cuando aparece el campo "Recibido" (método Efectivo)
+  // empuja el Total y los botones de método de pago hacia arriba en vez de
+  // mandar Confirmar/Cancelar hacia abajo (debajo del teclado).
+  //
+  // Antes se fijaba con un "top" en píxeles medido una vez para que no
+  // "siguiera" al teclado — pero eso hacía que "Recibido" creciera hacia
+  // abajo (tapado por el teclado) y que al rotar el panel quedara anclado a
+  // la posición de la orientación anterior. Se quitó todo ese mecanismo.
 
   useCerrarConEscape(() => setConfirmandoCancelar(false), confirmandoCancelar)
   useCerrarConEscape(() => setVentaConfirmada(null), Boolean(ventaConfirmada))
@@ -816,25 +768,16 @@ export default function Ventas({ activo = true }) {
             </div>
           </div>
 
-          {/* Columna de totales, pago y acciones:
-              fija abajo (sticky) en móvil, en flujo normal desde sm+,
-              barra lateral fija en desktop (lg+) */}
+          {/* Columna de totales, pago y acciones: anclada al fondo en móvil
+              (fixed bottom-0, crece hacia arriba), en flujo normal desde sm+,
+              barra lateral fija en desktop (lg+).
+              max-h-[100dvh] + overflow-y-auto: en móvil con el teclado
+              abierto, 100dvh ya es el alto del viewport encogido (sin el
+              teclado), así que el panel nunca pasa de ese alto y, si el
+              contenido no entra en pantallas muy chicas, se scrollea dentro
+              del propio panel en vez de mandar los botones fuera de la vista. */}
           <div
-            ref={refPanelTicket}
-            className="fixed inset-x-0 bottom-0 z-20 w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:pb-3 lg:w-[340px] lg:flex-none"
-            style={
-              esMovil && topPanelTicket != null
-                ? // Tope de altura: sin esto, cuando aparece el campo "Recibido"
-                  // (método Efectivo) el panel simplemente crecía hacia abajo sin
-                  // límite, empujando Confirmar/Cancelar por debajo del teclado —
-                  // ahí quedaban inalcanzables porque un position:fixed no entra
-                  // en el "scroll into view" automático del navegador. 100dvh ya
-                  // descuenta el teclado en los navegadores móviles actuales, así
-                  // que el tope se achica solo cuando el teclado ocupa pantalla, y
-                  // el contenido que no entra se scrollea dentro del panel.
-                  { top: `${topPanelTicket}px`, bottom: 'auto', maxHeight: `calc(100dvh - ${topPanelTicket}px)` }
-                : undefined
-            }
+            className="fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:max-h-none sm:pb-3 lg:w-[340px] lg:flex-none"
           >
             <div className="flex items-baseline justify-between">
               <span className="text-[19px] text-ink">Total</span>
