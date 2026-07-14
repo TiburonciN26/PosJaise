@@ -22,7 +22,7 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
     setGuardando(true)
     setError(null)
 
-    const { error: errorRpc } = await supabase.rpc('agregar_stock', {
+    const { data, error: errorRpc } = await supabase.rpc('agregar_stock', {
       p_producto_id: producto.id,
       p_cantidad: cantidadNumerica,
       p_nota: nota,
@@ -35,7 +35,7 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
       return
     }
 
-    onGuardado()
+    onGuardado(data?.[0]?.stock_nuevo)
   }
 
   return (

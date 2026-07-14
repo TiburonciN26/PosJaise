@@ -172,6 +172,50 @@
   .animate-elevar-flecha {
     animation: none;
   }
+
+  .foto-borde-luz {
+    animation: none;
+  }
+}
+
+/* Registra el ángulo como tipo <angle> animable — sin esto, animar una
+   variable custom por keyframes no interpola (salta de golpe). Es lo que
+   permite girar SOLO el gradiente de fondo sin usar transform: rotate en
+   el elemento (eso giraba la caja entera, incluida la foto de adentro —
+   el bug de la vuelta anterior). */
+@property --angulo-luz-foto {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes girar-luz-foto {
+  to {
+    --angulo-luz-foto: 360deg;
+  }
+}
+
+/* Miniatura de foto de producto (ModalDetalleProducto): borde ámbar con
+   un punto brillante que recorre todo el borde en bucle, dejando una
+   estela de luz atrás (efecto "cometa"), invitando a tocarla para
+   expandirla.
+   Técnica "padding reveal": este elemento tiene el conic-gradient de
+   fondo y 2px de padding; el hijo directo (la foto, con su propio fondo
+   opaco) tapa todo excepto ese anillo de 2px, donde se asoma el
+   gradiente. Solo se anima el ángulo "from" del gradiente (arriba) — el
+   elemento en sí queda quieto, la foto de adentro nunca gira. */
+.foto-borde-luz {
+  padding: 2px;
+  --angulo-luz-foto: 0deg;
+  background: conic-gradient(
+    from var(--angulo-luz-foto),
+    var(--color-amber) 0deg,
+    var(--color-amber) 280deg,
+    #ffe7b3 320deg,
+    #fff8e8 345deg,
+    var(--color-amber) 360deg
+  );
+  animation: girar-luz-foto 3.5s linear infinite;
 }
 
 :root {

@@ -10,6 +10,7 @@ import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import ModalProducto from '../components/ModalProducto.jsx'
 import ModalAgregarStock from '../components/ModalAgregarStock.jsx'
+import ModalDetalleProducto from '../components/ModalDetalleProducto.jsx'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
@@ -35,7 +36,7 @@ const ORDEN_A_COLUMNA = {
 const TAMANO_PAGINA = 50
 
 const SELECT_PRODUCTOS =
-  'id, codigo_barras, nombre, categoria, precio, costo, stock_actual, stock_minimo, proveedor, activo'
+  'id, codigo_barras, nombre, categoria, precio, costo, stock_actual, stock_minimo, proveedor, foto_url, activo'
 
 const RESUMEN_VACIO = {
   total: 0,
@@ -98,6 +99,7 @@ export default function Inventario({ activo = true }) {
   const [productoAEliminar, setProductoAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [productoParaAgregarStock, setProductoParaAgregarStock] = useState(null)
+  const [productoDetalle, setProductoDetalle] = useState(null) // { producto, mostrarAcciones } | null
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
   // cargarMasProductos descarte una respuesta que llega tarde de un
@@ -321,12 +323,16 @@ export default function Inventario({ activo = true }) {
         </p>
       ) : (
         <>
-          {/* Tarjetas: solo móvil */}
+          {/* Tarjetas: solo móvil. Tocar la tarjeta abre el detalle (foto +
+              historial de stock si es admin), donde ahora viven Editar/
+              Eliminar. "Agregar stock" en cambio queda inline acá (lo usan
+              seguido ambos roles) Y también dentro del modal. */}
           <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
             {productos.map((producto) => (
               <div
                 key={producto.id}
-                className="rounded-lg border border-border bg-surface p-3"
+                onClick={() => setProductoDetalle({ producto, mostrarAcciones: true })}
+                className="w-full rounded-lg border border-border bg-surface p-3 text-left transition-colors hover:border-amber/40"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -348,29 +354,13 @@ export default function Inventario({ activo = true }) {
                       Stock:{' '}
                       <span className={claseColorStock(producto)}>{producto.stock_actual}</span>
                     </span>
-                    <div className="flex items-center gap-1">
+                    <div onClick={(evento) => evento.stopPropagation()}>
                       <BotonAccion
                         icono={Plus}
                         texto="Agregar stock"
                         color="morado"
-                        onClick={() => setProductoParaAgregarStock(producto)}
+                        onClick={() => setProductoParaAgregarStock({ producto, desdeDetalle: false })}
                       />
-                      {esAdmin && (
-                        <>
-                          <BotonAccion
-                            icono={Pencil}
-                            texto="Editar"
-                            color="celeste"
-                            onClick={() => setModalProducto(producto)}
-                          />
-                          <BotonAccion
-                            icono={Trash2}
-                            texto="Eliminar"
-                            color="rojo"
-                            onClick={() => setProductoAEliminar(producto)}
-                          />
-                        </>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -410,7 +400,11 @@ export default function Inventario({ activo = true }) {
               </thead>
               <tbody className="divide-y divide-border">
                 {productos.map((producto) => (
-                  <tr key={producto.id} className="bg-surface">
+                  <tr
+                    key={producto.id}
+                    onClick={() => setProductoDetalle({ producto, mostrarAcciones: false })}
+                    className="cursor-pointer bg-surface hover:bg-surface-2/60"
+                  >
                     <td className="px-3 py-2.5">
                       <p className="text-ink">
                         {producto.nombre}
@@ -441,13 +435,13 @@ export default function Inventario({ activo = true }) {
                     <td className={`px-3 py-2.5 text-right font-mono ${claseColorStock(producto)}`}>
                       {producto.stock_actual}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-2.5" onClick={(evento) => evento.stopPropagation()}>
                       <div className="flex justify-end gap-2">
                         <BotonAccion
                           icono={Plus}
                           texto="Agregar stock"
                           color="morado"
-                          onClick={() => setProductoParaAgregarStock(producto)}
+                          onClick={() => setProductoParaAgregarStock({ producto, desdeDetalle: false })}
                         />
                         {esAdmin && (
                           <>
@@ -498,10 +492,18 @@ export default function Inventario({ activo = true }) {
           producto={modalProducto === 'nuevo' ? null : modalProducto}
           categoriasExistentes={categoriasExistentes}
           onCerrar={() => setModalProducto(null)}
-          onGuardado={() => {
+          onGuardado={(productoActualizado) => {
             const esNuevo = modalProducto === 'nuevo'
             setModalProducto(null)
             mostrarToast(esNuevo ? 'Producto creado.' : 'Producto actualizado.', 'exito')
+            // Si se editó desde el modal de detalle, ese modal sigue abierto
+            // (nunca se cerró, ver más abajo) — se le pasan los datos ya
+            // actualizados para que no muestre la foto/precio/nombre viejos.
+            if (productoActualizado) {
+              setProductoDetalle((anterior) =>
+                anterior ? { ...anterior, producto: productoActualizado } : anterior,
+              )
+            }
             cargarProductos()
           }}
         />
@@ -509,12 +511,47 @@ export default function Inventario({ activo = true }) {
 
       {productoParaAgregarStock && (
         <ModalAgregarStock
-          producto={productoParaAgregarStock}
+          producto={productoParaAgregarStock.producto}
           onCerrar={() => setProductoParaAgregarStock(null)}
-          onGuardado={() => {
+          onGuardado={(stockNuevo) => {
+            const { desdeDetalle } = productoParaAgregarStock
             setProductoParaAgregarStock(null)
             mostrarToast('Stock actualizado.', 'exito')
+            // Si se agregó desde el modal de detalle, ese modal sigue abierto
+            // (nunca se cerró, ver más abajo) — le actualizamos el stock a
+            // mano para que se vea el número nuevo mientras su historial se
+            // refresca solo al remontar (useEffect por producto.id).
+            if (desdeDetalle && stockNuevo != null) {
+              setProductoDetalle((anterior) =>
+                anterior
+                  ? { ...anterior, producto: { ...anterior.producto, stock_actual: stockNuevo } }
+                  : anterior,
+              )
+            }
             cargarProductos()
+          }}
+        />
+      )}
+
+      {/* Si "Agregar stock" o "Editar" se abren desde el modal de detalle,
+          ese modal no se cierra (ver onAgregarStock/onEditar abajo) — solo
+          se oculta mientras el otro modal está encima, y reaparece solo al
+          cerrarlo. Así, al cancelar o guardar, se vuelve al historial de
+          stock (ya actualizado si hubo cambios) en vez de volver a la
+          lista de productos. */}
+      {productoDetalle && !productoParaAgregarStock && !modalProducto && (
+        <ModalDetalleProducto
+          producto={productoDetalle.producto}
+          esAdmin={esAdmin}
+          mostrarAcciones={productoDetalle.mostrarAcciones}
+          onCerrar={() => setProductoDetalle(null)}
+          onEditar={() => setModalProducto(productoDetalle.producto)}
+          onEliminar={() => {
+            setProductoAEliminar(productoDetalle.producto)
+            setProductoDetalle(null)
+          }}
+          onAgregarStock={() => {
+            setProductoParaAgregarStock({ producto: productoDetalle.producto, desdeDetalle: true })
           }}
         />
       )}
