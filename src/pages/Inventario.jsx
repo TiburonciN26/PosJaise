@@ -332,7 +332,7 @@ export default function Inventario({ activo = true }) {
               <div
                 key={producto.id}
                 onClick={() => setProductoDetalle({ producto, mostrarAcciones: true })}
-                className="w-full rounded-lg border border-border bg-surface p-3 text-left transition-colors hover:border-amber/40"
+                className="w-full touch-manipulation rounded-lg border border-border bg-surface p-3 text-left transition-colors hover:border-amber/40"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -403,7 +403,7 @@ export default function Inventario({ activo = true }) {
                   <tr
                     key={producto.id}
                     onClick={() => setProductoDetalle({ producto, mostrarAcciones: false })}
-                    className="cursor-pointer bg-surface hover:bg-surface-2/60"
+                    className="cursor-pointer touch-manipulation bg-surface hover:bg-surface-2/60"
                   >
                     <td className="px-3 py-2.5">
                       <p className="text-ink">
