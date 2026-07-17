@@ -1,6 +1,5 @@
 import { supabase } from './supabase.js'
 
-const BUCKET = 'fotos-productos'
 const LADO_MAXIMO = 600
 const CALIDAD_WEBP = 0.8
 const TIPOS_ACEPTADOS = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -12,8 +11,9 @@ export function tipoDeImagenValido(archivo) {
 // Redimensiona (tope 600x600 manteniendo proporción, sin agrandar) y
 // recomprime a WebP en el navegador vía <canvas> — no hace falta ninguna
 // librería de procesamiento de imágenes (sharp, etc. son de Node, no
-// corren en el cliente).
-export async function procesarImagenProducto(archivo) {
+// corren en el cliente). Genérico: lo usan tanto fotos de producto como
+// de perfil de usuario, mismas reglas para las dos.
+export async function procesarImagen(archivo) {
   const bitmap = await createImageBitmap(archivo)
 
   const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height))
@@ -41,10 +41,13 @@ export async function procesarImagenProducto(archivo) {
   return { blob: blobJpeg, extension: 'jpg' }
 }
 
-export async function subirFotoProducto(blob, extension) {
-  const ruta = `${crypto.randomUUID()}.${extension}`
-
-  const { error } = await supabase.storage.from(BUCKET).upload(ruta, blob, {
+// bucket + ruta los decide el llamador — productos sube a la raíz del
+// bucket "fotos-productos" (solo admin puede escribir ahí, ver
+// 42_storage_fotos_productos.sql); perfil de usuario sube a
+// "fotos-usuarios/{uid}/archivo.webp" (cada quien solo puede escribir en
+// su propia carpeta, ver 46_foto_perfil_usuario.sql).
+export async function subirFoto(bucket, ruta, blob) {
+  const { error } = await supabase.storage.from(bucket).upload(ruta, blob, {
     contentType: blob.type,
     cacheControl: '31536000',
   })
@@ -53,12 +56,12 @@ export async function subirFotoProducto(blob, extension) {
   return ruta
 }
 
-export async function eliminarFotoProducto(ruta) {
+export async function eliminarFoto(bucket, ruta) {
   if (!ruta) return
-  await supabase.storage.from(BUCKET).remove([ruta])
+  await supabase.storage.from(bucket).remove([ruta])
 }
 
-export function urlPublicaFoto(ruta) {
+export function urlPublicaFoto(bucket, ruta) {
   if (!ruta) return null
-  return supabase.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl
+  return supabase.storage.from(bucket).getPublicUrl(ruta).data.publicUrl
 }
