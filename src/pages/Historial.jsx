@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Download, Filter } from 'lucide-react'
+import { ArrowBigDown, Download, Filter, History } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -14,6 +14,8 @@ import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import EsqueletoLista from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'fecha-desc', label: 'Más recientes primero' },
@@ -128,7 +130,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
       {/* Items */}
       <div className="mt-3 rounded-lg border border-border bg-bg">
-        <div className="grid grid-cols-[1fr_3rem_4.5rem] gap-2 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-ink/60">
+        <div className="grid grid-cols-[1fr_3rem_4.5rem] gap-2 border-b border-border px-3 py-2 font-mono text-xs uppercase tracking-wider text-ink/60">
           <span>Producto</span>
           <span className="text-center">Cant.</span>
           <span className="text-right">Subtotal</span>
@@ -139,13 +141,13 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   {item.tipo === 'SERVICIO' && (
-                    <span className="rounded border border-blue/40 bg-blue/10 px-1 py-0.5 font-mono text-[9px] text-blue">
+                    <span className="rounded border border-blue/40 bg-blue/10 px-1 py-0.5 font-mono text-[11px] font-medium text-blue">
                       Servicio
                     </span>
                   )}
                   <span className="truncate text-sm text-ink">{item.nombre}</span>
                 </div>
-                <span className="font-mono text-[10px] text-ink/60">
+                <span className="font-mono text-[11px] text-ink/60">
                   {formatearSoles(item.precio_unitario)} c/u
                 </span>
               </div>
@@ -579,7 +581,7 @@ export default function Historial({ activo = true }) {
   const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, filtroMetodo), orden)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador + orden: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -661,11 +663,12 @@ export default function Historial({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando historial...</p>
+        <EsqueletoLista columnas={7} />
       ) : ventasOrdenadas.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          {busqueda.trim() ? 'No se encontraron ventas.' : 'No hay ventas en este período.'}
-        </p>
+        <EstadoVacio
+          icono={History}
+          mensaje={busqueda.trim() ? 'No se encontraron ventas.' : 'No hay ventas en este período.'}
+        />
       ) : (
         <>
           {/* Lista: solo móvil */}
@@ -700,7 +703,7 @@ export default function Historial({ activo = true }) {
                         {venta.codigo}
                       </span>
                       {anulada && (
-                        <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[10px] font-medium text-red">
+                        <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
                           Anulada
                         </span>
                       )}
@@ -718,7 +721,7 @@ export default function Historial({ activo = true }) {
                         {formatearSoles(venta.total)}
                       </span>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                           CLASE_METODO_PAGO_PILL[venta.metodo_pago] ?? 'bg-surface-2 text-ink/60'
                         }`}
                       >
@@ -756,7 +759,7 @@ export default function Historial({ activo = true }) {
           <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
+                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Código</th>
                   <th className="px-3 py-2 font-normal">Fecha</th>
                   <th className="px-3 py-2 font-normal">Método</th>

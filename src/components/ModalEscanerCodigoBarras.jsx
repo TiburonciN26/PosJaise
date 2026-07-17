@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import { X, Camera } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 
 const PAUSA_TRAS_ESCANEO_MS = 1200
 
 export default function ModalEscanerCodigoBarras({ productos, onProductoEncontrado, onCerrar }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const videoRef = useRef(null)
   const controlesRef = useRef(null)
   const pausadoRef = useRef(false)
@@ -89,7 +92,7 @@ export default function ModalEscanerCodigoBarras({ productos, onProductoEncontra
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/80 p-4">
-      <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-4">
+      <div ref={panelRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
             <Camera className="h-5 w-5 text-amber" />
@@ -99,7 +102,7 @@ export default function ModalEscanerCodigoBarras({ productos, onProductoEncontra
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="text-ink/60 transition-colors hover:text-ink"
+            className="-m-3 rounded-lg p-3 text-ink/60 transition-colors hover:bg-surface-2 hover:text-ink"
           >
             <X className="h-5 w-5" />
           </button>

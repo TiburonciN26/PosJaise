@@ -1,11 +1,15 @@
-import { useState } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Pencil, Trash2, Plus, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BotonAccion from './BotonAccion.jsx'
+import EstadoVacio from './EstadoVacio.jsx'
 
 export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const [modo, setModo] = useState('lista') // 'lista' | 'form' | 'eliminar'
   const [plantillaActual, setPlantillaActual] = useState(null)
   const [nombreCampo, setNombreCampo] = useState('')
@@ -104,10 +108,11 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
 
   return (
     <div
-      onClick={onCerrar}
+      onClick={modo === 'lista' ? onCerrar : undefined}
       className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
     >
       <div
+        ref={panelRef}
         onClick={(evento) => evento.stopPropagation()}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
@@ -126,9 +131,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
             </div>
 
             {plantillas.length === 0 ? (
-              <p className="mt-6 text-center font-mono text-sm text-ink/60">
-                No hay plantillas registradas.
-              </p>
+              <EstadoVacio icono={Wallet} mensaje="No hay plantillas registradas." tema="purple-300" />
             ) : (
               <div className="mt-4 space-y-2">
                 {plantillas.map((plantilla) => (
@@ -141,7 +144,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
                       <div className="mt-1 flex items-center gap-2 font-mono text-sm">
                         <span className="text-purple-300">{formatearSoles(plantilla.monto)}</span>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                             plantilla.activo ? 'bg-green/15 text-green' : 'bg-surface text-ink/60'
                           }`}
                         >

@@ -12,10 +12,12 @@ import {
   KeyRound,
   MessageCircle,
   ArrowBigDown,
+  UserCog,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
@@ -23,6 +25,8 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalAsistente from '../components/ModalAsistente.jsx'
+import EsqueletoLista from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const CAMPOS_OPCIONALES = [
   'telefono',
@@ -124,8 +128,10 @@ export default function Asistentes({ activo = true }) {
   const [eliminando, setEliminando] = useState(false)
   const [abiertos, setAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
+  const panelEliminarRef = useRef(null)
 
   useCerrarConEscape(() => setAsistenteAEliminar(null), Boolean(asistenteAEliminar))
+  useModalA11y(panelEliminarRef, Boolean(asistenteAEliminar))
 
   async function cargarAsistentes(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -212,7 +218,7 @@ export default function Asistentes({ activo = true }) {
   const filtradosOrdenados = ordenarAsistentes(filtrados, orden)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador + Nueva asistente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -246,11 +252,14 @@ export default function Asistentes({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando asistentes...</p>
+        <EsqueletoLista columnas={5} />
       ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          No se encontraron asistentes.
-        </p>
+        <EstadoVacio
+          icono={UserCog}
+          mensaje="No se encontraron asistentes."
+          accion={{ label: '+ Nueva asistente', onClick: () => setModalAsistente('nuevo') }}
+          tema="purple-300"
+        />
       ) : (
         <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtradosOrdenados.map((asistente) => {
@@ -278,7 +287,7 @@ export default function Asistentes({ activo = true }) {
                           {asistente.nombres_completos}
                         </p>
                         <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
                             asistente.activo
                               ? 'bg-green/15 text-green'
                               : 'bg-surface-2 text-ink/60'
@@ -398,7 +407,7 @@ export default function Asistentes({ activo = true }) {
 
       {asistenteAEliminar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar a "{asistenteAEliminar.nombres_completos}"?
             </h2>

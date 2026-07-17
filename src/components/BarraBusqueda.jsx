@@ -56,7 +56,7 @@ export default function BarraBusqueda({ valor, onCambiar, placeholder, tema = 'a
             type="button"
             onClick={() => onCambiar('')}
             aria-label="Limpiar búsqueda"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
+            className="absolute right-0.5 top-1/2 -translate-y-1/2 p-2.5 text-ink/60 transition-colors hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>

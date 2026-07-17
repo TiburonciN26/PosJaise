@@ -50,7 +50,7 @@ export default function SelectorOrden({
       </button>
 
       {abierto && (
-        <div className="absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-lg">
+        <div className="animate-entrada-dropdown absolute right-0 top-full z-20 mt-1 w-56 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-lg">
           {opciones.map((opcion) => (
             <button
               key={opcion.id}

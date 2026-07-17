@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Camera, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
+import Etiqueta from './Etiqueta.jsx'
 import {
-  eliminarFotoProducto,
-  procesarImagenProducto,
-  subirFotoProducto,
+  eliminarFoto,
+  procesarImagen,
+  subirFoto,
   tipoDeImagenValido,
   urlPublicaFoto,
 } from '../lib/imagenes.js'
 
+const BUCKET_FOTOS = 'fotos-productos'
 const STOCK_MINIMO_POR_DEFECTO = 3
 const OPCION_NUEVA_CATEGORIA = '__nueva__'
 
@@ -23,15 +26,6 @@ const formularioVacio = {
   precio: '',
   stockInicial: '',
   proveedor: '',
-}
-
-function Etiqueta({ children, obligatorio }) {
-  return (
-    <label className="mb-1 block text-xs text-ink/60">
-      {children}
-      {obligatorio && <span className="text-red"> *</span>}
-    </label>
-  )
 }
 
 function formularioDesdeProducto(producto) {
@@ -69,6 +63,9 @@ function validar(formulario) {
 }
 
 export default function ModalProducto({ producto, categoriasExistentes, onCerrar, onGuardado }) {
+  const idBase = useId()
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const esEdicion = Boolean(producto)
 
   const [formulario, setFormulario] = useState(() =>
@@ -107,7 +104,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
     setErrorFoto(null)
     setProcesandoFoto(true)
     try {
-      const { blob, extension } = await procesarImagenProducto(archivo)
+      const { blob, extension } = await procesarImagen(archivo)
       if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
       setFotoNueva({ blob, extension, previewUrl: URL.createObjectURL(blob) })
       setFotoEliminada(false)
@@ -139,7 +136,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
   const previewFoto = fotoNueva
     ? fotoNueva.previewUrl
     : !fotoEliminada && fotoActual
-      ? urlPublicaFoto(fotoActual)
+      ? urlPublicaFoto(BUCKET_FOTOS, fotoActual)
       : null
 
   function actualizarCampo(campo, valor) {
@@ -179,7 +176,8 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
     let rutaFotoSubida = null
     if (fotoNueva) {
       try {
-        rutaFotoSubida = await subirFotoProducto(fotoNueva.blob, fotoNueva.extension)
+        const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
+        rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
       } catch {
         setGuardando(false)
         setError('No se pudo subir la foto. Intenta de nuevo.')
@@ -212,7 +210,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
     setGuardando(false)
 
     if (errorGuardado) {
-      if (rutaFotoSubida) eliminarFotoProducto(rutaFotoSubida)
+      if (rutaFotoSubida) eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
       if (errorGuardado.code === '23505') {
         setError('Ya existe un producto con ese código de barras.')
       } else {
@@ -223,7 +221,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
 
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
-    if (fotoActual && fotoActual !== fotoFinal) eliminarFotoProducto(fotoActual)
+    if (fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
 
     // En edición, se manda de vuelta el producto ya actualizado — así, si
     // este modal se abrió desde el de historial de stock, ese modal (que
@@ -235,6 +233,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
@@ -244,8 +243,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
 
         <div className="mt-4 space-y-3">
           <div>
-            <Etiqueta obligatorio>Nombre</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
+              id={`${idBase}-nombre`}
               type="text"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
@@ -255,8 +255,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
           </div>
 
           <div>
-            <Etiqueta>Código de barras</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-codigo`}>Código de barras</Etiqueta>
             <input
+              id={`${idBase}-codigo`}
               type="text"
               value={formulario.codigoBarras}
               onChange={(evento) => actualizarCampo('codigoBarras', evento.target.value)}
@@ -270,8 +271,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               muestra unos pocos dígitos. */}
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
-              <Etiqueta>Categoría</Etiqueta>
+              <Etiqueta htmlFor={`${idBase}-categoria`}>Categoría</Etiqueta>
               <select
+                id={`${idBase}-categoria`}
                 value={formulario.categoriaSeleccionada}
                 onChange={(evento) => actualizarCampo('categoriaSeleccionada', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
@@ -298,8 +300,11 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
             </div>
 
             <div className="col-span-1">
-              <Etiqueta obligatorio>{esEdicion ? 'Stock actual' : 'Stock inicial'}</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-stock`}>
+                {esEdicion ? 'Stock actual' : 'Stock inicial'}
+              </Etiqueta>
               <input
+                id={`${idBase}-stock`}
                 type="number"
                 inputMode="numeric"
                 value={formulario.stockInicial}
@@ -311,8 +316,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <Etiqueta obligatorio>Costo</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-costo`}>Costo</Etiqueta>
               <input
+                id={`${idBase}-costo`}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -322,8 +328,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               />
             </div>
             <div className="flex-1">
-              <Etiqueta obligatorio>Precio de venta</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-precio`}>Precio de venta</Etiqueta>
               <input
+                id={`${idBase}-precio`}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -343,8 +350,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
           </div>
 
           <div>
-            <Etiqueta>Proveedor</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
             <input
+              id={`${idBase}-proveedor`}
               type="text"
               value={formulario.proveedor}
               onChange={(evento) => actualizarCampo('proveedor', evento.target.value)}

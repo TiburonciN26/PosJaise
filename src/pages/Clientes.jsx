@@ -9,10 +9,12 @@ import {
   StickyNote,
   MessageCircle,
   ArrowBigDown,
+  Users,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -21,6 +23,8 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalCliente from '../components/ModalCliente.jsx'
+import EsqueletoLista from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const CAMPOS_OPCIONALES = ['telefono', 'dni', 'cumpleanos', 'notas']
 
@@ -141,8 +145,10 @@ export default function Clientes({ activo = true }) {
   // cargarMasClientes descarte una respuesta que llega tarde de una
   // búsqueda/orden que ya no está activo (ver Historial.jsx).
   const vigenteRef = useRef({ actual: true })
+  const panelEliminarRef = useRef(null)
 
   useCerrarConEscape(() => setClienteAEliminar(null), Boolean(clienteAEliminar))
+  useModalA11y(panelEliminarRef, Boolean(clienteAEliminar))
 
   async function cargarClientes(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -239,7 +245,7 @@ export default function Clientes({ activo = true }) {
   const clientesOrdenados = ordenarClientes(clientes, orden)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -272,11 +278,14 @@ export default function Clientes({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando clientes...</p>
+        <EsqueletoLista columnas={4} />
       ) : clientesOrdenados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          No se encontraron clientes.
-        </p>
+        <EstadoVacio
+          icono={Users}
+          mensaje="No se encontraron clientes."
+          accion={{ label: '+ Nuevo cliente', onClick: () => setModalCliente('nuevo') }}
+          tema="purple-300"
+        />
       ) : (
         <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {clientesOrdenados.map((cliente) => {
@@ -403,7 +412,7 @@ export default function Clientes({ activo = true }) {
 
       {clienteAEliminar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar a "{clienteAEliminar.nombre}"?
             </h2>

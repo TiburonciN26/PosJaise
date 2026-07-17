@@ -1,9 +1,13 @@
-import { useState } from 'react'
-import { X, UserPlus } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { X, UserPlus, Users } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import IconoBuscar from './IconoBuscar.jsx'
+import EstadoVacio from './EstadoVacio.jsx'
 
 export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const [busqueda, setBusqueda] = useState('')
   const [indiceActivo, setIndiceActivo] = useState(-1)
 
@@ -69,6 +73,7 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
       className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
     >
       <div
+        ref={panelRef}
         onClick={(evento) => evento.stopPropagation()}
         className="flex max-h-[80dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface"
       >
@@ -78,7 +83,7 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="text-ink/60 transition-colors hover:text-ink"
+            className="-m-3.5 rounded-lg p-3.5 text-ink/60 transition-colors hover:bg-surface-2 hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>
@@ -103,7 +108,7 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
                 type="button"
                 onClick={() => manejarCambioBusqueda('')}
                 aria-label="Limpiar búsqueda"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
+                className="absolute right-0.5 top-1/2 -translate-y-1/2 p-2.5 text-ink/60 transition-colors hover:text-ink"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -126,11 +131,14 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
           )}
 
           {filtrados.length === 0 ? (
-            <p className="p-6 text-center font-mono text-sm text-ink/30">
-              {busqueda.trim()
-                ? 'No hay clientes registrados con ese nombre.'
-                : 'No se encontraron clientes.'}
-            </p>
+            <EstadoVacio
+              icono={Users}
+              mensaje={
+                busqueda.trim()
+                  ? 'No hay clientes registrados con ese nombre.'
+                  : 'No se encontraron clientes.'
+              }
+            />
           ) : (
             filtrados.map((cliente, indice) => (
               <button

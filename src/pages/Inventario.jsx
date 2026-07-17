@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { Pencil, Trash2, Plus, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -12,6 +13,8 @@ import ModalProducto from '../components/ModalProducto.jsx'
 import ModalAgregarStock from '../components/ModalAgregarStock.jsx'
 import ModalDetalleProducto from '../components/ModalDetalleProducto.jsx'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
+import EsqueletoLista from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 
@@ -105,8 +108,10 @@ export default function Inventario({ activo = true }) {
   // cargarMasProductos descarte una respuesta que llega tarde de un
   // filtro/búsqueda que ya no está activo (ver Historial.jsx).
   const vigenteRef = useRef({ actual: true })
+  const panelEliminarRef = useRef(null)
 
   useCerrarConEscape(() => setProductoAEliminar(null), Boolean(productoAEliminar))
+  useModalA11y(panelEliminarRef, Boolean(productoAEliminar))
 
   async function cargarProductos(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -198,6 +203,8 @@ export default function Inventario({ activo = true }) {
       return
     }
 
+    setProductoDetalle(null)
+
     if (data === 'ELIMINADO') {
       mostrarToast('Producto eliminado.', 'exito')
     } else {
@@ -217,7 +224,7 @@ export default function Inventario({ activo = true }) {
   const categoriasExistentes = resumen.categorias
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador + Nuevo producto: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -258,7 +265,7 @@ export default function Inventario({ activo = true }) {
               <p className="font-mono text-lg font-semibold text-ink sm:text-xl">
                 {totalProductos}
               </p>
-              <p className="text-[10px] text-ink/60">Total</p>
+              <p className="text-[11px] text-ink/60">Total</p>
             </button>
             <button
               type="button"
@@ -270,7 +277,7 @@ export default function Inventario({ activo = true }) {
               <p className="font-mono text-lg font-semibold text-orange-400 sm:text-xl">
                 {bajoStockCount}
               </p>
-              <p className="text-[10px] text-ink/60">Bajo</p>
+              <p className="text-[11px] text-ink/60">Bajo</p>
             </button>
             <button
               type="button"
@@ -282,7 +289,7 @@ export default function Inventario({ activo = true }) {
               <p className="font-mono text-lg font-semibold text-red sm:text-xl">
                 {sinStockCount}
               </p>
-              <p className="text-[10px] text-ink/60">Sin stock</p>
+              <p className="text-[11px] text-ink/60">Sin stock</p>
             </button>
           </div>
         </div>
@@ -316,11 +323,13 @@ export default function Inventario({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando inventario...</p>
+        <EsqueletoLista columnas={6} />
       ) : productos.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          No se encontraron productos.
-        </p>
+        <EstadoVacio
+          icono={Package}
+          mensaje="No se encontraron productos."
+          accion={esAdmin ? { label: '+ Nuevo producto', onClick: () => setModalProducto('nuevo') } : undefined}
+        />
       ) : (
         <>
           {/* Tarjetas: solo móvil. Tocar la tarjeta abre el detalle (foto +
@@ -342,7 +351,7 @@ export default function Inventario({ activo = true }) {
                         {producto.codigo_barras || 'Sin código'}
                       </p>
                       {producto.categoria && (
-                        <span className="shrink-0 whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-ink/60">
+                        <span className="shrink-0 whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
                           {producto.categoria}
                         </span>
                       )}
@@ -366,7 +375,7 @@ export default function Inventario({ activo = true }) {
                 </div>
 
                 {!producto.activo && (
-                  <span className="mt-1 inline-block rounded border border-border-strong px-1.5 py-0.5 text-[10px] text-ink/60">
+                  <span className="mt-1 inline-block rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
                     Inactivo
                   </span>
                 )}
@@ -388,7 +397,7 @@ export default function Inventario({ activo = true }) {
           <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
+                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Producto</th>
                   <th className="px-3 py-2 font-normal">Categoría</th>
                   {esAdmin && <th className="px-3 py-2 text-right font-normal">Costo</th>}
@@ -409,7 +418,7 @@ export default function Inventario({ activo = true }) {
                       <p className="text-ink">
                         {producto.nombre}
                         {!producto.activo && (
-                          <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[10px] text-ink/60">
+                          <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
                             Inactivo
                           </span>
                         )}
@@ -533,23 +542,20 @@ export default function Inventario({ activo = true }) {
         />
       )}
 
-      {/* Si "Agregar stock" o "Editar" se abren desde el modal de detalle,
-          ese modal no se cierra (ver onAgregarStock/onEditar abajo) — solo
-          se oculta mientras el otro modal está encima, y reaparece solo al
-          cerrarlo. Así, al cancelar o guardar, se vuelve al historial de
-          stock (ya actualizado si hubo cambios) en vez de volver a la
-          lista de productos. */}
-      {productoDetalle && !productoParaAgregarStock && !modalProducto && (
+      {/* Si "Agregar stock", "Editar" o "Eliminar" se abren desde el modal
+          de detalle, ese modal no se cierra (ver los handlers abajo) —
+          solo se oculta mientras el otro modal está encima, y reaparece
+          solo al cerrarlo. Así, al cancelar o guardar, se vuelve al
+          historial de stock (ya actualizado si hubo cambios) en vez de
+          volver a la lista de productos. */}
+      {productoDetalle && !productoParaAgregarStock && !modalProducto && !productoAEliminar && (
         <ModalDetalleProducto
           producto={productoDetalle.producto}
           esAdmin={esAdmin}
           mostrarAcciones={productoDetalle.mostrarAcciones}
           onCerrar={() => setProductoDetalle(null)}
           onEditar={() => setModalProducto(productoDetalle.producto)}
-          onEliminar={() => {
-            setProductoAEliminar(productoDetalle.producto)
-            setProductoDetalle(null)
-          }}
+          onEliminar={() => setProductoAEliminar(productoDetalle.producto)}
           onAgregarStock={() => {
             setProductoParaAgregarStock({ producto: productoDetalle.producto, desdeDetalle: true })
           }}
@@ -558,7 +564,7 @@ export default function Inventario({ activo = true }) {
 
       {productoAEliminar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{productoAEliminar.nombre}"?
             </h2>

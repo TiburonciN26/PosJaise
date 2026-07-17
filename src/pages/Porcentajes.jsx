@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Lock, Unlock, ArrowBigDown } from 'lucide-react'
+import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -263,7 +264,7 @@ export default function Porcentajes({ activo = true }) {
   const filtradosOrdenados = ordenarServicios(filtrados, orden, asistentes, porcentajesMap)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador: fijo arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -285,9 +286,7 @@ export default function Porcentajes({ activo = true }) {
       {cargando ? (
         <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando servicios...</p>
       ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          No se encontraron servicios.
-        </p>
+        <EstadoVacio icono={Percent} mensaje="No se encontraron servicios." tema="purple-300" />
       ) : (
         <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtradosOrdenados.map((servicio) => (

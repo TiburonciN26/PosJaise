@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
+import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 
 export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const [cantidad, setCantidad] = useState('')
   const [nota, setNota] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -31,7 +35,11 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
     setGuardando(false)
 
     if (errorRpc) {
-      setError('No se pudo agregar el stock. Intenta de nuevo.')
+      setError(
+        errorRpc.message === MENSAJE_NEGOCIO_CERRADO
+          ? MENSAJE_NEGOCIO_CERRADO
+          : 'No se pudo agregar el stock. Intenta de nuevo.',
+      )
       return
     }
 
@@ -41,6 +49,7 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >

@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { Pencil, Trash2, Plus, Scissors } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalServicio from '../components/ModalServicio.jsx'
+import EsqueletoLista from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -56,8 +59,10 @@ export default function Servicios({ activo = true }) {
   const [servicioAEliminar, setServicioAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const primeraCargaHecha = useRef(false)
+  const panelEliminarRef = useRef(null)
 
   useCerrarConEscape(() => setServicioAEliminar(null), Boolean(servicioAEliminar))
+  useModalA11y(panelEliminarRef, Boolean(servicioAEliminar))
 
   async function cargarServicios(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -127,7 +132,7 @@ export default function Servicios({ activo = true }) {
   )
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador + Nuevo servicio: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -158,11 +163,13 @@ export default function Servicios({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando servicios...</p>
+        <EsqueletoLista columnas={5} />
       ) : filtrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          No se encontraron servicios.
-        </p>
+        <EstadoVacio
+          icono={Scissors}
+          mensaje="No se encontraron servicios."
+          accion={esAdmin ? { label: '+ Nuevo servicio', onClick: () => setModalServicio('nuevo') } : undefined}
+        />
       ) : (
         <>
           {/* Tarjetas: solo móvil */}
@@ -173,7 +180,7 @@ export default function Servicios({ activo = true }) {
                   <div className="flex min-w-0 items-center gap-2">
                     <p className="truncate text-sm font-medium text-ink">{servicio.nombre}</p>
                     {servicio.categoria && (
-                      <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-ink/60">
+                      <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
                         {servicio.categoria}
                       </span>
                     )}
@@ -181,7 +188,7 @@ export default function Servicios({ activo = true }) {
 
                   <div className="flex shrink-0 items-center gap-1.5">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                         servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
                       }`}
                     >
@@ -218,7 +225,7 @@ export default function Servicios({ activo = true }) {
           <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[11px] uppercase tracking-wider text-ink/60">
+                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Servicio</th>
                   <th className="px-3 py-2 font-normal">Categoría</th>
                   <th className="px-3 py-2 text-right font-normal">Precio</th>
@@ -296,7 +303,7 @@ export default function Servicios({ activo = true }) {
 
       {servicioAEliminar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{servicioAEliminar.nombre}"?
             </h2>

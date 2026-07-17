@@ -10,11 +10,13 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
+  UserCircle,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
@@ -25,6 +27,8 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
+import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const OPCION_TODOS = 'todos'
 const TAMANO_PAGINA = 50
@@ -118,6 +122,11 @@ export default function MiPanel({ activo = true }) {
 
   useCerrarConEscape(() => setRegistroAEliminar(null), Boolean(registroAEliminar))
   useCerrarConEscape(() => setRegistroACancelar(null), Boolean(registroACancelar))
+
+  const panelEliminarRef = useRef(null)
+  const panelCancelarRef = useRef(null)
+  useModalA11y(panelEliminarRef, Boolean(registroAEliminar))
+  useModalA11y(panelCancelarRef, Boolean(registroACancelar))
 
   useEffect(() => {
     if (!esAdmin) return
@@ -307,7 +316,7 @@ export default function MiPanel({ activo = true }) {
   const grupos = agruparPorDia(registrosFiltrados)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador: fijo arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -374,13 +383,18 @@ export default function MiPanel({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando atenciones...</p>
+        <EsqueletoGrupos />
       ) : registrosFiltrados.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          {busqueda.trim()
-            ? 'No se encontraron atenciones.'
-            : 'No hay atenciones registradas en este período.'}
-        </p>
+        <EstadoVacio
+          icono={UserCircle}
+          mensaje={
+            busqueda.trim()
+              ? 'No se encontraron atenciones.'
+              : 'No hay atenciones registradas en este período.'
+          }
+          accion={{ label: '+ Nueva atención', onClick: () => setModalRegistro('nuevo') }}
+          tema="purple-300"
+        />
       ) : (
         <div className="mt-4 space-y-3">
           {grupos.map((grupo) => {
@@ -446,7 +460,7 @@ export default function MiPanel({ activo = true }) {
                             </p>
 
                             {cancelado ? (
-                              <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[10px] font-medium text-red">
+                              <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
                                 Cancelada
                               </span>
                             ) : (
@@ -575,7 +589,7 @@ export default function MiPanel({ activo = true }) {
 
       {registroAEliminar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">¿Eliminar esta atención?</h2>
             <p className="mt-1 text-sm text-ink/60">Esta acción no se puede deshacer.</p>
             <div className="mt-4 flex gap-2">
@@ -602,7 +616,7 @@ export default function MiPanel({ activo = true }) {
 
       {registroACancelar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">¿Cancelar esta atención?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Quedará marcada como cancelada y no contará en tus totales del período.

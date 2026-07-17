@@ -1,6 +1,8 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
+import Etiqueta from './Etiqueta.jsx'
 
 const formularioVacio = {
   nombre: '',
@@ -20,15 +22,6 @@ function formularioDesdeCliente(cliente) {
   }
 }
 
-function Etiqueta({ children, obligatorio, htmlFor }) {
-  return (
-    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/60">
-      {children}
-      {obligatorio && <span className="text-red"> *</span>}
-    </label>
-  )
-}
-
 function validar(formulario) {
   if (!formulario.nombre.trim()) return 'El nombre completo es obligatorio.'
   return null
@@ -36,6 +29,8 @@ function validar(formulario) {
 
 export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
   const idBase = useId()
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const esEdicion = Boolean(cliente)
 
   const [formulario, setFormulario] = useState(() =>
@@ -85,13 +80,10 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
   }
 
   return (
-    <div
-      onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
-    >
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
-        onClick={(evento) => evento.stopPropagation()}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -100,8 +92,9 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
 
         <div className="mt-4 space-y-3">
           <div>
-            <Etiqueta obligatorio>Nombre completo</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre completo</Etiqueta>
             <input
+              id={`${idBase}-nombre`}
               type="text"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
@@ -111,8 +104,9 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
           </div>
 
           <div>
-            <Etiqueta>Teléfono</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-telefono`}>Teléfono</Etiqueta>
             <input
+              id={`${idBase}-telefono`}
               type="tel"
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
@@ -122,8 +116,9 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
           </div>
 
           <div>
-            <Etiqueta>DNI</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-dni`}>DNI</Etiqueta>
             <input
+              id={`${idBase}-dni`}
               type="text"
               value={formulario.dni}
               onChange={(evento) => actualizarCampo('dni', evento.target.value)}
@@ -144,8 +139,9 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
           </div>
 
           <div>
-            <Etiqueta>Notas</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-notas`}>Notas</Etiqueta>
             <textarea
+              id={`${idBase}-notas`}
               value={formulario.notas}
               onChange={(evento) => actualizarCampo('notas', evento.target.value)}
               placeholder="Opcional"

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { X, ShoppingCart, Check, User, Camera, Mic } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
 import { useCarrito } from '../context/CarritoContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -112,7 +113,7 @@ function FilaTicket({
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           {item.tipo === 'SERVICIO' && (
-            <span className="rounded border border-blue/40 bg-blue/10 px-1.5 py-0.5 font-mono text-[10px] text-blue">
+            <span className="rounded border border-blue/40 bg-blue/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-blue">
               Servicio
             </span>
           )}
@@ -137,7 +138,7 @@ function FilaTicket({
           </span>
         )}
         {(superaStock || enElLimite) && (
-          <p className={`font-mono text-[10px] ${superaStock ? 'text-red' : 'text-amber'}`}>
+          <p className={`font-mono text-[11px] ${superaStock ? 'text-red' : 'text-amber'}`}>
             {superaStock ? 'Stock insuficiente' : `Stock máx: ${stockDisponible}`}
           </p>
         )}
@@ -241,6 +242,11 @@ export default function Ventas({ activo = true }) {
 
   useCerrarConEscape(() => setConfirmandoCancelar(false), confirmandoCancelar)
   useCerrarConEscape(() => setVentaConfirmada(null), Boolean(ventaConfirmada))
+
+  const panelCancelarRef = useRef(null)
+  const panelConfirmadaRef = useRef(null)
+  useModalA11y(panelCancelarRef, confirmandoCancelar)
+  useModalA11y(panelConfirmadaRef, Boolean(ventaConfirmada))
 
   useEffect(() => {
     if (!ventaParaImprimir) return
@@ -586,7 +592,7 @@ export default function Ventas({ activo = true }) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="animate-entrada-pestana flex h-full flex-col">
       {/* Buscador / escáner de código de barras + Agregar servicio */}
       <div className="border-b border-border bg-surface p-3">
         <div className="relative flex items-center gap-2">
@@ -620,7 +626,7 @@ export default function Ventas({ activo = true }) {
                 setIndiceActivo(-1)
               }}
               aria-label="Limpiar búsqueda"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
+              className="absolute right-0.5 top-1/2 -translate-y-1/2 p-2.5 text-ink/60 transition-colors hover:text-ink"
             >
               <X className="h-4 w-4" />
             </button>
@@ -629,7 +635,7 @@ export default function Ventas({ activo = true }) {
         </div>
 
         {mostrarSugerencias && sugerencias.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-lg">
+          <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-lg">
             {sugerencias.map((producto, indice) => (
               <button
                 key={producto.id}
@@ -699,7 +705,7 @@ export default function Ventas({ activo = true }) {
                 type="button"
                 onClick={() => setCliente(null)}
                 aria-label="Quitar cliente"
-                className="shrink-0 text-purple-300/70 transition-colors hover:text-red"
+                className="-m-2 shrink-0 p-2 text-purple-300/70 transition-colors hover:text-red"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -734,7 +740,7 @@ export default function Ventas({ activo = true }) {
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
             <div className="-mx-3 flex min-h-0 flex-1 flex-col border-t border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none">
-              <div className="grid grid-cols-[1fr_5rem_4rem_1.5rem] gap-3 border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-ink">
+              <div className="grid grid-cols-[1fr_5rem_4rem_1.5rem] gap-3 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink">
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
                 <span className="text-right">Subtotal</span>
@@ -906,7 +912,7 @@ export default function Ventas({ activo = true }) {
 
       {confirmandoCancelar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
             <h2 className="text-base font-semibold text-ink">¿Cancelar esta venta?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Se va a vaciar el ticket completo. Esta acción no se puede deshacer.
@@ -933,7 +939,7 @@ export default function Ventas({ activo = true }) {
 
       {ventaConfirmada && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5 text-center">
+          <div ref={panelConfirmadaRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5 text-center">
             <p className="text-3xl text-green">✓</p>
             <h2 className="mt-2 text-base font-semibold text-ink">Venta confirmada</h2>
             <p className="mt-1 font-mono text-sm text-ink/60">

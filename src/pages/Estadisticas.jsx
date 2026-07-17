@@ -12,6 +12,7 @@ import {
 import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
 import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/finanzas.js'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
+import { EsqueletoResumen } from '../components/Esqueleto.jsx'
 
 const CLASE_METODO_PAGO = {
   Efectivo: 'bg-green',
@@ -182,7 +183,7 @@ function GraficoTendencia({ dias }) {
               onTouchCancel={() => setActivo(null)}
             >
               {activo === indice && (
-                <div className="absolute -top-7 z-10 whitespace-nowrap rounded border border-border bg-surface-2 px-1.5 py-1 font-mono text-[10px] text-ink shadow-lg">
+                <div className="absolute -top-7 z-10 whitespace-nowrap rounded border border-border bg-surface-2 px-1.5 py-1 font-mono text-[11px] text-ink shadow-lg">
                   {formatearSoles(dia.monto)}
                 </div>
               )}
@@ -192,7 +193,7 @@ function GraficoTendencia({ dias }) {
                 }`}
                 style={{ height: `${alturaPct}%` }}
               />
-              <span className="mt-1 font-mono text-[9px] text-ink/60">
+              <span className="mt-1 font-mono text-[11px] text-ink/60">
                 {formatearFechaCorta(dia.fecha)}
               </span>
             </div>
@@ -313,7 +314,7 @@ export default function Estadisticas({ activo = true }) {
   const totalMetodos = sumarMontos(metodosPago, (m) => m.monto)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
       <FiltrosFecha
         filtro={filtro}
@@ -333,7 +334,7 @@ export default function Estadisticas({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando estadísticas...</p>
+        <EsqueletoResumen cantidad={8} />
       ) : (
         <>
           {/* 1. KPIs comparativos */}

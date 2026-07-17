@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { anioMesEnLima } from '../lib/fechas.js'
+import Etiqueta from './Etiqueta.jsx'
 
 export const MESES = [
   'Enero',
@@ -44,15 +46,6 @@ function formularioDesdeGasto(gasto) {
   }
 }
 
-function Etiqueta({ children, obligatorio }) {
-  return (
-    <label className="mb-1 block text-xs text-ink/60">
-      {children}
-      {obligatorio && <span className="text-red"> *</span>}
-    </label>
-  )
-}
-
 function validar(formulario) {
   if (!formulario.nombre.trim()) return 'El nombre es obligatorio.'
 
@@ -69,6 +62,9 @@ function validar(formulario) {
 }
 
 export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, onGuardado }) {
+  const idBase = useId()
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const esEdicion = Boolean(gasto)
   const periodoBloqueado = esEdicion && gasto.tipo === 'FIJO'
 
@@ -123,13 +119,10 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
   }
 
   return (
-    <div
-      onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
-    >
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
-        onClick={(evento) => evento.stopPropagation()}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -138,8 +131,9 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
 
         <div className="mt-4 space-y-3">
           <div>
-            <Etiqueta obligatorio>Nombre</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
+              id={`${idBase}-nombre`}
               type="text"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
@@ -175,8 +169,9 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
           )}
 
           <div>
-            <Etiqueta obligatorio>Monto</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-monto`}>Monto</Etiqueta>
             <input
+              id={`${idBase}-monto`}
               type="number"
               inputMode="decimal"
               step="0.01"
@@ -188,8 +183,9 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Etiqueta obligatorio>Mes</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-mes`}>Mes</Etiqueta>
               <select
+                id={`${idBase}-mes`}
                 value={formulario.mes}
                 onChange={(evento) => actualizarCampo('mes', evento.target.value)}
                 disabled={periodoBloqueado}
@@ -203,8 +199,9 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
               </select>
             </div>
             <div>
-              <Etiqueta obligatorio>Año</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-anio`}>Año</Etiqueta>
               <input
+                id={`${idBase}-anio`}
                 type="number"
                 inputMode="numeric"
                 value={formulario.anio}

@@ -46,19 +46,27 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={value}>
       {children}
 
-      {toast && (
-        <div
-          className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] transition-opacity duration-300 ease-in-out ${
-            visible ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
+      {/* C4 de la auditoría frontend (WCAG 4.1.3): el contenedor con
+          role="status" vive SIEMPRE montado (no junto con el toast) —
+          una región aria-live anuncia CAMBIOS de contenido, así que si
+          se monta recién cuando aparece el toast, el lector de pantalla
+          se pierde el primer mensaje. aria-live="polite": anuncia sin
+          interrumpir lo que el lector esté leyendo. */}
+      <div
+        role="status"
+        aria-live="polite"
+        className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] transition-opacity duration-300 ease-in-out ${
+          visible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {toast && (
           <div
             className={`rounded-lg border px-4 py-2.5 text-sm shadow-lg ${CLASES_TIPO[toast.tipo]}`}
           >
             {toast.texto}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </ToastContext.Provider>
   )
 }

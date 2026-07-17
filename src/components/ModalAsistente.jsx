@@ -1,6 +1,8 @@
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
+import Etiqueta from './Etiqueta.jsx'
 
 const formularioVacio = {
   nombresCompletos: '',
@@ -28,15 +30,6 @@ function formularioDesdeAsistente(asistente) {
   }
 }
 
-function Etiqueta({ children, obligatorio, htmlFor }) {
-  return (
-    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/60">
-      {children}
-      {obligatorio && <span className="text-red"> *</span>}
-    </label>
-  )
-}
-
 function validar(formulario) {
   if (!formulario.nombresCompletos.trim()) return 'Los nombres completos son obligatorios.'
   return null
@@ -44,6 +37,8 @@ function validar(formulario) {
 
 export default function ModalAsistente({ asistente, usuariosDisponibles, onCerrar, onGuardado }) {
   const idBase = useId()
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const esEdicion = Boolean(asistente)
 
   const [formulario, setFormulario] = useState(() =>
@@ -97,13 +92,10 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
   }
 
   return (
-    <div
-      onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
-    >
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
-        onClick={(evento) => evento.stopPropagation()}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -112,8 +104,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
 
         <div className="mt-4 space-y-3">
           <div>
-            <Etiqueta obligatorio>Nombres completos</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-nombres`}>Nombres completos</Etiqueta>
             <input
+              id={`${idBase}-nombres`}
               type="text"
               value={formulario.nombresCompletos}
               onChange={(evento) => actualizarCampo('nombresCompletos', evento.target.value)}
@@ -123,8 +116,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
-            <Etiqueta>Teléfono</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-telefono`}>Teléfono</Etiqueta>
             <input
+              id={`${idBase}-telefono`}
               type="tel"
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
@@ -134,8 +128,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
-            <Etiqueta>Email</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-email`}>Email</Etiqueta>
             <input
+              id={`${idBase}-email`}
               type="email"
               value={formulario.email}
               onChange={(evento) => actualizarCampo('email', evento.target.value)}
@@ -145,8 +140,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
-            <Etiqueta>Dirección</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-direccion`}>Dirección</Etiqueta>
             <input
+              id={`${idBase}-direccion`}
               type="text"
               value={formulario.direccion}
               onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
@@ -156,8 +152,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
-            <Etiqueta>Contacto de emergencia</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-emergencia`}>Contacto de emergencia</Etiqueta>
             <input
+              id={`${idBase}-emergencia`}
               type="text"
               value={formulario.contactoEmergencia}
               onChange={(evento) => actualizarCampo('contactoEmergencia', evento.target.value)}
@@ -189,8 +186,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
-            <Etiqueta>Cuenta de acceso</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-cuenta`}>Cuenta de acceso</Etiqueta>
             <select
+              id={`${idBase}-cuenta`}
               value={formulario.usuarioId}
               onChange={(evento) => actualizarCampo('usuarioId', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"

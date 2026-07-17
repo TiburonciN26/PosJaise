@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
+import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
+import Etiqueta from './Etiqueta.jsx'
 
 function formularioVacio() {
   return {
@@ -24,15 +27,6 @@ function formularioDesdeRegistro(registro) {
   }
 }
 
-function Etiqueta({ children, obligatorio }) {
-  return (
-    <label className="mb-1 block text-xs text-ink/60">
-      {children}
-      {obligatorio && <span className="text-red"> *</span>}
-    </label>
-  )
-}
-
 function validar(formulario) {
   if (!formulario.servicioId) return 'Selecciona un servicio.'
   if (!formulario.clienteId) return 'Selecciona un cliente.'
@@ -46,6 +40,9 @@ function validar(formulario) {
 }
 
 export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }) {
+  const idBase = useId()
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const { usuario } = useAuth()
   const esEdicion = Boolean(registro)
 
@@ -179,7 +176,11 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
     setGuardando(false)
 
     if (errorGuardado) {
-      setError('No se pudo guardar la atención. Intenta de nuevo.')
+      setError(
+        errorGuardado.message === MENSAJE_NEGOCIO_CERRADO
+          ? MENSAJE_NEGOCIO_CERRADO
+          : 'No se pudo guardar la atención. Intenta de nuevo.',
+      )
       return
     }
 
@@ -187,13 +188,10 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
   }
 
   return (
-    <div
-      onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
-    >
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
-        onClick={(evento) => evento.stopPropagation()}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -205,8 +203,9 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
         ) : (
           <div className="mt-4 space-y-3">
             <div>
-              <Etiqueta obligatorio>Servicio</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-servicio`}>Servicio</Etiqueta>
               <select
+                id={`${idBase}-servicio`}
                 value={formulario.servicioId}
                 onChange={(evento) => seleccionarServicio(evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
@@ -221,8 +220,9 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
             </div>
 
             <div>
-              <Etiqueta obligatorio>Cliente</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-cliente`}>Cliente</Etiqueta>
               <select
+                id={`${idBase}-cliente`}
                 value={formulario.clienteId}
                 onChange={(evento) => actualizarCampo('clienteId', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
@@ -237,8 +237,9 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
             </div>
 
             <div>
-              <Etiqueta obligatorio>Precio</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-precio`}>Precio</Etiqueta>
               <input
+                id={`${idBase}-precio`}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -261,8 +262,9 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
             </div>
 
             <div>
-              <Etiqueta obligatorio>Fecha y hora</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-fecha`}>Fecha y hora</Etiqueta>
               <input
+                id={`${idBase}-fecha`}
                 type="datetime-local"
                 value={formulario.fecha}
                 onChange={(evento) => actualizarCampo('fecha', evento.target.value)}
@@ -271,8 +273,9 @@ export default function ModalRegistroAtencion({ registro, onCerrar, onGuardado }
             </div>
 
             <div>
-              <Etiqueta>Nota</Etiqueta>
+              <Etiqueta htmlFor={`${idBase}-nota`}>Nota</Etiqueta>
               <textarea
+                id={`${idBase}-nota`}
                 value={formulario.nota}
                 onChange={(evento) => actualizarCampo('nota', evento.target.value)}
                 placeholder="Opcional"

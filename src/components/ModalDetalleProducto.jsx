@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, ImageOff, Pencil, Plus, Trash2, ZoomIn } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { urlPublicaFoto } from '../lib/imagenes.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BotonAccion from './BotonAccion.jsx'
 import ModalVisorFoto from './ModalVisorFoto.jsx'
+
+const BUCKET_FOTOS = 'fotos-productos'
 
 function formatearFechaHoraCorta(fechaIso) {
   const fecha = new Date(fechaIso)
@@ -39,6 +42,8 @@ export default function ModalDetalleProducto({
   onEliminar,
   onAgregarStock,
 }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const [historial, setHistorial] = useState([])
   const [cargando, setCargando] = useState(esAdmin)
   const [error, setError] = useState(null)
@@ -70,15 +75,19 @@ export default function ModalDetalleProducto({
     }
   }, [producto.id, esAdmin])
 
-  const urlFoto = urlPublicaFoto(producto.foto_url)
+  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div onClick={onCerrar} className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       {/* flex-col + footer shrink-0: con muchos movimientos de stock, el
           contenido del medio scrollea pero las acciones y "Cerrar" quedan
           siempre visibles abajo, en vez de que la lista los empuje fuera
           de la pantalla. */}
-      <div className="flex max-h-[90dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface">
+      <div
+        ref={panelRef}
+        onClick={(evento) => evento.stopPropagation()}
+        className="flex max-h-[90dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface"
+      >
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           {urlFoto ? (
             <button

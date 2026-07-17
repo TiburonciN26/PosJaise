@@ -6,6 +6,7 @@ import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
 import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/finanzas.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
+import { EsqueletoResumen } from '../components/Esqueleto.jsx'
 
 const METRICAS_VACIAS = {
   ingresoProductos: 0,
@@ -217,7 +218,7 @@ export default function Dashboard({ activo = true }) {
   ]
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
       <FiltrosFecha
         filtro={filtro}
@@ -237,7 +238,7 @@ export default function Dashboard({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando dashboard...</p>
+        <EsqueletoResumen cantidad={9} />
       ) : (
         <>
           {/* Punto de equilibrio: barra tipo termómetro */}

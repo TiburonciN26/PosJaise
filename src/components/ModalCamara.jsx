@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 
 // Cámara integrada en la propia página (getUserMedia + <video> en vivo),
 // en vez de <input type="file" capture>. El input con "capture" abre la
@@ -10,6 +11,8 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 // el formulario, todo). Con getUserMedia la app nunca pierde el foco: la
 // cámara se ve dentro de este mismo modal.
 export default function ModalCamara({ onCapturar, onCerrar }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef, true, 'Tomar foto con la cámara')
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const [listo, setListo] = useState(false)
@@ -66,7 +69,7 @@ export default function ModalCamara({ onCapturar, onCerrar }) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-black">
+    <div ref={panelRef} className="fixed inset-0 z-40 flex flex-col bg-black">
       <div className="flex shrink-0 items-center justify-between gap-2 p-3">
         <button
           type="button"

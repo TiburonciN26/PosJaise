@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
+import Etiqueta from './Etiqueta.jsx'
 
 const OPCION_NUEVA_CATEGORIA = '__nueva__'
 
@@ -22,15 +24,6 @@ function formularioDesdeServicio(servicio) {
     duracionMin: servicio.duracion_min != null ? String(servicio.duracion_min) : '',
     activo: servicio.activo ?? true,
   }
-}
-
-function Etiqueta({ children, obligatorio }) {
-  return (
-    <label className="mb-1 block text-xs text-ink/60">
-      {children}
-      {obligatorio && <span className="text-red"> *</span>}
-    </label>
-  )
 }
 
 function validar(formulario) {
@@ -58,6 +51,9 @@ function validar(formulario) {
 }
 
 export default function ModalServicio({ servicio, categoriasExistentes, onCerrar, onGuardado }) {
+  const idBase = useId()
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
   const esEdicion = Boolean(servicio)
 
   const [formulario, setFormulario] = useState(() =>
@@ -117,13 +113,10 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
   }
 
   return (
-    <div
-      onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
-    >
+    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
-        onClick={(evento) => evento.stopPropagation()}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -132,8 +125,9 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
 
         <div className="mt-4 space-y-3">
           <div>
-            <Etiqueta obligatorio>Nombre</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
+              id={`${idBase}-nombre`}
               type="text"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
@@ -143,8 +137,9 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
           </div>
 
           <div>
-            <Etiqueta obligatorio>Categoría</Etiqueta>
+            <Etiqueta obligatorio htmlFor={`${idBase}-categoria`}>Categoría</Etiqueta>
             <select
+              id={`${idBase}-categoria`}
               value={formulario.categoriaSeleccionada}
               onChange={(evento) => actualizarCampo('categoriaSeleccionada', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
@@ -172,8 +167,9 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Etiqueta obligatorio>Precio</Etiqueta>
+              <Etiqueta obligatorio htmlFor={`${idBase}-precio`}>Precio</Etiqueta>
               <input
+                id={`${idBase}-precio`}
                 type="number"
                 inputMode="decimal"
                 step="0.01"
@@ -184,8 +180,9 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
             </div>
 
             <div>
-              <Etiqueta>Duración (min)</Etiqueta>
+              <Etiqueta htmlFor={`${idBase}-duracion`}>Duración (min)</Etiqueta>
               <input
+                id={`${idBase}-duracion`}
                 type="number"
                 inputMode="numeric"
                 value={formulario.duracionMin}

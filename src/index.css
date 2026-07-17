@@ -1,13 +1,31 @@
 @import 'tailwindcss';
 
 /*
- * Tema POS — Negocio 2
+ * Tema POS — Negocio 2 — oscuro (por defecto) y claro
+ * =========================================================
  * Estas variables generan utilidades de Tailwind automáticamente:
  * --color-x  -> bg-x / text-x / border-x
  * --font-x   -> font-x
+ *
+ * Tailwind v4 compila cada utilidad como una referencia var() real
+ * (ej. .bg-bg{background-color:var(--color-bg)}), no como un valor
+ * fijo — por eso alcanza con sobreescribir estas mismas variables
+ * bajo :root[data-tema="claro"] (ver más abajo) para que TODA la
+ * app cambie de tema al instante, sin duplicar un solo componente:
+ * cualquier className que ya usa bg-bg/text-ink/bg-amber/etc. se
+ * adapta solo, sin tocarlo.
+ *
+ * Temas principales (oscuro/claro) vs. sub-temas de acento (amber,
+ * y el "rosa pastel" purple-300, además de green/blue/red/orange-400):
+ * los acentos son marca/estado y quedan IDÉNTICOS en los dos temas
+ * principales, sin excepción — no se redeclaran bajo
+ * :root[data-tema="claro"], así que ahí abajo siguen sacando el
+ * mismo valor de acá. Lo único que invierte entre temas principales
+ * son los neutros: bg/surface/surface-2/surface-3/border/
+ * border-strong/ink.
  */
 @theme {
-  /* Fondos y superficies */
+  /* Fondos y superficies (oscuro — sin cambios respecto al diseño actual) */
   --color-bg: #0d0d0d;
   --color-surface: #161616;
   --color-surface-2: #1e1e1e;
@@ -84,7 +102,7 @@
 
 @keyframes flash-verde {
   from {
-    background-color: rgba(62, 207, 106, 0.3);
+    background-color: color-mix(in srgb, var(--color-green) 30%, transparent);
   }
   to {
     background-color: transparent;
@@ -93,7 +111,7 @@
 
 @keyframes flash-rojo {
   from {
-    background-color: rgba(240, 101, 101, 0.3);
+    background-color: color-mix(in srgb, var(--color-red) 30%, transparent);
   }
   to {
     background-color: transparent;
@@ -162,6 +180,75 @@
   }
 }
 
+/* C3+A3 (useModalA11y.js): estas dos clases se agregan vía classList.add
+   en JS, no aparecen como className literal en ningún JSX — por eso van
+   como CSS a mano en vez de pasar por @theme --animate-x (Tailwind
+   necesita ver el nombre de la clase como texto en un archivo para
+   generarla; acá alcanza con que exista la regla). */
+@keyframes entrada-modal {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes entrada-overlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entrada-modal {
+  animation: entrada-modal 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-entrada-overlay {
+  animation: entrada-overlay 180ms ease-out;
+}
+
+/* M3: los desplegables (SelectorOrden, sugerencias de búsqueda en
+   Ventas) aparecían en 0ms — seco al lado de acordeones/menús que sí
+   animan. Entrada breve con la duración "media" de la escala. */
+@keyframes entrada-dropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-entrada-dropdown {
+  animation: entrada-dropdown var(--dur-media) cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top;
+}
+
+/* M4: PestanasCacheadas mantiene cada pestaña montada y alterna
+   display:none/contents — instantáneo (bien, no se paga red de nuevo),
+   pero visualmente seco. Solo opacity, sin transform: no debe competir
+   con el layout ancla-al-viewport de Ventas (panel de cobro). */
+@keyframes entrada-pestana {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entrada-pestana {
+  animation: entrada-pestana 120ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-flash-verde,
   .animate-flash-rojo,
@@ -169,7 +256,11 @@
   .animate-brillo-barra,
   .animate-brillo-texto,
   .animate-brillo-tarjeta,
-  .animate-elevar-flecha {
+  .animate-elevar-flecha,
+  .animate-entrada-modal,
+  .animate-entrada-overlay,
+  .animate-entrada-dropdown,
+  .animate-entrada-pestana {
     animation: none;
   }
 
@@ -222,6 +313,211 @@
   /* Radio de borde estándar del proyecto: usar rounded-lg (8px) en componentes */
   --radius: 8px;
   color-scheme: dark;
+  /* Anillo de foco de teclado (regla :focus-visible más abajo). En
+     oscuro el ámbar de marca contrasta de sobra; claro lo redefine. */
+  --color-foco: var(--color-amber);
+  /* M3 de la 5ª auditoría: las duraciones de motion convivían sin
+     escala (150/200/300/350/500ms repartidos sin criterio). Estos tres
+     tokens son la referencia única de acá en más — rápida para
+     hover/press, media para dropdowns/colapsables, lenta para overlays
+     y el fundido de tema. */
+  --dur-rapida: 150ms;
+  --dur-media: 250ms;
+  --dur-lenta: 350ms;
+}
+
+/* C2 de la auditoría frontend (WCAG 2.4.7): el proyecto usa
+ * outline-none en todos los inputs y ningún botón declara estado de
+ * foco — un usuario de teclado navegaba sin saber dónde estaba parado.
+ * :focus-visible solo se activa con teclado (los clics de mouse/touch
+ * no muestran el anillo, así la UI táctil queda igual que siempre).
+ * :where() deja la especificidad en cero: cualquier componente puede
+ * pisarlo declarando su propio foco si algún día lo necesita. */
+:where(button, a, input, select, textarea, [role='switch']):focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* A4 de la auditoría frontend: los CTAs sólidos (Cobrar, Guardar,
+ * Entrar, el FAB, filtros activos) no tenían NINGÚN feedback de
+ * hover/press — .text-bg ya es, en toda la app, la marca de "texto
+ * sobre un acento sólido" (bg-amber/bg-purple-300/bg-green + text-bg),
+ * así que basta esta única regla para darle microinteracción a los
+ * ~25 CTAs de golpe, sin tocar un componente. :where() = especificidad
+ * cero: donde un botón ya declara su propio active:scale-* (el FAB),
+ * ese gana y esta regla queda inerte para esa propiedad. */
+@media (hover: hover) {
+  :where(button.text-bg, a.text-bg):hover {
+    filter: brightness(1.08);
+  }
+}
+:where(button.text-bg, a.text-bg) {
+  transition:
+    filter 150ms ease,
+    transform 100ms ease;
+}
+:where(button.text-bg, a.text-bg):active {
+  transform: scale(0.98);
+}
+
+/* Tema claro: se activa poniendo data-tema="claro" en <html> (ver
+ * ThemeContext.jsx). Mismos nombres de variable que @theme arriba —
+ * el selector de atributo pesa más que el :root plano de arriba, así
+ * que gana en cascada sin !important. No pure-white: fondo gris muy
+ * suave, cards en blanco real (así se distinguen del fondo), bordes
+ * sutiles. color-scheme: light además le pide al navegador pintar
+ * los controles NATIVOS en claro — scrollbars, <input type="date">/
+ * "datetime-local" (los calendarios), <select> — sin eso quedarían
+ * oscuros aunque el resto de la UI ya esté en claro.
+ *
+ * Solo se tocan los NEUTROS (fondo/superficie/borde/texto). Los
+ * acentos (amber y el "rosa pastel" purple-300, más verde/azul/rojo/
+ * naranja) son sub-temas de marca/estado — quedan EXACTAMENTE
+ * iguales en los dos temas principales, sin excepción: no se
+ * redeclaran acá, así que siguen tomando el valor de @theme de
+ * arriba pase lo que pase con data-tema.
+ */
+:root[data-tema='claro'] {
+  color-scheme: light;
+
+  /* Gris/azul ultra suave (slate-50) en vez de blanco puro — así las
+     cards (--color-surface, blanco real, sin cambios) "flotan" encima.
+     A7 de la auditoría frontend: surface-2/3 y los bordes eran beige
+     cálido (#f1efe9…) mientras bg/ink ya eran slate frío — tres
+     temperaturas de neutro conviviendo (fondo azulado, inputs beige,
+     texto frío) se leía "casi bien pero raro". Unificado a la escala
+     slate completa. */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #e2e8f0;
+
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Base slate-900 (antes un negro cálido) — texto principal. */
+  --color-ink: #0f172a;
+
+  /* A1 de la auditoría frontend — texto secundario (etiquetas,
+     subtítulos, metadatos): slate-600 real, no opacidad sobre ink.
+     Legible (7.6:1 sobre blanco, pasa AAA) pero visualmente distinto
+     del texto principal, así la jerarquía no se aplana. Lo consume la
+     regla [class*='text-ink/'] de abajo. */
+  --color-ink-secundario: #475569;
+
+  /* Único acento que sí cambia entre temas (pedido explícito): el
+     "rosa pastel" (Asistentes/Porcentajes) pasa a #ED8BAC solo en
+     claro — en oscuro sigue el lavanda original de @theme, sin tocar. */
+  --color-purple-300: #ed8bac;
+
+  /* C1 de la auditoría — los acentos usados COMO TEXTO sobre
+     superficies claras no llegan ni a 3:1 (amber sobre blanco: 2.0).
+     La identidad pide acentos de MARCA idénticos en ambos temas, así
+     que la corrección separa el ROL: rellenos/bordes/pills no se
+     tocan; el acento-texto usa estos pares oscurecidos del mismo matiz
+     (todos ≥4.5:1 sobre blanco), aplicados por override de las
+     utilidades .text-* de abajo, sin tocar componentes. */
+  --color-amber-texto: #9a6700;
+  --color-green-texto: #15803d;
+  --color-red-texto: #dc2626;
+  --color-blue-texto: #2563eb;
+  --color-rosa-texto: #c2456b;
+  --color-naranja-texto: #c2410c;
+
+  /* Anillo de foco (regla :focus-visible, más abajo): en claro, el
+     ámbar de marca no contrasta sobre blanco — usa el par de texto. */
+  --color-foco: var(--color-amber-texto);
+}
+
+/* Texto secundario en claro: antes se forzaba ink al 100% (legible pero
+ * jerarquía aplanada: etiquetas y valores se veían igual que el texto
+ * principal). Ahora usa el token secundario. En oscuro no se toca:
+ * sobre #0d0d0d las opacidades ya funcionan bien. */
+[data-tema='claro'] [class*='text-ink/'] {
+  color: var(--color-ink-secundario);
+}
+
+/* C1 (continuación): override de las utilidades de TEXTO de acento en
+ * claro — la clase base y su variante hover (con :hover en el selector
+ * para pisar a la de Tailwind solo cuando corresponde). */
+[data-tema='claro'] :is(.text-amber, .hover\:text-amber:hover) {
+  color: var(--color-amber-texto);
+}
+[data-tema='claro'] :is(.text-green, .hover\:text-green:hover) {
+  color: var(--color-green-texto);
+}
+[data-tema='claro'] :is(.text-red, .hover\:text-red:hover) {
+  color: var(--color-red-texto);
+}
+[data-tema='claro'] :is(.text-blue, .hover\:text-blue:hover) {
+  color: var(--color-blue-texto);
+}
+[data-tema='claro'] :is(.text-purple-300, .hover\:text-purple-300:hover) {
+  color: var(--color-rosa-texto);
+}
+[data-tema='claro'] .text-orange-400 {
+  color: var(--color-naranja-texto);
+}
+
+/* Variantes con opacidad del rosa (pestañas inactivas del header y del
+ * menú lateral): mismo par de texto, apenas atenuado — mantiene la
+ * distinción activa/inactiva sin volver a caer bajo 4.5:1. */
+[data-tema='claro'] :is(.text-purple-300\/70, .text-purple-300\/90) {
+  color: color-mix(in oklab, var(--color-rosa-texto) 85%, transparent);
+}
+
+/* C1b: .text-bg existe para "texto sobre acento sólido" (botones
+ * Guardar/Cobrar, FAB, filtros activos). En oscuro resuelve a #0d0d0d
+ * (texto oscuro sobre ámbar: 9.6:1 ✓). En claro, --color-bg es casi
+ * blanco y esos botones quedaban con texto blanquecino sobre ámbar
+ * (2:1, ilegible). Los acentos sólidos son idénticos en ambos temas,
+ * así que el texto encima debe ser oscuro SIEMPRE (≥5.7:1 sobre los
+ * cinco acentos). */
+[data-tema='claro'] .text-bg {
+  color: var(--color-ink);
+}
+
+/* Títulos, menús y demás texto "importante" en negrita en claro —
+ * en oscuro se deja tal cual (no se pidió cambiarlo ahí). h1-h3 ya
+ * suelen traer font-semibold (600) por className; acá se refuerza a
+ * 700 SOLO en claro. Los links de <nav> (pestañas del header y del
+ * menú lateral) no traían ningún peso propio — se les da 600. */
+[data-tema='claro'] h1,
+[data-tema='claro'] h2,
+[data-tema='claro'] h3 {
+  font-weight: 700;
+}
+
+[data-tema='claro'] nav a {
+  font-weight: 600;
+}
+
+/* Fundido suave al cambiar de tema — SOLO mientras el toggle está en
+ * curso. ThemeContext.alternarTema le pone .cambiando-tema al <html>
+ * justo antes de invertir data-tema y se la quita a los 500ms. Fuera de
+ * ese instante NO hay ninguna transición global: así no se anima por
+ * accidente ningún otro cambio de color de la app (lo que antes hacía
+ * "saltar"/parpadear valores y filas), y el menú lateral desliza sin
+ * tirones porque no compite con transiciones de color permanentes.
+ *
+ * Se incluye transform (con su propia curva) porque el thumb del switch
+ * de tema se mueve exactamente en el mismo toggle — sin esto, el
+ * !important le quitaría su transición y saltaría de golpe en vez de
+ * deslizarse. Cubre ::before/::after para que ningún pseudo-elemento
+ * coloreado quede fuera del fundido. */
+@media (prefers-reduced-motion: no-preference) {
+  html.cambiando-tema,
+  html.cambiando-tema *,
+  html.cambiando-tema *::before,
+  html.cambiando-tema *::after {
+    transition:
+      background-color 350ms ease,
+      border-color 350ms ease,
+      color 350ms ease,
+      fill 350ms ease,
+      stroke 350ms ease,
+      transform 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
 }
 
 body {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Minus, Plus } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 
 const ESCALA_MIN = 1
 const ESCALA_MAX = 4
@@ -32,6 +33,8 @@ function limitarTraslado(traslado, escala, contenedor) {
 // Ctrl+rueda, gesto típico de pinch en trackpad). Todo con Pointer Events
 // nativos (unifican mouse/táctil/lápiz) — sin librerías de gestos.
 export default function ModalVisorFoto({ url, alt, onCerrar }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef, true, alt || 'Visor de foto')
   // pointer:coarse = el puntero primario es el dedo (móvil/tablet), donde
   // el pellizco ya cubre el zoom y los botones +/- solo estorban. En PC
   // (puntero fino: mouse/trackpad) sí tienen sentido, junto con el clic.
@@ -205,7 +208,11 @@ export default function ModalVisorFoto({ url, alt, onCerrar }) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-black/90">
+    <div
+      ref={panelRef}
+      onClick={(evento) => evento.stopPropagation()}
+      className="fixed inset-0 z-40 flex flex-col bg-black/90"
+    >
       <div className="flex shrink-0 items-center justify-between gap-2 p-3">
         <button
           type="button"

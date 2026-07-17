@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { PlusCircle, Pencil, Trash2, Ban, Package, ArrowBigDown } from 'lucide-react'
+import { PlusCircle, Pencil, Trash2, Ban, Package, ArrowBigDown, ShieldCheck } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
+import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const TABLA_LABELS = {
   usuarios: 'Usuarios',
@@ -19,6 +21,7 @@ const TABLA_LABELS = {
   registro_servicios: 'Atenciones',
   ventas: 'Ventas',
   stock: 'Stock',
+  estado_negocio: 'Estado del negocio',
 }
 
 const OPCION_TODAS_TABLAS = 'todas'
@@ -319,7 +322,7 @@ export default function Auditoria({ activo = true }) {
   const grupos = agruparPorDia(entradasFiltradas)
 
   return (
-    <div className="p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6">
       {/* Buscador + orden + filtros de fecha: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 space-y-3 bg-bg px-3 py-2">
         <div className="flex items-center gap-2">
@@ -356,13 +359,17 @@ export default function Auditoria({ activo = true }) {
       )}
 
       {cargando ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando auditoría...</p>
+        <EsqueletoGrupos />
       ) : entradasFiltradas.length === 0 ? (
-        <p className="mt-6 text-center font-mono text-sm text-ink/60">
-          {busqueda.trim() || tablaFiltro !== OPCION_TODAS_TABLAS
-            ? 'No se encontraron registros.'
-            : 'No hay actividad registrada en este período.'}
-        </p>
+        <EstadoVacio
+          icono={ShieldCheck}
+          mensaje={
+            busqueda.trim() || tablaFiltro !== OPCION_TODAS_TABLAS
+              ? 'No se encontraron registros.'
+              : 'No hay actividad registrada en este período.'
+          }
+          tema="purple-300"
+        />
       ) : (
         <>
           <div className="mt-4 space-y-3">
