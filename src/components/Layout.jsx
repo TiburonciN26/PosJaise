@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { CarritoProvider } from '../context/CarritoContext.jsx'
 import Header from './Header.jsx'
 import MenuLateral from './MenuLateral.jsx'
+import AvisoNegocioCerrado from './AvisoNegocioCerrado.jsx'
 
 export default function Layout() {
   const [menuAbierto, setMenuAbierto] = useState(false)
@@ -24,6 +25,8 @@ export default function Layout() {
           <MenuLateral abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
         </div>
       </div>
+
+      <AvisoNegocioCerrado />
     </CarritoProvider>
   )
 }

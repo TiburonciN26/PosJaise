@@ -24,6 +24,27 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
     />
     <meta name="theme-color" content="#0d0d0d" />
+    <script>
+      // Bloqueante a propósito, antes que cualquier CSS/JS del bundle: sin
+      // esto, la página pintaría un instante en oscuro (o claro) y recién
+      // React, ya montado, corregiría al tema guardado — un parpadeo
+      // visible. Misma clave/lógica que ThemeContext.jsx (temaInicial) —
+      // si se cambia acá, cambiar también allá. Va después del <meta
+      // theme-color> de arriba porque necesita que ya exista en el DOM.
+      ;(function () {
+        var guardado = localStorage.getItem('pos-jaise-tema')
+        var tema =
+          guardado === 'claro' || guardado === 'oscuro'
+            ? guardado
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'claro'
+              : 'oscuro'
+        document.documentElement.dataset.tema = tema
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0d0d0d')
+      })()
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

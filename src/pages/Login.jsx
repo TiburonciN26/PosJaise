@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 // un dispositivo compartido conviene además que el personal rechace el
 // "¿Guardar contraseña?" del navegador.
 export default function Login() {
-  const { usuario, iniciarSesion } = useAuth()
+  const { usuario, iniciarSesion, bloqueoLogin } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -27,6 +27,13 @@ export default function Login() {
   if (usuario) {
     return <Navigate to="/" replace />
   }
+
+  // El aviso de "negocio cerrado" no lo lanza iniciarSesion (no hay forma
+  // de esperarlo ahí sin reabrir la condición de carrera que causaba el
+  // bug de "entra un segundo y lo bota" — ver el comentario en
+  // AuthContext.cargarPerfil) — llega solo, un instante después, como
+  // bloqueoLogin del contexto. Se muestra igual que un error local.
+  const mensajeError = error || bloqueoLogin
 
   async function manejarSubmit(evento) {
     evento.preventDefault()
@@ -39,7 +46,7 @@ export default function Login() {
       // de red. Supabase adjunta un status HTTP 4xx cuando el correo/clave son
       // inválidos; un fallo de conexión (fetch falla, AuthRetryableFetchError)
       // llega sin status numérico. Antes todo caía en "credenciales
-      // incorrectas" y el usuario reintentaba datos que sí eran correctos.
+      // incorrectas" y el usuario reintentaba datos que sí eran correctas.
       const status = errorLogin?.status
       const esCredenciales = typeof status === 'number' && status >= 400 && status < 500
       setError(
@@ -94,9 +101,9 @@ export default function Login() {
           className="mb-4 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-ink outline-none focus:border-amber"
         />
 
-        {error && (
+        {mensajeError && (
           <p className="mb-4 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
-            {error}
+            {mensajeError}
           </p>
         )}
 
