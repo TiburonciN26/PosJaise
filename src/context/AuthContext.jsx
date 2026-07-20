@@ -43,8 +43,14 @@ export function AuthProvider({ children }) {
     }
 
     if (!data || !data.activo) {
+      // Antes esto salía completamente mudo: sin data.activo, se cerraba
+      // sesión sin avisar nada y el usuario se quedaba viendo el
+      // formulario de login sin entender por qué "no pasa nada" al
+      // ingresar datos correctos. Mismo canal que el bloqueo de negocio
+      // cerrado (bloqueoLogin), que Login.jsx ya sabe mostrar.
       setUsuario(null)
       setErrorPerfil(false)
+      setBloqueoLogin('Esta cuenta está desactivada. Contacta al administrador.')
       await supabase.auth.signOut()
       return
     }
