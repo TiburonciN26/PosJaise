@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
 // Hallazgo crítico reportado por el usuario (no numerado en ninguna
@@ -21,6 +22,7 @@ export default function Login() {
   const { usuario, iniciarSesion, bloqueoLogin } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [mostrarPassword, setMostrarPassword] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -90,16 +92,26 @@ export default function Login() {
         <label htmlFor="password" className="mb-1 block text-sm text-ink/80">
           Contraseña
         </label>
-        <input
-          id="password"
-          type="password"
-          required
-          autoComplete="new-password"
-          value={password}
-          onChange={(evento) => setPassword(evento.target.value)}
-          placeholder="••••••••"
-          className="mb-4 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-ink outline-none focus:border-amber"
-        />
+        <div className="relative mb-4">
+          <input
+            id="password"
+            type={mostrarPassword ? 'text' : 'password'}
+            required
+            autoComplete="new-password"
+            value={password}
+            onChange={(evento) => setPassword(evento.target.value)}
+            placeholder="••••••••"
+            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 pr-11 font-mono text-ink outline-none focus:border-amber"
+          />
+          <button
+            type="button"
+            onClick={() => setMostrarPassword((valorAnterior) => !valorAnterior)}
+            aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            className="absolute right-0.5 top-1/2 -translate-y-1/2 p-2.5 text-ink/60 transition-colors hover:text-ink"
+          >
+            {mostrarPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
 
         {mensajeError && (
           <p className="mb-4 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
