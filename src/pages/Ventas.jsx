@@ -21,6 +21,13 @@ const ModalEscanerCodigoBarras = lazy(() => import('../components/ModalEscanerCo
 // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
 const DURACION_SALIDA = 300
 
+// Deslizar (izquierda o derecha) una fila del carrito más de esto la
+// elimina, igual que tocar el botón ✕ que reemplaza en táctil.
+const UMBRAL_ARRASTRE_ELIMINAR = 90
+// Movimiento mínimo antes de considerarlo un arrastre y no un tap sobre
+// la fila (nombre/precio, no los controles con su propio onClick).
+const UMBRAL_ARRASTRE_INICIO = 8
+
 // Rutas con BASE_URL (no "/icons/..." a secas): en GitHub Pages la app vive
 // bajo /PosJaise/ y Vite no reescribe strings dentro de JSX — con la ruta
 // absoluta estos íconos daban 404 en producción (A1 de la 3ª auditoría).
@@ -50,6 +57,11 @@ const metodosPago = [
     clasesActivo: 'border-purple-300 bg-purple-300/10 text-purple-300',
   },
 ]
+
+// Billetes más comunes en efectivo — cada botón FIJA el campo Recibido a
+// ese valor (no lo suma), para el caso típico: el cliente paga con un
+// solo billete y no hay que hacer la cuenta a mano.
+const MONTOS_RAPIDOS_EFECTIVO = [10, 20, 50, 100]
 
 function useContadorAnimado(valorObjetivo, duracionMs = 350) {
   const [valorMostrado, setValorMostrado] = useState(valorObjetivo)
@@ -95,6 +107,7 @@ function FilaTicket({
   stockDisponible,
   resaltada,
   saliendo,
+  esTactil,
   onCambiarCantidad,
   onCambiarPrecio,
   onQuitar,
@@ -104,9 +117,69 @@ function FilaTicket({
   const superaStock = esProducto && item.cantidad > stockDisponible
   const enElLimite = esProducto && item.cantidad >= stockDisponible
 
+  // Deslizar para eliminar (reemplaza el botón ✕ en táctil, ver esTactil
+  // más abajo): arrastreX sigue al dedo 1:1 mientras se arrastra, y se
+  // usa también para el tinte rojo de fondo (progreso hacia el umbral).
+  // touch-pan-y en el contenedor deja el scroll vertical de la lista
+  // intacto — solo el gesto horizontal lo captura este handler.
+  const [arrastreX, setArrastreX] = useState(0)
+  const [arrastrando, setArrastrando] = useState(false)
+  const inicioRef = useRef({ x: 0, iniciado: false, ignorar: false })
+
+  function manejarPointerDown(evento) {
+    if (!esTactil || saliendo) return
+    // Empezar el gesto sobre +/-/precio no debe interpretarse como
+    // swipe — esos controles ya tienen su propio onClick.
+    const ignorar = Boolean(evento.target.closest('button, input'))
+    inicioRef.current = { x: evento.clientX, iniciado: false, ignorar }
+    if (!ignorar) evento.currentTarget.setPointerCapture?.(evento.pointerId)
+  }
+
+  function manejarPointerMove(evento) {
+    if (!esTactil || saliendo || inicioRef.current.ignorar || evento.buttons === 0) return
+    const deltaX = evento.clientX - inicioRef.current.x
+
+    if (!inicioRef.current.iniciado) {
+      if (Math.abs(deltaX) < UMBRAL_ARRASTRE_INICIO) return
+      inicioRef.current.iniciado = true
+      setArrastrando(true)
+    }
+
+    setArrastreX(Math.max(-140, Math.min(140, deltaX)))
+  }
+
+  function soltar(evento) {
+    evento.currentTarget.releasePointerCapture?.(evento.pointerId)
+    if (!inicioRef.current.iniciado) return
+    inicioRef.current.iniciado = false
+    setArrastrando(false)
+
+    if (Math.abs(arrastreX) >= UMBRAL_ARRASTRE_ELIMINAR) {
+      setArrastreX(0)
+      onQuitar(item.id)
+    } else {
+      setArrastreX(0)
+    }
+  }
+
+  const progresoEliminar = Math.min(1, Math.abs(arrastreX) / UMBRAL_ARRASTRE_ELIMINAR)
+
   return (
     <div
-      className={`grid grid-cols-[1fr_5rem_4rem_1.5rem] items-center gap-3 overflow-hidden px-3 py-2.5 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms] ${
+      onPointerDown={manejarPointerDown}
+      onPointerMove={manejarPointerMove}
+      onPointerUp={soltar}
+      onPointerCancel={soltar}
+      style={
+        saliendo
+          ? undefined
+          : {
+              transform: arrastreX ? `translateX(${arrastreX}px)` : undefined,
+              backgroundColor: `color-mix(in srgb, var(--color-red) ${Math.round(progresoEliminar * 85)}%, transparent)`,
+              transition: arrastrando ? 'none' : undefined,
+            }
+      }
+      className={`${esTactil ? 'grid-cols-[1fr_5rem_4rem]' : 'grid-cols-[1fr_5rem_4rem_1.5rem]'} touch-pan-y grid items-center gap-3 overflow-hidden px-3 py-2.5 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
         saliendo ? 'pointer-events-none -translate-x-full opacity-0 animate-flash-rojo' : 'translate-x-0 opacity-100'
       } ${resaltada ? 'animate-flash-verde' : ''}`}
     >
@@ -138,7 +211,7 @@ function FilaTicket({
           </span>
         )}
         {(superaStock || enElLimite) && (
-          <p className={`font-mono text-[11px] ${superaStock ? 'text-red' : 'text-amber'}`}>
+          <p className="font-mono text-[11px] text-red">
             {superaStock ? 'Stock insuficiente' : `Stock máx: ${stockDisponible}`}
           </p>
         )}
@@ -169,14 +242,16 @@ function FilaTicket({
         {subtotal.toFixed(2)}
       </span>
 
-      <button
-        type="button"
-        onClick={() => onQuitar(item.id)}
-        aria-label="Quitar"
-        className="text-ink/30 transition-colors hover:text-red"
-      >
-        ✕
-      </button>
+      {!esTactil && (
+        <button
+          type="button"
+          onClick={() => onQuitar(item.id)}
+          aria-label="Quitar"
+          className="text-ink/30 transition-colors hover:text-red"
+        >
+          ✕
+        </button>
+      )}
     </div>
   )
 }
@@ -196,6 +271,11 @@ export default function Ventas({ activo = true }) {
   const [busqueda, setBusqueda] = useState('')
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
   const [indiceActivo, setIndiceActivo] = useState(-1)
+  // Filas del carrito: en táctil se eliminan deslizando (más espacio para
+  // el nombre del producto), en mouse/trackpad se conserva el botón ✕.
+  const [esTactil] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+  )
   const [filaFlash, setFilaFlash] = useState(null)
   const [idsSaliendo, setIdsSaliendo] = useState(() => new Set())
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false)
@@ -740,11 +820,13 @@ export default function Ventas({ activo = true }) {
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
             <div className="-mx-3 flex min-h-0 flex-1 flex-col border-t border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none">
-              <div className="grid grid-cols-[1fr_5rem_4rem_1.5rem] gap-3 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink">
+              <div
+                className={`${esTactil ? 'grid-cols-[1fr_5rem_4rem]' : 'grid-cols-[1fr_5rem_4rem_1.5rem]'} grid gap-3 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink`}
+              >
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
                 <span className="text-right">Subtotal</span>
-                <span />
+                {!esTactil && <span />}
               </div>
 
               <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto pb-[22rem] sm:h-[300px] sm:flex-none sm:pb-0">
@@ -763,6 +845,7 @@ export default function Ventas({ activo = true }) {
                       }
                       resaltada={item.id === filaFlash}
                       saliendo={idsSaliendo.has(item.id)}
+                      esTactil={esTactil}
                       onCambiarCantidad={cambiarCantidad}
                       onCambiarPrecio={cambiarPrecioServicio}
                       onQuitar={quitarItem}
@@ -793,7 +876,7 @@ export default function Ventas({ activo = true }) {
 
             <CampoColapsable abierto={metodoPago === 'Efectivo'} margen>
               <div
-                className={`flex items-center justify-between pt-1.5 text-sm ${
+                className={`flex items-center justify-between text-sm ${
                   vuelto < 0 ? 'text-red' : 'text-green'
                 }`}
               >
@@ -812,10 +895,7 @@ export default function Ventas({ activo = true }) {
                   <button
                     key={metodo.nombre}
                     type="button"
-                    onClick={() => {
-                      setMetodoPago(metodo.nombre)
-                      if (metodo.nombre !== 'Efectivo') setMontoRecibido('')
-                    }}
+                    onClick={() => setMetodoPago(metodo.nombre)}
                     className={`rounded-lg border px-1 py-2 text-[11px] transition-colors sm:px-2 sm:text-sm ${
                       metodoPago === metodo.nombre
                         ? metodo.clasesActivo
@@ -835,14 +915,43 @@ export default function Ventas({ activo = true }) {
             <CampoColapsable abierto={metodoPago === 'Efectivo'} margen>
               <div>
                 <label className="mb-1 block text-xs text-ink">Recibido</label>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={montoRecibido}
-                  onChange={(evento) => setMontoRecibido(evento.target.value)}
-                  placeholder="0.00"
-                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
-                />
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={montoRecibido}
+                    onChange={(evento) => setMontoRecibido(evento.target.value)}
+                    placeholder="0.00"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
+                  />
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setMontoRecibido(String(total))}
+                      className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
+                        montoRecibido === String(total)
+                          ? 'border-green bg-green/10 text-green'
+                          : 'border-border-strong text-ink/70 hover:border-amber hover:text-amber'
+                      }`}
+                    >
+                      Exacto
+                    </button>
+                    {MONTOS_RAPIDOS_EFECTIVO.map((monto) => (
+                      <button
+                        key={monto}
+                        type="button"
+                        onClick={() => setMontoRecibido(String(monto))}
+                        className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
+                          montoRecibido === String(monto)
+                            ? 'border-green bg-green/10 text-green'
+                            : 'border-border-strong text-ink/70 hover:border-amber hover:text-amber'
+                        }`}
+                      >
+                        {monto}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CampoColapsable>
 
@@ -852,25 +961,31 @@ export default function Ventas({ activo = true }) {
               </p>
             )}
 
-            <button
-              type="button"
-              onClick={confirmarVenta}
-              disabled={!puedeCobrar || cobrando}
-              className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-3 text-lg font-bold transition-colors ${
-                puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-surface-3 text-ink'
-              }`}
-            >
-              <Check className="h-5 w-5" />
-              {cobrando ? 'Cobrando...' : 'Confirmar venta'}
-            </button>
-            <button
-              type="button"
-              onClick={pedirCancelarVenta}
-              disabled={cobrando}
-              className="mt-3 w-full rounded-lg border border-red bg-transparent py-3 text-sm font-semibold text-red transition-colors hover:bg-red/10 disabled:opacity-40"
-            >
-              Cancelar venta
-            </button>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={pedirCancelarVenta}
+                disabled={cobrando}
+                className={`flex-1 rounded-lg border bg-transparent py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
+                  carrito.length > 0
+                    ? 'border-red text-red hover:bg-red/10'
+                    : 'border-border-strong text-ink/60'
+                }`}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarVenta}
+                disabled={!puedeCobrar || cobrando}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-base font-bold transition-colors sm:text-lg ${
+                  puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-surface-3 text-ink'
+                }`}
+              >
+                <Check className="h-5 w-5" />
+                {cobrando ? 'Cobrando...' : 'Confirmar venta'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

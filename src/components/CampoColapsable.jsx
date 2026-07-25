@@ -7,7 +7,7 @@ export default function CampoColapsable({ abierto, children, margen = false }) {
     return (
       <div
         className={`grid overflow-hidden transition-[grid-template-rows,opacity,margin-top] duration-300 ease-in-out ${
-          abierto ? 'mt-3 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'
+          abierto ? 'mt-2 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'
         }`}
       >
         <div className="overflow-hidden">{children}</div>
