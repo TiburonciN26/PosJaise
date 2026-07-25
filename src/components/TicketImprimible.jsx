@@ -44,6 +44,7 @@ export default function TicketImprimible({ detalle, items }) {
       <div style={estiloTicket}>
         <div style={{ textAlign: 'center' }}>
           {/* Espacio reservado para logo, si más adelante se agrega uno */}
+          <p>.</p>
           <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold' }}>POS JAISE</p>
           <p style={{ margin: 0 }}>{separador}</p>
         </div>
