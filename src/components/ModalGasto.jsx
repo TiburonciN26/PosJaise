@@ -121,6 +121,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
@@ -134,7 +135,8 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
             <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
               id={`${idBase}-nombre`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
@@ -172,9 +174,9 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
             <Etiqueta obligatorio htmlFor={`${idBase}-monto`}>Monto</Etiqueta>
             <input
               id={`${idBase}-monto`}
-              type="number"
+              type="search"
               inputMode="decimal"
-              step="0.01"
+              autoComplete="new-password"
               value={formulario.monto}
               onChange={(evento) => actualizarCampo('monto', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
@@ -202,8 +204,9 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
               <Etiqueta obligatorio htmlFor={`${idBase}-anio`}>Año</Etiqueta>
               <input
                 id={`${idBase}-anio`}
-                type="number"
+                type="search"
                 inputMode="numeric"
+                autoComplete="new-password"
                 value={formulario.anio}
                 onChange={(evento) => actualizarCampo('anio', evento.target.value)}
                 disabled={periodoBloqueado}

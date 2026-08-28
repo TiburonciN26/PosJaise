@@ -39,6 +39,12 @@ export default function TicketImprimible({ detalle, items }) {
   const vuelto =
     detalle.monto_recibido != null ? detalle.monto_recibido - detalle.total : null
 
+  // El descuento general se aplica sobre el total ya sumado (no por línea),
+  // así que el subtotal se reconstruye sumando los items — si no se muestra
+  // aparte, las líneas del ticket no cuadrarían a simple vista con el TOTAL.
+  const subtotal = items.reduce((acumulado, item) => acumulado + item.subtotal, 0)
+  const hayDescuento = detalle.descuento_pct > 0 || detalle.descuento_monto > 0
+
   return createPortal(
     <div id="ticket-impresion" className="hidden print:block">
       <div style={estiloTicket}>
@@ -73,6 +79,19 @@ export default function TicketImprimible({ detalle, items }) {
         ))}
 
         <p style={{ margin: '2px 0' }}>{separador}</p>
+
+        {hayDescuento && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Subtotal</span>
+              <span>{formatearMonto(subtotal)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Descuento{detalle.descuento_pct > 0 ? ` (${detalle.descuento_pct}%)` : ''}</span>
+              <span>-{formatearMonto(subtotal - detalle.total)}</span>
+            </div>
+          </>
+        )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
           <span>TOTAL</span>

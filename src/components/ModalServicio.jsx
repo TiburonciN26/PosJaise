@@ -115,6 +115,7 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
@@ -128,7 +129,8 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
             <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
               id={`${idBase}-nombre`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
@@ -155,7 +157,8 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
 
             {formulario.categoriaSeleccionada === OPCION_NUEVA_CATEGORIA && (
               <input
-                type="text"
+                type="search"
+                autoComplete="new-password"
                 value={formulario.categoriaNueva}
                 onChange={(evento) => actualizarCampo('categoriaNueva', evento.target.value)}
                 placeholder="Nombre de la nueva categoría"
@@ -170,9 +173,9 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
               <Etiqueta obligatorio htmlFor={`${idBase}-precio`}>Precio</Etiqueta>
               <input
                 id={`${idBase}-precio`}
-                type="number"
+                type="search"
                 inputMode="decimal"
-                step="0.01"
+                autoComplete="new-password"
                 value={formulario.precio}
                 onChange={(evento) => actualizarCampo('precio', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -183,8 +186,9 @@ export default function ModalServicio({ servicio, categoriasExistentes, onCerrar
               <Etiqueta htmlFor={`${idBase}-duracion`}>Duración (min)</Etiqueta>
               <input
                 id={`${idBase}-duracion`}
-                type="number"
+                type="search"
                 inputMode="numeric"
+                autoComplete="new-password"
                 value={formulario.duracionMin}
                 onChange={(evento) => actualizarCampo('duracionMin', evento.target.value)}
                 placeholder="Opcional"

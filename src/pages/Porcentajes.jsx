@@ -69,10 +69,9 @@ function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGu
       <div className="flex shrink-0 items-center gap-2">
         <div className="flex items-center gap-1">
           <input
-            type="number"
+            type="search"
             inputMode="numeric"
-            min="0"
-            max="100"
+            autoComplete="new-password"
             value={valor}
             disabled={bloqueado}
             placeholder="—"

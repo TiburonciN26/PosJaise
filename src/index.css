@@ -564,6 +564,16 @@ body {
   background: transparent;
 }
 
+/* Los buscadores usan <input type="search"> (evita que Chrome/Safari
+   ofrezcan autocompletar con contraseñas/tarjetas/direcciones guardadas
+   sobre un campo que solo busca texto) — sin este reset, WebKit dibuja su
+   propia "x" nativa encima del botón de limpiar que la app ya tiene. */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 /* Impresión de tickets: el ticket se monta vía portal directo en
    document.body (fuera de #root), así que basta con ocultar toda
    la app al imprimir — lo único que queda visible es el ticket. */

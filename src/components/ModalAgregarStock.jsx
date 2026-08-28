@@ -49,6 +49,7 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface p-5"
@@ -63,9 +64,9 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
               Cantidad a agregar<span className="text-red"> *</span>
             </label>
             <input
-              type="number"
+              type="search"
               inputMode="numeric"
-              min="1"
+              autoComplete="new-password"
               value={cantidad}
               onChange={(evento) => setCantidad(evento.target.value)}
               autoFocus
@@ -76,7 +77,8 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
           <div>
             <label className="mb-1 block text-xs text-ink/60">Nota</label>
             <input
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={nota}
               onChange={(evento) => setNota(evento.target.value)}
               placeholder="Ej: Compra proveedor X"

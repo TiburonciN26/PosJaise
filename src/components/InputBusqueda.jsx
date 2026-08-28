@@ -21,7 +21,11 @@ export default function InputBusqueda({
 
   return (
     <input
-      type="text"
+      type="search"
+      autoComplete="off"
+      autoCorrect="off"
+      autoCapitalize="off"
+      spellCheck="false"
       value={value}
       disabled={disabled}
       autoFocus={autoFocus}

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pencil, Trash2, Plus, Scissors } from 'lucide-react'
+import { Pencil, Trash2, Plus, Scissors, Clock, ArrowBigDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
@@ -13,6 +14,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalServicio from '../components/ModalServicio.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -58,8 +60,18 @@ export default function Servicios({ activo = true }) {
   const [modalServicio, setModalServicio] = useState(null) // null | 'nuevo' | servicio
   const [servicioAEliminar, setServicioAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
+  const [abiertos, setAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
   const panelEliminarRef = useRef(null)
+
+  function alternarAbierto(id) {
+    setAbiertos((anterior) => {
+      const siguiente = new Set(anterior)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
+      return siguiente
+    })
+  }
 
   useCerrarConEscape(() => setServicioAEliminar(null), Boolean(servicioAEliminar))
   useModalA11y(panelEliminarRef, Boolean(servicioAEliminar))
@@ -174,51 +186,84 @@ export default function Servicios({ activo = true }) {
         <>
           {/* Tarjetas: solo móvil */}
           <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
-            {filtradosOrdenados.map((servicio) => (
-              <div key={servicio.id} className="rounded-lg border border-border bg-surface p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <p className="truncate text-sm font-medium text-ink">{servicio.nombre}</p>
-                    {servicio.categoria && (
-                      <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
-                        {servicio.categoria}
-                      </span>
-                    )}
-                  </div>
+            {filtradosOrdenados.map((servicio) => {
+              const abierto = abiertos.has(servicio.id)
 
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
-                      }`}
+              return (
+                <div key={servicio.id} className="rounded-lg border border-border bg-surface">
+                  <div className="flex items-center gap-2 px-3 py-[9px]">
+                    <div
+                      onClick={() => alternarAbierto(servicio.id)}
+                      onKeyDown={manejarActivacionTeclado(() => alternarAbierto(servicio.id))}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={abierto}
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
                     >
-                      {servicio.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                    {esAdmin && (
-                      <>
-                        <BotonAccion
-                          icono={Pencil}
-                          texto="Editar"
-                          color="celeste"
-                          onClick={() => setModalServicio(servicio)}
-                        />
-                        <BotonAccion
-                          icono={Trash2}
-                          texto="Eliminar"
-                          color="rojo"
-                          onClick={() => setServicioAEliminar(servicio)}
-                        />
-                      </>
-                    )}
-                  </div>
-                </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">{servicio.nombre}</p>
+                        <p className="font-mono text-sm text-amber">
+                          {formatearSoles(servicio.precio)}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
+                        }`}
+                      >
+                        {servicio.activo ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
 
-                <div className="mt-1.5 flex items-center gap-4 font-mono text-sm">
-                  <span className="text-amber">{formatearSoles(servicio.precio)}</span>
-                  <span className="text-ink/60">{formatearDuracion(servicio.duracion_min)}</span>
+                    <button
+                      type="button"
+                      onClick={() => alternarAbierto(servicio.id)}
+                      aria-label={abierto ? 'Contraer' : 'Expandir'}
+                      className="shrink-0 p-1.5"
+                    >
+                      <ArrowBigDown
+                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                          abierto ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <CampoColapsable abierto={abierto}>
+                    <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-[9px]">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-sm">
+                        {servicio.categoria && (
+                          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
+                            {servicio.categoria}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1 text-ink/60">
+                          <Clock className="h-3.5 w-3.5" />
+                          {formatearDuracion(servicio.duracion_min)}
+                        </span>
+                      </div>
+
+                      {esAdmin && (
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <BotonAccion
+                            icono={Pencil}
+                            texto="Editar"
+                            color="celeste"
+                            onClick={() => setModalServicio(servicio)}
+                          />
+                          <BotonAccion
+                            icono={Trash2}
+                            texto="Eliminar"
+                            color="rojo"
+                            onClick={() => setServicioAEliminar(servicio)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </CampoColapsable>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Tabla: tablet y desktop */}

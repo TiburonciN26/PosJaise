@@ -87,6 +87,7 @@ async function resumenPeriodo(desde, hasta, filtro, incluirDetalle = true) {
   const ingresoBruto = fila?.ingreso_bruto ?? 0
   const cantidadVentas = fila?.cantidad_ventas ?? 0
   const costoProductos = fila?.costo_productos ?? 0
+  const comisionesPagadas = fila?.comisiones_pagadas ?? 0
 
   const { anio, mes } = anioMesEnLima(desde)
   const { data: gastosData } = await supabase
@@ -97,7 +98,12 @@ async function resumenPeriodo(desde, hasta, filtro, incluirDetalle = true) {
   const gastosMesTotal = sumarMontos(gastosData ?? [], (g) => g.monto)
   const gastosMes = calcularGastosProrrateados({ filtro, gastosMesTotal, anio, mes, desde, hasta })
 
-  const { gananciaFinal } = calcularCascadaGanancia({ ingresoBruto, costoProductos, gastosMes })
+  const { gananciaFinal } = calcularCascadaGanancia({
+    ingresoBruto,
+    costoProductos,
+    comisionesPagadas,
+    gastosMes,
+  })
   const ticketPromedio = cantidadVentas > 0 ? redondear2(ingresoBruto / cantidadVentas) : 0
 
   return {

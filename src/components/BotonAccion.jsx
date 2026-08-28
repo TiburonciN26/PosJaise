@@ -15,9 +15,10 @@ export default function BotonAccion({
   rel,
   sinBorde,
 }) {
-  // min-h-11/min-w-11 (44px): mínimo táctil recomendado — antes el botón
-  // solo icono (móvil, sin el texto de lg:inline) quedaba en ~28px.
-  const clases = `flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg bg-transparent px-2 py-1.5 text-xs transition-colors hover:bg-surface-2 ${
+  // min-h-10/min-w-10 (40px): mínimo táctil — antes el botón solo icono
+  // (móvil, sin el texto de lg:inline) quedaba en ~28px; 40px se mantiene
+  // cómodo para tocar sin el padding extra de la versión anterior (44px).
+  const clases = `flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg bg-transparent px-1.5 py-1 text-xs transition-colors hover:bg-surface-2 ${
     sinBorde ? '' : 'border border-border-strong'
   } ${COLORES_ICONO_ACCION[color]}`
 

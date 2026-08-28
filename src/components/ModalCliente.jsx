@@ -27,14 +27,16 @@ function validar(formulario) {
   return null
 }
 
-export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
+export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuardado }) {
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const esEdicion = Boolean(cliente)
 
   const [formulario, setFormulario] = useState(() =>
-    esEdicion ? formularioDesdeCliente(cliente) : formularioVacio,
+    esEdicion
+      ? formularioDesdeCliente(cliente)
+      : { ...formularioVacio, nombre: nombreInicial ?? '' },
   )
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
@@ -65,9 +67,9 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
       notas: formulario.notas.trim() || null,
     }
 
-    const { error: errorGuardado } = esEdicion
-      ? await supabase.from('clientes').update(datos).eq('id', cliente.id)
-      : await supabase.from('clientes').insert(datos)
+    const { data: filaGuardada, error: errorGuardado } = esEdicion
+      ? await supabase.from('clientes').update(datos).eq('id', cliente.id).select().single()
+      : await supabase.from('clientes').insert(datos).select().single()
 
     setGuardando(false)
 
@@ -76,12 +78,13 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
       return
     }
 
-    onGuardado()
+    onGuardado(filaGuardada)
   }
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
@@ -95,7 +98,8 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
             <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre completo</Etiqueta>
             <input
               id={`${idBase}-nombre`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
@@ -107,7 +111,9 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
             <Etiqueta htmlFor={`${idBase}-telefono`}>Teléfono</Etiqueta>
             <input
               id={`${idBase}-telefono`}
-              type="tel"
+              type="search"
+              inputMode="tel"
+              autoComplete="new-password"
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
               placeholder="Opcional"
@@ -119,7 +125,8 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
             <Etiqueta htmlFor={`${idBase}-dni`}>DNI</Etiqueta>
             <input
               id={`${idBase}-dni`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.dni}
               onChange={(evento) => actualizarCampo('dni', evento.target.value)}
               placeholder="Opcional"
@@ -142,6 +149,7 @@ export default function ModalCliente({ cliente, onCerrar, onGuardado }) {
             <Etiqueta htmlFor={`${idBase}-notas`}>Notas</Etiqueta>
             <textarea
               id={`${idBase}-notas`}
+              autoComplete="off"
               value={formulario.notas}
               onChange={(evento) => actualizarCampo('notas', evento.target.value)}
               placeholder="Opcional"

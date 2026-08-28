@@ -11,6 +11,7 @@ import {
   Percent,
   Wallet,
   UserCog,
+  CalendarClock,
 } from 'lucide-react'
 
 export const secciones = [
@@ -29,6 +30,13 @@ export const secciones = [
     path: '/mi-panel',
     label: 'Mi Panel',
     icono: UserCircle,
+    roles: ['ADMINISTRADOR', 'ASISTENTE'],
+    tema: 'rosa',
+  },
+  {
+    path: '/citas',
+    label: 'Citas',
+    icono: CalendarClock,
     roles: ['ADMINISTRADOR', 'ASISTENTE'],
     tema: 'rosa',
   },

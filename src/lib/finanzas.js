@@ -45,22 +45,35 @@ export function calcularGastosProrrateados({ filtro, gastosMesTotal, anio, mes, 
 
 // Única cascada de ganancia, usada por Dashboard y Estadísticas:
 // 1. Ingreso bruto → 2. −10% gastos operativos (estimado, sobre el ingreso
-// bruto) → 3. −Costo de productos → 4. −Gastos reales del período
-// (prorrateados) = Utilidad neta → 5. −10% diezmo (sobre la utilidad neta)
-// = Ganancia final.
-export function calcularCascadaGanancia({ ingresoBruto, costoProductos, gastosMes }) {
+// bruto) → 3. −Costo de productos → 4. −Comisión pagada a asistentes →
+// 5. −Gastos reales del período (prorrateados) = Utilidad neta →
+// 6. −10% diezmo (sobre la utilidad neta) = Ganancia final.
+//
+// comisionesPagadas es lo que la asistente se lleva (pago_asistente), no lo
+// que gana el admin sobre lo suyo — un admin registrando su propia atención
+// se queda con el 100% líquido, así que eso nunca debe restarse acá (ver
+// comisiones_pagadas en resumen_dashboard/resumen_estadisticas, que ya
+// excluye esas filas por rol).
+export function calcularCascadaGanancia({
+  ingresoBruto,
+  costoProductos,
+  comisionesPagadas = 0,
+  gastosMes,
+}) {
   const gastosOperativos = redondear2(ingresoBruto * 0.1)
   const saldoTrasOperativos = ingresoBruto - gastosOperativos
   const saldoTrasCosto = saldoTrasOperativos - costoProductos
-  const utilidadNeta = saldoTrasCosto - gastosMes
+  const saldoTrasComisiones = saldoTrasCosto - comisionesPagadas
+  const utilidadNeta = saldoTrasComisiones - gastosMes
   const montoDiezmo = redondear2(utilidadNeta * 0.1)
   const gananciaFinal = redondear2(utilidadNeta - montoDiezmo)
-  const metaEquilibrio = redondear2(gastosOperativos + costoProductos + gastosMes)
+  const metaEquilibrio = redondear2(gastosOperativos + costoProductos + comisionesPagadas + gastosMes)
 
   return {
     gastosOperativos,
     saldoTrasOperativos,
     saldoTrasCosto,
+    saldoTrasComisiones,
     utilidadNeta,
     montoDiezmo,
     gananciaFinal,

@@ -255,8 +255,9 @@ export default function Gastos({ activo = true }) {
           ))}
         </select>
         <input
-          type="number"
+          type="search"
           inputMode="numeric"
+          autoComplete="new-password"
           value={anioTexto}
           onChange={(evento) => actualizarAnioTexto(evento.target.value)}
           onBlur={confirmarAnioTexto}

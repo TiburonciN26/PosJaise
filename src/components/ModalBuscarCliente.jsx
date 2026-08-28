@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react'
-import { X, UserPlus, Users } from 'lucide-react'
+import { X, UserPlus, UserRoundPlus, Users } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import IconoBuscar from './IconoBuscar.jsx'
 import EstadoVacio from './EstadoVacio.jsx'
 
-export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }) {
+export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistrarNuevo, onCerrar }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const [busqueda, setBusqueda] = useState('')
@@ -95,7 +95,11 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
               <IconoBuscar />
             </span>
             <input
-              type="text"
+              type="search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
               autoFocus
               value={busqueda}
               onChange={(evento) => manejarCambioBusqueda(evento.target.value)}
@@ -117,19 +121,6 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
         </div>
 
         <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
-          {busqueda.trim() && (
-            <button
-              type="button"
-              onClick={() => onSeleccionar({ id: null, nombre: busqueda.trim() })}
-              className="flex w-full items-center gap-2 bg-amber/5 px-3 py-2.5 text-left text-amber transition-colors hover:bg-amber/10"
-            >
-              <UserPlus className="h-4 w-4 shrink-0" />
-              <span className="truncate text-sm">
-                Usar "{busqueda.trim()}" (venta rápida, sin guardar)
-              </span>
-            </button>
-          )}
-
           {filtrados.length === 0 ? (
             <EstadoVacio
               icono={Users}
@@ -160,6 +151,31 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onCerrar }
             ))
           )}
         </div>
+
+        {busqueda.trim() && (
+          <div className="shrink-0 divide-y divide-border border-t border-border">
+            <button
+              type="button"
+              onClick={() => onSeleccionar({ id: null, nombre: busqueda.trim() })}
+              className="flex w-full items-center gap-2 bg-amber/5 px-3 py-2.5 text-left text-amber transition-colors hover:bg-amber/10"
+            >
+              <UserPlus className="h-4 w-4 shrink-0" />
+              <span className="truncate text-sm">
+                Usar "{busqueda.trim()}" (venta rápida, sin guardar)
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onRegistrarNuevo(busqueda.trim())}
+              className="flex w-full items-center gap-2 bg-purple-300/5 px-3 py-2.5 text-left text-purple-300 transition-colors hover:bg-purple-300/10"
+            >
+              <UserRoundPlus className="h-4 w-4 shrink-0" />
+              <span className="truncate text-sm">
+                Registrar "{busqueda.trim()}" como cliente nuevo
+              </span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

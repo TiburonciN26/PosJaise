@@ -182,7 +182,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
         )}
 
         {modo === 'form' && (
-          <form onSubmit={guardarPlantilla}>
+          <form onSubmit={guardarPlantilla} autoComplete="off">
             <h2 className="text-base font-semibold text-ink">
               {plantillaActual ? 'Editar plantilla' : 'Nueva plantilla'}
             </h2>
@@ -194,7 +194,8 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
                   <span className="text-red"> *</span>
                 </label>
                 <input
-                  type="text"
+                  type="search"
+                  autoComplete="new-password"
                   value={nombreCampo}
                   onChange={(evento) => setNombreCampo(evento.target.value)}
                   className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
@@ -208,9 +209,9 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
                   <span className="text-red"> *</span>
                 </label>
                 <input
-                  type="number"
+                  type="search"
                   inputMode="decimal"
-                  step="0.01"
+                  autoComplete="new-password"
                   value={montoCampo}
                   onChange={(evento) => setMontoCampo(evento.target.value)}
                   className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"

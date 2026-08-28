@@ -12,6 +12,7 @@ const METRICAS_VACIAS = {
   ingresoProductos: 0,
   ingresoServicios: 0,
   costoProductos: 0,
+  comisionesPagadas: 0,
   productosVendidos: 0,
   serviciosRealizados: 0,
   cantidadVentas: 0,
@@ -123,7 +124,7 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
 }
 
 export default function Dashboard({ activo = true }) {
-  const [filtro, setFiltro] = useState('semana')
+  const [filtro, setFiltro] = useState('mes')
   const [personalizado, setPersonalizado] = useState(() => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
@@ -181,6 +182,7 @@ export default function Dashboard({ activo = true }) {
       ingresoProductos: redondear2(fila?.ingreso_productos ?? 0),
       ingresoServicios: redondear2(fila?.ingreso_servicios ?? 0),
       costoProductos: redondear2(fila?.costo_productos ?? 0),
+      comisionesPagadas: redondear2(fila?.comisiones_pagadas ?? 0),
       productosVendidos: fila?.productos_vendidos ?? 0,
       serviciosRealizados: fila?.servicios_realizados ?? 0,
       cantidadVentas: fila?.cantidad_ventas ?? 0,
@@ -207,6 +209,7 @@ export default function Dashboard({ activo = true }) {
     calcularCascadaGanancia({
       ingresoBruto,
       costoProductos: metricas.costoProductos,
+      comisionesPagadas: metricas.comisionesPagadas,
       gastosMes: metricas.gastosMes,
     })
 
@@ -214,7 +217,21 @@ export default function Dashboard({ activo = true }) {
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto },
     { etiqueta: '10% gastos operativos (estimado)', valor: -gastosOperativos },
     { etiqueta: 'Costo de productos vendidos', valor: -metricas.costoProductos },
+    { etiqueta: 'Comisión pagada a asistentes', valor: -metricas.comisionesPagadas },
     { etiqueta: ETIQUETA_GASTOS[filtro], valor: -metricas.gastosMes },
+  ]
+
+  // Resumen del período como lista (reemplaza las tarjetas sueltas de estos
+  // 7 montos) — mismo formato visual que la cascada de ganancia de más
+  // abajo, cada fila conserva el color que tenía su tarjeta.
+  const filasResumen = [
+    { etiqueta: 'Ingreso bruto', valor: ingresoBruto, positivo: true, clase: 'text-green' },
+    { etiqueta: 'Ingreso productos', valor: metricas.ingresoProductos, positivo: true, clase: 'text-amber' },
+    { etiqueta: 'Ingreso servicios', valor: metricas.ingresoServicios, positivo: true, clase: 'text-blue' },
+    { etiqueta: 'Gastos productos', valor: metricas.costoProductos, positivo: false, clase: 'text-red' },
+    { etiqueta: 'Ganancia productos', valor: gananciaProductos, positivo: true, clase: 'text-green' },
+    { etiqueta: 'Comisiones a pagar', valor: metricas.comisionesPagadas, positivo: false, clase: 'text-red' },
+    { etiqueta: ETIQUETA_GASTOS[filtro], valor: metricas.gastosMes, positivo: false, clase: 'text-blue' },
   ]
 
   return (
@@ -246,44 +263,24 @@ export default function Dashboard({ activo = true }) {
             <BarraTermometro filtro={filtro} ingresoBruto={ingresoBruto} meta={metaEquilibrio} />
           </div>
 
-          {/* Tarjetas: orden personalizado en móvil */}
-          <div className="mt-4 grid grid-cols-3 gap-3 sm:hidden">
-            <TarjetaResumen
-              etiqueta="Ingreso bruto"
-              valor={formatearSoles(ingresoBruto)}
-              claseValor="text-green"
-            />
-            <TarjetaResumen
-              etiqueta="Ingreso productos"
-              valor={formatearSoles(metricas.ingresoProductos)}
-              claseValor="text-amber"
-            />
-            <TarjetaResumen
-              etiqueta="Ingreso servicios"
-              valor={formatearSoles(metricas.ingresoServicios)}
-              claseValor="text-blue"
-            />
+          {/* Resumen del período: lista (antes eran tarjetas sueltas) */}
+          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+            <h2 className="text-sm font-semibold text-ink">Resumen del período</h2>
+            <div className="mt-3 space-y-2">
+              {filasResumen.map((fila) => (
+                <div key={fila.etiqueta} className="flex items-center justify-between text-sm">
+                  <span className="text-ink/60">{fila.etiqueta}</span>
+                  <span className={`font-mono ${fila.clase}`}>
+                    {fila.positivo ? '+' : '−'}
+                    {formatearSoles(Math.abs(fila.valor))}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:hidden">
-            <TarjetaResumen
-              etiqueta="Costo productos"
-              valor={formatearSoles(metricas.costoProductos)}
-              claseValor="text-red"
-            />
-            <TarjetaResumen
-              etiqueta="Ganancia productos"
-              valor={formatearSoles(gananciaProductos)}
-              claseValor="text-green"
-            />
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:hidden">
-            <TarjetaResumen
-              etiqueta={ETIQUETA_GASTOS[filtro]}
-              valor={formatearSoles(metricas.gastosMes)}
-              claseValor="text-blue"
-            />
-          </div>
-          <div className="mt-3 grid grid-cols-3 gap-3 sm:hidden">
+
+          {/* Tarjetas de conteo (no monetarias) */}
+          <div className="mt-3 grid grid-cols-3 gap-3">
             <TarjetaResumen etiqueta="Ventas" valor={metricas.cantidadVentas} />
             <TarjetaResumen
               etiqueta="Productos vendidos"
@@ -291,50 +288,6 @@ export default function Dashboard({ activo = true }) {
               claseValor="text-ink"
             />
             <TarjetaResumen etiqueta="Servicios realizados" valor={metricas.serviciosRealizados} />
-          </div>
-
-          {/* Tarjetas: tablet y desktop */}
-          <div className="mt-4 hidden gap-3 sm:grid sm:grid-cols-3">
-            <TarjetaResumen
-              etiqueta="Ingreso bruto total"
-              valor={formatearSoles(ingresoBruto)}
-              claseValor="text-green"
-            />
-            <TarjetaResumen
-              etiqueta="Ingreso por productos"
-              valor={formatearSoles(metricas.ingresoProductos)}
-              claseValor="text-amber"
-            />
-            <TarjetaResumen
-              etiqueta="Ingreso por servicios"
-              valor={formatearSoles(metricas.ingresoServicios)}
-              claseValor="text-blue"
-            />
-            <TarjetaResumen
-              etiqueta="Costo de productos vendidos"
-              valor={formatearSoles(metricas.costoProductos)}
-              claseValor="text-red"
-            />
-            <TarjetaResumen
-              etiqueta="Ganancia de productos"
-              valor={formatearSoles(gananciaProductos)}
-              claseValor="text-green"
-            />
-            <TarjetaResumen
-              etiqueta={ETIQUETA_GASTOS[filtro]}
-              valor={formatearSoles(metricas.gastosMes)}
-              claseValor="text-blue"
-            />
-            <TarjetaResumen etiqueta="Cantidad de ventas" valor={metricas.cantidadVentas} />
-            <TarjetaResumen
-              etiqueta="Productos vendidos"
-              valor={`${metricas.productosVendidos} uds.`}
-              claseValor="text-ink"
-            />
-            <TarjetaResumen
-              etiqueta="Servicios realizados"
-              valor={metricas.serviciosRealizados}
-            />
           </div>
 
           {/* Cascada de ganancia */}

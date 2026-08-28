@@ -10,6 +10,7 @@ import Ventas from '../pages/Ventas.jsx'
 // —sobre todo las 7 exclusivas de admin— sí van con React.lazy: una
 // asistente nunca llega a pedir ese código, y el admin lo pide recién cuando
 // entra a esa pestaña, no todo junto al abrir la app.
+const Citas = lazy(() => import('../pages/Citas.jsx'))
 const Inventario = lazy(() => import('../pages/Inventario.jsx'))
 const Historial = lazy(() => import('../pages/Historial.jsx'))
 const Servicios = lazy(() => import('../pages/Servicios.jsx'))
@@ -24,6 +25,7 @@ const Asistentes = lazy(() => import('../pages/Asistentes.jsx'))
 
 const PAGINAS = {
   '/ventas': Ventas,
+  '/citas': Citas,
   '/inventario': Inventario,
   '/historial': Historial,
   '/servicios': Servicios,

@@ -7,6 +7,12 @@ export function CarritoProvider({ children }) {
   const [metodoPago, setMetodoPago] = useState(null)
   const [montoRecibido, setMontoRecibido] = useState('')
   const [cliente, setCliente] = useState(null)
+  // tipoDescuento: 'porcentaje' (valorDescuento es un % 0-100) o 'monto'
+  // (valorDescuento son soles fijos) — el botón de descuento alterna entre
+  // ambos y limpia el valor al cambiar, para no reinterpretar en soles un
+  // número que se había tecleado como porcentaje (o viceversa).
+  const [tipoDescuento, setTipoDescuento] = useState('porcentaje')
+  const [valorDescuento, setValorDescuento] = useState('')
 
   // Memoizado (M5): los setState de React ya son estables, así que el value
   // solo cambia cuando cambia algún dato real del carrito, no en cada render.
@@ -20,8 +26,12 @@ export function CarritoProvider({ children }) {
       setMontoRecibido,
       cliente,
       setCliente,
+      tipoDescuento,
+      setTipoDescuento,
+      valorDescuento,
+      setValorDescuento,
     }),
-    [carrito, metodoPago, montoRecibido, cliente],
+    [carrito, metodoPago, montoRecibido, cliente, tipoDescuento, valorDescuento],
   )
 
   return <CarritoContext.Provider value={value}>{children}</CarritoContext.Provider>

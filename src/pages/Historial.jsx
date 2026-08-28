@@ -229,7 +229,7 @@ export default function Historial({ activo = true }) {
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
 
-  const [filtro, setFiltro] = useState('hoy')
+  const [filtro, setFiltro] = useState('mes')
   const [personalizado, setPersonalizado] = useState(() => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
@@ -269,7 +269,7 @@ export default function Historial({ activo = true }) {
       supabase
         .from('ventas')
         .select(
-          'id, codigo, fecha, estado, total, metodo_pago, monto_recibido, vendedor_id, clientes(nombre)',
+          'id, codigo, fecha, estado, total, descuento_pct, descuento_monto, metodo_pago, monto_recibido, vendedor_id, clientes(nombre)',
         )
         .eq('id', ventaId)
         .single(),

@@ -233,6 +233,7 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
@@ -246,7 +247,8 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
             <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
               id={`${idBase}-nombre`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
@@ -258,7 +260,8 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
             <Etiqueta htmlFor={`${idBase}-codigo`}>Código de barras</Etiqueta>
             <input
               id={`${idBase}-codigo`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.codigoBarras}
               onChange={(evento) => actualizarCampo('codigoBarras', evento.target.value)}
               placeholder="Opcional"
@@ -289,7 +292,8 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
 
               {formulario.categoriaSeleccionada === OPCION_NUEVA_CATEGORIA && (
                 <input
-                  type="text"
+                  type="search"
+                  autoComplete="new-password"
                   value={formulario.categoriaNueva}
                   onChange={(evento) => actualizarCampo('categoriaNueva', evento.target.value)}
                   placeholder="Nombre de la nueva categoría"
@@ -305,8 +309,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               </Etiqueta>
               <input
                 id={`${idBase}-stock`}
-                type="number"
+                type="search"
                 inputMode="numeric"
+                autoComplete="new-password"
                 value={formulario.stockInicial}
                 onChange={(evento) => actualizarCampo('stockInicial', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -319,9 +324,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               <Etiqueta obligatorio htmlFor={`${idBase}-costo`}>Costo</Etiqueta>
               <input
                 id={`${idBase}-costo`}
-                type="number"
+                type="search"
                 inputMode="decimal"
-                step="0.01"
+                autoComplete="new-password"
                 value={formulario.costo}
                 onChange={(evento) => actualizarCampo('costo', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -331,9 +336,9 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               <Etiqueta obligatorio htmlFor={`${idBase}-precio`}>Precio de venta</Etiqueta>
               <input
                 id={`${idBase}-precio`}
-                type="number"
+                type="search"
                 inputMode="decimal"
-                step="0.01"
+                autoComplete="new-password"
                 value={formulario.precio}
                 onChange={(evento) => actualizarCampo('precio', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -353,7 +358,8 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
             <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
             <input
               id={`${idBase}-proveedor`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.proveedor}
               onChange={(evento) => actualizarCampo('proveedor', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"

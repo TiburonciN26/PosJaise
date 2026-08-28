@@ -94,6 +94,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
@@ -107,7 +108,8 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             <Etiqueta obligatorio htmlFor={`${idBase}-nombres`}>Nombres completos</Etiqueta>
             <input
               id={`${idBase}-nombres`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.nombresCompletos}
               onChange={(evento) => actualizarCampo('nombresCompletos', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
@@ -119,7 +121,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             <Etiqueta htmlFor={`${idBase}-telefono`}>Teléfono</Etiqueta>
             <input
               id={`${idBase}-telefono`}
-              type="tel"
+              type="search"
+              inputMode="tel"
+              autoComplete="new-password"
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
               placeholder="Opcional"
@@ -131,7 +135,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             <Etiqueta htmlFor={`${idBase}-email`}>Email</Etiqueta>
             <input
               id={`${idBase}-email`}
-              type="email"
+              type="search"
+              inputMode="email"
+              autoComplete="new-password"
               value={formulario.email}
               onChange={(evento) => actualizarCampo('email', evento.target.value)}
               placeholder="Opcional"
@@ -143,7 +149,8 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             <Etiqueta htmlFor={`${idBase}-direccion`}>Dirección</Etiqueta>
             <input
               id={`${idBase}-direccion`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.direccion}
               onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
               placeholder="Opcional"
@@ -155,7 +162,8 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             <Etiqueta htmlFor={`${idBase}-emergencia`}>Contacto de emergencia</Etiqueta>
             <input
               id={`${idBase}-emergencia`}
-              type="text"
+              type="search"
+              autoComplete="new-password"
               value={formulario.contactoEmergencia}
               onChange={(evento) => actualizarCampo('contactoEmergencia', evento.target.value)}
               placeholder="Opcional"

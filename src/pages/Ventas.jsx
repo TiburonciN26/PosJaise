@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { X, ShoppingCart, Check, User, Camera, Mic } from 'lucide-react'
+import { X, ShoppingCart, Check, User, Camera, Mic, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -7,10 +7,12 @@ import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
 import { useCarrito } from '../context/CarritoContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
 import InputBusqueda from '../components/InputBusqueda.jsx'
-import ModalBuscarServicio from '../components/ModalBuscarServicio.jsx'
+import ModalBuscarAtencion from '../components/ModalBuscarAtencion.jsx'
 import ModalBuscarCliente from '../components/ModalBuscarCliente.jsx'
+import ModalCliente from '../components/ModalCliente.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 
@@ -109,7 +111,6 @@ function FilaTicket({
   saliendo,
   esTactil,
   onCambiarCantidad,
-  onCambiarPrecio,
   onQuitar,
 }) {
   const subtotal = item.cantidad * item.precioUnitario
@@ -179,7 +180,7 @@ function FilaTicket({
               transition: arrastrando ? 'none' : undefined,
             }
       }
-      className={`${esTactil ? 'grid-cols-[1fr_5rem_4rem]' : 'grid-cols-[1fr_5rem_4rem_1.5rem]'} touch-pan-y grid items-center gap-3 overflow-hidden px-3 py-2.5 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
+      className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} touch-pan-y grid items-center gap-3 overflow-hidden px-3 py-2 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
         saliendo ? 'pointer-events-none -translate-x-full opacity-0 animate-flash-rojo' : 'translate-x-0 opacity-100'
       } ${resaltada ? 'animate-flash-verde' : ''}`}
     >
@@ -193,21 +194,17 @@ function FilaTicket({
           <span className="truncate text-sm text-ink">{item.nombre}</span>
         </div>
         {item.tipo === 'SERVICIO' ? (
-          <div className="mt-0.5 flex items-center gap-1 font-mono text-xs text-ink/60">
-            <span>S/</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              value={item.precioUnitario}
-              onChange={(evento) => onCambiarPrecio(item.id, parseFloat(evento.target.value) || 0)}
-              className="w-14 rounded border border-border-strong bg-surface-2 px-1 py-0.5 text-ink outline-none focus:border-amber"
-            />
-            <span>c/u</span>
+          <div className="mt-0.5">
+            <span className="font-mono text-xs text-ink/60">
+              S/ {item.precioUnitario.toFixed(1)}
+            </span>
+            {item.clienteNombre && (
+              <p className="truncate text-[11px] text-ink/50">Para: {item.clienteNombre}</p>
+            )}
           </div>
         ) : (
           <span className="font-mono text-xs text-ink/60">
-            {formatearSoles(item.precioUnitario)} c/u
+            S/ {item.precioUnitario.toFixed(1)} c/u
           </span>
         )}
         {(superaStock || enElLimite) && (
@@ -218,28 +215,34 @@ function FilaTicket({
       </div>
 
       <div className="flex items-center justify-center gap-1.5">
-        {item.cantidad > 1 && (
-          <button
-            type="button"
-            onClick={() => onCambiarCantidad(item.id, -1)}
-            className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber hover:text-amber"
-          >
-            −
-          </button>
+        {esProducto ? (
+          <>
+            {item.cantidad > 1 && (
+              <button
+                type="button"
+                onClick={() => onCambiarCantidad(item.id, -1)}
+                className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber hover:text-amber"
+              >
+                −
+              </button>
+            )}
+            <span className="w-4 text-center font-mono text-sm text-ink">{item.cantidad}</span>
+            <button
+              type="button"
+              onClick={() => onCambiarCantidad(item.id, 1)}
+              disabled={enElLimite}
+              className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:pointer-events-none disabled:opacity-30"
+            >
+              +
+            </button>
+          </>
+        ) : (
+          <span className="w-4 text-center font-mono text-sm text-ink/60">1</span>
         )}
-        <span className="w-4 text-center font-mono text-sm text-ink">{item.cantidad}</span>
-        <button
-          type="button"
-          onClick={() => onCambiarCantidad(item.id, 1)}
-          disabled={enElLimite}
-          className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:pointer-events-none disabled:opacity-30"
-        >
-          +
-        </button>
       </div>
 
-      <span className="whitespace-nowrap text-right font-mono text-sm text-ink">
-        {subtotal.toFixed(2)}
+      <span className="-ml-3 whitespace-nowrap text-right font-mono text-sm text-ink">
+        {subtotal.toFixed(1)}
       </span>
 
       {!esTactil && (
@@ -267,10 +270,19 @@ export default function Ventas({ activo = true }) {
     setMontoRecibido,
     cliente,
     setCliente,
+    tipoDescuento,
+    setTipoDescuento,
+    valorDescuento,
+    setValorDescuento,
   } = useCarrito()
   const [busqueda, setBusqueda] = useState('')
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
   const [indiceActivo, setIndiceActivo] = useState(-1)
+  // Tocar el cabezal del carrito (móvil) empuja fuera de vista el panel de
+  // total/pago/confirmar (fixed bottom-0) para que la lista de productos
+  // aproveche toda la pantalla cuando el ticket tiene muchas filas. En sm+
+  // el panel ya es estático (no fixed), así que esto no aplica ahí.
+  const [carritoExpandido, setCarritoExpandido] = useState(false)
   // Filas del carrito: en táctil se eliminan deslizando (más espacio para
   // el nombre del producto), en mouse/trackpad se conserva el botón ✕.
   const [esTactil] = useState(
@@ -334,12 +346,15 @@ export default function Ventas({ activo = true }) {
   }, [ventaParaImprimir])
 
   const [catalogoProductos, setCatalogoProductos] = useState([])
-  const [catalogoServicios, setCatalogoServicios] = useState([])
   const [catalogoClientes, setCatalogoClientes] = useState([])
   const [cargandoCatalogo, setCargandoCatalogo] = useState(true)
   const [errorCatalogo, setErrorCatalogo] = useState(null)
-  const [modalServiciosAbierto, setModalServiciosAbierto] = useState(false)
+  const [atencionesDisponibles, setAtencionesDisponibles] = useState([])
+  const [cargandoAtenciones, setCargandoAtenciones] = useState(false)
+  const [modalAtencionesAbierto, setModalAtencionesAbierto] = useState(false)
   const [modalClienteAbierto, setModalClienteAbierto] = useState(false)
+  const [modalRegistroClienteAbierto, setModalRegistroClienteAbierto] = useState(false)
+  const [nombreClienteNuevo, setNombreClienteNuevo] = useState('')
   const [modalEscanerAbierto, setModalEscanerAbierto] = useState(false)
   const primeraCargaCatalogoHecha = useRef(false)
 
@@ -353,15 +368,10 @@ export default function Ventas({ activo = true }) {
   // el más numeroso y el menos usado en el flujo de venta en sí).
   async function cargarCatalogo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargandoCatalogo(true)
-    const [productosRes, serviciosRes, clientesRes] = await Promise.all([
+    const [productosRes, clientesRes] = await Promise.all([
       supabase
         .from('productos_vista')
         .select('id, codigo_barras, nombre, categoria, precio, stock_actual')
-        .eq('activo', true)
-        .order('nombre'),
-      supabase
-        .from('servicios')
-        .select('id, nombre, precio, categoria, duracion_min')
         .eq('activo', true)
         .order('nombre'),
       supabase.from('clientes').select('id, nombre, telefono').order('nombre'),
@@ -369,17 +379,16 @@ export default function Ventas({ activo = true }) {
 
     if (!vigente.actual) return
 
-    if (productosRes.error || serviciosRes.error) {
+    if (productosRes.error) {
       setErrorCatalogo('No se pudo cargar el catálogo. Revisa tu conexión.')
     } else {
       setErrorCatalogo(null)
       setCatalogoProductos(productosRes.data ?? [])
-      setCatalogoServicios(serviciosRes.data ?? [])
       // B2 de la 3ª auditoría: antes un fallo acá quedaba en silencio (la
       // lista de clientes simplemente quedaba vacía). No bloquea la venta
-      // como productos/servicios (cliente es opcional en el ticket), pero
-      // sí avisa — si no, "no aparece ningún cliente" parece un catálogo
-      // vacío de verdad, no un error de red.
+      // como productos (cliente es opcional en el ticket), pero sí avisa —
+      // si no, "no aparece ningún cliente" parece un catálogo vacío de
+      // verdad, no un error de red.
       if (clientesRes.error) {
         mostrarToast('No se pudo cargar la lista de clientes.', 'error')
       } else {
@@ -387,6 +396,39 @@ export default function Ventas({ activo = true }) {
       }
     }
     setCargandoCatalogo(false)
+  }
+
+  // Las atenciones pendientes (registradas en Mi Panel o al completar una
+  // cita, todavía sin cobrar) se piden recién al abrir el buscador, no en
+  // cargarCatalogo(): a diferencia de productos/clientes, esta lista cambia
+  // seguido (cualquier asistente puede registrar/vender una en cualquier
+  // momento) y no vale la pena mantenerla sincronizada en segundo plano.
+  async function abrirBuscadorAtenciones() {
+    setModalAtencionesAbierto(true)
+    setCargandoAtenciones(true)
+    const { data, error } = await supabase
+      .from('registro_servicios')
+      .select('id, servicio_id, cliente_id, precio, fecha, servicios(nombre), clientes(nombre)')
+      .eq('estado', 'ACTIVO')
+      .is('venta_id', null)
+      .order('fecha')
+
+    setCargandoAtenciones(false)
+
+    if (error) {
+      mostrarToast('No se pudieron cargar las atenciones pendientes.', 'error')
+      return
+    }
+
+    // El servidor solo sabe qué atenciones ya se VENDIERON (venta_id
+    // puesto al confirmar) — una que ya está en el carrito de este ticket,
+    // pero todavía sin confirmar, sigue viniendo como "disponible" en la
+    // consulta. Se descarta acá para no poder agregarla dos veces al mismo
+    // ticket antes de cobrar.
+    const idsEnCarrito = new Set(
+      carrito.filter((item) => item.tipo === 'SERVICIO').map((item) => item.registroServicioId),
+    )
+    setAtencionesDisponibles((data ?? []).filter((atencion) => !idsEnCarrito.has(atencion.id)))
   }
 
   useEffect(() => {
@@ -414,10 +456,71 @@ export default function Ventas({ activo = true }) {
         )
       : []
 
-  const total = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
+  const subtotal = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
+  const valorDescuentoNumero = parseFloat(valorDescuento) || 0
+  const esDescuentoPorcentaje = tipoDescuento === 'porcentaje'
+  const descuentoPctAplicado = esDescuentoPorcentaje
+    ? Math.min(100, Math.max(0, valorDescuentoNumero))
+    : 0
+  const montoDescuento = esDescuentoPorcentaje
+    ? redondear2(subtotal * (descuentoPctAplicado / 100))
+    : redondear2(Math.min(Math.max(valorDescuentoNumero, 0), subtotal))
+  const total = redondear2(subtotal - montoDescuento)
   const totalMostrado = useContadorAnimado(total)
   const recibidoNumerico = parseFloat(montoRecibido) || 0
   const vuelto = redondear2(recibidoNumerico - total)
+
+  // "Exacto" fija Recibido al total del momento — si después el total
+  // cambia (cambiar de % a monto fijo reinterpreta el mismo número
+  // tecleado, agregar/quitar del carrito, etc.) mientras Recibido seguía
+  // calzando con el total viejo, se actualiza junto con él para que el
+  // botón no se vea "desmarcado" de la nada. Si Recibido tiene cualquier
+  // otro valor (uno tecleado a mano, o un monto rápido como 10/20/50/100),
+  // no se toca — por eso el resto de botones de Efectivo no se ven
+  // afectados por esto, solo Exacto.
+  const totalAnteriorRef = useRef(total)
+  useEffect(() => {
+    if (montoRecibido === String(totalAnteriorRef.current) && total !== totalAnteriorRef.current) {
+      setMontoRecibido(String(total))
+    }
+    totalAnteriorRef.current = total
+  }, [total])
+
+  function alternarTipoDescuento() {
+    setTipoDescuento((anterior) => (anterior === 'porcentaje' ? 'monto' : 'porcentaje'))
+  }
+
+  // Tocar el método ya seleccionado lo desmarca (vuelve a null, oculta
+  // Recibido/Vuelto). Al marcar Efectivo, si Recibido está vacío se fija en
+  // "Exacto" por defecto — pero si ya había un monto/botón rápido elegido
+  // antes (ej. "20"), se respeta: no se pisa solo por volver a marcar
+  // Efectivo.
+  function seleccionarMetodoPago(nombre) {
+    if (metodoPago === nombre) {
+      setMetodoPago(null)
+      return
+    }
+    setMetodoPago(nombre)
+    if (nombre === 'Efectivo' && !montoRecibido) {
+      setMontoRecibido(String(total))
+    }
+  }
+
+  function actualizarDescuento(valor) {
+    if (esDescuentoPorcentaje) {
+      const soloDigitos = valor.replace(/[^0-9]/g, '').slice(0, 3)
+      setValorDescuento(soloDigitos === '' ? '' : String(Math.min(100, parseInt(soloDigitos, 10))))
+      return
+    }
+    // Monto fijo en soles: dígitos + un único punto decimal, sin tope de caracteres.
+    const limpio = valor.replace(/[^0-9.]/g, '')
+    const primerPunto = limpio.indexOf('.')
+    setValorDescuento(
+      primerPunto === -1
+        ? limpio
+        : limpio.slice(0, primerPunto + 1) + limpio.slice(primerPunto + 1).replace(/\./g, ''),
+    )
+  }
 
   const {
     soportado: vozSoportada,
@@ -490,7 +593,7 @@ export default function Ventas({ activo = true }) {
     ])
   }
 
-  function agregarServicio(servicio) {
+  function agregarAtencion(atencion) {
     const nuevoId = crypto.randomUUID()
     setFilaFlash(nuevoId)
     setCarrito((anterior) => [
@@ -498,13 +601,31 @@ export default function Ventas({ activo = true }) {
       {
         id: nuevoId,
         tipo: 'SERVICIO',
-        servicioId: servicio.id,
-        nombre: servicio.nombre,
+        registroServicioId: atencion.id,
+        servicioId: atencion.servicio_id,
+        nombre: atencion.servicios?.nombre ?? 'Servicio',
+        clienteNombre: atencion.clientes?.nombre ?? null,
         cantidad: 1,
-        precioUnitario: servicio.precio,
+        precioUnitario: atencion.precio,
       },
     ])
-    setModalServiciosAbierto(false)
+    // La clienta de la venta se autocompleta con la de la PRIMERA atención
+    // agregada (si todavía no hay ninguna elegida) — así se ahorra el paso
+    // de volver a buscarla, que es el caso normal (la misma persona que se
+    // hizo el servicio es quien paga). No pisa una clienta ya elegida a
+    // mano: si agrega un segundo servicio de OTRA clienta al mismo ticket
+    // (ej. hija que se atiende junto a su mamá, pero paga la mamá), el
+    // campo se queda con la primera.
+    if (!cliente && atencion.clientes?.nombre) {
+      setCliente({ id: atencion.cliente_id ?? null, nombre: atencion.clientes.nombre })
+    }
+    // El modal se queda abierto (no se cierra acá) para poder agregar varias
+    // atenciones seguidas del mismo ticket sin reabrir el buscador cada vez
+    // — la fila agregada simplemente desaparece de la lista de abajo.
+    // Se quita de la lista local (no solo del servidor al vender) para que
+    // no se pueda agregar la misma atención dos veces al mismo ticket antes
+    // de que se confirme la venta.
+    setAtencionesDisponibles((anterior) => anterior.filter((a) => a.id !== atencion.id))
   }
 
   function cambiarCantidad(id, delta) {
@@ -517,16 +638,6 @@ export default function Ventas({ activo = true }) {
         }
         return { ...item, cantidad: Math.max(1, siguienteCantidad) }
       }),
-    )
-  }
-
-  function cambiarPrecioServicio(id, nuevoPrecio) {
-    setCarrito((anterior) =>
-      anterior.map((item) =>
-        item.id === id && item.tipo === 'SERVICIO'
-          ? { ...item, precioUnitario: Math.max(0, nuevoPrecio) }
-          : item,
-      ),
     )
   }
 
@@ -555,6 +666,8 @@ export default function Ventas({ activo = true }) {
       setMontoRecibido('')
       setMetodoPago(null)
       setCliente(null)
+      setValorDescuento('')
+      setTipoDescuento('porcentaje')
       setIdsSaliendo(new Set())
     }, DURACION_SALIDA)
   }
@@ -568,10 +681,9 @@ export default function Ventas({ activo = true }) {
     const items = carrito.map((item) => ({
       tipo: item.tipo,
       producto_id: item.tipo === 'PRODUCTO' ? item.productoId : null,
-      servicio_id: item.tipo === 'SERVICIO' ? item.servicioId : null,
+      registro_servicio_id: item.tipo === 'SERVICIO' ? item.registroServicioId : null,
       nombre: item.nombre,
       cantidad: item.cantidad,
-      precio_unitario: item.precioUnitario,
     }))
 
     const { data, error } = await supabase.rpc('confirmar_venta', {
@@ -579,6 +691,8 @@ export default function Ventas({ activo = true }) {
       p_monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
       p_items: items,
       p_cliente_id: cliente?.id ?? null,
+      p_descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
+      p_descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
     })
 
     setCobrando(false)
@@ -604,6 +718,8 @@ export default function Ventas({ activo = true }) {
         fecha: new Date().toISOString(),
         estado: 'ACTIVA',
         total: venta.total,
+        descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
+        descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
         metodo_pago: metodoPago,
         monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
         clientes: cliente ? { nombre: cliente.nombre } : null,
@@ -613,6 +729,8 @@ export default function Ventas({ activo = true }) {
 
     setCarrito([])
     setMontoRecibido('')
+    setValorDescuento('')
+    setTipoDescuento('porcentaje')
     setMetodoPago(null)
     setCliente(null)
     cargarCatalogo()
@@ -762,48 +880,86 @@ export default function Ventas({ activo = true }) {
         </button>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <div
-            className={`flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors ${
-              cliente
-                ? 'border-purple-300 bg-purple-300/10 text-purple-300'
-                : 'border-dashed border-border-strong text-ink/70'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => setModalClienteAbierto(true)}
-              className="flex min-w-0 flex-1 items-center gap-1.5 transition-colors hover:text-amber"
+        <CampoColapsable abierto={!carritoExpandido} margen>
+          <div className="flex items-center gap-2">
+            <div
+              className={`flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors ${
+                cliente
+                  ? 'border-purple-300 bg-purple-300/10 text-purple-300'
+                  : 'border-dashed border-border-strong text-ink/70'
+              }`}
             >
-              <User className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">
-                {cliente ? cliente.nombre : 'Cliente: (ninguno)'}
-              </span>
-            </button>
-            {cliente && (
               <button
                 type="button"
-                onClick={() => setCliente(null)}
-                aria-label="Quitar cliente"
-                className="-m-2 shrink-0 p-2 text-purple-300/70 transition-colors hover:text-red"
+                onClick={() => setModalClienteAbierto(true)}
+                className="flex min-w-0 flex-1 items-center gap-1.5 transition-colors hover:text-amber"
               >
-                <X className="h-3 w-3" />
+                <User className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {cliente ? cliente.nombre : 'Cliente: (ninguno)'}
+                </span>
               </button>
-            )}
-          </div>
+              {cliente && (
+                <button
+                  type="button"
+                  onClick={() => setCliente(null)}
+                  aria-label="Quitar cliente"
+                  className="-m-2 shrink-0 p-2 text-purple-300/70 transition-colors hover:text-red"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
 
-          <button
-            type="button"
-            onClick={() => setModalServiciosAbierto(true)}
-            className={`shrink-0 whitespace-nowrap rounded-lg border border-dashed px-2 py-1.5 text-xs transition-colors ${
-              hayServicioEnCarrito
-                ? 'border-blue/50 text-blue hover:bg-blue/10'
-                : 'border-border-strong text-ink/70 hover:border-blue/50 hover:text-blue'
-            }`}
-          >
-            + Agregar servicio
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={abrirBuscadorAtenciones}
+              className={`shrink-0 whitespace-nowrap rounded-lg border border-dashed px-2 py-1.5 text-xs transition-colors ${
+                hayServicioEnCarrito
+                  ? 'border-blue/50 text-blue hover:bg-blue/10'
+                  : 'border-border-strong text-ink/70 hover:border-blue/50 hover:text-blue'
+              }`}
+            >
+              + Agregar servicio
+            </button>
+
+            <button
+              type="button"
+              onClick={alternarTipoDescuento}
+              aria-label={esDescuentoPorcentaje ? 'Descuento porcentual — cambiar a monto fijo' : 'Descuento por monto fijo — cambiar a porcentual'}
+              title="Cambiar tipo de descuento"
+              className={`flex shrink-0 items-center justify-center rounded-lg border border-dashed p-1.5 transition-colors ${
+                valorDescuento
+                  ? 'border-red/50 text-red'
+                  : 'border-border-strong text-ink/70 hover:border-red hover:text-red'
+              }`}
+            >
+              {esDescuentoPorcentaje ? (
+                <Percent className="h-3.5 w-3.5" />
+              ) : (
+                <span className="w-3.5 text-center font-mono text-[11px] font-semibold leading-none">
+                  S/
+                </span>
+              )}
+            </button>
+
+            <input
+              type="search"
+              inputMode={esDescuentoPorcentaje ? 'numeric' : 'decimal'}
+              maxLength={esDescuentoPorcentaje ? 3 : undefined}
+              autoComplete="new-password"
+              value={valorDescuento}
+              onChange={(evento) => actualizarDescuento(evento.target.value)}
+              placeholder="0"
+              aria-label={esDescuentoPorcentaje ? 'Porcentaje de descuento' : 'Monto de descuento'}
+              className={`w-12 shrink-0 rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs outline-none ${
+                valorDescuento
+                  ? 'border-red bg-red/10 text-red'
+                  : 'border-border bg-surface-2 text-ink focus:border-red'
+              }`}
+            />
+          </div>
+        </CampoColapsable>
 
         {errorCatalogo && (
           <p className="mt-2 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
@@ -812,24 +968,38 @@ export default function Ventas({ activo = true }) {
         )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden p-3 sm:overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-hidden p-3 pt-0 sm:overflow-y-auto">
         <div className="flex h-full min-h-0 w-full flex-col gap-3 sm:h-auto lg:flex-row lg:items-start">
           {/* Columna de ticket (fija en móvil el espacio disponible; crece en desktop) */}
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             {/* Zona de ticket: en móvil ocupa el espacio libre (entre header y
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
-            <div className="-mx-3 flex min-h-0 flex-1 flex-col border-t border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none">
+            <div
+              className={`-mx-3 flex min-h-0 flex-1 flex-col border-border bg-[#0a0a0a] sm:mx-0 sm:rounded-lg sm:border-t sm:flex-none ${
+                carritoExpandido ? 'border-t' : ''
+              }`}
+            >
               <div
-                className={`${esTactil ? 'grid-cols-[1fr_5rem_4rem]' : 'grid-cols-[1fr_5rem_4rem_1.5rem]'} grid gap-3 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setCarritoExpandido((anterior) => !anterior)}
+                onKeyDown={manejarActivacionTeclado(() => setCarritoExpandido((anterior) => !anterior))}
+                aria-expanded={carritoExpandido}
+                aria-label={carritoExpandido ? 'Contraer carrito' : 'Expandir carrito'}
+                className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} grid cursor-pointer gap-3 border-b border-border pr-2 pl-3 py-2.5 font-mono text-[11px] uppercase tracking-wider text-ink transition-colors hover:bg-surface-2/50`}
               >
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
-                <span className="text-right">Subtotal</span>
+                <span className="-ml-3 text-right">Subtotal</span>
                 {!esTactil && <span />}
               </div>
 
-              <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto pb-[22rem] sm:h-[300px] sm:flex-none sm:pb-0">
+              <div
+                className={`min-h-0 flex-1 divide-y divide-border overflow-y-auto sm:h-[300px] sm:flex-none sm:pb-0 ${
+                  carritoExpandido ? 'pb-3' : 'pb-[22rem]'
+                }`}
+              >
                 {carrito.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
                     <ShoppingCart className="h-10 w-10 text-ink/20" />
@@ -847,7 +1017,6 @@ export default function Ventas({ activo = true }) {
                       saliendo={idsSaliendo.has(item.id)}
                       esTactil={esTactil}
                       onCambiarCantidad={cambiarCantidad}
-                      onCambiarPrecio={cambiarPrecioServicio}
                       onQuitar={quitarItem}
                     />
                   ))
@@ -865,28 +1034,43 @@ export default function Ventas({ activo = true }) {
               contenido no entra en pantallas muy chicas, se scrollea dentro
               del propio panel en vez de mandar los botones fuera de la vista. */}
           <div
-            className="fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:max-h-none sm:pb-3 lg:w-[340px] lg:flex-none"
+            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:w-[340px] lg:flex-none ${
+              carritoExpandido ? 'translate-y-full pointer-events-none' : 'translate-y-0'
+            }`}
           >
             <div className="flex items-baseline justify-between">
               <span className="text-[19px] text-ink">Total</span>
-              <span className="font-mono text-2xl font-semibold text-amber">
-                {formatearSoles(totalMostrado)}
+              <span className="flex items-baseline gap-2">
+                {montoDescuento > 0 && (
+                  <span className="font-mono text-sm text-ink/40 line-through">
+                    {formatearSoles(subtotal)}
+                  </span>
+                )}
+                <span className="font-mono text-2xl font-semibold text-amber">
+                  {formatearSoles(totalMostrado)}
+                </span>
               </span>
             </div>
 
-            <CampoColapsable abierto={metodoPago === 'Efectivo'} margen>
+            {(montoDescuento > 0 || metodoPago === 'Efectivo') && (
               <div
-                className={`flex items-center justify-between text-sm ${
-                  vuelto < 0 ? 'text-red' : 'text-green'
+                className={`mt-1 flex items-center text-sm ${
+                  montoDescuento > 0 ? 'justify-between' : 'justify-end'
                 }`}
               >
-                <span className="flex items-center gap-1.5">
-                  <span aria-hidden="true">↩</span>
-                  Vuelto
-                </span>
-                <span className="font-mono font-semibold">{formatearSoles(vuelto)}</span>
+                {montoDescuento > 0 && (
+                  <span className="text-red">
+                    Descuento{esDescuentoPorcentaje ? ` (${descuentoPctAplicado}%)` : ''}:{' '}
+                    <span className="font-mono">-{formatearSoles(montoDescuento)}</span>
+                  </span>
+                )}
+                {metodoPago === 'Efectivo' && (
+                  <span className={vuelto < 0 ? 'text-red' : 'text-green'}>
+                    Vuelto: <span className="font-mono font-semibold">{formatearSoles(vuelto)}</span>
+                  </span>
+                )}
               </div>
-            </CampoColapsable>
+            )}
 
             <div className="mt-3">
               <p className="mb-1.5 text-xs text-ink">Método de pago</p>
@@ -895,7 +1079,7 @@ export default function Ventas({ activo = true }) {
                   <button
                     key={metodo.nombre}
                     type="button"
-                    onClick={() => setMetodoPago(metodo.nombre)}
+                    onClick={() => seleccionarMetodoPago(metodo.nombre)}
                     className={`rounded-lg border px-1 py-2 text-[11px] transition-colors sm:px-2 sm:text-sm ${
                       metodoPago === metodo.nombre
                         ? metodo.clasesActivo
@@ -917,8 +1101,9 @@ export default function Ventas({ activo = true }) {
                 <label className="mb-1 block text-xs text-ink">Recibido</label>
                 <div className="flex items-center gap-1.5">
                   <input
-                    type="number"
+                    type="search"
                     inputMode="decimal"
+                    autoComplete="new-password"
                     value={montoRecibido}
                     onChange={(evento) => setMontoRecibido(evento.target.value)}
                     placeholder="0.00"
@@ -990,11 +1175,12 @@ export default function Ventas({ activo = true }) {
         </div>
       </div>
 
-      {modalServiciosAbierto && (
-        <ModalBuscarServicio
-          servicios={catalogoServicios}
-          onSeleccionar={agregarServicio}
-          onCerrar={() => setModalServiciosAbierto(false)}
+      {modalAtencionesAbierto && (
+        <ModalBuscarAtencion
+          atenciones={atencionesDisponibles}
+          cargando={cargandoAtenciones}
+          onSeleccionar={agregarAtencion}
+          onCerrar={() => setModalAtencionesAbierto(false)}
         />
       )}
 
@@ -1005,7 +1191,25 @@ export default function Ventas({ activo = true }) {
             setCliente(clienteElegido)
             setModalClienteAbierto(false)
           }}
+          onRegistrarNuevo={(nombre) => {
+            setModalClienteAbierto(false)
+            setNombreClienteNuevo(nombre)
+            setModalRegistroClienteAbierto(true)
+          }}
           onCerrar={() => setModalClienteAbierto(false)}
+        />
+      )}
+
+      {modalRegistroClienteAbierto && (
+        <ModalCliente
+          nombreInicial={nombreClienteNuevo}
+          onCerrar={() => setModalRegistroClienteAbierto(false)}
+          onGuardado={(clienteCreado) => {
+            setModalRegistroClienteAbierto(false)
+            cargarCatalogo()
+            if (clienteCreado) setCliente(clienteCreado)
+            mostrarToast('Cliente creado.', 'exito')
+          }}
         />
       )}
 

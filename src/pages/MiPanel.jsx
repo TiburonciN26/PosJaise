@@ -20,6 +20,7 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
@@ -90,7 +91,7 @@ export default function MiPanel({ activo = true }) {
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
 
-  const [filtro, setFiltro] = useState('hoy')
+  const [filtro, setFiltro] = useState('mes')
   const [personalizado, setPersonalizado] = useState(() => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
@@ -114,6 +115,7 @@ export default function MiPanel({ activo = true }) {
   const [registroACancelar, setRegistroACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
+  const [registrosAbiertos, setRegistrosAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
   // cargarMasRegistros descarte una respuesta que llega tarde de un
@@ -248,7 +250,10 @@ export default function MiPanel({ activo = true }) {
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarRegistros(vigente, silencioso)
-    if (!silencioso) setDiasAbiertos(new Set())
+    if (!silencioso) {
+      setDiasAbiertos(new Set())
+      setRegistrosAbiertos(new Set())
+    }
     return () => {
       vigente.actual = false
     }
@@ -259,6 +264,15 @@ export default function MiPanel({ activo = true }) {
       const siguiente = new Set(anterior)
       if (siguiente.has(clave)) siguiente.delete(clave)
       else siguiente.add(clave)
+      return siguiente
+    })
+  }
+
+  function alternarRegistro(id) {
+    setRegistrosAbiertos((anterior) => {
+      const siguiente = new Set(anterior)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
       return siguiente
     })
   }
@@ -347,26 +361,29 @@ export default function MiPanel({ activo = true }) {
       />
 
       {/* Resumen del período + Registrar atención (desktop) */}
-      <div className="mt-3 flex items-center justify-between gap-2">
+      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
         {/* Resumen del período: viene del RPC resumen_mi_panel, no del array
-            cargado — así sigue exacto aunque la lista de abajo esté paginada. */}
-        <div className="flex flex-1 items-center gap-3 text-sm">
-          <span className="text-ink/60">
-            Atenciones: <span className="font-mono font-semibold text-ink">{resumen.cantidad}</span>
-          </span>
-          <span className="text-ink/60">
+            cargado — así sigue exacto aunque la lista de abajo esté paginada.
+            Atenciones a la izquierda (a la altura de "N servicios" de cada
+            día) y Total a la derecha (a la altura del monto de cada día). */}
+        <span className="text-ink/60">
+          Atenciones: <span className="font-mono font-semibold text-ink">{resumen.cantidad}</span>
+        </span>
+
+        <div className="flex items-center gap-3">
+          <span className="pr-[35px] text-ink/60">
             Total: <span className="font-mono font-semibold text-green">{formatearSoles(resumen.total)}</span>
           </span>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setModalRegistro('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2 text-sm font-semibold text-bg lg:flex"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Registrar atención</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setModalRegistro('nuevo')}
+            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2 text-sm font-semibold text-bg lg:flex"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Registrar atención</span>
+          </button>
+        </div>
       </div>
 
       <FiltrosFecha.CamposPersonalizado
@@ -403,7 +420,12 @@ export default function MiPanel({ activo = true }) {
             const totalDia = sumarMontos(registrosActivosDia, (r) => montoDeRegistro(r, esAdmin))
 
             return (
-              <div key={grupo.clave} className="rounded-lg border border-border bg-surface">
+              <div
+                key={grupo.clave}
+                className={`border border-border bg-surface transition-colors duration-300 ${
+                  abierto ? 'rounded-none border-l-2 border-l-purple-300 bg-purple-300/5' : 'rounded-lg'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => alternarDia(grupo.clave)}
@@ -442,64 +464,52 @@ export default function MiPanel({ activo = true }) {
                       // aparecía igual en días pasados y el intento fallaba con
                       // un toast de error confuso.
                       const puedeCancelar = esAdmin || esHoyLima(new Date(registro.fecha))
+                      const registroAbierto = registrosAbiertos.has(registro.id)
 
                       return (
                         <div
                           key={registro.id}
-                          className={`rounded-lg p-2.5 ${
+                          className={`rounded-lg ${
                             cancelado ? 'border border-red/40 bg-red/5' : 'bg-surface-2'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <p
-                              className={`min-w-0 truncate text-sm font-medium ${
-                                cancelado ? 'text-red line-through' : 'text-ink'
-                              }`}
-                            >
-                              {registro.servicios?.nombre ?? 'Servicio eliminado'}
-                            </p>
+                          <div
+                            onClick={() => alternarRegistro(registro.id)}
+                            onKeyDown={manejarActivacionTeclado(() => alternarRegistro(registro.id))}
+                            role="button"
+                            tabIndex={0}
+                            aria-expanded={registroAbierto}
+                            aria-label={registroAbierto ? 'Contraer' : 'Expandir'}
+                            className="cursor-pointer p-2.5"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p
+                                className={`min-w-0 flex-1 truncate text-sm font-medium ${
+                                  cancelado ? 'text-red line-through' : 'text-ink'
+                                }`}
+                              >
+                                {registro.servicios?.nombre ?? 'Servicio eliminado'}
+                              </p>
 
-                            {cancelado ? (
-                              <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
-                                Cancelada
-                              </span>
-                            ) : (
-                              <div className="flex shrink-0 items-center gap-2">
-                                {esAdmin && (
+                              <div className="flex shrink-0 items-center gap-1.5">
+                                {cancelado ? (
+                                  <span className="rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
+                                    Cancelada
+                                  </span>
+                                ) : (
                                   <span className="font-mono text-sm text-ink">
-                                    {formatearSoles(registro.precio)}
+                                    {formatearSoles(montoDeRegistro(registro, esAdmin))}
                                   </span>
                                 )}
-                                {esAdmin && (
-                                  <BotonAccion
-                                    icono={Pencil}
-                                    texto="Editar"
-                                    color="celeste"
-                                    onClick={() => setModalRegistro(registro)}
-                                  />
-                                )}
-                                {puedeCancelar && (
-                                  <BotonAccion
-                                    icono={Ban}
-                                    texto="Cancelar"
-                                    color="rojo"
-                                    onClick={() => setRegistroACancelar(registro)}
-                                  />
-                                )}
-                                {esAdmin && (
-                                  <BotonAccion
-                                    icono={Trash2}
-                                    texto="Eliminar"
-                                    color="rojo"
-                                    onClick={() => setRegistroAEliminar(registro)}
-                                  />
-                                )}
+                                <ArrowBigDown
+                                  className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                                    registroAbierto ? 'rotate-180' : ''
+                                  }`}
+                                />
                               </div>
-                            )}
-                          </div>
+                            </div>
 
-                          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-ink/60">
+                            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-ink/60">
                               {esAdmin && nombreUsuarioDe(registro) && (
                                 <span className="flex items-center gap-1 text-purple-300">
                                   <Users className="h-3.5 w-3.5" />
@@ -514,38 +524,72 @@ export default function MiPanel({ activo = true }) {
                                 <Clock className="h-3.5 w-3.5 text-ink/60" />
                                 {formatearHora(registro.fecha)}
                               </span>
-                              {esAdmin && !cancelado && (
-                                tieneComision ? (
-                                  <span className="flex items-center gap-1 text-yellow-300">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    {registro.porcentaje_aplicado}%
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center gap-1 text-orange-400">
-                                    <AlertTriangle className="h-3.5 w-3.5" />
-                                    Sin % asignado
-                                  </span>
-                                )
-                              )}
                             </div>
-
-                            {!cancelado &&
-                              (tieneComision ? (
-                                <span className="shrink-0 rounded-full bg-green/15 px-2 py-0.5 font-mono text-xs font-semibold text-green">
-                                  Mi pago: {formatearSoles(registro.pago_asistente)}
-                                </span>
-                              ) : (
-                                !esAdmin && (
-                                  <span className="shrink-0 text-xs text-orange-400">
-                                    Sin comisión asignada
-                                  </span>
-                                )
-                              ))}
                           </div>
 
-                          {registro.nota && (
-                            <p className="mt-1.5 truncate text-xs text-ink/60">{registro.nota}</p>
-                          )}
+                          <CampoColapsable abierto={registroAbierto}>
+                            <div className="space-y-2 border-t border-border/60 px-2.5 pb-2.5 pt-2">
+                              {!cancelado && (
+                                <>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    {esAdmin && tieneComision && (
+                                      <span className="rounded-full bg-green/15 px-2 py-0.5 font-mono text-xs font-semibold text-green">
+                                        Pago asistente: {formatearSoles(registro.pago_asistente)}
+                                      </span>
+                                    )}
+                                    {!esAdmin && !tieneComision && (
+                                      <span className="text-xs text-orange-400">
+                                        Sin comisión asignada
+                                      </span>
+                                    )}
+                                    {esAdmin &&
+                                      (tieneComision ? (
+                                        <span className="flex items-center gap-1 text-xs text-yellow-300">
+                                          <CheckCircle2 className="h-3.5 w-3.5" />
+                                          {registro.porcentaje_aplicado}%
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center gap-1 text-xs text-orange-400">
+                                          <AlertTriangle className="h-3.5 w-3.5" />
+                                          Sin % asignado
+                                        </span>
+                                      ))}
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                    {esAdmin && (
+                                      <BotonAccion
+                                        icono={Pencil}
+                                        texto="Editar"
+                                        color="celeste"
+                                        onClick={() => setModalRegistro(registro)}
+                                      />
+                                    )}
+                                    {puedeCancelar && (
+                                      <BotonAccion
+                                        icono={Ban}
+                                        texto="Cancelar"
+                                        color="rojo"
+                                        onClick={() => setRegistroACancelar(registro)}
+                                      />
+                                    )}
+                                    {esAdmin && (
+                                      <BotonAccion
+                                        icono={Trash2}
+                                        texto="Eliminar"
+                                        color="rojo"
+                                        onClick={() => setRegistroAEliminar(registro)}
+                                      />
+                                    )}
+                                  </div>
+                                </>
+                              )}
+
+                              {registro.nota && (
+                                <p className="text-xs text-ink/60">{registro.nota}</p>
+                              )}
+                            </div>
+                          </CampoColapsable>
                         </div>
                       )
                     })}
