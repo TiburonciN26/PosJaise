@@ -60,6 +60,8 @@
   --animate-brillo-texto: brillo-texto 8.5s linear infinite;
   /* Tarjeta de punto de equilibrio: brillo rosa tenue de fondo, detrás del contenido */
   --animate-brillo-tarjeta: brillo-tarjeta 8.5s linear infinite;
+  /* Tarjeta de cumpleaños: borde que se ilumina, intercalado con brillo-tarjeta */
+  --animate-brillo-borde-tarjeta: brillo-borde-tarjeta 8.5s linear infinite;
   /* Flechita verde: sube y se desvanece, con pausa antes de repetir */
   --animate-elevar-flecha: elevar-flecha 3s ease-out infinite;
 }
@@ -162,6 +164,26 @@
   }
   100% {
     transform: translateX(300%);
+  }
+}
+
+/* Segundo brillo, intercalado con brillo-tarjeta: mientras ese recorre toda
+   la tarjeta en el primer ~41% del bucle, este ilumina solo el borde a la
+   mitad del hueco que queda libre (antes de que el bucle vuelva a
+   empezar), más sutil (opacidad, no toda la superficie). Pensado para usar
+   con la MISMA duración que brillo-tarjeta (8.5s) en el mismo elemento. */
+@keyframes brillo-borde-tarjeta {
+  0%, 55% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  85%, 100% {
+    opacity: 0;
   }
 }
 

@@ -116,7 +116,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const sugerenciasServicio = servicios.filter((servicio) =>
     servicio.nombre.toLowerCase().includes(busquedaServicio.trim().toLowerCase()),
   )
-
   function actualizarCampo(campo, valor) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }

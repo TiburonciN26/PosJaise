@@ -976,7 +976,7 @@ export default function Ventas({ activo = true }) {
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
             <div
-              className={`-mx-3 flex min-h-0 flex-1 flex-col border-border bg-[#0a0a0a] sm:mx-0 sm:rounded-lg sm:border-t sm:flex-none ${
+              className={`-mx-3 flex min-h-0 flex-1 flex-col border-border bg-bg sm:mx-0 sm:rounded-lg sm:border-t sm:flex-none ${
                 carritoExpandido ? 'border-t' : ''
               }`}
             >
