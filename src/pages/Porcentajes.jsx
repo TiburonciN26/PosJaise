@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
+import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
@@ -13,6 +14,25 @@ const OPCIONES_ORDEN = [
   { id: 'asignados-asc', label: '% asignado (menor a mayor)' },
   { id: 'asignados-desc', label: '% asignado (mayor a menor)' },
 ]
+
+// Mide con canvas (mismo font que el elemento truncado) exactamente qué
+// parte del nombre quedó tapada por el "..." del CSS, carácter por
+// carácter — así lo que se muestra abajo al desplegar es solo lo que no se
+// alcanzó a ver, no una copia del nombre completo.
+let ctxMedicionNombre = null
+
+function calcularParteOculta(nombre, elemento) {
+  if (!elemento || elemento.scrollWidth <= elemento.clientWidth) return ''
+  if (!ctxMedicionNombre) ctxMedicionNombre = document.createElement('canvas').getContext('2d')
+  const estilo = getComputedStyle(elemento)
+  ctxMedicionNombre.font = `${estilo.fontWeight} ${estilo.fontSize} ${estilo.fontFamily}`
+  const anchoDisponible = elemento.clientWidth
+  let corte = nombre.length
+  while (corte > 0 && ctxMedicionNombre.measureText(`${nombre.slice(0, corte)}…`).width > anchoDisponible) {
+    corte--
+  }
+  return nombre.slice(corte).trim()
+}
 
 function contarAsignados(servicioId, asistentesActivos, porcentajesMap) {
   return asistentesActivos.filter((a) => porcentajesMap.has(`${servicioId}_${a.id}`)).length
@@ -101,6 +121,18 @@ function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGu
 
 function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap, onGuardar }) {
   const [abierto, setAbierto] = useState(false)
+  const nombreRef = useRef(null)
+  const [parteOculta, setParteOculta] = useState('')
+
+  useLayoutEffect(() => {
+    const elemento = nombreRef.current
+    if (!elemento) return undefined
+    const medir = () => setParteOculta(calcularParteOculta(servicio.nombre, elemento))
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(elemento)
+    return () => observador.disconnect()
+  }, [servicio.nombre])
 
   const asignados = asistentesActivos.filter((a) =>
     porcentajesMap.has(`${servicio.id}_${a.id}`),
@@ -115,7 +147,10 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
         onClick={() => setAbierto((valor) => !valor)}
         className="flex w-full items-center gap-2 p-3 text-left"
       >
-        <p className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{servicio.nombre}</p>
+        <p ref={nombreRef} className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
+          {servicio.nombre}
+        </p>
+        <span className="shrink-0 font-mono text-xs text-ink/60">{formatearSoles(servicio.precio)}</span>
         <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-medium ${colores.pill}`}>
           {asignados}/{total}
         </span>
@@ -128,6 +163,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
 
       <CampoColapsable abierto={abierto}>
         <div className="space-y-2 border-t border-border p-3">
+          {parteOculta && <p className="-mt-1 text-xs text-ink/50">…{parteOculta}</p>}
           {total === 0 ? (
             <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
           ) : (
@@ -162,10 +198,10 @@ export default function Porcentajes({ activo = true }) {
   async function cargarTodo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     const [resServicios, resAsistentes, resPorcentajes] = await Promise.all([
-      supabase.from('servicios').select('id, nombre').order('nombre'),
+      supabase.from('servicios').select('id, nombre, precio').order('nombre'),
       supabase
         .from('asistentes')
-        .select('id, nombres_completos')
+        .select('id, nombres_completos, usuario_id, usuarios(rol)')
         .eq('activo', true)
         .order('nombres_completos'),
       supabase.from('porcentajes').select('servicio_id, asistente_id, porcentaje'),
@@ -178,7 +214,14 @@ export default function Porcentajes({ activo = true }) {
     } else {
       setError(null)
       setServicios(resServicios.data ?? [])
-      setAsistentes(resAsistentes.data ?? [])
+      // Un admin puede tener ficha de asistente (para que le asignen citas),
+      // pero su comisión siempre es 100% por rol, no por porcentaje
+      // configurado acá — mostrarlo en esta lista solo confundía el
+      // contador (ej. "1/2" cuando en realidad solo falta 1 asistente real
+      // por configurar). rol viene del join a usuarios, que esta página ya
+      // puede leer completo porque solo la ve un admin (usuarios_select
+      // permite id=auth.uid() or es_admin()).
+      setAsistentes((resAsistentes.data ?? []).filter((a) => a.usuarios?.rol !== 'ADMINISTRADOR'))
       setPorcentajes(resPorcentajes.data ?? [])
     }
     setCargando(false)
@@ -263,7 +306,10 @@ export default function Porcentajes({ activo = true }) {
   const filtradosOrdenados = ordenarServicios(filtrados, orden, asistentes, porcentajesMap)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Buscador: fijo arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda

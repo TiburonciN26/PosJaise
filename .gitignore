@@ -36,3 +36,14 @@ supabase/sql/RESET_*.sql
 *.njsproj
 *.sln
 *.sw?
+
+# Herramientas locales de Claude Code (skills instaladas y sus proyectos
+# de video) — no son parte de la app desplegada, nunca al repo público.
+.agents/
+skills-lock.json
+videos/
+
+# Assets sueltos que no usa el código (ej. PDFs de referencia) y mockups
+# HTML previos a implementar la pantalla real en React.
+src/assets/
+headerYServicios.html

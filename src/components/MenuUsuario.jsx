@@ -40,12 +40,14 @@ export default function MenuUsuario() {
 
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
+  const [confirmandoSalir, setConfirmandoSalir] = useState(false)
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   const [mostrarCamara, setMostrarCamara] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
 
   useCerrarConEscape(() => setMenuAbierto(false), menuAbierto)
   useCerrarConEscape(() => setConfirmando(false), confirmando)
+  useCerrarConEscape(() => setConfirmandoSalir(false), confirmandoSalir)
 
   // Cierre por clic-afuera con ref (no por onBlur): el enfoque de blur +
   // timer que había antes era frágil — cualquier pérdida de foco lo
@@ -242,7 +244,7 @@ export default function MenuUsuario() {
 
           <button
             type="button"
-            onClick={cerrarSesion}
+            onClick={() => setConfirmandoSalir(true)}
             className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -291,6 +293,33 @@ export default function MenuUsuario() {
                 }`}
               >
                 {cambiandoEstado ? 'Guardando...' : 'Sí'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmandoSalir && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-base font-semibold text-ink">¿Cerrar sesión?</h2>
+            <p className="mt-1 text-sm text-ink/60">
+              Vas a salir de tu cuenta en este dispositivo.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmandoSalir(false)}
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={cerrarSesion}
+                className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white"
+              >
+                Sí, cerrar sesión
               </button>
             </div>
           </div>

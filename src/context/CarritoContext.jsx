@@ -6,6 +6,7 @@ export function CarritoProvider({ children }) {
   const [carrito, setCarrito] = useState([])
   const [metodoPago, setMetodoPago] = useState(null)
   const [montoRecibido, setMontoRecibido] = useState('')
+  const [montoPosTarjeta, setMontoPosTarjeta] = useState('')
   const [cliente, setCliente] = useState(null)
   // tipoDescuento: 'porcentaje' (valorDescuento es un % 0-100) o 'monto'
   // (valorDescuento son soles fijos) — el botón de descuento alterna entre
@@ -24,6 +25,8 @@ export function CarritoProvider({ children }) {
       setMetodoPago,
       montoRecibido,
       setMontoRecibido,
+      montoPosTarjeta,
+      setMontoPosTarjeta,
       cliente,
       setCliente,
       tipoDescuento,
@@ -31,7 +34,7 @@ export function CarritoProvider({ children }) {
       valorDescuento,
       setValorDescuento,
     }),
-    [carrito, metodoPago, montoRecibido, cliente, tipoDescuento, valorDescuento],
+    [carrito, metodoPago, montoRecibido, montoPosTarjeta, cliente, tipoDescuento, valorDescuento],
   )
 
   return <CarritoContext.Provider value={value}>{children}</CarritoContext.Provider>

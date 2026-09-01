@@ -15,6 +15,7 @@ export function EstadoNegocioProvider({ children }) {
   // (RLS + RPCs en 45_negocio_cerrado_bloquea_escrituras.sql), así que un
   // valor optimista acá no abre ningún hueco de seguridad.
   const [abierto, setAbierto] = useState(true)
+  const [cuentaTransferencia, setCuentaTransferencia] = useState('')
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -27,12 +28,15 @@ export function EstadoNegocioProvider({ children }) {
 
     supabase
       .from('estado_negocio')
-      .select('abierto')
+      .select('abierto, cuenta_transferencia')
       .eq('id', 1)
       .maybeSingle()
       .then(({ data }) => {
         if (!vigente) return
-        if (data) setAbierto(data.abierto)
+        if (data) {
+          setAbierto(data.abierto)
+          setCuentaTransferencia(data.cuenta_transferencia ?? '')
+        }
         setCargando(false)
       })
 
@@ -42,7 +46,9 @@ export function EstadoNegocioProvider({ children }) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'estado_negocio' },
         (payload) => {
-          if (vigente) setAbierto(payload.new.abierto)
+          if (!vigente) return
+          setAbierto(payload.new.abierto)
+          setCuentaTransferencia(payload.new.cuenta_transferencia ?? '')
         },
       )
       .subscribe()
@@ -64,9 +70,20 @@ export function EstadoNegocioProvider({ children }) {
     setAbierto(nuevoAbierto)
   }, [])
 
+  // Misma barrera del lado del servidor que cambiarEstado: RLS solo deja
+  // actualizar la fila al admin, acá no se repite el chequeo de rol.
+  const cambiarCuentaTransferencia = useCallback(async (nuevaCuenta) => {
+    const { error } = await supabase
+      .from('estado_negocio')
+      .update({ cuenta_transferencia: nuevaCuenta })
+      .eq('id', 1)
+    if (error) throw error
+    setCuentaTransferencia(nuevaCuenta)
+  }, [])
+
   const value = useMemo(
-    () => ({ abierto, cargando, cambiarEstado }),
-    [abierto, cargando, cambiarEstado],
+    () => ({ abierto, cuentaTransferencia, cargando, cambiarEstado, cambiarCuentaTransferencia }),
+    [abierto, cuentaTransferencia, cargando, cambiarEstado, cambiarCuentaTransferencia],
   )
 
   return <EstadoNegocioContext.Provider value={value}>{children}</EstadoNegocioContext.Provider>

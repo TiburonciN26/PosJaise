@@ -8,15 +8,16 @@ export function tipoDeImagenValido(archivo) {
   return TIPOS_ACEPTADOS.includes(archivo.type)
 }
 
-// Redimensiona (tope 600x600 manteniendo proporción, sin agrandar) y
+// Redimensiona (tope configurable, manteniendo proporción, sin agrandar) y
 // recomprime a WebP en el navegador vía <canvas> — no hace falta ninguna
 // librería de procesamiento de imágenes (sharp, etc. son de Node, no
-// corren en el cliente). Genérico: lo usan tanto fotos de producto como
-// de perfil de usuario, mismas reglas para las dos.
-export async function procesarImagen(archivo) {
+// corren en el cliente). Genérico: lo usan fotos de producto, perfil de
+// usuario/cliente y servicio, cada una con su propio tope de tamaño (ver
+// llamadas) — 600px/0.8 sigue siendo el default para las que no lo pasan.
+export async function procesarImagen(archivo, { ladoMaximo = LADO_MAXIMO, calidad = CALIDAD_WEBP } = {}) {
   const bitmap = await createImageBitmap(archivo)
 
-  const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height))
+  const escala = Math.min(1, ladoMaximo / Math.max(bitmap.width, bitmap.height))
   const ancho = Math.round(bitmap.width * escala)
   const alto = Math.round(bitmap.height * escala)
 
@@ -27,17 +28,13 @@ export async function procesarImagen(archivo) {
   contexto.drawImage(bitmap, 0, 0, ancho, alto)
   bitmap.close?.()
 
-  const blobWebp = await new Promise((resolve) =>
-    canvas.toBlob(resolve, 'image/webp', CALIDAD_WEBP),
-  )
+  const blobWebp = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', calidad))
 
   // Algún navegador viejo puede no soportar codificar WebP en canvas
   // (toBlob resuelve null) — en ese caso caemos a JPEG en vez de fallar.
   if (blobWebp) return { blob: blobWebp, extension: 'webp' }
 
-  const blobJpeg = await new Promise((resolve) =>
-    canvas.toBlob(resolve, 'image/jpeg', CALIDAD_WEBP),
-  )
+  const blobJpeg = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', calidad))
   return { blob: blobJpeg, extension: 'jpg' }
 }
 

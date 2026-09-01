@@ -34,7 +34,7 @@ export default defineConfig(({ command }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         },
         manifest: {
-          name: 'Pos Jaise',
+          name: 'Pos Jaise Beauty Academy',
           short_name: 'Pos Jaise',
           description: 'Sistema de punto de venta para el negocio.',
           lang: 'es',

@@ -322,7 +322,10 @@ export default function Auditoria({ activo = true }) {
   const grupos = agruparPorDia(entradasFiltradas)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Buscador + orden + filtros de fecha: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 space-y-3 bg-bg px-3 py-2">
         <div className="flex items-center gap-2">

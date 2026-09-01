@@ -1,11 +1,13 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { X, ShoppingCart, Check, User, Camera, Mic, Percent } from 'lucide-react'
+import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useReconocimientoVoz } from '../hooks/useReconocimientoVoz.js'
 import { useCarrito } from '../context/CarritoContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
@@ -64,6 +66,19 @@ const metodosPago = [
 // ese valor (no lo suma), para el caso típico: el cliente paga con un
 // solo billete y no hay que hacer la cuenta a mano.
 const MONTOS_RAPIDOS_EFECTIVO = [10, 20, 50, 100]
+
+// Comisión de Culqi (POS físico): 3.44% + IGV sobre el % (~4.0592% neto), o
+// un mínimo de S/ 3.50 + IGV (S/ 4.13) si el % no llega a cubrirlo. Se
+// calcula el monto inverso para que, después de la comisión, al negocio le
+// quede exactamente el total de la venta — nunca asume la comisión del banco.
+const TASA_COMISION_TARJETA = 0.040592
+const COMISION_MINIMA_TARJETA = 4.13
+
+function calcularMontoPosTarjeta(total) {
+  const montoPorcentaje = total / (1 - TASA_COMISION_TARJETA)
+  const montoFijo = total + COMISION_MINIMA_TARJETA
+  return redondear2(Math.max(montoPorcentaje, montoFijo))
+}
 
 function useContadorAnimado(valorObjetivo, duracionMs = 350) {
   const [valorMostrado, setValorMostrado] = useState(valorObjetivo)
@@ -261,6 +276,9 @@ function FilaTicket({
 
 export default function Ventas({ activo = true }) {
   const { mostrarToast } = useToast()
+  const { rol } = useAuth()
+  const esAdmin = rol === 'ADMINISTRADOR'
+  const { cuentaTransferencia, cambiarCuentaTransferencia } = useEstadoNegocio()
   const {
     carrito,
     setCarrito,
@@ -268,6 +286,8 @@ export default function Ventas({ activo = true }) {
     setMetodoPago,
     montoRecibido,
     setMontoRecibido,
+    montoPosTarjeta,
+    setMontoPosTarjeta,
     cliente,
     setCliente,
     tipoDescuento,
@@ -288,6 +308,30 @@ export default function Ventas({ activo = true }) {
   const [esTactil] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
   )
+  // La cuenta de transferencia es un dato del negocio (fila singleton en
+  // Supabase, no del carrito) — visible para cualquiera, pero editable
+  // solo por el admin. "borrador" es lo que se ve/edita en el input;
+  // se resetea al valor guardado cada vez que este cambia (otro admin lo
+  // actualizó, o llegó por Realtime), y solo se sobrescribe en el server
+  // al bloquear (mismo patrón que el % de comisión en Porcentajes.jsx).
+  const [cuentaTransferenciaBloqueada, setCuentaTransferenciaBloqueada] = useState(true)
+  const [borradorCuentaTransferencia, setBorradorCuentaTransferencia] = useState(cuentaTransferencia)
+  useEffect(() => {
+    setBorradorCuentaTransferencia(cuentaTransferencia)
+    setCuentaTransferenciaBloqueada(true)
+  }, [cuentaTransferencia])
+
+  async function confirmarYBloquearCuentaTransferencia() {
+    setCuentaTransferenciaBloqueada(true)
+    if (borradorCuentaTransferencia === cuentaTransferencia) return
+    try {
+      await cambiarCuentaTransferencia(borradorCuentaTransferencia)
+    } catch {
+      setBorradorCuentaTransferencia(cuentaTransferencia)
+      mostrarToast('No se pudo guardar la cuenta de transferencia.', 'error')
+    }
+  }
+
   const [filaFlash, setFilaFlash] = useState(null)
   const [idsSaliendo, setIdsSaliendo] = useState(() => new Set())
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false)
@@ -399,13 +443,19 @@ export default function Ventas({ activo = true }) {
   }
 
   // Las atenciones pendientes (registradas en Mi Panel o al completar una
-  // cita, todavía sin cobrar) se piden recién al abrir el buscador, no en
-  // cargarCatalogo(): a diferencia de productos/clientes, esta lista cambia
-  // seguido (cualquier asistente puede registrar/vender una en cualquier
-  // momento) y no vale la pena mantenerla sincronizada en segundo plano.
-  async function abrirBuscadorAtenciones() {
-    setModalAtencionesAbierto(true)
-    setCargandoAtenciones(true)
+  // cita, todavía sin cobrar) — a diferencia de productos/clientes, esta
+  // lista cambia seguido (cualquier asistente puede registrar/vender una en
+  // cualquier momento) así que no se refresca sola en segundo plano, solo
+  // en los momentos en que de verdad puede haber cambiado: al entrar a la
+  // pestaña, al abrir el buscador, después de cobrar, y al sacar del
+  // carrito una que se había agregado (vuelve a estar disponible).
+  // carritoActual es opcional (por defecto el carrito del render actual) —
+  // hace falta pasarlo explícito cuando se llama justo después de un
+  // setCarrito(...), porque la variable "carrito" de este closure todavía
+  // tiene el valor VIEJO hasta el próximo render (setCarrito no la muta al
+  // toque), así que sin esto se filtraba con la lista de antes de sacar/
+  // vaciar el carrito y el aviso no volvía a aparecer.
+  async function cargarAtencionesDisponibles(carritoActual = carrito) {
     const { data, error } = await supabase
       .from('registro_servicios')
       .select('id, servicio_id, cliente_id, precio, fecha, servicios(nombre), clientes(nombre)')
@@ -413,22 +463,29 @@ export default function Ventas({ activo = true }) {
       .is('venta_id', null)
       .order('fecha')
 
-    setCargandoAtenciones(false)
-
-    if (error) {
-      mostrarToast('No se pudieron cargar las atenciones pendientes.', 'error')
-      return
-    }
+    if (error) return false
 
     // El servidor solo sabe qué atenciones ya se VENDIERON (venta_id
     // puesto al confirmar) — una que ya está en el carrito de este ticket,
     // pero todavía sin confirmar, sigue viniendo como "disponible" en la
     // consulta. Se descarta acá para no poder agregarla dos veces al mismo
-    // ticket antes de cobrar.
+    // ticket antes de cobrar (y para que el avisito del botón se apague
+    // apenas ya no quede ninguna suelta).
     const idsEnCarrito = new Set(
-      carrito.filter((item) => item.tipo === 'SERVICIO').map((item) => item.registroServicioId),
+      carritoActual.filter((item) => item.tipo === 'SERVICIO').map((item) => item.registroServicioId),
     )
     setAtencionesDisponibles((data ?? []).filter((atencion) => !idsEnCarrito.has(atencion.id)))
+    return true
+  }
+
+  async function abrirBuscadorAtenciones() {
+    setModalAtencionesAbierto(true)
+    setCargandoAtenciones(true)
+    const huboError = !(await cargarAtencionesDisponibles())
+    setCargandoAtenciones(false)
+    if (huboError) {
+      mostrarToast('No se pudieron cargar las atenciones pendientes.', 'error')
+    }
   }
 
   useEffect(() => {
@@ -440,6 +497,12 @@ export default function Ventas({ activo = true }) {
     return () => {
       vigente.actual = false
     }
+  }, [activo])
+
+  useEffect(() => {
+    if (!activo) return
+    cargarAtencionesDisponibles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activo])
 
   // Si el escáner de cámara quedó abierto y el usuario cambia de pestaña
@@ -469,6 +532,8 @@ export default function Ventas({ activo = true }) {
   const totalMostrado = useContadorAnimado(total)
   const recibidoNumerico = parseFloat(montoRecibido) || 0
   const vuelto = redondear2(recibidoNumerico - total)
+  const montoPosTarjetaSugerido = calcularMontoPosTarjeta(total)
+  const montoPosTarjetaNumerico = parseFloat(montoPosTarjeta) || 0
 
   // "Exacto" fija Recibido al total del momento — si después el total
   // cambia (cambiar de % a monto fijo reinterpreta el mismo número
@@ -485,6 +550,22 @@ export default function Ventas({ activo = true }) {
     }
     totalAnteriorRef.current = total
   }, [total])
+
+  // Mismo patrón que "Exacto" arriba: el monto a digitar en POS se
+  // precalcula con la fórmula de Culqi, pero es editable a mano (el cajero
+  // puede ajustarlo). Si el total cambia mientras el campo seguía calzando
+  // con el último sugerido, se actualiza junto con él; si el cajero ya lo
+  // editó a otro valor, no se toca.
+  const sugeridoAnteriorRef = useRef(montoPosTarjetaSugerido)
+  useEffect(() => {
+    if (
+      montoPosTarjeta === String(sugeridoAnteriorRef.current) &&
+      montoPosTarjetaSugerido !== sugeridoAnteriorRef.current
+    ) {
+      setMontoPosTarjeta(String(montoPosTarjetaSugerido))
+    }
+    sugeridoAnteriorRef.current = montoPosTarjetaSugerido
+  }, [montoPosTarjetaSugerido])
 
   function alternarTipoDescuento() {
     setTipoDescuento((anterior) => (anterior === 'porcentaje' ? 'monto' : 'porcentaje'))
@@ -503,6 +584,9 @@ export default function Ventas({ activo = true }) {
     setMetodoPago(nombre)
     if (nombre === 'Efectivo' && !montoRecibido) {
       setMontoRecibido(String(total))
+    }
+    if (nombre === 'Tarjeta' && !montoPosTarjeta) {
+      setMontoPosTarjeta(String(montoPosTarjetaSugerido))
     }
   }
 
@@ -548,6 +632,10 @@ export default function Ventas({ activo = true }) {
     (item) => item.tipo === 'PRODUCTO' && item.cantidad > obtenerStockProducto(item.productoId),
   )
   const hayServicioEnCarrito = carrito.some((item) => item.tipo === 'SERVICIO')
+  // atencionesDisponibles ya excluye lo que está en el carrito (ver
+  // cargarAtencionesDisponibles) — el avisito del botón es solo mirar si
+  // queda algo suelto.
+  const hayAtencionesPendientes = atencionesDisponibles.length > 0
 
   const puedeCobrar =
     carrito.length > 0 &&
@@ -607,6 +695,10 @@ export default function Ventas({ activo = true }) {
         clienteNombre: atencion.clientes?.nombre ?? null,
         cantidad: 1,
         precioUnitario: atencion.precio,
+        // Se guarda el objeto tal cual vino del buscador — si se saca del
+        // carrito, vuelve a "atenciones a cobrar" al instante con este
+        // mismo objeto, sin esperar una ida y vuelta al servidor.
+        atencionOriginal: atencion,
       },
     ])
     // La clienta de la venta se autocompleta con la de la PRIMERA atención
@@ -642,9 +734,36 @@ export default function Ventas({ activo = true }) {
   }
 
   function quitarItem(id) {
+    const item = carrito.find((i) => i.id === id)
+
+    // Restaurada al toque, sin ida al servidor — ya se tiene el objeto
+    // completo guardado desde que se agregó (atencionOriginal), así el
+    // avisito del botón no tiene que esperar una consulta de red.
+    if (item?.tipo === 'SERVICIO' && item.atencionOriginal) {
+      setAtencionesDisponibles((anterior) =>
+        [...anterior, item.atencionOriginal].sort(
+          (a, b) => new Date(a.fecha) - new Date(b.fecha),
+        ),
+      )
+    }
+
     setIdsSaliendo((anterior) => new Set(anterior).add(id))
     conTemporizador(() => {
-      setCarrito((anterior) => anterior.filter((item) => item.id !== id))
+      setCarrito((anterior) => {
+        const siguiente = anterior.filter((i) => i.id !== id)
+        // Si el cliente actual venía de esta atención (autocompletado al
+        // agregarla) y ya no queda ningún otro item suyo en el carrito, se
+        // limpia también — no tiene sentido dejarlo puesto para una venta
+        // que ya no tiene nada de esa clienta.
+        if (
+          item?.clienteNombre &&
+          cliente?.nombre === item.clienteNombre &&
+          !siguiente.some((i) => i.clienteNombre === item.clienteNombre)
+        ) {
+          setCliente(null)
+        }
+        return siguiente
+      })
       setIdsSaliendo((anterior) => {
         const siguiente = new Set(anterior)
         siguiente.delete(id)
@@ -664,6 +783,7 @@ export default function Ventas({ activo = true }) {
     conTemporizador(() => {
       setCarrito([])
       setMontoRecibido('')
+      setMontoPosTarjeta('')
       setMetodoPago(null)
       setCliente(null)
       setValorDescuento('')
@@ -693,6 +813,7 @@ export default function Ventas({ activo = true }) {
       p_cliente_id: cliente?.id ?? null,
       p_descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
       p_descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
+      p_monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
     })
 
     setCobrando(false)
@@ -722,6 +843,7 @@ export default function Ventas({ activo = true }) {
         descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
         metodo_pago: metodoPago,
         monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
+        monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
         clientes: cliente ? { nombre: cliente.nombre } : null,
       },
       items: (venta.items ?? []).map((item, indice) => ({ id: indice, ...item })),
@@ -729,11 +851,13 @@ export default function Ventas({ activo = true }) {
 
     setCarrito([])
     setMontoRecibido('')
+    setMontoPosTarjeta('')
     setValorDescuento('')
     setTipoDescuento('porcentaje')
     setMetodoPago(null)
     setCliente(null)
     cargarCatalogo()
+    cargarAtencionesDisponibles([])
   }
 
   function seleccionarSugerencia(producto) {
@@ -881,7 +1005,7 @@ export default function Ventas({ activo = true }) {
         </div>
 
         <CampoColapsable abierto={!carritoExpandido} margen>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pt-1.5">
             <div
               className={`flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors ${
                 cliente
@@ -914,12 +1038,15 @@ export default function Ventas({ activo = true }) {
             <button
               type="button"
               onClick={abrirBuscadorAtenciones}
-              className={`shrink-0 whitespace-nowrap rounded-lg border border-dashed px-2 py-1.5 text-xs transition-colors ${
+              className={`relative shrink-0 whitespace-nowrap rounded-lg border border-dashed px-2 py-1.5 text-xs transition-colors ${
                 hayServicioEnCarrito
                   ? 'border-blue/50 text-blue hover:bg-blue/10'
                   : 'border-border-strong text-ink/70 hover:border-blue/50 hover:text-blue'
               }`}
             >
+              {hayAtencionesPendientes && (
+                <span className="absolute -left-1 -top-1 z-10 h-2 w-2 rounded-full bg-blue" />
+              )}
               + Agregar servicio
             </button>
 
@@ -1087,7 +1214,11 @@ export default function Ventas({ activo = true }) {
                     }`}
                   >
                     <span className="flex items-center justify-center gap-1">
-                      <img src={metodo.icono} alt="" className="h-4 w-4 shrink-0" />
+                      {metodo.nombre === 'Tarjeta' ? (
+                        <span className="shrink-0 text-sm leading-none">💳</span>
+                      ) : (
+                        <img src={metodo.icono} alt="" className="h-4 w-4 shrink-0" />
+                      )}
                       <span className="sm:hidden">{metodo.nombreCorto}</span>
                       <span className="hidden sm:inline">{metodo.nombre}</span>
                     </span>
@@ -1136,6 +1267,75 @@ export default function Ventas({ activo = true }) {
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            </CampoColapsable>
+
+            <CampoColapsable abierto={metodoPago === 'Tarjeta'} margen>
+              <div>
+                <label className="mb-1 block text-xs text-ink">💳 Digitar en POS</label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="search"
+                    inputMode="decimal"
+                    autoComplete="new-password"
+                    value={montoPosTarjeta}
+                    onChange={(evento) => setMontoPosTarjeta(evento.target.value)}
+                    placeholder="0.00"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMontoPosTarjeta(String(montoPosTarjetaSugerido))}
+                    className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
+                      montoPosTarjeta === String(montoPosTarjetaSugerido)
+                        ? 'border-green bg-green/10 text-green'
+                        : 'border-border-strong text-ink/70 hover:border-amber hover:text-amber'
+                    }`}
+                  >
+                    Sugerido
+                  </button>
+                </div>
+              </div>
+            </CampoColapsable>
+
+            <CampoColapsable abierto={metodoPago === 'Transferencia'} margen>
+              <div>
+                <label className="mb-1 block text-xs text-ink">Cuenta para transferencias</label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="search"
+                    autoComplete="new-password"
+                    value={borradorCuentaTransferencia}
+                    disabled={!esAdmin || cuentaTransferenciaBloqueada}
+                    onChange={(evento) => setBorradorCuentaTransferencia(evento.target.value)}
+                    onBlur={() => {
+                      if (!cuentaTransferenciaBloqueada) confirmarYBloquearCuentaTransferencia()
+                    }}
+                    onKeyDown={(evento) => {
+                      if (evento.key === 'Enter') evento.target.blur()
+                    }}
+                    placeholder="N.° de cuenta / CCI"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber disabled:text-ink/60"
+                  />
+                  {esAdmin && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        cuentaTransferenciaBloqueada
+                          ? setCuentaTransferenciaBloqueada(false)
+                          : confirmarYBloquearCuentaTransferencia()
+                      }
+                      aria-label={cuentaTransferenciaBloqueada ? 'Desbloquear' : 'Bloquear y guardar'}
+                      className="shrink-0 p-2 text-ink/60 transition-colors hover:text-amber"
+                    >
+                      {cuentaTransferenciaBloqueada ? (
+                        <Lock className="h-4 w-4" />
+                      ) : (
+                        <Unlock className="h-4 w-4 text-amber" />
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </CampoColapsable>

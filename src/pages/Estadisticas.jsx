@@ -320,7 +320,10 @@ export default function Estadisticas({ activo = true }) {
   const totalMetodos = sumarMontos(metodosPago, (m) => m.monto)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
       <FiltrosFecha
         filtro={filtro}

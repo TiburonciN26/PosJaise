@@ -4,6 +4,10 @@ import { useAuth } from './context/AuthContext.jsx'
 import RutaProtegida from './components/RutaProtegida.jsx'
 import Layout from './components/Layout.jsx'
 import PestanasCacheadas from './components/PestanasCacheadas.jsx'
+import PortalCliente from './pages/PortalCliente.jsx'
+import InicioCliente from './pages/cliente/InicioCliente.jsx'
+import MiPerfil from './pages/cliente/MiPerfil.jsx'
+import ServiciosCliente from './pages/cliente/ServiciosCliente.jsx'
 
 // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
 // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
@@ -18,7 +22,7 @@ function CargandoPantalla() {
 }
 
 function App() {
-  const { cargando, session, usuario, errorPerfil, reintentarPerfil } = useAuth()
+  const { cargando, session, usuario, rol, errorPerfil, reintentarPerfil } = useAuth()
 
   if (cargando) {
     return <CargandoPantalla />
@@ -58,13 +62,25 @@ function App() {
         />
 
         <Route element={<RutaProtegida />}>
-          <Route element={<Layout />}>
-            <Route index element={<Navigate to="/ventas" replace />} />
-            {/* Un solo comodín: así el router nunca desmonta PestanasCacheadas
-                al cambiar de pestaña; ella decide sola qué mostrar/ocultar y
-                aplica el guard de rol (antes hecho por RutaAdmin). */}
-            <Route path="*" element={<PestanasCacheadas />} />
-          </Route>
+          {rol === 'CLIENTE' ? (
+            // Un cliente de la pestaña Web nunca monta Layout/MenuLateral
+            // (eso es del POS, solo para personal) — su único árbol es este.
+            <Route element={<PortalCliente />}>
+              <Route index element={<Navigate to="/inicio" replace />} />
+              <Route path="inicio" element={<InicioCliente />} />
+              <Route path="mi-perfil" element={<MiPerfil />} />
+              <Route path="servicios" element={<ServiciosCliente />} />
+              <Route path="*" element={<Navigate to="/inicio" replace />} />
+            </Route>
+          ) : (
+            <Route element={<Layout />}>
+              <Route index element={<Navigate to="/ventas" replace />} />
+              {/* Un solo comodín: así el router nunca desmonta PestanasCacheadas
+                  al cambiar de pestaña; ella decide sola qué mostrar/ocultar y
+                  aplica el guard de rol (antes hecho por RutaAdmin). */}
+              <Route path="*" element={<PestanasCacheadas />} />
+            </Route>
+          )}
         </Route>
       </Routes>
     </BrowserRouter>

@@ -64,6 +64,10 @@
   --animate-brillo-borde-tarjeta: brillo-borde-tarjeta 8.5s linear infinite;
   /* Flechita verde: sube y se desvanece, con pausa antes de repetir */
   --animate-elevar-flecha: elevar-flecha 3s ease-out infinite;
+  /* Ícono de la pestaña "Web... Próximamente": martillazo en bucle */
+  --animate-martillar: martillar 1.3s ease-in-out infinite;
+  /* Chispas del martillazo — misma duración, cada una con su propio --dx/--dy */
+  --animate-chispa-martillo: chispa-martillo 1.3s ease-out infinite;
 }
 
 /*
@@ -202,6 +206,49 @@
   }
 }
 
+/* Martillo de la pestaña "Web... Próximamente": cocked-back con pausa
+   (anticipación), golpe rápido, rebote breve y vuelta a cocked-back. El
+   pivote va en el JSX (transform-origin cerca del mango) para que gire
+   como si golpeara en vez de rotar sobre el centro del ícono. */
+@keyframes martillar {
+  0%, 30% {
+    transform: rotate(-28deg);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: rotate(14deg);
+    animation-timing-function: ease-out;
+  }
+  62% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(-28deg);
+  }
+}
+
+/* Chispas: invisibles casi todo el ciclo, aparecen justo en el golpe (50%,
+   sincronizado con martillar) y salen disparadas hacia --dx/--dy antes de
+   desvanecerse. --dx/--dy son fijos por chispa (ver IconoMartillo.jsx), no
+   se animan en sí — solo el transform que los usa. */
+@keyframes chispa-martillo {
+  0%, 48% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  52% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* C3+A3 (useModalA11y.js): estas dos clases se agregan vía classList.add
    en JS, no aparecen como className literal en ningún JSX — por eso van
    como CSS a mano en vez de pasar por @theme --animate-x (Tailwind
@@ -279,6 +326,8 @@
   .animate-brillo-texto,
   .animate-brillo-tarjeta,
   .animate-elevar-flecha,
+  .animate-martillar,
+  .animate-chispa-martillo,
   .animate-entrada-modal,
   .animate-entrada-overlay,
   .animate-entrada-dropdown,
@@ -594,6 +643,313 @@ input[type='search']::-webkit-search-cancel-button,
 input[type='search']::-webkit-search-decoration {
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Catálogo de servicios de la Web (ServiciosCliente.jsx) — tarjeta
+   "iridiscente" replicada de headerYServicios.html (código de
+   referencia del cliente). Paleta dorado/rosa escopeada bajo
+   .catalogo-iridiscente para no filtrar estas variables genéricas
+   (--gold-1, --pink-1...) al resto del POS. --mx/--my/--iri-shift los
+   pone el mousemove de ServiciosCliente.jsx directo por JS (variables
+   CSS en el propio elemento, sin pasar por React state — el mismo
+   truco de la referencia, para no re-renderizar en cada movimiento).
+   ═══════════════════════════════════════════════════════ */
+.catalogo-iridiscente {
+  --gold-1: #ffd700;
+  --gold-2: #e6b422;
+  --pink-1: #ff4d6d;
+  --pink-2: #ff85a1;
+}
+
+/* Nombre "Jaise" del header de la Web (PortalCliente.jsx) — mismo truco
+   que .iri-price-num: degradado recortado al texto. Clase de CSS (no
+   estilo inline con ternario de useTheme) por el mismo motivo que el
+   resto del tema: la variante clara se resuelve sola vía el selector de
+   atributo, sin lógica en JS ni re-render al cambiar de tema. En claro
+   el header es blanco, así que el "blanco" del medio (que se pierde ahí)
+   pasa a un tono oscuro — mismo espíritu del degradado, legible en los
+   dos fondos. */
+.nombre-marca-web {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #ffd700 0%, #fff 50%, #ff85a1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+:root[data-tema='claro'] .nombre-marca-web {
+  background: linear-gradient(135deg, #b8860b 0%, #1a1a1a 50%, #e0507a 100%);
+}
+
+.iri-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  perspective: 900px;
+}
+.iri-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--color-surface-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transform: perspective(900px) rotateX(0) rotateY(0) scale(1);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+  isolation: isolate;
+}
+.iri-card.is-hover {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+  box-shadow:
+    0 16px 48px rgba(255, 215, 0, 0.35),
+    0 8px 24px rgba(255, 77, 109, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 2px var(--gold-1) inset;
+}
+
+.iri-img {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.iri-img-real {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.iri-img-grad {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+}
+.iri-img-vacia {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface-3));
+  color: color-mix(in oklab, var(--gold-1) 55%, var(--color-ink));
+}
+
+.iri-iridescent {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  mix-blend-mode: color-dodge;
+  background:
+    radial-gradient(
+      circle at var(--mx) var(--my),
+      hsla(calc(330 + var(--iri-shift)), 95%, 70%, 0.5) 0%,
+      hsla(calc(45 + var(--iri-shift)), 95%, 65%, 0.35) 25%,
+      hsla(calc(280 + var(--iri-shift)), 80%, 60%, 0.25) 45%,
+      transparent 70%
+    ),
+    conic-gradient(
+      from calc(var(--iri-shift) * 1deg) at var(--mx) var(--my),
+      hsla(340, 100%, 70%, 0.18),
+      hsla(45, 100%, 65%, 0.22),
+      hsla(0, 100%, 70%, 0.18),
+      hsla(320, 100%, 70%, 0.22),
+      hsla(45, 100%, 65%, 0.18)
+    );
+}
+.iri-card.is-hover .iri-iridescent {
+  opacity: 1;
+}
+
+.iri-specular {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  mix-blend-mode: overlay;
+  background: radial-gradient(
+    circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.15) 12%,
+    transparent 35%
+  );
+}
+.iri-card.is-hover .iri-specular {
+  opacity: 1;
+}
+
+.iri-border {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: linear-gradient(
+    135deg,
+    #fff5b8 0%,
+    var(--gold-1) 25%,
+    var(--pink-2) 50%,
+    var(--gold-1) 75%,
+    #fff5b8 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
+}
+.iri-card.is-hover .iri-border {
+  opacity: 1;
+}
+
+.iri-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255, 215, 0, 0.65) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 70%, rgba(255, 77, 109, 0.5) 0%, transparent 60%);
+  filter: blur(14px);
+}
+.iri-card.is-hover .iri-glow {
+  opacity: 1;
+}
+
+.iri-heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+  z-index: 5;
+}
+.iri-heart:hover {
+  background: rgba(0, 0, 0, 0.65);
+  transform: scale(1.1);
+}
+.iri-heart.on {
+  background: rgba(0, 0, 0, 0.65);
+}
+.iri-heart.on:hover {
+  transform: scale(1.15);
+}
+.iri-heart svg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.92);
+}
+.iri-heart.on svg {
+  fill: #ff2d55;
+  stroke: #ff2d55;
+}
+
+.iri-share {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s, background 0.2s, transform 0.15s;
+  z-index: 5;
+}
+.iri-card.is-hover .iri-share {
+  opacity: 1;
+}
+.iri-share:hover {
+  background: #25d366;
+  transform: scale(1.1);
+}
+
+.iri-price {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 4px 8px;
+  line-height: 1;
+  z-index: 4;
+}
+.iri-price-from {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.05em;
+}
+.iri-price-num {
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-1), var(--pink-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.iri-name {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--color-ink);
+  letter-spacing: -0.005em;
+}
+.iri-meta {
+  font-size: 11px;
+  color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+  margin-top: 3px;
+}
+@media (min-width: 720px) {
+  .iri-name {
+    font-size: 14px;
+  }
+  .iri-meta {
+    font-size: 12px;
+  }
 }
 
 /* Impresión de tickets: el ticket se monta vía portal directo en

@@ -4,14 +4,21 @@ import {
   Trash2,
   Plus,
   Phone,
-  IdCard,
   Cake,
+  Mail,
+  MapPin,
   StickyNote,
   MessageCircle,
   ArrowBigDown,
   Users,
+  Globe,
+  Lock,
+  Venus,
+  Mars,
+  Filter,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { urlPublicaFoto } from '../lib/imagenes.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -26,7 +33,10 @@ import ModalCliente from '../components/ModalCliente.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 
-const CAMPOS_OPCIONALES = ['telefono', 'dni', 'cumpleanos', 'notas']
+// Datos que suman a la barra de "datos completos": ocasionales como notas
+// no cuentan (casi nadie los llena y no dice nada de qué tan bien se conoce
+// al cliente); dirección sí, porque hace falta para delivery a futuro.
+const CAMPOS_OPCIONALES = ['telefono', 'cumpleanos', 'direccion']
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -35,8 +45,16 @@ const OPCIONES_ORDEN = [
   { id: 'completitud-desc', label: 'Datos completos (mayor a menor)' },
 ]
 
+const OPCIONES_SEXO = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'Femenino', label: 'Femenino' },
+  { id: 'Masculino', label: 'Masculino' },
+]
+
 const TAMANO_PAGINA = 50
-const SELECT_CLIENTES = 'id, nombre, telefono, dni, cumpleanos, notas'
+const BUCKET_FOTOS_CLIENTES = 'fotos-clientes'
+const SELECT_CLIENTES =
+  'id, nombre, telefono, sexo, direccion, cumpleanos, notas, foto_url, cliente_web_id, clientes_web(email)'
 
 // "Datos completos" no se puede pedir ordenado al servidor (no es una
 // columna, se calcula acá) — se sigue reordenando en el cliente sobre lo que
@@ -63,8 +81,13 @@ function aplicarFiltroBusqueda(consulta, busqueda) {
   return termino ? consulta.or(`nombre.ilike.%${termino}%,telefono.ilike.%${termino}%`) : consulta
 }
 
-function construirConsultaClientes({ busqueda, orden }) {
-  const consulta = aplicarFiltroBusqueda(supabase.from('clientes').select(SELECT_CLIENTES), busqueda)
+function aplicarFiltroSexo(consulta, sexo) {
+  return sexo === 'todos' ? consulta : consulta.eq('sexo', sexo)
+}
+
+function construirConsultaClientes({ busqueda, orden, sexo }) {
+  let consulta = aplicarFiltroBusqueda(supabase.from('clientes').select(SELECT_CLIENTES), busqueda)
+  consulta = aplicarFiltroSexo(consulta, sexo)
   return consulta.order('nombre', { ascending: orden !== 'nombre-desc' })
 }
 
@@ -89,9 +112,34 @@ function iniciales(nombre) {
   )
 }
 
+// Solo los clientes que se registraron por la Web tienen foto (la suben
+// ellos desde Mi Perfil, ver 63_mi_perfil_cliente.sql) — un manual
+// siempre cae al círculo de iniciales de siempre. Estado de error propio
+// por tarjeta (no uno global): si la foto de un cliente no carga, no debe
+// tumbar la de los demás.
+function AvatarCliente({ cliente }) {
+  const [errorFoto, setErrorFoto] = useState(false)
+  const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS_CLIENTES, cliente.foto_url) : null
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300">
+      {urlFoto ? (
+        <img
+          src={urlFoto}
+          alt=""
+          onError={() => setErrorFoto(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        iniciales(cliente.nombre)
+      )}
+    </div>
+  )
+}
+
 function completitud(cliente) {
   const llenos = CAMPOS_OPCIONALES.filter((campo) => cliente[campo]).length
-  return llenos * 25
+  return Math.round((llenos / CAMPOS_OPCIONALES.length) * 100)
 }
 
 function coloresCompletitud(porcentaje) {
@@ -136,6 +184,7 @@ export default function Clientes({ activo = true }) {
   const [busqueda, setBusqueda] = useState('')
   const busquedaDebounced = useDebounce(busqueda, 300)
   const [orden, setOrden] = useState('nombre-asc')
+  const [filtroSexo, setFiltroSexo] = useState('todos')
   const [modalCliente, setModalCliente] = useState(null) // null | 'nuevo' | cliente
   const [clienteAEliminar, setClienteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
@@ -152,13 +201,16 @@ export default function Clientes({ activo = true }) {
 
   async function cargarClientes(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
-    const filtros = { busqueda: busquedaDebounced, orden }
+    const filtros = { busqueda: busquedaDebounced, orden, sexo: filtroSexo }
 
     const [clientesRes, totalRes] = await Promise.all([
       construirConsultaClientes(filtros).range(0, TAMANO_PAGINA - 1),
-      aplicarFiltroBusqueda(
-        supabase.from('clientes').select('id', { count: 'exact', head: true }),
-        busquedaDebounced,
+      aplicarFiltroSexo(
+        aplicarFiltroBusqueda(
+          supabase.from('clientes').select('id', { count: 'exact', head: true }),
+          busquedaDebounced,
+        ),
+        filtroSexo,
       ),
     ])
 
@@ -182,7 +234,7 @@ export default function Clientes({ activo = true }) {
     if (cargandoMas || !hayMas) return
     const vigente = vigenteRef.current
     setCargandoMas(true)
-    const filtros = { busqueda: busquedaDebounced, orden }
+    const filtros = { busqueda: busquedaDebounced, orden, sexo: filtroSexo }
 
     const { data, error: errorMas } = await construirConsultaClientes(filtros).range(
       clientes.length,
@@ -211,7 +263,7 @@ export default function Clientes({ activo = true }) {
     return () => {
       vigente.actual = false
     }
-  }, [activo, busquedaDebounced, orden])
+  }, [activo, busquedaDebounced, orden, filtroSexo])
 
   function alternarAbierto(id) {
     setAbiertos((anterior) => {
@@ -245,7 +297,10 @@ export default function Clientes({ activo = true }) {
   const clientesOrdenados = ordenarClientes(clientes, orden)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -256,6 +311,15 @@ export default function Clientes({ activo = true }) {
         />
 
         <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
+
+        <SelectorOrden
+          opciones={OPCIONES_SEXO}
+          valor={filtroSexo}
+          onCambiar={setFiltroSexo}
+          tema="purple-300"
+          icono={Filter}
+          ariaLabel="Filtrar por sexo"
+        />
 
         <button
           type="button"
@@ -304,12 +368,16 @@ export default function Clientes({ activo = true }) {
                     aria-expanded={abierto}
                     className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300">
-                      {iniciales(cliente.nombre)}
+                    <AvatarCliente cliente={cliente} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-ink">{cliente.nombre}</p>
+                      {cliente.cliente_web_id && (
+                        <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber/15 px-1.5 py-0.5 text-[10px] font-medium text-amber">
+                          <Globe className="h-2.5 w-2.5" />
+                          Cliente Web
+                        </span>
+                      )}
                     </div>
-                    <p className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
-                      {cliente.nombre}
-                    </p>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1.5">
@@ -344,34 +412,51 @@ export default function Clientes({ activo = true }) {
                 <CampoColapsable abierto={abierto}>
                   <div className="flex items-start justify-between gap-3 border-t border-border p-3">
                     <div className="min-w-0 flex-1 space-y-2">
+                      <DatoCliente
+                        icono={cliente.sexo === 'Femenino' ? Venus : cliente.sexo === 'Masculino' ? Mars : Users}
+                      >
+                        {cliente.sexo || 'Sin registrar'}
+                      </DatoCliente>
                       <DatoCliente icono={Phone} mono>
                         {cliente.telefono || 'Sin registrar'}
                       </DatoCliente>
-                      <DatoCliente icono={IdCard} mono>
-                        {cliente.dni ? `DNI ${cliente.dni}` : 'Sin registrar'}
-                      </DatoCliente>
                       <DatoCliente icono={Cake} mono>
                         {formatearFecha(cliente.cumpleanos) || 'Sin registrar'}
+                      </DatoCliente>
+                      <DatoCliente icono={Mail} mono>
+                        {cliente.clientes_web?.email || 'Sin registrar'}
+                      </DatoCliente>
+                      <DatoCliente icono={MapPin}>
+                        {cliente.direccion || 'Sin registrar'}
                       </DatoCliente>
                       <DatoCliente icono={StickyNote}>
                         {cliente.notas || 'Sin registrar'}
                       </DatoCliente>
                     </div>
 
-                    <div className="flex shrink-0 gap-2">
-                      <BotonAccion
-                        icono={Pencil}
-                        texto="Editar"
-                        color="celeste"
-                        onClick={() => setModalCliente(cliente)}
-                      />
-                      <BotonAccion
-                        icono={Trash2}
-                        texto="Eliminar"
-                        color="rojo"
-                        onClick={() => setClienteAEliminar(cliente)}
-                      />
-                    </div>
+                    {cliente.cliente_web_id ? (
+                      <div className="flex shrink-0 items-center gap-1.5 text-xs text-ink/50">
+                        <Lock className="h-3.5 w-3.5 shrink-0" />
+                        <span className="max-w-[9rem]">
+                          Se registró por la Web — edita su perfil desde ahí.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex shrink-0 gap-2">
+                        <BotonAccion
+                          icono={Pencil}
+                          texto="Editar"
+                          color="celeste"
+                          onClick={() => setModalCliente(cliente)}
+                        />
+                        <BotonAccion
+                          icono={Trash2}
+                          texto="Eliminar"
+                          color="rojo"
+                          onClick={() => setClienteAEliminar(cliente)}
+                        />
+                      </div>
+                    )}
                   </div>
                 </CampoColapsable>
               </div>

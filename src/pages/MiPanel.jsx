@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   UserCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -108,12 +110,23 @@ export default function MiPanel({ activo = true }) {
 
   const [asistentesUsuarios, setAsistentesUsuarios] = useState([])
   const [usuarioFiltro, setUsuarioFiltro] = useState(OPCION_TODOS)
+  // El admin ve su propio panel por defecto (no "Todos") — solo una vez,
+  // apenas se conoce el usuario logeado; si después elige otra opción a
+  // mano (otro asistente, o "Todos"), esto no se lo vuelve a pisar.
+  const filtroUsuarioInicializado = useRef(false)
+  useEffect(() => {
+    if (usuario && !filtroUsuarioInicializado.current) {
+      filtroUsuarioInicializado.current = true
+      setUsuarioFiltro(usuario.id)
+    }
+  }, [usuario])
 
   const [modalRegistro, setModalRegistro] = useState(null) // null | 'nuevo' | registro
   const [registroAEliminar, setRegistroAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [registroACancelar, setRegistroACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
+  const [ocultarCancelados, setOcultarCancelados] = useState(true)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const [registrosAbiertos, setRegistrosAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
@@ -327,10 +340,17 @@ export default function MiPanel({ activo = true }) {
       })
     : registros
 
-  const grupos = agruparPorDia(registrosFiltrados)
+  const registrosVisibles = ocultarCancelados
+    ? registrosFiltrados.filter((r) => r.estado !== 'CANCELADO')
+    : registrosFiltrados
+
+  const grupos = agruparPorDia(registrosVisibles)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Buscador: fijo arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -366,8 +386,19 @@ export default function MiPanel({ activo = true }) {
             cargado — así sigue exacto aunque la lista de abajo esté paginada.
             Atenciones a la izquierda (a la altura de "N servicios" de cada
             día) y Total a la derecha (a la altura del monto de cada día). */}
-        <span className="text-ink/60">
+        <span className="flex items-center gap-1.5 text-ink/60">
           Atenciones: <span className="font-mono font-semibold text-ink">{resumen.cantidad}</span>
+          <button
+            type="button"
+            onClick={() => setOcultarCancelados((anterior) => !anterior)}
+            aria-label={ocultarCancelados ? 'Mostrar canceladas' : 'Ocultar canceladas'}
+            title={ocultarCancelados ? 'Mostrar canceladas' : 'Ocultar canceladas'}
+            className={`p-1 transition-colors ${
+              ocultarCancelados ? 'text-red' : 'text-ink/40 hover:text-purple-300'
+            }`}
+          >
+            {ocultarCancelados ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         </span>
 
         <div className="flex items-center gap-3">
@@ -530,59 +561,62 @@ export default function MiPanel({ activo = true }) {
                           <CampoColapsable abierto={registroAbierto}>
                             <div className="space-y-2 border-t border-border/60 px-2.5 pb-2.5 pt-2">
                               {!cancelado && (
-                                <>
-                                  <div className="flex flex-wrap items-center gap-3">
-                                    {esAdmin && tieneComision && (
-                                      <span className="rounded-full bg-green/15 px-2 py-0.5 font-mono text-xs font-semibold text-green">
-                                        Pago asistente: {formatearSoles(registro.pago_asistente)}
+                                <div className="flex flex-wrap items-center gap-3">
+                                  {esAdmin && tieneComision && (
+                                    <span className="rounded-full bg-green/15 px-2 py-0.5 font-mono text-xs font-semibold text-green">
+                                      Pago asistente: {formatearSoles(registro.pago_asistente)}
+                                    </span>
+                                  )}
+                                  {!esAdmin && !tieneComision && (
+                                    <span className="text-xs text-orange-400">
+                                      Sin comisión asignada
+                                    </span>
+                                  )}
+                                  {esAdmin &&
+                                    (tieneComision ? (
+                                      <span className="flex items-center gap-1 text-xs text-yellow-300">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        {registro.porcentaje_aplicado}%
                                       </span>
-                                    )}
-                                    {!esAdmin && !tieneComision && (
-                                      <span className="text-xs text-orange-400">
-                                        Sin comisión asignada
+                                    ) : (
+                                      <span className="flex items-center gap-1 text-xs text-orange-400">
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        Sin % asignado
                                       </span>
-                                    )}
-                                    {esAdmin &&
-                                      (tieneComision ? (
-                                        <span className="flex items-center gap-1 text-xs text-yellow-300">
-                                          <CheckCircle2 className="h-3.5 w-3.5" />
-                                          {registro.porcentaje_aplicado}%
-                                        </span>
-                                      ) : (
-                                        <span className="flex items-center gap-1 text-xs text-orange-400">
-                                          <AlertTriangle className="h-3.5 w-3.5" />
-                                          Sin % asignado
-                                        </span>
-                                      ))}
-                                  </div>
+                                    ))}
+                                </div>
+                              )}
 
-                                  <div className="flex flex-wrap items-center justify-center gap-1.5">
-                                    {esAdmin && (
-                                      <BotonAccion
-                                        icono={Pencil}
-                                        texto="Editar"
-                                        color="celeste"
-                                        onClick={() => setModalRegistro(registro)}
-                                      />
-                                    )}
-                                    {puedeCancelar && (
-                                      <BotonAccion
-                                        icono={Ban}
-                                        texto="Cancelar"
-                                        color="rojo"
-                                        onClick={() => setRegistroACancelar(registro)}
-                                      />
-                                    )}
-                                    {esAdmin && (
-                                      <BotonAccion
-                                        icono={Trash2}
-                                        texto="Eliminar"
-                                        color="rojo"
-                                        onClick={() => setRegistroAEliminar(registro)}
-                                      />
-                                    )}
-                                  </div>
-                                </>
+                              {/* Cancelada: solo Eliminar (admin) sigue disponible —
+                                  Editar/Cancelar no aplican a una atención ya cancelada. */}
+                              {((!cancelado && (esAdmin || puedeCancelar)) ||
+                                (cancelado && esAdmin)) && (
+                                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                  {!cancelado && esAdmin && (
+                                    <BotonAccion
+                                      icono={Pencil}
+                                      texto="Editar"
+                                      color="celeste"
+                                      onClick={() => setModalRegistro(registro)}
+                                    />
+                                  )}
+                                  {!cancelado && puedeCancelar && (
+                                    <BotonAccion
+                                      icono={Ban}
+                                      texto="Cancelar"
+                                      color="rojo"
+                                      onClick={() => setRegistroACancelar(registro)}
+                                    />
+                                  )}
+                                  {esAdmin && (
+                                    <BotonAccion
+                                      icono={Trash2}
+                                      texto="Eliminar"
+                                      color="rojo"
+                                      onClick={() => setRegistroAEliminar(registro)}
+                                    />
+                                  )}
+                                </div>
                               )}
 
                               {registro.nota && (

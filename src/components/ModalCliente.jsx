@@ -7,7 +7,8 @@ import Etiqueta from './Etiqueta.jsx'
 const formularioVacio = {
   nombre: '',
   telefono: '',
-  dni: '',
+  sexo: '',
+  direccion: '',
   cumpleanos: '',
   notas: '',
 }
@@ -16,7 +17,8 @@ function formularioDesdeCliente(cliente) {
   return {
     nombre: cliente.nombre ?? '',
     telefono: cliente.telefono ?? '',
-    dni: cliente.dni ?? '',
+    sexo: cliente.sexo ?? '',
+    direccion: cliente.direccion ?? '',
     cumpleanos: cliente.cumpleanos ?? '',
     notas: cliente.notas ?? '',
   }
@@ -62,7 +64,8 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
     const datos = {
       nombre: formulario.nombre.trim(),
       telefono: formulario.telefono.trim() || null,
-      dni: formulario.dni.trim() || null,
+      sexo: formulario.sexo || null,
+      direccion: formulario.direccion.trim() || null,
       cumpleanos: formulario.cumpleanos || null,
       notas: formulario.notas.trim() || null,
     }
@@ -74,7 +77,11 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
     setGuardando(false)
 
     if (errorGuardado) {
-      setError('No se pudo guardar el cliente. Intenta de nuevo.')
+      setError(
+        errorGuardado.code === '23505'
+          ? 'Ya existe un cliente con ese teléfono.'
+          : 'No se pudo guardar el cliente. Intenta de nuevo.',
+      )
       return
     }
 
@@ -87,6 +94,7 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
+        style={{ '--color-foco': 'var(--color-purple-300)' }}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -122,15 +130,29 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
           </div>
 
           <div>
-            <Etiqueta htmlFor={`${idBase}-dni`}>DNI</Etiqueta>
+            <Etiqueta htmlFor={`${idBase}-sexo`}>Sexo</Etiqueta>
+            <select
+              id={`${idBase}-sexo`}
+              value={formulario.sexo}
+              onChange={(evento) => actualizarCampo('sexo', evento.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+            >
+              <option value="">Sin especificar</option>
+              <option value="Femenino">Femenino</option>
+              <option value="Masculino">Masculino</option>
+            </select>
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-direccion`}>Dirección</Etiqueta>
             <input
-              id={`${idBase}-dni`}
+              id={`${idBase}-direccion`}
               type="search"
               autoComplete="new-password"
-              value={formulario.dni}
-              onChange={(evento) => actualizarCampo('dni', evento.target.value)}
+              value={formulario.direccion}
+              onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
             />
           </div>
 

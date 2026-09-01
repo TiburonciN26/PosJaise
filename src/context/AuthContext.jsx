@@ -11,6 +11,58 @@ export function AuthProvider({ children }) {
   const [errorPerfil, setErrorPerfil] = useState(false)
   const [bloqueoLogin, setBloqueoLogin] = useState(null)
 
+  // Perfil de un cliente de la pestaña Web (auto-registrado, sin fila en
+  // "usuarios"). Siempre deja a "usuario" (o errorPerfil/bloqueoLogin)
+  // resuelto por su cuenta — cargarPerfil no necesita mirar el resultado,
+  // solo evitar seguir con su propio manejo de "cuenta inválida" después.
+  const cargarPerfilCliente = useCallback(async (userId) => {
+    const { data, error } = await supabase
+      .from('clientes_web')
+      .select('id, email, activo')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (error) {
+      setErrorPerfil(true)
+      return
+    }
+
+    if (data) {
+      if (!data.activo) {
+        setUsuario(null)
+        setErrorPerfil(false)
+        setBloqueoLogin('Esta cuenta está desactivada. Contacta al negocio.')
+        await supabase.auth.signOut()
+        return
+      }
+
+      setErrorPerfil(false)
+      setBloqueoLogin(null)
+      setUsuario({ ...data, rol: 'CLIENTE' })
+      return
+    }
+
+    // Primer login de una cuenta recién confirmada: la fila de perfil se
+    // crea recién acá (no en el registro), porque si el proyecto exige
+    // confirmar el correo, en el momento del registro todavía no hay
+    // sesión con la que cumplir la política RLS "id = auth.uid()".
+    const { data: { user: usuarioAuth } } = await supabase.auth.getUser()
+    const { data: creado, error: errorCreado } = await supabase
+      .from('clientes_web')
+      .insert({ id: userId, email: usuarioAuth?.email ?? '' })
+      .select('id, email, activo')
+      .single()
+
+    if (errorCreado) {
+      setErrorPerfil(true)
+      return
+    }
+
+    setErrorPerfil(false)
+    setBloqueoLogin(null)
+    setUsuario({ ...creado, rol: 'CLIENTE' })
+  }, [])
+
   // A2 de la 3ª auditoría: un fallo de red al leer el perfil NO cierra la
   // sesión — antes cualquier error del select disparaba signOut(), y un
   // parpadeo de conexión expulsaba al usuario. Solo se cierra sesión cuando
@@ -42,7 +94,15 @@ export function AuthProvider({ children }) {
       return
     }
 
-    if (!data || !data.activo) {
+    // Sin fila en "usuarios": no es personal, puede ser un cliente de la
+    // pestaña Web (se auto-registra, no lo crea un admin). Se resuelve en
+    // clientes_web en vez de tratarlo como cuenta inválida/desactivada.
+    if (!data) {
+      await cargarPerfilCliente(userId)
+      return
+    }
+
+    if (!data.activo) {
       // Antes esto salía completamente mudo: sin data.activo, se cerraba
       // sesión sin avisar nada y el usuario se quedaba viendo el
       // formulario de login sin entender por qué "no pasa nada" al
@@ -55,7 +115,7 @@ export function AuthProvider({ children }) {
       return
     }
 
-    if (esNuevoLogin && data.rol === 'ASISTENTE') {
+    if (esNuevoLogin && data.rol !== 'ADMINISTRADOR') {
       const { data: estado } = await supabase
         .from('estado_negocio')
         .select('abierto')
@@ -74,7 +134,7 @@ export function AuthProvider({ children }) {
     setErrorPerfil(false)
     setBloqueoLogin(null)
     setUsuario(data)
-  }, [])
+  }, [cargarPerfilCliente])
 
   const reintentarPerfil = useCallback(async () => {
     const { data: { session: sesionActual } } = await supabase.auth.getSession()
@@ -143,6 +203,19 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }, [])
 
+  // Registro de clientes de la pestaña Web (self-service, distinto del
+  // alta de personal que hace el admin). La fila en clientes_web no se
+  // crea acá: si el proyecto exige confirmar el correo, signUp puede no
+  // devolver sesión todavía, y sin sesión no se cumple la política RLS
+  // de clientes_web ("id = auth.uid()"). Se crea sola en cargarPerfilCliente
+  // en el primer login con sesión real. Devuelve si ya quedó sesión activa
+  // (confirmación desactivada) o si falta confirmar el correo.
+  const registrarCliente = useCallback(async (email, password) => {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) throw error
+    return { requiereConfirmacion: !data.session }
+  }, [])
+
   // El RPC (46_foto_perfil_usuario.sql) es la única puerta de escritura —
   // solo puede tocar foto_url de la propia fila (auth.uid()), nunca
   // rol/activo/etc. Tras confirmarse en el servidor, se actualiza el
@@ -166,6 +239,7 @@ export function AuthProvider({ children }) {
       reintentarPerfil,
       iniciarSesion,
       cerrarSesion,
+      registrarCliente,
       actualizarFotoPerfil,
     }),
     [
@@ -177,6 +251,7 @@ export function AuthProvider({ children }) {
       reintentarPerfil,
       iniciarSesion,
       cerrarSesion,
+      registrarCliente,
       actualizarFotoPerfil,
     ],
   )

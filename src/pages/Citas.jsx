@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   ArrowBigDown,
+  Eye,
+  EyeOff,
   Search,
   CalendarClock,
   CheckCheck,
@@ -116,7 +118,9 @@ function TarjetaCumpleanos({ cliente }) {
         <div className="flex flex-wrap gap-2 pt-1">
           {cliente.telefono ? (
             <a
-              href={`https://wa.me/${numeroWhatsapp(cliente.telefono)}`}
+              href={`https://wa.me/${numeroWhatsapp(cliente.telefono)}?text=${encodeURIComponent(
+                `¡Feliz cumpleaños, ${cliente.nombre.split(' ')[0]}! 🎉 De parte de Jaise Beauty Academy, tenés un 30% de descuento en el servicio que quieras, válido por 7 días. ¡Te esperamos!`,
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(evento) => evento.stopPropagation()}
@@ -163,17 +167,54 @@ function formatearFechaCorta(fechaIso) {
 }
 
 const SELECT_CITAS =
-  'id, cliente_id, servicio_id, asistente_id, fecha_hora, duracion_min, estado, nota, ' +
-  'clientes(nombre), servicios(nombre, precio, duracion_min), asistentes(nombres_completos)'
+  'id, cliente_id, cliente_nombre_referencia, asistente_id, creado_por, fecha_hora, estado, nota, ' +
+  'clientes(nombre), asistentes(nombres_completos, usuario_id), ' +
+  'cita_servicios(id, servicio_id, duracion_min, precio, servicios(nombre, precio))'
+
+// Antes, sin asistente asignado, se mostraba el nombre de quien agendó la
+// cita — pero eso hacía parecer que esa persona era la asistente (y el
+// botón Completar solo aparece para quien de verdad está en asistente_id),
+// una confusión reportada en pruebas reales. Ahora sin asistente_id se
+// muestra "Asistente pendiente" siempre, sin importar quién la creó.
+function nombreAsistenteDe(cita) {
+  return cita.asistentes?.nombres_completos ?? 'Asistente pendiente'
+}
+
+// Cliente real (tabla clientes) o, si se usó "sin guardar", el nombre de
+// referencia que se escribió a mano.
+function nombreClienteDe(cita) {
+  return cita.clientes?.nombre ?? cita.cliente_nombre_referencia ?? 'Cliente'
+}
+
+// "Corte, Tinte" o "Corte +2 más" si hay más de 2 — evita que el nombre
+// de la fila del calendario/lista se desborde con citas de varios servicios.
+function resumenServiciosDe(cita) {
+  const nombres = (cita.cita_servicios ?? []).map((cs) => cs.servicios?.nombre ?? 'Servicio eliminado')
+  if (nombres.length === 0) return 'Servicio'
+  if (nombres.length <= 2) return nombres.join(', ')
+  return `${nombres.slice(0, 2).join(', ')} +${nombres.length - 2} más`
+}
+
+function duracionTotalDe(cita) {
+  return (cita.cita_servicios ?? []).reduce((total, cs) => total + (cs.duracion_min ?? 0), 0)
+}
+
+// Solo mientras la cita sigue activa (pendiente/confirmada) — una cancelada
+// o no-asistió sin asistente ya no necesita resolverse.
+function tieneAsistentePendiente(cita) {
+  return !cita.asistente_id && (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA')
+}
 
 export default function Citas({ activo = true }) {
-  const { rol } = useAuth()
+  const { usuario, rol } = useAuth()
   const { mostrarToast } = useToast()
 
   const [fechaCursor, setFechaCursor] = useState(() => new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState(() => new Date())
   const [asistentes, setAsistentes] = useState([])
   const [asistenteFiltro, setAsistenteFiltro] = useState('todas')
+  const [nombresUsuarios, setNombresUsuarios] = useState(new Map())
+  const [ocultarCanceladas, setOcultarCanceladas] = useState(true)
   const [clientesCumpleanos, setClientesCumpleanos] = useState([])
   const [citas, setCitas] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -198,6 +239,10 @@ export default function Citas({ activo = true }) {
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [busquedaCitas, setBusquedaCitas] = useState('')
 
+  const [filtroAbierto, setFiltroAbierto] = useState(false)
+  const [posicionFiltro, setPosicionFiltro] = useState(null)
+  const botonFiltroRef = useRef(null)
+
   const panelDetalleRef = useRef(null)
   const panelEliminarRef = useRef(null)
   const panelReactivarRef = useRef(null)
@@ -208,6 +253,7 @@ export default function Citas({ activo = true }) {
   useCerrarConEscape(() => setCitaAReactivar(null), Boolean(citaAReactivar))
   useModalA11y(panelReactivarRef, Boolean(citaAReactivar))
   useCerrarConEscape(() => setMesAbierto(false), mesAbierto)
+  useCerrarConEscape(() => setFiltroAbierto(false), filtroAbierto)
 
   function alternarMes() {
     if (mesAbierto) {
@@ -225,9 +271,61 @@ export default function Citas({ activo = true }) {
     setMesAbierto(false)
   }
 
+  function alternarFiltro() {
+    if (filtroAbierto) {
+      setFiltroAbierto(false)
+      return
+    }
+    const rect = botonFiltroRef.current?.getBoundingClientRect()
+    if (rect) setPosicionFiltro({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    setFiltroAbierto(true)
+  }
+
+  function seleccionarFiltro(valor) {
+    setAsistenteFiltro(valor)
+    setFiltroAbierto(false)
+  }
+
   function cerrarBusqueda() {
     setBusquedaAbierta(false)
     setBusquedaCitas('')
+  }
+
+  function irMesAnterior() {
+    setFechaCursor(iniciarMesLima(anioCursor, mesCursor - 1))
+    setDiaSeleccionado(null)
+  }
+
+  function irMesSiguiente() {
+    setFechaCursor(iniciarMesLima(anioCursor, mesCursor + 1))
+    setDiaSeleccionado(null)
+  }
+
+  // Deslizar la grilla mensual para pasar de mes — solo con el dedo (no con
+  // mouse, que ya tiene el selector de mes). Izquierda→derecha retrocede un
+  // mes, derecha→izquierda avanza uno. touch-pan-y en el contenedor deja el
+  // scroll vertical de la página intacto, pero un gesto diagonal (como el
+  // que se hace al scrollear) igual dispara un deltaX grande — por eso acá
+  // además se exige que el movimiento sea más horizontal que vertical antes
+  // de cambiar de mes (mismo patrón base que el swipe-to-delete del carrito
+  // de Ventas, con el chequeo de dominancia agregado).
+  const UMBRAL_SWIPE_MES = 50
+  const inicioSwipeMesRef = useRef({ x: 0, y: 0, activo: false })
+
+  function manejarSwipeMesInicio(evento) {
+    if (evento.pointerType !== 'touch') return
+    inicioSwipeMesRef.current = { x: evento.clientX, y: evento.clientY, activo: true }
+  }
+
+  function manejarSwipeMesFin(evento) {
+    if (!inicioSwipeMesRef.current.activo) return
+    inicioSwipeMesRef.current.activo = false
+    const deltaX = evento.clientX - inicioSwipeMesRef.current.x
+    const deltaY = evento.clientY - inicioSwipeMesRef.current.y
+    if (Math.abs(deltaX) < UMBRAL_SWIPE_MES) return
+    if (Math.abs(deltaX) < Math.abs(deltaY)) return
+    if (deltaX > 0) irMesAnterior()
+    else irMesSiguiente()
   }
 
   // Rango del mes visible (para traer todas las citas del mes de una vez,
@@ -252,14 +350,25 @@ export default function Citas({ activo = true }) {
   }, [rango])
 
   useEffect(() => {
-    if (rol !== 'ADMINISTRADOR') return
     supabase
       .from('asistentes')
       .select('id, nombres_completos')
       .eq('activo', true)
       .order('nombres_completos')
       .then(({ data }) => setAsistentes(data ?? []))
-  }, [rol])
+  }, [])
+
+  // Nombre de quien agendó cada cita ("Agendado por") y respaldo de
+  // "Asistente" cuando no hay asistente_id — el embed usuarios(...) de
+  // PostgREST respeta la RLS de usuarios (solo la propia cuenta o un admin
+  // puede leer la fila de otra persona), así que cualquier otro rol veía
+  // ese nombre vacío. Se resuelve aparte con una función security definer
+  // que solo expone id + nombre_completo.
+  useEffect(() => {
+    supabase
+      .rpc('usuarios_para_citas')
+      .then(({ data }) => setNombresUsuarios(new Map((data ?? []).map((u) => [u.id, u.nombre_completo]))))
+  }, [])
 
   // Cumpleaños: se cargan una sola vez (no dependen del mes que se esté
   // viendo — el mismo listado sirve para calcular en qué día cae cada uno
@@ -298,7 +407,7 @@ export default function Citas({ activo = true }) {
       .lt('fecha_hora', rango.hasta.toISOString())
       .order('fecha_hora')
 
-    if (rol === 'ADMINISTRADOR' && asistenteFiltro !== 'todas') {
+    if (asistenteFiltro !== 'todas') {
       consulta = consulta.eq('asistente_id', asistenteFiltro)
     }
 
@@ -330,6 +439,30 @@ export default function Citas({ activo = true }) {
     cargarCitas(vigente, silencioso)
     return () => {
       vigente.actual = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activo, rango.desde.getTime(), rango.hasta.getTime(), asistenteFiltro, rol])
+
+  // Tiempo real: cualquier cambio en citas (agendada, editada, cancelada,
+  // completada, eliminada — desde este dispositivo o cualquier otro) dispara
+  // una recarga silenciosa, igual que al volver a la pestaña. No hace falta
+  // mirar el payload del evento: cargarCitas ya trae los datos completos
+  // (con los joins) y vigenteRef descarta la respuesta si mientras tanto se
+  // cambió de mes/filtro.
+  useEffect(() => {
+    if (!activo) return undefined
+
+    const canal = supabase
+      .channel('citas-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'citas' },
+        () => cargarCitas(vigenteRef.current, true),
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(canal)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activo, rango.desde.getTime(), rango.hasta.getTime(), asistenteFiltro, rol])
@@ -404,19 +537,26 @@ export default function Citas({ activo = true }) {
   // ese orden — por eso ni la lista del día ni la búsqueda vuelven a
   // ordenar (antes hacían .slice().sort() con new Date() por ítem en cada
   // render, trabajo repetido para llegar al mismo orden).
+  const citasVisibles = useMemo(
+    () => (ocultarCanceladas ? citas.filter((c) => c.estado !== 'CANCELADA') : citas),
+    [citas, ocultarCanceladas],
+  )
+
   const citasPorDia = useMemo(() => {
     const mapa = new Map()
-    for (const cita of citas) {
+    for (const cita of citasVisibles) {
       const clave = claveDia(new Date(cita.fecha_hora))
       if (!mapa.has(clave)) mapa.set(clave, [])
       mapa.get(clave).push(cita)
     }
     return mapa
-  }, [citas])
+  }, [citasVisibles])
 
   // Una sola vez por render, no por cada una de las ~35 celdas de la grilla.
   const claveHoy = claveDia(new Date())
   const claveSeleccionada = diaSeleccionado ? claveDia(diaSeleccionado) : null
+  const { anio: anioHoy, mes: mesHoy } = anioMesEnLima(new Date())
+  const esMesActual = anioCursor === anioHoy && mesCursor === mesHoy
 
   const citasDelDiaSeleccionado = diaSeleccionado
     ? (citasPorDia.get(claveDia(diaSeleccionado)) ?? [])
@@ -429,19 +569,28 @@ export default function Citas({ activo = true }) {
   // Busca solo dentro de las citas ya cargadas del mes visible (sin ida
   // extra al servidor) — por nombre de cliente o de servicio.
   const citasFiltradas = busquedaCitas.trim()
-    ? citas.filter((cita) => {
+    ? citasVisibles.filter((cita) => {
         const texto = busquedaCitas.trim().toLowerCase()
         return (
-          (cita.clientes?.nombre ?? '').toLowerCase().includes(texto) ||
-          (cita.servicios?.nombre ?? '').toLowerCase().includes(texto)
+          nombreClienteDe(cita).toLowerCase().includes(texto) ||
+          (cita.cita_servicios ?? []).some((cs) =>
+            (cs.servicios?.nombre ?? '').toLowerCase().includes(texto),
+          )
         )
       })
     : []
 
   const tituloRango = `${MESES[mesCursor]} ${anioCursor}`
+  const nombreFiltroActual =
+    asistenteFiltro === 'todas'
+      ? 'Todas'
+      : (asistentes.find((a) => a.id === asistenteFiltro)?.nombres_completos ?? 'Todas')
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <div
           className={`grid overflow-x-hidden transition-[grid-template-columns] duration-300 ease-in-out ${
@@ -503,26 +652,86 @@ export default function Citas({ activo = true }) {
 
             <button
               type="button"
+              onClick={() => setOcultarCanceladas((anterior) => !anterior)}
+              aria-label={ocultarCanceladas ? 'Mostrar canceladas' : 'Ocultar canceladas'}
+              title={ocultarCanceladas ? 'Mostrar canceladas' : 'Ocultar canceladas'}
+              className={`shrink-0 p-1.5 transition-colors ${
+                ocultarCanceladas ? 'text-red' : 'text-ink/40 hover:text-purple-300'
+              }`}
+            >
+              {ocultarCanceladas ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+
+            <button
+              type="button"
               onClick={irHoy}
-              className="shrink-0 rounded-lg border border-border-strong px-2.5 py-1.5 text-xs text-ink/70 hover:border-purple-300 hover:text-purple-300"
+              className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-xs transition-colors ${
+                esMesActual
+                  ? 'border-purple-300 bg-purple-300/15 text-purple-300'
+                  : 'border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300'
+              }`}
             >
               Hoy
             </button>
 
-            {rol === 'ADMINISTRADOR' && (
-              <select
-                value={asistenteFiltro}
-                onChange={(evento) => setAsistenteFiltro(evento.target.value)}
-                className="shrink-0 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-purple-300"
+            <div className="relative shrink-0">
+              <button
+                ref={botonFiltroRef}
+                type="button"
+                onClick={alternarFiltro}
+                aria-expanded={filtroAbierto}
+                className="flex max-w-28 items-center gap-1 truncate rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-purple-300"
               >
-                <option value="todas">Todas</option>
-                {asistentes.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.nombres_completos}
-                  </option>
-                ))}
-              </select>
-            )}
+                <span className="truncate">{nombreFiltroActual}</span>
+                <ArrowBigDown
+                  className={`h-3 w-3 shrink-0 text-ink/50 transition-transform duration-300 ${
+                    filtroAbierto ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {filtroAbierto &&
+                posicionFiltro &&
+                createPortal(
+                  <div
+                    className="fixed inset-0 z-30 bg-black/60"
+                    onClick={() => setFiltroAbierto(false)}
+                  >
+                    <div
+                      onClick={(evento) => evento.stopPropagation()}
+                      className="animate-entrada-dropdown fixed max-h-64 w-48 overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg"
+                      style={{ top: posicionFiltro.top, right: posicionFiltro.right }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => seleccionarFiltro('todas')}
+                        className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
+                          asistenteFiltro === 'todas'
+                            ? 'bg-purple-300/15 text-purple-300'
+                            : 'text-ink hover:bg-surface-3'
+                        }`}
+                      >
+                        Todas
+                      </button>
+                      {asistentes.map((a) => (
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => seleccionarFiltro(a.id)}
+                          className={`block w-full truncate px-3 py-2 text-left text-sm transition-colors ${
+                            asistenteFiltro === a.id
+                              ? 'bg-purple-300/15 text-purple-300'
+                              : 'text-ink hover:bg-surface-3'
+                          }`}
+                        >
+                          {a.nombres_completos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>,
+                  document.body,
+                )}
+            </div>
 
             <button
               type="button"
@@ -600,11 +809,23 @@ export default function Citas({ activo = true }) {
                     key={cita.id}
                     type="button"
                     onClick={() => setCitaSeleccionada(cita)}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-purple-300/50"
+                    className="relative flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-purple-300/50"
                   >
+                    {((cita.cita_servicios?.length ?? 0) > 1 || tieneAsistentePendiente(cita)) && (
+                      <span className="absolute -left-1.5 -top-1.5 z-10 flex items-center gap-1">
+                        {(cita.cita_servicios?.length ?? 0) > 1 && (
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-blue">
+                            {cita.cita_servicios.length}
+                          </span>
+                        )}
+                        {tieneAsistentePendiente(cita) && (
+                          <span className="h-2.5 w-2.5 rounded-full bg-red" />
+                        )}
+                      </span>
+                    )}
                     <div className="min-w-0">
                       <p className="truncate text-sm text-ink">
-                        {cita.clientes?.nombre ?? 'Cliente'} · {cita.servicios?.nombre ?? 'Servicio'}
+                        {nombreClienteDe(cita)} · {resumenServiciosDe(cita)}
                       </p>
                       <p className="font-mono text-xs text-ink/60">
                         {l.getUTCDate()} de {MESES[l.getUTCMonth()]} · {formatearHora(cita.fecha_hora)}
@@ -622,8 +843,13 @@ export default function Citas({ activo = true }) {
         </div>
       ) : (
         <>
-          {/* Grilla mensual */}
-          <div className="mt-4">
+          {/* Grilla mensual — deslizable con el dedo para pasar de mes */}
+          <div
+            className="mt-4 touch-pan-y"
+            onPointerDown={manejarSwipeMesInicio}
+            onPointerUp={manejarSwipeMesFin}
+            onPointerCancel={manejarSwipeMesFin}
+          >
             <div className="grid grid-cols-7 gap-1 text-center">
               {DIAS_CORTOS.map((d) => (
                 <p key={d} className="py-1 text-[11px] font-medium uppercase tracking-wide text-ink/50">
@@ -643,6 +869,12 @@ export default function Citas({ activo = true }) {
                 const cumpleanosDia = enMesActual
                   ? (cumpleanosPorDia.get(claveMesDia(enLima.getUTCMonth(), enLima.getUTCDate())) ?? [])
                   : []
+                // Verde = ya no hay nada pendiente ese día (todo completado,
+                // cancelado o no asistido); azul = todavía hay una cita
+                // pendiente o confirmada por atender.
+                const hayPendientes = citasDia.some(
+                  (c) => c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA',
+                )
 
                 return (
                   <button
@@ -663,7 +895,11 @@ export default function Citas({ activo = true }) {
                     <span>{enLima.getUTCDate()}</span>
                     {enMesActual && (citasDia.length > 0 || cumpleanosDia.length > 0) && (
                       <span className="flex items-center gap-1">
-                        {citasDia.length > 0 && <span className="h-1.5 w-1.5 rounded-full bg-blue" />}
+                        {citasDia.length > 0 && (
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${hayPendientes ? 'bg-blue' : 'bg-green'}`}
+                          />
+                        )}
                         {cumpleanosDia.length > 0 && <Cake className="h-3 w-3 text-amber" />}
                       </span>
                     )}
@@ -705,11 +941,23 @@ export default function Citas({ activo = true }) {
                             key={cita.id}
                             type="button"
                             onClick={() => setCitaSeleccionada(cita)}
-                            className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-purple-300/50"
+                            className="relative flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-purple-300/50"
                           >
+                            {((cita.cita_servicios?.length ?? 0) > 1 || tieneAsistentePendiente(cita)) && (
+                              <span className="absolute -left-1.5 -top-1.5 z-10 flex items-center gap-1">
+                                {(cita.cita_servicios?.length ?? 0) > 1 && (
+                                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black text-[11px] font-semibold text-blue">
+                                    {cita.cita_servicios.length}
+                                  </span>
+                                )}
+                                {tieneAsistentePendiente(cita) && (
+                                  <span className="h-2.5 w-2.5 rounded-full bg-red" />
+                                )}
+                              </span>
+                            )}
                             <div className="min-w-0">
                               <p className="truncate text-sm text-ink">
-                                {cita.clientes?.nombre ?? 'Cliente'} · {cita.servicios?.nombre ?? 'Servicio'}
+                                {nombreClienteDe(cita)} · {resumenServiciosDe(cita)}
                               </p>
                               <p className="font-mono text-xs text-ink/60">
                                 {formatearHora(cita.fecha_hora)}
@@ -754,10 +1002,17 @@ export default function Citas({ activo = true }) {
       {citaACompletar && (
         <ModalRegistroAtencion
           citaId={citaACompletar.id}
+          serviciosCita={(citaACompletar.cita_servicios ?? []).map((cs) => ({
+            citaServicioId: cs.id,
+            servicioId: cs.servicio_id,
+            nombre: cs.servicios?.nombre ?? 'Servicio eliminado',
+            // Precio acordado al agendar si se guardó uno; si no, el precio
+            // actual del catálogo (citas viejas, de antes de este campo).
+            precioSugerido: cs.precio ?? cs.servicios?.precio ?? 0,
+          }))}
           valoresIniciales={{
-            servicioId: citaACompletar.servicio_id ?? '',
             clienteId: citaACompletar.cliente_id ?? '',
-            precio: citaACompletar.servicios?.precio != null ? String(citaACompletar.servicios.precio) : '',
+            clienteNombre: nombreClienteDe(citaACompletar),
             fecha: aInputDatetimeLima(new Date()),
             nota: citaACompletar.nota ?? '',
           }}
@@ -779,7 +1034,7 @@ export default function Citas({ activo = true }) {
           >
             <div className="flex items-start justify-between gap-2">
               <h2 className="text-base font-semibold text-ink">
-                {citaSeleccionada.clientes?.nombre ?? 'Cliente'}
+                {nombreClienteDe(citaSeleccionada)}
               </h2>
               <span
                 className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
@@ -791,12 +1046,24 @@ export default function Citas({ activo = true }) {
             </div>
 
             <div className="mt-3 space-y-1.5 text-sm text-ink/70">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="min-w-0 truncate">{citaSeleccionada.servicios?.nombre ?? 'Servicio'}</span>
-                <span className="flex shrink-0 items-center gap-1 font-mono text-xs">
-                  <Timer className="h-3.5 w-3.5 text-ink/40" />
-                  {citaSeleccionada.duracion_min} min
-                </span>
+              <div className="space-y-1.5">
+                {(citaSeleccionada.cita_servicios ?? []).map((cs) => (
+                  <div key={cs.id}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="min-w-0 truncate">
+                        {cs.servicios?.nombre ?? 'Servicio eliminado'}
+                      </span>
+                      <span className="shrink-0 font-mono text-xs text-ink/50">
+                        {cs.duracion_min} min
+                      </span>
+                    </div>
+                    {(cs.precio ?? cs.servicios?.precio) != null && (
+                      <p className="font-mono text-xs text-ink/50">
+                        {formatearSoles(cs.precio ?? cs.servicios.precio)}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
               <div className="flex items-center justify-between gap-2 font-mono text-xs">
                 <span className="flex items-center gap-1">
@@ -807,12 +1074,16 @@ export default function Citas({ activo = true }) {
                   <Clock className="h-3.5 w-3.5 text-ink/40" />
                   {formatearHora(citaSeleccionada.fecha_hora)}
                 </span>
+                <span className="flex items-center gap-1">
+                  <Timer className="h-3.5 w-3.5 text-ink/40" />
+                  {duracionTotalDe(citaSeleccionada)} min
+                </span>
               </div>
-              {citaSeleccionada.servicios?.precio != null && (
-                <p className="font-mono text-xs">{formatearSoles(citaSeleccionada.servicios.precio)}</p>
-              )}
+              <p className={`text-xs ${citaSeleccionada.asistente_id ? '' : 'text-red'}`}>
+                Asistente: {nombreAsistenteDe(citaSeleccionada)}
+              </p>
               <p className="text-xs">
-                Asistente: {citaSeleccionada.asistentes?.nombres_completos ?? 'Sin asignar'}
+                Agendado por: {nombresUsuarios.get(citaSeleccionada.creado_por) ?? '—'}
               </p>
               {citaSeleccionada.nota && (
                 <p className="rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs">
@@ -826,11 +1097,11 @@ export default function Citas({ activo = true }) {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setCitaACompletar(citaSeleccionada)}
-                    className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-green/50 px-2 py-1.5 text-xs font-medium text-green hover:bg-green/10"
+                    onClick={() => cambiarEstado(citaSeleccionada, 'CANCELADA')}
+                    className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong px-2 py-1.5 text-xs font-medium text-ink/70 hover:border-red hover:text-red"
                   >
-                    <CheckCheck className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">Completar</span>
+                    <X className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Cancelar</span>
                   </button>
                   <button
                     type="button"
@@ -840,14 +1111,20 @@ export default function Citas({ activo = true }) {
                     <UserX className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">No asistió</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => cambiarEstado(citaSeleccionada, 'CANCELADA')}
-                    className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong px-2 py-1.5 text-xs font-medium text-ink/70 hover:border-red hover:text-red"
-                  >
-                    <X className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">Cancelar</span>
-                  </button>
+                  {/* Solo la persona asignada puede completar (crea el
+                      registro en SU Mi Panel) — ni un admin puede hacerlo
+                      por otra persona. El servidor ya lo bloquea igual,
+                      esto evita mostrar un botón que solo va a dar error. */}
+                  {citaSeleccionada.asistentes?.usuario_id === usuario?.id && (
+                    <button
+                      type="button"
+                      onClick={() => setCitaACompletar(citaSeleccionada)}
+                      className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-green/50 px-2 py-1.5 text-xs font-medium text-green hover:bg-green/10"
+                    >
+                      <CheckCheck className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">Completar</span>
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -861,7 +1138,7 @@ export default function Citas({ activo = true }) {
                 </button>
               )}
 
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setCitaSeleccionada(null)}
@@ -869,12 +1146,14 @@ export default function Citas({ activo = true }) {
                 >
                   Cerrar
                 </button>
-                <BotonAccion
-                  icono={Pencil}
-                  texto="Editar"
-                  color="celeste"
-                  onClick={() => setModalCita(citaSeleccionada)}
-                />
+                {citaSeleccionada.estado !== 'CANCELADA' && citaSeleccionada.estado !== 'COMPLETADA' && (
+                  <BotonAccion
+                    icono={Pencil}
+                    texto="Editar"
+                    color="celeste"
+                    onClick={() => setModalCita(citaSeleccionada)}
+                  />
+                )}
                 {rol === 'ADMINISTRADOR' && (
                   <BotonAccion
                     icono={Trash2}

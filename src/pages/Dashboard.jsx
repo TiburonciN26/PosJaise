@@ -13,6 +13,7 @@ const METRICAS_VACIAS = {
   ingresoServicios: 0,
   costoProductos: 0,
   comisionesPagadas: 0,
+  descuentos: 0,
   productosVendidos: 0,
   serviciosRealizados: 0,
   cantidadVentas: 0,
@@ -183,6 +184,7 @@ export default function Dashboard({ activo = true }) {
       ingresoServicios: redondear2(fila?.ingreso_servicios ?? 0),
       costoProductos: redondear2(fila?.costo_productos ?? 0),
       comisionesPagadas: redondear2(fila?.comisiones_pagadas ?? 0),
+      descuentos: redondear2(fila?.descuentos ?? 0),
       productosVendidos: fila?.productos_vendidos ?? 0,
       serviciosRealizados: fila?.servicios_realizados ?? 0,
       cantidadVentas: fila?.cantidad_ventas ?? 0,
@@ -226,6 +228,7 @@ export default function Dashboard({ activo = true }) {
   // abajo, cada fila conserva el color que tenía su tarjeta.
   const filasResumen = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto, positivo: true, clase: 'text-green' },
+    { etiqueta: 'Descuentos', valor: metricas.descuentos, positivo: false, clase: 'text-red' },
     { etiqueta: 'Ingreso productos', valor: metricas.ingresoProductos, positivo: true, clase: 'text-amber' },
     { etiqueta: 'Ingreso servicios', valor: metricas.ingresoServicios, positivo: true, clase: 'text-blue' },
     { etiqueta: 'Gastos productos', valor: metricas.costoProductos, positivo: false, clase: 'text-red' },
@@ -235,7 +238,10 @@ export default function Dashboard({ activo = true }) {
   ]
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
       <FiltrosFecha
         filtro={filtro}

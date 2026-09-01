@@ -154,10 +154,14 @@ export default function Asistentes({ activo = true }) {
   }
 
   async function cargarUsuariosAsistente() {
+    // Incluye también ADMINISTRADOR: un admin que atiende servicios
+    // personalmente necesita poder vincularse a una ficha igual que
+    // cualquier asistente (para que le puedan asignar/completar citas a
+    // su nombre) — nunca CAJERA, que no atiende.
     const { data } = await supabase
       .from('usuarios')
       .select('id, nombre_completo')
-      .eq('rol', 'ASISTENTE')
+      .in('rol', ['ADMINISTRADOR', 'ASISTENTE'])
       .order('nombre_completo')
     setUsuariosAsistente(data ?? [])
   }
@@ -218,7 +222,10 @@ export default function Asistentes({ activo = true }) {
   const filtradosOrdenados = ordenarAsistentes(filtrados, orden)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Buscador + Nueva asistente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda

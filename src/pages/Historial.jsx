@@ -72,6 +72,12 @@ const CLASE_METODO_PAGO_PILL = {
   Yape: 'border border-purple-300/40 bg-purple-300/15 text-purple-300',
 }
 
+// Solo cambia lo que se muestra (VEN007 -> V007) — el código real en la
+// base de datos y en el CSV exportado no se toca.
+function codigoCorto(codigo) {
+  return codigo.replace(/^VEN/, 'V')
+}
+
 function formatearFechaHora(fechaIso) {
   const fecha = new Date(fechaIso)
   const fechaStr = new Intl.DateTimeFormat('es-PE', {
@@ -97,6 +103,19 @@ function nombreClienteDeVenta(venta) {
 
 function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, onConfirmarAnular }) {
   const { cargando, error, detalle, items, vendedorNombre, confirmandoAnular, anulando } = estado
+  // Cliente/asistente por servicio: dato adicional, no molesta si se
+  // muestra siempre — se oculta detrás de un toggle por fila (sin ícono,
+  // solo el propio botón) en vez de ensuciar la fila compacta de siempre.
+  const [itemsAbiertos, setItemsAbiertos] = useState(() => new Set())
+
+  function alternarItem(id) {
+    setItemsAbiertos((anterior) => {
+      const siguiente = new Set(anterior)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
+      return siguiente
+    })
+  }
 
   if (cargando) {
     return <p className="py-4 text-center font-mono text-sm text-ink/60">Cargando detalle...</p>
@@ -119,9 +138,19 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
   return (
     <div className="px-[17px] pb-[17px] pt-[5px]">
-      <p className="text-xs text-ink/60">
-        Vendedor: <span className="text-ink/80">{vendedorNombre ?? '—'}</span>
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-ink/60">
+          Vendedor: <span className="text-ink/80">{vendedorNombre ?? '—'}</span>
+        </p>
+        {detalle.descuento_pct > 0 && (
+          <span className="text-xs font-medium text-red">Descuento: {detalle.descuento_pct}%</span>
+        )}
+        {detalle.descuento_monto > 0 && (
+          <span className="text-xs font-medium text-red">
+            Descuento: {formatearSoles(detalle.descuento_monto)}
+          </span>
+        )}
+      </div>
       {nombreCliente && (
         <p className="mt-0.5 text-xs text-ink/60">
           Cliente: <span className="text-ink/80">{nombreCliente}</span>
@@ -136,27 +165,62 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
           <span className="text-right">Subtotal</span>
         </div>
         <div className="divide-y divide-border">
-          {items.map((item) => (
-            <div key={item.id} className="grid grid-cols-[1fr_3rem_4.5rem] items-center gap-2 px-3 py-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {item.tipo === 'SERVICIO' && (
-                    <span className="rounded border border-blue/40 bg-blue/10 px-1 py-0.5 font-mono text-[11px] font-medium text-blue">
-                      Servicio
-                    </span>
-                  )}
-                  <span className="truncate text-sm text-ink">{item.nombre}</span>
+          {items.map((item) => {
+            const contenidoFila = (
+              <>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    {item.tipo === 'SERVICIO' && (
+                      <span className="rounded border border-blue/40 bg-blue/10 px-1 py-0.5 font-mono text-[11px] font-medium text-blue">
+                        Servicio
+                      </span>
+                    )}
+                    <span className="truncate text-sm text-ink">{item.nombre}</span>
+                  </div>
+                  <span className="font-mono text-[11px] text-ink/60">
+                    {formatearSoles(item.precio_unitario)} c/u
+                  </span>
                 </div>
-                <span className="font-mono text-[11px] text-ink/60">
-                  {formatearSoles(item.precio_unitario)} c/u
+                <span className="text-center font-mono text-sm text-ink">{item.cantidad}</span>
+                <span className="text-right font-mono text-sm text-ink">
+                  {formatearSoles(item.subtotal)}
                 </span>
+              </>
+            )
+
+            if (item.tipo !== 'SERVICIO') {
+              return (
+                <div key={item.id} className="grid grid-cols-[1fr_3rem_4.5rem] items-center gap-2 px-3 py-2">
+                  {contenidoFila}
+                </div>
+              )
+            }
+
+            const abierto = itemsAbiertos.has(item.id)
+            return (
+              <div key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => alternarItem(item.id)}
+                  aria-expanded={abierto}
+                  className="grid w-full grid-cols-[1fr_3rem_4.5rem] items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-2"
+                >
+                  {contenidoFila}
+                </button>
+                <CampoColapsable abierto={abierto}>
+                  <div className="space-y-1 bg-surface-2/60 px-3 py-2 text-xs text-ink/60">
+                    <p>
+                      Cliente: <span className="text-ink/80">{item.clientes?.nombre ?? '—'}</span>
+                    </p>
+                    <p>
+                      Realizado por:{' '}
+                      <span className="text-ink/80">{item.asistentes?.nombres_completos ?? '—'}</span>
+                    </p>
+                  </div>
+                </CampoColapsable>
               </div>
-              <span className="text-center font-mono text-sm text-ink">{item.cantidad}</span>
-              <span className="text-right font-mono text-sm text-ink">
-                {formatearSoles(item.subtotal)}
-              </span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -197,7 +261,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
         <div className="mt-4 rounded-lg border border-red/40 bg-red/5 p-3">
           <p className="text-sm text-ink">
             ¿Seguro que quieres anular la venta{' '}
-            <span className="font-mono text-red">{detalle.codigo}</span>? Esto devolverá el stock
+            <span className="font-mono text-red">{codigoCorto(detalle.codigo)}</span>? Esto devolverá el stock
             de los productos.
           </p>
           <div className="mt-3 flex gap-2">
@@ -275,7 +339,9 @@ export default function Historial({ activo = true }) {
         .single(),
       supabase
         .from('venta_items')
-        .select('id, tipo, nombre, cantidad, precio_unitario, subtotal')
+        .select(
+          'id, tipo, nombre, cantidad, precio_unitario, subtotal, clientes(nombre), asistentes(nombres_completos)',
+        )
         .eq('venta_id', ventaId)
         .order('id'),
     ])
@@ -700,7 +766,7 @@ export default function Historial({ activo = true }) {
                           anulada ? 'text-red' : 'text-amber'
                         }`}
                       >
-                        {venta.codigo}
+                        {codigoCorto(venta.codigo)}
                       </span>
                       {anulada && (
                         <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
@@ -793,7 +859,7 @@ export default function Historial({ activo = true }) {
                             anulada ? 'text-red line-through' : 'text-amber'
                           }`}
                         >
-                          {venta.codigo}
+                          {codigoCorto(venta.codigo)}
                         </td>
                         <td className="px-3 py-2.5 font-mono text-ink/60">
                           {formatearFechaHora(venta.fecha)}

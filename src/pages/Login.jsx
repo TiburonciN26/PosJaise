@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useToast } from '../context/ToastContext.jsx'
 
 // Hallazgo crítico reportado por el usuario (no numerado en ninguna
 // auditoría formal): al cerrar sesión, el navegador autocompletaba el
@@ -19,9 +20,12 @@ import { useAuth } from '../context/AuthContext.jsx'
 // un dispositivo compartido conviene además que el personal rechace el
 // "¿Guardar contraseña?" del navegador.
 export default function Login() {
-  const { usuario, iniciarSesion, bloqueoLogin } = useAuth()
+  const { usuario, iniciarSesion, registrarCliente, bloqueoLogin } = useAuth()
+  const { mostrarToast } = useToast()
+  const [modo, setModo] = useState('login') // 'login' | 'registro'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirmar, setPasswordConfirmar] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -37,10 +41,14 @@ export default function Login() {
   // bloqueoLogin del contexto. Se muestra igual que un error local.
   const mensajeError = error || bloqueoLogin
 
-  async function manejarSubmit(evento) {
-    evento.preventDefault()
+  function cambiarModo(nuevoModo) {
+    setModo(nuevoModo)
     setError('')
-    setEnviando(true)
+    setPassword('')
+    setPasswordConfirmar('')
+  }
+
+  async function manejarLogin() {
     try {
       await iniciarSesion(email, password)
     } catch (errorLogin) {
@@ -56,9 +64,46 @@ export default function Login() {
           ? 'Correo o contraseña incorrectos.'
           : 'No se pudo conectar. Revisa tu conexión a internet.',
       )
-    } finally {
-      setEnviando(false)
     }
+  }
+
+  async function manejarRegistro() {
+    if (password !== passwordConfirmar) {
+      setError('Las contraseñas no coinciden.')
+      return
+    }
+
+    try {
+      const { requiereConfirmacion } = await registrarCliente(email, password)
+      if (requiereConfirmacion) {
+        mostrarToast('Cuenta creada. Revisa tu correo para confirmarla.', 'exito')
+        cambiarModo('login')
+      }
+      // Si no requiere confirmación, la sesión ya quedó activa: el
+      // listener de AuthContext carga el perfil solo y este componente
+      // navega afuera por el "if (usuario)" de arriba.
+    } catch (errorRegistro) {
+      const mensaje = errorRegistro?.message ?? ''
+      setError(
+        mensaje.includes('already registered') || mensaje.includes('already exists')
+          ? 'Ese correo ya tiene una cuenta.'
+          : mensaje.includes('Password')
+            ? 'La contraseña debe tener al menos 6 caracteres.'
+            : 'No se pudo crear la cuenta. Intenta de nuevo.',
+      )
+    }
+  }
+
+  async function manejarSubmit(evento) {
+    evento.preventDefault()
+    setError('')
+    setEnviando(true)
+    if (modo === 'login') {
+      await manejarLogin()
+    } else {
+      await manejarRegistro()
+    }
+    setEnviando(false)
   }
 
   return (
@@ -69,10 +114,10 @@ export default function Login() {
         className="w-full max-w-sm rounded-lg border border-border bg-surface p-8"
       >
         <h1 className="mb-1 text-center text-xl font-semibold text-ink">
-          Pos Jaise
+          Pos Jaise Beauty Academy
         </h1>
         <p className="mb-6 text-center font-mono text-sm text-ink/60">
-          Iniciar sesión
+          {modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta de cliente'}
         </p>
 
         <label htmlFor="email" className="mb-1 block text-sm text-ink/80">
@@ -113,6 +158,24 @@ export default function Login() {
           </button>
         </div>
 
+        {modo === 'registro' && (
+          <>
+            <label htmlFor="password-confirmar" className="mb-1 block text-sm text-ink/80">
+              Confirmar contraseña
+            </label>
+            <input
+              id="password-confirmar"
+              type={mostrarPassword ? 'text' : 'password'}
+              required
+              autoComplete="new-password"
+              value={passwordConfirmar}
+              onChange={(evento) => setPasswordConfirmar(evento.target.value)}
+              placeholder="••••••••"
+              className="mb-4 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-ink outline-none focus:border-amber"
+            />
+          </>
+        )}
+
         {mensajeError && (
           <p className="mb-4 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
             {mensajeError}
@@ -124,7 +187,21 @@ export default function Login() {
           disabled={enviando}
           className="w-full rounded-lg bg-amber px-4 py-2 font-medium text-bg disabled:opacity-50"
         >
-          {enviando ? 'Entrando...' : 'Entrar'}
+          {modo === 'login'
+            ? enviando
+              ? 'Entrando...'
+              : 'Entrar'
+            : enviando
+              ? 'Creando cuenta...'
+              : 'Crear cuenta'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => cambiarModo(modo === 'login' ? 'registro' : 'login')}
+          className="mt-4 w-full text-center text-sm text-ink/60 underline-offset-2 hover:text-amber hover:underline"
+        >
+          {modo === 'login' ? '¿Eres cliente? Crea tu cuenta' : '¿Ya tienes cuenta? Inicia sesión'}
         </button>
       </form>
     </main>

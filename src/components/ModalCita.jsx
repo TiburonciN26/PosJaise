@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { X, User, Scissors } from 'lucide-react'
+import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
@@ -7,14 +7,114 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 import Etiqueta from './Etiqueta.jsx'
+import ModalCliente from './ModalCliente.jsx'
+import ModalServicio from './ModalServicio.jsx'
+
+// Umbrales del swipe-to-delete del carrito — mismos valores que el
+// carrito de Ventas/Mi Panel, para que el gesto se sienta idéntico.
+const UMBRAL_ARRASTRE_ELIMINAR = 90
+const UMBRAL_ARRASTRE_INICIO = 8
+
+function FilaLineaCita({ linea, esTactil, onCambiarPrecio, onCambiarDuracion, onQuitar }) {
+  const [arrastreX, setArrastreX] = useState(0)
+  const [arrastrando, setArrastrando] = useState(false)
+  const inicioRef = useRef({ x: 0, iniciado: false, ignorar: false })
+
+  function manejarPointerDown(evento) {
+    if (!esTactil) return
+    const ignorar = Boolean(evento.target.closest('button, input'))
+    inicioRef.current = { x: evento.clientX, iniciado: false, ignorar }
+    if (!ignorar) evento.currentTarget.setPointerCapture?.(evento.pointerId)
+  }
+
+  function manejarPointerMove(evento) {
+    if (!esTactil || inicioRef.current.ignorar || evento.buttons === 0) return
+    const deltaX = evento.clientX - inicioRef.current.x
+
+    if (!inicioRef.current.iniciado) {
+      if (Math.abs(deltaX) < UMBRAL_ARRASTRE_INICIO) return
+      inicioRef.current.iniciado = true
+      setArrastrando(true)
+    }
+
+    setArrastreX(Math.max(-140, Math.min(140, deltaX)))
+  }
+
+  function soltar(evento) {
+    evento.currentTarget.releasePointerCapture?.(evento.pointerId)
+    if (!inicioRef.current.iniciado) return
+    inicioRef.current.iniciado = false
+    setArrastrando(false)
+
+    if (Math.abs(arrastreX) >= UMBRAL_ARRASTRE_ELIMINAR) {
+      onQuitar()
+    } else {
+      setArrastreX(0)
+    }
+  }
+
+  const progresoEliminar = Math.min(1, Math.abs(arrastreX) / UMBRAL_ARRASTRE_ELIMINAR)
+
+  return (
+    <div
+      onPointerDown={manejarPointerDown}
+      onPointerMove={manejarPointerMove}
+      onPointerUp={soltar}
+      onPointerCancel={soltar}
+      style={{
+        transform: arrastreX ? `translateX(${arrastreX}px)` : undefined,
+        backgroundColor: `color-mix(in srgb, var(--color-red) ${Math.round(progresoEliminar * 85)}%, transparent)`,
+        transition: arrastrando ? 'none' : undefined,
+      }}
+      className="touch-pan-y px-3 py-2 transition-[transform_200ms_ease-in,background-color_150ms_ease-out]"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 truncate text-sm text-ink">{linea.nombre}</p>
+        {!esTactil && (
+          <button
+            type="button"
+            onClick={onQuitar}
+            aria-label="Quitar servicio"
+            className="shrink-0 text-ink/30 transition-colors hover:text-red"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-ink/50">S/</span>
+          <input
+            type="search"
+            inputMode="decimal"
+            autoComplete="new-password"
+            value={linea.precio}
+            onChange={(evento) => onCambiarPrecio(evento.target.value)}
+            className="w-16 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
+          />
+        </div>
+        <div className="flex items-center gap-1">
+          <input
+            type="search"
+            inputMode="numeric"
+            autoComplete="new-password"
+            value={linea.duracionMin}
+            onChange={(evento) => onCambiarDuracion(evento.target.value)}
+            className="w-12 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
+          />
+          <span className="text-xs text-ink/50">min</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function formularioVacio(fechaSugerida) {
   return {
     clienteId: '',
-    servicioId: '',
     asistenteId: '',
     fechaHora: aInputDatetimeLima(fechaSugerida ?? new Date()),
-    duracionMin: '30',
     nota: '',
   }
 }
@@ -22,25 +122,39 @@ function formularioVacio(fechaSugerida) {
 function formularioDesdeCita(cita) {
   return {
     clienteId: cita.cliente_id ?? '',
-    servicioId: cita.servicio_id ?? '',
     asistenteId: cita.asistente_id ?? '',
     fechaHora: aInputDatetimeLima(new Date(cita.fecha_hora)),
-    duracionMin: String(cita.duracion_min ?? 30),
     nota: cita.nota ?? '',
   }
+}
+
+function lineasDesdeCita(cita) {
+  return (cita.cita_servicios ?? []).map((cs) => ({
+    id: cs.id,
+    servicioId: cs.servicio_id,
+    nombre: cs.servicios?.nombre ?? 'Servicio eliminado',
+    duracionMin: String(cs.duracion_min ?? 30),
+    precio: String(cs.precio ?? cs.servicios?.precio ?? ''),
+  }))
 }
 
 // El asistente solo es obligatorio si quien agenda NO es admin (una
 // asistente siempre agenda para sí misma). Un admin puede dejarlo sin
 // asignar — por ejemplo cuando el servicio lo va a hacer ella misma.
-function validar(formulario, puedeElegirAsistente) {
-  if (!formulario.clienteId) return 'Selecciona un cliente.'
-  if (!formulario.servicioId) return 'Selecciona un servicio.'
+function validar(formulario, lineas, puedeElegirAsistente, clienteReferencia) {
+  if (!formulario.clienteId && !clienteReferencia.trim()) {
+    return 'Selecciona un cliente o escribe un nombre de referencia.'
+  }
+  if (lineas.length === 0) return 'Agrega al menos un servicio.'
   if (!formulario.asistenteId && !puedeElegirAsistente) return 'Selecciona una asistente.'
   if (!formulario.fechaHora) return 'Selecciona una fecha y hora.'
 
-  const duracion = parseInt(formulario.duracionMin, 10)
-  if (Number.isNaN(duracion) || duracion <= 0) return 'La duración debe ser mayor a 0.'
+  for (const linea of lineas) {
+    const duracion = parseInt(linea.duracionMin, 10)
+    if (Number.isNaN(duracion) || duracion <= 0) return 'Hay una duración inválida en los servicios.'
+    const precio = parseFloat(linea.precio)
+    if (Number.isNaN(precio) || precio < 0) return 'Hay un precio inválido en los servicios.'
+  }
 
   return null
 }
@@ -49,7 +163,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
-  const { usuario, rol } = useAuth()
+  const { usuario } = useAuth()
   const esEdicion = Boolean(cita)
 
   const [servicios, setServicios] = useState([])
@@ -60,36 +174,49 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const [formulario, setFormulario] = useState(() =>
     esEdicion ? formularioDesdeCita(cita) : formularioVacio(fechaSugerida),
   )
+  const [lineas, setLineas] = useState(() => (esEdicion ? lineasDesdeCita(cita) : []))
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  // Igual que el carrito de Ventas/Mi Panel: en táctil se elimina
+  // deslizando la fila, en mouse/trackpad se conserva el botón ✕.
+  const [esTactil] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+  )
 
   // Buscadores de cliente/servicio — mismo patrón que el carrito de
   // atenciones de Mi Panel: precargan todo al enfocar, ícono que se
   // convierte en "✕" en cuanto hay texto, y blur manual al elegir para que
   // no se quede el borde de foco encendido con la lista ya cerrada.
   const [busquedaCliente, setBusquedaCliente] = useState(() =>
-    esEdicion ? (cita.clientes?.nombre ?? '') : '',
+    esEdicion ? (cita.clientes?.nombre ?? cita.cliente_nombre_referencia ?? '') : '',
+  )
+  // Cliente "de referencia" (sin guardar en Clientes) — mutuamente
+  // excluyente con formulario.clienteId: escribir de nuevo en el buscador
+  // o elegir un cliente real limpia esto.
+  const [clienteReferencia, setClienteReferencia] = useState(() =>
+    esEdicion && !cita.cliente_id ? (cita.cliente_nombre_referencia ?? '') : '',
   )
   const [mostrarSugerenciasCliente, setMostrarSugerenciasCliente] = useState(false)
-  const [busquedaServicio, setBusquedaServicio] = useState(() =>
-    esEdicion ? (cita.servicios?.nombre ?? '') : '',
-  )
+  const [busquedaServicio, setBusquedaServicio] = useState('')
   const [mostrarSugerenciasServicio, setMostrarSugerenciasServicio] = useState(false)
   const inputClienteRef = useRef(null)
   const inputServicioRef = useRef(null)
+
+  const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
+  const [modalServicioNuevoAbierto, setModalServicioNuevoAbierto] = useState(false)
 
   useCerrarConEscape(onCerrar)
 
   useEffect(() => {
     async function cargarListas() {
       const [resServicios, resClientes, resAsistentes] = await Promise.all([
-        supabase.from('servicios').select('id, nombre, duracion_min').order('nombre'),
+        supabase.from('servicios').select('id, nombre, precio, duracion_min, categoria').order('nombre'),
         supabase.from('clientes').select('id, nombre').order('nombre'),
-        supabase
-          .from('asistentes')
-          .select('id, nombres_completos, usuario_id')
-          .eq('activo', true)
-          .order('nombres_completos'),
+        // RPC en vez de leer la tabla directo: ya excluye a quien esté
+        // vinculado a una cuenta CAJERA (no atiende), cosa que un no-admin
+        // no podría filtrar por su cuenta (la RLS de usuarios no le deja
+        // ver el rol de otras cuentas).
+        supabase.rpc('asistentes_para_citas'),
       ])
       setServicios(resServicios.data ?? [])
       setClientes(resClientes.data ?? [])
@@ -99,16 +226,19 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
     cargarListas()
   }, [])
 
-  // Una asistente solo agenda para sí misma — su propia ficha se fija en
-  // cuanto la lista carga, sin mostrarle un selector con nombres ajenos
-  // (la RLS de citas la rechazaría igual, pero acá evitamos el intento).
+  // Cajera y asistente pueden agendarle una cita a cualquier profesional
+  // (elegible desde el selector), pero si quien agenda tiene su propia
+  // ficha se la proponemos de entrada — solo una precarga cómoda, no un
+  // bloqueo: se puede cambiar antes de guardar.
   const miFicha = asistentes.find((a) => a.usuario_id === usuario.id) ?? null
   useEffect(() => {
-    if (rol !== 'ASISTENTE' || esEdicion || !miFicha) return
+    if (esEdicion || !miFicha) return
     setFormulario((anterior) =>
       anterior.asistenteId ? anterior : { ...anterior, asistenteId: miFicha.id },
     )
-  }, [rol, esEdicion, miFicha])
+  }, [esEdicion, miFicha])
+
+  const categoriasExistentes = [...new Set(servicios.map((s) => s.categoria).filter(Boolean))].sort()
 
   const sugerenciasCliente = clientes.filter((cliente) =>
     cliente.nombre.toLowerCase().includes(busquedaCliente.trim().toLowerCase()),
@@ -122,27 +252,75 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
 
   function seleccionarCliente(cliente) {
     actualizarCampo('clienteId', cliente.id)
+    setClienteReferencia('')
     setBusquedaCliente(cliente.nombre)
     setMostrarSugerenciasCliente(false)
     inputClienteRef.current?.blur()
   }
 
-  function seleccionarServicio(servicioId) {
+  function usarClienteReferencia() {
+    actualizarCampo('clienteId', '')
+    setClienteReferencia(busquedaCliente.trim())
+    setMostrarSugerenciasCliente(false)
+    inputClienteRef.current?.blur()
+  }
+
+  function manejarClienteCreado(clienteCreado) {
+    setModalClienteNuevoAbierto(false)
+    if (!clienteCreado) return
+    setClientes((anterior) =>
+      [...anterior, clienteCreado].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    )
+    seleccionarCliente(clienteCreado)
+  }
+
+  function agregarLineaServicio(servicioId) {
     const servicio = servicios.find((s) => s.id === servicioId)
-    setFormulario((anterior) => ({
+    if (!servicio) return
+    setLineas((anterior) => [
       ...anterior,
-      servicioId,
-      duracionMin: servicio?.duracion_min ? String(servicio.duracion_min) : anterior.duracionMin,
-    }))
-    setBusquedaServicio(servicio?.nombre ?? '')
+      {
+        id: `${servicioId}-${Date.now()}`,
+        servicioId,
+        nombre: servicio.nombre,
+        duracionMin: servicio.duracion_min ? String(servicio.duracion_min) : '30',
+        precio: servicio.precio != null ? String(servicio.precio) : '',
+      },
+    ])
+    setBusquedaServicio('')
     setMostrarSugerenciasServicio(false)
     inputServicioRef.current?.blur()
+  }
+
+  function manejarServicioCreado(servicioCreado) {
+    setModalServicioNuevoAbierto(false)
+    if (!servicioCreado) return
+    setServicios((anterior) =>
+      [...anterior, servicioCreado].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    )
+    agregarLineaServicio(servicioCreado.id)
+  }
+
+  function quitarLinea(id) {
+    setLineas((anterior) => anterior.filter((linea) => linea.id !== id))
+  }
+
+  function actualizarDuracionLinea(id, duracionMin) {
+    setLineas((anterior) =>
+      anterior.map((linea) => (linea.id === id ? { ...linea, duracionMin } : linea)),
+    )
+  }
+
+  function actualizarPrecioLinea(id, precio) {
+    setLineas((anterior) =>
+      anterior.map((linea) => (linea.id === id ? { ...linea, precio } : linea)),
+    )
   }
 
   async function guardar(evento) {
     evento.preventDefault()
 
-    const mensajeError = validar(formulario, puedeElegirAsistente)
+    const mensajeError = validar(formulario, lineas, puedeElegirAsistente, clienteReferencia)
     if (mensajeError) {
       setError(mensajeError)
       return
@@ -151,34 +329,81 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
     setGuardando(true)
     setError(null)
 
-    const datos = {
-      cliente_id: formulario.clienteId,
-      servicio_id: formulario.servicioId,
+    const datosCita = {
+      cliente_id: formulario.clienteId || null,
+      cliente_nombre_referencia: formulario.clienteId ? null : clienteReferencia.trim() || null,
       asistente_id: formulario.asistenteId || null,
       fecha_hora: deInputDatetimeLima(formulario.fechaHora).toISOString(),
-      duracion_min: parseInt(formulario.duracionMin, 10),
       nota: formulario.nota.trim() || null,
     }
 
-    const { error: errorGuardado } = esEdicion
-      ? await supabase.from('citas').update(datos).eq('id', cita.id)
-      : await supabase.from('citas').insert({ ...datos, creado_por: usuario.id })
+    let citaId = esEdicion ? cita.id : null
+
+    if (esEdicion) {
+      const { error: errorCita } = await supabase.from('citas').update(datosCita).eq('id', citaId)
+      if (errorCita) {
+        setGuardando(false)
+        setError(
+          errorCita.message === MENSAJE_NEGOCIO_CERRADO
+            ? MENSAJE_NEGOCIO_CERRADO
+            : 'No se pudo guardar la cita. Intenta de nuevo.',
+        )
+        return
+      }
+      // Se reemplazan todas las líneas — más simple que diffear cuáles
+      // cambiaron, y una cita editada nunca tiene servicios ya completados
+      // sueltos (si tuviera alguno completado, la cita entera ya estaría
+      // en estado COMPLETADA y no pasaría por acá).
+      const { error: errorBorrar } = await supabase
+        .from('cita_servicios')
+        .delete()
+        .eq('cita_id', citaId)
+      if (errorBorrar) {
+        setGuardando(false)
+        setError('No se pudo actualizar los servicios de la cita. Intenta de nuevo.')
+        return
+      }
+    } else {
+      const { data: citaCreada, error: errorCita } = await supabase
+        .from('citas')
+        .insert({ ...datosCita, creado_por: usuario.id })
+        .select()
+        .single()
+      if (errorCita) {
+        setGuardando(false)
+        setError(
+          errorCita.message === MENSAJE_NEGOCIO_CERRADO
+            ? MENSAJE_NEGOCIO_CERRADO
+            : 'No se pudo guardar la cita. Intenta de nuevo.',
+        )
+        return
+      }
+      citaId = citaCreada.id
+    }
+
+    const { error: errorLineas } = await supabase.from('cita_servicios').insert(
+      lineas.map((linea) => ({
+        cita_id: citaId,
+        servicio_id: linea.servicioId,
+        duracion_min: parseInt(linea.duracionMin, 10),
+        precio: parseFloat(linea.precio),
+      })),
+    )
 
     setGuardando(false)
 
-    if (errorGuardado) {
-      setError(
-        errorGuardado.message === MENSAJE_NEGOCIO_CERRADO
-          ? MENSAJE_NEGOCIO_CERRADO
-          : 'No se pudo guardar la cita. Intenta de nuevo.',
-      )
+    if (errorLineas) {
+      setError('No se pudieron guardar los servicios de la cita. Intenta de nuevo.')
       return
     }
 
     onGuardado()
   }
 
-  const puedeElegirAsistente = rol === 'ADMINISTRADOR'
+  // Antes solo el admin podía elegir/reasignar el selector completo de
+  // asistentes; ahora cajera y asistente también pueden reasignar
+  // cualquier cita, así que los 3 roles ven el mismo selector.
+  const puedeElegirAsistente = true
 
   return (
     <div
@@ -214,6 +439,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                   onChange={(evento) => {
                     setBusquedaCliente(evento.target.value)
                     actualizarCampo('clienteId', '')
+                    setClienteReferencia('')
                     setMostrarSugerenciasCliente(true)
                   }}
                   onFocus={() => setMostrarSugerenciasCliente(true)}
@@ -227,6 +453,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                     onClick={() => {
                       setBusquedaCliente('')
                       actualizarCampo('clienteId', '')
+                      setClienteReferencia('')
                     }}
                     aria-label="Limpiar búsqueda"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
@@ -237,7 +464,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                   <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
                 )}
 
-                {mostrarSugerenciasCliente && sugerenciasCliente.length > 0 && (
+                {mostrarSugerenciasCliente && (sugerenciasCliente.length > 0 || busquedaCliente.trim()) && (
                   <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
                     {sugerenciasCliente.map((cliente) => (
                       <button
@@ -250,17 +477,48 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                         <span className="truncate">{cliente.nombre}</span>
                       </button>
                     ))}
+                    {busquedaCliente.trim() && (
+                      <>
+                        <button
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={usarClienteReferencia}
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink/70 transition-colors hover:bg-surface-3 ${
+                            sugerenciasCliente.length > 0 ? 'border-t border-border' : ''
+                          }`}
+                        >
+                          <UserPlus className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            Usar "{busquedaCliente.trim()}" (referencia, sin guardar)
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={() => {
+                            setMostrarSugerenciasCliente(false)
+                            setModalClienteNuevoAbierto(true)
+                          }}
+                          className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3"
+                        >
+                          <UserRoundPlus className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            Registrar "{busquedaCliente.trim()}" como cliente nuevo
+                          </span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
             <div>
-              <Etiqueta obligatorio htmlFor={`${idBase}-servicio`}>Servicio</Etiqueta>
+              <Etiqueta htmlFor={`${idBase}-agregar-servicio`}>Agregar servicio</Etiqueta>
               <div className="relative">
                 <input
                   ref={inputServicioRef}
-                  id={`${idBase}-servicio`}
+                  id={`${idBase}-agregar-servicio`}
                   type="search"
                   autoComplete="off"
                   autoCorrect="off"
@@ -269,7 +527,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                   value={busquedaServicio}
                   onChange={(evento) => {
                     setBusquedaServicio(evento.target.value)
-                    actualizarCampo('servicioId', '')
                     setMostrarSugerenciasServicio(true)
                   }}
                   onFocus={() => setMostrarSugerenciasServicio(true)}
@@ -280,10 +537,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                 {busquedaServicio ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      setBusquedaServicio('')
-                      actualizarCampo('servicioId', '')
-                    }}
+                    onClick={() => setBusquedaServicio('')}
                     aria-label="Limpiar búsqueda"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
                   >
@@ -293,20 +547,65 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                   <Scissors className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
                 )}
 
-                {mostrarSugerenciasServicio && sugerenciasServicio.length > 0 && (
-                  <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                    {sugerenciasServicio.map((servicio) => (
-                      <button
-                        key={servicio.id}
-                        type="button"
-                        onMouseDown={(evento) => evento.preventDefault()}
-                        onClick={() => seleccionarServicio(servicio.id)}
-                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
-                      >
-                        <span className="truncate">{servicio.nombre}</span>
-                      </button>
-                    ))}
+                {mostrarSugerenciasServicio &&
+                  (sugerenciasServicio.length > 0 || busquedaServicio.trim()) && (
+                    <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
+                      {sugerenciasServicio.map((servicio) => (
+                        <button
+                          key={servicio.id}
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={() => agregarLineaServicio(servicio.id)}
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
+                        >
+                          <span className="truncate">{servicio.nombre}</span>
+                          {servicio.duracion_min && (
+                            <span className="shrink-0 font-mono text-xs text-ink/60">
+                              {servicio.duracion_min} min
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                      {busquedaServicio.trim() && (
+                        <button
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={() => {
+                            setMostrarSugerenciasServicio(false)
+                            setModalServicioNuevoAbierto(true)
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3 ${
+                            sugerenciasServicio.length > 0 ? 'border-t border-border' : ''
+                          }`}
+                        >
+                          <PlusCircle className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            Crear servicio "{busquedaServicio.trim()}"
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border">
+              <div className="max-h-[220px] divide-y divide-border overflow-y-auto">
+                {lineas.length === 0 ? (
+                  <div className="flex items-center justify-center py-6">
+                    <p className="text-sm text-ink/40">Sin servicios</p>
                   </div>
+                ) : (
+                  lineas.map((linea) => (
+                    <FilaLineaCita
+                      key={linea.id}
+                      linea={linea}
+                      esTactil={esTactil}
+                      onCambiarPrecio={(precio) => actualizarPrecioLinea(linea.id, precio)}
+                      onCambiarDuracion={(duracionMin) => actualizarDuracionLinea(linea.id, duracionMin)}
+                      onQuitar={() => quitarLinea(linea.id)}
+                    />
+                  ))
                 )}
               </div>
             </div>
@@ -316,19 +615,27 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                 Asistente
               </Etiqueta>
               {puedeElegirAsistente ? (
-                <select
-                  id={`${idBase}-asistente`}
-                  value={formulario.asistenteId}
-                  onChange={(evento) => actualizarCampo('asistenteId', evento.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
-                >
-                  <option value="">{usuario.nombre_completo}</option>
-                  {asistentes.map((asistente) => (
-                    <option key={asistente.id} value={asistente.id}>
-                      {asistente.nombres_completos}
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    id={`${idBase}-asistente`}
+                    value={formulario.asistenteId}
+                    onChange={(evento) => actualizarCampo('asistenteId', evento.target.value)}
+                    className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+                  >
+                    <option value="">Asistente pendiente</option>
+                    {asistentes.map((asistente) => (
+                      <option key={asistente.id} value={asistente.id}>
+                        {asistente.nombres_completos}
+                      </option>
+                    ))}
+                  </select>
+                  {!formulario.asistenteId && (
+                    <p className="mt-1 text-[11px] text-orange-400">
+                      Sin asistente todavía no se puede completar la cita — comunícate con el
+                      administrador para asignar una.
+                    </p>
+                  )}
+                </>
               ) : (
                 <p className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink/70">
                   {miFicha?.nombres_completos ?? 'Sin ficha de asistente vinculada'}
@@ -343,19 +650,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                 type="datetime-local"
                 value={formulario.fechaHora}
                 onChange={(evento) => actualizarCampo('fechaHora', evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
-              />
-            </div>
-
-            <div>
-              <Etiqueta obligatorio htmlFor={`${idBase}-duracion`}>Duración (minutos)</Etiqueta>
-              <input
-                id={`${idBase}-duracion`}
-                type="search"
-                inputMode="numeric"
-                autoComplete="new-password"
-                value={formulario.duracionMin}
-                onChange={(evento) => actualizarCampo('duracionMin', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
               />
             </div>
@@ -392,13 +686,35 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
           </button>
           <button
             type="submit"
-            disabled={guardando || cargandoListas || (!puedeElegirAsistente && !miFicha)}
+            disabled={
+              guardando ||
+              cargandoListas ||
+              lineas.length === 0 ||
+              (!formulario.clienteId && !clienteReferencia.trim())
+            }
             className="flex-1 rounded-lg bg-purple-300 py-2 text-sm font-semibold text-bg disabled:opacity-40"
           >
             {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Agendar'}
           </button>
         </div>
       </form>
+
+      {modalClienteNuevoAbierto && (
+        <ModalCliente
+          nombreInicial={busquedaCliente.trim()}
+          onCerrar={() => setModalClienteNuevoAbierto(false)}
+          onGuardado={manejarClienteCreado}
+        />
+      )}
+
+      {modalServicioNuevoAbierto && (
+        <ModalServicio
+          nombreInicial={busquedaServicio.trim()}
+          categoriasExistentes={categoriasExistentes}
+          onCerrar={() => setModalServicioNuevoAbierto(false)}
+          onGuardado={manejarServicioCreado}
+        />
+      )}
     </div>
   )
 }

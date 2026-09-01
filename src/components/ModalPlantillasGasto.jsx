@@ -114,6 +114,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
       <div
         ref={panelRef}
         onClick={(evento) => evento.stopPropagation()}
+        style={{ '--color-foco': 'var(--color-purple-300)' }}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         {modo === 'lista' && (

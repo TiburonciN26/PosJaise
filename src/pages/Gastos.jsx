@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Pencil, Trash2, Plus, ArrowBigDown, Download, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -80,8 +81,30 @@ export default function Gastos({ activo = true }) {
   const primeraCargaHecha = useRef(false)
   const panelEliminarRef = useRef(null)
 
+  // Selector de mes: mismo desplegable a medida que en Citas.jsx, en vez del
+  // <select> nativo (que en móvil abre el picker del sistema operativo).
+  const [mesAbierto, setMesAbierto] = useState(false)
+  const [posicionMes, setPosicionMes] = useState(null)
+  const botonMesRef = useRef(null)
+
   useCerrarConEscape(() => setGastoAEliminar(null), Boolean(gastoAEliminar))
   useModalA11y(panelEliminarRef, Boolean(gastoAEliminar))
+  useCerrarConEscape(() => setMesAbierto(false), mesAbierto)
+
+  function alternarMes() {
+    if (mesAbierto) {
+      setMesAbierto(false)
+      return
+    }
+    const rect = botonMesRef.current?.getBoundingClientRect()
+    if (rect) setPosicionMes({ top: rect.bottom + 4, left: rect.left })
+    setMesAbierto(true)
+  }
+
+  function seleccionarMes(indiceMes) {
+    setMes(indiceMes + 1)
+    setMesAbierto(false)
+  }
 
   async function cargarGastos(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -226,34 +249,79 @@ export default function Gastos({ activo = true }) {
   const totalVariables = sumarMontos(variables, (g) => g.monto)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div
+      className="animate-entrada-pestana p-3 pb-6"
+      style={{ '--color-foco': 'var(--color-purple-300)' }}
+    >
       {/* Resumen del período */}
       <div className="grid grid-cols-2 gap-3">
         <TarjetaResumen
           etiqueta="Gastos fijos"
           valor={formatearSoles(totalFijos)}
           claseValor="text-blue"
+          padding="p-3"
+          compacto
+          apilarCompacto
         />
         <TarjetaResumen
           etiqueta="Gastos variables"
           valor={formatearSoles(totalVariables)}
           claseValor="text-purple-300"
+          padding="p-3"
+          compacto
+          apilarCompacto
         />
       </div>
 
       {/* Filtro de período + Nuevo gasto: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto bg-bg px-3 py-2">
-        <select
-          value={mes}
-          onChange={(evento) => setMes(parseInt(evento.target.value, 10))}
-          className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-sm text-ink outline-none focus:border-purple-300 md:flex-none"
-        >
-          {MESES.map((nombreMes, indice) => (
-            <option key={nombreMes} value={indice + 1}>
-              {nombreMes}
-            </option>
-          ))}
-        </select>
+        <div className="relative min-w-0 flex-1 md:flex-none">
+          <button
+            ref={botonMesRef}
+            type="button"
+            onClick={alternarMes}
+            aria-expanded={mesAbierto}
+            className="flex w-full items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-sm text-ink outline-none focus:border-purple-300"
+          >
+            <span className="min-w-0 flex-1 truncate text-left">{MESES[mes - 1]}</span>
+            <ArrowBigDown
+              className={`h-3.5 w-3.5 shrink-0 text-ink/50 transition-transform duration-300 ${
+                mesAbierto ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {mesAbierto &&
+            posicionMes &&
+            createPortal(
+              <div
+                className="fixed inset-0 z-30 bg-black/60"
+                onClick={() => setMesAbierto(false)}
+              >
+                <div
+                  onClick={(evento) => evento.stopPropagation()}
+                  className="animate-entrada-dropdown fixed w-40 rounded-lg border border-border bg-surface-2 shadow-lg"
+                  style={{ top: posicionMes.top, left: posicionMes.left }}
+                >
+                  {MESES.map((nombreMes, indice) => (
+                    <button
+                      key={nombreMes}
+                      type="button"
+                      onClick={() => seleccionarMes(indice)}
+                      className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
+                        indice === mes - 1
+                          ? 'bg-purple-300/15 text-purple-300'
+                          : 'text-ink hover:bg-surface-3'
+                      }`}
+                    >
+                      {nombreMes}
+                    </button>
+                  ))}
+                </div>
+              </div>,
+              document.body,
+            )}
+        </div>
         <input
           type="search"
           inputMode="numeric"
@@ -329,20 +397,21 @@ export default function Gastos({ activo = true }) {
                   onClick={() => setFijosAbiertos((abierto) => !abierto)}
                   className="flex w-full items-center justify-between gap-2 p-3 text-left"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-ink">Gastos fijos</p>
-                      <span className="shrink-0 rounded-full border border-blue/40 bg-blue/15 px-2 py-0.5 text-[11px] font-medium text-blue">
-                        FIJO
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-medium text-ink">
+                          {MESES[mes - 1]} {anioDebounced}
+                        </p>
+                        <span className="shrink-0 rounded-full border border-blue/40 bg-blue/15 px-2 py-0.5 text-[11px] font-medium text-blue">
+                          FIJO
+                        </span>
+                      </div>
+                      <span className="shrink-0 font-mono text-sm text-purple-300">
+                        {formatearSoles(totalFijos)}
                       </span>
                     </div>
                     <p className="mt-1 truncate text-xs text-ink/60">{resumenNombres(fijos)}</p>
-                    <div className="mt-1.5 flex items-center gap-4 font-mono text-sm">
-                      <span className="text-purple-300">{formatearSoles(totalFijos)}</span>
-                      <span className="text-ink/60">
-                        {MESES[mes - 1]} {anioDebounced}
-                      </span>
-                    </div>
                   </div>
                   <ArrowBigDown
                     className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
@@ -392,20 +461,21 @@ export default function Gastos({ activo = true }) {
                   onClick={() => setVariablesAbiertos((abierto) => !abierto)}
                   className="flex w-full items-center justify-between gap-2 p-3 text-left"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-ink">Gastos variables</p>
-                      <span className="shrink-0 rounded-full border border-purple-300/40 bg-purple-300/15 px-2 py-0.5 text-[11px] font-medium text-purple-300">
-                        VARIABLE
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <p className="truncate text-sm font-medium text-ink">
+                          {MESES[mes - 1]} {anioDebounced}
+                        </p>
+                        <span className="shrink-0 rounded-full border border-purple-300/40 bg-purple-300/15 px-2 py-0.5 text-[11px] font-medium text-purple-300">
+                          VARIABLE
+                        </span>
+                      </div>
+                      <span className="shrink-0 font-mono text-sm text-purple-300">
+                        {formatearSoles(totalVariables)}
                       </span>
                     </div>
                     <p className="mt-1 truncate text-xs text-ink/60">{resumenNombres(variables)}</p>
-                    <div className="mt-1.5 flex items-center gap-4 font-mono text-sm">
-                      <span className="text-purple-300">{formatearSoles(totalVariables)}</span>
-                      <span className="text-ink/60">
-                        {MESES[mes - 1]} {anioDebounced}
-                      </span>
-                    </div>
                   </div>
                   <ArrowBigDown
                     className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${

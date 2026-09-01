@@ -97,6 +97,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
+        style={{ '--color-foco': 'var(--color-purple-300)' }}
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">

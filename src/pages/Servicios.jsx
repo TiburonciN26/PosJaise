@@ -80,7 +80,7 @@ export default function Servicios({ activo = true }) {
     if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('servicios')
-      .select('id, nombre, categoria, precio, duracion_min, activo')
+      .select('id, nombre, categoria, precio, duracion_min, activo, foto_url')
       .order('nombre')
 
     if (!vigente.actual) return

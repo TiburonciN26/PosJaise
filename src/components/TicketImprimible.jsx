@@ -116,6 +116,19 @@ export default function TicketImprimible({ detalle, items }) {
           </>
         )}
 
+        {detalle.monto_pos_tarjeta != null && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Digitado en POS</span>
+              <span>{formatearMonto(detalle.monto_pos_tarjeta)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Comisión tarjeta</span>
+              <span>{formatearMonto(detalle.monto_pos_tarjeta - detalle.total)}</span>
+            </div>
+          </>
+        )}
+
         <p style={{ margin: '8px 0 0', textAlign: 'center' }}>{separador}</p>
         <p style={{ margin: '2px 0 0', textAlign: 'center' }}>¡Gracias por su compra!</p>
       </div>
