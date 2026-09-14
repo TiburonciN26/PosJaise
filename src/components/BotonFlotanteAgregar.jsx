@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 const COLORES = {
   amber: 'bg-amber',
   morado: 'bg-purple-300',
+  rojo: 'bg-red',
 }
 
 export default function BotonFlotanteAgregar({ onClick, color = 'amber', label = 'Agregar' }) {

@@ -21,6 +21,7 @@ import {
   Timer,
   Calendar,
   Clock,
+  Globe,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -167,7 +168,8 @@ function formatearFechaCorta(fechaIso) {
 }
 
 const SELECT_CITAS =
-  'id, cliente_id, cliente_nombre_referencia, asistente_id, creado_por, fecha_hora, estado, nota, ' +
+  'id, cliente_id, cliente_nombre_referencia, asistente_id, creado_por, creado_por_cliente_web_id, ' +
+  'fecha_hora, estado, nota, adelanto, ' +
   'clientes(nombre), asistentes(nombres_completos, usuario_id), ' +
   'cita_servicios(id, servicio_id, duracion_min, precio, servicios(nombre, precio))'
 
@@ -203,6 +205,39 @@ function duracionTotalDe(cita) {
 // o no-asistió sin asistente ya no necesita resolverse.
 function tieneAsistentePendiente(cita) {
   return !cita.asistente_id && (cita.estado === 'PENDIENTE' || cita.estado === 'CONFIRMADA')
+}
+
+function tieneAdelanto(cita) {
+  return cita.adelanto != null && Number(cita.adelanto) > 0
+}
+
+// creado_por_cliente_web_id solo se llena cuando agendar_cita_web() (la
+// Web) crea la cita — nunca lo pisa el POS (ModalCita.jsx no lo toca) —
+// así que es el indicador confiable de "esto lo agendó el cliente solo".
+function esCitaWeb(cita) {
+  return Boolean(cita.creado_por_cliente_web_id)
+}
+
+// Mismo estilo que la cápsula "Cliente Web" de Clientes.jsx — misma idea,
+// distinto lugar (acá va sobre CITAS, no sobre la ficha del cliente).
+function CapsulaClienteWeb() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber/15 px-1.5 py-0.5 text-[10px] font-medium text-amber">
+      <Globe className="h-2.5 w-2.5" />
+      Cliente Web
+    </span>
+  )
+}
+
+// Diferencia a simple vista las citas con adelanto/abono ya dejado por el
+// cliente — misma forma de cápsula que CapsulaClienteWeb, en verde.
+function CapsulaAdelanto() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green/15 px-1.5 py-0.5 text-[10px] font-medium text-green">
+      <Coins className="h-2.5 w-2.5" />
+      Adelanto
+    </span>
+  )
 }
 
 export default function Citas({ activo = true }) {
@@ -588,7 +623,7 @@ export default function Citas({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
@@ -827,8 +862,10 @@ export default function Citas({ activo = true }) {
                       <p className="truncate text-sm text-ink">
                         {nombreClienteDe(cita)} · {resumenServiciosDe(cita)}
                       </p>
-                      <p className="font-mono text-xs text-ink/60">
+                      <p className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-ink/60">
                         {l.getUTCDate()} de {MESES[l.getUTCMonth()]} · {formatearHora(cita.fecha_hora)}
+                        {esCitaWeb(cita) && <CapsulaClienteWeb />}
+                        {tieneAdelanto(cita) && <CapsulaAdelanto />}
                       </p>
                     </div>
                     <span
@@ -843,9 +880,12 @@ export default function Citas({ activo = true }) {
         </div>
       ) : (
         <>
+          {/* lg: calendario y lista del día lado a lado (patrón de agenda de
+              escritorio) — en móvil sigue apilado, sin cambios. */}
+          <div className="lg:flex lg:items-start lg:gap-4">
           {/* Grilla mensual — deslizable con el dedo para pasar de mes */}
           <div
-            className="mt-4 touch-pan-y"
+            className="mt-4 touch-pan-y lg:w-[380px] lg:shrink-0"
             onPointerDown={manejarSwipeMesInicio}
             onPointerUp={manejarSwipeMesFin}
             onPointerCancel={manejarSwipeMesFin}
@@ -910,7 +950,7 @@ export default function Citas({ activo = true }) {
           </div>
 
           {/* Citas del día seleccionado */}
-          <div className="mt-4">
+          <div className="mt-4 lg:min-w-0 lg:flex-1">
             {!diaSeleccionado ? (
               <p className="py-8 text-center font-mono text-sm text-ink/60">
                 Selecciona un día para ver sus citas.
@@ -959,8 +999,10 @@ export default function Citas({ activo = true }) {
                               <p className="truncate text-sm text-ink">
                                 {nombreClienteDe(cita)} · {resumenServiciosDe(cita)}
                               </p>
-                              <p className="font-mono text-xs text-ink/60">
+                              <p className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-ink/60">
                                 {formatearHora(cita.fecha_hora)}
+                                {esCitaWeb(cita) && <CapsulaClienteWeb />}
+                                {tieneAdelanto(cita) && <CapsulaAdelanto />}
                               </p>
                             </div>
                             <span
@@ -975,6 +1017,7 @@ export default function Citas({ activo = true }) {
                 )}
               </div>
             )}
+          </div>
           </div>
         </>
       )}
@@ -1036,12 +1079,15 @@ export default function Citas({ activo = true }) {
               <h2 className="text-base font-semibold text-ink">
                 {nombreClienteDe(citaSeleccionada)}
               </h2>
-              <span
-                className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                  (ESTADOS[citaSeleccionada.estado] ?? ESTADOS.PENDIENTE).clase
-                }`}
-              >
-                {(ESTADOS[citaSeleccionada.estado] ?? ESTADOS.PENDIENTE).label}
+              <span className="flex shrink-0 items-center gap-1.5">
+                {esCitaWeb(citaSeleccionada) && <CapsulaClienteWeb />}
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                    (ESTADOS[citaSeleccionada.estado] ?? ESTADOS.PENDIENTE).clase
+                  }`}
+                >
+                  {(ESTADOS[citaSeleccionada.estado] ?? ESTADOS.PENDIENTE).label}
+                </span>
               </span>
             </div>
 
@@ -1085,6 +1131,12 @@ export default function Citas({ activo = true }) {
               <p className="text-xs">
                 Agendado por: {nombresUsuarios.get(citaSeleccionada.creado_por) ?? '—'}
               </p>
+              {tieneAdelanto(citaSeleccionada) && (
+                <p className="flex items-center gap-1 text-xs text-green">
+                  <Coins className="h-3.5 w-3.5" />
+                  Adelanto: {formatearSoles(citaSeleccionada.adelanto)}
+                </p>
+              )}
               {citaSeleccionada.nota && (
                 <p className="rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs">
                   {citaSeleccionada.nota}

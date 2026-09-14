@@ -29,7 +29,9 @@ export default function TarjetaResumen({
   }
 
   return (
-    <div className={`rounded-lg border border-border bg-surface ${padding}`}>
+    <div
+      className={`rounded-lg border border-border bg-surface lg:flex lg:flex-col lg:items-center lg:text-center ${padding}`}
+    >
       <p className="text-xs text-ink/60">{etiqueta}</p>
       <p className={`mt-1 font-mono text-lg font-semibold sm:text-xl ${claseValor}`}>{valor}</p>
     </div>

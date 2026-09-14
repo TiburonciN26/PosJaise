@@ -8,6 +8,10 @@ import PortalCliente from './pages/PortalCliente.jsx'
 import InicioCliente from './pages/cliente/InicioCliente.jsx'
 import MiPerfil from './pages/cliente/MiPerfil.jsx'
 import ServiciosCliente from './pages/cliente/ServiciosCliente.jsx'
+import CitasCliente from './pages/cliente/CitasCliente.jsx'
+import HistorialCliente from './pages/cliente/HistorialCliente.jsx'
+import FidelizacionCliente from './pages/cliente/FidelizacionCliente.jsx'
+import OfertasCliente from './pages/cliente/OfertasCliente.jsx'
 
 // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
 // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
@@ -70,6 +74,10 @@ function App() {
               <Route path="inicio" element={<InicioCliente />} />
               <Route path="mi-perfil" element={<MiPerfil />} />
               <Route path="servicios" element={<ServiciosCliente />} />
+              <Route path="citas" element={<CitasCliente />} />
+              <Route path="historial" element={<HistorialCliente />} />
+              <Route path="fidelizacion" element={<FidelizacionCliente />} />
+              <Route path="ofertas" element={<OfertasCliente />} />
               <Route path="*" element={<Navigate to="/inicio" replace />} />
             </Route>
           ) : (

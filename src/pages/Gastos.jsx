@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, Trash2, Plus, ArrowBigDown, Download, Wallet } from 'lucide-react'
+import { Pencil, Trash2, Plus, ArrowBigDown, Download, Wallet, Ban, Clock } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -28,7 +29,70 @@ function resumenNombres(items) {
   return `${visibles.join(', ')} +${nombres.length - MAX_NOMBRES_VISIBLES} más`
 }
 
+function formatearFechaHora(fechaIso) {
+  return new Intl.DateTimeFormat('es-PE', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'America/Lima',
+  })
+    .format(new Date(fechaIso))
+    .replace('.', '')
+}
+
+// Misma fila para fijos/variables y para la tarjeta móvil/fila de tabla
+// desktop — las 4 versiones ya eran prácticamente idénticas. Eliminar
+// queda exclusivo del admin; cancelar/editar los ve cualquiera que llegue
+// a esta pantalla (solo ADMINISTRADOR o CAJERA, ver navegacion.js).
+function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
+  const cancelado = gasto.estado === 'CANCELADO'
+  return (
+    <div
+      className={`flex items-center justify-between gap-2 rounded-lg p-2.5 ${
+        cancelado ? 'border border-red/40 bg-red/5' : 'bg-surface-2'
+      }`}
+    >
+      <div className="min-w-0">
+        <p className={`truncate text-sm ${cancelado ? 'text-red line-through' : 'text-ink'}`}>
+          {gasto.nombre}
+        </p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+          <span className={`font-mono text-sm ${cancelado ? 'text-red/70' : 'text-purple-300'}`}>
+            {formatearSoles(gasto.monto)}
+          </span>
+          {gasto.creado_en && (
+            <span className="flex items-center gap-1 font-mono text-[11px] text-ink/40">
+              <Clock className="h-3 w-3" />
+              {formatearFechaHora(gasto.creado_en)}
+            </span>
+          )}
+          {cancelado && (
+            <span className="rounded-full bg-red/15 px-1.5 py-0.5 text-[10px] font-medium text-red">
+              Cancelado
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {!cancelado && (
+          <>
+            <BotonAccion icono={Pencil} texto="Editar" color="celeste" onClick={onEditar} />
+            <BotonAccion icono={Ban} texto="Cancelar" color="rojo" onClick={onCancelar} />
+          </>
+        )}
+        {esAdmin && (
+          <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" onClick={onEliminar} />
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Gastos({ activo = true }) {
+  const { usuario, rol } = useAuth()
+  const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
   // Mes/año iniciales en hora de Lima, no la del dispositivo (M3 de la 3ª
   // auditoría) — el resto de la app ya deriva el período con anioMesEnLima.
@@ -71,6 +135,8 @@ export default function Gastos({ activo = true }) {
   const [modalGasto, setModalGasto] = useState(null) // null | 'nuevo' | gasto
   const [gastoAEliminar, setGastoAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
+  const [gastoACancelar, setGastoACancelar] = useState(null)
+  const [cancelando, setCancelando] = useState(false)
 
   const [plantillas, setPlantillas] = useState([])
   const [mostrarPlantillas, setMostrarPlantillas] = useState(false)
@@ -80,6 +146,7 @@ export default function Gastos({ activo = true }) {
   const [variablesAbiertos, setVariablesAbiertos] = useState(false)
   const primeraCargaHecha = useRef(false)
   const panelEliminarRef = useRef(null)
+  const panelCancelarRef = useRef(null)
 
   // Selector de mes: mismo desplegable a medida que en Citas.jsx, en vez del
   // <select> nativo (que en móvil abre el picker del sistema operativo).
@@ -89,6 +156,8 @@ export default function Gastos({ activo = true }) {
 
   useCerrarConEscape(() => setGastoAEliminar(null), Boolean(gastoAEliminar))
   useModalA11y(panelEliminarRef, Boolean(gastoAEliminar))
+  useCerrarConEscape(() => setGastoACancelar(null), Boolean(gastoACancelar))
+  useModalA11y(panelCancelarRef, Boolean(gastoACancelar))
   useCerrarConEscape(() => setMesAbierto(false), mesAbierto)
 
   function alternarMes() {
@@ -110,7 +179,7 @@ export default function Gastos({ activo = true }) {
     if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('gastos')
-      .select('id, nombre, tipo, monto, mes, anio')
+      .select('id, nombre, tipo, monto, mes, anio, estado, creado_en')
       .eq('mes', mes)
       .eq('anio', anioDebounced)
       .order('nombre')
@@ -192,6 +261,7 @@ export default function Gastos({ activo = true }) {
       monto: p.monto,
       mes,
       anio: anioDebounced,
+      creado_por: usuario.id,
     }))
 
     const { error: errorInsercion } = await supabase.from('gastos').insert(filas)
@@ -231,6 +301,26 @@ export default function Gastos({ activo = true }) {
     cargarGastos()
   }
 
+  async function confirmarCancelar() {
+    if (!gastoACancelar) return
+
+    setCancelando(true)
+    const { error: errorCancelar } = await supabase
+      .from('gastos')
+      .update({ estado: 'CANCELADO' })
+      .eq('id', gastoACancelar.id)
+    setCancelando(false)
+    setGastoACancelar(null)
+
+    if (errorCancelar) {
+      mostrarToast('No se pudo cancelar el gasto.', 'error')
+      return
+    }
+
+    mostrarToast('Gasto cancelado.', 'exito')
+    cargarGastos()
+  }
+
   function exportarCSV() {
     if (gastos.length === 0) {
       mostrarToast('No hay gastos para exportar en este período.', 'info')
@@ -245,24 +335,35 @@ export default function Gastos({ activo = true }) {
   const fijos = gastos.filter((g) => g.tipo === 'FIJO')
   const variables = gastos.filter((g) => g.tipo === 'VARIABLE')
 
-  const totalFijos = sumarMontos(fijos, (g) => g.monto)
-  const totalVariables = sumarMontos(variables, (g) => g.monto)
+  // Cancelado no cuenta en el total (mismo criterio que Mi Panel/Citas/
+  // Ventas), pero sigue en la lista tachado — no desaparece.
+  const totalFijos = sumarMontos(
+    fijos.filter((g) => g.estado !== 'CANCELADO'),
+    (g) => g.monto,
+  )
+  const totalVariables = sumarMontos(
+    variables.filter((g) => g.estado !== 'CANCELADO'),
+    (g) => g.monto,
+  )
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
-      {/* Resumen del período */}
-      <div className="grid grid-cols-2 gap-3">
-        <TarjetaResumen
-          etiqueta="Gastos fijos"
-          valor={formatearSoles(totalFijos)}
-          claseValor="text-blue"
-          padding="p-3"
-          compacto
-          apilarCompacto
-        />
+      {/* Resumen del período — la cajera solo maneja caja chica (variable),
+          los gastos fijos del negocio no le corresponden ni para verlos. */}
+      <div className={`grid gap-3 ${esAdmin ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        {esAdmin && (
+          <TarjetaResumen
+            etiqueta="Gastos fijos"
+            valor={formatearSoles(totalFijos)}
+            claseValor="text-blue"
+            padding="p-3"
+            compacto
+            apilarCompacto
+          />
+        )}
         <TarjetaResumen
           etiqueta="Gastos variables"
           valor={formatearSoles(totalVariables)}
@@ -352,24 +453,27 @@ export default function Gastos({ activo = true }) {
         </button>
       </div>
 
-      {/* Gestión de plantillas de gastos fijos */}
-      <div className="mt-3 flex flex-nowrap gap-2 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setMostrarPlantillas(true)}
-          className="shrink-0 whitespace-nowrap rounded-lg border border-border-strong px-3 py-1.5 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300"
-        >
-          Plantillas de gastos fijos
-        </button>
-        <button
-          type="button"
-          onClick={generarGastosFijos}
-          disabled={generando}
-          className="shrink-0 whitespace-nowrap rounded-lg border border-blue/40 bg-blue/10 px-3 py-1.5 text-sm text-blue transition-colors hover:bg-blue/20 disabled:opacity-40"
-        >
-          {generando ? 'Creando...' : 'Crear gastos fijos del mes'}
-        </button>
-      </div>
+      {/* Gestión de plantillas de gastos fijos — exclusivo del admin, la
+          cajera no ve ni gestiona nada de gastos fijos. */}
+      {esAdmin && (
+        <div className="mt-3 flex flex-nowrap gap-2 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setMostrarPlantillas(true)}
+            className="shrink-0 whitespace-nowrap rounded-lg border border-border-strong px-3 py-1.5 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300"
+          >
+            Plantillas de gastos fijos
+          </button>
+          <button
+            type="button"
+            onClick={generarGastosFijos}
+            disabled={generando}
+            className="shrink-0 whitespace-nowrap rounded-lg border border-blue/40 bg-blue/10 px-3 py-1.5 text-sm text-blue transition-colors hover:bg-blue/20 disabled:opacity-40"
+          >
+            {generando ? 'Creando...' : 'Crear gastos fijos del mes'}
+          </button>
+        </div>
+      )}
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -423,31 +527,14 @@ export default function Gastos({ activo = true }) {
                 <CampoColapsable abierto={fijosAbiertos}>
                   <div className="space-y-2 border-t border-border p-3">
                     {fijos.map((gasto) => (
-                      <div
+                      <FilaGasto
                         key={gasto.id}
-                        className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-2.5"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm text-ink">{gasto.nombre}</p>
-                          <span className="font-mono text-sm text-purple-300">
-                            {formatearSoles(gasto.monto)}
-                          </span>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <BotonAccion
-                            icono={Pencil}
-                            texto="Editar"
-                            color="celeste"
-                            onClick={() => setModalGasto(gasto)}
-                          />
-                          <BotonAccion
-                            icono={Trash2}
-                            texto="Eliminar"
-                            color="rojo"
-                            onClick={() => setGastoAEliminar(gasto)}
-                          />
-                        </div>
-                      </div>
+                        gasto={gasto}
+                        esAdmin={esAdmin}
+                        onEditar={() => setModalGasto(gasto)}
+                        onCancelar={() => setGastoACancelar(gasto)}
+                        onEliminar={() => setGastoAEliminar(gasto)}
+                      />
                     ))}
                   </div>
                 </CampoColapsable>
@@ -487,31 +574,14 @@ export default function Gastos({ activo = true }) {
                 <CampoColapsable abierto={variablesAbiertos}>
                   <div className="space-y-2 border-t border-border p-3">
                     {variables.map((gasto) => (
-                      <div
+                      <FilaGasto
                         key={gasto.id}
-                        className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-2.5"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm text-ink">{gasto.nombre}</p>
-                          <span className="font-mono text-sm text-purple-300">
-                            {formatearSoles(gasto.monto)}
-                          </span>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <BotonAccion
-                            icono={Pencil}
-                            texto="Editar"
-                            color="celeste"
-                            onClick={() => setModalGasto(gasto)}
-                          />
-                          <BotonAccion
-                            icono={Trash2}
-                            texto="Eliminar"
-                            color="rojo"
-                            onClick={() => setGastoAEliminar(gasto)}
-                          />
-                        </div>
-                      </div>
+                        gasto={gasto}
+                        esAdmin={esAdmin}
+                        onEditar={() => setModalGasto(gasto)}
+                        onCancelar={() => setGastoACancelar(gasto)}
+                        onEliminar={() => setGastoAEliminar(gasto)}
+                      />
                     ))}
                   </div>
                 </CampoColapsable>
@@ -573,31 +643,14 @@ export default function Gastos({ activo = true }) {
                         <CampoColapsable abierto={fijosAbiertos}>
                           <div className="space-y-2 border-t border-border bg-bg p-3">
                             {fijos.map((gasto) => (
-                              <div
+                              <FilaGasto
                                 key={gasto.id}
-                                className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-2.5"
-                              >
-                                <span className="pl-2 text-sm text-ink">{gasto.nombre}</span>
-                                <div className="flex items-center gap-4">
-                                  <span className="font-mono text-sm text-purple-300">
-                                    {formatearSoles(gasto.monto)}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <BotonAccion
-                                      icono={Pencil}
-                                      texto="Editar"
-                                      color="celeste"
-                                      onClick={() => setModalGasto(gasto)}
-                                    />
-                                    <BotonAccion
-                                      icono={Trash2}
-                                      texto="Eliminar"
-                                      color="rojo"
-                                      onClick={() => setGastoAEliminar(gasto)}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                                gasto={gasto}
+                                esAdmin={esAdmin}
+                                onEditar={() => setModalGasto(gasto)}
+                                onCancelar={() => setGastoACancelar(gasto)}
+                                onEliminar={() => setGastoAEliminar(gasto)}
+                              />
                             ))}
                           </div>
                         </CampoColapsable>
@@ -647,31 +700,14 @@ export default function Gastos({ activo = true }) {
                         <CampoColapsable abierto={variablesAbiertos}>
                           <div className="space-y-2 border-t border-border bg-bg p-3">
                             {variables.map((gasto) => (
-                              <div
+                              <FilaGasto
                                 key={gasto.id}
-                                className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-2.5"
-                              >
-                                <span className="pl-2 text-sm text-ink">{gasto.nombre}</span>
-                                <div className="flex items-center gap-4">
-                                  <span className="font-mono text-sm text-purple-300">
-                                    {formatearSoles(gasto.monto)}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <BotonAccion
-                                      icono={Pencil}
-                                      texto="Editar"
-                                      color="celeste"
-                                      onClick={() => setModalGasto(gasto)}
-                                    />
-                                    <BotonAccion
-                                      icono={Trash2}
-                                      texto="Eliminar"
-                                      color="rojo"
-                                      onClick={() => setGastoAEliminar(gasto)}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                                gasto={gasto}
+                                esAdmin={esAdmin}
+                                onEditar={() => setModalGasto(gasto)}
+                                onCancelar={() => setGastoACancelar(gasto)}
+                                onEliminar={() => setGastoAEliminar(gasto)}
+                              />
                             ))}
                           </div>
                         </CampoColapsable>
@@ -696,6 +732,7 @@ export default function Gastos({ activo = true }) {
           gasto={modalGasto === 'nuevo' ? null : modalGasto}
           mesInicial={mes}
           anioInicial={anioDebounced}
+          usuarioId={usuario.id}
           onCerrar={() => setModalGasto(null)}
           onGuardado={() => {
             const esNuevo = modalGasto === 'nuevo'
@@ -737,6 +774,37 @@ export default function Gastos({ activo = true }) {
                 className="flex-1 rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10 disabled:opacity-40"
               >
                 {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gastoACancelar && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-base font-semibold text-ink">
+              ¿Cancelar "{gastoACancelar.nombre}"?
+            </h2>
+            <p className="mt-1 text-sm text-ink/60">
+              Quedará marcado como cancelado y no contará en el total del período.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setGastoACancelar(null)}
+                disabled={cancelando}
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={confirmarCancelar}
+                disabled={cancelando}
+                className="flex-1 rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10 disabled:opacity-40"
+              >
+                {cancelando ? 'Cancelando...' : 'Sí, cancelar'}
               </button>
             </div>
           </div>

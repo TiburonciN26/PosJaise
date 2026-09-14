@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
@@ -25,7 +25,7 @@ export default function Header({ menuAbierto, onToggleMenu }) {
             onClick={onToggleMenu}
             aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={menuAbierto}
-            className={`-ml-[7px] shrink-0 p-2.5 transition-colors duration-150 lg:hidden ${
+            className={`-ml-[7px] shrink-0 p-2.5 transition-colors duration-150 ${
               menuAbierto ? colorHamburguesaAbierta : 'text-ink'
             }`}
           >
@@ -34,7 +34,7 @@ export default function Header({ menuAbierto, onToggleMenu }) {
 
           <span
             key={pathname}
-            className="animate-deslizar-pestana flex min-w-0 items-center gap-1.5 truncate font-semibold text-ink lg:hidden"
+            className="animate-deslizar-pestana flex min-w-0 items-center gap-1.5 truncate font-semibold text-ink"
           >
             {seccionActual?.icono &&
               (seccionActual.animado ? (
@@ -52,41 +52,6 @@ export default function Header({ menuAbierto, onToggleMenu }) {
             disparador de nada. */}
         <MenuUsuario />
       </div>
-
-      <nav className="hidden border-t border-border lg:flex">
-        {seccionesVisibles.map((seccion) => {
-          const esRosa = seccion.tema === 'rosa'
-          const esRojo = seccion.tema === 'rojo'
-          return (
-            <NavLink
-              key={seccion.path}
-              to={seccion.path}
-              className={({ isActive }) =>
-                `flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-2 text-sm transition-colors ${
-                  esRojo
-                    ? isActive
-                      ? 'border-red text-red'
-                      : 'border-transparent text-red/70 hover:text-red'
-                    : esRosa
-                      ? isActive
-                        ? 'border-purple-300 text-purple-300'
-                        : 'border-transparent text-purple-300/70 hover:text-purple-300'
-                      : isActive
-                        ? 'border-amber text-amber'
-                        : 'border-transparent text-ink/60 hover:text-ink'
-                }`
-              }
-            >
-              {seccion.animado ? (
-                <IconoMartillo animando className="h-4 w-4 shrink-0" />
-              ) : (
-                <seccion.icono className="h-4 w-4 shrink-0" />
-              )}
-              {seccion.label}
-            </NavLink>
-          )
-        })}
-      </nav>
     </header>
   )
 }

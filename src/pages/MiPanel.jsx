@@ -78,8 +78,14 @@ function agruparPorDia(registros) {
   return Array.from(grupos.values())
 }
 
-function montoDeRegistro(registro, esAdmin) {
-  return esAdmin ? registro.precio : (registro.pago_asistente ?? 0)
+// mostrarPrecio: true muestra el precio del servicio (ingreso del
+// negocio), false muestra lo que le corresponde a la asistente por su %.
+// Antes esto era directo esAdmin (el admin siempre veía precio) — pero
+// viendo el perfil de UNA asistente puntual (paga por %), un admin
+// necesita ver su pago real, no el precio del servicio que cobró el
+// negocio (ver filtroEsAsistente).
+function montoDeRegistro(registro, mostrarPrecio) {
+  return mostrarPrecio ? registro.precio : (registro.pago_asistente ?? 0)
 }
 
 function nombreUsuarioDe(registro) {
@@ -126,6 +132,7 @@ export default function MiPanel({ activo = true }) {
   const [eliminando, setEliminando] = useState(false)
   const [registroACancelar, setRegistroACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
+  const [confirmandoId, setConfirmandoId] = useState(null)
   const [ocultarCancelados, setOcultarCancelados] = useState(true)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const [registrosAbiertos, setRegistrosAbiertos] = useState(() => new Set())
@@ -173,6 +180,14 @@ export default function MiPanel({ activo = true }) {
       ? usuarioFiltro
       : null
     : (usuario?.id ?? null)
+
+  // El admin filtrando por SU PROPIO nombre o "Todos" sigue viendo el
+  // precio del servicio (ingreso), como siempre — pero filtrando por una
+  // asistente puntual (paga por %, no por precio) necesita ver lo que de
+  // verdad le corresponde a ella, no el precio del servicio que cobró el
+  // negocio. asistentesUsuarios ya solo trae cuentas rol=ASISTENTE.
+  const filtroEsAsistente =
+    esAdmin && usuarioFiltro !== OPCION_TODOS && asistentesUsuarios.some((a) => a.id === usuarioFiltro)
 
   function construirConsultaRegistros(desde, hasta) {
     let consulta = supabase
@@ -226,7 +241,10 @@ export default function MiPanel({ activo = true }) {
       filaResumen
         ? {
             cantidad: filaResumen.cantidad ?? 0,
-            total: esAdmin ? (filaResumen.total_precio ?? 0) : (filaResumen.total_pago_asistente ?? 0),
+            total:
+              esAdmin && !filtroEsAsistente
+                ? (filaResumen.total_precio ?? 0)
+                : (filaResumen.total_pago_asistente ?? 0),
           }
         : RESUMEN_VACIO,
     )
@@ -330,6 +348,28 @@ export default function MiPanel({ activo = true }) {
     cargarRegistros()
   }
 
+  async function confirmarPendiente(registro) {
+    if (confirmandoId) return
+    setConfirmandoId(registro.id)
+
+    const { error: errorConfirmar } = await supabase
+      .from('registro_servicios')
+      .update({ estado: 'ACTIVO' })
+      .eq('id', registro.id)
+
+    setConfirmandoId(null)
+
+    if (errorConfirmar) {
+      // El mensaje del trigger (si todavía no hay % asignado) ya viene
+      // redactado para mostrarlo tal cual — mismo texto que usa Citas.
+      mostrarToast(errorConfirmar.message || 'No se pudo confirmar la atención.', 'error')
+      return
+    }
+
+    mostrarToast('Atención confirmada — ya cuenta en tus totales.', 'exito')
+    cargarRegistros()
+  }
+
   const registrosFiltrados = busqueda.trim()
     ? registros.filter((r) => {
         const texto = busqueda.trim().toLowerCase()
@@ -348,7 +388,7 @@ export default function MiPanel({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-3xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador: fijo arriba al hacer scroll, siempre debajo del header */}
@@ -403,7 +443,8 @@ export default function MiPanel({ activo = true }) {
 
         <div className="flex items-center gap-3">
           <span className="pr-[35px] text-ink/60">
-            Total: <span className="font-mono font-semibold text-green">{formatearSoles(resumen.total)}</span>
+            {filtroEsAsistente ? 'Pago asistente' : 'Total'}:{' '}
+            <span className="font-mono font-semibold text-green">{formatearSoles(resumen.total)}</span>
           </span>
 
           <button
@@ -447,16 +488,22 @@ export default function MiPanel({ activo = true }) {
         <div className="mt-4 space-y-3">
           {grupos.map((grupo) => {
             const abierto = diasAbiertos.has(grupo.clave)
-            const registrosActivosDia = grupo.registros.filter((r) => r.estado !== 'CANCELADO')
-            const totalDia = sumarMontos(registrosActivosDia, (r) => montoDeRegistro(r, esAdmin))
+            const registrosActivosDia = grupo.registros.filter((r) => r.estado === 'ACTIVO')
+            const totalDia = sumarMontos(registrosActivosDia, (r) =>
+              montoDeRegistro(r, esAdmin && !filtroEsAsistente),
+            )
+            const hayPendientesDia = grupo.registros.some((r) => r.estado === 'PENDIENTE_PORCENTAJE')
 
             return (
               <div
                 key={grupo.clave}
-                className={`border border-border bg-surface transition-colors duration-300 ${
+                className={`relative border border-border bg-surface transition-colors duration-300 ${
                   abierto ? 'rounded-none border-l-2 border-l-purple-300 bg-purple-300/5' : 'rounded-lg'
                 }`}
               >
+                {hayPendientesDia && (
+                  <span className="absolute -left-1.5 -top-1.5 z-10 h-3 w-3 rounded-full bg-purple-300" />
+                )}
                 <button
                   type="button"
                   onClick={() => alternarDia(grupo.clave)}
@@ -489,19 +536,25 @@ export default function MiPanel({ activo = true }) {
                       const tieneComision =
                         registro.porcentaje_aplicado != null && registro.pago_asistente != null
                       const cancelado = registro.estado === 'CANCELADO'
+                      const pendiente = registro.estado === 'PENDIENTE_PORCENTAJE'
                       // B4 de la 3ª auditoría: la RLS de registro_servicios_update
                       // solo deja a un no-admin cancelar atenciones de HOY (mismo
                       // criterio que es_hoy() en el servidor) — antes el botón
                       // aparecía igual en días pasados y el intento fallaba con
                       // un toast de error confuso.
                       const puedeCancelar = esAdmin || esHoyLima(new Date(registro.fecha))
+                      const puedeConfirmar = esAdmin || registro.usuario_id === usuario?.id
                       const registroAbierto = registrosAbiertos.has(registro.id)
 
                       return (
                         <div
                           key={registro.id}
                           className={`rounded-lg ${
-                            cancelado ? 'border border-red/40 bg-red/5' : 'bg-surface-2'
+                            cancelado
+                              ? 'border border-red/40 bg-red/5'
+                              : pendiente
+                                ? 'border border-orange-400/40 bg-orange-400/5'
+                                : 'bg-surface-2'
                           }`}
                         >
                           <div
@@ -516,7 +569,11 @@ export default function MiPanel({ activo = true }) {
                             <div className="flex items-center justify-between gap-2">
                               <p
                                 className={`min-w-0 flex-1 truncate text-sm font-medium ${
-                                  cancelado ? 'text-red line-through' : 'text-ink'
+                                  cancelado
+                                    ? 'text-red line-through'
+                                    : pendiente
+                                      ? 'text-orange-400'
+                                      : 'text-ink'
                                 }`}
                               >
                                 {registro.servicios?.nombre ?? 'Servicio eliminado'}
@@ -527,9 +584,13 @@ export default function MiPanel({ activo = true }) {
                                   <span className="rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
                                     Cancelada
                                   </span>
+                                ) : pendiente ? (
+                                  <span className="rounded-full bg-orange-400/15 px-2 py-0.5 text-[11px] font-medium text-orange-400">
+                                    Pendiente
+                                  </span>
                                 ) : (
                                   <span className="font-mono text-sm text-ink">
-                                    {formatearSoles(montoDeRegistro(registro, esAdmin))}
+                                    {formatearSoles(montoDeRegistro(registro, esAdmin && !filtroEsAsistente))}
                                   </span>
                                 )}
                                 <ArrowBigDown
@@ -560,7 +621,15 @@ export default function MiPanel({ activo = true }) {
 
                           <CampoColapsable abierto={registroAbierto}>
                             <div className="space-y-2 border-t border-border/60 px-2.5 pb-2.5 pt-2">
-                              {!cancelado && (
+                              {pendiente && (
+                                <div className="flex items-center gap-1.5 rounded-lg bg-orange-400/10 px-2.5 py-1.5 text-xs text-orange-400">
+                                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                  Pendiente de comisión — no cuenta en tus totales hasta que el
+                                  administrador asigne un % y se confirme.
+                                </div>
+                              )}
+
+                              {!cancelado && !pendiente && (
                                 <div className="flex flex-wrap items-center gap-3">
                                   {esAdmin && tieneComision && (
                                     <span className="rounded-full bg-green/15 px-2 py-0.5 font-mono text-xs font-semibold text-green">
@@ -592,6 +661,14 @@ export default function MiPanel({ activo = true }) {
                               {((!cancelado && (esAdmin || puedeCancelar)) ||
                                 (cancelado && esAdmin)) && (
                                 <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                  {pendiente && puedeConfirmar && (
+                                    <BotonAccion
+                                      icono={CheckCircle2}
+                                      texto="Confirmar"
+                                      color="verde"
+                                      onClick={() => confirmarPendiente(registro)}
+                                    />
+                                  )}
                                   {!cancelado && esAdmin && (
                                     <BotonAccion
                                       icono={Pencil}

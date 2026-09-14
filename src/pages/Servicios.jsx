@@ -144,7 +144,7 @@ export default function Servicios({ activo = true }) {
   )
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl">
       {/* Buscador + Nuevo servicio: fijos arriba al hacer scroll */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda

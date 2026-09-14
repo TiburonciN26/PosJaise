@@ -22,19 +22,21 @@ export default function BotonAccion({
     sinBorde ? '' : 'border border-border-strong'
   } ${COLORES_ICONO_ACCION[color]}`
 
+  // Solo ícono, en cualquier tamaño de pantalla — el texto queda como
+  // title (tooltip) para accesibilidad. Antes se revelaba como texto en
+  // desktop (lg:inline); pedido explícito: acciones de tabla/tarjeta con
+  // solo ícono también en desktop, igual que ya era en móvil.
   if (href) {
     return (
-      <a href={href} target={target} rel={rel} title={texto} className={clases}>
+      <a href={href} target={target} rel={rel} title={texto} aria-label={texto} className={clases}>
         <Icono className="h-3.5 w-3.5 shrink-0" />
-        <span className="hidden lg:inline">{texto}</span>
       </a>
     )
   }
 
   return (
-    <button type="button" onClick={onClick} title={texto} className={clases}>
+    <button type="button" onClick={onClick} title={texto} aria-label={texto} className={clases}>
       <Icono className="h-3.5 w-3.5 shrink-0" />
-      <span className="hidden lg:inline">{texto}</span>
     </button>
   )
 }

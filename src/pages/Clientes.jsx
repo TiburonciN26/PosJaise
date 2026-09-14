@@ -298,7 +298,7 @@ export default function Clientes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
@@ -351,7 +351,7 @@ export default function Clientes({ activo = true }) {
           tema="purple-300"
         />
       ) : (
-        <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
           {clientesOrdenados.map((cliente) => {
             const abierto = abiertos.has(cliente.id)
             const porcentaje = completitud(cliente)

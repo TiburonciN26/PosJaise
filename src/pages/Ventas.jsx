@@ -917,6 +917,10 @@ export default function Ventas({ activo = true }) {
     <div className="animate-entrada-pestana flex h-full flex-col">
       {/* Buscador / escáner de código de barras + Agregar servicio */}
       <div className="border-b border-border bg-surface p-3">
+        {/* lg: en monitores anchos, el buscador y la fila de cliente/servicio
+            se centran en vez de estirarse de borde a borde (la franja de
+            fondo sí sigue ocupando todo el ancho). */}
+        <div className="lg:mx-auto lg:w-full lg:max-w-5xl">
         <div className="relative flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink/60">
@@ -1093,10 +1097,11 @@ export default function Ventas({ activo = true }) {
             {errorCatalogo}
           </p>
         )}
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden p-3 pt-0 sm:overflow-y-auto">
-        <div className="flex h-full min-h-0 w-full flex-col gap-3 sm:h-auto lg:flex-row lg:items-start">
+        <div className="flex h-full min-h-0 w-full flex-col gap-3 sm:h-auto lg:mx-auto lg:max-w-5xl lg:flex-row lg:items-start">
           {/* Columna de ticket (fija en móvil el espacio disponible; crece en desktop) */}
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             {/* Zona de ticket: en móvil ocupa el espacio libre (entre header y
@@ -1161,7 +1166,7 @@ export default function Ventas({ activo = true }) {
               contenido no entra en pantallas muy chicas, se scrollea dentro
               del propio panel en vez de mandar los botones fuera de la vista. */}
           <div
-            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:w-[340px] lg:flex-none ${
+            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:w-[360px] lg:flex-none ${
               carritoExpandido ? 'translate-y-full pointer-events-none' : 'translate-y-0'
             }`}
           >
@@ -1351,7 +1356,7 @@ export default function Ventas({ activo = true }) {
                 type="button"
                 onClick={pedirCancelarVenta}
                 disabled={cobrando}
-                className={`flex-1 rounded-lg border bg-transparent py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
+                className={`flex-1 whitespace-nowrap rounded-lg border bg-transparent py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
                   carrito.length > 0
                     ? 'border-red text-red hover:bg-red/10'
                     : 'border-border-strong text-ink/60'
@@ -1363,7 +1368,7 @@ export default function Ventas({ activo = true }) {
                 type="button"
                 onClick={confirmarVenta}
                 disabled={!puedeCobrar || cobrando}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-base font-bold transition-colors sm:text-lg ${
+                className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg py-3 text-base font-bold transition-colors sm:text-lg lg:text-base ${
                   puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-surface-3 text-ink'
                 }`}
               >

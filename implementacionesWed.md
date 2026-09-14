@@ -258,6 +258,13 @@ salvo "Clientes web" en modo lectura que puede convenir abrirlo a CAJERA
 
 ## 5. Roadmap sugerido (orden de dependencia, no de facilidad)
 
+> Nota de numeración: `supabase/sql/` es una sola secuencia compartida
+> con las mejoras que se hacen del lado POS — no es exclusiva de la
+> Web. Antes de crear el próximo archivo, revisar `ls supabase/sql/`
+> para el número más alto real (no confiar en el último que aparece
+> acá) — ya pasó una vez que dos features en paralelo usaron el mismo
+> número (70-73 se repitieron y hubo que renumerar 74-77).
+
 1. ✅ **Mi Perfil + vínculo `clientes.cliente_web_id`** (§1, §2.2) —
    construido (SQL 63 a 67). Funciones básicas: nombre/teléfono/
    dirección/cumpleaños/foto, vínculo con confirmación, teléfono único,
@@ -274,13 +281,96 @@ salvo "Clientes web" en modo lectura que puede convenir abrirlo a CAJERA
    corazón de favorito y compartir por WhatsApp. El nombre del negocio en
    el header de la Web usa el mismo degradado dorado-blanco-rosa de esa
    referencia (solo eso del header, no su diseño completo).
-3. **Citas desde la web** (§2.3) — la pieza más compleja (choques de
-   horario, RLS por "es mi cita"), pero la de más valor de negocio.
-4. **Historial** (§2.4) — casi gratis una vez que existen citas
-   completadas y el vínculo del §1.
-5. **Fidelización** (§2.5) — necesita historial real para tener algo
-   que sumar.
-6. **Descuentos/Promociones** (§2.6) + su panel en Web POS (§4).
+3. ✅ **Citas desde la web** (§2.3) — construido (SQL 74-75).
+   Confirmado por el usuario funcionando de punta a punta (agendar →
+   verla en el propio calendario) después de los dos fixes de abajo.
+   - `estado_negocio` gana horario real: lunes a sábado, 10:00-13:00 y
+     15:00-20:30 (dos bloques, con el descanso de por medio) — expuesto
+     al cliente vía `horario_atencion()`.
+   - `citas.creado_por` pasa a ser opcional + `creado_por_cliente_web_id`
+     nuevo (mismo patrón que `cliente_id`/`cliente_nombre_referencia`
+     que ya convivían en esa tabla) — un cliente Web no tiene fila en
+     `usuarios`, no podía ser el autor de la cita como estaba antes.
+   - `horarios_disponibles_cita()`: calcula huecos libres de un
+     asistente en un día (respeta los 2 bloques — un servicio no puede
+     cruzar el descanso — y no se pisa con ninguna cita ya agendada de
+     ese asistente ese día). Toda la aritmética de fecha/hora pasa por
+     `at time zone 'America/Lima'`, mismo criterio que ya usa
+     `es_hoy()` — sin eso, los horarios habrían salido corridos ~5h.
+   - `agendar_cita_web()` / `cancelar_mi_cita_web()` /
+     `reprogramar_mi_cita_web()`: único punto de escritura, revalidan
+     todo en el servidor (nunca confían en lo que ya calculó el
+     navegador). Cancelar/reprogramar exige 3 horas de anticipación.
+   - **Decisión de alcance**: el cliente elige un asistente específico,
+     no hay "cualquiera disponible" — evita resolver auto-asignación en
+     esta primera versión.
+   - `/citas` en el portal: calendario mensual (mismo espíritu que el
+     de Citas del POS, pero solo con las citas propias), agendar nueva,
+     cancelar, reprogramar.
+   - **Corrección**: en Citas del POS, una cita agendada desde la Web
+     ahora muestra una cápsula "Cliente Web" (junto a la hora en las
+     listas, y junto al estado en el detalle) — se detecta por
+     `citas.creado_por_cliente_web_id`, que el POS nunca escribe.
+   - **Bug corregido (calendario)**: la clienta agendaba bien pero no
+     aparecía en su propio calendario — el calendario del cliente se
+     quedaba en el mes que ya tenía abierto en vez de saltar al mes de
+     la cita recién creada/reprogramada.
+   - **Bug corregido (RLS, más serio)**: aun mirando el mes correcto,
+     la clienta seguía sin ver NINGUNA cita propia — `SQL 76`.
+     `citas_select_propio_web`/`cita_servicios_select_propio_web`
+     resolvían "cuál es mi cliente" con una subconsulta directa contra
+     `clientes`, y esa subconsulta queda sujeta al RLS de `clientes`
+     (staff-only) — para la propia clienta siempre devolvía vacío, así
+     que la política nunca se cumplía. `agendar_cita_web()` sí
+     funcionaba (es `security definer`, se salta el RLS), pero el
+     `SELECT` de "mis citas" no. Se agregó `mi_cliente_id()` (mismo
+     patrón que `rol_actual()` ya usa para `usuarios`) para resolverlo
+     sin tropezar con el RLS de `clientes`. Verificado en vivo
+     suplantando la sesión real de la clienta: 0 filas antes del fix,
+     1 (la suya) después.
+4. ✅ **Historial** (§2.4) — construido (SQL 77). 100% lectura, sin RPC
+   de escritura. Fuente: `registro_servicios` (no `citas`) filtrado por
+   `mi_cliente_id()` — así aparece tanto lo agendado por la Web como una
+   atención registrada directo por el personal. De paso se cerró un
+   hueco pre-existente: `registro_servicios_select_disponibles` dejaba
+   ver a cualquier autenticado (sin chequeo de rol) los servicios
+   "activos y sin vender" de CUALQUIER cliente — ahora exige
+   `rol_actual() is not null`, verificado en vivo (staff sigue viendo
+   sus 17 registros, la clienta ve solo los suyos). "Tus citas" salió
+   del menú del avatar (redundante, Citas ya es pestaña propia) y en su
+   lugar quedó "Historial", como subpágina.
+5. ✅ **Fidelización** (§2.5) — construido (SQL 78), **alcance
+   reducido a propósito**: solo ver progreso, sin canje real todavía
+   (decisión del negocio — el canje en caja queda para una fase aparte,
+   no se tocó `Ventas.jsx`).
+   - Regla real del negocio: 1 sello por VISITA completada (no por
+     servicio — una visita con 2 servicios sigue siendo 1 sello). 5
+     sellos = 20% de descuento.
+   - Sin tabla de movimientos nueva: por ahora no hace falta (no hay
+     canjes que registrar todavía) — el progreso se calcula al vuelo en
+     `mi_fidelizacion()` a partir de `registro_servicios`, agrupando por
+     `(cliente_id, fecha)` distintos — confirmado con datos reales que
+     tanto `completar_cita()` como el registro manual de Mi Panel
+     insertan todas las líneas de una misma visita con el mismo `fecha`
+     (no `now()` por línea), así que ese agrupamiento sí equivale a
+     "una visita", verificado simulando 6 visitas (una de 2 líneas) →
+     dio 6 sellos totales, no 7.
+   - `/fidelizacion` como subpágina (menú del avatar): tarjeta de 5
+     sellos, aviso si ya tiene una recompensa disponible.
+6. ✅ **Descuentos/Promociones** (§2.6) — construido (SQL 79),
+   verificado en vivo (admin puede crear, cliente solo ve activas y
+   vigentes). El descuento de cumpleaños se queda solo en WhatsApp por
+   ahora — decisión del negocio, no se duplica acá.
+   - `/web` (POS) deja de ser el placeholder "Web... Próximamente" y
+     pasa a ser admin-only (antes también la veían Cajera/Asistente) —
+     panel administrativo de la pestaña Web, con Promociones como su
+     primera sección real.
+   - Sin agregar pestañas sueltas al menú: `/promociones` cuelga de
+     `/web` como "padre" (`navegacion.js`), mismo patrón que ya existe
+     entre Deudas y Clientes — en el menú lateral (móvil) se revela con
+     la flechita en vez de sumar un ítem más a una lista ya larga.
+   - `/ofertas` en el portal del cliente (menú del avatar → "Cupones y
+     ofertas", ya no placeholder) — solo lectura.
 7. **Referidos** (§2.8) — el que más depende de que todo lo anterior
    ya esté rodando.
 

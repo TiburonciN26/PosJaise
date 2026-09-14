@@ -223,7 +223,7 @@ export default function Asistentes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador + Nueva asistente: fijos arriba al hacer scroll, siempre debajo del header */}

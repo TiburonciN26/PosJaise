@@ -22,8 +22,10 @@ const Clientes = lazy(() => import('../pages/Clientes.jsx'))
 const Porcentajes = lazy(() => import('../pages/Porcentajes.jsx'))
 const Gastos = lazy(() => import('../pages/Gastos.jsx'))
 const Asistentes = lazy(() => import('../pages/Asistentes.jsx'))
+const Mobiliario = lazy(() => import('../pages/Mobiliario.jsx'))
 const Web = lazy(() => import('../pages/Web.jsx'))
 const Deudas = lazy(() => import('../pages/Deudas.jsx'))
+const Promociones = lazy(() => import('../pages/Promociones.jsx'))
 
 const PAGINAS = {
   '/ventas': Ventas,
@@ -39,8 +41,10 @@ const PAGINAS = {
   '/porcentajes': Porcentajes,
   '/gastos': Gastos,
   '/asistentes': Asistentes,
+  '/mobiliario': Mobiliario,
   '/web': Web,
   '/deudas': Deudas,
+  '/promociones': Promociones,
 }
 
 function puedeVer(seccion, rol) {

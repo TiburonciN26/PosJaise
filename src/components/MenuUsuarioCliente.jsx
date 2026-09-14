@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Bell,
-  CalendarClock,
+  History,
   LogOut,
   MapPin,
   Moon,
@@ -22,18 +22,20 @@ import { urlPublicaFoto } from '../lib/imagenes.js'
 
 const BUCKET_FOTOS = 'fotos-clientes'
 
-// Solo "Tu perfil" tiene funcionalidad real hoy — el resto son accesos
-// ya pensados para fases futuras del roadmap (ver implementacionesWed.md):
-// Tus citas → §2.3, Tus reseñas → futuro, Cupones y ofertas → §2.6,
-// Fidelización y puntos → §2.5, Direcciones → múltiples direcciones a
-// futuro (hoy Mi Perfil solo tiene una), Notificaciones y Seguridad de la
-// cuenta (cambiar contraseña) son transversales, sin fase asignada todavía.
+// "Tu perfil", "Historial", "Fidelización" y "Cupones y ofertas" ya
+// tienen pantalla real — el resto son accesos pensados para fases
+// futuras del roadmap (ver implementacionesWed.md): Tus reseñas →
+// futuro, Direcciones → múltiples direcciones a futuro (hoy Mi Perfil
+// solo tiene una), Notificaciones y Seguridad de la cuenta (cambiar
+// contraseña) son transversales, sin fase asignada todavía. "Tus citas"
+// no va acá: Citas ya es una pestaña real de la barra principal, tenerla
+// acá también sería redundante.
 const OPCIONES = [
   { icono: UserCircle, label: 'Tu perfil', ruta: '/mi-perfil' },
-  { icono: CalendarClock, label: 'Tus citas' },
+  { icono: History, label: 'Historial', ruta: '/historial' },
+  { icono: Wallet, label: 'Fidelización y puntos', ruta: '/fidelizacion' },
+  { icono: Ticket, label: 'Cupones y ofertas', ruta: '/ofertas' },
   { icono: Star, label: 'Tus reseñas' },
-  { icono: Ticket, label: 'Cupones y ofertas' },
-  { icono: Wallet, label: 'Fidelización y puntos' },
   { icono: MapPin, label: 'Direcciones' },
   { icono: Bell, label: 'Notificaciones' },
   { icono: ShieldCheck, label: 'Seguridad de la cuenta' },

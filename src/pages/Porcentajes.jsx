@@ -307,7 +307,7 @@ export default function Porcentajes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador: fijo arriba al hacer scroll */}
@@ -333,7 +333,7 @@ export default function Porcentajes({ activo = true }) {
       ) : filtrados.length === 0 ? (
         <EstadoVacio icono={Percent} mensaje="No se encontraron servicios." tema="purple-300" />
       ) : (
-        <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
           {filtradosOrdenados.map((servicio) => (
             <TarjetaServicioPorcentaje
               key={servicio.id}

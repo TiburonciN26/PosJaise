@@ -327,12 +327,13 @@ export default function ModalRegistroAtencion({
     return mapaPorcentajes[servicioId] ?? null
   }
 
-  // Mismo criterio estricto que antes tenía el formulario simple de
-  // completar cita: sin % configurado para algún servicio, no se deja
-  // completar (evita dejar pago_asistente en null sin que la asistente
-  // entienda por qué su ganancia quedó en 0).
-  const bloqueadoPorSinComisionCarrito =
-    esCompletarCita &&
+  // Antes solo bloqueaba completar una cita; ahora también bloquea
+  // registrar una atención nueva desde cero (esMultiple) — el servidor ya
+  // no deja guardar ACTIVO sin comisión resuelta (73_registro_pendiente_
+  // porcentaje.sql). Para esMultiple, el formulario ofrece un botón
+  // aparte para anotarlo igual como pendiente (ver guardarMultiple).
+  const hayLineaSinComision =
+    usaCarrito &&
     !cargandoAsistenteDueno &&
     Boolean(asistenteIdDueno) &&
     lineas.some((linea) => porcentajeParaServicio(linea.servicioId) == null)
@@ -468,8 +469,9 @@ export default function ModalRegistroAtencion({
     onGuardado()
   }
 
-  async function guardarMultiple(evento) {
+  async function guardarMultiple(evento, opciones = {}) {
     evento.preventDefault()
+    const comoNota = opciones.comoNota === true
 
     if (!clienteIdMultiple) {
       setError('Selecciona un cliente.')
@@ -490,8 +492,12 @@ export default function ModalRegistroAtencion({
         return
       }
     }
-    if (bloqueadoPorSinComisionCarrito) {
-      setError('Asigna un % de comisión para cada servicio antes de completar la cita.')
+    if (hayLineaSinComision && !comoNota) {
+      setError(
+        esCompletarCita
+          ? 'Asigna un % de comisión para cada servicio antes de completar la cita.'
+          : 'Asigna un % de comisión para cada servicio, o guárdalo como nota pendiente.',
+      )
       return
     }
 
@@ -539,6 +545,11 @@ export default function ModalRegistroAtencion({
         nota: notaMultiple.trim() || null,
         porcentaje_aplicado: porcentaje,
         pago_asistente: porcentaje != null ? (precioLinea * porcentaje) / 100 : null,
+        // Sin % resuelto, queda como nota pendiente (no cuenta en ningún
+        // total hasta que se le asigne un % y se confirme desde Mi Panel)
+        // — el resto de las líneas del mismo carrito se registran oficial
+        // si ya tienen su % resuelto, sin que una arrastre a la otra.
+        ...(porcentaje == null ? { estado: 'PENDIENTE_PORCENTAJE' } : {}),
       }
     })
 
@@ -755,7 +766,7 @@ export default function ModalRegistroAtencion({
                         porcentaje={porcentajeParaServicio(linea.servicioId)}
                         esTactil={esTactil}
                         permitirQuitar={!esCompletarCita}
-                        estricto={esCompletarCita}
+                        estricto
                         onCambiarPrecio={(precio) => actualizarPrecioLinea(linea.id, precio)}
                         onQuitar={() => quitarLinea(linea.id)}
                       />
@@ -812,7 +823,7 @@ export default function ModalRegistroAtencion({
                 cargandoListas ||
                 cargandoAsistenteDueno ||
                 lineas.length === 0 ||
-                bloqueadoPorSinComisionCarrito
+                hayLineaSinComision
               }
               className="flex-1 rounded-lg bg-purple-300 py-2 text-sm font-semibold text-bg disabled:opacity-40"
             >
@@ -823,6 +834,21 @@ export default function ModalRegistroAtencion({
                   : `Guardar${lineas.length > 1 ? ` (${lineas.length})` : ''}`}
             </button>
           </div>
+
+          {/* Solo para registro nuevo (no completar cita, que no admite
+              esta salida): sin % en alguna línea, se puede anotar igual
+              — no cuenta en los totales hasta que se confirme desde Mi
+              Panel con el % ya asignado. */}
+          {esMultiple && hayLineaSinComision && (
+            <button
+              type="button"
+              onClick={(evento) => guardarMultiple(evento, { comoNota: true })}
+              disabled={guardando || cargandoListas || cargandoAsistenteDueno || lineas.length === 0}
+              className="mt-2 w-full rounded-lg border border-orange-400/50 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-orange-400/10 disabled:opacity-40"
+            >
+              Anotar como pendiente (sin comisión por ahora)
+            </button>
+          )}
         </form>
       </div>
 

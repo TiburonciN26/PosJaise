@@ -224,7 +224,7 @@ export default function Inventario({ activo = true }) {
   const categoriasExistentes = resumen.categorias
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6">
+    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl">
       {/* Buscador + Nuevo producto: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -253,7 +253,7 @@ export default function Inventario({ activo = true }) {
         <div
           className={`rounded-lg border border-border bg-surface px-3 py-2 ${!esAdmin ? 'col-span-2 md:col-span-4' : ''}`}
         >
-          <p className="text-xs text-ink/60">Productos</p>
+          <p className="text-xs text-ink/60 lg:text-center">Productos</p>
           <div className="mt-1 grid grid-cols-3 gap-2 text-center">
             <button
               type="button"

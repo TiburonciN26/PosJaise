@@ -13,9 +13,16 @@ import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
 //
 // Mismo patrón responsive que Header.jsx/MenuLateral.jsx del POS: en
 // móvil, el hamburguesa abre un drawer (MenuLateralCliente) con las
-// pestañas principales, y la fila 2 del header muestra el título de dónde
-// estás en vez de la barra; en desktop no hay hamburguesa, la fila 2 es
-// la barra de pestañas de siempre.
+// pestañas principales; en desktop no hay hamburguesa, se ve la barra de
+// pestañas completa.
+//
+// La fila de "dónde estás" (título centrado, solo móvil) NO va dentro de
+// <header> — va como primer hijo del contenedor `relative` que también
+// tiene el drawer, así el overlay del drawer (absolute inset-0 ahí mismo)
+// la tapa al abrirse, igual que en el POS el drawer tapa el contenido de
+// la pestaña sin dejar ninguna franja de header de más asomando debajo.
+// Header real (fila 1: hamburguesa/logo/avatar) queda siempre visible,
+// nunca tapado.
 export default function PortalCliente() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -59,26 +66,8 @@ export default function PortalCliente() {
             <MenuUsuarioCliente />
           </div>
 
-          {/* Móvil: título de dónde estás (con flecha de volver si es una
-              subpágina, ver titulosSubpaginasCliente). Desktop: barra de
-              pestañas completa — ver clases lg: de cada bloque. */}
-          <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center border-t border-border px-2 py-2.5 lg:hidden">
-            {esPestanaPrincipal ? (
-              <span aria-hidden="true" />
-            ) : (
-              <button
-                type="button"
-                onClick={() => navigate('/inicio')}
-                aria-label="Volver"
-                className="flex h-9 w-9 items-center justify-center text-ink/70 transition-colors hover:text-amber"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            )}
-            <span className="text-center text-sm font-semibold text-ink">{tituloActual}</span>
-            <span aria-hidden="true" />
-          </div>
-
+          {/* Solo desktop: en móvil esta barra vive adentro del drawer
+              (MenuLateralCliente), no acá. */}
           <nav className="hidden border-t border-border lg:flex">
             {seccionesCliente.map((seccion) => (
               <NavLink
@@ -99,7 +88,28 @@ export default function PortalCliente() {
           </nav>
         </header>
 
-        <div className="relative flex flex-1 overflow-hidden">
+        <div className="relative flex flex-1 flex-col overflow-hidden">
+          {/* Título de dónde estás — solo móvil (con flecha de volver si es
+              una subpágina, ver titulosSubpaginasCliente). El drawer, más
+              abajo en el JSX pero superpuesto encima (absolute inset-0 de
+              este mismo contenedor), la tapa mientras está abierto. */}
+          <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center border-b border-border bg-surface px-2 py-2.5 lg:hidden">
+            {esPestanaPrincipal ? (
+              <span aria-hidden="true" />
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate('/inicio')}
+                aria-label="Volver"
+                className="flex h-9 w-9 items-center justify-center text-ink/70 transition-colors hover:text-amber"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+            <span className="text-center text-sm font-semibold text-ink">{tituloActual}</span>
+            <span aria-hidden="true" />
+          </div>
+
           <main className="flex flex-1 flex-col overflow-hidden">
             <Outlet />
           </main>

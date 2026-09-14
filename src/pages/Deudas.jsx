@@ -138,7 +138,7 @@ export default function Deudas({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador + filtro + Nueva deuda: fijos arriba al hacer scroll */}

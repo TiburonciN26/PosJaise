@@ -61,7 +61,7 @@ function validar(formulario) {
   return null
 }
 
-export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, onGuardado }) {
+export default function ModalGasto({ gasto, mesInicial, anioInicial, usuarioId, onCerrar, onGuardado }) {
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
@@ -102,7 +102,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, onCerrar, o
 
     const { error: errorGuardado } = esEdicion
       ? await supabase.from('gastos').update(datos).eq('id', gasto.id)
-      : await supabase.from('gastos').insert(datos)
+      : await supabase.from('gastos').insert({ ...datos, creado_por: usuarioId })
 
     setGuardando(false)
 

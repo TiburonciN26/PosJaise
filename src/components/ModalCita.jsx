@@ -116,6 +116,7 @@ function formularioVacio(fechaSugerida) {
     asistenteId: '',
     fechaHora: aInputDatetimeLima(fechaSugerida ?? new Date()),
     nota: '',
+    adelanto: '',
   }
 }
 
@@ -125,6 +126,7 @@ function formularioDesdeCita(cita) {
     asistenteId: cita.asistente_id ?? '',
     fechaHora: aInputDatetimeLima(new Date(cita.fecha_hora)),
     nota: cita.nota ?? '',
+    adelanto: cita.adelanto != null ? String(cita.adelanto) : '',
   }
 }
 
@@ -154,6 +156,11 @@ function validar(formulario, lineas, puedeElegirAsistente, clienteReferencia) {
     if (Number.isNaN(duracion) || duracion <= 0) return 'Hay una duración inválida en los servicios.'
     const precio = parseFloat(linea.precio)
     if (Number.isNaN(precio) || precio < 0) return 'Hay un precio inválido en los servicios.'
+  }
+
+  if (formulario.adelanto.trim()) {
+    const adelanto = parseFloat(formulario.adelanto)
+    if (Number.isNaN(adelanto) || adelanto < 0) return 'El adelanto no es válido.'
   }
 
   return null
@@ -335,6 +342,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
       asistente_id: formulario.asistenteId || null,
       fecha_hora: deInputDatetimeLima(formulario.fechaHora).toISOString(),
       nota: formulario.nota.trim() || null,
+      adelanto: formulario.adelanto.trim() ? parseFloat(formulario.adelanto) : null,
     }
 
     let citaId = esEdicion ? cita.id : null
@@ -652,6 +660,23 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                 onChange={(evento) => actualizarCampo('fechaHora', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
               />
+            </div>
+
+            <div>
+              <Etiqueta htmlFor={`${idBase}-adelanto`}>Adelanto o abono</Etiqueta>
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 py-2 focus-within:border-purple-300">
+                <span className="text-sm text-ink/50">S/</span>
+                <input
+                  id={`${idBase}-adelanto`}
+                  type="search"
+                  inputMode="decimal"
+                  autoComplete="new-password"
+                  value={formulario.adelanto}
+                  onChange={(evento) => actualizarCampo('adelanto', evento.target.value)}
+                  placeholder="Opcional"
+                  className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink/60"
+                />
+              </div>
             </div>
 
             <div>

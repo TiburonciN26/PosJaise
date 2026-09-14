@@ -1,4 +1,4 @@
-import { Home, Scissors } from 'lucide-react'
+import { CalendarClock, Home, Scissors } from 'lucide-react'
 
 // Pestañas de la barra del header (ver implementacionesWed.md). "Mi
 // Perfil" NO va acá — se entra desde el menú del avatar
@@ -9,6 +9,7 @@ import { Home, Scissors } from 'lucide-react'
 export const seccionesCliente = [
   { path: '/inicio', label: 'Inicio', icono: Home },
   { path: '/servicios', label: 'Servicios', icono: Scissors },
+  { path: '/citas', label: 'Citas', icono: CalendarClock },
 ]
 
 // Título que muestra PortalCliente en la segunda fila del header (con
@@ -18,4 +19,7 @@ export const seccionesCliente = [
 // vaya ganando su propia pantalla (hoy solo "Tu perfil" la tiene).
 export const titulosSubpaginasCliente = {
   '/mi-perfil': 'Mi Perfil',
+  '/historial': 'Historial',
+  '/fidelizacion': 'Fidelización',
+  '/ofertas': 'Cupones y ofertas',
 }

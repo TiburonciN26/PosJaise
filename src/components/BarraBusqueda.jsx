@@ -14,6 +14,10 @@ const TEMA_CLASES = {
     micHover:
       'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300',
   },
+  red: {
+    focus: 'focus:border-red',
+    micHover: 'border-dashed border-border-strong text-ink/70 hover:border-red hover:text-red',
+  },
 }
 
 // Icono de búsqueda + input + botón de limpiar + micrófono (voz), el bloque

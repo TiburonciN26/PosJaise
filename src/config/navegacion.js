@@ -14,6 +14,8 @@ import {
   CalendarClock,
   Hammer,
   HandCoins,
+  Ticket,
+  Armchair,
 } from 'lucide-react'
 
 export const secciones = [
@@ -58,14 +60,35 @@ export const secciones = [
     padre: '/clientes',
   },
   { path: '/porcentajes', label: 'Porcentajes', icono: Percent, roles: ['ADMINISTRADOR'], tema: 'rosa' },
-  { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ['ADMINISTRADOR', 'CAJERA'], tema: 'rosa' },
   { path: '/asistentes', label: 'Asistentes', icono: UserCog, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   {
+    path: '/mobiliario',
+    label: 'Mobiliario',
+    icono: Armchair,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rosa',
+  },
+  {
+    // Admin-only a propósito (antes también la veían Cajera/Asistente):
+    // esta pestaña pasa a ser el panel administrativo de la pestaña Web
+    // de clientes — Promociones es su primera sección real. En vez de
+    // agregar una pestaña nueva del menú por cada sección (la lista
+    // sería larguísima), cada una cuelga de "Web" como "padre" — mismo
+    // patrón que Deudas cuelga de Clientes.
     path: '/web',
-    label: 'Web... Próximamente',
+    label: 'Web',
     icono: Hammer,
-    roles: ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE'],
+    roles: ['ADMINISTRADOR'],
     tema: 'rojo',
     animado: true,
+  },
+  {
+    path: '/promociones',
+    label: 'Promociones',
+    icono: Ticket,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
   },
 ]
