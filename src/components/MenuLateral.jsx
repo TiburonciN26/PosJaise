@@ -72,7 +72,7 @@ export default function MenuLateral({ abierto, onCerrar }) {
       />
 
       <nav
-        className={`absolute inset-y-0 left-0 flex w-48 flex-col border-r border-border bg-surface py-3 transition-transform duration-300 ease-in-out ${
+        className={`absolute inset-y-0 left-0 flex w-48 flex-col overflow-y-auto overscroll-contain border-r border-border bg-surface py-3 transition-transform duration-300 ease-in-out ${
           abierto
             ? 'translate-x-0 shadow-[4px_0_16px_rgba(0,0,0,0.45)]'
             : '-translate-x-full pointer-events-none'

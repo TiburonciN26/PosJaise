@@ -22,10 +22,8 @@ export default function MenuLateralCliente({ abierto, onCerrar }) {
       />
 
       <nav
-        className={`absolute inset-y-0 left-0 flex w-48 flex-col border-r border-border bg-surface py-3 transition-transform duration-300 ease-in-out ${
-          abierto
-            ? 'translate-x-0 shadow-[4px_0_16px_rgba(0,0,0,0.45)]'
-            : '-translate-x-full pointer-events-none'
+        className={`absolute inset-y-0 left-0 flex w-48 flex-col border-r border-white/10 bg-[var(--lw-card)] py-3 transition-transform duration-300 ease-in-out ${
+          abierto ? 'translate-x-0 shadow-[4px_0_16px_rgba(0,0,0,0.45)]' : '-translate-x-full pointer-events-none'
         }`}
       >
         {seccionesCliente.map((seccion) => (
@@ -37,8 +35,8 @@ export default function MenuLateralCliente({ abierto, onCerrar }) {
             className={({ isActive }) =>
               `flex items-center gap-2.5 border-l-2 px-4 py-2.5 text-sm transition-colors duration-150 ${
                 isActive
-                  ? 'border-amber bg-surface-2 text-amber'
-                  : 'border-transparent text-ink/70 hover:bg-surface-2 hover:text-ink'
+                  ? 'border-[var(--lw-gold)] bg-white/5 text-[var(--lw-gold)]'
+                  : 'border-transparent text-white/60 hover:bg-white/5 hover:text-white'
               }`
             }
           >

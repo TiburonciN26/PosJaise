@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Ticket } from 'lucide-react'
+import { Gift, MapPin, PiggyBank, ShoppingBag, Star, Ticket } from 'lucide-react'
 import IconoMartillo from '../components/IconoMartillo.jsx'
 
 // Panel administrativo de la pestaña Web de clientes — ya no es un
@@ -19,8 +19,7 @@ export default function Web() {
         <IconoMartillo animando className="h-9 w-9 text-red" />
         <p className="text-base font-semibold text-red">Panel de la pestaña Web</p>
         <p className="max-w-xs text-sm text-ink/60">
-          Acá se administra todo lo que ven tus clientes en su portal. Todavía se está
-          construyendo — por ahora, Promociones.
+          Acá se administra todo lo que ven tus clientes en su portal.
         </p>
       </div>
 
@@ -30,6 +29,46 @@ export default function Web() {
       >
         <Ticket className="h-4 w-4" />
         Ir a Promociones
+      </Link>
+
+      <Link
+        to="/pedidos-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <ShoppingBag className="h-4 w-4" />
+        Ir a Pedidos Web
+      </Link>
+
+      <Link
+        to="/resenas-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <Star className="h-4 w-4" />
+        Ir a Reseñas
+      </Link>
+
+      <Link
+        to="/contacto-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <MapPin className="h-4 w-4" />
+        Ir a Contacto Web
+      </Link>
+
+      <Link
+        to="/puntos-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <PiggyBank className="h-4 w-4" />
+        Ir a Puntos Web
+      </Link>
+
+      <Link
+        to="/referidos-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <Gift className="h-4 w-4" />
+        Ir a Referidos Web
       </Link>
     </div>
   )

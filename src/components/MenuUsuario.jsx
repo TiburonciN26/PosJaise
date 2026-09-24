@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, ImagePlus, LogOut } from 'lucide-react'
+import { Camera, ImagePlus, LogOut, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -33,7 +33,7 @@ function iniciales(nombre) {
 // cerrar sesión. Reemplaza al logo+MenuEstadoNegocio: el logo pasa acá,
 // abajo del todo, como firma de marca en vez de disparador de un menú.
 export default function MenuUsuario() {
-  const { usuario, rol, cerrarSesion, actualizarFotoPerfil } = useAuth()
+  const { usuario, rol, cerrarSesion, actualizarFotoPerfil, entrarComoClienta } = useAuth()
   const { abierto: negocioAbierto, cambiarEstado } = useEstadoNegocio()
   const { mostrarToast } = useToast()
   const esAdmin = rol === 'ADMINISTRADOR'
@@ -44,6 +44,7 @@ export default function MenuUsuario() {
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   const [mostrarCamara, setMostrarCamara] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [entrandoComoClienta, setEntrandoComoClienta] = useState(false)
 
   useCerrarConEscape(() => setMenuAbierto(false), menuAbierto)
   useCerrarConEscape(() => setConfirmando(false), confirmando)
@@ -67,6 +68,21 @@ export default function MenuUsuario() {
     document.addEventListener('pointerdown', alClicFuera)
     return () => document.removeEventListener('pointerdown', alClicFuera)
   }, [menuAbierto])
+
+  // Personal que a veces también es clienta del salón (ver
+  // AuthContext.jsx, "entrarComoClienta") — misma sesión, misma cuenta,
+  // solo cambia qué árbol de rutas ve.
+  async function irAModoCliente() {
+    setEntrandoComoClienta(true)
+    try {
+      await entrarComoClienta()
+      setMenuAbierto(false)
+    } catch {
+      mostrarToast('No se pudo abrir tu perfil de clienta. Intenta de nuevo.', 'error')
+    } finally {
+      setEntrandoComoClienta(false)
+    }
+  }
 
   async function confirmarCambioEstado() {
     setCambiandoEstado(true)
@@ -241,6 +257,16 @@ export default function MenuUsuario() {
           <div className="mt-3 flex justify-center">
             <SwitchTema />
           </div>
+
+          <button
+            type="button"
+            onClick={irAModoCliente}
+            disabled={entrandoComoClienta}
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+          >
+            <User className="h-3.5 w-3.5" />
+            {entrandoComoClienta ? 'Abriendo...' : 'Mi perfil de clienta'}
+          </button>
 
           <button
             type="button"

@@ -5,7 +5,6 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { formatearFechaISO } from '../lib/fechas.js'
-import Etiqueta from './Etiqueta.jsx'
 
 const formatoHora = new Intl.DateTimeFormat('es-PE', {
   hour: 'numeric',
@@ -13,13 +12,25 @@ const formatoHora = new Intl.DateTimeFormat('es-PE', {
   timeZone: 'America/Lima',
 })
 
+// Etiqueta propia (no la Etiqueta.jsx compartida con el POS, que usa
+// text-ink/60 — un token atado al switch claro/oscuro global; acá el
+// fondo es siempre negro).
+function EtiquetaCampo({ children, obligatorio, htmlFor }) {
+  return (
+    <label htmlFor={htmlFor} className="mb-1 block text-xs text-white/50">
+      {children}
+      {obligatorio && <span className="text-red"> *</span>}
+    </label>
+  )
+}
+
 // Agendar cita desde la Web: servicios → asistente → fecha/hora → nota.
 // Sin pasos numerados — cada sección se habilita cuando la anterior ya
 // tiene algo elegido, así el flujo se lee de arriba a abajo sin modal
 // dentro de modal. El servidor (agendar_cita_web) revalida TODO de
 // nuevo — esto es solo para no dejar mandar un formulario a medio
 // llenar, no es la fuente de verdad de qué es válido.
-export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
+export default function ModalAgendarCitaCliente({ onCerrar, onAgendada, serviciosIniciales }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   useCerrarConEscape(onCerrar)
@@ -28,7 +39,11 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
   const [servicios, setServicios] = useState([])
   const [asistentes, setAsistentes] = useState([])
 
-  const [serviciosSeleccionados, setServiciosSeleccionados] = useState(() => new Set())
+  // Precargados desde el carrito (CarritoCliente.jsx → "Reservar cita")
+  // cuando corresponde — sigue siendo editable, no un valor fijo.
+  const [serviciosSeleccionados, setServiciosSeleccionados] = useState(
+    () => new Set(serviciosIniciales ?? []),
+  )
   const [asistenteId, setAsistenteId] = useState('')
   const [fecha, setFecha] = useState('')
   const [horarios, setHorarios] = useState([])
@@ -145,41 +160,43 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
       return
     }
 
-    onAgendada(horarioElegido)
+    onAgendada(horarioElegido, [...serviciosSeleccionados])
   }
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <div
         ref={panelRef}
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="lw-bar max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-white/10 p-5"
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-ink">Agendar cita</h2>
+          <h2 className="text-base font-semibold text-white">Agendar cita</h2>
           <button
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="-m-2 rounded-lg p-2 text-ink/60 transition-colors hover:bg-surface-2 hover:text-ink"
+            className="-m-2 rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {cargandoCatalogo ? (
-          <p className="mt-6 text-center text-sm text-ink/60">Cargando...</p>
+          <p className="mt-6 text-center text-sm text-white/50">Cargando...</p>
         ) : (
           <form onSubmit={confirmar} className="mt-4 space-y-4">
             <div>
-              <Etiqueta obligatorio>Servicios</Etiqueta>
+              <EtiquetaCampo obligatorio>Servicios</EtiquetaCampo>
               <div className="space-y-1.5">
                 {servicios.map((servicio) => {
                   const marcado = serviciosSeleccionados.has(servicio.id)
                   return (
                     <label
                       key={servicio.id}
-                      className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                        marcado ? 'border-amber bg-amber/10' : 'border-border hover:border-border-strong'
+                      className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm text-white transition-colors ${
+                        marcado
+                          ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)]/10'
+                          : 'border-white/15 hover:border-white/30'
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -187,11 +204,11 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
                           type="checkbox"
                           checked={marcado}
                           onChange={() => alternarServicio(servicio.id)}
-                          className="h-4 w-4 accent-amber"
+                          className="h-4 w-4 accent-[var(--lw-gold)]"
                         />
                         {servicio.nombre}
                       </span>
-                      <span className="shrink-0 font-mono text-xs text-ink/60">
+                      <span className="shrink-0 font-mono text-xs text-white/60">
                         {formatearSoles(servicio.precio)} · {servicio.duracion_min ?? 30} min
                       </span>
                     </label>
@@ -199,8 +216,11 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
                 })}
               </div>
               {serviciosSeleccionados.size > 0 && (
-                <p className="mt-1.5 text-right text-xs text-ink/60">
-                  Total: <span className="font-mono font-semibold text-amber">{formatearSoles(precioTotal)}</span>
+                <p className="mt-1.5 text-right text-xs text-white/60">
+                  Total:{' '}
+                  <span className="font-mono font-semibold text-[var(--lw-gold)]">
+                    {formatearSoles(precioTotal)}
+                  </span>
                   {' · '}
                   {duracionTotal} min
                 </p>
@@ -209,9 +229,9 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
 
             {serviciosSeleccionados.size > 0 && (
               <div>
-                <Etiqueta obligatorio htmlFor="cita-asistente">
+                <EtiquetaCampo obligatorio htmlFor="cita-asistente">
                   Asistente
-                </Etiqueta>
+                </EtiquetaCampo>
                 <select
                   id="cita-asistente"
                   value={asistenteId}
@@ -219,7 +239,7 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
                     setAsistenteId(evento.target.value)
                     setHorarioElegido(null)
                   }}
-                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
+                  className="w-full rounded-lg border border-transparent bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-[var(--lw-gold)]"
                 >
                   <option value="">Selecciona un asistente</option>
                   {asistentes.map((asistente) => (
@@ -233,27 +253,27 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
 
             {asistenteId && (
               <div>
-                <Etiqueta obligatorio htmlFor="cita-fecha">
+                <EtiquetaCampo obligatorio htmlFor="cita-fecha">
                   Fecha
-                </Etiqueta>
+                </EtiquetaCampo>
                 <input
                   id="cita-fecha"
                   type="date"
                   min={fechaMinima}
                   value={fecha}
                   onChange={(evento) => setFecha(evento.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
+                  className="w-full rounded-lg border border-transparent bg-white/5 px-3 py-2 font-mono text-sm text-white outline-none focus:border-[var(--lw-gold)]"
                 />
               </div>
             )}
 
             {fecha && (
               <div>
-                <Etiqueta obligatorio>Horario</Etiqueta>
+                <EtiquetaCampo obligatorio>Horario</EtiquetaCampo>
                 {cargandoHorarios ? (
-                  <p className="text-sm text-ink/60">Buscando horarios...</p>
+                  <p className="text-sm text-white/50">Buscando horarios...</p>
                 ) : horarios.length === 0 ? (
-                  <p className="text-sm text-ink/60">
+                  <p className="text-sm text-white/50">
                     No hay horarios disponibles ese día. Prueba con otra fecha.
                   </p>
                 ) : (
@@ -267,8 +287,8 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
                           onClick={() => setHorarioElegido(h.inicio)}
                           className={`rounded-lg border px-2 py-1.5 font-mono text-xs transition-colors ${
                             elegido
-                              ? 'border-amber bg-amber text-bg font-semibold'
-                              : 'border-border text-ink hover:border-border-strong'
+                              ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)] font-semibold text-black'
+                              : 'border-white/15 text-white hover:border-white/30'
                           }`}
                         >
                           {formatoHora.format(new Date(h.inicio))}
@@ -282,14 +302,14 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
 
             {horarioElegido && (
               <div>
-                <Etiqueta htmlFor="cita-nota">Nota (opcional)</Etiqueta>
+                <EtiquetaCampo htmlFor="cita-nota">Nota (opcional)</EtiquetaCampo>
                 <textarea
                   id="cita-nota"
                   value={nota}
                   onChange={(evento) => setNota(evento.target.value)}
                   placeholder="Algo que quieras avisar antes de tu cita"
                   rows={2}
-                  className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+                  className="w-full resize-none rounded-lg border border-transparent bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-white/40 focus:border-[var(--lw-gold)]"
                 />
               </div>
             )}
@@ -298,19 +318,19 @@ export default function ModalAgendarCitaCliente({ onCerrar, onAgendada }) {
               <p className="rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">{error}</p>
             )}
 
-            <div className="flex gap-2 border-t border-border pt-4">
+            <div className="flex gap-2 border-t border-white/10 pt-4">
               <button
                 type="button"
                 onClick={onCerrar}
                 disabled={guardando}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                className="flex-1 rounded-lg border border-white/15 py-2 text-sm text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:opacity-40"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={guardando || !horarioElegido}
-                className="flex-1 rounded-lg bg-amber py-2 text-sm font-semibold text-bg disabled:opacity-40"
+                className="flex-1 rounded-lg bg-[var(--lw-gold)] py-2 text-sm font-semibold text-black disabled:opacity-40"
               >
                 {guardando ? 'Agendando...' : 'Confirmar cita'}
               </button>

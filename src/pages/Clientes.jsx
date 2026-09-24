@@ -53,8 +53,15 @@ const OPCIONES_SEXO = [
 
 const TAMANO_PAGINA = 50
 const BUCKET_FOTOS_CLIENTES = 'fotos-clientes'
+// clientes_web(direcciones_cliente(...)) — un cliente Web puede guardar
+// varias direcciones (ver implementacionesWed.md §7.17/§7.18); se
+// embeben anidadas bajo clientes_web porque esa es la tabla con la que
+// direcciones_cliente tiene la FK real (cliente_web_id), no "clientes"
+// directamente. Un cliente cargado a mano (sin cuenta Web) no trae nada
+// acá — para esos se sigue mostrando la columna `direccion` de siempre.
 const SELECT_CLIENTES =
-  'id, nombre, telefono, sexo, direccion, cumpleanos, notas, foto_url, cliente_web_id, clientes_web(email)'
+  'id, nombre, telefono, sexo, direccion, cumpleanos, notas, foto_url, cliente_web_id, ' +
+  'clientes_web(email, direcciones_cliente(id, etiqueta, direccion, referencia, predeterminada))'
 
 // "Datos completos" no se puede pedir ordenado al servidor (no es una
 // columna, se calcula acá) — se sigue reordenando en el cliente sobre lo que
@@ -137,8 +144,16 @@ function AvatarCliente({ cliente }) {
   )
 }
 
+// Un cliente Web "tiene dirección" si guardó al menos una en la pestaña
+// Direcciones (§7.17) — la columna `direccion` sola ya no basta para
+// saberlo, esa solo se sigue llenando para clientes cargados a mano.
+function tieneDireccion(cliente) {
+  return Boolean(cliente.direccion) || (cliente.clientes_web?.direcciones_cliente?.length ?? 0) > 0
+}
+
 function completitud(cliente) {
-  const llenos = CAMPOS_OPCIONALES.filter((campo) => cliente[campo]).length
+  const otrosLlenos = CAMPOS_OPCIONALES.filter((campo) => campo !== 'direccion' && cliente[campo]).length
+  const llenos = otrosLlenos + (tieneDireccion(cliente) ? 1 : 0)
   return Math.round((llenos / CAMPOS_OPCIONALES.length) * 100)
 }
 
@@ -426,9 +441,21 @@ export default function Clientes({ activo = true }) {
                       <DatoCliente icono={Mail} mono>
                         {cliente.clientes_web?.email || 'Sin registrar'}
                       </DatoCliente>
-                      <DatoCliente icono={MapPin}>
-                        {cliente.direccion || 'Sin registrar'}
-                      </DatoCliente>
+                      {(cliente.clientes_web?.direcciones_cliente?.length ?? 0) > 0 ? (
+                        <div className="flex min-w-0 items-start gap-1.5 text-sm text-ink/60">
+                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink/60" />
+                          <div className="min-w-0 space-y-0.5">
+                            {cliente.clientes_web.direcciones_cliente.map((dir) => (
+                              <p key={dir.id} className="truncate">
+                                <span className="font-medium text-ink/80">{dir.etiqueta}:</span> {dir.direccion}
+                                {dir.predeterminada && <span className="ml-1 text-amber">★</span>}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <DatoCliente icono={MapPin}>{cliente.direccion || 'Sin registrar'}</DatoCliente>
+                      )}
                       <DatoCliente icono={StickyNote}>
                         {cliente.notas || 'Sin registrar'}
                       </DatoCliente>

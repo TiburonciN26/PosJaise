@@ -16,6 +16,11 @@ import {
   HandCoins,
   Ticket,
   Armchair,
+  ShoppingBag,
+  Star,
+  MapPin,
+  PiggyBank,
+  Gift,
 } from 'lucide-react'
 
 export const secciones = [
@@ -91,4 +96,55 @@ export const secciones = [
     tema: 'rojo',
     padre: '/web',
   },
+  {
+    path: '/pedidos-web',
+    label: 'Pedidos Web',
+    icono: ShoppingBag,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    path: '/resenas-web',
+    label: 'Reseñas',
+    icono: Star,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    path: '/contacto-web',
+    label: 'Contacto Web',
+    icono: MapPin,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    path: '/puntos-web',
+    label: 'Puntos Web',
+    icono: PiggyBank,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    path: '/referidos-web',
+    label: 'Referidos Web',
+    icono: Gift,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
 ]
+
+// Ruta de aterrizaje por rol — antes App.jsx/PestanasCacheadas.jsx tenían
+// "/ventas" fijo a mano en dos lugares. Bug real: Ventas es
+// ADMINISTRADOR/CAJERA (ver arriba), así que una ASISTENTE (que no está
+// en esa lista) caía en un fallback que la mandaba... de vuelta a
+// "/ventas" — pantalla negra permanente, nunca llegaba a ver nada. Se
+// usa el primer ítem de `secciones` (en su orden real) que el rol SÍ
+// puede ver — para ASISTENTE, eso es "/mi-panel", tal como debía ser.
+export function rutaInicialPara(rol) {
+  return secciones.find((seccion) => seccion.roles.includes(rol))?.path ?? '/ventas'
+}

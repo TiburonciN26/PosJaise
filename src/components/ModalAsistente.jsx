@@ -1,8 +1,20 @@
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Camera, Globe, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
+import Interruptor from './Interruptor.jsx'
+import ModalCamara from './ModalCamara.jsx'
+import {
+  eliminarFoto,
+  procesarImagen,
+  subirFoto,
+  tipoDeImagenValido,
+  urlPublicaFoto,
+} from '../lib/imagenes.js'
+
+const BUCKET_FOTOS = 'fotos-asistentes'
 
 const formularioVacio = {
   nombresCompletos: '',
@@ -14,6 +26,9 @@ const formularioVacio = {
   fechaIngreso: '',
   usuarioId: '',
   activo: true,
+  especialidad: '',
+  bio: '',
+  mostrarEnWeb: false,
 }
 
 function formularioDesdeAsistente(asistente) {
@@ -27,6 +42,9 @@ function formularioDesdeAsistente(asistente) {
     fechaIngreso: asistente.fecha_ingreso ?? '',
     usuarioId: asistente.usuario_id ?? '',
     activo: asistente.activo ?? true,
+    especialidad: asistente.especialidad ?? '',
+    bio: asistente.bio ?? '',
+    mostrarEnWeb: asistente.mostrar_en_web ?? false,
   }
 }
 
@@ -47,7 +65,67 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
+  // Mismo patrón que ModalServicio.jsx: la foto nueva se procesa al
+  // elegirla pero se sube recién al guardar, para no dejar un archivo
+  // huérfano en Storage si el usuario cancela el modal.
+  const [fotoActual] = useState(asistente?.foto_url ?? null)
+  const [fotoNueva, setFotoNueva] = useState(null) // { blob, extension, previewUrl } | null
+  const [fotoEliminada, setFotoEliminada] = useState(false)
+  const [procesandoFoto, setProcesandoFoto] = useState(false)
+  const [errorFoto, setErrorFoto] = useState(null)
+  const [mostrarCamara, setMostrarCamara] = useState(false)
+
   useCerrarConEscape(onCerrar)
+
+  useEffect(() => {
+    return () => {
+      if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
+    }
+  }, [fotoNueva])
+
+  async function procesarNuevaFoto(archivo) {
+    if (!tipoDeImagenValido(archivo)) {
+      setErrorFoto('Formato no admitido. Usa JPG, PNG o WEBP.')
+      return
+    }
+
+    setErrorFoto(null)
+    setProcesandoFoto(true)
+    try {
+      const { blob, extension } = await procesarImagen(archivo, { ladoMaximo: 900, calidad: 0.85 })
+      if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
+      setFotoNueva({ blob, extension, previewUrl: URL.createObjectURL(blob) })
+      setFotoEliminada(false)
+    } catch {
+      setErrorFoto('No se pudo procesar la imagen. Intenta con otra.')
+    } finally {
+      setProcesandoFoto(false)
+    }
+  }
+
+  function elegirFoto(evento) {
+    const archivo = evento.target.files?.[0]
+    evento.target.value = ''
+    if (!archivo) return
+    procesarNuevaFoto(archivo)
+  }
+
+  function capturarDesdeCamara(blob) {
+    setMostrarCamara(false)
+    procesarNuevaFoto(blob)
+  }
+
+  function quitarFoto() {
+    if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
+    setFotoNueva(null)
+    setFotoEliminada(true)
+  }
+
+  const previewFoto = fotoNueva
+    ? fotoNueva.previewUrl
+    : !fotoEliminada && fotoActual
+      ? urlPublicaFoto(BUCKET_FOTOS, fotoActual)
+      : null
 
   function actualizarCampo(campo, valor) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
@@ -65,6 +143,20 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
     setGuardando(true)
     setError(null)
 
+    let rutaFotoSubida = null
+    if (fotoNueva) {
+      try {
+        const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
+        rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
+      } catch {
+        setGuardando(false)
+        setError('No se pudo subir la foto. Intenta de nuevo.')
+        return
+      }
+    }
+
+    const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoActual
+
     const datos = {
       nombres_completos: formulario.nombresCompletos.trim(),
       telefono: formulario.telefono.trim() || null,
@@ -75,6 +167,10 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
       fecha_ingreso: formulario.fechaIngreso || null,
       usuario_id: formulario.usuarioId || null,
       activo: formulario.activo,
+      especialidad: formulario.especialidad.trim() || null,
+      bio: formulario.bio.trim() || null,
+      mostrar_en_web: formulario.mostrarEnWeb,
+      foto_url: fotoFinal,
     }
 
     const { error: errorGuardado } = esEdicion
@@ -84,9 +180,12 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
     setGuardando(false)
 
     if (errorGuardado) {
+      if (rutaFotoSubida) eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
       setError('No se pudo guardar la asistente. Intenta de nuevo.')
       return
     }
+
+    if (fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
 
     onGuardado()
   }
@@ -242,6 +341,91 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               </button>
             </div>
           </div>
+
+          {/* A partir de acá: datos pensados para la pestaña "Equipo" del
+              portal de clientes (83_equipo_web.sql), no para uso interno. */}
+          <div className="border-t border-border pt-3">
+            <Etiqueta htmlFor={`${idBase}-especialidad`}>Especialidad</Etiqueta>
+            <input
+              id={`${idBase}-especialidad`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.especialidad}
+              onChange={(evento) => actualizarCampo('especialidad', evento.target.value)}
+              placeholder="Ej. Colorimetría, cortes, maquillaje..."
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+            />
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-bio`}>Bio corta (para la Web)</Etiqueta>
+            <textarea
+              id={`${idBase}-bio`}
+              value={formulario.bio}
+              onChange={(evento) => actualizarCampo('bio', evento.target.value)}
+              placeholder="Opcional — un par de líneas sobre su experiencia"
+              rows={3}
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+            />
+          </div>
+
+          <div>
+            <Etiqueta>Foto (para la Web)</Etiqueta>
+            <div className="flex items-center gap-3">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
+                {previewFoto ? (
+                  <img src={previewFoto} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <ImagePlus className="h-6 w-6 text-ink/40" />
+                )}
+              </div>
+              <div className="flex flex-1 flex-col gap-2">
+                <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-purple-300 hover:text-purple-300">
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  {procesandoFoto ? 'Procesando...' : previewFoto ? 'Cambiar foto' : 'Elegir foto'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={elegirFoto}
+                    disabled={procesandoFoto}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setMostrarCamara(true)}
+                  disabled={procesandoFoto}
+                  className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  {procesandoFoto ? 'Procesando...' : 'Tomar foto'}
+                </button>
+                {previewFoto && (
+                  <button
+                    type="button"
+                    onClick={quitarFoto}
+                    className="flex w-fit items-center gap-1 text-xs text-ink/60 transition-colors hover:text-red"
+                  >
+                    <X className="h-3 w-3" />
+                    Quitar foto
+                  </button>
+                )}
+              </div>
+            </div>
+            {errorFoto && <p className="mt-1 text-xs text-red">{errorFoto}</p>}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => actualizarCampo('mostrarEnWeb', !formulario.mostrarEnWeb)}
+            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-purple-300"
+          >
+            <span className="flex min-w-0 items-center gap-2 text-sm text-ink">
+              <Globe className="h-4 w-4 shrink-0 text-ink/60" />
+              Mostrar en la Web
+            </span>
+            <Interruptor activado={formulario.mostrarEnWeb} colorActivado="bg-purple-300" />
+          </button>
         </div>
 
         {error && (
@@ -268,6 +452,10 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </button>
         </div>
       </form>
+
+      {mostrarCamara && (
+        <ModalCamara onCapturar={capturarDesdeCamara} onCerrar={() => setMostrarCamara(false)} />
+      )}
     </div>
   )
 }

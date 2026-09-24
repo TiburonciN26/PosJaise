@@ -29,7 +29,7 @@ export default function FidelizacionCliente() {
   if (cargando) {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
-        <p className="font-mono text-sm text-ink/60">Cargando...</p>
+        <p className="font-mono text-sm text-white/50">Cargando...</p>
       </div>
     )
   }
@@ -42,12 +42,12 @@ export default function FidelizacionCliente() {
   const tarjetaLlena = visitasTotales > 0 && sellos === 0
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
       <div className="mx-auto w-full max-w-sm">
-        <div className="rounded-lg border border-border bg-surface p-4 text-center">
-          <p className="text-sm text-ink/60">
+        <div className="liquid-glass rounded-none p-5 text-center">
+          <p className="text-sm text-white/60">
             Cada {VISITAS_POR_RECOMPENSA} visitas completadas ganas{' '}
-            <span className="font-semibold text-amber">20% de descuento</span> en tu próximo
+            <span className="font-semibold text-[var(--lw-gold)]">20% de descuento</span> en tu próximo
             servicio.
           </p>
 
@@ -58,21 +58,23 @@ export default function FidelizacionCliente() {
                 <div
                   key={i}
                   className={`flex h-11 w-11 items-center justify-center rounded-full border-2 ${
-                    lleno ? 'border-amber bg-amber/15' : 'border-dashed border-border-strong'
+                    lleno ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)]/15' : 'border-dashed border-white/20'
                   }`}
                 >
-                  <Star className={`h-5 w-5 ${lleno ? 'fill-amber text-amber' : 'text-ink/20'}`} />
+                  <Star
+                    className={`h-5 w-5 ${lleno ? 'fill-[var(--lw-gold)] text-[var(--lw-gold)]' : 'text-white/20'}`}
+                  />
                 </div>
               )
             })}
           </div>
 
-          <p className="mt-3 text-sm font-medium text-ink">
+          <p className="mt-3 text-sm font-medium text-white">
             {tarjetaLlena
               ? '¡Tarjeta completa!'
               : `${sellos} de ${VISITAS_POR_RECOMPENSA} visitas`}
           </p>
-          <p className="mt-1 text-xs text-ink/60">
+          <p className="mt-1 text-xs text-white/60">
             {visitasTotales === 0
               ? 'Todavía no tienes visitas registradas.'
               : `${visitasTotales} ${visitasTotales === 1 ? 'visita completada' : 'visitas completadas'} en total.`}
@@ -80,13 +82,13 @@ export default function FidelizacionCliente() {
         </div>
 
         {recompensas > 0 && (
-          <div className="mt-3 flex items-start gap-3 rounded-lg border border-amber/40 bg-amber/10 p-3">
-            <Gift className="h-5 w-5 shrink-0 text-amber" />
+          <div className="liquid-glass mt-3 flex items-start gap-3 rounded-none p-3.5">
+            <Gift className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <div>
-              <p className="text-sm font-semibold text-amber">
+              <p className="text-sm font-semibold text-[var(--lw-gold)]">
                 Tienes {recompensas} {recompensas === 1 ? 'recompensa disponible' : 'recompensas disponibles'}
               </p>
-              <p className="mt-0.5 text-xs text-ink/60">
+              <p className="mt-0.5 text-xs text-white/60">
                 Menciónalo en tu próxima visita para que te apliquen el descuento.
               </p>
             </div>
@@ -94,7 +96,7 @@ export default function FidelizacionCliente() {
         )}
 
         {visitasTotales === 0 && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-ink/50">
+          <div className="mt-3 flex items-center gap-2 text-xs text-white/50">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
             Agenda tu primera cita para empezar a sumar sellos.
           </div>

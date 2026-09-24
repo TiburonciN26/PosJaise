@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../hooks/useModalA11y.js'
 import { formatearSoles } from '../../lib/moneda.js'
+import PieClienteWeb from './PieClienteWeb.jsx'
 import {
   aLima,
   anioMesEnLima,
@@ -24,10 +25,10 @@ const NOMBRES_MES = [
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 const ETIQUETAS_ESTADO = {
-  PENDIENTE: { texto: 'Pendiente', clase: 'bg-amber/15 text-amber' },
+  PENDIENTE: { texto: 'Pendiente', clase: 'bg-[var(--lw-gold)]/15 text-[var(--lw-gold)]' },
   CONFIRMADA: { texto: 'Confirmada', clase: 'bg-blue/15 text-blue' },
   COMPLETADA: { texto: 'Completada', clase: 'bg-green/15 text-green' },
-  CANCELADA: { texto: 'Cancelada', clase: 'bg-ink/10 text-ink/50' },
+  CANCELADA: { texto: 'Cancelada', clase: 'bg-white/10 text-white/50' },
   NO_ASISTIO: { texto: 'No asistió', clase: 'bg-red/15 text-red' },
 }
 
@@ -175,14 +176,13 @@ export default function CitasCliente() {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
       <div className="mx-auto w-full max-w-md">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-lg font-semibold text-ink">Citas</h1>
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={() => setMostrarAgendar(true)}
-            className="flex items-center gap-1.5 rounded-full bg-amber px-3 py-1.5 text-sm font-semibold text-bg"
+            className="flex items-center gap-1.5 rounded-full bg-[var(--lw-gold)] px-3 py-1.5 text-sm font-semibold text-black"
           >
             <Plus className="h-3.5 w-3.5" />
             Agendar
@@ -190,23 +190,23 @@ export default function CitasCliente() {
         </div>
 
         {/* Navegación de mes */}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="liquid-glass mt-4 flex items-center justify-between rounded-none px-2 py-2.5">
           <button
             type="button"
             onClick={irMesAnterior}
             aria-label="Mes anterior"
-            className="p-1.5 text-ink/70 transition-colors hover:text-amber"
+            className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-ink">
+            <span className="text-sm font-semibold text-white">
               {NOMBRES_MES[mesIndiceActual]} {anioMesActual}
             </span>
             <button
               type="button"
               onClick={irHoy}
-              className="rounded-full border border-border-strong px-2 py-0.5 text-xs text-ink/70 transition-colors hover:border-amber hover:text-amber"
+              className="rounded-full border border-white/15 px-2 py-0.5 text-xs text-white/70 transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
             >
               Hoy
             </button>
@@ -215,14 +215,14 @@ export default function CitasCliente() {
             type="button"
             onClick={irMesSiguiente}
             aria-label="Mes siguiente"
-            className="p-1.5 text-ink/70 transition-colors hover:text-amber"
+            className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
 
         {/* Grilla mensual */}
-        <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] text-ink/50">
+        <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] text-white/50">
           {DIAS_SEMANA.map((dia) => (
             <span key={dia}>{dia}</span>
           ))}
@@ -243,18 +243,18 @@ export default function CitasCliente() {
                 onClick={() => setDiaSeleccionado(clave)}
                 className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-sm transition-colors ${
                   esSeleccionado
-                    ? 'bg-amber text-bg font-semibold'
+                    ? 'bg-[var(--lw-gold)] font-semibold text-black'
                     : esHoy
-                      ? 'border border-amber text-amber'
+                      ? 'border border-[var(--lw-gold)] text-[var(--lw-gold)]'
                       : esDelMes
-                        ? 'text-ink hover:bg-surface-2'
-                        : 'text-ink/30 hover:bg-surface-2'
+                        ? 'text-white hover:bg-white/5'
+                        : 'text-white/30 hover:bg-white/5'
                 }`}
               >
                 {aLima(dia).getUTCDate()}
                 <span
                   className={`h-1 w-1 rounded-full ${
-                    tieneCitas ? (esSeleccionado ? 'bg-bg' : 'bg-amber') : 'bg-transparent'
+                    tieneCitas ? (esSeleccionado ? 'bg-black' : 'bg-[var(--lw-gold)]') : 'bg-transparent'
                   }`}
                 />
               </button>
@@ -265,11 +265,11 @@ export default function CitasCliente() {
         {/* Citas del día elegido */}
         <div className="mt-5">
           {cargando ? (
-            <p className="text-center text-sm text-ink/60">Cargando...</p>
+            <p className="text-center text-sm text-white/50">Cargando...</p>
           ) : citasDelDia.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <CalendarClock className="h-8 w-8 text-ink/30" />
-              <p className="text-sm text-ink/60">No tienes citas este día.</p>
+            <div className="liquid-glass flex flex-col items-center gap-2 rounded-none py-10 text-center">
+              <CalendarClock className="h-8 w-8 text-white/30" />
+              <p className="text-sm text-white/50">No tienes citas este día.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -278,13 +278,13 @@ export default function CitasCliente() {
                 const modificable = puedeModificar(cita)
 
                 return (
-                  <div key={cita.id} className="rounded-lg border border-border bg-surface p-3">
+                  <div key={cita.id} className="liquid-glass rounded-none p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-mono text-sm font-semibold text-amber">
+                        <p className="font-mono text-sm font-semibold text-[var(--lw-gold)]">
                           {formatoHora.format(new Date(cita.fecha_hora))}
                         </p>
-                        <p className="mt-0.5 text-sm font-medium text-ink">
+                        <p className="mt-0.5 text-sm font-medium text-white">
                           {nombresServicios(cita) || 'Servicio'}
                         </p>
                       </div>
@@ -293,22 +293,22 @@ export default function CitasCliente() {
                       </span>
                     </div>
 
-                    <div className="mt-2 flex items-center justify-between gap-2 text-xs text-ink/60">
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs text-white/60">
                       <span className="flex items-center gap-1">
                         <User className="h-3.5 w-3.5" />
                         {asistentesPorId.get(cita.asistente_id) || 'Sin asignar'}
                       </span>
-                      <span className="font-mono font-semibold text-ink">
+                      <span className="font-mono font-semibold text-white">
                         {formatearSoles(totalCita(cita))}
                       </span>
                     </div>
 
                     {modificable && (
-                      <div className="mt-3 flex gap-2 border-t border-border pt-2.5">
+                      <div className="mt-3 flex gap-2 border-t border-white/10 pt-2.5">
                         <button
                           type="button"
                           onClick={() => setCitaAReprogramar(cita)}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber"
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 py-1.5 text-xs text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
                         >
                           <Pencil className="h-3 w-3" />
                           Reprogramar
@@ -316,7 +316,7 @@ export default function CitasCliente() {
                         <button
                           type="button"
                           onClick={() => setCitaACancelar(cita)}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong py-1.5 text-xs text-red transition-colors hover:border-red"
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 py-1.5 text-xs text-red transition-colors hover:border-red"
                         >
                           <X className="h-3 w-3" />
                           Cancelar
@@ -330,6 +330,8 @@ export default function CitasCliente() {
           )}
         </div>
       </div>
+
+      <PieClienteWeb />
 
       {mostrarAgendar && (
         <ModalAgendarCitaCliente
@@ -356,9 +358,9 @@ export default function CitasCliente() {
 
       {citaACancelar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
-            <h2 className="text-base font-semibold text-ink">¿Cancelar esta cita?</h2>
-            <p className="mt-1 text-sm text-ink/60">
+          <div ref={panelCancelarRef} className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
+            <h2 className="text-base font-semibold text-white">¿Cancelar esta cita?</h2>
+            <p className="mt-1 text-sm text-white/60">
               {formatoHora.format(new Date(citaACancelar.fecha_hora))} —{' '}
               {nombresServicios(citaACancelar) || 'Servicio'}. Esta acción no se puede deshacer.
             </p>
@@ -367,7 +369,7 @@ export default function CitasCliente() {
                 type="button"
                 onClick={() => setCitaACancelar(null)}
                 disabled={cancelando}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                className="flex-1 rounded-lg border border-white/15 py-2 text-sm text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:opacity-40"
               >
                 Volver
               </button>

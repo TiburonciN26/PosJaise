@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock } from 'lucide-react'
+import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -294,7 +294,12 @@ export default function Ventas({ activo = true }) {
     setTipoDescuento,
     valorDescuento,
     setValorDescuento,
+    codigoCupon,
+    setCodigoCupon,
   } = useCarrito()
+  const [cuponPreview, setCuponPreview] = useState(null)
+  const [cuponError, setCuponError] = useState('')
+  const [buscandoCupon, setBuscandoCupon] = useState(false)
   const [busqueda, setBusqueda] = useState('')
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
   const [indiceActivo, setIndiceActivo] = useState(-1)
@@ -522,12 +527,15 @@ export default function Ventas({ activo = true }) {
   const subtotal = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
   const valorDescuentoNumero = parseFloat(valorDescuento) || 0
   const esDescuentoPorcentaje = tipoDescuento === 'porcentaje'
+  const esCupon = tipoDescuento === 'cupon'
   const descuentoPctAplicado = esDescuentoPorcentaje
     ? Math.min(100, Math.max(0, valorDescuentoNumero))
     : 0
-  const montoDescuento = esDescuentoPorcentaje
-    ? redondear2(subtotal * (descuentoPctAplicado / 100))
-    : redondear2(Math.min(Math.max(valorDescuentoNumero, 0), subtotal))
+  const montoDescuento = esCupon
+    ? redondear2(Math.min(cuponPreview?.valor ?? 0, subtotal))
+    : esDescuentoPorcentaje
+      ? redondear2(subtotal * (descuentoPctAplicado / 100))
+      : redondear2(Math.min(Math.max(valorDescuentoNumero, 0), subtotal))
   const total = redondear2(subtotal - montoDescuento)
   const totalMostrado = useContadorAnimado(total)
   const recibidoNumerico = parseFloat(montoRecibido) || 0
@@ -567,8 +575,65 @@ export default function Ventas({ activo = true }) {
     sugeridoAnteriorRef.current = montoPosTarjetaSugerido
   }, [montoPosTarjetaSugerido])
 
+  // Vista previa del cupón: no decide nada por sí sola (el canje real y
+  // seguro pasa por confirmar_venta(), que vuelve a validar todo en el
+  // servidor) — solo evita que la cajera confirme a ciegas un código
+  // inválido o ya usado, y muestra de quién es el cupón antes de cobrar.
+  useEffect(() => {
+    if (!esCupon || codigoCupon.length !== 6) {
+      setCuponPreview(null)
+      setCuponError('')
+      setBuscandoCupon(false)
+      return undefined
+    }
+
+    let vigente = true
+    setBuscandoCupon(true)
+    const temporizador = setTimeout(() => {
+      supabase
+        .from('cupones')
+        // "clientes!cliente_id" desambigua: cupones tiene DOS FK a
+        // clientes (cliente_id y referido_id) — sin el hint, PostgREST
+        // no sabe cuál usar y el select entero falla (se veía como
+        // "código no encontrado" aunque el cupón sí existiera).
+        .select('valor, estado, clientes!cliente_id(nombre)')
+        .eq('codigo', codigoCupon.toUpperCase())
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (!vigente) return
+          setBuscandoCupon(false)
+          if (error) {
+            setCuponPreview(null)
+            setCuponError('No se pudo verificar el cupón')
+          } else if (!data) {
+            setCuponPreview(null)
+            setCuponError('Código no encontrado')
+          } else if (data.estado !== 'DISPONIBLE') {
+            setCuponPreview(null)
+            setCuponError('Ese cupón ya fue usado')
+          } else {
+            setCuponError('')
+            setCuponPreview({ valor: parseFloat(data.valor), clienteNombre: data.clientes?.nombre })
+          }
+        })
+    }, 400)
+
+    return () => {
+      vigente = false
+      clearTimeout(temporizador)
+    }
+  }, [esCupon, codigoCupon])
+
   function alternarTipoDescuento() {
-    setTipoDescuento((anterior) => (anterior === 'porcentaje' ? 'monto' : 'porcentaje'))
+    setTipoDescuento((anterior) => {
+      const siguiente = anterior === 'porcentaje' ? 'monto' : anterior === 'monto' ? 'cupon' : 'porcentaje'
+      // Limpia el valor del modo que se deja — un código de cupón viejo
+      // colgado ahí es más riesgoso que un número de descuento viejo (se
+      // reenviaría a confirmar_venta si no se limpia).
+      if (anterior === 'cupon') setCodigoCupon('')
+      if (siguiente === 'cupon') setValorDescuento('')
+      return siguiente
+    })
   }
 
   // Tocar el método ya seleccionado lo desmarca (vuelve a null, oculta
@@ -606,6 +671,10 @@ export default function Ventas({ activo = true }) {
     )
   }
 
+  function actualizarCodigoCupon(valor) {
+    setCodigoCupon(valor.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6))
+  }
+
   const {
     soportado: vozSoportada,
     escuchando,
@@ -641,7 +710,8 @@ export default function Ventas({ activo = true }) {
     carrito.length > 0 &&
     metodoPago !== null &&
     !haySobreStock &&
-    (metodoPago !== 'Efectivo' || recibidoNumerico >= total)
+    (metodoPago !== 'Efectivo' || recibidoNumerico >= total) &&
+    (!esCupon || Boolean(cuponPreview))
 
   useEffect(() => {
     if (!filaFlash) return undefined
@@ -787,6 +857,7 @@ export default function Ventas({ activo = true }) {
       setMetodoPago(null)
       setCliente(null)
       setValorDescuento('')
+      setCodigoCupon('')
       setTipoDescuento('porcentaje')
       setIdsSaliendo(new Set())
     }, DURACION_SALIDA)
@@ -812,8 +883,9 @@ export default function Ventas({ activo = true }) {
       p_items: items,
       p_cliente_id: cliente?.id ?? null,
       p_descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
-      p_descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
+      p_descuento_monto: esDescuentoPorcentaje || esCupon ? 0 : montoDescuento,
       p_monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
+      p_codigo_cupon: esCupon ? codigoCupon : null,
     })
 
     setCobrando(false)
@@ -853,6 +925,7 @@ export default function Ventas({ activo = true }) {
     setMontoRecibido('')
     setMontoPosTarjeta('')
     setValorDescuento('')
+    setCodigoCupon('')
     setTipoDescuento('porcentaje')
     setMetodoPago(null)
     setCliente(null)
@@ -1057,16 +1130,24 @@ export default function Ventas({ activo = true }) {
             <button
               type="button"
               onClick={alternarTipoDescuento}
-              aria-label={esDescuentoPorcentaje ? 'Descuento porcentual — cambiar a monto fijo' : 'Descuento por monto fijo — cambiar a porcentual'}
+              aria-label={
+                esDescuentoPorcentaje
+                  ? 'Descuento porcentual — cambiar a monto fijo'
+                  : esCupon
+                    ? 'Cupón — cambiar a porcentaje'
+                    : 'Descuento por monto fijo — cambiar a cupón'
+              }
               title="Cambiar tipo de descuento"
               className={`flex shrink-0 items-center justify-center rounded-lg border border-dashed p-1.5 transition-colors ${
-                valorDescuento
+                valorDescuento || codigoCupon
                   ? 'border-red/50 text-red'
                   : 'border-border-strong text-ink/70 hover:border-red hover:text-red'
               }`}
             >
               {esDescuentoPorcentaje ? (
                 <Percent className="h-3.5 w-3.5" />
+              ) : esCupon ? (
+                <Ticket className="h-3.5 w-3.5" />
               ) : (
                 <span className="w-3.5 text-center font-mono text-[11px] font-semibold leading-none">
                   S/
@@ -1074,23 +1155,56 @@ export default function Ventas({ activo = true }) {
               )}
             </button>
 
-            <input
-              type="search"
-              inputMode={esDescuentoPorcentaje ? 'numeric' : 'decimal'}
-              maxLength={esDescuentoPorcentaje ? 3 : undefined}
-              autoComplete="new-password"
-              value={valorDescuento}
-              onChange={(evento) => actualizarDescuento(evento.target.value)}
-              placeholder="0"
-              aria-label={esDescuentoPorcentaje ? 'Porcentaje de descuento' : 'Monto de descuento'}
-              className={`w-12 shrink-0 rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs outline-none ${
-                valorDescuento
-                  ? 'border-red bg-red/10 text-red'
-                  : 'border-border bg-surface-2 text-ink focus:border-red'
-              }`}
-            />
+            {esCupon ? (
+              <input
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                value={codigoCupon}
+                onChange={(evento) => actualizarCodigoCupon(evento.target.value)}
+                placeholder="CÓDIGO"
+                aria-label="Código de cupón"
+                className={`w-20 shrink-0 rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs uppercase tracking-widest outline-none ${
+                  cuponPreview
+                    ? 'border-green bg-green/10 text-green'
+                    : cuponError
+                      ? 'border-red bg-red/10 text-red'
+                      : 'border-border bg-surface-2 text-ink focus:border-red'
+                }`}
+              />
+            ) : (
+              <input
+                type="search"
+                inputMode={esDescuentoPorcentaje ? 'numeric' : 'decimal'}
+                maxLength={esDescuentoPorcentaje ? 3 : undefined}
+                autoComplete="new-password"
+                value={valorDescuento}
+                onChange={(evento) => actualizarDescuento(evento.target.value)}
+                placeholder="0"
+                aria-label={esDescuentoPorcentaje ? 'Porcentaje de descuento' : 'Monto de descuento'}
+                className={`w-12 shrink-0 rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs outline-none ${
+                  valorDescuento
+                    ? 'border-red bg-red/10 text-red'
+                    : 'border-border bg-surface-2 text-ink focus:border-red'
+                }`}
+              />
+            )}
           </div>
         </CampoColapsable>
+
+        {esCupon && codigoCupon.length === 6 && (
+          <p
+            className={`mt-1.5 text-xs ${
+              cuponPreview ? 'text-green' : cuponError ? 'text-red' : 'text-ink/50'
+            }`}
+          >
+            {buscandoCupon
+              ? 'Buscando cupón...'
+              : cuponPreview
+                ? `Cupón de ${cuponPreview.clienteNombre ?? 'cliente'} — ${formatearSoles(cuponPreview.valor)}`
+                : cuponError}
+          </p>
+        )}
 
         {errorCatalogo && (
           <p className="mt-2 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
@@ -1192,7 +1306,8 @@ export default function Ventas({ activo = true }) {
               >
                 {montoDescuento > 0 && (
                   <span className="text-red">
-                    Descuento{esDescuentoPorcentaje ? ` (${descuentoPctAplicado}%)` : ''}:{' '}
+                    {esCupon ? `Cupón ${codigoCupon}` : `Descuento${esDescuentoPorcentaje ? ` (${descuentoPctAplicado}%)` : ''}`}
+                    :{' '}
                     <span className="font-mono">-{formatearSoles(montoDescuento)}</span>
                   </span>
                 )}

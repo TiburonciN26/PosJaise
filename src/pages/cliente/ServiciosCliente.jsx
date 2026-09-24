@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Heart, MessageCircle, Scissors, Search, X } from 'lucide-react'
+import { Heart, MessageCircle, Scissors, Search, ShoppingBag, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
+import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-servicios'
 // Grados de inclinación 3D y escala en hover — mismos valores que la
@@ -22,6 +24,7 @@ const SCALE = 1.07
 export default function ServiciosCliente() {
   const { usuario } = useAuth()
   const { mostrarToast } = useToast()
+  const { serviciosCarrito, agregarServicio, quitarServicio } = useCarritoCliente()
 
   const [servicios, setServicios] = useState([])
   const [favoritos, setFavoritos] = useState(() => new Set())
@@ -121,6 +124,12 @@ export default function ServiciosCliente() {
     })
   }
 
+  async function alternarCarrito(servicioId) {
+    const enCarrito = serviciosCarrito.has(servicioId)
+    const exito = enCarrito ? await quitarServicio(servicioId) : await agregarServicio(servicioId)
+    if (!exito) mostrarToast('No se pudo actualizar tu carrito.', 'error')
+  }
+
   function compartir(servicio) {
     const texto =
       `✨ Mira este servicio:\n\n💅 *${servicio.nombre}*\n` +
@@ -147,29 +156,29 @@ export default function ServiciosCliente() {
   if (cargando) {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
-        <p className="font-mono text-sm text-ink/60">Cargando...</p>
+        <p className="font-mono text-sm text-white/50">Cargando...</p>
       </div>
     )
   }
 
   return (
-    <div className="catalogo-iridiscente animate-entrada-pestana flex-1 overflow-y-auto p-4">
+    <div className="catalogo-iridiscente animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
       {/* Buscador (headerYServicios.html: .buscador) */}
-      <div className="flex items-center gap-2.5 rounded-2xl border border-border bg-surface-2 px-3.5 transition-colors focus-within:border-ink">
-        <Search className="h-4 w-4 shrink-0 text-ink/50" />
+      <div className="liquid-glass flex items-center gap-2.5 rounded-2xl px-3.5 transition-colors focus-within:border-[var(--lw-gold)]">
+        <Search className="h-4 w-4 shrink-0 text-white/50" />
         <input
           type="text"
           value={busqueda}
           onChange={(evento) => setBusqueda(evento.target.value)}
           placeholder="Buscar servicio…"
-          className="w-full bg-transparent py-3 text-sm text-ink outline-none placeholder:text-ink/50"
+          className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/40"
         />
         {busqueda && (
           <button
             type="button"
             onClick={() => setBusqueda('')}
             aria-label="Limpiar"
-            className="shrink-0 text-lg leading-none text-ink/50 transition-colors hover:text-ink"
+            className="shrink-0 text-lg leading-none text-white/50 transition-colors hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
@@ -186,19 +195,10 @@ export default function ServiciosCliente() {
                 key={categoria}
                 type="button"
                 onClick={() => setCategoriaActiva(categoria)}
-                // El texto NO usa la clase .text-bg: ese utility está
-                // pensado para botones de acento sólido (amber/verde/...)
-                // y en tema claro se reescribe a color: var(--color-ink)
-                // (para que se lea oscuro sobre un acento claro) — acá el
-                // fondo YA es ink, así que esa regla dejaba texto oscuro
-                // sobre fondo oscuro, invisible. Con estilo inline se
-                // pide el color real de --color-bg, sin pasar por esa
-                // regla especial.
-                style={activa ? { color: 'var(--color-bg)' } : undefined}
                 className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium capitalize transition-colors ${
                   activa
-                    ? 'border-ink bg-ink'
-                    : 'border-border text-ink/70 hover:border-border-strong hover:text-ink'
+                    ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)] text-black'
+                    : 'border-white/15 text-white/70 hover:border-white/30 hover:text-white'
                 }`}
               >
                 {categoria}
@@ -210,14 +210,15 @@ export default function ServiciosCliente() {
 
       {/* Grilla de tarjetas (headerYServicios.html: .grid/.iri-*) */}
       {filtrados.length === 0 ? (
-        <p className="mt-10 text-center text-sm text-ink/60">Sin resultados.</p>
+        <p className="mt-10 text-center text-sm text-white/50">Sin resultados.</p>
       ) : (
         <div
           ref={gridRef}
-          className="mt-5 grid grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-4 lg:grid-cols-5"
+          className="mt-5 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-4"
         >
           {filtrados.map((servicio) => {
             const esFavorito = favoritos.has(servicio.id)
+            const enCarrito = serviciosCarrito.has(servicio.id)
             const urlFoto = urlPublicaFoto(BUCKET_FOTOS, servicio.foto_url)
 
             return (
@@ -267,11 +268,26 @@ export default function ServiciosCliente() {
 
                 <div className="iri-name">{servicio.nombre}</div>
                 {servicio.duracion_min && <div className="iri-meta">{servicio.duracion_min} min</div>}
+
+                <button
+                  type="button"
+                  onClick={() => alternarCarrito(servicio.id)}
+                  className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-xs font-medium transition-colors ${
+                    enCarrito
+                      ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]'
+                      : 'border-white/15 text-white/70 hover:border-white/30 hover:text-white'
+                  }`}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+                  {enCarrito ? 'En tu carrito' : 'Agregar'}
+                </button>
               </div>
             )
           })}
         </div>
       )}
+
+      <PieClienteWeb />
     </div>
   )
 }

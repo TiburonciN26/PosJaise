@@ -4,12 +4,50 @@ import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 
 const AuthContext = createContext(null)
 
+const CLAVE_MODO_VISTA = 'modoVista'
+
+// sessionStorage (no localStorage): sobrevive a un refresh de la página
+// (F5) — el bug reportado — pero se borra solo al cerrar la pestaña/
+// ventana, así que nunca deja "modo cliente" pegado para una sesión de
+// personal completamente distinta en otra pestaña u otro día.
+function leerModoVistaGuardado() {
+  try {
+    return sessionStorage.getItem(CLAVE_MODO_VISTA) === 'CLIENTE' ? 'CLIENTE' : 'STAFF'
+  } catch {
+    return 'STAFF'
+  }
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [usuario, setUsuario] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [errorPerfil, setErrorPerfil] = useState(false)
   const [bloqueoLogin, setBloqueoLogin] = useState(null)
+  // Una asistente/cajera/admin a veces también es clienta del salón — con
+  // el mismo correo, no uno nuevo (Supabase Auth no permite dos cuentas
+  // con el mismo correo, así que "Crear cuenta" en el login de clientes
+  // no es una opción para ella). "modoVista" deja que la MISMA sesión de
+  // personal entre al portal Web sin dejar de ser personal: cargarPerfil
+  // sigue resolviendo "usuario"/"rol" como personal siempre (ver arriba,
+  // corta camino ANTES de mirar clientes_web) — modoVista es un flag
+  // aparte que App.jsx usa para decidir qué árbol de rutas montar. Se
+  // reinicia a 'STAFF' en cada cierre de sesión para que la próxima nunca
+  // arranque directo en modo cliente por accidente. Bug reportado: sin
+  // persistir esto, un F5 estando en modo cliente perdía el estado (React
+  // vuelve a montar todo desde cero) y la app regresaba sola al POS —
+  // por eso el valor inicial se lee de sessionStorage, y un efecto lo
+  // mantiene sincronizado ahí en cada cambio.
+  const [modoVista, setModoVista] = useState(leerModoVistaGuardado)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(CLAVE_MODO_VISTA, modoVista)
+    } catch {
+      // Almacenamiento bloqueado (modo privado, cuota, etc.) — la sesión
+      // sigue funcionando, solo no sobrevive a un refresh.
+    }
+  }, [modoVista])
 
   // Perfil de un cliente de la pestaña Web (auto-registrado, sin fila en
   // "usuarios"). Siempre deja a "usuario" (o errorPerfil/bloqueoLogin)
@@ -201,6 +239,35 @@ export function AuthProvider({ children }) {
 
   const cerrarSesion = useCallback(async () => {
     await supabase.auth.signOut()
+    setModoVista('STAFF')
+  }, [])
+
+  // Para personal (asistente/cajera/admin) que también es clienta: crea
+  // su fila en clientes_web con el MISMO auth.uid() si todavía no la
+  // tiene (nunca pasa por auth.signUp — ya está autenticada, y de todos
+  // modos Supabase Auth rechazaría un segundo registro con ese correo) y
+  // cambia el modo de vista. Es idempotente: si ya tenía perfil de
+  // clienta, el insert choca con la PK (23505) y se ignora sin problema —
+  // el botón que llama a esto puede usarse cualquier cantidad de veces.
+  // El resto (vincular su perfil de negocio, historial, etc.) lo resuelve
+  // el flujo normal de Mi Perfil, igual que cualquier clienta nueva.
+  const entrarComoClienta = useCallback(async () => {
+    const {
+      data: { user: usuarioAuth },
+    } = await supabase.auth.getUser()
+    if (!usuarioAuth) return
+
+    const { error } = await supabase
+      .from('clientes_web')
+      .insert({ id: usuarioAuth.id, email: usuarioAuth.email ?? '' })
+
+    if (error && error.code !== '23505') throw error
+
+    setModoVista('CLIENTE')
+  }, [])
+
+  const volverAlPos = useCallback(() => {
+    setModoVista('STAFF')
   }, [])
 
   // Registro de clientes de la pestaña Web (self-service, distinto del
@@ -236,11 +303,14 @@ export function AuthProvider({ children }) {
       cargando,
       errorPerfil,
       bloqueoLogin,
+      modoVista,
       reintentarPerfil,
       iniciarSesion,
       cerrarSesion,
       registrarCliente,
       actualizarFotoPerfil,
+      entrarComoClienta,
+      volverAlPos,
     }),
     [
       session,
@@ -248,11 +318,14 @@ export function AuthProvider({ children }) {
       cargando,
       errorPerfil,
       bloqueoLogin,
+      modoVista,
       reintentarPerfil,
       iniciarSesion,
       cerrarSesion,
       registrarCliente,
       actualizarFotoPerfil,
+      entrarComoClienta,
+      volverAlPos,
     ],
   )
 

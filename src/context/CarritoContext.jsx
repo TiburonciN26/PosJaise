@@ -8,12 +8,16 @@ export function CarritoProvider({ children }) {
   const [montoRecibido, setMontoRecibido] = useState('')
   const [montoPosTarjeta, setMontoPosTarjeta] = useState('')
   const [cliente, setCliente] = useState(null)
-  // tipoDescuento: 'porcentaje' (valorDescuento es un % 0-100) o 'monto'
-  // (valorDescuento son soles fijos) — el botón de descuento alterna entre
-  // ambos y limpia el valor al cambiar, para no reinterpretar en soles un
-  // número que se había tecleado como porcentaje (o viceversa).
+  // tipoDescuento: 'porcentaje' (valorDescuento es un % 0-100), 'monto'
+  // (valorDescuento son soles fijos) o 'cupon' (codigoCupon es el código
+  // que muestra la clienta — el monto lo resuelve el servidor, nunca se
+  // teclea a mano, ver confirmar_venta() en 95_cupones_referido.sql). El
+  // botón de descuento rota entre los tres y limpia los valores de los
+  // otros dos al cambiar, para no reinterpretar un dato tecleado para un
+  // modo distinto.
   const [tipoDescuento, setTipoDescuento] = useState('porcentaje')
   const [valorDescuento, setValorDescuento] = useState('')
+  const [codigoCupon, setCodigoCupon] = useState('')
 
   // Memoizado (M5): los setState de React ya son estables, así que el value
   // solo cambia cuando cambia algún dato real del carrito, no en cada render.
@@ -33,8 +37,19 @@ export function CarritoProvider({ children }) {
       setTipoDescuento,
       valorDescuento,
       setValorDescuento,
+      codigoCupon,
+      setCodigoCupon,
     }),
-    [carrito, metodoPago, montoRecibido, montoPosTarjeta, cliente, tipoDescuento, valorDescuento],
+    [
+      carrito,
+      metodoPago,
+      montoRecibido,
+      montoPosTarjeta,
+      cliente,
+      tipoDescuento,
+      valorDescuento,
+      codigoCupon,
+    ],
   )
 
   return <CarritoContext.Provider value={value}>{children}</CarritoContext.Provider>

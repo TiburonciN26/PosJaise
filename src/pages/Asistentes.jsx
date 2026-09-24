@@ -13,6 +13,8 @@ import {
   MessageCircle,
   ArrowBigDown,
   UserCog,
+  Globe,
+  Sparkles,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -35,6 +37,8 @@ const CAMPOS_OPCIONALES = [
   'contacto_emergencia',
   'cumpleanos',
   'fecha_ingreso',
+  'especialidad',
+  'bio',
 ]
 
 const OPCIONES_ORDEN = [
@@ -138,7 +142,7 @@ export default function Asistentes({ activo = true }) {
     const { data, error: errorConsulta } = await supabase
       .from('asistentes')
       .select(
-        'id, usuario_id, nombres_completos, telefono, email, direccion, contacto_emergencia, cumpleanos, fecha_ingreso, activo',
+        'id, usuario_id, nombres_completos, telefono, email, direccion, contacto_emergencia, cumpleanos, fecha_ingreso, activo, foto_url, especialidad, bio, mostrar_en_web',
       )
       .order('nombres_completos')
 
@@ -303,10 +307,20 @@ export default function Asistentes({ activo = true }) {
                           {asistente.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
-                      {asistente.usuario_id && (
-                        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-ink/60">
-                          <KeyRound className="h-3 w-3 shrink-0" />
-                          <span>Vinculada a una cuenta</span>
+                      {(asistente.usuario_id || asistente.mostrar_en_web) && (
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-ink/60">
+                          {asistente.usuario_id && (
+                            <span className="flex items-center gap-1">
+                              <KeyRound className="h-3 w-3 shrink-0" />
+                              Vinculada a una cuenta
+                            </span>
+                          )}
+                          {asistente.mostrar_en_web && (
+                            <span className="flex items-center gap-1 text-purple-300">
+                              <Globe className="h-3 w-3 shrink-0" />
+                              En la Web
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -362,6 +376,9 @@ export default function Asistentes({ activo = true }) {
                       </DatoAsistente>
                       <DatoAsistente icono={KeyRound}>
                         {asistente.usuario_id ? 'Vinculada a una cuenta' : 'Sin cuenta vinculada'}
+                      </DatoAsistente>
+                      <DatoAsistente icono={Sparkles}>
+                        {asistente.especialidad || 'Sin especialidad'}
                       </DatoAsistente>
                     </div>
 

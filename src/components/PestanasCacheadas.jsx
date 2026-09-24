@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { secciones } from '../config/navegacion.js'
+import { secciones, rutaInicialPara } from '../config/navegacion.js'
 import Ventas from '../pages/Ventas.jsx'
 
 // Ventas queda con import normal (no lazy): es la pestaña de aterrizaje de
@@ -26,6 +26,11 @@ const Mobiliario = lazy(() => import('../pages/Mobiliario.jsx'))
 const Web = lazy(() => import('../pages/Web.jsx'))
 const Deudas = lazy(() => import('../pages/Deudas.jsx'))
 const Promociones = lazy(() => import('../pages/Promociones.jsx'))
+const PedidosWeb = lazy(() => import('../pages/PedidosWeb.jsx'))
+const ResenasWeb = lazy(() => import('../pages/ResenasWeb.jsx'))
+const ContactoWeb = lazy(() => import('../pages/ContactoWeb.jsx'))
+const PuntosWeb = lazy(() => import('../pages/PuntosWeb.jsx'))
+const ReferidosWeb = lazy(() => import('../pages/ReferidosWeb.jsx'))
 
 const PAGINAS = {
   '/ventas': Ventas,
@@ -45,6 +50,11 @@ const PAGINAS = {
   '/web': Web,
   '/deudas': Deudas,
   '/promociones': Promociones,
+  '/pedidos-web': PedidosWeb,
+  '/resenas-web': ResenasWeb,
+  '/contacto-web': ContactoWeb,
+  '/puntos-web': PuntosWeb,
+  '/referidos-web': ReferidosWeb,
 }
 
 function puedeVer(seccion, rol) {
@@ -78,7 +88,11 @@ export default function PestanasCacheadas() {
   }, [pathname, permitido])
 
   if (!seccion || !permitido) {
-    return <Navigate to="/ventas" replace />
+    // Bug real corregido: esto redirigía siempre a "/ventas" a mano, así
+    // que una ASISTENTE (sin acceso a Ventas) caía en un loop mudo —
+    // pantalla negra permanente, sin ningún contenido. Ahora manda a la
+    // primera pestaña que el rol actual sí puede ver.
+    return <Navigate to={rutaInicialPara(rol)} replace />
   }
 
   return (

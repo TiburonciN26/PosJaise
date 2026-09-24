@@ -4,13 +4,24 @@ import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearFechaISO } from '../lib/fechas.js'
-import Etiqueta from './Etiqueta.jsx'
 
 const formatoHora = new Intl.DateTimeFormat('es-PE', {
   hour: 'numeric',
   minute: '2-digit',
   timeZone: 'America/Lima',
 })
+
+// Etiqueta propia (no la Etiqueta.jsx compartida con el POS, que usa
+// text-ink/60 — un token atado al switch claro/oscuro global; acá el
+// fondo es siempre negro).
+function EtiquetaCampo({ children, obligatorio, htmlFor }) {
+  return (
+    <label htmlFor={htmlFor} className="mb-1 block text-xs text-white/50">
+      {children}
+      {obligatorio && <span className="text-red"> *</span>}
+    </label>
+  )
+}
 
 // Reprograma una cita ya agendada: mismo asistente y servicios, solo
 // cambia fecha/hora. p_excluir_cita_id en horarios_disponibles_cita
@@ -86,15 +97,15 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <div
         ref={panelRef}
-        className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="lw-bar max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border border-white/10 p-5"
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-ink">Reprogramar cita</h2>
+          <h2 className="text-base font-semibold text-white">Reprogramar cita</h2>
           <button
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
-            className="-m-2 rounded-lg p-2 text-ink/60 transition-colors hover:bg-surface-2 hover:text-ink"
+            className="-m-2 rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
@@ -102,25 +113,25 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
 
         <form onSubmit={confirmar} className="mt-4 space-y-4">
           <div>
-            <Etiqueta obligatorio htmlFor="reprogramar-fecha">
+            <EtiquetaCampo obligatorio htmlFor="reprogramar-fecha">
               Nueva fecha
-            </Etiqueta>
+            </EtiquetaCampo>
             <input
               id="reprogramar-fecha"
               type="date"
               min={fechaMinima}
               value={fecha}
               onChange={(evento) => setFecha(evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
+              className="w-full rounded-lg border border-transparent bg-white/5 px-3 py-2 font-mono text-sm text-white outline-none focus:border-[var(--lw-gold)]"
             />
           </div>
 
           <div>
-            <Etiqueta obligatorio>Horario</Etiqueta>
+            <EtiquetaCampo obligatorio>Horario</EtiquetaCampo>
             {cargandoHorarios ? (
-              <p className="text-sm text-ink/60">Buscando horarios...</p>
+              <p className="text-sm text-white/50">Buscando horarios...</p>
             ) : horarios.length === 0 ? (
-              <p className="text-sm text-ink/60">
+              <p className="text-sm text-white/50">
                 No hay horarios disponibles ese día. Prueba con otra fecha.
               </p>
             ) : (
@@ -134,8 +145,8 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
                       onClick={() => setHorarioElegido(h.inicio)}
                       className={`rounded-lg border px-2 py-1.5 font-mono text-xs transition-colors ${
                         elegido
-                          ? 'border-amber bg-amber text-bg font-semibold'
-                          : 'border-border text-ink hover:border-border-strong'
+                          ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)] font-semibold text-black'
+                          : 'border-white/15 text-white hover:border-white/30'
                       }`}
                     >
                       {formatoHora.format(new Date(h.inicio))}
@@ -150,19 +161,19 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
             <p className="rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">{error}</p>
           )}
 
-          <div className="flex gap-2 border-t border-border pt-4">
+          <div className="flex gap-2 border-t border-white/10 pt-4">
             <button
               type="button"
               onClick={onCerrar}
               disabled={guardando}
-              className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+              className="flex-1 rounded-lg border border-white/15 py-2 text-sm text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:opacity-40"
             >
               Volver
             </button>
             <button
               type="submit"
               disabled={guardando || !horarioElegido}
-              className="flex-1 rounded-lg bg-amber py-2 text-sm font-semibold text-bg disabled:opacity-40"
+              className="flex-1 rounded-lg bg-[var(--lw-gold)] py-2 text-sm font-semibold text-black disabled:opacity-40"
             >
               {guardando ? 'Guardando...' : 'Confirmar'}
             </button>
