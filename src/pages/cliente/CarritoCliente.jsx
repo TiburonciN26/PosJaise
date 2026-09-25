@@ -261,7 +261,7 @@ export default function CarritoCliente() {
                 type="button"
                 onClick={() => setMostrarAgendar(true)}
                 disabled={serviciosMarcados.size === 0}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--lw-gold)] py-2.5 text-sm font-semibold text-black disabled:opacity-40"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--lw-gold)] bg-transparent py-2.5 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
               >
                 Reservar cita ({serviciosMarcados.size})
               </button>
@@ -441,7 +441,7 @@ export default function CarritoCliente() {
                   productosMarcados.size === 0 ||
                   (tipoEntrega === 'DELIVERY' && direcciones.length === 0)
                 }
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--lw-gold)] py-2.5 text-sm font-semibold text-black disabled:opacity-40"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--lw-gold)] bg-transparent py-2.5 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
               >
                 {confirmando ? 'Confirmando...' : `Confirmar compra (${productosMarcados.size})`}
               </button>

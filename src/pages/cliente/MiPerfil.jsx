@@ -242,7 +242,7 @@ export default function MiPerfil() {
               onClick={() => inputFotoRef.current?.click()}
               disabled={subiendoFoto}
               aria-label="Cambiar foto de perfil"
-              className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border border-black/20 bg-[var(--lw-gold)] text-black shadow-md transition-transform hover:scale-105 disabled:opacity-50"
+              className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--lw-gold)] bg-[#0b0b0c] text-[var(--lw-gold)] shadow-md transition-transform hover:scale-105 disabled:opacity-50"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -323,7 +323,7 @@ export default function MiPerfil() {
               <button
                 type="submit"
                 disabled={guardando}
-                className="flex-1 rounded-full bg-[var(--lw-gold)] py-2 text-sm font-semibold text-black disabled:opacity-40"
+                className="flex-1 rounded-full border border-[var(--lw-gold)] bg-transparent py-2 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
               >
                 {guardando ? 'Guardando...' : 'Guardar'}
               </button>
@@ -333,7 +333,7 @@ export default function MiPerfil() {
               <button
                 type="button"
                 onClick={empezarEdicion}
-                className="flex items-center gap-1.5 rounded-full bg-[var(--lw-gold)] px-4 py-2 text-sm font-semibold text-black"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--lw-gold)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--lw-gold)]"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Editar
@@ -381,7 +381,7 @@ export default function MiPerfil() {
                 type="button"
                 onClick={() => guardarPerfil(true)}
                 disabled={guardando}
-                className="flex-1 rounded-full bg-[var(--lw-gold)] py-2 text-sm font-semibold text-black disabled:opacity-40"
+                className="flex-1 rounded-full border border-[var(--lw-gold)] bg-transparent py-2 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
               >
                 {guardando ? 'Guardando...' : 'Sí, es mi registro'}
               </button>

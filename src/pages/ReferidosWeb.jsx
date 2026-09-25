@@ -50,7 +50,12 @@ export default function ReferidosWeb() {
         // "clientes!cliente_id" desambigua: cupones tiene DOS FK a
         // clientes (cliente_id y referido_id) — sin el hint del FK,
         // PostgREST no sabe cuál usar y el select falla entero.
+        // .in(...) (§7.58): desde que existen los cupones de
+        // Fidelización, sin este filtro se mezclaban acá también —
+        // esta pantalla es solo de los de Referidos, Fidelización
+        // tiene su propia lista en Fidelización Web.
         .select('codigo, origen, valor, estado, creado_en, cliente:clientes!cliente_id(nombre)')
+        .in('origen', ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA'])
         .order('creado_en', { ascending: false }),
     ]).then(([configRes, cuponesRes]) => {
       if (configRes.data) {

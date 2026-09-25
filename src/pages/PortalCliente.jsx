@@ -1,5 +1,5 @@
-import { Menu, PiggyBank, ShoppingCart, X } from 'lucide-react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Menu, ShoppingCart, X } from 'lucide-react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
@@ -7,6 +7,39 @@ import { NotificacionesClienteProvider } from '../context/NotificacionesClienteC
 import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
+
+// Chanchito "activo" — SVG que trajo el usuario (public/icons/
+// chanchitoActivo.svg), inlineado acá en vez de <img src="..."> a
+// propósito: un <img> de un .svg externo no hereda `currentColor` del
+// botón (siempre se vería negro, sin importar el hover/tema) — inline
+// sí, igual que el resto de íconos "a medida" del proyecto
+// (EsquinaBracket, .lw-checker). El path es el mismo que el archivo,
+// solo con los atributos en formato JSX (stroke-width→strokeWidth,
+// etc).
+// -scale-x-100: el dibujo original mira hacia la derecha (el hocico
+// del lado del carrito/avatar) — se espeja para que mire hacia la
+// izquierda, o sea hacia el logo (pedido explícito del usuario).
+// El archivo hermano (chanchitoBloqueado.svg, mismo chancho + una
+// barra diagonal) queda en public/icons/ sin usar todavía — el
+// usuario lo reservó para más adelante, cuando algún producto/servicio
+// puntual no sume puntos.
+function IconoChanchito() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="icono-chanchito h-[22px] w-[22px] -scale-x-100 sm:h-8 sm:w-8"
+    >
+      <path d="M15 11v.01" />
+      <path d="M16 3l0 3.803a6.019 6.019 0 0 1 2.658 3.197h1.341a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-1.342a6.008 6.008 0 0 1 -1.658 2.473v2.027a1.5 1.5 0 0 1 -3 0v-.583a6.04 6.04 0 0 1 -1 .083h-4a6.04 6.04 0 0 1 -1 -.083v.583a1.5 1.5 0 0 1 -3 0v-2l0 -.027a6 6 0 0 1 4 -10.473h2.5l4.5 -3" />
+    </svg>
+  )
+}
 
 // Ícono de puntos (header) — ya no es un placeholder inerte: lleva a
 // '/mis-puntos' (ver implementacionesWed.md §7.15), la tarjeta con el
@@ -16,14 +49,32 @@ import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
 // destellos, "+N" flotante) siguen portadas en index.css
 // (`.chanchito-*`) para cuando el ícono del header también reaccione en
 // vivo a sumar puntos — hoy solo usa `.icono-chanchito` en reposo.
-function BotonChanchito() {
+// §7.54: mismo "volver" que BotonCarrito (§7.53) — parado en
+// /mis-puntos, el ícono pasa a ser navigate(-1) en vez de un Link que
+// no haría nada ahí.
+function BotonChanchito({ estaEnPuntos }) {
+  const navigate = useNavigate()
+
+  if (estaEnPuntos) {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        aria-label="Volver"
+        className="-mr-2 flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+      >
+        <IconoChanchito />
+      </button>
+    )
+  }
+
   return (
     <Link
       to="/mis-puntos"
       aria-label="Tus puntos"
-      className="flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+      className="-mr-2 flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
     >
-      <PiggyBank className="icono-chanchito h-5 w-5" />
+      <IconoChanchito />
     </Link>
   )
 }
@@ -33,8 +84,46 @@ function BotonChanchito() {
 // insignia con la cantidad viene de CarritoClienteContext, compartido
 // con ServiciosCliente/ProductosCliente para que se actualice sola al
 // agregar/quitar algo, sin recargar la página.
-function BotonCarrito() {
+// La insignia usa el degradado --lw-metal-azul (el "acero pulido" con
+// brillo) — antes solo en Inicio (esInicio), dorado en el resto; desde
+// §7.57 el azul metálico es el acento único de todo el portal cliente,
+// así que la insignia lo usa siempre, sin condicional.
+// §7.53: si ya estás EN /carrito, el mismo ícono pasa a ser "volver" —
+// navigate(-1) (un paso atrás en el historial del navegador), no un
+// Link a /carrito de nuevo (que ahí no haría nada) ni a /inicio fijo —
+// así, parada en Productos, abrís el carrito y volvés a tocar el
+// ícono, volvés a Productos, no a Inicio. Fuera de /carrito se
+// comporta exactamente igual que antes (Link normal).
+function BotonCarrito({ estaEnCarrito }) {
   const { totalItems } = useCarritoCliente()
+  const navigate = useNavigate()
+
+  const contenido = (
+    <>
+      <ShoppingCart className="h-5 w-5 sm:h-7 sm:w-7" />
+      {totalItems > 0 && (
+        <span
+          className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-black"
+          style={{ background: 'var(--lw-metal-azul)' }}
+        >
+          {totalItems}
+        </span>
+      )}
+    </>
+  )
+
+  if (estaEnCarrito) {
+    return (
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        aria-label="Volver"
+        className="relative flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+      >
+        {contenido}
+      </button>
+    )
+  }
 
   return (
     <Link
@@ -42,12 +131,7 @@ function BotonCarrito() {
       aria-label="Tu carrito"
       className="relative flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
     >
-      <ShoppingCart className="h-5 w-5" />
-      {totalItems > 0 && (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--lw-gold)] px-1 text-[10px] font-semibold text-black">
-          {totalItems}
-        </span>
-      )}
+      {contenido}
     </Link>
   )
 }
@@ -131,7 +215,6 @@ function migajasDeRuta(pathname) {
 export default function PortalCliente() {
   const location = useLocation()
   const [menuAbierto, setMenuAbierto] = useState(false)
-  const [errorLogo, setErrorLogo] = useState(false)
 
   const esInicio = location.pathname === '/inicio'
   const migajas = esInicio ? [] : migajasDeRuta(location.pathname)
@@ -141,32 +224,116 @@ export default function PortalCliente() {
       <CarritoClienteProvider>
         <NotificacionesClienteProvider>
           <div className="landing-web flex h-svh flex-col">
-            <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center px-4 sm:h-[72px] sm:px-6 md:px-8">
-              <div className="mx-auto flex w-full max-w-[1400px] items-center gap-3">
+            {/* Fondo sólido (§7.51, antes transparente/flotante desde
+                §7.36): a pedido del usuario, para que el header no se
+                "mezcle" con lo que pasa por detrás al hacer scroll. Esto
+                deshace el bleed de la foto de Inicio bajo el header
+                (§7.37) — si el header ahora es opaco, dejar que la foto
+                siga detrás solo tapaba la punta de la cabeza de la
+                clienta con una franja negra sólida. Por eso el `pt-16
+                sm:pt-[72px]` de acá abajo volvió a aplicarse SIEMPRE (ya
+                no se salta en /inicio) — toda la estructura, hero
+                incluido, arranca debajo del header otra vez, como en
+                el resto de la Web. */}
+            <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center bg-[#0b0b0c] px-4 pt-2 sm:h-[72px] sm:px-6 md:px-8">
+              <div className="mx-auto flex w-full max-w-[1700px] items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setMenuAbierto((valorAnterior) => !valorAnterior)}
                   aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
                   aria-expanded={menuAbierto}
-                  className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center text-white/80 transition-colors hover:text-white lg:hidden"
+                  className="-ml-1 flex h-11 w-11 shrink-0 items-center justify-center text-white/80 transition-colors hover:text-white lg:hidden"
                 >
-                  {menuAbierto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  {menuAbierto ? <X className="h-6 w-6 text-[#a9c6ec]" /> : <Menu className="h-6 w-6" />}
                 </button>
   
-                <Link to="/inicio" className="flex shrink-0 flex-col items-center leading-none">
-                  {!errorLogo && (
-                    <img
-                      src={`${import.meta.env.BASE_URL}icon-192.png`}
-                      alt=""
-                      onError={() => setErrorLogo(true)}
-                      className="h-6 w-6 shrink-0 rounded-full object-cover"
-                    />
+                {/* Wordmark tipográfico (referencia "jaise-inicio-oscuro", ver
+                    implementacionesWed.md §7.37) — reemplaza el logo anterior
+                    (ícono redondo + "Jaise"/"Beauty Academy" en Inter) que no
+                    tenía nada que ver con la nueva dirección visual. Sin
+                    imagen: es texto en Orbitron, mismo trato que .lw-titulo-*
+                    del hero de Inicio.
+                    `relative` acá (no en el <header>) a propósito: es el
+                    ancla de la migaja de abajo (§7.41) — así su posición
+                    sale de la del logo mismo (CSS puro, `top-full`), no de
+                    un cálculo de píxeles aparte que hay que mantener
+                    sincronizado a mano con el alto del header en cada
+                    breakpoint (eso era lo que se desalineaba al achicar/
+                    agrandar la pantalla, bug reportado por el usuario). */}
+                <div className="relative flex shrink-0 flex-col items-center gap-0.5 leading-none">
+                  <Link to="/inicio" aria-label="Jaise Beauty Academy — inicio" className="flex flex-col items-center gap-0.5 leading-none">
+                    <span
+                      className="pl-[0.15em] text-[14px] font-black tracking-[0.19em] text-white sm:text-[24px]"
+                      style={{ fontFamily: "'Orbitron', sans-serif" }}
+                    >
+                       JAISE
+                      <sup className="ml-0.5 align-top text-[0px]">˚</sup>
+                    </span>
+                    <span className="pl-[0.3em] text-[6px] font-bold tracking-[0.3em] text-white/50">
+                      BEAUTY ACADEMY
+                    </span>
+                  </Link>
+
+                  {/* Migaja de pan ("Inicio | <pestaña actual>") — pegada
+                      justo debajo del logo (`top-full`) y alineada a su
+                      borde izquierdo (`left-0`), inmune al tamaño de
+                      pantalla porque es 100% relativa a ESTE contenedor, no
+                      al viewport. Sigue siendo un elemento propio (no una
+                      segunda fila del <nav> de pestañas, a pedido explícito
+                      de una instrucción anterior del usuario) — vive acá
+                      adentro por el `relative` del logo, no adentro del
+                      <nav> de pestañas. "Inicio" y el "|" van siempre en
+                      azul metálico (§7.57, antes condicional a esInicio,
+                      dorado en el resto — el dorado se retiró de todo el
+                      portal cliente). Si la ruta actual ya es Inicio, se
+                      muestra sola (sin "|" ni segunda migaja, sería
+                      redundante). Misma animación de deslizamiento que usa
+                      Header.jsx en el POS (`.animate-deslizar-pestana`).
+                      !menuAbierto (§7.56): con el drawer móvil abierto,
+                      la migaja se ocultaba detrás pero seguía ahí — a
+                      pedido del usuario, se esconde mientras el drawer
+                      está abierto y vuelve a aparecer sola al cerrarlo
+                      (mismo estado `menuAbierto` que ya maneja el botón
+                      de hamburguesa, sin agregar estado nuevo). */}
+                  {(esInicio || migajas.length > 0) && !menuAbierto && (
+                    <nav
+                      aria-label="Ubicación actual"
+                      className="absolute left-0 top-full mt-3 flex items-center gap-2 whitespace-nowrap text-xs font-medium max-lg:left-[-36px]"
+                    >
+                      <Link
+                        to="/inicio"
+                        className={`shrink-0 transition-colors ${esInicio ? 'lw-metal-azul-texto' : 'text-white/60 hover:text-white'}`}
+                      >
+                        Inicio
+                      </Link>
+                      {migajas.map((migaja, indice) => {
+                        const esUltima = indice === migajas.length - 1
+                        return (
+                          <span key={migaja.ruta} className="flex min-w-0 items-center gap-2">
+                            <span aria-hidden="true" className="lw-metal-azul-texto shrink-0">
+                              |
+                            </span>
+                            {esUltima ? (
+                              <span
+                                key={location.pathname}
+                                className="animate-deslizar-pestana lw-metal-azul-texto truncate"
+                              >
+                                {migaja.titulo}
+                              </span>
+                            ) : (
+                              <Link
+                                to={migaja.ruta}
+                                className="shrink-0 truncate text-white/60 transition-colors hover:text-white"
+                              >
+                                {migaja.titulo}
+                              </Link>
+                            )}
+                          </span>
+                        )
+                      })}
+                    </nav>
                   )}
-                  <span className="mt-1 text-xs font-semibold text-white">Jaise</span>
-                  <span className="text-[7px] font-medium uppercase tracking-wide text-white/50">
-                    Beauty Academy
-                  </span>
-                </Link>
+                </div>
   
                 {/* Íconos/texto libres, sin caja — solo desktop: en móvil las
                     pestañas viven adentro del drawer (MenuLateralCliente).
@@ -186,17 +353,22 @@ export default function PortalCliente() {
                       {({ isActive }) => (
                         <>
                           <span
-                            className={`whitespace-nowrap text-sm font-medium transition-colors ${
-                              isActive ? 'text-[var(--lw-gold)]' : 'text-white/60 hover:text-white'
+                            className={`whitespace-nowrap text-[15px] font-semibold transition-colors ${
+                              isActive ? 'lw-metal-azul-texto' : 'text-white/60 hover:text-white'
                             }`}
                           >
                             {seccion.label}
                           </span>
+                          {/* Subrayado en el degradado real (background, no
+                              color/border-color — por eso va por `style`,
+                              no por --lw-gold): azul metálico siempre
+                              desde §7.57, antes solo en Inicio. */}
                           <span
                             aria-hidden="true"
-                            className={`absolute -bottom-1 left-0 h-[2px] w-full origin-left bg-[var(--lw-gold)] transition-transform duration-300 ease-out ${
+                            className={`absolute -bottom-1 left-0 h-[2px] w-full origin-left transition-transform duration-300 ease-out ${
                               isActive ? 'scale-x-100' : 'scale-x-0'
                             }`}
+                            style={{ background: 'var(--lw-metal-azul)' }}
                           />
                         </>
                       )}
@@ -206,58 +378,34 @@ export default function PortalCliente() {
   
                 <div className="flex-1" />
   
-                <div className="flex shrink-0 items-center gap-1">
-                  <BotonChanchito />
+                <div className="flex shrink-0 items-center gap-1 sm:gap-3">
+                  <BotonChanchito estaEnPuntos={location.pathname === '/mis-puntos'} />
   
-                  <BotonCarrito />
+                  <BotonCarrito estaEnCarrito={location.pathname === '/carrito'} />
   
                   <MenuUsuarioCliente />
                 </div>
               </div>
             </header>
-  
-            {(esInicio || migajas.length > 0) && (
-              <div className="pointer-events-none fixed inset-x-0 top-20 z-40 flex px-4 sm:top-24 sm:px-6 md:px-8">
-                <nav
-                  aria-label="Ubicación actual"
-                  className="pointer-events-auto mx-auto flex w-full max-w-[1400px] items-center gap-2 py-1 text-sm font-medium sm:py-1.5"
-                >
-                  <Link
-                    to="/inicio"
-                    className={`shrink-0 transition-colors ${esInicio ? 'text-white' : 'text-white/60 hover:text-white'}`}
-                  >
-                    Inicio
-                  </Link>
-                  {migajas.map((migaja, indice) => {
-                    const esUltima = indice === migajas.length - 1
-                    return (
-                      <span key={migaja.ruta} className="flex min-w-0 items-center gap-2">
-                        <span aria-hidden="true" className="shrink-0 text-[var(--lw-gold)]">
-                          |
-                        </span>
-                        {esUltima ? (
-                          <span
-                            key={location.pathname}
-                            className="animate-deslizar-pestana truncate text-white"
-                          >
-                            {migaja.titulo}
-                          </span>
-                        ) : (
-                          <Link
-                            to={migaja.ruta}
-                            className="shrink-0 truncate text-white/60 transition-colors hover:text-white"
-                          >
-                            {migaja.titulo}
-                          </Link>
-                        )}
-                      </span>
-                    )
-                  })}
-                </nav>
-              </div>
-            )}
-  
-            <div className="relative flex flex-1 flex-col overflow-hidden pt-16 sm:pt-[72px]">
+
+            {/* pt-12/72px SIEMPRE (§7.51, antes se saltaba en /inicio
+                desde §7.37): el header ahora tiene fondo sólido (ver su
+                comentario arriba), así que ya no tiene sentido que el
+                hero de Inicio arranque detrás de él — con header opaco,
+                "detrás" es "tapado". Todas las rutas, Inicio incluida,
+                reservan este espacio otra vez, igual que el resto de la
+                Web.
+                pt-12, no pt-16 (§7.52): tiene que calzar EXACTO con el
+                alto real del <header> en cada breakpoint (`h-12
+                sm:h-[72px]` de arriba) — con `pt-16` (64px) en celular
+                sobraban 16px de hueco vacío del mismo color que el
+                header, dando la sensación de un header más alto/ancho
+                de lo que realmente es (bug reportado). Si el `h-*` del
+                <header> cambia, este valor hay que actualizarlo junto
+                (no hay forma de derivarlo solo sin tocar el <header>). */}
+            <div
+              className="relative flex flex-1 flex-col overflow-hidden pt-12 sm:pt-[72px]"
+            >
               <main className="flex flex-1 flex-col overflow-hidden">
                 <Outlet />
               </main>

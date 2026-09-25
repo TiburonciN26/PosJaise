@@ -958,13 +958,32 @@ input[type='search']::-webkit-search-decoration {
    compartido con el POS.
    ═══════════════════════════════════════════════════════ */
 .landing-web {
-  --lw-bg: #000000;
+  /* #0b0b0c, no #000000 puro (§7.47) — a pedido del usuario, para que
+     el fondo de TODO el shell de cliente (no solo el hero) sea
+     exactamente el mismo tono que ya usaba el hero (bg-[#0b0b0c] en
+     InicioCliente.jsx) — antes había una costura sutil entre el hero y
+     el resto de las secciones al hacer scroll, cada uno con un negro
+     ligeramente distinto. */
+  --lw-bg: #0b0b0c;
   --lw-fg: #ffffff;
   --lw-muted: #a6a6a6;
   --lw-card: #0d0d0d;
   --lw-border: #2e2e2e;
   --lw-subtitle: #f1f3f5;
-  --lw-gold: #ffd700;
+  /* #a9c6ec, no #ffd700 (§7.57): el usuario retiró el dorado como
+     acento de TODO el portal cliente, a favor del azul metálico que
+     había arrancado "por ahora" solo en Inicio (§7.36 en adelante). El
+     NOMBRE de la variable se dejó igual a propósito — renombrarla
+     tocaría cada uno de sus ~100 usos en ~25 archivos del portal
+     cliente por un beneficio puramente cosmético (el nombre ya no
+     describe el color); es deuda técnica, no un bug, documentada acá.
+     Valor plano, NO el degradado `--lw-metal-azul` de abajo: esta
+     variable se usa en propiedades como `color`/`border-color`, que
+     no aceptan un gradient como valor — solo `background` sí. Los
+     pocos lugares que ya usaban `--lw-metal-azul` de verdad (badges,
+     texto del nav activo en Inicio) se dejan como estaban; ver
+     comentarios puntuales en PortalCliente.jsx. */
+  --lw-gold: #a9c6ec;
   --lw-rose: #ff85a1;
   background: var(--lw-bg);
   color: var(--lw-fg);
@@ -1707,4 +1726,157 @@ input[type='search']::-webkit-search-decoration {
   .cupon-chispa {
     animation: none;
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Hero de Inicio — nuevo lenguaje visual (a partir de una referencia
+   HTML nueva del usuario, ver implementacionesWed.md §7.36-7.38): arranca
+   SOLO en el hero de InicioCliente.jsx, "por ahora" a pedido explícito
+   del usuario — el resto de la Web se queda con el look dorado/
+   liquid-glass hasta que se migre página por página. Por eso estas
+   clases NO tocan --lw-gold ni ninguna del bloque .landing-web de
+   arriba, viven aparte con su propio degradado azul/acento (el header
+   de PortalCliente.jsx sí usa ese mismo celeste, pero solo cuando la
+   ruta activa es /inicio — ver comentario ahí).
+   Kunaroh NO está en Google Fonts (family=Kunaroh devuelve 400 "Font
+   family not found" — se probó en vivo) — por eso el título caía a
+   Orbitron pese al fallback declarado. El .ttf que trajo la referencia
+   es la fuente real, así que va como @font-face local. */
+@font-face {
+  font-family: 'Kunaroh';
+  src: url('./assets/fonts/Kunaroh.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --lw-metal-azul: el "acero pulido" de la referencia (--metal en su
+   styles.css) — un degradado con una banda clara al centro, no un color
+   plano, para que se vea con brillo/reflejo en vez de chato. §7.38: el
+   header lo usa (pestaña activa + insignia del carrito) cuando
+   esInicio, no solo el título. */
+.landing-web {
+  --lw-metal-azul: linear-gradient(90deg, #86a9d8 0%, #a9c6ec 40%, #d3e4f8 50%, #a9c6ec 60%, #86a9d8 100%);
+}
+
+.lw-titulo-kunaroh {
+  margin: 0;
+  font-family: 'Kunaroh', 'Orbitron', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+}
+
+.lw-metal-azul-texto {
+  background: var(--lw-metal-azul);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Botón "Reserva tu cita" — mismo espíritu ghost-button de la
+   referencia (jx-cta): borde fino, invierte a fondo claro/texto negro
+   en hover, la flecha se corre hacia la esquina.
+   Borde + letras en azul metálico, fondo transparente (pedido del
+   usuario). Primer intento con `border-image` funcionaba para el
+   color pero `border-image` IGNORA `border-radius` por spec — las
+   esquinas se veían en ángulo recto (bug reportado). Fix real: el
+   borde de layout queda transparente (`border: 1px solid transparent`,
+   solo para reservar el espacio) y un `::before` absoluto dibuja el
+   anillo degradado encima, con `border-radius: inherit` (sí redondea)
+   y la técnica de `mask-composite` para "vaciar" el centro (padding:1px
+   = grosor del anillo) — así el centro del botón queda genuinamente
+   transparente (se ve la foto detrás), no un relleno sólido fingiendo
+   transparencia. El texto usa `.lw-metal-azul-texto`
+   (background-clip:text) puesto directo en el <span> del JSX, no acá
+   — así no le agarra también al ícono de la flecha (que solo hereda
+   un tono sólido del degradado vía `color`, currentColor). En hover
+   se cae a la versión sólida de siempre (border-radius normal, sin
+   truco) — el anillo degradado es SOLO el estado de reposo. */
+.lw-cta-hero {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 14px);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #a9c6ec;
+  /* clamp(), no 14px/26px fijos (§7.50): mismo motivo que el resto del
+     hero — en celular, con la <section> ahora bajita (sin min-h, ver
+     §7.49), un botón de tamaño fijo desktop no entraba bien en el
+     "formato miniatura" que pidió el usuario. */
+  padding: clamp(10px, 2.5vw, 14px) clamp(16px, 4vw, 26px);
+  font-size: clamp(11px, 2vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  /* nowrap (pedido del usuario): "Reserva tu cita" nunca se parte en 2
+     líneas, ni achicando el botón en celular abajo. */
+  white-space: nowrap;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.lw-cta-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--lw-metal-azul);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.lw-cta-hero:hover {
+  background: #f5f5f4;
+  color: #0b0b0c;
+  border-color: #f5f5f4;
+}
+.lw-cta-hero:hover::before {
+  opacity: 0;
+}
+.lw-cta-hero:hover .lw-metal-azul-texto {
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: #0b0b0c;
+}
+.lw-cta-hero:hover .lw-cta-flecha {
+  transform: translate(2px, -2px);
+}
+.lw-cta-flecha {
+  transition: transform 0.2s;
+}
+
+/* Más chico solo en celular (pedido del usuario) — el clamp() de arriba
+   ya baja bastante, pero esto lo achica más todavía por debajo de
+   640px, mismo corte que el resto del hero (InicioCliente.jsx). De
+   640px para arriba queda intacto, gobernado solo por el clamp(). */
+@media (max-width: 640px) {
+  .lw-cta-hero {
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 10px;
+  }
+}
+
+.lw-hint-cursor {
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  background: #0b0b0c;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  color: #f5f5f4;
 }

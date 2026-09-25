@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Gift, MapPin, PiggyBank, ShoppingBag, Star, Ticket } from 'lucide-react'
+import { Gift, MapPin, PiggyBank, ShoppingBag, Stamp, Star, Ticket } from 'lucide-react'
 import IconoMartillo from '../components/IconoMartillo.jsx'
 
 // Panel administrativo de la pestaña Web de clientes — ya no es un
@@ -69,6 +69,14 @@ export default function Web() {
       >
         <Gift className="h-4 w-4" />
         Ir a Referidos Web
+      </Link>
+
+      <Link
+        to="/fidelizacion-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <Stamp className="h-4 w-4" />
+        Ir a Fidelización Web
       </Link>
     </div>
   )

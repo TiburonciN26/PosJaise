@@ -5,6 +5,12 @@ import { seccionesCliente } from '../config/navegacionCliente.js'
 // desde la izquierda, solo visible en móvil (en desktop las pestañas
 // siguen en la barra de PortalCliente). Acá siempre son las mismas dos
 // (Inicio, Servicios); crece solo si seccionesCliente crece.
+// §7.56: la pestaña seleccionada usa azul metálico (#a9c6ec sólido en
+// borde/ícono, degradado real en el label vía .lw-metal-azul-texto) —
+// en §7.57 el resto del portal cliente (nav/migaja/carrito en
+// PortalCliente.jsx) también pasó a azul metálico siempre (se retiró
+// el dorado del todo), así que esto ya no es una excepción — es el
+// mismo criterio en todos lados.
 export default function MenuLateralCliente({ abierto, onCerrar }) {
   return (
     <div
@@ -35,13 +41,22 @@ export default function MenuLateralCliente({ abierto, onCerrar }) {
             className={({ isActive }) =>
               `flex items-center gap-2.5 border-l-2 px-4 py-2.5 text-sm transition-colors duration-150 ${
                 isActive
-                  ? 'border-[var(--lw-gold)] bg-white/5 text-[var(--lw-gold)]'
+                  ? 'border-[#a9c6ec] bg-white/5 text-[#a9c6ec]'
                   : 'border-transparent text-white/60 hover:bg-white/5 hover:text-white'
               }`
             }
           >
-            <seccion.icono className="h-4 w-4 shrink-0" />
-            {seccion.label}
+            {({ isActive }) => (
+              <>
+                <seccion.icono className="h-4 w-4 shrink-0" />
+                {/* El ícono se queda en el tono sólido de arriba
+                    (currentColor, #a9c6ec) — .lw-metal-azul-texto usa
+                    background-clip:text, que solo "recorta" texto de
+                    verdad, no un <svg>; ponerlo en el <NavLink> entero
+                    hubiera vuelto transparente también al ícono. */}
+                <span className={isActive ? 'lw-metal-azul-texto' : undefined}>{seccion.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

@@ -1,3 +1,5 @@
+import { formatearSoles } from './moneda.js'
+
 // Compartido entre ReferidosCliente.jsx y OfertasCliente.jsx: un cupón es
 // un cupón sin importar de dónde salió (hoy solo Referidos genera, pero
 // `origen` ya está pensado para sumar más formas de obtención sin tocar
@@ -8,6 +10,7 @@
 export const ETIQUETAS_ORIGEN_CUPON = {
   REFERIDO_BIENVENIDA: 'Cupón de bienvenida',
   REFERIDO_RECOMPENSA: 'Cupón por referir',
+  FIDELIZACION: 'Cupón de fidelización',
 }
 
 // "Peso"/color del cupón según su valor — mismo espíritu que los niveles
@@ -32,8 +35,20 @@ export function formatearFechaCupon(fechaIso) {
 // esas dos viven en index.css (.cupon-plata/.cupon-oro/.cupon-texto-oro,
 // ver §7.35 en implementacionesWed.md) — Bronce se queda con Tailwind
 // puro (color plano, sin efectos) porque no lo necesita.
-export function nivelCupon(valor) {
-  if (valor >= 20) {
+//
+// `tipoDescuento` (§7.58, cupones de Fidelización): un cupón de 20% y
+// uno de S/20 no son comparables en la misma escala — 20% de una
+// cuenta cara puede valer mucho más que S/20 fijos, y viceversa. Por
+// pedido del usuario, un cupón PORCENTAJE usa su propia escala de
+// umbrales (en puntos de %), no la de soles — mismos 3 escalones
+// (Bronce/Plata/Oro), mismo espíritu, números distintos.
+const UMBRALES_SOLES = { oro: 20, plata: 10 }
+const UMBRALES_PORCENTAJE = { oro: 20, plata: 10 }
+
+export function nivelCupon(valor, tipoDescuento = 'MONTO_FIJO') {
+  const umbrales = tipoDescuento === 'PORCENTAJE' ? UMBRALES_PORCENTAJE : UMBRALES_SOLES
+
+  if (valor >= umbrales.oro) {
     return {
       nombre: 'Oro',
       claseTarjeta: 'cupon-tarjeta cupon-oro',
@@ -41,7 +56,7 @@ export function nivelCupon(valor) {
       claseIcono: 'text-[var(--lw-gold)]',
     }
   }
-  if (valor >= 10) {
+  if (valor >= umbrales.plata) {
     return {
       nombre: 'Plata',
       claseTarjeta: 'cupon-tarjeta cupon-plata',
@@ -55,4 +70,15 @@ export function nivelCupon(valor) {
     claseTexto: 'text-[#c8935a]',
     claseIcono: 'text-[#c8935a]',
   }
+}
+
+// Cómo se lee el valor de un cupón — nunca "formatearSoles" a secas,
+// porque desde Fidelización valor=20 significa "20%", no "S/20"
+// (mismo criterio que ya usaba OfertasCliente.jsx para promociones,
+// ahora compartido acá para que TarjetaCupon lo use igual sin
+// duplicar la función en dos archivos).
+export function formatearValorCupon(cupon) {
+  return cupon.tipo_descuento === 'PORCENTAJE'
+    ? `${cupon.valor}% dcto.`
+    : formatearSoles(cupon.valor)
 }

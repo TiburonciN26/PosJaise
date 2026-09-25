@@ -1,30 +1,63 @@
 import { useEffect, useState } from 'react'
-import { Gift, Sparkles, Star } from 'lucide-react'
+import { ArrowBigDown, Gift, Sparkles, Star, Ticket } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { useToast } from '../../context/ToastContext.jsx'
+import { formatearFechaSoloDia } from '../../lib/fechas.js'
+import CampoColapsable from '../../components/CampoColapsable.jsx'
 
 const VISITAS_POR_RECOMPENSA = 5
 
-// Solo ver progreso — el canje real en caja queda para una fase aparte
-// (ver implementacionesWed.md §2.5). El progreso se calcula al vuelo en
-// mi_fidelizacion() a partir de registro_servicios: no hay contador ni
-// tabla de movimientos que se puedan desincronizar.
+// §7.58: el canje real ya existe — "Generar cupón" crea un cupón de %
+// de verdad (generar_cupon_fidelizacion()), canjeable en Ventas con el
+// mismo modo "Cupón" que ya usan los de Referidos (95_cupones_
+// referido.sql). El progreso de sellos se sigue calculando al vuelo en
+// mi_fidelizacion() a partir de registro_servicios — lo único que SÍ
+// se guarda ahora es cuántas recompensas ya se reclamaron
+// (clientes.fidelizacion_recompensas_reclamadas), para que el botón no
+// se pueda tocar más veces de las tarjetas completas de verdad.
 export default function FidelizacionCliente() {
+  const { mostrarToast } = useToast()
   const [datos, setDatos] = useState(null)
+  const [historial, setHistorial] = useState([])
   const [cargando, setCargando] = useState(true)
+  const [generando, setGenerando] = useState(false)
+  const [historialAbierto, setHistorialAbierto] = useState(false)
+
+  async function cargar() {
+    const [fidelizacionRes, historialRes] = await Promise.all([
+      supabase.rpc('mi_fidelizacion'),
+      supabase.rpc('mi_historial_fidelizacion'),
+    ])
+    setDatos(!fidelizacionRes.error && fidelizacionRes.data?.length > 0 ? fidelizacionRes.data[0] : null)
+    setHistorial(historialRes.data ?? [])
+    setCargando(false)
+  }
 
   useEffect(() => {
-    let vigente = true
-
-    supabase.rpc('mi_fidelizacion').then(({ data, error }) => {
-      if (!vigente) return
-      setDatos(!error && data?.length > 0 ? data[0] : null)
-      setCargando(false)
-    })
-
-    return () => {
-      vigente = false
-    }
+    cargar()
   }, [])
+
+  async function generarCupon() {
+    setGenerando(true)
+    const { data, error } = await supabase.rpc('generar_cupon_fidelizacion')
+    setGenerando(false)
+
+    if (error) {
+      mostrarToast(error.message ?? 'No se pudo generar el cupón.', 'error')
+      return
+    }
+
+    const cupon = data?.[0]
+    mostrarToast(
+      cupon ? `¡Cupón ${cupon.codigo} generado! Muéstralo en tu próxima visita.` : 'Cupón generado.',
+      'exito',
+    )
+    // recompensas_disponibles baja recién con datos frescos del servidor
+    // (fidelizacion_recompensas_reclamadas ya se actualizó ahí) — un
+    // refetch completo, no un ajuste optimista a mano, para que quede
+    // exactamente lo que el servidor validó.
+    cargar()
+  }
 
   if (cargando) {
     return (
@@ -84,14 +117,53 @@ export default function FidelizacionCliente() {
         {recompensas > 0 && (
           <div className="liquid-glass mt-3 flex items-start gap-3 rounded-none p-3.5">
             <Gift className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--lw-gold)]">
                 Tienes {recompensas} {recompensas === 1 ? 'recompensa disponible' : 'recompensas disponibles'}
               </p>
               <p className="mt-0.5 text-xs text-white/60">
-                Menciónalo en tu próxima visita para que te apliquen el descuento.
+                Genera tu cupón y muéstralo en tu próxima visita para que te apliquen el descuento.
               </p>
+              <button
+                type="button"
+                onClick={generarCupon}
+                disabled={generando}
+                className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-[var(--lw-gold)] bg-transparent px-3 py-1.5 text-xs font-semibold text-[var(--lw-gold)] disabled:opacity-40"
+              >
+                <Ticket className="h-3.5 w-3.5" />
+                {generando ? 'Generando...' : 'Generar cupón'}
+              </button>
             </div>
+          </div>
+        )}
+
+        {/* Historial de visitas (§7.58, pedido del usuario) — cada fecha
+            de acá es también "cuándo se sumó un sello nuevo a la
+            tarjeta", van ligados 1 a 1 (mismo criterio de "visita" que
+            usa el progreso de arriba). Cerrado por defecto. */}
+        {historial.length > 0 && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setHistorialAbierto((anterior) => !anterior)}
+              aria-expanded={historialAbierto}
+              className="flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white"
+            >
+              Ver historial de visitas
+              <ArrowBigDown
+                className={`h-3 w-3 transition-transform duration-300 ${historialAbierto ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <CampoColapsable abierto={historialAbierto} margen>
+              <div className="liquid-glass space-y-1.5 rounded-none p-3">
+                {historial.map((visita, indice) => (
+                  <div key={visita.fecha} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="text-white/70">Visita {historial.length - indice}</span>
+                    <span className="text-white/40">{formatearFechaSoloDia(visita.fecha)}</span>
+                  </div>
+                ))}
+              </div>
+            </CampoColapsable>
           </div>
         )}
 

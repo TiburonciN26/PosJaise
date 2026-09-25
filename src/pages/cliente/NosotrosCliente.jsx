@@ -272,7 +272,7 @@ function SeccionContacto() {
             href={`https://wa.me/${numeroWhatsapp(contacto.telefono)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--lw-gold)] py-2.5 text-sm font-semibold text-black"
+            className="mt-4 flex items-center justify-center gap-2 rounded-full border border-[var(--lw-gold)] bg-transparent py-2.5 text-sm font-semibold text-[var(--lw-gold)]"
           >
             <Phone className="h-4 w-4" />
             Escríbenos por WhatsApp

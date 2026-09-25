@@ -31,6 +31,7 @@ const ResenasWeb = lazy(() => import('../pages/ResenasWeb.jsx'))
 const ContactoWeb = lazy(() => import('../pages/ContactoWeb.jsx'))
 const PuntosWeb = lazy(() => import('../pages/PuntosWeb.jsx'))
 const ReferidosWeb = lazy(() => import('../pages/ReferidosWeb.jsx'))
+const FidelizacionWeb = lazy(() => import('../pages/FidelizacionWeb.jsx'))
 
 const PAGINAS = {
   '/ventas': Ventas,
@@ -55,6 +56,7 @@ const PAGINAS = {
   '/contacto-web': ContactoWeb,
   '/puntos-web': PuntosWeb,
   '/referidos-web': ReferidosWeb,
+  '/fidelizacion-web': FidelizacionWeb,
 }
 
 function puedeVer(seccion, rol) {

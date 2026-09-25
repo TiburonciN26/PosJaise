@@ -109,7 +109,7 @@ export default function SeguridadCuentaCliente() {
           <button
             type="submit"
             disabled={guardando}
-            className="w-full rounded-full bg-[var(--lw-gold)] py-2.5 text-sm font-semibold text-black disabled:opacity-40"
+            className="w-full rounded-full border border-[var(--lw-gold)] bg-transparent py-2.5 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
           >
             {guardando ? 'Guardando...' : 'Cambiar contraseña'}
           </button>

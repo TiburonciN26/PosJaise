@@ -80,6 +80,26 @@ export function calcularRango(filtro, personalizado) {
   return { desde: hoy, hasta: sumarDias(hoy, 1) }
 }
 
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const MESES_LARGOS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
+// Para MOSTRAR una columna `date` de Postgres ("YYYY-MM-DD", sin hora)
+// — nunca pasar ese string por `new Date(iso)`: un string sin hora se
+// interpreta como medianoche UTC, y formatearlo en hora de Lima
+// (UTC-5) lo corre un día para atrás (el 25 se ve como 24 — bug real
+// reportado por el usuario, en Historial y en el historial de
+// Fidelización). Una fecha "date" no tiene zona horaria propia — no
+// hace falta convertir nada, ninguna instancia de Date ni de Intl con
+// timeZone de por medio, solo leer los números del string tal cual.
+export function formatearFechaSoloDia(fechaISO, { mesLargo = false } = {}) {
+  const [anio, mes, dia] = fechaISO.split('-').map(Number)
+  const nombreMes = (mesLargo ? MESES_LARGOS : MESES_CORTOS)[mes - 1]
+  return mesLargo ? `${dia} de ${nombreMes} de ${anio}` : `${dia} ${nombreMes} ${anio}`
+}
+
 export function formatearFechaISO(fecha) {
   const enLima = aLima(fecha)
   const anio = enLima.getUTCFullYear()

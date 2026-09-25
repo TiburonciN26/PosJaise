@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ArrowBigDown, Ticket } from 'lucide-react'
-import { ETIQUETAS_ORIGEN_CUPON, formatearFechaCupon, nivelCupon } from '../lib/cupones.js'
-import { formatearSoles } from '../lib/moneda.js'
+import { ETIQUETAS_ORIGEN_CUPON, formatearFechaCupon, formatearValorCupon, nivelCupon } from '../lib/cupones.js'
 import CampoColapsable from './CampoColapsable.jsx'
 
 // Posiciones de las "chispas" del nivel Oro — mismo patrón que la
@@ -56,7 +55,7 @@ function Chispa({ estilo, size, delay }) {
 // una fila chica con las fechas, en vez de mostrarlas siempre.
 export default function TarjetaCupon({ cupon, esNuevo = false }) {
   const [abierto, setAbierto] = useState(false)
-  const nivel = nivelCupon(cupon.valor)
+  const nivel = nivelCupon(cupon.valor, cupon.tipo_descuento)
   const disponible = cupon.estado === 'DISPONIBLE'
   const esOro = nivel.nombre === 'Oro'
 
@@ -100,7 +99,7 @@ export default function TarjetaCupon({ cupon, esNuevo = false }) {
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className={`font-semibold ${nivel.claseTexto}`}>{formatearSoles(cupon.valor)}</p>
+            <p className={`font-semibold ${nivel.claseTexto}`}>{formatearValorCupon(cupon)}</p>
             <p className="text-[11px] text-white/50">
               {disponible ? 'Muéstralo en caja' : cupon.estado === 'ANULADO' ? 'Anulado' : 'Ya canjeado'}
             </p>

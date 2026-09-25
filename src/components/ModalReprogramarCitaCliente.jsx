@@ -173,7 +173,7 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
             <button
               type="submit"
               disabled={guardando || !horarioElegido}
-              className="flex-1 rounded-lg bg-[var(--lw-gold)] py-2 text-sm font-semibold text-black disabled:opacity-40"
+              className="flex-1 rounded-lg border border-[var(--lw-gold)] bg-transparent py-2 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
             >
               {guardando ? 'Guardando...' : 'Confirmar'}
             </button>

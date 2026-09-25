@@ -182,7 +182,7 @@ export default function CitasCliente() {
           <button
             type="button"
             onClick={() => setMostrarAgendar(true)}
-            className="flex items-center gap-1.5 rounded-full bg-[var(--lw-gold)] px-3 py-1.5 text-sm font-semibold text-black"
+            className="flex items-center gap-1.5 rounded-full border border-[var(--lw-gold)] bg-transparent px-3 py-1.5 text-sm font-semibold text-[var(--lw-gold)]"
           >
             <Plus className="h-3.5 w-3.5" />
             Agendar

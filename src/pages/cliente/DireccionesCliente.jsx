@@ -94,7 +94,7 @@ export default function DireccionesCliente() {
           <button
             type="button"
             onClick={abrirNueva}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--lw-gold)] px-3 py-2 text-sm font-semibold text-black"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--lw-gold)] bg-transparent px-3 py-2 text-sm font-semibold text-[var(--lw-gold)]"
           >
             <Plus className="h-4 w-4" />
             Agregar

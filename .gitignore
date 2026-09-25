@@ -44,6 +44,14 @@ skills-lock.json
 videos/
 
 # Assets sueltos que no usa el código (ej. PDFs de referencia) y mockups
-# HTML previos a implementar la pantalla real en React.
-src/assets/
+# HTML previos a implementar la pantalla real en React. "/*" (no "/") para
+# que sí se pueda descender y rescatar archivos puntuales de abajo, como
+# la excepción de Kunaroh.ttf.
+src/assets/*
+# Excepción: sí la usa el código — @font-face de .lw-titulo-kunaroh en
+# src/index.css (§7.37 implementacionesWed.md). Sin este archivo el build
+# de otra máquina (o CI) compila igual pero el título del hero de Inicio
+# cae en silencio al fallback 'Orbitron' del font-family.
+!src/assets/fonts/
+!src/assets/fonts/Kunaroh.ttf
 headerYServicios.html

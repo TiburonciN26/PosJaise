@@ -20,7 +20,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
-import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO } from '../lib/fechas.js'
+import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO, parsearFechaISOLima } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -70,7 +70,14 @@ function formatearTituloDia(fecha) {
 function agruparPorDia(registros) {
   const grupos = new Map()
   for (const registro of registros) {
-    const fecha = new Date(registro.fecha)
+    // parsearFechaISOLima, no new Date(registro.fecha) (bug real
+    // reportado por el usuario): registro.fecha es una columna `date`
+    // de Postgres ("YYYY-MM-DD", sin hora) — new Date() de un string
+    // así se interpreta como medianoche UTC, y claveDiaLima() la lee
+    // en hora de Lima (UTC-5), corriéndola un día para atrás (una
+    // visita del 25 se agrupaba bajo el 24). parsearFechaISOLima ya
+    // existe en fechas.js para exactamente este caso.
+    const fecha = parsearFechaISOLima(registro.fecha)
     const clave = claveDiaLima(fecha)
     if (!grupos.has(clave)) grupos.set(clave, { clave, fecha, registros: [] })
     grupos.get(clave).registros.push(registro)
@@ -542,7 +549,7 @@ export default function MiPanel({ activo = true }) {
                       // criterio que es_hoy() en el servidor) — antes el botón
                       // aparecía igual en días pasados y el intento fallaba con
                       // un toast de error confuso.
-                      const puedeCancelar = esAdmin || esHoyLima(new Date(registro.fecha))
+                      const puedeCancelar = esAdmin || esHoyLima(parsearFechaISOLima(registro.fecha))
                       const puedeConfirmar = esAdmin || registro.usuario_id === usuario?.id
                       const registroAbierto = registrosAbiertos.has(registro.id)
 

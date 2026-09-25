@@ -33,7 +33,7 @@ const BUCKET_FOTOS = 'fotos-clientes'
 const OPCIONES = [
   { icono: UserCircle, label: 'Tu perfil', ruta: '/mi-perfil' },
   { icono: History, label: 'Historial', ruta: '/historial' },
-  { icono: Wallet, label: 'Fidelización y puntos', ruta: '/fidelizacion' },
+  { icono: Wallet, label: 'Fidelización', ruta: '/fidelizacion' },
   { icono: Ticket, label: 'Cupones y ofertas', ruta: '/ofertas' },
   { icono: Star, label: 'Tus reseñas', ruta: '/mis-resenas' },
   { icono: MapPin, label: 'Direcciones', ruta: '/mi-perfil/direcciones' },
@@ -96,13 +96,13 @@ export default function MenuUsuarioCliente() {
   const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS, perfil?.foto_url) : null
 
   return (
-    <div ref={menuRef} className="relative shrink-0">
+    <div ref={menuRef} className="relative flex h-11 w-11 shrink-0 items-center justify-center">
       <button
         type="button"
         onClick={() => setAbierto((valorAnterior) => !valorAnterior)}
         aria-expanded={abierto}
         aria-label="Menú de cuenta"
-        className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--lw-gold)]/30 bg-[var(--lw-gold)]/15 text-sm font-semibold text-[var(--lw-gold)]"
+        className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--lw-gold)]/30 bg-[var(--lw-gold)]/15 text-sm font-semibold text-[var(--lw-gold)] sm:h-10 sm:w-10"
       >
         {urlFoto ? (
           <img

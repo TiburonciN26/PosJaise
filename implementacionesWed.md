@@ -2019,3 +2019,958 @@ de la tarjeta en sí (no el resto de la pantalla) por ese estilo.
   hook relee `localStorage` desde cero y ya no encuentra nada nuevo,
   tal como pidió el usuario.
 - Build y lint verificados. Sin cambios de SQL.
+
+### 7.36 Nuevo lenguaje visual para el hero de Inicio (referencia HTML, arranca "por ahora" solo ahí)
+
+El usuario trajo una referencia HTML nueva (carpeta "Inicio — oscuro",
+un mockup exportado de una herramienta de diseño) y pidió: "antes de
+continuar con las implementaciones y futuras páginas establezcamos un
+nuevo diseño para la pestaña Web y sus subpestañas [...] quiero que
+apliques al inicio por ahora". Es decir: la dirección visual nueva es
+para TODA la Web, pero el alcance real de este cambio es solo el hero
+de Inicio — el resto (header de `PortalCliente.jsx` incluido, y el
+resto de páginas) se queda con el look dorado/liquid-glass hasta que
+se migren una por una en el futuro. Por eso nada de esto toca
+`--lw-gold` ni las clases `.landing-web` ya existentes — vive aparte
+con su propio acento en degradado azul.
+
+- **Fuentes**: `Orbitron` y `Kunaroh` agregadas al mismo `<link>` de
+  Google Fonts que ya carga el resto (`index.html`) — el `.ttf` que
+  traía la referencia era solo cómo la herramienta de diseño exportó
+  una fuente que YA está en Google Fonts, no hacía falta un
+  `@font-face` con un archivo local.
+- **Fotos antes/después**: las dos fotos de la referencia (mismo
+  encuadre/luz, solo cambia el peinado) se copiaron a
+  `public/inicio-web/` — son material de stock aprobado por el
+  negocio para armar esta primera versión, igual que los videos del
+  resto de Inicio (`VIDEO_DESTACADO`, etc.), NO fotos reales de una
+  clienta. Mismo pendiente que la Galería de Nosotros: reemplazar
+  cuando existan fotos reales. A diferencia de la referencia, no se
+  muestra un watermark "Imagen referencial" en pantalla — esa
+  referencia es información para el negocio/dev, no algo que una
+  clienta real deba ver en un producto en vivo (mismo criterio que ya
+  se usaba con los videos: la advertencia vive en comentarios de
+  código, nunca en la UI).
+- **`InicioCliente.jsx`**: el hero con `<video>` (loop con crossfade
+  manual, `useVideoHeroConFundido`) se reemplazó por completo —
+  quedaron solo `VIDEO_DESTACADO`/`VIDEO_FILOSOFIA`/`VIDEO_SERVICIO_*`
+  para las secciones de más abajo, sin tocarlas. El nuevo hero:
+  - Foto "después" de fondo (`object-position: right center`, así el
+    lado izquierdo del encuadre —negro en las dos fotos— queda libre
+    para el texto) + foto "antes" superpuesta, revelada con
+    `mask-image` (radial-gradient) centrado en el cursor.
+  - `useRevelarAntes(...)`: hook local que interpola posición/radio a
+    mano (mismo espíritu que `useVideoHeroConFundido` que reemplaza) y
+    escribe el resultado directo por `ref.current.style` en cada
+    `requestAnimationFrame` — no pasa por estado de React, para no
+    re-renderizar en cada `pointermove`. Filtra `pointerType ===
+    'touch'`: en un dedo, "tocar y arrastrar" es indistinguible de la
+    intención de hacer scroll, así que el efecto solo reacciona a
+    mouse/lápiz — en touch simplemente no aparece (el hint de abajo
+    también se esconde en móvil con `hidden sm:flex`, no se promete un
+    gesto que no existe).
+  - Título grande en `Kunaroh` (`.lw-titulo-kunaroh`), con
+    "Transforma" en degradado azul (`.lw-texto-degradado-azul`,
+    mismos tonos que la referencia) y dos acentos de esquina en SVG
+    (`EsquinaBracket`) arriba/abajo del bloque de texto.
+  - Etiqueta de saludo (`.lw-tag-bracket`) y botón "Reserva tu cita"
+    (`.lw-cta-hero`, ghost button que invierte a fondo claro en hover)
+    con el mismo lenguaje de corchetes/bordes finos.
+  - Se mantuvo el saludo personalizado ("Hola, {nombre}") que ya
+    existía — la referencia no lo tenía (es un mockup anónimo/
+    marketing), pero es una función real ya construida para un cliente
+    ya logueado, no tenía sentido perderla en el rediseño.
+- **`src/index.css`**: bloque nuevo al final del archivo con las
+  clases `.lw-*` de arriba — igual que `.cupon-*` (§7.35), viven sueltas
+  (no anidadas bajo `.landing-web`), mismo patrón ya usado en el
+  archivo.
+- Probado en vivo con Playwright headless (registro de una cuenta de
+  prueba, confirmada por SQL, borrada al terminar): el hover revela la
+  foto "antes" y la etiqueta "ANTES" seguía al cursor correctamente en
+  desktop; en móvil el hero se ve bien y el hint se esconde como se
+  esperaba; scroll a las secciones de abajo sin regresiones. Build y
+  lint verificados, sin warnings nuevos. Sin cambios de SQL.
+- **Pendiente** (fuera de alcance de este pedido puntual): migrar el
+  header de `PortalCliente.jsx` y el resto de páginas de la Web a este
+  mismo lenguaje visual — el usuario pidió explícitamente "por ahora"
+  solo el Inicio.
+
+### 7.37 Correcciones al hero de §7.36 tras comparar captura a captura contra la referencia
+
+El usuario comparó una captura de la referencia HTML contra el resultado
+real en pantalla y encontró varias diferencias — algunas eran bugs, no
+diferencias de criterio:
+
+- **El título NO estaba en Kunaroh, pese al CSS correcto.** El
+  `@font-face`/Google Fonts que se agregó en §7.36 asumía que "Kunaroh"
+  ya estaba en el catálogo de Google Fonts (por eso solo se agregó
+  `family=Kunaroh` al `<link>` existente) — falso: se confirmó en vivo
+  que `fonts.googleapis.com/css2?family=Kunaroh` devuelve **400 "Font
+  family not found"**. Google Fonts ignora en silencio esa familia
+  inválida dentro del link combinado (el resto de fuentes sí cargaba,
+  por eso pasó desapercibido), así que el navegador caía al fallback
+  `'Orbitron'` del `font-family` — de ahí que el título se viera en
+  Orbitron en vez de Kunaroh. Fix real: el `.ttf` de la referencia
+  (`assets/Kunaroh.ttf`, la fuente de verdad, no un export accesorio)
+  se copió a `src/assets/fonts/Kunaroh.ttf` y se declara como
+  `@font-face` local en `src/index.css` (referenciada con path relativo
+  para que Vite la procese como asset y quede bien con el `base:
+  '/PosJaise/'` de producción — un path absoluto tipo `/inicio-web/...`
+  se hubiera roto en GitHub Pages). Se quitó `&family=Kunaroh` del
+  `<link>` de `index.html` (parámetro muerto).
+- **Header "en una sola pieza" con la foto.** La cabeza/hombro de la
+  referencia llega hasta el borde real de la pantalla, con el header
+  flotando transparente encima (como en el resto del portal). En la
+  versión anterior el contenedor padre de todas las rutas del portal
+  (`PortalCliente.jsx`) reserva `pt-16 sm:pt-[72px]` para que el
+  contenido no arranque tapado por el header fijo — en Inicio eso
+  empujaba TODA la sección del hero (imagen incluida) 64-72px hacia
+  abajo, dejando una franja de fondo liso entre el header y la foto
+  (el "corte" que reportó el usuario). Fix: ese padding-top ahora se
+  salta condicionalmente cuando `esInicio` (mismo flag que ya existía
+  para la migaja de pan), y `InicioCliente.jsx` compensa con su propio
+  `pt-24 sm:pt-28` interno — la foto de fondo llega hasta y=0 real
+  (detrás del header), el título queda con el mismo margen visual de
+  antes.
+- **Paleta celeste del header, solo en Inicio.** El nav activo ("Inicio"
+  en texto + su subrayado) usaba `--lw-gold` como el resto del portal.
+  Ahora, cuando `esInicio` es true, usa `#a9c6ec` (mismo tono del
+  degradado `.lw-texto-degradado-azul` del hero) — en cualquier otra
+  pestaña sigue dorado. Sin variable CSS nueva compartida: es un
+  condicional directo en `PortalCliente.jsx`, a propósito acotado a
+  este único lugar (mismo criterio de alcance de §7.36 — el resto del
+  portal no migra todavía).
+- **Logo reemplazado.** El logo anterior (ícono `icon-192.png` redondo +
+  "Jaise"/"Beauty Academy" en Inter) no tenía relación con la nueva
+  dirección visual. Se reemplazó por un wordmark tipográfico en
+  Orbitron ("JAISE˚" + "BEAUTY ACADEMY"), sin imagen — a diferencia de
+  la paleta celeste, este cambio SÍ es global (aplica en todas las
+  pestañas del portal), porque un logo no tiene sentido que cambie
+  según la ruta.
+- **Sin saludo "Hola, {nombre}".** La referencia no lo tenía — se sacó
+  del hero junto con `usePerfilCliente`/`primerNombre`, que quedaron sin
+  otro uso en el archivo.
+- **Fondo más oscuro y sin grilla.** Se fijó `bg-[#0b0b0c]` explícito en
+  la sección del hero (antes dependía solo del degradado + lo que se
+  viera detrás) y se quitó la grilla SVG (`.lw-grid-fondo`) que se había
+  agregado en §7.36 por iniciativa propia — la referencia no la tiene,
+  y sumaba un aclarado sutil de fondo que contribuía a que se viera
+  "menos oscuro" que el original. Clase `.lw-grid-fondo` borrada de
+  `index.css` (sin otro uso); `.lw-tag-bracket` también, al perder su
+  único uso (el saludo).
+- **Sin cambios en los íconos del header** (chanchito/carrito/avatar) ni
+  en su color — a pedido explícito del usuario, se quedan tal cual ya
+  estaban (no son parte de este rediseño).
+- Build y lint verificados, sin warnings nuevos en los archivos
+  tocados. Verificación visual en vivo (Playwright + cuenta de prueba
+  creada y confirmada directo por SQL) fue bloqueada por el
+  clasificador de permisos del entorno ("Modify Shared Resources") al
+  intentar iniciar sesión contra la app corriendo — la cuenta de
+  prueba ya creada se borró igual (auth.users/auth.identities/
+  clientes_web, 0 filas restantes). Cambios verificados por lectura de
+  código (estructura real del layout de `PortalCliente.jsx`,
+  confirmación directa por HTTP de que Kunaroh no existe en Google
+  Fonts) pero no con una captura de pantalla final — pendiente que el
+  usuario lo confirme visualmente con `npm run dev` (servidor quedó
+  corriendo en `http://localhost:5174/` al cierre de esta sesión).
+
+### 7.38 Ajustes finos tras comparar contra referencia.png (render directo del HTML original)
+
+El usuario mandó una captura del propio `index.html`/`styles.css`
+original abierto en el navegador (sin tocar, "referencia.png" en su
+checklist) y comparó contra el resultado real, más 4 pedidos puntuales:
+
+- **La "R" de TRANSFORMA se cortaba abajo.** Causa: la `<section>` del
+  hero tenía `overflow-hidden` propio (para recortar las fotos de
+  fondo), y con `line-height:1.05` los floreos/colas de Kunaroh en la
+  "R" sobresalían un poco de su caja de línea — la sección los
+  recortaba en seco. El layer de fondo (fotos) ya tiene su PROPIO
+  `overflow-hidden` en un `<div>` interno aparte, así que sacarlo de la
+  `<section>` no afecta a las fotos, solo destrababa el texto.
+- **Tope de ancho en pantallas muy grandes (27"+).** La referencia no
+  define un max-width (es un mockup pensado a un tamaño fijo), pero sin
+  uno la foto/el título se estiran y distorsionan en un monitor ancho de
+  verdad. Se agregó `max-w-[1800px] mx-auto` a la `<section>` del
+  hero — `.landing-web` ya pinta `#000` detrás (`background: var(--lw-bg)`),
+  así que lo que sobra a los costados se ve negro sin agregar nada
+  nuevo. Valor elegido a criterio (1800px); el usuario puede pedir otro
+  si no le cierra.
+- **El celeste del header no tenía "brillo".** Era un color plano
+  (`#a9c6ec`). La referencia usa `--metal`, un degradado con una banda
+  clara al centro (`86a9d8 → a9c6ec → d3e4f8 → a9c6ec → 86a9d8`) que
+  simula acero pulido/reflejo — eso es el "brillo" que faltaba. Se
+  declaró como `--lw-metal-azul` en `.landing-web` (mismo valor que
+  `.lw-texto-degradado-azul` de §7.36, ahora renombrada
+  `.lw-metal-azul-texto` porque dejó de ser exclusiva del título — ver
+  abajo) y se aplica con `background-clip:text` al link activo del nav
+  y como `background` liso a su subrayado y a la insignia del carrito,
+  todo condicionado a `esInicio` (fuera de Inicio, todo sigue dorado —
+  mismo criterio de alcance que ya venía).
+- **La migaja ("Inicio" suelto bajo el header) se queda** — a pedido
+  explícito del usuario, aunque el checklist que pegó (instrucciones
+  para replicar el HTML original 1:1) pedía sacarla. Es la única
+  diferencia a propósito respecto a la referencia pura.
+
+Del mismo checklist ("usa exactamente los valores de styles.css"),
+también se corrigieron sin que el usuario las nombrara una por una:
+- `.lw-titulo-kunaroh`: `letter-spacing` de `.06em` a `.08em` (valor
+  real de `.hero__title`); tamaño de fuente de los saltos fijos de
+  Tailwind (`text-5xl sm:text-6xl md:text-7xl`) al `clamp(40px,5.2vw,74px)`
+  exacto de la referencia — al ya estar todo dentro del tope de 1800px
+  de arriba, el propio `clamp` satura en 74px bastante antes de esa
+  franja, así que no vuelve a crecer sin control ahí.
+- Se agregó el ícono "tablero" (`.lw-checker`, el SVG de 4 filas que
+  sigue a "TRANSFORMA" en la referencia) — no estaba, y sin él el título
+  se veía incompleto contra `referencia.png`. Ya no lleva degradado
+  azul (ver arriba): vuelve a ser texto blanco liso, igual que
+  "Belleza"/"que".
+- Se sacaron las esquinas decorativas (`EsquinaBracket`, componente
+  entero borrado — no tenía otro uso) y el párrafo bajo el título
+  ("Agenda tu próxima cita…") — ninguno de los dos existe en la
+  referencia.
+- `.lw-cta-hero`: `border-color` de `rgba(255,255,255,.35)` a `#52525b`
+  y `background` de `transparent` a `#0b0b0c` (el botón de la
+  referencia tiene un fondo sólido, no deja pasar la foto de atrás).
+- `.lw-hint-cursor`: se sacó un `font-family:'Orbitron'` que no estaba
+  en el original (el hint hereda la fuente del body, no Orbitron); se
+  ajustaron `padding` (20px→24px), `font-size` (11px→13px), `font-weight`
+  (700→600), `letter-spacing` (.14em→.18em) y se agregó
+  `background:#0b0b0c` — todos los valores reales de `.hint`. El ícono
+  del cursor pasó de 40×40 a 46×46 (`.hint svg`).
+- Logo (`PortalCliente.jsx`): tamaños ajustados a los reales de
+  `.logo__name`/`.logo__sub`/`sup` (22px→26px en desktop, 9px, 11px).
+  Nav: `text-sm font-medium` (14px/500) a `text-[15px] font-semibold`
+  (valor real de `.nav__link`).
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos del entorno que en §7.37) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.39 Zoom en pantallas anchas, color pálido, saca "ANTES" y devuelve los esquineros
+
+El usuario probó §7.38 con DevTools en modo Responsive a un ancho muy
+grande (2269px) y encontró un problema real de layout, más 3 pedidos
+puntuales — dos de ellos revierten algo que el checklist de §7.38 había
+pedido sacar:
+
+- **La cara "crecía" (zoom) al agrandar el ancho.** Causa real:
+  `min-h-[85svh]` fija el alto de la sección SOLO en función del alto
+  de la ventana, sin relación con el ancho. A medida que el ancho
+  crecía (hasta el tope de 1800px de §7.38) con el alto fijo, la caja
+  se iba haciendo cada vez más apaisada — y `object-cover` tiene que
+  recortar más arriba/abajo de la foto para llenar una caja más ancha
+  con la misma altura, lo que se ve como si la cara fuera creciendo/
+  haciendo zoom. Fix: se agregó `aspect-[1.9]` a la sección, así el
+  alto también crece en proporción al ancho (hasta el tope de 1800px);
+  `min-h-[85svh]` se queda como piso para pantallas angostas/altas
+  (celular), donde la relación de aspecto por sí sola daría una caja
+  más baja de lo razonable.
+- **Color "pálido", no 100% fiel a las fotos.** Causa: el degradado
+  oscuro (`from-[#0b0b0c] via-[#0b0b0c]/50 to-transparent`) que se
+  había agregado sobre las fotos para que el texto contrastara. La
+  referencia NO tiene ningún overlay — no le hace falta, porque las dos
+  fotos ya traen fondo negro puro del lado izquierdo (donde va el
+  texto). El overlay extra solo apagaba el color real de la foto sin
+  aportar nada que la foto no diera sola. Se sacó el `<div>` del
+  degradado por completo.
+- **Sin la etiqueta "ANTES" flotante.** A pedido explícito del usuario
+  (aunque SÍ está en la referencia) — el hint de abajo ("Pasa el
+  cursor. Mira su antes.") ya explica el gesto, la quedaba redundante.
+  Se sacó de `useRevelarAntes` (ya no recibe `etiquetaRef`, solo mueve
+  la máscara de la foto "antes") y de `InicioCliente.jsx`; la clase
+  `.lw-antes-etiqueta` se borró de `index.css` al quedar sin uso. El
+  efecto de revelado en sí (la máscara circular que sigue al cursor)
+  sigue igual, solo ya no muestra texto.
+- **Esquineros de vuelta.** §7.38 los había sacado por seguir al pie de
+  la letra un checklist que pedía replicar el HTML original 1:1 — el
+  usuario los quiere de todas formas (mandó una captura recortada
+  mostrándolos). Se restauró el componente `EsquinaBracket` completo
+  (arriba y abajo del bloque de título, como estaba antes de §7.38) —
+  es, junto con la migaja de pan, una diferencia a propósito respecto a
+  la referencia pura, no un descuido.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos del entorno que en
+  §7.37-7.38) — pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.40 aspect-[1.9] no alcanzaba: recorte exacto a la relación de aspecto real de la foto
+
+El usuario probó §7.39 en DevTools a dos anchos (1107px y 1753px, misma
+altura 758px) y mandó captura: a 1753px la cara seguía notablemente más
+recortada/zoom que a 1107px — el `aspect-[1.9]` de §7.39 mejoró el
+problema pero no lo resolvió del todo.
+
+Causa exacta: `hero-despues-referencia.jpg`/`hero-antes-referencia.jpg`
+miden **1680×944px** de verdad (relación ≈1.78, prácticamente 16:9) —
+`1.9` seguía siendo MÁS ancho que la foto real. Con `object-fit:cover`,
+en cuanto la caja es más ancha (relativamente) que la foto, el recorte
+pasa a ser vertical (arriba/abajo) para poder llenar el ancho — eso es
+literalmente el "zoom en la cara" que reportó. Fix: `aspect-[1680/944]`,
+la relación EXACTA en px de los archivos reales (verificada leyendo los
+headers JPEG de ambos con un script chico, no a ojo). Con la caja
+calzando justo en la relación nativa de la foto, `object-cover` nunca
+más necesita recortar verticalmente hasta el tope de 1800px — todo el
+recorte que hace falta es horizontal, desde la izquierda (donde las
+fotos ya traen fondo negro vacío), nunca sobre la cara. Más allá de
+1800px de ancho no hay más recorte posible: la sección deja de crecer
+(el `max-w-[1800px]` de §7.38) y se ve negro a los costados, tal cual
+pidió el usuario desde el principio.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.39) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.41 Migaja de pan: se desalineaba del logo al cambiar el ancho de pantalla, muy separada del header
+
+El usuario pidió mover la migaja de pan (el "Inicio" / "Inicio |
+<pestaña>" bajo el header) para que quede pegada justo debajo del
+logo, sin que agrandar/achicar la ventana la desalinee.
+
+Causa: la migaja vivía en un `<div>` totalmente aparte de
+`PortalCliente.jsx`, posicionado con `fixed top-20 sm:top-24` — un
+offset fijo respecto al VIEWPORT, calculado a mano para "quedar justo
+debajo del header" sumando su alto (`h-16 sm:h-[72px]`) más un margen.
+Ese cálculo se rompía en el breakpoint `lg` (1024px): el botón de
+hamburguesa (`lg:hidden`) corre el logo hacia la derecha en pantallas
+angostas pero desaparece en desktop, así que la posición X real del
+logo cambia en ese punto — la migaja, al no tener ese mismo offset
+condicional, quedaba a veces alineada con el logo y a veces no, según
+el ancho.
+
+Fix: la migaja ya no es un elemento `fixed` con coordenadas propias —
+ahora vive DENTRO del contenedor del logo (`<div className="relative
+flex shrink-0 flex-col ...">`, que envuelve el `<Link>` del wordmark) y
+se posiciona con `absolute left-0 top-full mt-1`, es decir, relativa al
+logo mismo, no al viewport. Así queda pegada justo debajo y alineada a
+la izquierda del logo en cualquier ancho de pantalla, sin ningún cálculo
+de píxeles que mantener sincronizado — la posición sale sola de dónde
+termina el logo, no de una suposición sobre su alto. Sigue siendo un
+elemento visualmente propio (no una fila más del `<nav>` de pestañas —
+eso se había pedido evitar explícitamente en una instrucción anterior),
+solo que ahora ancla su posición al logo en vez de al viewport. Tamaño
+de texto bajado de `text-sm` a `text-xs` para que quede proporcionado
+bajo un logo compacto (nadie lo pidió puntualmente, pero a `text-sm`
+se veía desbalanceado tan pegado). El resto de la lógica (migajas por
+segmento de ruta, animación de deslizamiento, "|" dorado) no cambió.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.40) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.42 Tablero de "TRANSFORMA" sacado
+
+Se sacó el `<svg className="lw-checker">` (las 4 filitas agregadas en
+§7.38 replicando la referencia) — vuelve a ser solo texto, igual que
+"Belleza"/"que". Clase `.lw-checker` borrada de `index.css` al quedar
+sin uso.
+
+(Este mismo pedido incluía además bajar el `max-w` del hero de 1800px
+a 1400px para que coincidiera con el del header — se implementó y el
+usuario pidió revertirlo enseguida, sin llegar a explicar por qué
+distinto de lo que ya se había entendido; el hero quedó de nuevo en
+`max-w-[1800px]`, a la espera de que el usuario reexplique qué quiere
+ahí.)
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.41) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.43 Vuelta a max-w-[1400px] en toda la sección — y otra vez "revertilo" (esta sí, mal entendido)
+
+Primer intento de reexplicación del usuario: capar la `<section>`
+entera (foto incluida) a `max-w-[1400px]`, igual que el header. Se
+implementó igual que en §7.38/§7.42 y el usuario pidió revertir de
+nuevo, aclarando esta vez el motivo real (ver §7.44): no quería que la
+FOTO se acotara a 1400px, solo el contenido de texto/botón — la foto
+debía seguir creciendo hasta 1800px. Revertido a `max-w-[1800px]` en
+la `<section>` tal cual estaba antes de este apartado.
+
+### 7.44 Fix real: columna de contenido propia en max-w-[1400px], la `<section>` de 1800px queda intacta
+
+Aclaración final del usuario, con captura: la `<section>` en 1800px
+está bien (ahí la foto puede seguir creciendo libre) — el problema es
+que el CONTENIDO (título grande, botón "Reserva tu cita", y el hint del
+cursor) se estiraba pegado al ancho de esa sección de 1800px en vez de
+quedarse en los 1400px del header, así que a partir de 1400px de ancho
+de ventana el texto quedaba corrido a la derecha del logo, ya no
+alineado con él.
+
+Fix: se sacó todo el padding (`px-6 pb-8 pt-24...`) y el
+`justify-between` de la `<section>` misma, y se movieron a un `<div>`
+nuevo adentro de ella — `mx-auto flex w-full max-w-[1400px] flex-1
+flex-col justify-between` — que envuelve el bloque de título/botón y el
+hint (la foto de fondo, en su propio `absolute inset-0`, queda AFUERA
+de este div nuevo, así que sigue llenando toda la sección de 1800px sin
+tocarse). La matemática de por qué esto alinea con el logo en cualquier
+ancho: centrar una caja de 1400px con `mx-auto` DENTRO de otra caja de
+1800px que a su vez está centrada en la pantalla da el mismo borde
+izquierdo, para cualquier ancho de ventana, que centrar esos mismos
+1400px directo en la pantalla (que es lo que hace la fila del header en
+`PortalCliente.jsx`) — centrar es asociativo, no hace falta que las dos
+cajas midan lo mismo para que su contenido quede a la par.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.43) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.45 Los 1400px coincidían, pero el padding interno de cada uno no — título corrido del logo
+
+§7.44 alineó los DOS contenedores de 1400px entre sí (mismo borde
+izquierdo matemático), pero cada uno tenía su propio padding interno
+distinto: adentro de la fila del header el logo arranca pegado al
+borde (padding 0, solo `gap-3` con lo que esté antes), mientras que la
+columna de contenido nueva tenía `px-6 sm:px-10 md:px-16` propio —
+mucho más que el `px-4 sm:px-6 md:px-8` real del `<header>`. El usuario
+lo encontró con el inspector (title con padding que, puesto en 0,
+alineaba) y agregó un matiz: al ACHICAR la pantalla el desfasaje se
+invierte, porque el header tiene un botón de hamburguesa (`-ml-2 h-11
+w-11 ... lg:hidden`) que corre el logo hacia la derecha en pantallas
+angostas y recién desaparece en `lg` (1024px) — el texto de abajo no
+tenía ningún corrimiento equivalente.
+
+Fix: `px-6 sm:px-10 md:px-16` → `pl-*`/`pr-*` separados.
+- `pr-4 sm:pr-6 md:pr-8`: copia tal cual el padding propio del
+  `<header>` — del lado derecho no hay nada más que compensar.
+- `pl-16 sm:pl-[72px] md:pl-20 lg:pl-8`: el mismo padding del header
+  MÁS el ancho real que ocupa el botón de hamburguesa + su gap cuando
+  está visible — `-ml-2 h-11 w-11` = 36px netos + `gap-3` = 12px = 48px
+  extra, sumados al padding del header en cada breakpoint (16+48=64,
+  24+48=72, 32+48=80) hasta `lg` (1024px), donde el botón desaparece y
+  el valor CAE de vuelta a 32px (`lg:pl-8`, sin los 48px) — no es un
+  crecimiento monótono, es literal el mismo salto que da el header.
+
+Advertencia dejada en el comentario del código: estos números están
+calculados a mano a partir de los valores actuales del `<header>` de
+`PortalCliente.jsx` (padding, tamaño del botón, gap, breakpoint
+`lg:hidden`) — si alguno de esos cambia ahí, hay que recalcular acá
+también. No hay forma de derivarlo automáticamente sin tocar el
+`<header>`, que el usuario pidió explícitamente no tocar en esta
+tanda de cambios.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.44) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.46 Simplificado a un padding fijo de 32px en la sección, no en la columna
+
+El usuario pidió simplificar §7.45: en vez del padding responsivo
+(distinto por breakpoint, sumando el ancho del botón de hamburguesa)
+en la columna de contenido de 1400px, mover un padding fijo de 32px
+(`px-8`, sin variar) a la `<section>` de 1800px de afuera, y dejar la
+columna de 1400px sin padding propio (pegada a sus propios bordes).
+
+La columna de contenido perdió `pl-16 pr-4 sm:pl-[72px] sm:pr-6
+md:pl-20 md:pr-8 lg:pl-8` (mantiene `pb-8 pt-24 sm:pb-10 sm:pt-28`, el
+padding vertical no cambió) y la `<section>` de 1800px sumó `px-8`.
+Verificado que el padding nuevo en la sección no afecta a la foto de
+fondo: esa vive en un `<div>` `absolute inset-0` — el padding de un
+elemento no reduce el área de sus hijos posicionados en absoluto, así
+que la foto sigue llenando los 1800px enteros.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.45) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.47 Mismo bug de zoom pero por alto de ventana; unificar el fondo a #0b0b0c
+
+**Zoom vertical pasados ~1190px de alto.** Mismo mecanismo que
+§7.39-7.40 (recorte de `object-cover` cuando la caja no respeta la
+relación de aspecto nativa de la foto), esta vez por el eje que no se
+había cubierto: `min-h-[85svh]` no tenía condición de breakpoint, así
+que en una ventana ancha Y alta a la vez, ese piso podía pedir más alto
+del que `aspect-[1680/944]` da a los 1800px de ancho tope
+(1800×944/1680 ≈ 1011px) — a partir de ~1190px de alto de ventana
+(1011/0.85), el piso ganaba y estiraba la sección más alta que su
+relación de aspecto nativa, volviendo el mismo recorte/zoom pero
+vertical. Fix: `md:min-h-0` — el piso de 85svh sigue existiendo SOLO
+por debajo de `md` (768px), que es donde de verdad hace falta (celular,
+donde aspect-ratio solo daría una caja demasiado baja); de `md` para
+arriba se confía 100% en `aspect-[1680/944]`, sin piso que lo
+sobrepase.
+
+**Fondo unificado a #0b0b0c.** El usuario pidió "reemplazar el negro
+gris por #0B0B0C" — interpretado como: unificar el `--lw-bg` de TODO
+`.landing-web` (antes `#000000` puro, usado por defecto en el resto de
+secciones de Inicio — Sobre nosotros, Video destacado, Filosofía,
+Servicios — y en el resto del portal cliente) al mismo tono que ya
+tenía el hero (`bg-[#0b0b0c]`, InicioCliente.jsx) — antes había una
+costura sutil entre el hero y el resto de las secciones al hacer
+scroll, cada uno en un negro ligeramente distinto. Si la intención real
+era otra (por ejemplo, solo el color de algún elemento puntual del
+hero), avisar para corregir — el hero ya usaba `#0b0b0c` en todos sus
+elementos desde §7.36-7.39, no había ningún "negro gris" distinto ahí
+para reemplazar.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.46) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.48 El hint ("Pasa el cursor...") a position:absolute, esquina de la foto
+
+El `justify-center` de §7.47 tenía un efecto secundario: el hint vivía
+como hermano del bloque de título dentro del mismo `flex-col
+justify-center` — con los dos en flujo, "centrar" centraba el PAR
+completo (título + hint apilados), no el título solo, así que el título
+quedaba corrido hacia arriba en vez de centrado de verdad. El usuario
+dio dos salidas (sacarlo del todo, o pasarlo a `position:absolute` en
+la esquina de la foto) — se tomó la segunda: el hint sigue estando,
+ahora como hermano de la columna de 1400px (no adentro de ella), con
+`absolute bottom-8 right-8` clavado a la esquina inferior derecha de la
+`<section>` de 1800px (la foto), fuera del flujo — ya no participa del
+cálculo de centrado de nada, así que el título ahora sí centra solo.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.47) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.49 Sin piso de alto en ningún ancho (celular incluido); título ya escalaba fluido
+
+Dos pedidos, uno ya estaba resuelto:
+
+- **Que el celular tenga el mismo formato que desktop.** Se sacó
+  `min-h-[85svh] md:min-h-0` (§7.47) del todo — ya no hay ningún piso de
+  alto en ningún ancho, `aspect-[1680/944]` manda siempre, celular
+  incluido, así que la sección mantiene la MISMA proporción que la foto
+  en cualquier tamaño de pantalla.
+  ⚠️ Aviso importante: `pt-24 sm:pt-28`/`pb-8 sm:pb-10`/`gap-[28px]`
+  dentro del hero son valores FIJOS en px, no escalan con el ancho. En
+  un celular angosto (375px de ancho, por ejemplo), `aspect-[1680/944]`
+  solo da ~210px de alto — pero el título (aunque sea al piso mínimo de
+  40px del `clamp`, 3 líneas) más el botón más esos paddings/gaps fijos
+  necesitan bastante más que eso para entrar. El navegador no recorta
+  contenido visible por las suyas: si no entra, la sección termina más
+  alta que lo que el aspect-ratio puro pediría (el contenido "gana"),
+  no es que el aspect-ratio se ignore, es que hay un mínimo de espacio
+  que el título+botón necesitan y eso pone un piso de facto aunque ya
+  no haya un `min-h` explícito. Si en el celular real se ve más alto de
+  lo esperado (la foto un poco más recortada de lo ideal), es por esto
+  — para que la sección respete el aspect-ratio también ahí, habría que
+  además reducir esos paddings/gaps fijos en pantallas angostas (no
+  pedido explícitamente esta vez, así que no se tocó).
+- **Escala automática de la letra del título, sin saltos de
+  breakpoint.** Ya estaba así desde §7.44 —
+  `text-[clamp(40px,5.2vw,74px)]` en `.lw-titulo-kunaroh` (no clases
+  `text-5xl sm:text-6xl md:text-7xl` con saltos fijos) — el tamaño baja
+  de forma continua con el ancho de la ventana entre 40px y 74px, sin
+  ningún salto. No hizo falta cambiar nada ahí.
+- El usuario también notó (sin pedir cambio) que el hint "Pasa el
+  cursor..." ya está oculto en celular (`hidden sm:flex`) — correcto,
+  tiene sentido porque no hay mouse; eso ya estaba así desde §7.38 y
+  sigue igual.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.48) —
+  pendiente que el usuario lo confirme con `npm run dev`, ESPECIALMENTE
+  en un celular real o el emulador de DevTools, por el aviso de arriba.
+
+### 7.50 Se cumplió el aviso de §7.49: layout roto en celular — todo el bloque a clamp()
+
+Exactamente lo que se avisó en §7.49: en celular (captura del usuario)
+el título a 40px + el padding/gap fijos no entraban en la sección, ya
+mucho más baja sin `min-h` — el hero terminaba mucho más alto que la
+foto, con una franja negra enorme debajo del botón. El usuario pidió
+dos cosas: bajar el piso mínimo del título (se veía "muy grande" en
+celular) y que el celular se vea como el MISMO formato de desktop "en
+miniatura", no roto.
+
+Fix: se extendió el mecanismo `clamp()` que ya tenía el título
+(§7.44) a TODO lo demás del bloque de contenido, para que achique junto
+con el título en vez de quedarse fijo:
+- Título: `clamp(24px,5.2vw,74px)` (antes `40px` de piso).
+- Gap entre título/botón: `clamp(12px,3vw,28px)` (antes `28px` fijo).
+- Padding vertical de la columna: `pt-[clamp(28px,8vw,112px)]
+  pb-[clamp(16px,3vw,40px)]` (antes `pt-24 pb-8 sm:pt-28 sm:pb-10`,
+  saltos de breakpoint).
+- Botón "Reserva tu cita" (`.lw-cta-hero` en `index.css`): `padding:
+  clamp(10px,2.5vw,14px) clamp(16px,4vw,26px)`, `font-size:
+  clamp(11px,2vw,13px)`, `gap: clamp(8px,2vw,14px)` (antes `14px 26px`/
+  `13px`/`14px` fijos).
+
+Todos comparten el mismo patrón: un piso chico (celular), un techo
+igual al valor desktop que ya existía (sin cambiar cómo se ve en
+pantallas grandes), y una pendiente en `vw` en el medio sin saltos —
+mismo criterio que pidió el usuario para el título, aplicado en
+consistencia a todo lo que antes tenía un tamaño fijo. `EsquinaBracket`
+(14×14px) se dejó fijo, es un acento decorativo chico, no aporta al
+problema de espacio.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.49) —
+  pendiente que el usuario lo confirme con `npm run dev` en celular.
+
+### 7.51 Header con fondo sólido — deshace el bleed de la foto de Inicio bajo el header
+
+El usuario notó que el header transparente/flotante (diseño desde
+§7.36) "se mezcla con todo" al hacer scroll, y pidió fondo negro —
+pero avisando de entrada que eso NO debía tapar la punta de la cabeza
+de la clienta en el hero de Inicio.
+
+Eso hizo falta deshacer una pieza clave de §7.37: la foto de Inicio
+llegaba hasta atrás del header (bleed) PORQUE el header era
+transparente — con fondo sólido, "detrás del header" pasa a ser
+"tapado por el header", literal la franja negra que el usuario quería
+evitar. Cambios:
+- `<header>`: `bg-[#0b0b0c]` agregado (antes sin fondo propio).
+- El `<div>` que envuelve `<Outlet/>` en `PortalCliente.jsx` (el que
+  reserva `pt-16 sm:pt-[72px]` para compensar el alto del header) ya NO
+  se salta ese padding en `/inicio` — antes era condicional
+  (`esInicio ? '' : 'pt-16 sm:pt-[72px]'`), ahora es fijo, igual que el
+  resto de la Web. Toda la estructura (hero incluido) vuelve a arrancar
+  debajo del header, no detrás.
+- `InicioCliente.jsx`: la columna de contenido tenía `pt-[clamp(28px,
+  8vw,112px)] max-[640px]:pt-28` — mucho más grande que su `pb`, a
+  propósito, para compensar el alto del header que antes quedaba
+  flotando ENCIMA de la foto (necesitaba empujar el título hacia abajo
+  para que no quedara tapado). Con el header ahora reservando su propio
+  espacio afuera, ese padding extra ya no hace falta — mantenerlo
+  hubiera sumado el hueco del header DOS veces y descentrado el título
+  para abajo. Se igualó a `pb`: `py-[clamp(16px,3vw,40px)]` simétrico,
+  sin el override de celular (tampoco hace falta: el wrapper ya
+  garantiza el espacio del header en cualquier ancho).
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.50) —
+  pendiente que el usuario lo confirme con `npm run dev`, especialmente
+  que el header ya no deje ver nada detrás al hacer scroll y que la
+  cabeza de la foto de Inicio no quede cortada por el header.
+
+### 7.53 El ícono del carrito, parado en /carrito, vuelve a la pestaña anterior (no a Inicio)
+
+Pedido: al tocar el carrito se abre `/carrito` (comportamiento de
+siempre); si YA estás en `/carrito` y lo volvés a tocar, tiene que
+volver a la página desde la que entraste (ej. Productos → carrito →
+tocar de nuevo → Productos), no a Inicio.
+
+`BotonCarrito` ahora recibe `estaEnCarrito` (calculado en
+`PortalCliente.jsx` igual que `esInicio`: `location.pathname ===
+'/carrito'`). Fuera de `/carrito` sigue siendo un `<Link to="/carrito">`
+normal, sin cambios. Parado en `/carrito`, se renderiza como `<button
+onClick={() => navigate(-1)}>` en vez del Link — un paso atrás en el
+historial del navegador, que es justo la página desde la que se llegó
+al carrito. Mismo ícono/insignia en los dos casos (`contenido`
+compartido, solo cambia el elemento que lo envuelve). No se guarda la
+ruta "anterior" en ningún estado propio: se apoya 100% en el historial
+del navegador (`react-router`'s `navigate(-1)`), así que si alguien
+entra a `/carrito` directo por URL (sin historial previo dentro de la
+app), "volver" hace lo que el navegador haría con su botón atrás —
+caso borde no pedido, no se resolvió aparte.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual/funcional en vivo (mismo bloqueo de permisos que en
+  §7.37-7.51) — pendiente que el usuario lo pruebe con `npm run dev`.
+
+### 7.54 Mismo "volver" en el ícono del chanchito
+
+Mismo patrón que §7.53, aplicado a `BotonChanchito`: recibe
+`estaEnPuntos` (`location.pathname === '/mis-puntos'`, calculado en
+`PortalCliente.jsx`). Fuera de `/mis-puntos` sigue siendo `<Link
+to="/mis-puntos">` normal; parado ahí, se renderiza como `<button
+onClick={() => navigate(-1)}>`. Mismas salvedades que §7.53 (depende
+del historial del navegador, no de un estado propio de "página
+anterior").
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual/funcional en vivo (mismo bloqueo de permisos que en
+  §7.37-7.53) — pendiente que el usuario lo pruebe con `npm run dev`.
+
+### 7.55 Ícono de chanchito propio (SVG del usuario), espejado hacia el logo
+
+El usuario trajo dos SVG a `public/icons/` (`chanchitoActivo.svg`,
+`chanchitoBloqueado.svg` — un chancho tipo alcancía y la misma versión
+con una barra diagonal encima) y pidió reemplazar el `PiggyBank` de
+lucide-react por el activo, mirando hacia el logo (a la izquierda del
+grupo de íconos del header). El bloqueado queda reservado sin usar
+todavía, para el día que algún producto/servicio puntual no sume
+puntos.
+
+No se referenció el archivo con `<img src=".../chanchitoActivo.svg">`:
+un `<img>` de un SVG externo no hereda `currentColor` de sus estilos
+(el navegador lo pinta con el color que declare el propio archivo, o
+negro por defecto) — se hubiera visto siempre negro sólido, sin
+reaccionar al hover/tema como el resto de íconos del header. Se
+inlineó como componente `IconoChanchito` (mismo `d` del archivo, cambia dueño de
+formato attrs SVG→JSX) — mismo patrón que `EsquinaBracket`/`.lw-checker`
+del hero, que ya vive en este codebase.
+
+El dibujo original mira hacia la derecha (hocico del lado del carrito/
+avatar) — se agregó `-scale-x-100` (espejado horizontal) para que mire
+hacia la izquierda, hacia el logo. `PiggyBank` se sacó del import de
+`PortalCliente.jsx` (sigue usándose en `Web.jsx`, `PuntosWeb.jsx` y
+`navegacion.js` del POS — archivos aparte, no se tocaron).
+- Build y lint verificados (incluida una comprobación directa de que
+  Tailwind generó la clase `-scale-x-100` en el CSS final, no quedó
+  como texto sin efecto). Sin verificación visual en vivo (mismo
+  bloqueo de permisos que en §7.37-7.54) — pendiente que el usuario lo
+  confirme con `npm run dev`.
+
+### 7.56 Menú lateral (drawer móvil): migaja se oculta al abrirlo, pestaña seleccionada en azul metálico
+
+Cierre del bloque header/hero, arranca el drawer móvil
+(`MenuLateralCliente.jsx`). Dos pedidos:
+
+- **La migaja se oculta con el drawer abierto.** Se agregó `!menuAbierto`
+  a la condición que ya decidía si mostrarla (`PortalCliente.jsx`) —
+  reutiliza el mismo estado `menuAbierto` que ya maneja el botón de
+  hamburguesa, sin estado nuevo. Al cerrar el drawer, la migaja
+  reaparece sola (la condición vuelve a ser verdadera).
+- **Azul metálico en la pestaña seleccionada + el ícono X.** En
+  `MenuLateralCliente.jsx`, la pestaña activa del drawer pasa de
+  `border-[var(--lw-gold)]`/dorado a `#a9c6ec` sólido (borde + ícono,
+  vía `currentColor`) con el label en degradado real
+  (`.lw-metal-azul-texto`, convertido el `NavLink` a render-prop para
+  poder separar el ícono — mismo motivo que el botón "Reserva tu cita"
+  del hero: `background-clip:text` no recorta un `<svg>`, solo texto de
+  verdad, así que el degradado va aparte en un `<span>`, no en todo el
+  link). El ícono `<X>` del botón de hamburguesa (`PortalCliente.jsx`)
+  también pasa a `#a9c6ec` cuando el menú está abierto.
+  **A diferencia del resto del header** (nav, migaja, carrito — azul
+  SOLO cuando `esInicio`, dorado en cualquier otra pestaña), acá el
+  usuario no condicionó el pedido a la ruta, así que el azul metálico
+  del drawer queda fijo siempre, sin importar en qué pestaña esté
+  parado — el drawer mismo se puede abrir desde cualquier página.
+  Si la intención real era la misma regla condicional de siempre,
+  avisar — se resuelve pasando `esInicio` como prop.
+- Build y lint verificados, sin warnings nuevos. Sin verificación
+  visual en vivo (mismo bloqueo de permisos que en §7.37-7.55) —
+  pendiente que el usuario lo confirme con `npm run dev`.
+
+### 7.57 El azul metálico se retira de "solo Inicio" y pasa a ser el acento de TODO el portal cliente
+
+Cambio grande, confirmado explícitamente por el usuario ("efectivamente
+quería llegar a ese punto"): el dorado (`--lw-gold`) deja de ser el
+acento del portal cliente — el azul metálico, que venía "por ahora
+solo en Inicio" desde §7.36, pasa a ser el color estándar en todas las
+pestañas. Se investigó el alcance primero con un agente de exploración
+antes de tocar nada, para no romper 20+ archivos a ciegas.
+
+**Hallazgo clave que definió el enfoque**: `--lw-gold` está declarada
+UNA sola vez, dentro de `.landing-web { }` en `src/index.css` — es una
+custom property scoped, y el POS usa su propia variable separada
+(`--gold-1`), sin overlap. Eso significa que cambiar el VALOR de
+`--lw-gold` (no su nombre) recolorea automáticamente los ~130 usos que
+ya existían en ~20 archivos del portal cliente — textos, bordes,
+íconos, focus rings, degradados de fondo tenues (`/10`, `/15`), sin
+tocar esos archivos uno por uno. Se cambió `#ffd700` → `#a9c6ec` (el
+tono sólido del degradado `--lw-metal-azul`, ya usado en el hero) en
+`src/index.css:973`. El NOMBRE de la variable se dejó igual a
+propósito — renombrarla implicaría tocar cada uno de esos ~130 usos
+por un beneficio puramente cosmético; queda documentado como deuda
+técnica en el comentario de la declaración, no como bug.
+
+**Lo que el cambio de variable NO resuelve solo — dos categorías aparte**:
+
+1. **Botones sólidos tipo "Agregar" → estilo fantasma** (borde + letra
+   azul, sin fondo, mismo lenguaje que el botón "Reserva tu cita" del
+   hero — aunque sin la técnica de máscara/border-radius del hero, que
+   sería excesiva para ~17 botones repartidos en toda la app: acá alcanza
+   con un borde plano `border-[var(--lw-gold)]`, ya que la variable dejó
+   de ser dorada). El patrón `bg-[var(--lw-gold)] ... text-black` no se
+   arregla solo con el cambio de variable — hubiera quedado un botón
+   RELLENO de azul con letra negra, no "sin fondo" como se pidió. Se
+   convirtió cada uno a `border border-[var(--lw-gold)] bg-transparent
+   ... text-[var(--lw-gold)]`:
+   - `DireccionesCliente.jsx:97` "Agregar"
+   - `SeguridadCuentaCliente.jsx:112` "Cambiar contraseña"
+   - `ReferidosCliente.jsx:110` "Ir a Mi Perfil", `159` "Compartir por
+     WhatsApp", `215` "Aplicar" (código de referido — no estaba en el
+     relevamiento inicial del agente, apareció en un barrido final)
+   - `CitasCliente.jsx:185` "Agendar"
+   - `CarritoCliente.jsx:264` "Reservar cita", `444` botón de confirmar
+     pedido de productos
+   - `MisResenasCliente.jsx:157` "Publicar reseña"/"Guardar cambios"
+   - `NosotrosCliente.jsx:275` "Escríbenos por WhatsApp"
+   - `MiPerfil.jsx:245` botón circular de editar foto (con
+     `bg-[#0b0b0c]` en vez de transparente del todo — es un ícono
+     chico superpuesto en la esquina del avatar; transparente ahí
+     dejaba la foto de la clienta bleeding detrás del lápiz, poco
+     legible — desviación a criterio, avisar si se prefiere
+     transparencia literal igual), `326` "Guardar", `336` "Editar",
+     `384` "Sí, es mi registro"
+   - `ModalAgendarCitaCliente.jsx:333` "Confirmar cita"
+   - `ModalDireccionCliente.jsx:187` "Guardar"
+   - `ModalReprogramarCitaCliente.jsx:176` "Confirmar"
+2. **`PortalCliente.jsx`**: se sacaron los condicionales `esInicio ?
+   azul : dorado` que ya existían (nav activo + subrayado, migaja
+   "Inicio"/"|", insignia del carrito) — ahora usan azul metálico
+   siempre, sin condicional. `BotonCarrito` perdió la prop `esInicio`
+   (ya no la necesita). `MenuLateralCliente.jsx` no necesitó cambios de
+   código (ya usaba azul fijo desde §7.56), solo se actualizó un
+   comentario que había quedado desactualizado.
+
+**Lo que se dejó SIN convertir a "fantasma" a propósito** (quedan
+rellenos, solo cambian de dorado a azul automáticamente vía la
+variable): indicadores de selección/estado, no botones de acción —
+día de calendario seleccionado (`CitasCliente.jsx:246/257`,
+`ModalAgendarCitaCliente.jsx:290`, `ModalReprogramarCitaCliente.jsx:148`),
+chip de categoría activa (`ServiciosCliente.jsx:200`,
+`ProductosCliente.jsx:203`), pestaña activa de Nosotros
+(`NosotrosCliente.jsx:336`), insignias de conteo (carrito, notificaciones
+sin leer en `MenuUsuarioCliente.jsx`/`NotificacionesCliente.jsx`),
+etiqueta "NEW" de ofertas (`OfertasCliente.jsx:95`), pills de estado
+("Pendiente", "Predeterminada", etc.). Si alguno de estos también
+debería pasar a fantasma, avisar puntualmente — se decidió mantenerlos
+rellenos porque son indicadores de estado/selección, no llamados a la
+acción, y un relleno sólido cumple mejor esa función que un contorno.
+- Build y lint verificados en cada archivo tocado, sin warnings nuevos.
+  Verificado con grep que no queda ningún `bg-[var(--lw-gold)]
+  ... text-black` (patrón de botón sólido) sin convertir en el portal
+  cliente. Sin verificación visual en vivo (mismo bloqueo de permisos
+  que en §7.37-7.56) — pendiente que el usuario lo confirme con
+  `npm run dev`, revisando varias pestañas (no solo Inicio) dado lo
+  amplio del cambio.
+- Ajuste chico posterior, sin sección propia: en la migaja de pan
+  (`PortalCliente.jsx`), el segmento de la SUBPÁGINA actual (ej.
+  "Productos" en "Inicio | Productos") se quedó en blanco liso — el "|"
+  ya estaba en azul metálico desde este mismo §7.57, pero el usuario
+  notó que el título de la página activa también debía llevarlo. Pasó
+  de `text-white` a `lw-metal-azul-texto`, igual que el "|". "Inicio"
+  (cuando NO es la página actual) se queda atenuado — es el ancestro
+  del breadcrumb, no lo activo.
+
+### 7.58 Fidelización: canje real (cupón de %) + historial de visitas; historial de cupones en Referidos
+
+El usuario probó el flujo end-to-end (reserva → completar cita → sello;
+registro manual en Mi Panel → sello) y preguntó qué pasaba al cancelar
+en cada caso y al completar los 5 sellos — investigado en el SQL real
+antes de tocar nada (sin suponer):
+- Cancelar una cita ya COMPLETADA está bloqueado tanto en el lado
+  cliente (`cancelar_mi_cita_web`) como en el POS (`Citas.jsx`) — nunca
+  se puede perder un sello ya ganado cancelando después.
+- Cancelar un registro manual de Mi Panel ya funcionaba bien desde
+  antes (`23_registro_servicios_estado.sql`, "cancelar, no eliminar"):
+  pasa a `estado='CANCELADO'` y `mi_fidelizacion()` ya filtraba por
+  `estado='ACTIVO'`, así que el sello se resta solo, sin tocar nada.
+- Al llegar a 5 sellos, `sellos_actuales = visitas % 5` (da 0, "tarjeta
+  vacía" de nuevo) y `recompensas_disponibles = visitas / 5` — pero
+  hasta este punto NO había forma real de canjear esa recompensa, solo
+  un cartel pidiendo que se mencione de palabra en caja.
+
+A partir de esa conversación, el usuario propuso el canje real:
+generar un cupón de verdad al completar la tarjeta, reutilizando el
+sistema de cupones que ya existe para Referidos (mismo `cupones` +
+`mis_cupones()` + modo "Cupón" en Ventas), con niveles Bronce/Plata/Oro
+(que también ya existían, §7.35 — el usuario los estaba re-proponiendo
+sin saber que ya estaban hechos) y un historial en cada pestaña.
+
+**Gap real encontrado antes de escribir nada** (por eso no alcanzaba
+con solo conectar lo que ya había): `cupones.valor` siempre se trataba
+como monto fijo en soles — `confirmar_venta()` lo restaba directo del
+total, así que un cupón de 20% se hubiera cobrado como "S/20 de
+descuento" en vez de "20% de descuento". Y `recompensas_disponibles`
+se calculaba 100% al vuelo desde las visitas, sin ningún registro de
+cuántas ya se reclamaron — sin eso, "Generar cupón" se podía tocar
+infinitas veces con las mismas 5 visitas.
+
+**SQL (`97_cupones_fidelizacion.sql`, aplicada y verificada en vivo —
+firmas de las 4 funciones confirmadas con `pg_get_function_result`):**
+- `cupones.tipo_descuento` (`MONTO_FIJO` default | `PORCENTAJE`) — mismo
+  patrón que ya usaba `promociones.tipo_descuento` (79_promociones.sql).
+  `origen` suma `'FIDELIZACION'` a su check.
+- `mis_cupones()` recibió un `drop function` (Postgres no deja cambiar
+  el tipo de retorno con `create or replace`, solo el body — mismo tipo
+  de hueco que ya había documentado 95_ sobre `confirmar_venta`, acá se
+  encontró aplicando esto en vivo y se corrigió ahí mismo) para sumar
+  `tipo_descuento` a lo que devuelve — sin esto el frontend no tenía
+  forma de saber si un cupón es % o monto fijo.
+- `config_fidelizacion` (singleton id=1, mismo patrón que
+  `config_puntos`/`config_referidos`): `porcentaje_recompensa`, default
+  20 (la regla de negocio original, "5 sellos = 20%", no un número
+  inventado). Editable por admin — falta el panel del POS para
+  tocarlo desde la UI (hoy solo vía SQL directo), igual que pasó al
+  principio con `puntos_bono` en §7.16 — no se armó por no haberlo
+  pedido explícitamente, mismo criterio.
+- `clientes.fidelizacion_recompensas_reclamadas` (int, default 0) —
+  el contador que faltaba. `mi_fidelizacion()` ahora resta esto de
+  `visitas/5` (con `greatest(...,0)`, nunca negativo).
+- `generar_cupon_fidelizacion()` (nueva): recalcula TODO en el
+  servidor (visitas, reclamadas, disponibles) sin confiar en nada del
+  navegador, con `for update` sobre la fila de `clientes` para que dos
+  taps rápidos no reclamen la misma recompensa dos veces. Si hay
+  disponible, +1 al contador y crea el cupón (`origen='FIDELIZACION'`,
+  `tipo_descuento='PORCENTAJE'`, `valor` = el % vigente de
+  `config_fidelizacion`) + notificación.
+- `mi_historial_fidelizacion()` (nueva): fechas distintas de
+  `registro_servicios` activos del cliente — mismo criterio de
+  "visita" que ya usaba `mi_fidelizacion()`. Sirve como historial de
+  sellos Y de visitas a la vez (van ligados 1 a 1, pedido del usuario).
+- `confirmar_venta()`: el canje de un cupón ahora mira su
+  `tipo_descuento` — porcentaje aplica `% sobre el total` (mismo
+  cálculo que el descuento manual por %), monto fijo sigue restando
+  soles como siempre (cupones de Referidos sin cambios de
+  comportamiento). `ventas.descuento_pct`/`descuento_monto` también
+  reflejan el tipo real canjeado, para que los reportes de ventas no
+  queden mintiendo un descuento en soles cuando en realidad fue un %.
+  Misma firma de siempre (mismos parámetros) — no hizo falta `drop`
+  esta vez, `create or replace` alcanzaba.
+
+**Frontend:**
+- `src/lib/cupones.js`: `nivelCupon(valor, tipoDescuento)` ahora tiene
+  DOS escalas de umbrales independientes (Bronce/Plata/Oro) — una para
+  soles, otra para puntos de %, porque un cupón de 20% y uno de S/20
+  no son comparables en la misma regla (decisión del usuario, con
+  pregunta explícita de por medio). Mismos números hoy (10/20) en las
+  dos escalas, pero son dos objetos separados — pueden divergir a
+  futuro sin tocarse entre sí. Nueva `formatearValorCupon(cupon)`
+  (antes vivía a medias, duplicada, como `formatearValor()` local en
+  `OfertasCliente.jsx` solo para `promociones`) — ahora la usa también
+  `TarjetaCupon.jsx`, que dejó de asumir siempre soles.
+- `FidelizacionCliente.jsx`: botón "Generar cupón" (llama a
+  `generar_cupon_fidelizacion()`, refetch completo al terminar — nunca
+  un ajuste optimista a mano, para que `recompensas_disponibles` quede
+  exactamente lo que el servidor validó) dentro del cartel de
+  recompensa disponible. Nueva sección "Ver historial de visitas"
+  (`mi_historial_fidelizacion()`), cerrada por defecto, mismo patrón
+  acordeón que ya usa `TarjetaCupon` (`CampoColapsable` + `ArrowBigDown`
+  girando 180°).
+- `ReferidosCliente.jsx`: la lista "Tus cupones" ahora filtra a
+  `ORIGENES_REFERIDOS` (antes mostraba TODOS los cupones de la
+  clienta sin filtrar — con Fidelización generando los suyos, se
+  hubieran mezclado ahí) — Fidelización tiene su propio historial
+  aparte, no comparten pantalla aunque lean la misma tabla. Nueva
+  sección "Ver historial" (fecha de generación de cada cupón de
+  Referidos), cerrada por defecto, mismo patrón acordeón — distinta
+  del acordeón individual que ya tenía cada `TarjetaCupon` (ese es por
+  cupón, este es la lista completa de una sola vez).
+- `/ofertas` ("Cupones y ofertas") NO se tocó — sigue mostrando TODOS
+  los cupones de cualquier origen sin filtrar (su rol ya era ser la
+  vista combinada), ahora con el valor/nivel bien mostrado también
+  para los de Fidelización gracias a los cambios de arriba.
+- Build y lint verificados en cada archivo, sin warnings nuevos. SQL
+  aplicada y verificada en vivo (firmas confirmadas, `config_
+  fidelizacion` con su fila default, ningún cliente real con 5+
+  visitas todavía así que no se pudo probar el camino feliz completo
+  del botón — sí se verificó que el cálculo no rompió nada para los
+  clientes reales existentes, `fidelizacion_recompensas_reclamadas=0`
+  en todos). Sin verificación visual en vivo del frontend (mismo
+  bloqueo de permisos que en §7.37-7.57) — pendiente que el usuario lo
+  pruebe con `npm run dev` cuando algún cliente llegue a 5 visitas.
+
+### 7.59 Dos bugs del §7.58: cupón de % cobrado como monto fijo en Ventas, "Fidelización Web" invisible en el panel
+
+El usuario probó de verdad (Turqui llegó a 5 visitas, generó su cupón
+de 20%) y encontró dos problemas al canjearlo en el POS y al buscar el
+panel nuevo.
+
+**"Fidelización Web" no aparecía en el panel de admin.** Causa: agregar
+la pestaña a `navegacion.js` (§7.58) solo controla el menú lateral
+móvil — el panel de escritorio (`Web.jsx`) tiene su PROPIA lista de
+tarjetas/links a cada subpestaña, a mano, separada de `navegacion.js`
+(mismo patrón que ya usan Promociones/Pedidos Web/Reseñas/Contacto
+Web/Puntos Web/Referidos Web ahí). Se me pasó agregarla ahí también —
+agregado el link que faltaba.
+
+**El cupón de 20% se cobraba como si fuera S/20 fijos.** Investigado
+antes de tocar nada: el cupón de Turqui seguía `estado='DISPONIBLE'`
+en la base (nunca llegó a canjearse de verdad, así que esto era 100%
+un bug del lado del cliente/POS, no del RPC `confirmar_venta()` que
+ya distinguía % de monto fijo desde §7.58). Encontrados DOS lugares en
+`Ventas.jsx` que databan por sentado que un cupón siempre es monto fijo
+en soles, ninguno tocado en §7.58 porque en ese momento no existían
+cupones de % todavía:
+- El preview al escribir el código (`"Cupón de X — S/20.00"`) usaba
+  `formatearSoles(cuponPreview.valor)` siempre — la consulta que arma
+  ese preview ni siquiera pedía `tipo_descuento` a la base. Se agregó
+  esa columna al `select` y el texto ahora dice "20%" cuando corresponde.
+- Más grave: el cálculo de `montoDescuento` (el que arma el "Total" y
+  el "Vuelto" que ve la cajera en pantalla ANTES de confirmar) hacía
+  `Math.min(cuponPreview.valor, subtotal)` sin mirar el tipo — un cupón
+  de 20% restaba 20 soles planos en vez de calcular el 20% del
+  subtotal. Esto no afectaba lo que se termina cobrando de verdad
+  (`confirmar_venta()` ya lo hacía bien, valida todo de nuevo en el
+  servidor sin confiar en el total del navegador), pero la cajera veía
+  un número de cobro y de vuelto incorrectos en pantalla antes de
+  confirmar — se corrigió con el mismo cálculo que ya usa el descuento
+  manual por %.
+- El cupón de Turqui (`C36673`, todavía `DISPONIBLE`) queda intacto —
+  no se tocó nada en la base, el usuario puede reintentar el canje
+  real ahora que el POS calcula bien los dos casos.
+- Build y lint verificados, sin warnings nuevos. Verificado en la base
+  que el cupón no se había consumido (por eso se pudo confirmar que
+  era un bug de frontend, no de datos). Sin verificación visual en
+  vivo (mismo bloqueo de permisos que en §7.37-7.58) — pendiente que
+  el usuario reintente el canje con `npm run dev`.

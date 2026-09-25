@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Copy, Gift, MessageCircle, UserCircle, Users } from 'lucide-react'
+import { ArrowBigDown, Check, Copy, Gift, MessageCircle, UserCircle, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
+import { formatearFechaCupon } from '../../lib/cupones.js'
 import { useCuponesNuevos } from '../../hooks/useCuponesNuevos.js'
 import TarjetaCupon from '../../components/TarjetaCupon.jsx'
+import CampoColapsable from '../../components/CampoColapsable.jsx'
+
+// Orígenes propios de Referidos — Fidelización tiene los suyos
+// (§7.58) y su propio historial en FidelizacionCliente.jsx, no se
+// mezclan acá aunque las dos pestañas lean la misma tabla `cupones`.
+const ORIGENES_REFERIDOS = ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA']
 
 // "Referidos" (menú del avatar, anidada bajo Mi Perfil — mismo criterio
 // que Direcciones/Notificaciones/Seguridad, §7.22 y sucesivas). Cada
@@ -36,6 +43,7 @@ export default function ReferidosCliente() {
   const [codigoIngresado, setCodigoIngresado] = useState('')
   const [aplicando, setAplicando] = useState(false)
   const [error, setError] = useState('')
+  const [historialAbierto, setHistorialAbierto] = useState(false)
   const cuponesNuevos = useCuponesNuevos(cupones)
 
   async function cargar() {
@@ -45,7 +53,10 @@ export default function ReferidosCliente() {
     ])
     setSinPerfil(Boolean(estadoRes.error))
     setEstado(estadoRes.error ? null : estadoRes.data?.[0] ?? null)
-    setCupones(cuponesRes.data ?? [])
+    // mis_cupones() trae TODOS los cupones de la clienta, de cualquier
+    // origen (Fidelización incluida desde §7.58) — acá se filtra solo a
+    // los de Referidos, esa pestaña tiene su propia lista/historial.
+    setCupones((cuponesRes.data ?? []).filter((cupon) => ORIGENES_REFERIDOS.includes(cupon.origen)))
     setCargando(false)
   }
 
@@ -107,7 +118,7 @@ export default function ReferidosCliente() {
             </p>
             <Link
               to="/mi-perfil"
-              className="mt-2 rounded-full bg-[var(--lw-gold)] px-4 py-2 text-sm font-semibold text-black"
+              className="mt-2 rounded-full border border-[var(--lw-gold)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--lw-gold)]"
             >
               Ir a Mi Perfil
             </Link>
@@ -156,7 +167,7 @@ export default function ReferidosCliente() {
             href={`https://wa.me/?text=${mensajeWhatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--lw-gold)] py-2.5 text-sm font-semibold text-black"
+            className="mt-4 flex items-center justify-center gap-2 rounded-full border border-[var(--lw-gold)] bg-transparent py-2.5 text-sm font-semibold text-[var(--lw-gold)]"
           >
             <MessageCircle className="h-4 w-4" />
             Compartir por WhatsApp
@@ -191,6 +202,35 @@ export default function ReferidosCliente() {
             >
               Ver todos tus cupones en Cupones y ofertas →
             </Link>
+
+            {/* Historial (§7.58, pedido del usuario): cuándo se generó
+                cada cupón de Referidos — distinto del acordeón individual
+                de cada TarjetaCupon (que muestra creado/canjeado de UN
+                cupón), esto es la lista completa de fechas de una sola
+                vez, cerrada por defecto. */}
+            <button
+              type="button"
+              onClick={() => setHistorialAbierto((anterior) => !anterior)}
+              aria-expanded={historialAbierto}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white"
+            >
+              Ver historial
+              <ArrowBigDown
+                className={`h-3 w-3 transition-transform duration-300 ${historialAbierto ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <CampoColapsable abierto={historialAbierto} margen>
+              <div className="liquid-glass space-y-1.5 rounded-none p-3">
+                {cupones.map((cupon) => (
+                  <div key={cupon.id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate text-white/70">
+                      {cupon.origen === 'REFERIDO_BIENVENIDA' ? 'Cupón de bienvenida' : 'Cupón por referir'}
+                    </span>
+                    <span className="shrink-0 text-white/40">{formatearFechaCupon(cupon.creado_en)}</span>
+                  </div>
+                ))}
+              </div>
+            </CampoColapsable>
           </div>
         )}
 
@@ -212,7 +252,7 @@ export default function ReferidosCliente() {
               <button
                 type="submit"
                 disabled={aplicando}
-                className="shrink-0 rounded-lg bg-[var(--lw-gold)] px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+                className="shrink-0 rounded-lg border border-[var(--lw-gold)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
               >
                 {aplicando ? '...' : 'Aplicar'}
               </button>

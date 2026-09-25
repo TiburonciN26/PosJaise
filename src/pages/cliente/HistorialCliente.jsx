@@ -2,13 +2,7 @@ import { useEffect, useState } from 'react'
 import { History, Scissors, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { formatearSoles } from '../../lib/moneda.js'
-
-const formatoFecha = new Intl.DateTimeFormat('es-PE', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'America/Lima',
-})
+import { formatearFechaSoloDia } from '../../lib/fechas.js'
 
 // Historial de visitas — 100% lectura, sin RPC de escritura. Fuente:
 // registro_servicios (no citas): así aparece tanto lo agendado por la
@@ -75,7 +69,7 @@ export default function HistorialCliente() {
                     <p className="truncate text-sm font-medium text-white">
                       {registro.servicios?.nombre ?? 'Servicio'}
                     </p>
-                    <p className="text-xs text-white/60">{formatoFecha.format(new Date(registro.fecha))}</p>
+                    <p className="text-xs text-white/60">{formatearFechaSoloDia(registro.fecha, { mesLargo: true })}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-white/50">
                       <User className="h-3 w-3" />
                       {nombresPorUsuario.get(registro.usuario_id) ?? 'Personal'}

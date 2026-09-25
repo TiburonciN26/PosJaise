@@ -21,6 +21,7 @@ import {
   MapPin,
   PiggyBank,
   Gift,
+  Stamp,
 } from 'lucide-react'
 
 export const secciones = [
@@ -132,6 +133,14 @@ export const secciones = [
     path: '/referidos-web',
     label: 'Referidos Web',
     icono: Gift,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    path: '/fidelizacion-web',
+    label: 'Fidelización Web',
+    icono: Stamp,
     roles: ['ADMINISTRADOR'],
     tema: 'rojo',
     padre: '/web',

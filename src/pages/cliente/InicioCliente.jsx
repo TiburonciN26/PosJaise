@@ -2,15 +2,122 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
-import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+
+// Fotos de referencia del nuevo hero "antes/después" (§7.36
+// implementacionesWed.md) — igual que los videos de más abajo, son
+// material de stock que el negocio aprobó para armar esta primera
+// versión, no fotos reales de una clienta. Reemplazar en cuanto existan
+// fotos reales del salón (mismo pendiente que la Galería de Nosotros).
+const FOTO_DESPUES = `${import.meta.env.BASE_URL}inicio-web/hero-despues-referencia.jpg`
+const FOTO_ANTES = `${import.meta.env.BASE_URL}inicio-web/hero-antes-referencia.jpg`
+
+// Radio máximo (en px) del círculo que revela la foto "antes" al pasar
+// el cursor — mismo valor que la referencia del usuario.
+const RADIO_REVELADO = 340
+
+// Revela la foto "antes" bajo el cursor sin re-renderizar React en cada
+// movimiento: interpola posición y radio a mano y escribe el resultado
+// directo en el style de la imagen "antes" (vía mask-image), en vez de
+// guardarlo en estado. Sin etiqueta "ANTES" flotante (§7.39
+// implementacionesWed.md, a pedido del usuario) — el hint de abajo
+// ("Pasa el cursor. Mira su antes.") ya explica el gesto, la etiqueta
+// quedaba redundante.
+function useRevelarAntes(contenedorRef, imagenAntesRef) {
+  useEffect(() => {
+    const contenedor = contenedorRef.current
+    const imagenAntes = imagenAntesRef.current
+    if (!contenedor || !imagenAntes) return undefined
+
+    const objetivo = { x: contenedor.clientWidth, y: contenedor.clientHeight / 2 }
+    const suave = { x: objetivo.x, y: objetivo.y }
+    let activo = 0
+    let destino = 0
+    let animId
+
+    function moverA(clienteX, clienteY) {
+      const rect = contenedor.getBoundingClientRect()
+      objetivo.x = clienteX - rect.left
+      objetivo.y = clienteY - rect.top
+    }
+    // Solo mouse/lápiz: en touch, un "pointerdown+move" es indistinguible
+    // de la intención de hacer scroll — se ignora ahí para no interferir
+    // con el scroll normal de la página (el hint de abajo también se
+    // esconde en móvil, así que no se promete un gesto que no existe).
+    function esTactil(evento) {
+      return evento.pointerType === 'touch'
+    }
+    function alMover(evento) {
+      if (esTactil(evento)) return
+      moverA(evento.clientX, evento.clientY)
+      destino = 1
+    }
+    function alSoltar(evento) {
+      if (esTactil(evento)) return
+      destino = 0
+    }
+
+    function tick() {
+      suave.x += (objetivo.x - suave.x) * 0.12
+      suave.y += (objetivo.y - suave.y) * 0.12
+      activo += (destino - activo) * 0.12
+      const radio = Math.round(RADIO_REVELADO * activo)
+      const x = suave.x.toFixed(1)
+      const y = suave.y.toFixed(1)
+      const mascara =
+        radio < 2
+          ? 'linear-gradient(transparent, transparent)'
+          : `radial-gradient(circle ${radio}px at ${x}px ${y}px, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%)`
+      imagenAntes.style.maskImage = mascara
+      imagenAntes.style.webkitMaskImage = mascara
+      animId = requestAnimationFrame(tick)
+    }
+    animId = requestAnimationFrame(tick)
+
+    contenedor.addEventListener('pointermove', alMover)
+    contenedor.addEventListener('pointerdown', alMover)
+    contenedor.addEventListener('pointerup', alSoltar)
+    contenedor.addEventListener('pointerleave', alSoltar)
+    contenedor.addEventListener('pointercancel', alSoltar)
+    return () => {
+      cancelAnimationFrame(animId)
+      contenedor.removeEventListener('pointermove', alMover)
+      contenedor.removeEventListener('pointerdown', alMover)
+      contenedor.removeEventListener('pointerup', alSoltar)
+      contenedor.removeEventListener('pointerleave', alSoltar)
+      contenedor.removeEventListener('pointercancel', alSoltar)
+    }
+  }, [contenedorRef, imagenAntesRef])
+}
+
+// Acento de esquina arriba/abajo del bloque de título — se había sacado
+// en §7.38 siguiendo al pie de la letra un checklist que pedía
+// replicar el HTML original 1:1, pero el usuario lo pidió de vuelta
+// (§7.39 implementacionesWed.md): es una diferencia a propósito
+// respecto a la referencia pura, igual que la migaja de pan.
+// Tamaño por className (h-/w-), no por atributos width/height del SVG:
+// un atributo width="14" es fijo siempre, no admite variantes de
+// Tailwind como max-[640px]: — con clases sí se puede achicar solo en
+// celular sin afectar el resto de vistas (pedido del usuario).
+function EsquinaBracket({ voltear = false }) {
+  return (
+    <svg
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="#f5f5f4"
+      strokeWidth="1.5"
+      aria-hidden="true"
+      className="h-[14px] w-[14px] shrink-0 max-[640px]:h-[6px] max-[640px]:w-[6px]"
+    >
+      <path d={voltear ? 'M0 0.5V11.5H11.5' : 'M0 11.5V0.5H11.5'} />
+    </svg>
+  )
+}
 
 // Videos de referencia pegados tal cual por el negocio para armar esta
 // primera versión de la landing (§6 implementacionesWed.md) — no son
 // grabaciones del salón, el negocio los aprobó a sabiendas de eso.
 // Reemplazar por material real del salón en cuanto exista.
-const VIDEO_HERO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_074625_a81f018a-956b-43fb-9aee-4d1508e30e6a.mp4'
 const VIDEO_DESTACADO =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260402_054547_9875cfc5-155a-4229-8ec8-b7ba7125cbf8.mp4'
 const VIDEO_FILOSOFIA =
@@ -36,66 +143,6 @@ const SERVICIOS_DESTACADOS = [
       'De la idea al resultado final cuidamos cada detalle para que la experiencia se sienta impecable y el resultado se vea extraordinario.',
   },
 ]
-
-// Anima el opacity de un elemento del DOM directamente (sin transición
-// CSS ni estado de React) — igual que pide la referencia, para poder
-// encadenar el fundido con eventos del propio <video> sin re-render.
-function animarOpacidad(elemento, desde, hasta, duracionMs, alTerminar) {
-  const inicio = performance.now()
-  function paso(ahora) {
-    const progreso = Math.min((ahora - inicio) / duracionMs, 1)
-    elemento.style.opacity = String(desde + (hasta - desde) * progreso)
-    if (progreso < 1) {
-      requestAnimationFrame(paso)
-    } else {
-      alTerminar?.()
-    }
-  }
-  requestAnimationFrame(paso)
-}
-
-// Loop del video de fondo del hero con crossfade a negro entre vueltas
-// (en vez de loop nativo, que cortaría en seco): entra en fade-in al
-// poder reproducirse, se apaga los últimos ~0.55s de cada vuelta, y
-// vuelve a aparecer ya reiniciado.
-function useVideoHeroConFundido(videoRef) {
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return undefined
-    let desvaneciendo = false
-
-    function alPoderReproducir() {
-      desvaneciendo = false
-      video.play().catch(() => {})
-      animarOpacidad(video, 0, 1, 500)
-    }
-    function alActualizarTiempo() {
-      if (desvaneciendo || !Number.isFinite(video.duration)) return
-      if (video.duration - video.currentTime <= 0.55) {
-        desvaneciendo = true
-        animarOpacidad(video, Number(video.style.opacity) || 1, 0, 500)
-      }
-    }
-    function alTerminar() {
-      video.style.opacity = '0'
-      setTimeout(() => {
-        video.currentTime = 0
-        desvaneciendo = false
-        video.play().catch(() => {})
-        animarOpacidad(video, 0, 1, 500)
-      }, 100)
-    }
-
-    video.addEventListener('canplay', alPoderReproducir)
-    video.addEventListener('timeupdate', alActualizarTiempo)
-    video.addEventListener('ended', alTerminar)
-    return () => {
-      video.removeEventListener('canplay', alPoderReproducir)
-      video.removeEventListener('timeupdate', alActualizarTiempo)
-      video.removeEventListener('ended', alTerminar)
-    }
-  }, [videoRef])
-}
 
 function SeccionSobreNosotros() {
   const ref = useRef(null)
@@ -302,71 +349,192 @@ function SeccionServicios() {
 // ya existen ahí. Sin formulario de newsletter ni botones Sign Up/Login:
 // esta pantalla la ve un cliente que ya inició sesión.
 export default function InicioCliente() {
-  const { perfil } = usePerfilCliente()
-  const videoHeroRef = useRef(null)
-  useVideoHeroConFundido(videoHeroRef)
-
-  const primerNombre = perfil?.nombre?.trim().split(/\s+/)[0]
+  const contenedorHeroRef = useRef(null)
+  const imagenAntesRef = useRef(null)
+  useRevelarAntes(contenedorHeroRef, imagenAntesRef)
 
   return (
     <div className="landing-web flex-1 overflow-y-auto">
-      <section className="relative flex min-h-[85svh] flex-col items-center justify-center overflow-hidden px-6 py-12 text-center">
-        <video
-          ref={videoHeroRef}
-          className="absolute inset-0 h-full w-full object-cover object-bottom opacity-0"
-          src={VIDEO_HERO}
-          muted
-          autoPlay
-          playsInline
-          preload="auto"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-black/35" />
+      {/* Tope de ancho en pantallas muy anchas (27"+, ver
+          implementacionesWed.md §7.38): la referencia no define un
+          max-width (fue pensada como mockup fijo), pero sin uno acá la
+          foto/el título se estiran y se ven distorsionados en un
+          monitor grande de verdad. mx-auto centra la sección capada;
+          .landing-web ya pinta #000 detrás (arriba en este archivo), así
+          que lo que sobra a los costados se ve negro solo, sin agregar
+          otro color.
+          aspect-[1680/944] (§7.39-7.40): min-h-[85svh] por sí solo fija
+          la altura SOLO por el alto de la ventana, sin relación con el
+          ancho — a medida que el ancho crecía (hasta el tope de arriba)
+          con la altura fija, la caja se iba haciendo cada vez más
+          apaisada, y object-cover tenía que recortar más arriba/abajo
+          de la foto para llenarla: se veía como si "la chica creciera"
+          (más zoom sobre la cara según el ancho). §7.39 probó
+          aspect-[1.9] (una mejora, pero 1.9 sigue siendo más ancho que
+          la foto real → seguía recortando un poco verticalmente, bug
+          reportado de nuevo con captura). 1680/944 es el tamaño real en
+          px de hero-despues-referencia.jpg/hero-antes-referencia.jpg
+          (≈1.78, o sea 16:9) — con la caja exactamente en la relación
+          de aspecto nativa de la foto, object-cover ya no tiene que
+          recortar arriba/abajo en ningún ancho hasta el tope de 1800px:
+          todo el recorte que hace falta es horizontal, desde la
+          izquierda (fondo negro vacío en la foto), nunca sobre la cara.
+          Sin min-h (§7.49, antes min-h-[85svh] md:min-h-0 de §7.47): el
+          usuario pidió que el celular tenga el MISMO formato que
+          desktop (misma relación de aspecto de la foto, sin un piso de
+          alto aparte que la desvíe) — así que ya no hay ningún piso,
+          en ningún ancho: aspect-[1680/944] manda siempre, celular
+          incluido. Ver el aviso en implementacionesWed.md §7.49 sobre
+          lo que esto implica en celulares muy angostos (el contenido
+          — título + botón — puede necesitar más alto del que la sola
+          relación de aspecto da a ese ancho; el navegador no recorta
+          contenido visible, así que ahí la sección puede terminar más
+          alta que el aspect-ratio puro, no es un bug nuevo, es cómo
+          se resuelve ese choque).
+          px-8 (§7.46): antes este padding vivía en la columna de
+          contenido de 1400px de abajo, con valores distintos por
+          breakpoint para calzar con el padding real del <header> + el
+          ancho del botón de hamburguesa (§7.45) — el usuario lo
+          simplificó a un valor fijo de 32px acá en la sección de
+          1800px en vez de eso. Sigue sin afectar a la foto de fondo
+          (absolute inset-0 más abajo: el padding de un elemento no
+          reduce el área de sus hijos posicionados en absoluto). */}
+      <section
+        ref={contenedorHeroRef}
+        className="relative mx-auto flex aspect-[1680/944] w-full max-w-[1800px] flex-col bg-[#0b0b0c] px-8"
+      >
+        {/* Sin degradado oscuro sobre la foto (§7.39): la referencia no
+            tiene overlay — las dos fotos ya traen fondo negro puro del
+            lado izquierdo (donde va el texto), así que un overlay extra
+            acá solo apagaba el color real de la foto ("se ve pálida",
+            reportado por el usuario) sin aportar nada que las fotos no
+            dieran solas. */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <img
+            src={FOTO_DESPUES}
+            alt="Clienta después de su transformación en el salón"
+            className="absolute inset-0 h-full w-full object-cover object-[right_center]"
+          />
+          <img
+            ref={imagenAntesRef}
+            src={FOTO_ANTES}
+            alt="La misma clienta antes de su transformación"
+            style={{ filter: 'grayscale(0.35) brightness(0.97)' }}
+            className="absolute inset-0 h-full w-full object-cover object-[right_center]"
+          />
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="liquid-glass relative z-10 mb-6 flex items-center gap-2 rounded-lg px-3 py-2"
-        >
-          <span className="rounded-md bg-white px-2 py-0.5 text-xs font-medium text-black">Hola</span>
-          <span className="text-sm font-medium text-white/70">
-            {primerNombre ? `Qué bueno verte, ${primerNombre}` : 'Bienvenida de nuevo'}
-          </span>
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="lw-serif-regular relative z-10 text-5xl leading-tight tracking-tight text-white md:text-7xl lg:text-8xl"
-        >
-          Tu belleza,
-          <br />
-          <span className="lw-serif">nuestra pasión.</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative z-10 mt-6 max-w-md px-4 text-sm leading-relaxed text-white"
-        >
-          Agenda tu próxima cita, sigue tu progreso y descubre tus beneficios exclusivos.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="relative z-10 mt-8"
-        >
-          <Link
-            to="/citas"
-            className="liquid-glass inline-block rounded-full px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-white/5"
+        {/* Columna de contenido (§7.44-7.45): la <section> de arriba sigue
+            creciendo libre hasta 1800px (así la FOTO llena ese ancho
+            completo) — lo que se acota acá es el contenido de encima
+            (título, botón, hint), en su propio `mx-auto max-w-[1400px]`
+            independiente, centrado DENTRO de la sección de 1800px. Centrar
+            una caja de 1400px adentro de otra de 1800px que a su vez está
+            centrada en la pantalla da el mismo borde izquierdo, en
+            cualquier ancho de ventana, que centrar esos mismos 1400px
+            directo en la pantalla — que es exactamente lo que hace la fila
+            del header (`max-w-[1400px]` en PortalCliente.jsx). Por eso el
+            título/botón quedan siempre alineados bajo el logo/nav sin
+            importar cuánto se estire la ventana, mientras la foto de atrás
+            sigue teniendo sus 1800px enteros para respirar (bug reportado
+            con captura: antes el texto colgaba del ancho de la sección de
+            1800px, no del de 1400px del header).
+            `pl-*`/`pr-*` en vez de `px-*` simétrico (§7.45): esto SOLO
+            alinea los dos contenedores de 1400px entre sí — adentro, el
+            logo arranca pegado al borde de su fila (padding 0, ver
+            PortalCliente.jsx), mientras que acá el título tenía su propio
+            padding extra (antes `px-6 sm:px-10 md:px-16`), así que
+            quedaba corrido a la derecha del logo (bug reportado con
+            captura + inspector). `pr-*` copia tal cual el padding propio
+            del <header> (`px-4 sm:px-6 md:px-8`) — ahí no hay nada raro
+            del lado derecho. `pl-*` tiene que sumarle ADEMÁS el ancho
+            real que ocupa el botón de hamburguesa + su gap en el header
+            cuando está visible (`-ml-2 h-11 w-11` = 36px netos, + `gap-3`
+            = 12px → 48px), porque ese botón corre el logo hacia la
+            derecha en pantallas angostas y desaparece recién en `lg`
+            (1024px, `lg:hidden` en PortalCliente.jsx) — por eso el salto
+            hacia ABAJO en `lg:pl-8` (sin los 48px extra) en vez de seguir
+            creciendo. Si el padding del <header> o el ancho/gap de la
+            hamburguesa cambian alguna vez, estos valores hay que
+            recalcularlos a mano — no hay forma de derivarlos solos sin
+            tocar el <header>, que el usuario pidió explícitamente no
+            tocar acá.
+            §7.46: el usuario simplificó esto — el padding horizontal ya
+            no vive acá (esta columna queda sin `pl-*`/`pr-*` propio,
+            pegada a sus propios bordes de 1400px), se movió como
+            `px-8` fijo (32px, sin variar por breakpoint) a la
+            `<section>` de 1800px de arriba. Ver el comentario de esa
+            `<section>` para el resultado final. */}
+        {/* Todo el bloque de acá adentro escala fluido con clamp() en vez
+            de saltar entre breakpoints (§7.50, a pedido del usuario —
+            "mismo formato en miniatura" en celular, no un layout roto):
+            el gap entre título/botón y el tamaño de letra del título
+            comparten la idea de "un piso chico para celular, un techo
+            grande para desktop, y una pendiente en vw en el medio sin
+            saltos" — mismo mecanismo que ya tenía el título desde §7.44
+            (clamp(40px,5.2vw,74px)), extendido a todo lo demás porque
+            §7.49 sacó min-h-[85svh] de la <section> y a partir de ahí,
+            en celular, esos paddings/gap FIJOS no entraban en una
+            sección ahora mucho más baja (proporción de la foto, ~210px
+            a 375px de ancho) — el título se veía enorme y el layout se
+            rompía (bug reportado con captura). El piso del título bajó
+            de 40px a 24px (era "muy grande en móvil", reportado).
+            pt simétrico con pb (§7.51, antes pt-[clamp(28px,8vw,112px)]
+            max-[640px]:pt-28, mucho más grande que pb): ese pt extra
+            compensaba el header flotante/transparente de §7.37, que ya
+            no existe — el header ahora es opaco y el wrapper de
+            PortalCliente.jsx vuelve a reservarle su alto SIEMPRE (mismo
+            cambio, ver el comentario ahí). Dejar el pt grande acá
+            hubiera sumado ESE espacio dos veces y corrido el título
+            hacia abajo, ya no centrado de verdad dentro de la sección. */}
+        <div className="relative z-10 mx-auto flex w-full max-w-[1700px] flex-1 flex-col justify-center py-[clamp(16px,3vw,40px)]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-start gap-[clamp(12px,3vw,28px)] max-[640px]:gap-[8px] md:max-w-xl"
           >
-            Agendar una cita
-          </Link>
-        </motion.div>
+            {/* Sin overflow-hidden en la <section> (arriba): con
+                line-height 1.05 las colas/floreos de Kunaroh en la "R" de
+                TRANSFORMA quedaban cortadas por el borde de la sección
+                (bug reportado por el usuario con captura) — el layer de
+                fondo ya se clippea solo (overflow-hidden propio, arriba),
+                así que sacarlo de acá no afecta a las fotos. */}
+            <EsquinaBracket />
+            <h1 className="lw-titulo-kunaroh text-[clamp(10px,4vw,50px)] text-white">
+              <span className="block">Belleza</span>
+              <span className="block">que</span>
+              <span className="block">Transforma</span>
+            </h1>
+            <EsquinaBracket voltear />
+            <Link to="/citas" className="lw-cta-hero mt-2">
+              <span className="lw-metal-azul-texto">Reserva tu cita</span>
+              <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* El hint ("Pasa el cursor...") salió de la columna centrada de
+            arriba (§7.48): estando adentro, como hermano del bloque de
+            título en un flex-col con justify-center, empujaba el cálculo
+            del centrado (el título ya no quedaba centrado solo, sino
+            junto con el hint, corriéndolo hacia arriba). Ahora es
+            position:absolute clavado en la esquina inferior derecha de
+            la FOTO (relativo a la <section> de 1800px, no a la columna
+            de 1400px) — ya no participa del layout en flujo de nada, así
+            que no interfiere con el centrado del título. */}
+        <div className="lw-hint-cursor absolute bottom-8 right-8 z-10 hidden sm:flex">
+          <svg width="46" height="46" viewBox="0 0 64 64" fill="none" stroke="#f5f5f4" strokeWidth="1.2" className="shrink-0" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" />
+            <circle cx="32" cy="32" r="18" strokeDasharray="3 3" />
+            <path d="M32 4v56" />
+            <path d="M26 26l14 6-6 2-2 6z" fill="#8b8b3d" />
+          </svg>
+          <div>
+            <div>Pasa el cursor.</div>
+            <div>Mira su antes.</div>
+          </div>
+        </div>
       </section>
 
       <SeccionSobreNosotros />

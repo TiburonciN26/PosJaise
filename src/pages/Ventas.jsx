@@ -531,8 +531,16 @@ export default function Ventas({ activo = true }) {
   const descuentoPctAplicado = esDescuentoPorcentaje
     ? Math.min(100, Math.max(0, valorDescuentoNumero))
     : 0
+  // Bug real reportado (cupón de Fidelización, 20%): esto SIEMPRE trataba
+  // cuponPreview.valor como monto fijo en soles, sin mirar tipoDescuento —
+  // el "Total"/"Vuelto" que veía la cajera en pantalla no coincidía con lo
+  // que confirmar_venta() termina cobrando de verdad en el servidor (que sí
+  // ya distinguía % de monto fijo, ver 97_cupones_fidelizacion.sql). Mismo
+  // cálculo que ya existía acá abajo para el descuento manual por %.
   const montoDescuento = esCupon
-    ? redondear2(Math.min(cuponPreview?.valor ?? 0, subtotal))
+    ? cuponPreview?.tipoDescuento === 'PORCENTAJE'
+      ? redondear2(subtotal * ((cuponPreview.valor ?? 0) / 100))
+      : redondear2(Math.min(cuponPreview?.valor ?? 0, subtotal))
     : esDescuentoPorcentaje
       ? redondear2(subtotal * (descuentoPctAplicado / 100))
       : redondear2(Math.min(Math.max(valorDescuentoNumero, 0), subtotal))
@@ -596,7 +604,7 @@ export default function Ventas({ activo = true }) {
         // clientes (cliente_id y referido_id) — sin el hint, PostgREST
         // no sabe cuál usar y el select entero falla (se veía como
         // "código no encontrado" aunque el cupón sí existiera).
-        .select('valor, estado, clientes!cliente_id(nombre)')
+        .select('valor, tipo_descuento, estado, clientes!cliente_id(nombre)')
         .eq('codigo', codigoCupon.toUpperCase())
         .maybeSingle()
         .then(({ data, error }) => {
@@ -613,7 +621,11 @@ export default function Ventas({ activo = true }) {
             setCuponError('Ese cupón ya fue usado')
           } else {
             setCuponError('')
-            setCuponPreview({ valor: parseFloat(data.valor), clienteNombre: data.clientes?.nombre })
+            setCuponPreview({
+              valor: parseFloat(data.valor),
+              tipoDescuento: data.tipo_descuento,
+              clienteNombre: data.clientes?.nombre,
+            })
           }
         })
     }, 400)
@@ -1201,7 +1213,11 @@ export default function Ventas({ activo = true }) {
             {buscandoCupon
               ? 'Buscando cupón...'
               : cuponPreview
-                ? `Cupón de ${cuponPreview.clienteNombre ?? 'cliente'} — ${formatearSoles(cuponPreview.valor)}`
+                ? `Cupón de ${cuponPreview.clienteNombre ?? 'cliente'} — ${
+                    cuponPreview.tipoDescuento === 'PORCENTAJE'
+                      ? `${cuponPreview.valor}%`
+                      : formatearSoles(cuponPreview.valor)
+                  }`
                 : cuponError}
           </p>
         )}
