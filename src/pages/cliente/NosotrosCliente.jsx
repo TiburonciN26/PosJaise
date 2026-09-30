@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { Clock, Globe, Image, MapPin, PenLine, Phone, Star, User, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
-import { urlPublicaFoto } from '../../lib/imagenes.js'
+import { resolverUrlGaleria, urlPublicaFoto } from '../../lib/imagenes.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { nombrePublico } from '../../lib/resenas.js'
+import ComparadorAntesDespues from '../../components/ComparadorAntesDespues.jsx'
+import Estrellas from '../../components/Estrellas.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
@@ -13,29 +16,6 @@ const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
   year: 'numeric',
   timeZone: 'America/Lima',
 })
-
-// "María López" → "María L." — el nombre completo real solo lo ve el
-// admin (panel de moderación); en el muro público alcanza con esto.
-function nombrePublico(nombre) {
-  const partes = (nombre ?? '').trim().split(/\s+/)
-  if (partes.length < 2) return partes[0] ?? 'Clienta'
-  return `${partes[0]} ${partes[1][0].toUpperCase()}.`
-}
-
-function Estrellas({ calificacion, className = 'h-4 w-4' }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Star
-          key={i}
-          className={`${className} ${
-            i < calificacion ? 'fill-[var(--lw-gold)] text-[var(--lw-gold)]' : 'text-white/20'
-          }`}
-        />
-      ))}
-    </div>
-  )
-}
 
 const BUCKET_FOTOS_EQUIPO = 'fotos-asistentes'
 
@@ -119,6 +99,55 @@ function SeccionEquipo() {
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       {equipo.map((persona, indice) => (
         <TarjetaEquipo key={persona.id} persona={persona} indice={indice} />
+      ))}
+    </div>
+  )
+}
+
+// Grilla de antes/después — fuente: galeria_para_web() (98_galeria_web.sql),
+// solo lo que el admin marcó activo. Formato pedido por el usuario:
+// slider arrastrable de comparación (ComparadorAntesDespues.jsx), no el
+// círculo que revela con el cursor que ya usa el hero de Inicio — son dos
+// mecanismos distintos a propósito, cada uno pensado para su contexto
+// (un solo hero grande vs. una grilla de varias fotos chicas).
+function SeccionGaleria() {
+  const [fotos, setFotos] = useState([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    let vigente = true
+
+    supabase.rpc('galeria_para_web').then(({ data }) => {
+      if (!vigente) return
+      setFotos(data ?? [])
+      setCargando(false)
+    })
+
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  if (cargando) {
+    return <p className="py-10 text-center font-mono text-sm text-white/50">Cargando...</p>
+  }
+
+  if (fotos.length === 0) {
+    return <SeccionProximamente icono={Image} mensaje="Muy pronto: fotos de nuestros trabajos." />
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {fotos.map((foto) => (
+        <ComparadorAntesDespues
+          key={foto.id}
+          antes={resolverUrlGaleria(foto.antes_url)}
+          despues={resolverUrlGaleria(foto.despues_url)}
+          altAntes={`${foto.titulo ?? 'Trabajo del salón'} — antes`}
+          altDespues={`${foto.titulo ?? 'Trabajo del salón'} — después`}
+          titulo={foto.titulo}
+          mostrarEtiquetas
+        />
       ))}
     </div>
   )
@@ -314,8 +343,10 @@ function SeccionProximamente({ icono: Icono, mensaje }) {
 // una sola pestaña de la barra principal, con su propia sub-navegación
 // interna — decisión explícita del usuario para no ir sumando una
 // pestaña nueva a la barra por cada página de este tipo (Equipo,
-// Galería, Reseñas, Contacto...). Solo "Equipo" tiene contenido real
-// hoy; el resto son placeholders "Próximamente" hasta que se construyan.
+// Galería, Reseñas, Contacto...). Las 4 ya tienen contenido real —
+// SeccionProximamente queda solo como el estado vacío de Galería
+// mientras el admin no cargue ninguna foto (o si algún día se agrega
+// una 5ta sección que todavía no tenga nada).
 export default function NosotrosCliente() {
   const [seccionActiva, setSeccionActiva] = useState('equipo')
 
@@ -344,9 +375,7 @@ export default function NosotrosCliente() {
         </div>
 
         {seccionActiva === 'equipo' && <SeccionEquipo />}
-        {seccionActiva === 'galeria' && (
-          <SeccionProximamente icono={Image} mensaje="Muy pronto: fotos de nuestros trabajos." />
-        )}
+        {seccionActiva === 'galeria' && <SeccionGaleria />}
         {seccionActiva === 'resenas' && <SeccionResenas />}
         {seccionActiva === 'contacto' && <SeccionContacto />}
       </div>

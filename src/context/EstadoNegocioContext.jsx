@@ -16,6 +16,24 @@ export function EstadoNegocioProvider({ children }) {
   // valor optimista acá no abre ningún hueco de seguridad.
   const [abierto, setAbierto] = useState(true)
   const [cuentaTransferencia, setCuentaTransferencia] = useState('')
+  // Datos de Yape/Plin para el carrito web (ContactoWeb.jsx los edita,
+  // ver 100_pedidos_web_pago.sql) — agrupados en un solo objeto, a
+  // diferencia de `cuentaTransferencia` suelto, porque siempre se usan
+  // juntos (número + titular + QR de cada método) y ya son 6 campos.
+  const [pagos, setPagos] = useState({
+    yapeNumero: '',
+    yapeTitular: '',
+    yapeQrUrl: null,
+    plinNumero: '',
+    plinTitular: '',
+    plinQrUrl: null,
+  })
+  // Adelanto/cancelación configurables por el negocio (migración 115) —
+  // el Detalle del servicio los muestra en la franja "Adelanto y pago" en
+  // vez del placeholder [S/ X] / [24 h]; null = el negocio no lo cargó
+  // todavía, y esa pantalla sigue mostrando el placeholder.
+  const [adelantoMinimo, setAdelantoMinimo] = useState(null)
+  const [cancelacionPlazoHoras, setCancelacionPlazoHoras] = useState(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -26,17 +44,32 @@ export function EstadoNegocioProvider({ children }) {
 
     let vigente = true
 
+    function aplicarFila(fila) {
+      setAbierto(fila.abierto)
+      setCuentaTransferencia(fila.cuenta_transferencia ?? '')
+      setPagos({
+        yapeNumero: fila.yape_numero ?? '',
+        yapeTitular: fila.yape_titular ?? '',
+        yapeQrUrl: fila.yape_qr_url ?? null,
+        plinNumero: fila.plin_numero ?? '',
+        plinTitular: fila.plin_titular ?? '',
+        plinQrUrl: fila.plin_qr_url ?? null,
+      })
+      setAdelantoMinimo(fila.adelanto_minimo ?? null)
+      setCancelacionPlazoHoras(fila.cancelacion_plazo_horas ?? null)
+    }
+
     supabase
       .from('estado_negocio')
-      .select('abierto, cuenta_transferencia')
+      .select(
+        'abierto, cuenta_transferencia, yape_numero, yape_titular, yape_qr_url, ' +
+          'plin_numero, plin_titular, plin_qr_url, adelanto_minimo, cancelacion_plazo_horas',
+      )
       .eq('id', 1)
       .maybeSingle()
       .then(({ data }) => {
         if (!vigente) return
-        if (data) {
-          setAbierto(data.abierto)
-          setCuentaTransferencia(data.cuenta_transferencia ?? '')
-        }
+        if (data) aplicarFila(data)
         setCargando(false)
       })
 
@@ -47,8 +80,7 @@ export function EstadoNegocioProvider({ children }) {
         { event: 'UPDATE', schema: 'public', table: 'estado_negocio' },
         (payload) => {
           if (!vigente) return
-          setAbierto(payload.new.abierto)
-          setCuentaTransferencia(payload.new.cuenta_transferencia ?? '')
+          aplicarFila(payload.new)
         },
       )
       .subscribe()
@@ -82,8 +114,26 @@ export function EstadoNegocioProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ abierto, cuentaTransferencia, cargando, cambiarEstado, cambiarCuentaTransferencia }),
-    [abierto, cuentaTransferencia, cargando, cambiarEstado, cambiarCuentaTransferencia],
+    () => ({
+      abierto,
+      cuentaTransferencia,
+      pagos,
+      adelantoMinimo,
+      cancelacionPlazoHoras,
+      cargando,
+      cambiarEstado,
+      cambiarCuentaTransferencia,
+    }),
+    [
+      abierto,
+      cuentaTransferencia,
+      pagos,
+      adelantoMinimo,
+      cancelacionPlazoHoras,
+      cargando,
+      cambiarEstado,
+      cambiarCuentaTransferencia,
+    ],
   )
 
   return <EstadoNegocioContext.Provider value={value}>{children}</EstadoNegocioContext.Provider>

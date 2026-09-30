@@ -1,0 +1,121 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "DetalleMovil.dc.html": {
+      "h": 5000,
+      "is_interactive": true,
+      "page": "page-q31s6b",
+      "title": "Detalle del servicio · Móvil (390)",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    },
+    "DetalleServicio.dc.html": {
+      "h": 3620,
+      "is_interactive": true,
+      "page": "page-q31s6b",
+      "title": "Detalle del servicio · Escritorio (1440)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 3740,
+      "is_interactive": true,
+      "title": "Servicios · Escritorio (1440)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Movil.dc.html": {
+      "h": 3920,
+      "is_interactive": true,
+      "title": "Servicios · Móvil (390)",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-27T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "backend": {
+      "fill": "orange",
+      "text": "BACKEND QUE FALTA (preguntar antes de migrar)\n- servicios.descripcion (text), editable en ModalServicio.\n- servicios.en_tendencia (boolean, manual desde el POS) + texto corto para el hero (servicios.descripcion_destacado o reutilizar descripcion).\n- \"Lo más pedido\": calcular con las citas de los últimos 30 días (top por cantidad), sin columna nueva.\n- Opcional: servicios.incluye (text[]).\n- GRANT explícito además de RLS.\n- Orden de las categorías y de los servicios dentro de cada fila: agregar servicios.orden (int) o usar el más pedido primero.",
+      "w": 420,
+      "x": 1990,
+      "y": 1160
+    },
+    "cambios": {
+      "fill": "pink",
+      "text": "CAMBIOS VS. ACTUAL\n- Sale la tarjeta iridiscente con tilt 3D; queda zoom suave de la foto en hover.\n- Corazón, \"Agregar\" y compartir salen de la tarjeta y pasan a la pestaña Detalle del servicio.\n- Sale el filtro Favoritos de esta pestaña.\n- Móvil pasa de 3 a 2 columnas.\n- Servicios sin foto: degradado por categoría.",
+      "w": 420,
+      "x": 1990,
+      "y": 640
+    },
+    "detalle": {
+      "fill": "blue",
+      "page": "page-q31s6b",
+      "text": "DETALLE DEL SERVICIO\n1. Migas + Volver a servicios.\n2. Galería grande con carrusel de 5 s (barras), miniaturas Resultado / Antes / Después.\n3. Info: categoría, título, precio \"desde\", descripción, 4 datos clave, botones (Agregar a mi cita, Reservar ahora, favorito, compartir), WhatsApp y 3 íconos: puntos, reseñas, sello de fidelidad.\n4. Adelanto y pago (franja de 3 datos): adelanto obligatorio (mínimo [S/ X] o el total, por Yape/Plin/transferencia), cambios hasta [24 h] antes, saldo en el local (efectivo, Yape, Plin, transferencia o tarjeta solo en físico; aún no hay pasarela).\n5. Cómo es el servicio (pasos con minutos).\n6. Cuidados antes y después: sigue al paso a paso.\n7. Especificaciones · Herramientas · Materiales.\n8. Reseñas destacadas (id=resenas, destino de \"Ver reseñas\"): resumen 4.9 + distribución, Escribir una reseña, Ver las 32 reseñas, 3 reseñas.\n9. Se suele reservar junto con: combo que agrega los dos servicios a la cita.\n10. También te puede interesar.\nMóvil: mismo orden en una columna; reseñas deslizables; barra inferior fija con precio + Agregar.",
+      "w": 420,
+      "x": 1990,
+      "y": 0
+    },
+    "detalleBack": {
+      "fill": "orange",
+      "page": "page-q31s6b",
+      "text": "BACKEND PARA EL DETALLE (preguntar antes de migrar)\n- servicio_fotos (varias fotos por servicio, con etiqueta Antes/Después/Resultado y orden).\n- servicios: descripcion, a_domicilio (bool) y costo_domicilio, duracion_resultado, precio_variable (bool) + nota de precio.\n- Especificaciones, herramientas y materiales: jsonb en servicios o tablas servicio_pasos / servicio_materiales.\n- Cupos: calcular con el horario y las citas de la semana (no es un stock guardado).\n- Favoritos ya existe (favoritos_servicios).\n- Adelanto y plazo de cancelación: configurables en el negocio (ya existe adelanto/abono en Citas).\n- Cuidados antes/después: text[] por servicio.\n- Combo sugerido: servicios.combo_con (id) o calcular el par más reservado junto.\n- Reseñas: usar las que ya existen, filtradas por servicio.",
+      "w": 420,
+      "x": 1990,
+      "y": 700
+    },
+    "orden": {
+      "fill": "blue",
+      "text": "ORDEN DE LA PESTAÑA\n1. Hero \"Tendencias y lo más pedido\": 3–5 servicios. Cada 5 s cambia la foto con fundido y, con ella, la etiqueta (En tendencia / Lo más pedido), el título, la descripción y el precio (entran con desenfoque + subida suave, escalonados). Fijos: Reservar cita y Ver detalles.\n2. Filtros fijos (sticky): categorías, buscador y conteo.\n3. Catálogo. En \"Todos\": una fila por categoría con sus 4 primeros servicios y \"Ver todo (N)\" a la derecha (móvil: fila deslizable + tarjeta final \"Ver los N\"). Al elegir una categoría (chip o Ver todo): grilla completa de esa categoría + \"← Todas las categorías\". Al buscar: resultados en grilla plana. Tarjeta: foto cuadrada, radio 10, flecha ↗ abajo a la derecha, subcategorías abajo a la izquierda; tocarla abre la pestaña Detalle del servicio. 4 col escritorio / 2 col móvil.\n4. Cómo reservar (3 pasos).\n5. \"¿No encuentras tu servicio?\": título + horario a la derecha y 3 tarjetas (WhatsApp, Contacto y ubicación, Preguntas frecuentes \"Muy pronto\"). Solo estético por ahora; FAQ será otra pestaña.\n6. Barra flotante \"Tu cita\" al agregar servicios → Citas.\nDetalle del servicio: diseñado en la Página 2 (favorito, agregar a mi cita, compartir, reseñas, etc.).",
+      "w": 420,
+      "x": 1990,
+      "y": 0
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 1910,
+      "text": "Servicios — portal cliente",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "titulo2": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "page-q31s6b",
+      "text": "Detalle del servicio",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Movil.dc.html",
+    "DetalleServicio.dc.html",
+    "DetalleMovil.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Page 1"
+    },
+    {
+      "id": "page-q31s6b",
+      "name": "Page 2"
+    }
+  ],
+  "title": "Servicios Jaise"
+}

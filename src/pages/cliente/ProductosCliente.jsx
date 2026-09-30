@@ -1,58 +1,99 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Heart, MessageCircle, Minus, Package, Plus, Search, ShoppingBag, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, Search, ShoppingBag, Sparkles, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
-import { useAuth } from '../../context/AuthContext.jsx'
-import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
+import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
+import { degradadoServicio } from '../../lib/serviciosVisual.js'
+import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
+import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
+import { useCintaContinua } from '../../hooks/useCintaContinua.js'
+import TarjetaProductoCliente, { porcentajeDescuento } from '../../components/TarjetaProductoCliente.jsx'
+import BarraTuCarritoFlotante from '../../components/BarraTuCarritoFlotante.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-productos'
-// Mismos grados que ServiciosCliente.jsx — misma tarjeta iridiscente,
-// mismo "tacto" en toda la Web.
-const TILT = 1
-const SCALE = 1.07
+const POR_FILA = 4
+const MAX_HERO = 5
+const INTERVALO_HERO_MS = 5000
+// Cuántas tarjetas DISTINTAS mínimo debe tener una cinta antes de
+// duplicarla — si hay pocas ofertas, la lista se repite para llenar el
+// ancho (docs/diseno-productos/README.md, "Movimiento continuo").
+const MIN_CINTA = 10
 
-// Catálogo de productos activos + favoritos personales — mismo patrón
-// que ServiciosCliente.jsx (ver implementacionesWed.md §7), tarjeta
-// "iridiscente" compartida (.iri-* en index.css). productos_select ya
-// deja ver los activos a cualquier autenticado (84_productos_favoritos.sql)
-// — acá solo se lee, nunca se escribe "productos" (eso sigue siendo del
-// personal, ver ModalProducto.jsx/Inventario.jsx). favoritos_productos sí
-// es propia: insert/delete de (cliente_web_id, producto_id).
+// Medidas de la cinta por medida de pantalla (README: "296×390 a 36px/s
+// en escritorio; 200×264 a 28px/s en móvil"). Se resuelven una sola vez
+// al montar vía useEntornoAnimacion — igual que los retrasos de la
+// animación de entrada — porque el offset en px que lleva
+// useCintaContinua tiene que calzar exacto con el tamaño realmente
+// renderizado; no vale la pena el resize en vivo para esto.
+const CINTA_MEDIDAS = {
+  desktop: { ancho: 296, alto: 390, separacion: 24, velocidad: 36 },
+  movil: { ancho: 200, alto: 264, separacion: 12, velocidad: 28 },
+}
+
+// Catálogo de productos del rediseño (docs/diseno-productos/README.md):
+// inicio "Novedades y lo más vendido" con carrusel foto+texto (igual
+// efecto que el hero de Servicios), dos cintas continuas (Ofertas /
+// Destacados), filtros sticky + catálogo agrupado por categoría (idéntico
+// a Servicios), "Cómo comprar", ayuda y la barra flotante "Tu carrito".
+// Reemplaza la tarjeta iridiscente con inclinación 3D (`.iri-*`, que se
+// queda en index.css sin tocar) por TarjetaProductoCliente.jsx, la misma
+// tarjeta de Servicios con lo propio de un producto encima.
 //
-// Diferencia con servicios: productos tiene stock. Decisión confirmada
-// con el usuario: un producto sin stock sigue apareciendo (no se
-// filtra), solo se marca con la etiqueta "Agotado" (.iri-agotado).
+// `destacado`, `nuevo` y `en_inicio` (migración 117) se marcan a mano
+// desde ModalProducto.jsx — decisión confirmada con el usuario. El
+// inicio prioriza, por producto, la etiqueta: oferta (precio_antes) >
+// "Nuevo" > "Destacado" > "Novedad" genérica. La descripción usa
+// `productos.descripcion` (migración 118) si el admin ya la escribió, y
+// solo cae al texto genérico por categoría en los que todavía no la
+// tienen (mismo criterio que ServiciosCliente.jsx).
 export default function ProductosCliente() {
-  const { usuario } = useAuth()
+  const { agregarProducto } = useCarritoCliente()
   const { mostrarToast } = useToast()
-  const { productosCarrito, agregarProducto, cambiarCantidadProducto } = useCarritoCliente()
 
   const [productos, setProductos] = useState([])
-  const [favoritos, setFavoritos] = useState(() => new Set())
+  const [contacto, setContacto] = useState(null)
+  const [horario, setHorario] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [categoriaActiva, setCategoriaActiva] = useState('todos')
-  const gridRef = useRef(null)
+  const [heroIdx, setHeroIdx] = useState(0)
+  const [heroTick, setHeroTick] = useState(0)
+
+  // Animación de entrada — mismo patrón que ServiciosCliente.jsx (ver
+  // docs/patrones/animacion-entrada.md), tabla de retrasos propia de
+  // Productos (docs/diseno-productos/README.md, "Animación de entrada").
+  const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
+
+  const ENTRADA_FIJA = esDesktop
+    ? { eyebrow: 150, foto: 200, bloque: 300, botones: 500, catalogoLinea: 650, fraseOfertas: 800, filaOfertas: 900, filaDestacados: 1100, filtros: 1300 }
+    : { eyebrow: 350, foto: 100, bloque: 480, botones: 650, catalogoLinea: 780, fraseOfertas: 900, filaOfertas: 1000, filaDestacados: 1150, filtros: 1400 }
+  const ENTRADA_FILA = { fila: esDesktop ? 1500 : 1600, paso: 220, carta: 120, entre: 90 }
+  const cintaMedidas = esDesktop ? CINTA_MEDIDAS.desktop : CINTA_MEDIDAS.movil
+  const cintaPasoPx = cintaMedidas.ancho + cintaMedidas.separacion
 
   useEffect(() => {
     let vigente = true
 
     async function cargar() {
-      const [productosRes, favoritosRes] = await Promise.all([
+      const [productosRes, contactoRes, horarioRes] = await Promise.all([
         supabase
           .from('productos')
-          .select('id, nombre, categoria, precio, stock_actual, foto_url')
+          .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url, descripcion, destacado, nuevo, en_inicio')
           .eq('activo', true)
           .order('nombre'),
-        supabase.from('favoritos_productos').select('producto_id'),
+        supabase.rpc('datos_contacto'),
+        supabase.rpc('horario_atencion'),
       ])
 
       if (!vigente) return
       setProductos(productosRes.data ?? [])
-      setFavoritos(new Set((favoritosRes.data ?? []).map((fila) => fila.producto_id)))
+      setContacto(contactoRes.data?.[0] ?? null)
+      setHorario(horarioRes.data?.[0] ?? null)
       setCargando(false)
     }
 
@@ -62,101 +103,78 @@ export default function ProductosCliente() {
     }
   }, [])
 
-  // Mismo truco que ServiciosCliente.jsx: --mx/--my/--iri-shift directo
-  // por JS en el propio elemento, sin pasar por React state.
-  useEffect(() => {
-    const grid = gridRef.current
-    if (!grid) return undefined
-
-    function alMover(evento) {
-      const card = evento.target.closest('.iri-card')
-      if (!card) return
-      const rect = card.getBoundingClientRect()
-      const x = ((evento.clientX - rect.left) / rect.width) * 100
-      const y = ((evento.clientY - rect.top) / rect.height) * 100
-      card.classList.add('is-hover')
-      card.style.setProperty('--mx', `${x}%`)
-      card.style.setProperty('--my', `${y}%`)
-      card.style.setProperty('--iri-shift', `${(x + y) * 0.15}`)
-      const rx = ((50 - y) / 50) * TILT
-      const ry = ((x - 50) / 50) * TILT
-      card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${SCALE})`
-    }
-
-    function alSalir(evento) {
-      const card = evento.target.closest('.iri-card')
-      if (!card || card.contains(evento.relatedTarget)) return
-      card.classList.remove('is-hover')
-      card.style.setProperty('--mx', '50%')
-      card.style.setProperty('--my', '50%')
-      card.style.transform = 'perspective(900px) rotateX(0) rotateY(0) scale(1)'
-    }
-
-    grid.addEventListener('mousemove', alMover)
-    grid.addEventListener('mouseout', alSalir)
-    return () => {
-      grid.removeEventListener('mousemove', alMover)
-      grid.removeEventListener('mouseout', alSalir)
-    }
-  }, [])
-
-  async function alternarFavorito(productoId) {
-    const esFavorito = favoritos.has(productoId)
-
-    const { error } = esFavorito
-      ? await supabase
-          .from('favoritos_productos')
-          .delete()
-          .eq('cliente_web_id', usuario.id)
-          .eq('producto_id', productoId)
-      : await supabase
-          .from('favoritos_productos')
-          .insert({ cliente_web_id: usuario.id, producto_id: productoId })
-
-    if (error) {
-      mostrarToast('No se pudo actualizar tus favoritos.', 'error')
-      return
-    }
-
-    setFavoritos((anterior) => {
-      const siguiente = new Set(anterior)
-      if (esFavorito) siguiente.delete(productoId)
-      else siguiente.add(productoId)
-      return siguiente
-    })
-  }
-
-  async function alAgregar(productoId) {
-    const exito = await agregarProducto(productoId)
-    if (!exito) mostrarToast('No se pudo actualizar tu carrito.', 'error')
-  }
-
-  async function alCambiarCantidad(productoId, cantidad) {
-    const exito = await cambiarCantidadProducto(productoId, cantidad)
-    if (!exito) mostrarToast('No se pudo actualizar tu carrito.', 'error')
-  }
-
-  function compartir(producto) {
-    const texto =
-      `✨ Mira este producto:\n\n🛍 *${producto.nombre}*\n` +
-      `💰 ${formatearSoles(producto.precio)}` +
-      `\n\n¡Pregunta por él en tu próxima visita!`
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank', 'noopener,noreferrer')
-  }
-
   const categorias = useMemo(
     () => ['todos', ...new Set(productos.map((p) => p.categoria).filter(Boolean))],
     [productos],
   )
 
-  const filtrados = useMemo(() => {
-    const termino = busqueda.trim().toLowerCase()
-    return productos.filter(
-      (p) =>
-        (categoriaActiva === 'todos' || p.categoria === categoriaActiva) &&
-        (!termino || p.nombre.toLowerCase().includes(termino)),
-    )
-  }, [productos, busqueda, categoriaActiva])
+  // Inicio: productos marcados a mano (productos.en_inicio) con stock.
+  const heroProductos = useMemo(
+    () => productos.filter((p) => p.en_inicio && p.stock_actual > 0).slice(0, MAX_HERO),
+    [productos],
+  )
+  const heroIdxSeguro = heroProductos.length ? heroIdx % heroProductos.length : 0
+  const heroActual = heroProductos[heroIdxSeguro]
+
+  useEffect(() => {
+    if (heroProductos.length < 2) return undefined
+    const id = setInterval(() => {
+      setHeroIdx((indice) => (indice + 1) % heroProductos.length)
+    }, INTERVALO_HERO_MS)
+    return () => clearInterval(id)
+  }, [heroProductos.length, heroTick])
+
+  function irAHero(indice) {
+    setHeroIdx(indice)
+    setHeroTick((valor) => valor + 1)
+  }
+
+  async function agregarDesdeHero() {
+    if (!heroActual) return
+    const agregado = await agregarProducto(heroActual.id, 1)
+    mostrarToast(agregado > 0 ? 'Agregado al carrito.' : 'No se pudo agregar — ya no hay stock disponible.', agregado > 0 ? 'exito' : 'error')
+  }
+
+  const ofertas = useMemo(() => productos.filter((p) => p.precio_antes && p.stock_actual > 0), [productos])
+  const destacados = useMemo(() => productos.filter((p) => p.destacado && p.stock_actual > 0), [productos])
+
+  const terminoQ = busqueda.trim().toLowerCase()
+  const agrupado = categoriaActiva === 'todos' && !terminoQ
+
+  const listaFiltrada = useMemo(
+    () =>
+      productos.filter(
+        (p) =>
+          (categoriaActiva === 'todos' || p.categoria === categoriaActiva) &&
+          (!terminoQ || p.nombre.toLowerCase().includes(terminoQ)),
+      ),
+    [productos, categoriaActiva, terminoQ],
+  )
+
+  const grupos = useMemo(() => {
+    if (!agrupado) return []
+    return categorias
+      .slice(1)
+      .map((categoria) => {
+        const todos = productos.filter((p) => p.categoria === categoria)
+        return { categoria, todos, primeros: todos.slice(0, POR_FILA) }
+      })
+      .filter((grupo) => grupo.todos.length > 0)
+  }, [agrupado, categorias, productos])
+
+  const clavesFilas = useMemo(() => grupos.map((grupo) => grupo.categoria), [grupos])
+  const { contenedorRef, refFila, estadoFila } = useRevelarEnPantalla({
+    activo: !reducirMovimiento && agrupado,
+    claves: clavesFilas,
+    agotarEnMs:
+      ENTRADA_FILA.fila + (grupos.length + 1) * ENTRADA_FILA.paso + ENTRADA_FILA.carta + POR_FILA * ENTRADA_FILA.entre + 1500,
+  })
+
+  const plural = (n) => `${n} ${n === 1 ? 'producto' : 'productos'}`
+  const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
+  const horarioTexto = horario
+    ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
+    : null
 
   if (cargando) {
     return (
@@ -167,149 +185,568 @@ export default function ProductosCliente() {
   }
 
   return (
-    <div className="catalogo-iridiscente animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
-      <div className="liquid-glass flex items-center gap-2.5 rounded-2xl px-3.5 transition-colors focus-within:border-[var(--lw-gold)]">
-        <Search className="h-4 w-4 shrink-0 text-white/50" />
-        <input
-          type="text"
-          value={busqueda}
-          onChange={(evento) => setBusqueda(evento.target.value)}
-          placeholder="Buscar producto…"
-          className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-white/40"
-        />
-        {busqueda && (
-          <button
-            type="button"
-            onClick={() => setBusqueda('')}
-            aria-label="Limpiar"
-            className="shrink-0 text-lg leading-none text-white/50 transition-colors hover:text-white"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+    <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+      {/* 0. INICIO: "Novedades y lo más vendido" */}
+      {heroActual && (
+        <section className="mx-auto grid w-full max-w-[1400px] gap-8 px-4 pb-6 pt-6 sm:px-8 lg:grid-cols-[1fr_1.12fr] lg:gap-16 lg:pt-10">
+          <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
+            <span
+              className={`text-[11px] font-semibold uppercase tracking-widest text-white/60 ${reducirMovimiento ? '' : 'in-left'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
+            >
+              Novedades y lo más vendido
+            </span>
 
-      {categorias.length > 1 && (
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          {categorias.map((categoria) => {
-            const activa = categoriaActiva === categoria
-            return (
+            <div
+              className={`grid ${reducirMovimiento ? '' : 'in-left'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.bloque}ms` }}
+            >
+              {heroProductos.map((p, i) => {
+                const activo = i === heroIdxSeguro
+                const saliente = heroProductos.length > 2 && i === (heroIdxSeguro - 1 + heroProductos.length) % heroProductos.length
+                const y = activo ? 0 : saliente ? -16 : 16
+                const blur = activo ? 0 : 8
+                const dEtiqueta = activo ? 250 : 0
+                const dTitulo = activo ? 350 : 0
+                const dResto = activo ? 480 : 0
+                const desc = p.descripcion || `Uno de nuestros productos de ${p.categoria ?? 'catálogo'} favoritos entre nuestras clientas.`
+                const descuento = porcentajeDescuento(p)
+                const etiquetaHero = descuento != null ? `En oferta −${descuento}%` : p.nuevo ? 'Nuevo' : p.destacado ? 'Destacado' : 'Novedad'
+
+                const estiloEtiqueta = reducirMovimiento
+                  ? { opacity: activo ? 1 : 0, transition: 'none' }
+                  : {
+                      opacity: activo ? 1 : 0,
+                      transform: `translateY(${y}px)`,
+                      transition: `opacity 0.6s ease ${dEtiqueta}ms, transform 0.6s ease ${dEtiqueta}ms`,
+                    }
+                const estiloTitulo = reducirMovimiento
+                  ? { opacity: activo ? 1 : 0, filter: 'none', transform: 'none', transition: 'none' }
+                  : {
+                      opacity: activo ? 1 : 0,
+                      filter: `blur(${blur}px)`,
+                      transform: `translateY(${y}px)`,
+                      transition: `opacity 0.7s ease ${dTitulo}ms, filter 0.7s ease ${dTitulo}ms, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) ${dTitulo}ms`,
+                    }
+                const estiloDescripcion = reducirMovimiento
+                  ? { opacity: activo ? 1 : 0, transform: 'none', transition: 'none' }
+                  : {
+                      opacity: activo ? 1 : 0,
+                      transform: `translateY(${y}px)`,
+                      transition: `opacity 0.7s ease ${dResto}ms, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) ${dResto}ms`,
+                    }
+                const estiloPrecio = reducirMovimiento
+                  ? { opacity: activo ? 1 : 0, transition: 'none' }
+                  : { opacity: activo ? 1 : 0, transition: `opacity 0.7s ease ${dResto}ms` }
+
+                return (
+                  <div key={p.id} style={{ gridArea: '1 / 1' }} aria-hidden={!activo} className={`flex flex-col ${activo ? '' : 'pointer-events-none'}`}>
+                    <span
+                      style={estiloEtiqueta}
+                      className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[#0b0b0c]"
+                    >
+                      <Sparkles className="h-[13px] w-[13px]" />
+                      {etiquetaHero}
+                    </span>
+                    <h1 style={estiloTitulo} className="lw-titulo-heavitas mt-4 text-[34px] uppercase leading-[1.02] sm:text-[56px]">
+                      {p.nombre}
+                    </h1>
+                    <p style={estiloDescripcion} className="mt-4 max-w-[44ch] text-sm leading-relaxed text-[#d9d9dc] sm:text-[15px]">
+                      {desc}
+                    </p>
+                    <span style={estiloPrecio} className="mt-3.5 text-[13px] text-white/60">
+                      <b className="text-[15px] font-semibold text-white">{formatearSoles(p.precio)}</b>
+                      {p.precio_antes && <s className="ml-1.5">{formatearSoles(p.precio_antes)}</s>}
+                      {p.categoria && ` · ${p.categoria}`}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div
+              className={`flex flex-col gap-3 sm:flex-row sm:items-center ${reducirMovimiento ? '' : 'in-left'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.botones}ms` }}
+            >
               <button
-                key={categoria}
                 type="button"
-                onClick={() => setCategoriaActiva(categoria)}
-                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium capitalize transition-colors ${
-                  activa
-                    ? 'border-[var(--lw-gold)] bg-[var(--lw-gold)] text-black'
-                    : 'border-white/15 text-white/70 hover:border-white/30 hover:text-white'
-                }`}
+                onClick={agregarDesdeHero}
+                className="flex items-center justify-between gap-3 rounded-full py-1.5 pl-6 pr-1.5 text-sm font-semibold text-black"
+                style={{ background: 'var(--lw-gold)' }}
               >
-                {categoria}
+                Agregar al carrito
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0b0b0c] text-[var(--lw-gold)]">
+                  <ShoppingBag className="h-[15px] w-[15px]" />
+                </span>
               </button>
-            )
-          })}
-        </div>
-      )}
+              <Link
+                to={`/productos/${heroActual.id}`}
+                className="rounded-full border border-white/15 px-6 py-3.5 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+              >
+                Ver detalles
+              </Link>
+            </div>
 
-      {filtrados.length === 0 ? (
-        <p className="mt-10 text-center text-sm text-white/50">Sin resultados.</p>
-      ) : (
-        <div
-          ref={gridRef}
-          className="mt-5 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-4"
-        >
-          {filtrados.map((producto) => {
-            const esFavorito = favoritos.has(producto.id)
-            const agotado = producto.stock_actual <= 0
-            const cantidadEnCarrito = productosCarrito.get(producto.id) ?? 0
-            const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)
+            <div
+              className={`flex flex-wrap items-baseline gap-2 text-xs text-white/50 ${reducirMovimiento ? '' : 'in-left'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.catalogoLinea}ms` }}
+            >
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
+              <span>/</span>
+              <span className="font-medium text-[#e8e8ea]">{plural(productos.length)}</span>
+              <span>·</span>
+              <span>Recojo en el local</span>
+              <span>·</span>
+              <span>Envío a [ZONA]</span>
+            </div>
+          </div>
 
-            return (
-              <div key={producto.id} className="iri-wrap">
-                <div className="iri-card" role="group" aria-label={producto.nombre}>
-                  <div className="iri-img">
+          <div
+            className={`order-1 flex flex-col gap-2.5 lg:order-2 ${reducirMovimiento ? '' : 'in-photo'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.foto}ms` }}
+          >
+            <div className="relative h-[300px] overflow-hidden rounded-[16px] bg-[#050505] sm:h-[420px]">
+              {heroProductos.map((p, i) => {
+                const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
+                return (
+                  <div key={p.id} className="absolute inset-0" style={{ opacity: i === heroIdxSeguro ? 1 : 0, transition: 'opacity 1.1s ease' }}>
                     {urlFoto ? (
-                      <>
-                        <img src={urlFoto} alt="" className="iri-img-real" loading="lazy" />
-                        <div className="iri-img-grad" />
-                      </>
+                      <img
+                        src={urlFoto}
+                        alt={p.nombre}
+                        className="h-full w-full object-cover"
+                        style={{ transform: `scale(${i === heroIdxSeguro ? 1 : 1.06})`, transition: 'transform 6s ease-out' }}
+                      />
                     ) : (
-                      <div className="iri-img-vacia">
-                        <Package className="h-8 w-8" />
+                      <div className="flex h-full w-full items-center justify-center text-white/60" style={{ background: degradadoServicio(p) }}>
+                        <Package className="h-10 w-10" />
                       </div>
                     )}
                   </div>
-                  <div className="iri-iridescent" />
-                  <div className="iri-specular" />
-                  <div className="iri-border" />
-                  <div className="iri-glow" />
+                )
+              })}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/60" />
 
-                  <button
-                    type="button"
-                    onClick={() => alternarFavorito(producto.id)}
-                    aria-label={esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-                    aria-pressed={esFavorito}
-                    className={`iri-heart${esFavorito ? ' on' : ''}`}
-                  >
-                    <Heart className="h-[18px] w-[18px]" strokeWidth={2} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => compartir(producto)}
-                    aria-label="Compartir por WhatsApp"
-                    className="iri-share"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </button>
-
-                  {agotado && <span className="iri-agotado">Agotado</span>}
-                  <div className="iri-price">
-                    <span className="iri-price-num">{formatearSoles(producto.precio)}</span>
-                  </div>
+              {heroProductos.length > 1 && (
+                <div className="absolute inset-x-4 top-3.5 flex gap-1.5">
+                  {heroProductos.map((p, i) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => irAHero(i)}
+                      aria-label={`Ir a ${p.nombre}`}
+                      className={`lw-barra-progreso ${i === heroIdxSeguro ? 'activa' : i < heroIdxSeguro ? 'completa' : ''}`}
+                    >
+                      <span />
+                    </button>
+                  ))}
                 </div>
+              )}
 
-                <div className="iri-name">{producto.nombre}</div>
+              <div className="absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] font-medium uppercase tracking-widest text-white">
+                <span className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
+                  {String(heroIdxSeguro + 1).padStart(2, '0')} / {String(heroProductos.length).padStart(2, '0')}
+                </span>
+                <span className="normal-case tracking-normal text-[#eeeeee]">
+                  <b className="font-semibold">{formatearSoles(heroActual.precio)}</b>
+                </span>
+              </div>
+            </div>
 
-                {cantidadEnCarrito > 0 ? (
-                  <div className="mt-2 flex w-full items-center justify-between rounded-full border border-[var(--lw-gold)] bg-[var(--lw-gold)]/10 px-1.5 py-1">
+            {heroProductos.length > 1 && (
+              <div className="grid grid-cols-3 gap-2.5">
+                {[1, 2, 3].map((j) => {
+                  const t = (heroIdxSeguro + j) % heroProductos.length
+                  const p = heroProductos[t]
+                  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
+                  return (
                     <button
+                      key={j}
                       type="button"
-                      onClick={() => alCambiarCantidad(producto.id, cantidadEnCarrito - 1)}
-                      aria-label="Quitar uno"
-                      className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--lw-gold)]"
+                      onClick={() => irAHero(t)}
+                      aria-label={`Ver ${p.nombre}`}
+                      className="group relative h-[108px] overflow-hidden rounded-[14px] bg-[#151517] sm:h-[180px]"
                     >
-                      <Minus className="h-3 w-3" />
+                      {urlFoto ? (
+                        <img src={urlFoto} alt="" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-white/50" style={{ background: degradadoServicio(p) }}>
+                          <Package className="h-6 w-6" />
+                        </div>
+                      )}
                     </button>
-                    <span className="text-xs font-semibold text-[var(--lw-gold)]">
-                      {cantidadEnCarrito}
-                    </span>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 1. OFERTAS Y DESTACADOS: dos cintas en movimiento continuo. */}
+      {(ofertas.length > 0 || destacados.length > 0) && (
+        <section className="flex flex-col gap-9 py-10">
+          <p
+            className={`mx-auto w-full max-w-[1700px] px-4 text-[15px] leading-relaxed text-[#d9d9dc] sm:px-8 ${reducirMovimiento ? '' : 'in-left'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.fraseOfertas}ms` }}
+          >
+            Los mismos productos que usamos en el salón, para que tu resultado dure en casa.
+          </p>
+          {ofertas.length > 0 && (
+            <FilaCintaProductos
+              titulo="Ofertas"
+              derecha
+              etiqueta={(p) => `Oferta −${porcentajeDescuento(p)}%`}
+              productos={ofertas}
+              pasoPx={cintaPasoPx}
+              medidas={cintaMedidas}
+              velocidadPxS={cintaMedidas.velocidad}
+              activo={!reducirMovimiento}
+              claseEntrada={reducirMovimiento ? '' : 'in-left'}
+              delayEntrada={ENTRADA_FIJA.filaOfertas}
+            />
+          )}
+          {destacados.length > 0 && (
+            <FilaCintaProductos
+              titulo="Destacados"
+              derecha={false}
+              etiqueta={() => 'Destacado'}
+              productos={destacados}
+              pasoPx={cintaPasoPx}
+              medidas={cintaMedidas}
+              velocidadPxS={cintaMedidas.velocidad}
+              activo={!reducirMovimiento}
+              claseEntrada={reducirMovimiento ? '' : 'in-right'}
+              delayEntrada={ENTRADA_FIJA.filaDestacados}
+            />
+          )}
+        </section>
+      )}
+
+      {/* 2. FILTROS (sticky) */}
+      <div
+        id="catalogo"
+        className={`sticky top-0 z-10 border-y border-white/10 bg-[#0b0b0c]/90 px-4 py-3 backdrop-blur sm:px-8 ${reducirMovimiento ? '' : 'in-up'}`}
+        style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
+      >
+        <div className="mx-auto flex w-full max-w-[1700px] flex-wrap items-center gap-3">
+          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            {categorias.map((categoria) => {
+              const activa = categoriaActiva === categoria
+              return (
+                <button
+                  key={categoria}
+                  type="button"
+                  onClick={() => setCategoriaActiva(categoria)}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                    activa ? 'bg-white text-black' : 'bg-[#18181b] text-[#d6d6da] hover:text-white'
+                  }`}
+                >
+                  {categoria === 'todos' ? 'Todos' : categoria}
+                </button>
+              )
+            })}
+          </div>
+          <label className="flex h-[38px] w-full items-center gap-2 rounded-full bg-[#18181b] px-3.5 text-white/50 sm:w-[230px]">
+            <Search className="h-[15px] w-[15px] shrink-0" />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(evento) => setBusqueda(evento.target.value)}
+              placeholder="Buscar producto…"
+              aria-label="Buscar producto"
+              className="w-full min-w-0 bg-transparent text-[13px] text-white outline-none placeholder:text-white/40"
+            />
+            {busqueda && (
+              <button type="button" onClick={() => setBusqueda('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </label>
+          <span className="hidden shrink-0 text-[11px] uppercase tracking-wider text-white/50 sm:inline">
+            {plural(agrupado ? productos.length : listaFiltrada.length)}
+          </span>
+        </div>
+      </div>
+
+      <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-8">
+        {/* 3a. "Todos": una fila por categoría */}
+        {agrupado && (
+          <div className="flex flex-col gap-10 pt-8">
+            {grupos.map((grupo, gi) => {
+              const decision = reducirMovimiento ? null : estadoFila(grupo.categoria)
+              const pendiente = !reducirMovimiento && !decision
+              const listo = Boolean(decision && !decision.agotada)
+              const delayBase = decision?.modo === 'carga' ? ENTRADA_FILA.fila + gi * ENTRADA_FILA.paso : 0
+
+              return (
+                <section
+                  key={grupo.categoria}
+                  ref={refFila(grupo.categoria)}
+                  className="flex flex-col gap-3.5"
+                  style={pendiente ? { opacity: 0 } : undefined}
+                >
+                  <div
+                    className={`flex items-baseline justify-between gap-3 ${listo ? 'in-left' : ''}`}
+                    style={listo ? { animationDelay: `${delayBase}ms` } : undefined}
+                  >
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-3">
+                      <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
+                      <span className="text-xs text-white/50">{plural(grupo.todos.length)}</span>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => alCambiarCantidad(producto.id, cantidadEnCarrito + 1)}
-                      aria-label="Agregar uno"
-                      className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--lw-gold)]"
+                      onClick={() => setCategoriaActiva(grupo.categoria)}
+                      className="flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)]"
                     >
-                      <Plus className="h-3 w-3" />
+                      Ver todo ({grupo.todos.length}) <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => alAgregar(producto.id)}
-                    className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/15 px-2 py-1.5 text-xs font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
-                  >
-                    <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
-                    Agregar
-                  </button>
-                )}
+                  <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
+                    {grupo.primeros.map((p, k) => {
+                      const claseTarjeta = listo ? (esDesktop ? (k < 2 ? 'in-left' : 'in-right') : 'in-right') : ''
+                      const delayTarjeta = delayBase + ENTRADA_FILA.carta + k * ENTRADA_FILA.entre
+                      return (
+                        <div key={p.id} className={`w-[150px] shrink-0 sm:w-auto ${claseTarjeta}`} style={listo ? { animationDelay: `${delayTarjeta}ms` } : undefined}>
+                          <TarjetaProductoCliente producto={p} />
+                        </div>
+                      )
+                    })}
+                    {grupo.todos.length > POR_FILA && (
+                      <button
+                        type="button"
+                        onClick={() => setCategoriaActiva(grupo.categoria)}
+                        className={`flex h-[150px] w-[120px] shrink-0 flex-col items-center justify-center gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-[#111113] text-xs font-semibold text-white sm:hidden ${listo ? 'in-right' : ''}`}
+                        style={listo ? { animationDelay: `${delayBase + ENTRADA_FILA.carta + POR_FILA * ENTRADA_FILA.entre}ms` } : undefined}
+                      >
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </span>
+                        Ver los {grupo.todos.length}
+                      </button>
+                    )}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        )}
+
+        {/* 3b. Una categoría o una búsqueda: grilla completa */}
+        {!agrupado && (
+          <div className="flex flex-col gap-4 pt-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{terminoQ ? 'Resultados' : categoriaActiva}</h2>
+                <span className="text-xs text-white/50">{plural(listaFiltrada.length)}</span>
               </div>
+              {categoriaActiva !== 'todos' && (
+                <button
+                  type="button"
+                  onClick={() => setCategoriaActiva('todos')}
+                  className="flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)]"
+                >
+                  <ArrowRight className="h-3.5 w-3.5 rotate-180" /> Todas las categorías
+                </button>
+              )}
+            </div>
+            {listaFiltrada.length === 0 ? (
+              <p className="py-10 text-center text-sm text-white/50">Sin resultados para "{busqueda}".</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8">
+                {listaFiltrada.map((p) => (
+                  <TarjetaProductoCliente key={p.id} producto={p} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. CÓMO COMPRAR */}
+        <section className="mt-16 border-t border-white/10 pt-10">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">Así de simple</span>
+          <h2 className="lw-titulo-heavitas mt-2.5 text-2xl uppercase">Cómo comprar</h2>
+          <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+            {[
+              { paso: 'Paso 1', titulo: 'Elige tus productos', texto: 'Toca un producto (o la flecha ↗) para ver sus detalles, elige la cantidad y agrégalo a tu carrito.' },
+              { paso: 'Paso 2', titulo: 'Confirma tu pedido', texto: 'En el carrito aplica tu cupón, paga por Yape, Plin o transferencia y sube tu comprobante.' },
+              { paso: 'Paso 3', titulo: 'Recoge o recibe', texto: 'Te avisamos en Notificaciones cuando tu pedido esté listo para recoger o en camino a [ZONA].' },
+            ].map((item) => (
+              <div key={item.paso} className="rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                <span className="text-[11px] tracking-widest text-[var(--lw-gold)]">{item.paso.toUpperCase()}</span>
+                <h3 className="mt-2.5 text-[15px] font-semibold text-white">{item.titulo}</h3>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">{item.texto}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. AYUDA */}
+        <section className="mt-16 border-t border-white/10 pt-14">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex max-w-[560px] flex-col gap-3.5">
+              <h2 className="lw-titulo-heavitas text-3xl uppercase leading-[1.05] sm:text-[46px]">¿No encuentras tu producto?</h2>
+              <p className="text-sm leading-relaxed text-white/60 sm:text-[15px]">
+                Cuéntanos qué buscas y te recomendamos el producto ideal para tu tipo de cabello, uñas o piel.
+              </p>
+            </div>
+            {horarioTexto && (
+              <div className="flex flex-col gap-1 text-right">
+                <span className="text-lg font-bold text-white sm:text-2xl">{horarioTexto}</span>
+                <span className="text-xs text-white/50">horario de atención por WhatsApp y en el local</span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-2.5 rounded-[14px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+              <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
+                <MessageCircle className="h-[17px] w-[17px]" />
+              </span>
+              <h3 className="mt-2.5 text-[15px] font-bold text-white">Escríbenos por WhatsApp</h3>
+              <p className="mb-1 text-[13px] leading-relaxed text-white/60">Te decimos si lo tenemos, cuándo llega o cuál te conviene más.</p>
+              {whatsapp ? (
+                <a
+                  href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre sus productos.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white"
+                >
+                  Abrir WhatsApp
+                </a>
+              ) : (
+                <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] font-semibold text-white/40">
+                  Aún no configurado
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2.5 rounded-[14px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+              <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
+                <MapPin className="h-[17px] w-[17px]" />
+              </span>
+              <h3 className="mt-2.5 text-[15px] font-bold text-white">Contacto y ubicación</h3>
+              <p className="mb-1 text-[13px] leading-relaxed text-white/60">
+                {contacto?.direccion || contacto?.telefono ? [contacto?.direccion, contacto?.telefono].filter(Boolean).join(' · ') : 'Llámanos o visítanos. Te atendemos en el mismo horario.'}
+              </p>
+              <Link to="/nosotros" className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                Ver contacto
+              </Link>
+            </div>
+            <div className="flex flex-col gap-2.5 rounded-[14px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+              <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
+                <HelpCircle className="h-[17px] w-[17px]" />
+              </span>
+              <h3 className="mt-2.5 text-[15px] font-bold text-white">Preguntas frecuentes</h3>
+              <p className="mb-1 text-[13px] leading-relaxed text-white/60">Envíos, pagos, cambios y devoluciones: todo en un solo lugar.</p>
+              <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] font-semibold text-white/50">Muy pronto</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <PieClienteWeb />
+
+      <BarraTuCarritoFlotante productos={productos} />
+    </div>
+  )
+}
+
+// Una fila de la cinta continua (Ofertas/Destacados) — ver
+// useCintaContinua.js para el mecanismo de desplazamiento. Encapsulada
+// acá porque necesita su propio par de refs de hover/foco para pausar
+// SOLO esta fila, sin afectar a la otra.
+function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medidas, velocidadPxS, activo, claseEntrada, delayEntrada }) {
+  const n = productos.length
+  const k = Math.max(1, Math.ceil(MIN_CINTA / n))
+  const base = useMemo(() => Array.from({ length: k }, () => productos).flat(), [productos, k])
+  const pista = useMemo(() => base.concat(base), [base])
+
+  const { trackRef, dashRef, mover, pausar } = useCintaContinua({
+    cantidadDistintos: n,
+    pasoPx,
+    velocidadPxS,
+    derecha,
+    activo,
+  })
+
+  function alEntrar(evento) {
+    if (evento.target.closest('.cinta-tarjeta')) pausar(true)
+  }
+  function alSalir(evento) {
+    const siguiente = evento.relatedTarget
+    if (!siguiente || !siguiente.closest || !siguiente.closest('.cinta-tarjeta')) pausar(false)
+  }
+
+  return (
+    <div className={`flex flex-col ${claseEntrada}`} style={claseEntrada ? { animationDelay: `${delayEntrada}ms` } : undefined}>
+      <div className={`mx-auto flex w-full max-w-[1700px] items-baseline gap-3 px-4 sm:px-8 ${derecha ? 'justify-start' : 'justify-end'}`}>
+        <h2 className="lw-titulo-heavitas text-xl uppercase sm:text-[30px]">{titulo}</h2>
+        <span className="text-xs text-white/50">{plural(n)}</span>
+      </div>
+
+      <div className="lw-cinta-mask my-6 overflow-hidden" onMouseOver={alEntrar} onMouseOut={alSalir} onFocus={alEntrar} onBlur={alSalir}>
+        <div ref={trackRef} className="flex will-change-transform">
+          {pista.map((p, indice) => {
+            const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
+            return (
+              <Link
+                key={`${p.id}-${indice}`}
+                to={`/productos/${p.id}`}
+                tabIndex={0}
+                className="cinta-tarjeta group relative shrink-0 overflow-hidden rounded-[14px] bg-[#151517]"
+                style={{ width: medidas.ancho, height: medidas.alto, marginRight: medidas.separacion }}
+              >
+                {urlFoto ? (
+                  <img src={urlFoto} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06]" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-white/50" style={{ background: degradadoServicio(p) }}>
+                    <Package className="h-8 w-8" />
+                  </div>
+                )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/80" />
+                <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/30" />
+                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wider text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
+                  {etiqueta(p)}
+                </span>
+                <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5 flex flex-col gap-1">
+                  <span className="text-[15px] font-bold leading-tight text-white">{p.nombre}</span>
+                  <span className="text-[13px] font-semibold text-white">
+                    {formatearSoles(p.precio)}
+                    {p.precio_antes && <s className="ml-1.5 text-[12px] font-normal text-white/60">{formatearSoles(p.precio_antes)}</s>}
+                  </span>
+                </div>
+                <span className="absolute left-1/2 top-1/2 z-[3] inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-white/0 py-0 pl-0 pr-0 text-[13px] font-semibold text-[#0b0b0c] opacity-0 backdrop-blur transition-all duration-300 group-hover:bg-white/95 group-hover:py-2.5 group-hover:pl-4.5 group-hover:pr-1.5 group-hover:opacity-100">
+                  Ver detalles
+                  <span className="hidden h-[30px] w-[30px] items-center justify-center rounded-full bg-[#0b0b0c] text-white group-hover:flex">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </span>
+              </Link>
             )
           })}
         </div>
-      )}
+      </div>
 
-      <PieClienteWeb />
+      <div className="flex items-center justify-center gap-3.5">
+        <button type="button" onClick={() => mover(-1)} aria-label={`Producto anterior en ${titulo}`} className="flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-white">
+          <ArrowRight className="h-4 w-4 rotate-180" />
+        </button>
+        <div className="relative flex h-[3px] items-center gap-[5px]">
+          {Array.from({ length: n }, (_, i) => (
+            <span key={i} className="h-[2px] w-[18px] rounded-full bg-[#3a3a3f]" />
+          ))}
+          <span ref={dashRef} className="absolute left-0 top-0 h-[3px] w-[18px] rounded-full bg-white" />
+        </div>
+        <button type="button" onClick={() => mover(1)} aria-label={`Siguiente producto en ${titulo}`} className="flex h-11 w-11 items-center justify-center text-white/50 transition-colors hover:text-white">
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
+}
+
+function plural(n) {
+  return `${n} ${n === 1 ? 'producto' : 'productos'}`
 }

@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Bike, MapPin, Phone, ShoppingBag, Store } from 'lucide-react'
+import { ArrowBigDown, Bike, Image, MapPin, Phone, Receipt, ShieldCheck, ShoppingBag, Store, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { formatearSoles } from '../lib/moneda.js'
+import { urlFirmadaFoto } from '../lib/imagenes.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+
+const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
+
+const NOMBRES_METODO_PAGO = { YAPE: 'Yape', PLIN: 'Plin', TRANSFERENCIA: 'Transferencia' }
 
 const ETIQUETAS_ESTADO = {
   PENDIENTE: { texto: 'Pendiente', clase: 'bg-amber/15 text-amber' },
@@ -31,12 +36,17 @@ function numeroWhatsapp(telefono) {
 
 // Panel administrativo de "Pedidos Web" (cuelga de /web, ver
 // navegacion.js) — pedidos de productos que un cliente confirmó desde
-// su carrito (confirmar_pedido_productos(), 85_carrito_pedidos_web.sql).
-// Solo lectura + cambio de estado: el pedido lo crea el cliente, acá
-// el personal lo va pasando de Pendiente → Listo → Entregado (o
-// Cancelado en cualquier punto antes de Entregado). Sin pago online:
-// el cobro/coordinación de entrega se resuelve por fuera del sistema
-// (llamada, WhatsApp) — por eso el botón de WhatsApp directo al cliente.
+// su carrito (confirmar_pedido_productos(), Fase 3 del rediseño del
+// carrito: 99/100/101/102_pedidos_web_*.sql).
+//
+// El pago SÍ es online (Yape/Plin/Transferencia + captura obligatoria,
+// ver §8 de implementacionesWed.md) — lo que faltaba acá era el otro
+// lado de ese flujo: "Marcar listo" hacía un update crudo del estado,
+// sin pasar nunca por verificar_pago_pedido_web() — el RPC que de
+// verdad descuenta el stock, redime el cupón y crea la venta. Un
+// pedido "Listo" así nunca generaba una venta real. Ahora Pendiente →
+// Listo pasa siempre por ese RPC ("Verificar pago"); Listo → Entregado
+// y Cancelar siguen siendo un update simple, sin efecto financiero.
 export default function PedidosWeb({ activo = true }) {
   const { mostrarToast } = useToast()
 
@@ -46,6 +56,7 @@ export default function PedidosWeb({ activo = true }) {
   const [busqueda, setBusqueda] = useState('')
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [actualizando, setActualizando] = useState(null)
+  const [abriendoComprobante, setAbriendoComprobante] = useState(null)
   const primeraCargaHecha = useRef(false)
 
   async function cargarPedidos(silencioso = false) {
@@ -53,7 +64,8 @@ export default function PedidosWeb({ activo = true }) {
     const { data, error: errorConsulta } = await supabase
       .from('pedidos_web')
       .select(
-        'id, tipo_entrega, direccion_entrega, celular_entrega, costo_delivery, subtotal, total, estado, creado_en, ' +
+        'id, tipo_entrega, direccion_entrega, celular_entrega, costo_delivery, subtotal, descuento_cupon, total, estado, creado_en, ' +
+          'metodo_pago, comprobante_url, cupon_codigo, tipo_comprobante, ruc, razon_social, pago_verificado, ' +
           'clientes(nombre, telefono), zonas_delivery(nombre), ' +
           'pedidos_web_items(id, nombre_producto, cantidad, precio_unitario, subtotal)',
       )
@@ -100,6 +112,41 @@ export default function PedidosWeb({ activo = true }) {
 
     mostrarToast('Pedido actualizado.', 'exito')
     cargarPedidos(true)
+  }
+
+  // Único camino real para Pendiente → Listo: verificar_pago_pedido_web()
+  // (security definer, solo admin) descuenta el stock, redime el cupón si
+  // hay uno y crea la venta real — nunca un update crudo del estado, que
+  // dejaría el pedido "Listo" sin ninguna venta detrás.
+  async function verificarPago(pedido) {
+    setActualizando(pedido.id)
+    const { error: errorRpc } = await supabase.rpc('verificar_pago_pedido_web', {
+      p_pedido_id: pedido.id,
+    })
+    setActualizando(null)
+
+    if (errorRpc) {
+      mostrarToast(errorRpc.message || 'No se pudo verificar el pago.', 'error')
+      return
+    }
+
+    mostrarToast('Pago verificado — pedido listo.', 'exito')
+    cargarPedidos(true)
+  }
+
+  // El bucket es privado (RLS: cada clienta solo ve las suyas, el admin
+  // ve todas) — getPublicUrl no sirve, hace falta firmar la URL cada vez
+  // que se abre.
+  async function verComprobante(pedido) {
+    setAbriendoComprobante(pedido.id)
+    try {
+      const url = await urlFirmadaFoto(BUCKET_COMPROBANTES_PEDIDOS, pedido.comprobante_url)
+      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+    } catch {
+      mostrarToast('No se pudo abrir el comprobante.', 'error')
+    } finally {
+      setAbriendoComprobante(null)
+    }
   }
 
   const filtrados = busqueda.trim()
@@ -195,6 +242,15 @@ export default function PedidosWeb({ activo = true }) {
                         <span>Subtotal</span>
                         <span className="font-mono">{formatearSoles(pedido.subtotal)}</span>
                       </div>
+                      {pedido.cupon_codigo && (
+                        <div className="flex items-center justify-between text-amber">
+                          <span className="flex items-center gap-1.5">
+                            <Ticket className="h-3 w-3 shrink-0" />
+                            Cupón {pedido.cupon_codigo}
+                          </span>
+                          <span className="font-mono">− {formatearSoles(pedido.descuento_cupon)}</span>
+                        </div>
+                      )}
                       {pedido.tipo_entrega === 'DELIVERY' && (
                         <>
                           <div className="flex items-center gap-1.5">
@@ -208,6 +264,33 @@ export default function PedidosWeb({ activo = true }) {
                             <span className="font-mono">{formatearSoles(pedido.costo_delivery)}</span>
                           </div>
                         </>
+                      )}
+                      {pedido.tipo_comprobante === 'FACTURA' && (
+                        <div className="flex items-center gap-1.5">
+                          <Receipt className="h-3 w-3 shrink-0" />
+                          <span className="min-w-0 truncate">
+                            Factura — RUC {pedido.ruc} — {pedido.razon_social}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between gap-2 border-t border-border pt-2">
+                      <span className="flex items-center gap-1.5 text-xs text-ink/70">
+                        {pedido.pago_verificado && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green" />}
+                        Pago por {NOMBRES_METODO_PAGO[pedido.metodo_pago] ?? pedido.metodo_pago}
+                        {pedido.pago_verificado && ' — verificado'}
+                      </span>
+                      {pedido.comprobante_url && (
+                        <button
+                          type="button"
+                          onClick={() => verComprobante(pedido)}
+                          disabled={abriendoComprobante === pedido.id}
+                          className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-blue disabled:opacity-40"
+                        >
+                          <Image className="h-3.5 w-3.5" />
+                          Ver comprobante
+                        </button>
                       )}
                     </div>
 
@@ -242,11 +325,11 @@ export default function PedidosWeb({ activo = true }) {
                         {pedido.estado === 'PENDIENTE' && (
                           <button
                             type="button"
-                            onClick={() => cambiarEstado(pedido, 'LISTO')}
+                            onClick={() => verificarPago(pedido)}
                             disabled={actualizando === pedido.id}
                             className="flex-1 rounded-lg bg-blue py-2 text-xs font-semibold text-white disabled:opacity-40"
                           >
-                            Marcar listo
+                            Verificar pago
                           </button>
                         )}
                         {pedido.estado === 'LISTO' && (

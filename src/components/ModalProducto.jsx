@@ -5,6 +5,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
+import EditorListaJson from './EditorListaJson.jsx'
 import {
   eliminarFoto,
   procesarImagen,
@@ -22,10 +23,21 @@ const formularioVacio = {
   nombre: '',
   categoriaSeleccionada: '',
   categoriaNueva: '',
+  subcategoria: '',
   costo: '',
   precio: '',
+  precioAntes: '',
+  ofertaHasta: '',
   stockInicial: '',
   proveedor: '',
+  descripcion: '',
+  contenido: '',
+  rinde: '',
+  frecuencia: '',
+  comboCon: '',
+  destacado: false,
+  nuevo: false,
+  enInicio: false,
 }
 
 function formularioDesdeProducto(producto) {
@@ -34,10 +46,21 @@ function formularioDesdeProducto(producto) {
     nombre: producto.nombre ?? '',
     categoriaSeleccionada: producto.categoria ?? '',
     categoriaNueva: '',
+    subcategoria: producto.subcategoria ?? '',
     costo: String(producto.costo ?? ''),
     precio: String(producto.precio ?? ''),
+    precioAntes: producto.precio_antes != null ? String(producto.precio_antes) : '',
+    ofertaHasta: producto.oferta_hasta ?? '',
     stockInicial: String(producto.stock_actual ?? ''),
     proveedor: producto.proveedor ?? '',
+    descripcion: producto.descripcion ?? '',
+    contenido: producto.contenido ?? '',
+    rinde: producto.rinde ?? '',
+    frecuencia: producto.frecuencia ?? '',
+    comboCon: producto.combo_con ?? '',
+    destacado: producto.destacado ?? false,
+    nuevo: producto.nuevo ?? false,
+    enInicio: producto.en_inicio ?? false,
   }
 }
 
@@ -54,6 +77,16 @@ function validar(formulario) {
     return 'El precio de venta debe ser un número mayor a 0.'
   }
 
+  if (formulario.precioAntes.trim()) {
+    const precioAntes = parseFloat(formulario.precioAntes)
+    if (Number.isNaN(precioAntes) || precioAntes <= 0) {
+      return 'El precio antes debe ser un número mayor a 0.'
+    }
+    if (precioAntes <= precio) {
+      return 'El precio antes debe ser mayor al precio de venta actual.'
+    }
+  }
+
   const stockInicial = parseInt(formulario.stockInicial, 10)
   if (Number.isNaN(stockInicial) || stockInicial < 0) {
     return 'El stock inicial debe ser 0 o más.'
@@ -62,7 +95,7 @@ function validar(formulario) {
   return null
 }
 
-export default function ModalProducto({ producto, categoriasExistentes, onCerrar, onGuardado }) {
+export default function ModalProducto({ producto, categoriasExistentes, productosExistentes, onCerrar, onGuardado }) {
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
@@ -85,6 +118,31 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
   const [errorFoto, setErrorFoto] = useState(null)
   const [mostrarCamara, setMostrarCamara] = useState(false)
 
+  // Galería de la Web (producto_fotos, migración 119) — varias fotos con
+  // etiqueta Frente/Textura/En uso/Detrás, para el carrusel del Detalle
+  // del producto. Mismo patrón "se procesa al elegir, se sube recién al
+  // guardar" que la foto principal de arriba, y el mismo componente que
+  // ya usa ModalServicio.jsx para servicio_fotos.
+  const [fotosGaleria, setFotosGaleria] = useState([])
+  const [idsGaleriaEliminados, setIdsGaleriaEliminados] = useState([])
+  const [cargandoGaleria, setCargandoGaleria] = useState(esEdicion)
+  const [procesandoGaleria, setProcesandoGaleria] = useState(false)
+  const [errorGaleria, setErrorGaleria] = useState(null)
+
+  // Contenido editorial del Detalle del producto (migración 121:
+  // especificaciones, modo de uso, ideal para, tips, ingredientes, libre
+  // de) — jsonb, editado entero con EditorListaJson.jsx (mismo
+  // componente que ModalServicio.jsx). Las listas de solo texto (ideal
+  // para/tips/libre de) llegan de la base como array de strings; se
+  // guardan acá como [{ texto }] para reusar el mismo editor de filas
+  // que el resto, y se aplanan de vuelta a strings al guardar.
+  const [especificaciones, setEspecificaciones] = useState(() => producto?.especificaciones ?? [])
+  const [modoUso, setModoUso] = useState(() => producto?.modo_uso ?? [])
+  const [idealPara, setIdealPara] = useState(() => (producto?.ideal_para ?? []).map((texto) => ({ texto })))
+  const [tips, setTips] = useState(() => (producto?.tips ?? []).map((texto) => ({ texto })))
+  const [ingredientes, setIngredientes] = useState(() => producto?.ingredientes ?? [])
+  const [libreDe, setLibreDe] = useState(() => (producto?.libre_de ?? []).map((texto) => ({ texto })))
+
   useCerrarConEscape(onCerrar)
 
   // Libera el object URL de preview al reemplazar la foto o desmontar,
@@ -94,6 +152,33 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
       if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
     }
   }, [fotoNueva])
+
+  useEffect(() => {
+    if (!esEdicion) return undefined
+    let vigente = true
+
+    supabase
+      .from('producto_fotos')
+      .select('id, foto_url, etiqueta')
+      .eq('producto_id', producto.id)
+      .order('orden')
+      .then(({ data }) => {
+        if (!vigente) return
+        setFotosGaleria(
+          (data ?? []).map((fila) => ({
+            id: fila.id,
+            etiqueta: fila.etiqueta,
+            fotoUrl: fila.foto_url,
+            esNueva: false,
+          })),
+        )
+        setCargandoGaleria(false)
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [esEdicion, producto?.id])
 
   async function procesarNuevaFoto(archivo) {
     if (!tipoDeImagenValido(archivo)) {
@@ -131,6 +216,50 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
     if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
     setFotoNueva(null)
     setFotoEliminada(true)
+  }
+
+  async function agregarFotoGaleria(archivo) {
+    if (!tipoDeImagenValido(archivo)) {
+      setErrorGaleria('Formato no admitido. Usa JPG, PNG o WEBP.')
+      return
+    }
+
+    setErrorGaleria(null)
+    setProcesandoGaleria(true)
+    try {
+      const { blob, extension } = await procesarImagen(archivo)
+      setFotosGaleria((anterior) => [
+        ...anterior,
+        { id: null, etiqueta: 'Frente', esNueva: true, blob, extension, previewUrl: URL.createObjectURL(blob) },
+      ])
+    } catch {
+      setErrorGaleria('No se pudo procesar la imagen. Intenta con otra.')
+    } finally {
+      setProcesandoGaleria(false)
+    }
+  }
+
+  function elegirFotoGaleria(evento) {
+    const archivo = evento.target.files?.[0]
+    evento.target.value = ''
+    if (!archivo) return
+    agregarFotoGaleria(archivo)
+  }
+
+  function quitarFotoGaleria(indice) {
+    setFotosGaleria((anterior) => {
+      const item = anterior[indice]
+      if (item.esNueva) {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+      } else {
+        setIdsGaleriaEliminados((ids) => [...ids, item.id])
+      }
+      return anterior.filter((_, i) => i !== indice)
+    })
+  }
+
+  function cambiarEtiquetaGaleria(indice, etiqueta) {
+    setFotosGaleria((anterior) => anterior.map((foto, i) => (i === indice ? { ...foto, etiqueta } : foto)))
   }
 
   const previewFoto = fotoNueva
@@ -194,22 +323,46 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
       codigo_barras: formulario.codigoBarras.trim() || null,
       nombre: formulario.nombre.trim(),
       categoria: categoriaFinal || null,
+      subcategoria: formulario.subcategoria.trim() || null,
       precio: precioNumerico,
+      precio_antes: formulario.precioAntes.trim() ? parseFloat(formulario.precioAntes) : null,
+      oferta_hasta: formulario.ofertaHasta || null,
       costo: costoNumerico,
       stock_actual: parseInt(formulario.stockInicial, 10),
       proveedor: formulario.proveedor.trim() || null,
       foto_url: fotoFinal,
+      descripcion: formulario.descripcion.trim() || null,
+      contenido: formulario.contenido.trim() || null,
+      rinde: formulario.rinde.trim() || null,
+      frecuencia: formulario.frecuencia.trim() || null,
+      combo_con: formulario.comboCon || null,
+      destacado: formulario.destacado,
+      nuevo: formulario.nuevo,
+      en_inicio: formulario.enInicio,
+      especificaciones: especificaciones
+        .filter((spec) => spec.clave?.trim())
+        .map((spec) => ({ clave: spec.clave.trim(), valor: spec.valor?.trim() ?? '' })),
+      modo_uso: modoUso
+        .filter((paso) => paso.nombre?.trim())
+        .map((paso) => ({ nombre: paso.nombre.trim(), texto: paso.texto?.trim() ?? '' })),
+      ideal_para: idealPara.map((item) => item.texto?.trim()).filter(Boolean),
+      tips: tips.map((item) => item.texto?.trim()).filter(Boolean),
+      ingredientes: ingredientes
+        .filter((item) => item.nombre?.trim())
+        .map((item) => ({ nombre: item.nombre.trim(), texto: item.texto?.trim() ?? '' })),
+      libre_de: libreDe.map((item) => item.texto?.trim()).filter(Boolean),
     }
 
-    const { error: errorGuardado } = esEdicion
-      ? await supabase.from('productos').update(datos).eq('id', producto.id)
+    const { error: errorGuardado, data: filaGuardada } = esEdicion
+      ? await supabase.from('productos').update(datos).eq('id', producto.id).select('id').single()
       : await supabase
           .from('productos')
           .insert({ ...datos, stock_minimo: STOCK_MINIMO_POR_DEFECTO })
-
-    setGuardando(false)
+          .select('id')
+          .single()
 
     if (errorGuardado) {
+      setGuardando(false)
       if (rutaFotoSubida) eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
       if (errorGuardado.code === '23505') {
         setError('Ya existe un producto con ese código de barras.')
@@ -222,6 +375,36 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
     if (fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
+
+    // Galería (producto_fotos): se procesa DESPUÉS de que el producto ya
+    // tiene id real (necesario para uno nuevo). Si una foto puntual falla
+    // no se bloquea el guardado del producto, que ya quedó bien — se
+    // puede reintentar reabriendo el modal.
+    const productoId = esEdicion ? producto.id : filaGuardada.id
+    if (idsGaleriaEliminados.length > 0) {
+      await supabase.from('producto_fotos').delete().in('id', idsGaleriaEliminados)
+    }
+    for (let indice = 0; indice < fotosGaleria.length; indice += 1) {
+      const item = fotosGaleria[indice]
+      if (item.esNueva) {
+        try {
+          const ruta = `${crypto.randomUUID()}.${item.extension}`
+          const rutaSubida = await subirFoto(BUCKET_FOTOS, ruta, item.blob)
+          await supabase.from('producto_fotos').insert({
+            producto_id: productoId,
+            foto_url: rutaSubida,
+            etiqueta: item.etiqueta,
+            orden: indice,
+          })
+        } catch {
+          // ver comentario arriba
+        }
+      } else {
+        await supabase.from('producto_fotos').update({ etiqueta: item.etiqueta, orden: indice }).eq('id', item.id)
+      }
+    }
+
+    setGuardando(false)
 
     // En edición, se manda de vuelta el producto ya actualizado — así, si
     // este modal se abrió desde el de historial de stock, ese modal (que
@@ -319,6 +502,19 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
             </div>
           </div>
 
+          <div>
+            <Etiqueta htmlFor={`${idBase}-subcategoria`}>Subcategoría</Etiqueta>
+            <input
+              id={`${idBase}-subcategoria`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.subcategoria}
+              onChange={(evento) => actualizarCampo('subcategoria', evento.target.value)}
+              placeholder='Opcional, ej. "Shampoo" — etiqueta corta de la tarjeta en la Web'
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+            />
+          </div>
+
           <div className="flex gap-3">
             <div className="flex-1">
               <Etiqueta obligatorio htmlFor={`${idBase}-costo`}>Costo</Etiqueta>
@@ -355,6 +551,43 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
           </div>
 
           <div>
+            <Etiqueta htmlFor={`${idBase}-precio-antes`}>Precio antes de la oferta</Etiqueta>
+            {/* Aclaración pedida por el usuario: el campo de arriba
+                ("Precio de venta") ya es el precio CON el descuento
+                aplicado — el que de verdad se cobra. Este campo es solo la
+                referencia más alta que se muestra tachada, así que va
+                SIEMPRE por encima del precio de venta, nunca por debajo
+                (ver validación más abajo). Para terminar una oferta: subir
+                "Precio de venta" al monto normal y vaciar este campo. */}
+            <p className="mb-1.5 text-xs text-ink/50">
+              El monto normal, antes del descuento — tiene que ser mayor al "Precio de venta" de arriba, que es el que ya
+              incluye la oferta.
+            </p>
+            <input
+              id={`${idBase}-precio-antes`}
+              type="search"
+              inputMode="decimal"
+              autoComplete="new-password"
+              value={formulario.precioAntes}
+              onChange={(evento) => actualizarCampo('precioAntes', evento.target.value)}
+              placeholder="Déjalo vacío si no está en oferta"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+            />
+            {formulario.precioAntes.trim() && (
+              <div className="mt-2">
+                <Etiqueta htmlFor={`${idBase}-oferta-hasta`}>Precio de oferta hasta</Etiqueta>
+                <input
+                  id={`${idBase}-oferta-hasta`}
+                  type="date"
+                  value={formulario.ofertaHasta}
+                  onChange={(evento) => actualizarCampo('ofertaHasta', evento.target.value)}
+                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
+                />
+              </div>
+            )}
+          </div>
+
+          <div>
             <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
             <input
               id={`${idBase}-proveedor`}
@@ -363,6 +596,77 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
               value={formulario.proveedor}
               onChange={(evento) => actualizarCampo('proveedor', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
+            />
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-combo`}>Combo sugerido ("se suele comprar junto con")</Etiqueta>
+            <select
+              id={`${idBase}-combo`}
+              value={formulario.comboCon}
+              onChange={(evento) => actualizarCampo('comboCon', evento.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
+            >
+              <option value="">Sin forzar — usar el más comprado junto (si hay historial de pedidos web)</option>
+              {(productosExistentes ?? [])
+                .filter((otro) => otro.id !== producto?.id)
+                .map((otro) => (
+                  <option key={otro.id} value={otro.id}>
+                    {otro.nombre}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-descripcion`}>Descripción</Etiqueta>
+            <textarea
+              id={`${idBase}-descripcion`}
+              rows={3}
+              value={formulario.descripcion}
+              onChange={(evento) => actualizarCampo('descripcion', evento.target.value)}
+              placeholder="Opcional — se muestra en el detalle del producto en la Web"
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Etiqueta htmlFor={`${idBase}-contenido`}>Contenido</Etiqueta>
+              <input
+                id={`${idBase}-contenido`}
+                type="search"
+                autoComplete="new-password"
+                value={formulario.contenido}
+                onChange={(evento) => actualizarCampo('contenido', evento.target.value)}
+                placeholder='Ej. "250 ml"'
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+              />
+            </div>
+            <div>
+              <Etiqueta htmlFor={`${idBase}-rinde`}>Rinde</Etiqueta>
+              <input
+                id={`${idBase}-rinde`}
+                type="search"
+                autoComplete="new-password"
+                value={formulario.rinde}
+                onChange={(evento) => actualizarCampo('rinde', evento.target.value)}
+                placeholder='Ej. "3 meses de uso"'
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-frecuencia`}>Frecuencia de uso</Etiqueta>
+            <input
+              id={`${idBase}-frecuencia`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.frecuencia}
+              onChange={(evento) => actualizarCampo('frecuencia', evento.target.value)}
+              placeholder='Opcional, ej. "1 vez por semana"'
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
             />
           </div>
 
@@ -411,6 +715,152 @@ export default function ModalProducto({ producto, categoriasExistentes, onCerrar
             </div>
             {errorFoto && <p className="mt-1 text-xs text-red">{errorFoto}</p>}
           </div>
+
+          <div>
+            <Etiqueta>Galería (Frente / Textura / En uso / Detrás)</Etiqueta>
+            {cargandoGaleria ? (
+              <p className="text-xs text-ink/50">Cargando galería...</p>
+            ) : (
+              <div className="space-y-2">
+                {fotosGaleria.map((foto, indice) => (
+                  <div key={foto.id ?? foto.previewUrl} className="flex items-center gap-2">
+                    <img
+                      src={foto.esNueva ? foto.previewUrl : urlPublicaFoto(BUCKET_FOTOS, foto.fotoUrl)}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
+                    />
+                    <select
+                      value={foto.etiqueta}
+                      onChange={(evento) => cambiarEtiquetaGaleria(indice, evento.target.value)}
+                      className="flex-1 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
+                    >
+                      <option value="Frente">Frente</option>
+                      <option value="Textura">Textura</option>
+                      <option value="En uso">En uso</option>
+                      <option value="Detrás">Detrás</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => quitarFotoGaleria(indice)}
+                      aria-label="Quitar foto de la galería"
+                      className="shrink-0 p-1.5 text-ink/60 transition-colors hover:text-red"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber">
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  {procesandoGaleria ? 'Procesando...' : '+ Agregar foto'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={elegirFotoGaleria}
+                    disabled={procesandoGaleria}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+            {errorGaleria && <p className="mt-1 text-xs text-red">{errorGaleria}</p>}
+          </div>
+
+          <p className="border-t border-border pt-3 text-xs font-medium uppercase tracking-wide text-ink/50">
+            Contenido del Detalle del producto (Web)
+          </p>
+
+          <EditorListaJson
+            etiqueta="Cómo se usa (pasos)"
+            items={modoUso}
+            onCambiar={setModoUso}
+            vacio={{ nombre: '', texto: '' }}
+            textoAgregar="+ Agregar paso"
+            campos={[
+              { clave: 'nombre', placeholder: 'Nombre del paso, ej. "Aplica"' },
+              { clave: 'texto', placeholder: 'Explicación para la clienta', tipo: 'textarea' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Ideal para"
+            items={idealPara}
+            onCambiar={setIdealPara}
+            vacio={{ texto: '' }}
+            textoAgregar="+ Agregar punto"
+            campos={[{ clave: 'texto', placeholder: 'Ej. Cabello teñido, con mechas o decolorado' }]}
+          />
+
+          <EditorListaJson
+            etiqueta="Tips y precauciones"
+            items={tips}
+            onCambiar={setTips}
+            vacio={{ texto: '' }}
+            textoAgregar="+ Agregar tip"
+            campos={[{ clave: 'texto', placeholder: 'Ej. Úsala 1 vez por semana' }]}
+          />
+
+          <EditorListaJson
+            etiqueta="Especificaciones (Marca, Tipo de cabello, Aroma, Vence, Registro sanitario...)"
+            items={especificaciones}
+            onCambiar={setEspecificaciones}
+            vacio={{ clave: '', valor: '' }}
+            textoAgregar="+ Agregar especificación"
+            campos={[
+              { clave: 'clave', placeholder: 'Ej. Marca' },
+              { clave: 'valor', placeholder: 'Ej. Jaise Pro' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Ingredientes clave"
+            items={ingredientes}
+            onCambiar={setIngredientes}
+            vacio={{ nombre: '', texto: '' }}
+            textoAgregar="+ Agregar ingrediente"
+            campos={[
+              { clave: 'nombre', placeholder: 'Ej. Keratina hidrolizada' },
+              { clave: 'texto', placeholder: 'Para qué sirve' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Libre de"
+            items={libreDe}
+            onCambiar={setLibreDe}
+            vacio={{ texto: '' }}
+            textoAgregar="+ Agregar"
+            campos={[{ clave: 'texto', placeholder: 'Ej. Sulfatos' }]}
+          />
+
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={formulario.destacado}
+              onChange={(evento) => actualizarCampo('destacado', evento.target.checked)}
+              className="h-4 w-4 accent-amber"
+            />
+            Destacar en la fila "Destacados" (Web)
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={formulario.nuevo}
+              onChange={(evento) => actualizarCampo('nuevo', evento.target.checked)}
+              className="h-4 w-4 accent-amber"
+            />
+            Marcar como "Nuevo" (Web)
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={formulario.enInicio}
+              onChange={(evento) => actualizarCampo('enInicio', evento.target.checked)}
+              className="h-4 w-4 accent-amber"
+            />
+            Mostrar en "Novedades y lo más vendido" (inicio de Productos, Web)
+          </label>
         </div>
 
         {error && (

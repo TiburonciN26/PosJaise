@@ -1,10 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CalendarClock, ChevronLeft, ChevronRight, Pencil, Plus, User, X } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  ArrowBigDown,
+  ArrowRight,
+  CalendarClock,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Info,
+  MapPin,
+  MessageCircle,
+  Pencil,
+  Plus,
+  RotateCcw,
+  ShoppingCart,
+  Sparkles,
+  Stamp,
+  Star,
+  User,
+  X,
+} from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
 import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../hooks/useModalA11y.js'
+import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
 import { formatearSoles } from '../../lib/moneda.js'
+import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import PieClienteWeb from './PieClienteWeb.jsx'
 import {
   aLima,
@@ -15,18 +40,22 @@ import {
   iniciarMesLima,
   sumarDias,
 } from '../../lib/fechas.js'
-import ModalAgendarCitaCliente from '../../components/ModalAgendarCitaCliente.jsx'
 import ModalReprogramarCitaCliente from '../../components/ModalReprogramarCitaCliente.jsx'
 
 const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
+const NOMBRES_MES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+// Indexados por getUTCDay() (0 = domingo), no por el orden lunes-domingo
+// de la grilla del calendario (DIAS_SEMANA de arriba).
+const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const DIAS_LARGOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 const ETIQUETAS_ESTADO = {
-  PENDIENTE: { texto: 'Pendiente', clase: 'bg-[var(--lw-gold)]/15 text-[var(--lw-gold)]' },
-  CONFIRMADA: { texto: 'Confirmada', clase: 'bg-blue/15 text-blue' },
+  PENDIENTE: { texto: 'Pendiente', clase: 'border border-dashed border-[var(--lw-gold)]/60 text-[var(--lw-gold)]' },
+  CONFIRMADA: { texto: 'Confirmada', clase: 'bg-[var(--lw-gold)] text-black' },
   COMPLETADA: { texto: 'Completada', clase: 'bg-green/15 text-green' },
   CANCELADA: { texto: 'Cancelada', clase: 'bg-white/10 text-white/50' },
   NO_ASISTIO: { texto: 'No asistió', clase: 'bg-red/15 text-red' },
@@ -38,20 +67,127 @@ const formatoHora = new Intl.DateTimeFormat('es-PE', {
   timeZone: 'America/Lima',
 })
 
-// Se puede cancelar/reprogramar hasta 3 horas antes — mismo límite que
-// valida cancelar_mi_cita_web()/reprogramar_mi_cita_web() en el servidor;
+const SELECT_CITA =
+  'id, fecha_hora, estado, nota, asistente_id, adelanto, cita_servicios(id, duracion_min, precio, servicio_id, servicios(nombre))'
+
+const DEFAULT_PLAZO_CANCELACION_HORAS = 3
+
+const CLASE_BOTON_SECUNDARIO =
+  'flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 text-[13px] font-medium text-white/90 transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:cursor-not-allowed disabled:opacity-30'
+const CLASE_BOTON_SECUNDARIO_ROJO =
+  'flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 text-[13px] font-medium text-red transition-colors hover:border-red disabled:cursor-not-allowed disabled:opacity-30'
+const CLASE_BLOQUE =
+  'rounded-[10px] border border-white/10 bg-[#111113] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]'
+
+// Se puede cancelar/reprogramar hasta N horas antes — mismo límite que
+// valida cancelar_mi_cita_web()/reprogramar_mi_cita_web() en el servidor
+// (estado_negocio.cancelacion_plazo_horas, 115_estado_negocio_adelanto.sql);
 // acá solo evita mostrar un botón que el servidor igual va a rechazar.
-function puedeModificar(cita) {
+function puedeModificar(cita, plazoHoras) {
   if (!['PENDIENTE', 'CONFIRMADA'].includes(cita.estado)) return false
-  return new Date(cita.fecha_hora).getTime() - Date.now() > 3 * 60 * 60 * 1000
+  return new Date(cita.fecha_hora).getTime() - Date.now() > plazoHoras * 60 * 60 * 1000
+}
+
+function esVigente(cita) {
+  return ['PENDIENTE', 'CONFIRMADA'].includes(cita.estado) && new Date(cita.fecha_hora).getTime() >= Date.now()
 }
 
 function totalCita(cita) {
   return (cita.cita_servicios ?? []).reduce((suma, item) => suma + (item.precio ?? 0), 0)
 }
 
+function duracionCita(cita) {
+  return (cita.cita_servicios ?? []).reduce((suma, item) => suma + (item.duracion_min ?? 30), 0)
+}
+
 function nombresServicios(cita) {
   return (cita.cita_servicios ?? []).map((item) => item.servicios?.nombre).filter(Boolean).join(', ')
+}
+
+function relativoTexto(fecha) {
+  const dias = Math.round((iniciarDia(fecha).getTime() - iniciarDia(new Date()).getTime()) / 86400000)
+  if (dias === 0) return 'Hoy'
+  if (dias === 1) return 'Mañana'
+  if (dias > 1) return `En ${dias} días`
+  return ''
+}
+
+function fechaCortaTexto(fecha) {
+  const enLima = aLima(fecha)
+  return `${DIAS_CORTOS[enLima.getUTCDay()]} ${enLima.getUTCDate()} ${NOMBRES_MES_CORTOS[enLima.getUTCMonth()].toLowerCase()}`
+}
+
+function diaSemanaLargoTexto(fecha) {
+  return DIAS_LARGOS[diaSemanaLima(fecha)]
+}
+
+function fechaLargaTexto(fecha) {
+  const enLima = aLima(fecha)
+  return `${enLima.getUTCDate()} de ${NOMBRES_MES[enLima.getUTCMonth()].toLowerCase()} de ${enLima.getUTCFullYear()}`
+}
+
+function fechaDesdeClaveDia(clave) {
+  const [anio, mes, dia] = clave.split('-').map(Number)
+  return sumarDias(iniciarMesLima(anio, mes), dia - 1)
+}
+
+// Igual que idsConSello() del lienzo aprobado (docs/diseno-citas/README.md,
+// "Reglas de puntos y sellos"): 1 sello por DÍA — solo la primera cita no
+// cancelada/no-asistió de cada día (cronológicamente) cuenta.
+function idsConSello(citas) {
+  const vistos = new Set()
+  const ids = new Set()
+  ;[...citas]
+    .filter((c) => c.estado !== 'CANCELADA' && c.estado !== 'NO_ASISTIO')
+    .sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora))
+    .forEach((c) => {
+      const clave = claveDiaLima(new Date(c.fecha_hora))
+      if (!vistos.has(clave)) {
+        vistos.add(clave)
+        ids.add(c.id)
+      }
+    })
+  return ids
+}
+
+// Chips de sello: la tarjeta general (próxima/próximas/día filtrado) y la
+// fila de historial muestran reglas ligeramente distintas (ver README:
+// una completada que YA ganó el sello no repite el chip "+1 sello" fuera
+// de Historial, y Historial nunca muestra "ya contado").
+function calcularChipsSello(cita, tieneSello, { historial = false } = {}) {
+  if (historial) {
+    return { sello: cita.estado === 'COMPLETADA' && tieneSello, selloRepetido: false }
+  }
+  // Relevante = una cita que de verdad cuenta para el sello del día
+  // (vigente a futuro o ya completada) — una cancelada/no-asistió no
+  // muestra ningún chip, ni "+1 sello" ni "ya contado". La que SÍ es la
+  // dueña del sello de su día debe mostrar "+1 sello" sea cual sea su
+  // estado (antes se lo perdía si ya estaba COMPLETADA — bug reportado).
+  const relevante = esVigente(cita) || cita.estado === 'COMPLETADA'
+  return {
+    sello: tieneSello && relevante,
+    selloRepetido: !tieneSello && relevante,
+  }
+}
+
+// Estimado con la misma fórmula que mis_puntos() (config_puntos): no es
+// la fuente de verdad, solo el número que se muestra por adelantado.
+function puntosEstimados(cita, tieneSello, cfg) {
+  if (!cfg) return 0
+  return Math.floor((tieneSello ? Number(cfg.puntos_por_visita) : 0) + totalCita(cita) * Number(cfg.puntos_por_sol_gastado))
+}
+
+// resenas_servicio es por servicio (unique cliente+servicio) — una cita
+// completada "califica" para el botón Calificar si algún servicio suyo
+// todavía no tiene reseña; se navega al primero sin reseña.
+function estadoResenaCita(cita, resenasServicioIds) {
+  if (cita.estado !== 'COMPLETADA') return { puedeCalificar: false, calificada: false, servicioId: null }
+  const ids = (cita.cita_servicios ?? []).map((cs) => cs.servicio_id).filter(Boolean)
+  if (ids.length === 0) return { puedeCalificar: false, calificada: false, servicioId: null }
+  const faltante = ids.find((id) => !resenasServicioIds.has(id))
+  return faltante
+    ? { puedeCalificar: true, calificada: false, servicioId: faltante }
+    : { puedeCalificar: false, calificada: true, servicioId: ids[0] }
 }
 
 function construirDiasGrilla(mesActual) {
@@ -63,70 +199,325 @@ function construirDiasGrilla(mesActual) {
   return Array.from({ length: 42 }, (_, i) => sumarDias(primerDiaGrilla, i))
 }
 
+function ChipEstado({ estado }) {
+  const info = ETIQUETAS_ESTADO[estado] ?? ETIQUETAS_ESTADO.PENDIENTE
+  return (
+    <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${info.clase}`}>
+      {info.texto}
+    </span>
+  )
+}
+
+function ChipPuntos({ puntos }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]">
+      <Sparkles className="h-3 w-3 text-[var(--lw-gold)]" />+{puntos} pts
+    </span>
+  )
+}
+
+function ChipSello({ sello, selloRepetido }) {
+  if (sello) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]">
+        <Stamp className="h-3 w-3 text-[var(--lw-gold)]" />+1 sello
+      </span>
+    )
+  }
+  if (selloRepetido) {
+    return (
+      <span
+        title="Solo se suma 1 sello por día, aunque tengas varias citas ese día"
+        className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-white/20 px-2.5 py-1 text-[11px] text-white/40"
+      >
+        Sello ya contado ese día
+      </span>
+    )
+  }
+  return null
+}
+
+// "Agendar cita" reemplaza al viejo ModalAgendarCitaCliente (borrado
+// junto con este cambio), pero NO manda siempre al carrito: si todavía
+// no hay servicios agregados, el carrito solo diría "andá a Servicios"
+// — un redirect inútil. Va directo a /citas/carrito solo cuando ya hay
+// algo que reservar; si está vacío, manda a elegir servicios primero
+// (bug reportado por el usuario, corregido acá).
+function BotonAgendar({ destino }) {
+  return (
+    <Link
+      to={destino}
+      className="flex h-11 items-center gap-3 rounded-full bg-[var(--lw-gold)] py-0 pl-5 pr-1.5 text-sm font-semibold text-black transition-colors hover:bg-[#bcd3f1] lg:h-12"
+    >
+      Agendar cita
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0b0b0c] text-[var(--lw-gold)] lg:h-9 lg:w-9">
+        <Plus className="h-4 w-4" />
+      </span>
+    </Link>
+  )
+}
+
 // Calendario mensual propio del cliente — mismo espíritu que el de
 // Citas.jsx del POS (grilla de 7 columnas, navegación por mes, punto
 // indicador de días con citas), pero solo con SUS citas: no hay filtro
 // de asistente ni de búsqueda, no tiene sentido con 1-2 citas a la vez.
+//
+// Rediseño (docs/diseno-citas/README.md): el calendario en sí queda
+// idéntico, "Próximas citas" se ve siempre (consulta aparte, sin límite
+// de mes) y tocar un día solo filtra la lista — no reemplaza a "Próximas".
 export default function CitasCliente() {
   const { mostrarToast } = useToast()
+  const { serviciosCarrito, agregarServicio } = useCarritoCliente()
+  const { cancelacionPlazoHoras } = useEstadoNegocio()
+  const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
+  const navigate = useNavigate()
+
   const [mesActual, setMesActual] = useState(() => iniciarDia(new Date()))
-  const [citas, setCitas] = useState([])
+  const [citasMes, setCitasMes] = useState([])
+  const [cargandoMes, setCargandoMes] = useState(true)
+  const [proximas, setProximas] = useState([])
+  const [historial, setHistorial] = useState([])
+  const [cargandoInicial, setCargandoInicial] = useState(true)
   const [asistentesPorId, setAsistentesPorId] = useState(() => new Map())
-  const [cargando, setCargando] = useState(true)
-  const [diaSeleccionado, setDiaSeleccionado] = useState(() => claveDiaLima(new Date()))
-  const [mostrarAgendar, setMostrarAgendar] = useState(false)
+  const [contacto, setContacto] = useState(null)
+  const [horario, setHorario] = useState(null)
+  const [misPuntos, setMisPuntos] = useState(null)
+  const [fidelizacion, setFidelizacion] = useState(null)
+  const [cfgPuntos, setCfgPuntos] = useState(null)
+  const [resenasServicioIds, setResenasServicioIds] = useState(() => new Set())
+
+  const [diaSeleccionado, setDiaSeleccionado] = useState(null)
+  const [histAbierto, setHistAbierto] = useState(true)
   const [citaAReprogramar, setCitaAReprogramar] = useState(null)
   const [citaACancelar, setCitaACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
   const panelCancelarRef = useRef(null)
 
+  // La animación de entrada de "Próximas citas" corre solo al montar la
+  // pestaña (docs/patrones/animacion-entrada.md) — este ref se apaga
+  // justo después del primer pintado con datos reales, así que tocar un
+  // día del calendario (cambia qué citas se listan) nunca la repite.
+  const primeraListaRef = useRef(true)
+
   useCerrarConEscape(() => setCitaACancelar(null), Boolean(citaACancelar))
   useModalA11y(panelCancelarRef, Boolean(citaACancelar))
 
-  async function cargar() {
-    setCargando(true)
-    const { anio, mes } = anioMesEnLima(mesActual)
+  async function cargarMes(fechaMes) {
+    setCargandoMes(true)
+    const { anio, mes } = anioMesEnLima(fechaMes)
     const inicioMes = iniciarMesLima(anio, mes)
     const finMes = iniciarMesLima(anio, mes + 1)
+    const { data } = await supabase
+      .from('citas')
+      .select(SELECT_CITA)
+      .gte('fecha_hora', inicioMes.toISOString())
+      .lt('fecha_hora', finMes.toISOString())
+      .order('fecha_hora')
+    setCitasMes(data ?? [])
+    setCargandoMes(false)
+  }
 
-    const [citasRes, asistentesRes] = await Promise.all([
+  async function cargarProximasEHistorial() {
+    const ahoraIso = new Date().toISOString()
+    const [proximasRes, historialRes] = await Promise.all([
       supabase
         .from('citas')
-        .select(
-          'id, fecha_hora, estado, nota, asistente_id, cita_servicios(id, duracion_min, precio, servicios(nombre))',
-        )
-        .gte('fecha_hora', inicioMes.toISOString())
-        .lt('fecha_hora', finMes.toISOString())
+        .select(SELECT_CITA)
+        .gte('fecha_hora', ahoraIso)
+        .in('estado', ['PENDIENTE', 'CONFIRMADA'])
         .order('fecha_hora'),
-      supabase.rpc('asistentes_para_citas'),
+      supabase
+        .from('citas')
+        .select(SELECT_CITA)
+        .or(`fecha_hora.lt.${ahoraIso},estado.in.(COMPLETADA,CANCELADA,NO_ASISTIO)`)
+        .order('fecha_hora', { ascending: false }),
     ])
+    setProximas(proximasRes.data ?? [])
+    setHistorial(historialRes.data ?? [])
+  }
 
-    setCitas(citasRes.data ?? [])
-    setAsistentesPorId(
-      new Map((asistentesRes.data ?? []).map((a) => [a.id, a.nombres_completos])),
-    )
-    setCargando(false)
+  function recargarTodo() {
+    cargarMes(mesActual)
+    cargarProximasEHistorial()
   }
 
   useEffect(() => {
-    cargar()
+    let vigente = true
+
+    async function cargarInicial() {
+      const [asistentesRes, contactoRes, horarioRes, cfgRes, puntosRes, fidelizacionRes] = await Promise.all([
+        supabase.rpc('asistentes_para_citas'),
+        supabase.rpc('datos_contacto'),
+        supabase.rpc('horario_atencion'),
+        supabase.from('config_puntos').select('puntos_por_visita, puntos_por_sol_gastado').eq('id', 1).maybeSingle(),
+        supabase.rpc('mis_puntos'),
+        supabase.rpc('mi_fidelizacion'),
+      ])
+      if (!vigente) return
+      setAsistentesPorId(new Map((asistentesRes.data ?? []).map((a) => [a.id, a.nombres_completos])))
+      setContacto(contactoRes.data?.[0] ?? null)
+      setHorario(horarioRes.data?.[0] ?? null)
+      setCfgPuntos(cfgRes.data ?? null)
+      setMisPuntos(puntosRes.data?.[0] ?? null)
+      setFidelizacion(fidelizacionRes.data?.[0] ?? null)
+      await cargarProximasEHistorial()
+      if (!vigente) return
+      setCargandoInicial(false)
+    }
+
+    cargarInicial()
+    return () => {
+      vigente = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    cargarMes(mesActual)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesActual])
 
-  const citasPorDia = useMemo(() => {
+  // Apaga la animación de "Próximas citas" recién después del primer
+  // pintado con datos reales (no con el estado de carga vacío).
+  useEffect(() => {
+    if (cargandoInicial) return undefined
+    const id = requestAnimationFrame(() => {
+      primeraListaRef.current = false
+    })
+    return () => cancelAnimationFrame(id)
+  }, [cargandoInicial])
+
+  // Qué servicios (de citas COMPLETADAS) ya tienen reseña propia — se
+  // reusa mi_resena_servicio() (116_resenas_servicio.sql), la misma RPC
+  // security-definer del Detalle de servicio, en vez de reinventar el
+  // flujo de reseñas acá.
+  useEffect(() => {
+    const idsCompletadas = new Set()
+    historial.forEach((cita) => {
+      if (cita.estado !== 'COMPLETADA') return
+      ;(cita.cita_servicios ?? []).forEach((cs) => {
+        if (cs.servicio_id) idsCompletadas.add(cs.servicio_id)
+      })
+    })
+    if (idsCompletadas.size === 0) {
+      setResenasServicioIds(new Set())
+      return undefined
+    }
+    let vigente = true
+    Promise.all(
+      [...idsCompletadas].map((id) =>
+        supabase
+          .rpc('mi_resena_servicio', { p_servicio_id: id })
+          .then(({ data }) => {
+            const fila = Array.isArray(data) ? data[0] : data
+            return fila?.id ? id : null
+          }),
+      ),
+    ).then((resultados) => {
+      if (!vigente) return
+      setResenasServicioIds(new Set(resultados.filter(Boolean)))
+    })
+    return () => {
+      vigente = false
+    }
+  }, [historial])
+
+  const citasPorDiaMes = useMemo(() => {
     const mapa = new Map()
-    for (const cita of citas) {
+    for (const cita of citasMes) {
       const clave = claveDiaLima(new Date(cita.fecha_hora))
       if (!mapa.has(clave)) mapa.set(clave, [])
       mapa.get(clave).push(cita)
     }
     return mapa
-  }, [citas])
+  }, [citasMes])
+
+  const citasParaSello = useMemo(() => {
+    const mapa = new Map()
+    for (const c of citasMes) mapa.set(c.id, c)
+    for (const c of proximas) mapa.set(c.id, c)
+    for (const c of historial) mapa.set(c.id, c)
+    return [...mapa.values()]
+  }, [citasMes, proximas, historial])
+  const sellosSet = useMemo(() => idsConSello(citasParaSello), [citasParaSello])
 
   const diasGrilla = useMemo(() => construirDiasGrilla(mesActual), [mesActual])
   const { anio: anioMesActual, mes: mesIndiceActual } = anioMesEnLima(mesActual)
-  const citasDelDia = citasPorDia.get(diaSeleccionado) ?? []
   const hoyClave = claveDiaLima(new Date())
+
+  const plazoHoras = cancelacionPlazoHoras ?? DEFAULT_PLAZO_CANCELACION_HORAS
+  const destinoAgendar = serviciosCarrito.size > 0 ? '/citas/carrito' : '/servicios'
+  const proxima = proximas[0] ?? null
+
+  const diaSeleccionadoFecha = diaSeleccionado ? fechaDesdeClaveDia(diaSeleccionado) : null
+  const listaTitulo = diaSeleccionado
+    ? `Citas del ${fechaCortaTexto(diaSeleccionadoFecha).toLowerCase()}`
+    : 'Próximas citas'
+  const listaOrdenada = useMemo(() => {
+    const base = diaSeleccionado ? (citasPorDiaMes.get(diaSeleccionado) ?? []) : proximas
+    return [...base].sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora))
+  }, [diaSeleccionado, citasPorDiaMes, proximas])
+  const listaConteo = `${proximas.length} ${proximas.length === 1 ? 'cita' : 'citas'}`
+  const grupos = useMemo(() => {
+    const mapa = new Map()
+    listaOrdenada.forEach((cita) => {
+      const clave = claveDiaLima(new Date(cita.fecha_hora))
+      if (!mapa.has(clave)) {
+        mapa.set(clave, {
+          clave,
+          fecha: fechaCortaTexto(new Date(cita.fecha_hora)),
+          rel: diaSeleccionado ? '' : relativoTexto(new Date(cita.fecha_hora)),
+          items: [],
+        })
+      }
+      mapa.get(clave).items.push(cita)
+    })
+    return [...mapa.values()]
+  }, [listaOrdenada, diaSeleccionado])
+
+  const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
+  const mapsUrl = contacto?.direccion
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contacto.direccion)}`
+    : null
+  const horarioTexto = horario
+    ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
+    : null
+
+  const puntos = misPuntos?.puntos ?? 0
+  const nivelRaw = misPuntos?.nivel ?? 'BASICO'
+  const umbralPremium = misPuntos?.umbral_premium ?? 10
+  const umbralVip = misPuntos?.umbral_vip ?? 30
+  const faltanPts = misPuntos?.puntos_para_siguiente ?? 0
+  let piso = 0
+  let techo = umbralPremium
+  let siguienteNivel = 'Premium'
+  if (nivelRaw === 'PREMIUM') {
+    piso = umbralPremium
+    techo = umbralVip
+    siguienteNivel = 'VIP'
+  } else if (nivelRaw === 'VIP') {
+    piso = umbralVip
+    techo = umbralVip
+    siguienteNivel = null
+  }
+  const progresoPct = techo > piso ? Math.min(100, Math.max(0, ((puntos - piso) / (techo - piso)) * 100)) : 100
+  const nivelTexto = nivelRaw === 'BASICO' ? 'Básico' : nivelRaw === 'PREMIUM' ? 'Premium' : 'VIP'
+  const faltanTexto = siguienteNivel ? `${faltanPts} pts para ${siguienteNivel}` : 'Nivel máximo alcanzado'
+
+  const sellosMeta = fidelizacion?.visitas_por_recompensa ?? 5
+  const sellosActuales = fidelizacion?.sellos_actuales ?? 0
+  const sellosFaltan = Math.max(0, sellosMeta - sellosActuales)
+
+  const puntosPorVisita = cfgPuntos ? Number(cfgPuntos.puntos_por_visita) : 1
+  const solesPorPunto =
+    cfgPuntos && Number(cfgPuntos.puntos_por_sol_gastado) > 0 ? Math.round(1 / Number(cfgPuntos.puntos_por_sol_gastado)) : 20
+
+  const ENTRADA = esDesktop
+    ? { header: 100, proxima: 250, calendario: 450, listaTitulo: 600, listaBase: 700, listaPaso: 110, historial: 950, comoGanas: 1050 }
+    : { header: 100, proxima: 250, calendario: 700, listaTitulo: 550, listaBase: 700, listaPaso: 110, historial: 850, comoGanas: 1050 }
+  const DELAY_ASIDE_DESKTOP = 750
+  const DELAY_PUNTOS_MOBILE = 900
+  const DELAY_ANTES_MOBILE = 950
 
   function irMesAnterior() {
     const { anio, mes } = anioMesEnLima(mesActual)
@@ -141,7 +532,11 @@ export default function CitasCliente() {
   function irHoy() {
     const hoy = iniciarDia(new Date())
     setMesActual(hoy)
-    setDiaSeleccionado(claveDiaLima(hoy))
+    setDiaSeleccionado(null)
+  }
+
+  function alternarDia(clave) {
+    setDiaSeleccionado((anterior) => (anterior === clave ? null : clave))
   }
 
   async function confirmarCancelar() {
@@ -157,192 +552,714 @@ export default function CitasCliente() {
     }
 
     mostrarToast('Cita cancelada.', 'exito')
-    cargar()
+    recargarTodo()
   }
 
-  // Bug reportado: tras agendar/reprogramar, el calendario se quedaba
-  // mostrando el mes que ya estaba abierto (normalmente el actual) — si
-  // la cita nueva caía en otro mes, quedaba invisible hasta navegar ahí
-  // a mano; parecía que "no se agendó" aunque el staff sí la veía en el
-  // POS. Ahora salta directo al mes/día de la fecha elegida.
+  // Bug reportado (código anterior): tras agendar/reprogramar, el
+  // calendario se quedaba mostrando el mes que ya estaba abierto — si la
+  // cita nueva caía en otro mes, quedaba invisible hasta navegar ahí a
+  // mano. Ahora salta directo al mes/día de la fecha elegida y refresca
+  // Próximas/Historial (la cita puede haber salido de uno para entrar al
+  // otro, ej. al reprogramar).
   function irAFecha(fechaHoraIso) {
     const fecha = new Date(fechaHoraIso)
-    // setMesActual con un Date nuevo siempre dispara el useEffect de
-    // arriba (Date se compara por referencia, nunca es "el mismo" objeto
-    // que el mesActual anterior) — ese efecto ya llama a cargar() con el
-    // mesActual fresco, así que no hace falta llamarlo de nuevo acá.
     setMesActual(iniciarDia(fecha))
-    setDiaSeleccionado(claveDiaLima(fecha))
+    setDiaSeleccionado(null)
+    cargarProximasEHistorial()
+  }
+
+  // Agrega los servicios de esa cita al carrito de servicios y navega a
+  // /citas/carrito (docs/diseno-carrito-servicios/README.md) — ya no
+  // abre el modal, que se borró junto con este cambio.
+  async function volverAReservar(cita) {
+    const ids = [...new Set((cita.cita_servicios ?? []).map((cs) => cs.servicio_id).filter(Boolean))]
+    if (ids.length === 0) return
+    await Promise.all(ids.filter((id) => !serviciosCarrito.has(id)).map((id) => agregarServicio(id)))
+    navigate('/citas/carrito')
+  }
+
+  function bloquePuntos() {
+    return (
+      <div className={`${CLASE_BLOQUE} p-5`}>
+        <div className="flex items-center justify-between gap-2.5">
+          <h2 className="lw-titulo-heavitas text-[15px] uppercase">Puntos</h2>
+          <span className="rounded-full bg-[var(--lw-gold)]/15 px-2.5 py-1 text-[11px] font-semibold text-[var(--lw-gold)]">
+            Nivel {nivelTexto}
+          </span>
+        </div>
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="font-mono text-3xl font-bold" style={{ color: 'var(--lw-gold)' }}>
+            {puntos}
+          </span>
+          <span className="text-[13px] text-white/50">pts</span>
+        </div>
+        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+          <span
+            className="block h-full rounded-full"
+            style={{ width: `${progresoPct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
+          />
+        </div>
+        <p className="mt-1.5 text-xs text-white/50">{faltanTexto}</p>
+        <Link to="/mis-puntos" className="mt-3 flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+          Ver mis puntos <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+        <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[13px] font-semibold text-white">Sellos de fidelidad</span>
+            <span className="text-xs text-white/50">
+              {sellosActuales} de {sellosMeta} · {sellosFaltan} para tu 20%
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {Array.from({ length: sellosMeta }, (_, i) => (
+              <span
+                key={i}
+                className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                  i < sellosActuales ? 'bg-[var(--lw-gold)] text-black' : 'border border-dashed border-white/25 text-transparent'
+                }`}
+              >
+                <Stamp className="h-3 w-3" />
+              </span>
+            ))}
+          </div>
+          <p className="text-xs leading-relaxed text-white/50">
+            Se suma <strong className="text-white">1 sello por día</strong> que te atiendes, aunque tengas varias citas ese
+            mismo día.
+          </p>
+          <Link to="/fidelizacion" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+            Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  function bloqueAntes() {
+    return (
+      <div className={`${CLASE_BLOQUE} p-5`}>
+        <h2 className="lw-titulo-heavitas text-[15px] uppercase">Antes de tu cita</h2>
+        <div className="mt-3 flex flex-col gap-3">
+          <p className="flex gap-2.5 text-[13px] leading-relaxed text-white/70">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
+            Reprograma o cancela desde aquí hasta <strong className="text-white">{plazoHoras} horas antes</strong>. Después,
+            escríbenos por WhatsApp.
+          </p>
+          {horarioTexto && (
+            <p className="flex gap-2.5 text-[13px] leading-relaxed text-white/70">
+              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
+              Atendemos {horarioTexto}.
+            </p>
+          )}
+          <p className="flex gap-2.5 text-[13px] leading-relaxed text-white/70">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
+            {contacto?.direccion || 'Dirección aún no configurada'}
+          </p>
+        </div>
+        {whatsapp ? (
+          <a
+            href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre mi cita.')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex min-h-[44px] items-center justify-center gap-2.5 rounded-[10px] border border-green/30 bg-green/[0.07] text-sm font-semibold text-green transition-colors hover:bg-green/[0.12]"
+          >
+            <MessageCircle className="h-4 w-4" />
+            ¿Dudas con tu cita?
+          </a>
+        ) : (
+          <span className="mt-4 flex min-h-[44px] items-center justify-center rounded-[10px] border border-dashed border-white/15 text-sm text-white/40">
+            WhatsApp aún no configurado
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  if (cargandoInicial) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <p className="font-mono text-sm text-white/50">Cargando...</p>
+      </div>
+    )
   }
 
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
-      <div className="mx-auto w-full max-w-md">
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => setMostrarAgendar(true)}
-            className="flex items-center gap-1.5 rounded-full border border-[var(--lw-gold)] bg-transparent px-3 py-1.5 text-sm font-semibold text-[var(--lw-gold)]"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Agendar
-          </button>
-        </div>
-
-        {/* Navegación de mes */}
-        <div className="liquid-glass mt-4 flex items-center justify-between rounded-none px-2 py-2.5">
-          <button
-            type="button"
-            onClick={irMesAnterior}
-            aria-label="Mes anterior"
-            className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-white">
-              {NOMBRES_MES[mesIndiceActual]} {anioMesActual}
-            </span>
-            <button
-              type="button"
-              onClick={irHoy}
-              className="rounded-full border border-white/15 px-2 py-0.5 text-xs text-white/70 transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
-            >
-              Hoy
-            </button>
+      <div className="mx-auto w-full max-w-[1400px]">
+        {/* Encabezado */}
+        <div
+          className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${reducirMovimiento ? '' : 'in-left'}`}
+          style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.header}ms` }}
+        >
+          <div className="flex flex-col gap-2">
+            <h1 className="lw-titulo-heavitas text-3xl uppercase">Mis citas</h1>
+            <p className="text-sm text-white/60">Revisa tus reservas, reprograma o agenda una nueva.</p>
           </div>
-          <button
-            type="button"
-            onClick={irMesSiguiente}
-            aria-label="Mes siguiente"
-            className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/citas/carrito"
+              aria-label={
+                serviciosCarrito.size > 0 ? `Carrito de servicios, ${serviciosCarrito.size} por reservar` : 'Carrito de servicios, vacío'
+              }
+              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-[var(--lw-gold)]/[0.06] text-[var(--lw-gold)] transition-colors hover:border-[var(--lw-gold)] hover:text-[#d3e4f8] lg:h-12 lg:w-12"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {serviciosCarrito.size > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-[#0b0b0c] bg-[var(--lw-gold)] px-1 text-[11px] font-bold text-black">
+                  {serviciosCarrito.size}
+                </span>
+              )}
+            </Link>
+            <BotonAgendar destino={destinoAgendar} />
+          </div>
         </div>
 
-        {/* Grilla mensual */}
-        <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] text-white/50">
-          {DIAS_SEMANA.map((dia) => (
-            <span key={dia}>{dia}</span>
-          ))}
-        </div>
-        <div className="mt-1 grid grid-cols-7 gap-1">
-          {diasGrilla.map((dia) => {
-            const clave = claveDiaLima(dia)
-            const { mes } = anioMesEnLima(dia)
-            const esDelMes = mes === mesIndiceActual
-            const esHoy = clave === hoyClave
-            const esSeleccionado = clave === diaSeleccionado
-            const tieneCitas = citasPorDia.has(clave)
+        {/* Tu próxima cita */}
+        <section
+          aria-labelledby="citas-proxima-titulo"
+          className={`mt-6 rounded-[10px] border border-[var(--lw-gold)]/35 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-8 ${
+            reducirMovimiento ? '' : 'in-up'
+          }`}
+          style={{
+            ...(reducirMovimiento ? {} : { animationDelay: `${ENTRADA.proxima}ms` }),
+            backgroundImage: 'radial-gradient(120% 160% at 0% 0%, rgba(169,198,236,0.10), transparent 55%)',
+          }}
+        >
+          {proxima ? (
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[330px_minmax(0,1fr)_300px] lg:items-center">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <h2 id="citas-proxima-titulo" className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
+                    Tu próxima cita
+                  </h2>
+                  <span className="rounded-full bg-[var(--lw-gold)]/15 px-3 py-1 text-xs font-semibold text-[var(--lw-gold)]">
+                    {relativoTexto(new Date(proxima.fecha_hora))}
+                  </span>
+                </div>
+                <div className="lw-titulo-heavitas text-[28px] uppercase leading-none">
+                  {diaSemanaLargoTexto(new Date(proxima.fecha_hora))}
+                </div>
+                <div className="text-base text-white/80">{fechaLargaTexto(new Date(proxima.fecha_hora))}</div>
+                <div className="font-mono text-2xl font-bold" style={{ color: 'var(--lw-gold)' }}>
+                  {formatoHora.format(new Date(proxima.fecha_hora))}
+                </div>
+              </div>
 
-            return (
-              <button
-                key={clave}
-                type="button"
-                onClick={() => setDiaSeleccionado(clave)}
-                className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-sm transition-colors ${
-                  esSeleccionado
-                    ? 'bg-[var(--lw-gold)] font-semibold text-black'
-                    : esHoy
-                      ? 'border border-[var(--lw-gold)] text-[var(--lw-gold)]'
-                      : esDelMes
-                        ? 'text-white hover:bg-white/5'
-                        : 'text-white/30 hover:bg-white/5'
-                }`}
-              >
-                {aLima(dia).getUTCDate()}
-                <span
-                  className={`h-1 w-1 rounded-full ${
-                    tieneCitas ? (esSeleccionado ? 'bg-black' : 'bg-[var(--lw-gold)]') : 'bg-transparent'
-                  }`}
-                />
-              </button>
-            )
-          })}
-        </div>
+              <div className="flex flex-col gap-3 border-t border-white/10 pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                {(proxima.cita_servicios ?? []).map((s) => (
+                  <div key={s.id} className="flex justify-between gap-4">
+                    <span className="text-[15px] font-semibold">{s.servicios?.nombre}</span>
+                    <span className="shrink-0 text-xs text-white/60">
+                      {formatearSoles(s.precio)} · {s.duracion_min ?? 30} min
+                    </span>
+                  </div>
+                ))}
+                <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-3">
+                  <span className="flex items-center gap-1.5 text-xs text-white/60">
+                    <User className="h-3.5 w-3.5" />
+                    {asistentesPorId.get(proxima.asistente_id) || 'Por asignar'}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-white/60">
+                    <Clock className="h-3.5 w-3.5" />
+                    {duracionCita(proxima)} min
+                  </span>
+                  <ChipEstado estado={proxima.estado} />
+                  <ChipPuntos puntos={puntosEstimados(proxima, sellosSet.has(proxima.id), cfgPuntos)} />
+                  <ChipSello {...calcularChipsSello(proxima, sellosSet.has(proxima.id))} />
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs text-white/60">
+                    {proxima.adelanto > 0 ? `Dejaste ${formatearSoles(proxima.adelanto)} de adelanto · total` : 'Total estimado'}
+                  </span>
+                  <span className="font-mono text-lg font-bold text-white">{formatearSoles(totalCita(proxima))}</span>
+                </div>
+              </div>
 
-        {/* Citas del día elegido */}
-        <div className="mt-5">
-          {cargando ? (
-            <p className="text-center text-sm text-white/50">Cargando...</p>
-          ) : citasDelDia.length === 0 ? (
-            <div className="liquid-glass flex flex-col items-center gap-2 rounded-none py-10 text-center">
-              <CalendarClock className="h-8 w-8 text-white/30" />
-              <p className="text-sm text-white/50">No tienes citas este día.</p>
+              <div className="flex flex-col gap-2.5">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setCitaAReprogramar(proxima)}
+                    disabled={!puedeModificar(proxima, plazoHoras)}
+                    className={CLASE_BOTON_SECUNDARIO}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Reprogramar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCitaACancelar(proxima)}
+                    disabled={!puedeModificar(proxima, plazoHoras)}
+                    className={CLASE_BOTON_SECUNDARIO_ROJO}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Cancelar
+                  </button>
+                  {mapsUrl ? (
+                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={CLASE_BOTON_SECUNDARIO}>
+                      <MapPin className="h-3.5 w-3.5" />
+                      Cómo llegar
+                    </a>
+                  ) : (
+                    <span className={`${CLASE_BOTON_SECUNDARIO} opacity-40`}>Sin dirección</span>
+                  )}
+                  {whatsapp ? (
+                    <a
+                      href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre mi cita.')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={CLASE_BOTON_SECUNDARIO}
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      WhatsApp
+                    </a>
+                  ) : (
+                    <span className={`${CLASE_BOTON_SECUNDARIO} opacity-40`}>WhatsApp</span>
+                  )}
+                </div>
+                <p className="text-center text-xs text-white/40">
+                  Puedes reprogramar o cancelar hasta {plazoHoras} horas antes.
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {citasDelDia.map((cita) => {
-                const etiqueta = ETIQUETAS_ESTADO[cita.estado] ?? ETIQUETAS_ESTADO.PENDIENTE
-                const modificable = puedeModificar(cita)
-
-                return (
-                  <div key={cita.id} className="liquid-glass rounded-none p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-mono text-sm font-semibold text-[var(--lw-gold)]">
-                          {formatoHora.format(new Date(cita.fecha_hora))}
-                        </p>
-                        <p className="mt-0.5 text-sm font-medium text-white">
-                          {nombresServicios(cita) || 'Servicio'}
-                        </p>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${etiqueta.clase}`}>
-                        {etiqueta.texto}
-                      </span>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between gap-2 text-xs text-white/60">
-                      <span className="flex items-center gap-1">
-                        <User className="h-3.5 w-3.5" />
-                        {asistentesPorId.get(cita.asistente_id) || 'Sin asignar'}
-                      </span>
-                      <span className="font-mono font-semibold text-white">
-                        {formatearSoles(totalCita(cita))}
-                      </span>
-                    </div>
-
-                    {modificable && (
-                      <div className="mt-3 flex gap-2 border-t border-white/10 pt-2.5">
-                        <button
-                          type="button"
-                          onClick={() => setCitaAReprogramar(cita)}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 py-1.5 text-xs text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          Reprogramar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setCitaACancelar(cita)}
-                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/15 py-1.5 text-xs text-red transition-colors hover:border-red"
-                        >
-                          <X className="h-3 w-3" />
-                          Cancelar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+            <div className="flex flex-col items-center justify-between gap-5 sm:flex-row">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">Tu próxima cita</h2>
+                <div className="lw-titulo-heavitas text-2xl uppercase">No tienes citas agendadas</div>
+                <p className="text-sm text-white/60">Elige tus servicios y reserva el día y la hora que te acomoden.</p>
+              </div>
+              <div className="flex shrink-0 gap-2.5">
+                <Link to="/servicios" className={CLASE_BOTON_SECUNDARIO}>
+                  Ver servicios
+                </Link>
+                <BotonAgendar destino={destinoAgendar} />
+              </div>
             </div>
           )}
+        </section>
+
+        {/* Calendario | Próximas | (Puntos + Antes) — Historial abajo, a
+            todo el ancho. En móvil se apila con `order-*` (ver abajo). */}
+        <div className="mt-8 flex flex-col gap-8 lg:grid lg:grid-cols-[400px_minmax(0,1fr)_340px] lg:items-start lg:gap-8">
+          {/* Calendario */}
+          <section
+            aria-labelledby="citas-calendario-titulo"
+            className={`order-2 flex flex-col gap-3.5 lg:order-none ${reducirMovimiento ? '' : 'in-left'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.calendario}ms` }}
+          >
+            <h2 id="citas-calendario-titulo" className="lw-titulo-heavitas text-base uppercase">
+              Calendario
+            </h2>
+            <div className="liquid-glass flex items-center justify-between rounded-none px-2 py-2.5">
+              <button
+                type="button"
+                onClick={irMesAnterior}
+                aria-label="Mes anterior"
+                className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-white">
+                  {NOMBRES_MES[mesIndiceActual]} {anioMesActual}
+                </span>
+                <button
+                  type="button"
+                  onClick={irHoy}
+                  className="rounded-full border border-white/15 px-2 py-0.5 text-xs text-white/70 transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
+                >
+                  Hoy
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={irMesSiguiente}
+                aria-label="Mes siguiente"
+                className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+            <div>
+              <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-white/50">
+                {DIAS_SEMANA.map((dia) => (
+                  <span key={dia}>{dia}</span>
+                ))}
+              </div>
+              <div className="mt-1 grid grid-cols-7 gap-1">
+                {diasGrilla.map((dia) => {
+                  const clave = claveDiaLima(dia)
+                  const { mes } = anioMesEnLima(dia)
+                  const esDelMes = mes === mesIndiceActual
+                  const esHoy = clave === hoyClave
+                  const esSeleccionado = clave === diaSeleccionado
+                  const tieneCitas = citasPorDiaMes.has(clave)
+
+                  return (
+                    <button
+                      key={clave}
+                      type="button"
+                      onClick={() => alternarDia(clave)}
+                      className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-sm transition-colors ${
+                        esSeleccionado
+                          ? 'bg-[var(--lw-gold)] font-semibold text-black'
+                          : esHoy
+                            ? 'border border-[var(--lw-gold)] text-[var(--lw-gold)]'
+                            : esDelMes
+                              ? 'text-white hover:bg-white/5'
+                              : 'text-white/30 hover:bg-white/5'
+                      }`}
+                    >
+                      {aLima(dia).getUTCDate()}
+                      <span
+                        className={`h-1 w-1 rounded-full ${
+                          tieneCitas ? (esSeleccionado ? 'bg-black' : 'bg-[var(--lw-gold)]') : 'bg-transparent'
+                        }`}
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <p className="text-xs text-white/40">Toca un día para ver solo las citas de esa fecha.</p>
+          </section>
+
+          {/* Próximas citas / citas del día filtrado */}
+          <section
+            aria-labelledby="citas-lista-titulo"
+            className={`order-1 flex flex-col gap-3.5 lg:order-none ${reducirMovimiento ? '' : 'in-up'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.listaTitulo}ms` }}
+          >
+            <div className="flex min-h-[32px] items-center justify-between gap-3">
+              <h2 id="citas-lista-titulo" className="lw-titulo-heavitas text-base uppercase">
+                {listaTitulo}
+              </h2>
+              {diaSeleccionado ? (
+                <button
+                  type="button"
+                  onClick={() => setDiaSeleccionado(null)}
+                  className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--lw-gold)] bg-[var(--lw-gold)]/10 px-3 py-1.5 text-xs font-medium text-[var(--lw-gold)] transition-colors hover:bg-[var(--lw-gold)]/20"
+                >
+                  Ver todas las próximas <X className="h-3.5 w-3.5" />
+                </button>
+              ) : (
+                <span className="shrink-0 text-[13px] text-white/50">{listaConteo}</span>
+              )}
+            </div>
+
+            {diaSeleccionado && cargandoMes ? (
+              <p className="text-sm text-white/50">Cargando...</p>
+            ) : listaOrdenada.length === 0 ? (
+              <div className="flex flex-col items-center gap-2.5 rounded-[10px] border border-white/10 bg-[#111113] py-10 text-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+                <CalendarClock className="h-7 w-7 text-white/25" />
+                <p className="text-sm text-white/50">{diaSeleccionado ? 'No tienes citas este día.' : 'No tienes citas próximas.'}</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {grupos.map((grupo, indiceGrupo) => {
+                  const animarGrupo = !reducirMovimiento && primeraListaRef.current
+                  const delayGrupo = ENTRADA.listaBase + indiceGrupo * ENTRADA.listaPaso
+                  return (
+                    <div
+                      key={grupo.clave}
+                      className={`flex flex-col gap-2 ${animarGrupo ? 'in-right' : ''}`}
+                      style={animarGrupo ? { animationDelay: `${delayGrupo}ms` } : undefined}
+                    >
+                      <div className="flex items-baseline gap-2.5 text-[13px]">
+                        <span className="font-semibold text-white/85">{grupo.fecha}</span>
+                        {grupo.rel && <span className="text-[var(--lw-gold)]">{grupo.rel}</span>}
+                      </div>
+                      {grupo.items.map((cita) => {
+                        const tieneSello = sellosSet.has(cita.id)
+                        const chipsSello = calcularChipsSello(cita, tieneSello)
+                        const modificable = puedeModificar(cita, plazoHoras)
+                        const esCompletada = cita.estado === 'COMPLETADA'
+                        const esLaProxima = !diaSeleccionado && proxima?.id === cita.id
+                        const { puedeCalificar, calificada, servicioId } = estadoResenaCita(cita, resenasServicioIds)
+                        return (
+                          <article
+                            key={cita.id}
+                            className={`flex flex-col gap-2.5 rounded-[10px] border bg-[#111113] p-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] ${
+                              esLaProxima ? 'border-[var(--lw-gold)]/45' : 'border-white/10'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex min-w-0 flex-col gap-1">
+                                <span className="font-mono text-sm font-bold" style={{ color: 'var(--lw-gold)' }}>
+                                  {formatoHora.format(new Date(cita.fecha_hora))}
+                                </span>
+                                <span className="text-[15px] font-medium">{nombresServicios(cita) || 'Servicio'}</span>
+                              </div>
+                              <ChipEstado estado={cita.estado} />
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex flex-wrap gap-4">
+                                <span className="flex items-center gap-1.5 text-xs text-white/60">
+                                  <User className="h-3.5 w-3.5" />
+                                  {asistentesPorId.get(cita.asistente_id) || 'Por asignar'}
+                                </span>
+                                <span className="flex items-center gap-1.5 text-xs text-white/60">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  {duracionCita(cita)} min
+                                </span>
+                                <ChipPuntos puntos={puntosEstimados(cita, tieneSello, cfgPuntos)} />
+                                <ChipSello {...chipsSello} />
+                              </div>
+                              <span className="font-mono text-sm font-bold text-white">{formatearSoles(totalCita(cita))}</span>
+                            </div>
+                            {modificable && (
+                              <div className="flex gap-2 border-t border-white/10 pt-2.5">
+                                <button type="button" onClick={() => setCitaAReprogramar(cita)} className={`flex-1 ${CLASE_BOTON_SECUNDARIO}`}>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                  Reprogramar
+                                </button>
+                                <button type="button" onClick={() => setCitaACancelar(cita)} className={`flex-1 ${CLASE_BOTON_SECUNDARIO_ROJO}`}>
+                                  <X className="h-3.5 w-3.5" />
+                                  Cancelar
+                                </button>
+                              </div>
+                            )}
+                            {esCompletada && (
+                              <div className="flex gap-2 border-t border-white/10 pt-2.5">
+                                {puedeCalificar && (
+                                  <Link
+                                    to={`/servicios/${servicioId}#resenas`}
+                                    className={`flex flex-1 items-center justify-center gap-1.5 ${CLASE_BOTON_SECUNDARIO}`}
+                                  >
+                                    <Star className="h-3.5 w-3.5" />
+                                    Calificar
+                                  </Link>
+                                )}
+                                {calificada && (
+                                  <span className="flex flex-1 items-center justify-center text-xs text-white/45">Calificada</span>
+                                )}
+                                <button type="button" onClick={() => volverAReservar(cita)} className={`flex-1 ${CLASE_BOTON_SECUNDARIO}`}>
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                  Volver a reservar
+                                </button>
+                              </div>
+                            )}
+                          </article>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Puntos + Antes de tu cita */}
+          <div className="order-4 flex flex-col gap-5 lg:order-none">
+            <div
+              className={`hidden flex-col gap-5 lg:flex ${reducirMovimiento ? '' : 'in-right'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_ASIDE_DESKTOP}ms` }}
+            >
+              {bloquePuntos()}
+              {bloqueAntes()}
+            </div>
+            <div className="flex flex-col gap-5 lg:hidden">
+              <div className={reducirMovimiento ? '' : 'in-up'} style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_PUNTOS_MOBILE}ms` }}>
+                {bloquePuntos()}
+              </div>
+              <div className={reducirMovimiento ? '' : 'in-up'} style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_ANTES_MOBILE}ms` }}>
+                {bloqueAntes()}
+              </div>
+            </div>
+          </div>
+
+          {/* Historial */}
+          <div
+            className={`order-3 lg:order-none lg:col-span-3 ${CLASE_BLOQUE} ${reducirMovimiento ? '' : 'in-up'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.historial}ms` }}
+          >
+            <button
+              type="button"
+              onClick={() => setHistAbierto((v) => !v)}
+              aria-expanded={histAbierto}
+              className="flex w-full items-center gap-3 px-5 py-4 text-left text-white sm:px-6"
+            >
+              <h2 className="lw-titulo-heavitas text-base uppercase">Historial</h2>
+              <span className="text-[13px] text-white/50">
+                {historial.length} {historial.length === 1 ? 'cita pasada' : 'citas pasadas'}
+              </span>
+              <span className="flex-1" />
+              <ArrowBigDown className={`h-5 w-5 text-white/50 transition-transform ${histAbierto ? 'rotate-180' : ''}`} />
+            </button>
+            {histAbierto &&
+              (historial.length === 0 ? (
+                <p className="px-5 pb-6 text-sm text-white/50 sm:px-6">Todavía no tienes citas pasadas.</p>
+              ) : (
+                <div>
+                  {historial.map((cita) => {
+                    const tieneSello = sellosSet.has(cita.id)
+                    const chips = calcularChipsSello(cita, tieneSello, { historial: true })
+                    const { puedeCalificar, calificada, servicioId } = estadoResenaCita(cita, resenasServicioIds)
+                    return (
+                      <div
+                        key={cita.id}
+                        className="flex flex-col gap-2.5 border-t border-white/10 px-5 py-3.5 sm:grid sm:grid-cols-[130px_minmax(0,1fr)_140px_100px_220px] sm:items-center sm:gap-4 sm:px-6"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-semibold">{fechaCortaTexto(new Date(cita.fecha_hora))}</span>
+                          <span className="font-mono text-xs text-white/50">{formatoHora.format(new Date(cita.fecha_hora))}</span>
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="text-sm">{nombresServicios(cita) || 'Servicio'}</span>
+                          <span className="text-xs text-white/50">{asistentesPorId.get(cita.asistente_id) || 'Sin asignar'}</span>
+                        </div>
+                        <div className="flex flex-wrap items-start gap-1.5">
+                          <ChipEstado estado={cita.estado} />
+                          {cita.estado === 'COMPLETADA' && <ChipPuntos puntos={puntosEstimados(cita, tieneSello, cfgPuntos)} />}
+                          {chips.sello && <ChipSello sello />}
+                        </div>
+                        <span className="font-mono text-sm font-bold sm:text-right">{formatearSoles(totalCita(cita))}</span>
+                        <div className="flex items-center gap-4 sm:justify-end">
+                          {puedeCalificar && (
+                            <Link
+                              to={`/servicios/${servicioId}#resenas`}
+                              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]"
+                            >
+                              <Star className="h-3.5 w-3.5" />
+                              Calificar
+                            </Link>
+                          )}
+                          {calificada && <span className="text-[13px] text-white/45">Calificada</span>}
+                          <button
+                            type="button"
+                            onClick={() => volverAReservar(cita)}
+                            className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Volver a reservar
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+          </div>
         </div>
+
+        {/* Cómo ganas puntos y sellos */}
+        <section
+          aria-labelledby="citas-como-ganas-titulo"
+          className={`mt-8 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-8 ${
+            reducirMovimiento ? '' : 'in-up'
+          }`}
+          style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.comoGanas}ms` }}
+        >
+          <h2 id="citas-como-ganas-titulo" className="lw-titulo-heavitas text-xl uppercase">
+            Cómo ganas puntos y sellos
+          </h2>
+          <p className="mt-1.5 text-[13px] text-white/50">Así funciona tu tarjeta de fidelización en Jaise.</p>
+          <div className="mt-6 grid grid-cols-1 gap-8 divide-y divide-white/10 lg:grid-cols-3 lg:gap-10 lg:divide-y-0">
+            <div className="flex flex-col gap-3.5 pt-8 first:pt-0 lg:pt-0">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
+                  <Sparkles className="h-[18px] w-[18px]" />
+                </span>
+                <h3 className="lw-titulo-heavitas text-[15px] uppercase">Puntos</h3>
+              </div>
+              <p className="text-[13px] leading-relaxed text-white/75">
+                <strong className="text-white">
+                  {puntosPorVisita} {puntosPorVisita === 1 ? 'punto' : 'puntos'}
+                </strong>{' '}
+                por cada día que te atiendes.
+              </p>
+              <p className="text-[13px] leading-relaxed text-white/75">
+                1 punto por cada <strong className="text-white">S/ {solesPorPunto}</strong> que pagas en servicios.
+              </p>
+              <p className="text-[13px] leading-relaxed text-white/75">Con más puntos sube tu tarjeta de nivel:</p>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
+                  <strong className="text-[13px] text-white">Básico</strong>desde 0 pts
+                </div>
+                <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
+                  <strong className="text-[13px] text-white">Premium</strong>desde {umbralPremium} pts
+                </div>
+                <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
+                  <strong className="text-[13px] text-white">VIP</strong>desde {umbralVip} pts
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3.5 pt-8 lg:pt-0">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
+                  <Stamp className="h-[18px] w-[18px]" />
+                </span>
+                <h3 className="lw-titulo-heavitas text-[15px] uppercase">Sellos</h3>
+              </div>
+              <p className="text-[13px] leading-relaxed text-white/75">
+                <strong className="text-white">1 sello por día</strong> que te atiendes, aunque ese día tengas varias citas a
+                distintas horas.
+              </p>
+              <p className="text-[13px] leading-relaxed text-white/75">
+                Al juntar <strong className="text-white">{sellosMeta} sellos</strong> puedes generar un{' '}
+                <strong className="text-white">cupón de 20%</strong> desde Fidelización y usarlo al pagar en caja.
+              </p>
+              <p className="text-[13px] leading-relaxed text-white/75">
+                <strong className="text-white">Muy pronto:</strong> una nueva sección de{' '}
+                <strong className="text-white">Recompensas</strong> donde podrás canjear tus puntos y sellos por{' '}
+                <strong className="text-white">cupones de todo tipo</strong>, o directamente por{' '}
+                <strong className="text-white">servicios y productos</strong>.{' '}
+                <span className="ml-1 inline-block rounded-full border border-dashed border-[var(--lw-gold)]/60 px-2 py-0.5 text-[11px] font-semibold text-[var(--lw-gold)]">
+                  Próximamente
+                </span>
+              </p>
+              <p className="text-[13px] leading-relaxed text-white/75">
+                Cada {sellosMeta} sellos se llena una tarjeta y empieza otra. Los cupones que aún no generaste te siguen
+                esperando.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3.5 pt-8 lg:pt-0">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
+                  <Check className="h-[18px] w-[18px]" />
+                </span>
+                <h3 className="lw-titulo-heavitas text-[15px] uppercase">Cuándo se suman</h3>
+              </div>
+              <div className="flex flex-col">
+                <div className="relative flex gap-3">
+                  <span className="absolute left-[11px] top-[22px] h-[calc(100%+8px)] w-px bg-white/15" />
+                  <span className="z-[1] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#0b0b0c]" />
+                  <span className="flex flex-col gap-0.5 pb-4 text-xs text-white/50">
+                    <strong className="text-[13px] text-white/80">Pendiente</strong>Reservaste tu cita. Aún no suma.
+                  </span>
+                </div>
+                <div className="relative flex gap-3">
+                  <span className="absolute left-[11px] top-[22px] h-[calc(100%+8px)] w-px bg-white/15" />
+                  <span className="z-[1] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#0b0b0c]" />
+                  <span className="flex flex-col gap-0.5 pb-4 text-xs text-white/50">
+                    <strong className="text-[13px] text-white/80">Confirmada</strong>El salón aceptó tu cita. Aún no suma.
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-green text-black">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <span className="flex flex-col gap-0.5 text-xs">
+                    <strong className="text-[13px] text-green">Completada</strong>
+                    <span className="text-white/60">Te atendimos y se registró en caja: aquí se suman tus puntos y tu sello.</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 flex gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-[13px] leading-relaxed text-white/60">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
+            <span>
+              <strong className="text-white">No suman</strong> las citas canceladas, las citas a las que no asististe ni las
+              compras de productos. Si un servicio se anula en caja, se descuentan sus puntos y su sello.
+            </span>
+          </div>
+        </section>
       </div>
 
       <PieClienteWeb />
-
-      {mostrarAgendar && (
-        <ModalAgendarCitaCliente
-          onCerrar={() => setMostrarAgendar(false)}
-          onAgendada={(fechaHoraNueva) => {
-            setMostrarAgendar(false)
-            mostrarToast('Cita agendada.', 'exito')
-            irAFecha(fechaHoraNueva)
-          }}
-        />
-      )}
 
       {citaAReprogramar && (
         <ModalReprogramarCitaCliente
@@ -361,8 +1278,8 @@ export default function CitasCliente() {
           <div ref={panelCancelarRef} className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
             <h2 className="text-base font-semibold text-white">¿Cancelar esta cita?</h2>
             <p className="mt-1 text-sm text-white/60">
-              {formatoHora.format(new Date(citaACancelar.fecha_hora))} —{' '}
-              {nombresServicios(citaACancelar) || 'Servicio'}. Esta acción no se puede deshacer.
+              {formatoHora.format(new Date(citaACancelar.fecha_hora))} — {nombresServicios(citaACancelar) || 'Servicio'}. Esta
+              acción no se puede deshacer.
             </p>
             <div className="mt-4 flex gap-2">
               <button

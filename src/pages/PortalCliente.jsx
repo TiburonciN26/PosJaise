@@ -3,10 +3,11 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useState } from 'react'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
-import { NotificacionesClienteProvider } from '../context/NotificacionesClienteContext.jsx'
+import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
 import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
+import IconoCampana from '../components/IconoCampana.jsx'
 
 // Chanchito "activo" — SVG que trajo el usuario (public/icons/
 // chanchitoActivo.svg), inlineado acá en vez de <img src="..."> a
@@ -84,6 +85,11 @@ function BotonChanchito({ estaEnPuntos }) {
 // insignia con la cantidad viene de CarritoClienteContext, compartido
 // con ServiciosCliente/ProductosCliente para que se actualice sola al
 // agregar/quitar algo, sin recargar la página.
+// Solo cuenta PRODUCTOS (totalItemsProductos) — /carrito es solo-
+// productos desde el rediseño, y los servicios agregados tienen su
+// propio mini-carrito dentro de Citas, con su propio contador ahí.
+// Antes este ícono sumaba servicios+productos pero solo llevaba a la
+// mitad de lo que contaba (bug real, corregido).
 // La insignia usa el degradado --lw-metal-azul (el "acero pulido" con
 // brillo) — antes solo en Inicio (esInicio), dorado en el resto; desde
 // §7.57 el azul metálico es el acento único de todo el portal cliente,
@@ -95,18 +101,18 @@ function BotonChanchito({ estaEnPuntos }) {
 // ícono, volvés a Productos, no a Inicio. Fuera de /carrito se
 // comporta exactamente igual que antes (Link normal).
 function BotonCarrito({ estaEnCarrito }) {
-  const { totalItems } = useCarritoCliente()
+  const { totalItemsProductos } = useCarritoCliente()
   const navigate = useNavigate()
 
   const contenido = (
     <>
       <ShoppingCart className="h-5 w-5 sm:h-7 sm:w-7" />
-      {totalItems > 0 && (
+      {totalItemsProductos > 0 && (
         <span
           className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-black"
           style={{ background: 'var(--lw-metal-azul)' }}
         >
-          {totalItems}
+          {totalItemsProductos}
         </span>
       )}
     </>
@@ -133,6 +139,48 @@ function BotonCarrito({ estaEnCarrito }) {
     >
       {contenido}
     </Link>
+  )
+}
+
+// Botón de notificaciones (header) — mismo patrón "volver si ya estás
+// en su propia página" que BotonChanchito/BotonCarrito arriba. El
+// contador de no leídas y el "abrir" que las marca leídas YA existían
+// del lado del cliente (NotificacionesClienteContext +
+// NotificacionesCliente.jsx, /mi-perfil/notificaciones) — esto solo le
+// suma el ícono al header, que antes vivía únicamente adentro del menú
+// del avatar. `IconoCampana` es el recorte del "BellToggle" real de
+// React Bits (registro @react-bits) — solo el ícono + el repique +
+// el badge, sin la píldora de encendido/apagado del original (eso no
+// aplica acá, un clic siempre abre la bandeja).
+function BotonNotificaciones({ estaEnNotificaciones }) {
+  const { noLeidas } = useNotificacionesCliente()
+  const navigate = useNavigate()
+
+  // Insignia en --lw-metal-azul (texto negro), igual que la del carrito —
+  // §7.57: el azul metálico es el acento único de todo el portal cliente,
+  // no solo de Inicio.
+  const estiloBadge = { background: 'var(--lw-metal-azul)', color: '#000' }
+
+  if (estaEnNotificaciones) {
+    return (
+      <IconoCampana
+        contador={noLeidas}
+        onClick={() => navigate(-1)}
+        ariaLabel="Volver"
+        className="h-11 w-11 text-white/80 hover:text-white"
+        estiloBadge={estiloBadge}
+      />
+    )
+  }
+
+  return (
+    <IconoCampana
+      contador={noLeidas}
+      onClick={() => navigate('/mi-perfil/notificaciones')}
+      ariaLabel="Notificaciones"
+      className="h-11 w-11 text-white/80 hover:text-white"
+      estiloBadge={estiloBadge}
+    />
   )
 }
 
@@ -285,17 +333,20 @@ export default function PortalCliente() {
                       <nav> de pestañas. "Inicio" y el "|" van siempre en
                       azul metálico (§7.57, antes condicional a esInicio,
                       dorado en el resto — el dorado se retiró de todo el
-                      portal cliente). Si la ruta actual ya es Inicio, se
-                      muestra sola (sin "|" ni segunda migaja, sería
-                      redundante). Misma animación de deslizamiento que usa
-                      Header.jsx en el POS (`.animate-deslizar-pestana`).
+                      portal cliente). En Inicio no se muestra nada (ni
+                      siquiera "Inicio" sola): pedido explícito del
+                      rediseño de esa pestaña (docs/diseno-inicio/README.md)
+                      — `migajas` ya sale vacío ahí (ver `esInicio` arriba),
+                      así que basta con no pintar el <nav> cuando no hay
+                      nada que mostrar. Misma animación de deslizamiento que
+                      usa Header.jsx en el POS (`.animate-deslizar-pestana`).
                       !menuAbierto (§7.56): con el drawer móvil abierto,
                       la migaja se ocultaba detrás pero seguía ahí — a
                       pedido del usuario, se esconde mientras el drawer
                       está abierto y vuelve a aparecer sola al cerrarlo
                       (mismo estado `menuAbierto` que ya maneja el botón
                       de hamburguesa, sin agregar estado nuevo). */}
-                  {(esInicio || migajas.length > 0) && !menuAbierto && (
+                  {migajas.length > 0 && !menuAbierto && (
                     <nav
                       aria-label="Ubicación actual"
                       className="absolute left-0 top-full mt-3 flex items-center gap-2 whitespace-nowrap text-xs font-medium max-lg:left-[-36px]"
@@ -382,7 +433,9 @@ export default function PortalCliente() {
                   <BotonChanchito estaEnPuntos={location.pathname === '/mis-puntos'} />
   
                   <BotonCarrito estaEnCarrito={location.pathname === '/carrito'} />
-  
+
+                  <BotonNotificaciones estaEnNotificaciones={location.pathname === '/mi-perfil/notificaciones'} />
+
                   <MenuUsuarioCliente />
                 </div>
               </div>

@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Detalle del servicio · Móvil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+@font-face{font-family:'Heavitas';src:url('/_blob/23f90573110d55aa2787d6f37972937b') format('truetype');font-display:swap}
+body{margin:0;background:#0b0b0c;font-family:'Inter',system-ui,sans-serif}
+a{color:#ffffff}a:hover{color:#a9c6ec}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #a9c6ec;outline-offset:2px}
+.bar span{position:absolute;inset:0;background:#ffffff;transform-origin:left;transform:scaleX(0)}
+.bar.done span{transform:scaleX(1)}
+.bar.run span{animation:barfill 5s linear forwards}
+@keyframes barfill{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.bar.run span{animation:none;transform:scaleX(1)}}
+</style>
+</helmet>
+<div id="dc-root" style="position: relative; width: 390px; height: 5000px; box-sizing: border-box; background: #0b0b0c; color: #ffffff; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; overflow: hidden">
+
+  <!-- 1. GALERÍA a todo el ancho -->
+  <div style="position: relative; height: 460px; background: #050505">
+    <sc-for list="{{fotos}}" as="f" hint-placeholder-count="3">
+      <img src="{{f.src}}" alt="{{f.label}}" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: {{f.pos}}; opacity: {{f.op}}; transition: opacity 0.8s ease">
+    </sc-for>
+    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 72%, rgba(0,0,0,0.65) 100%); pointer-events: none"></div>
+    <div style="position: absolute; top: 10px; left: 16px; right: 16px; display: flex; gap: 6px; z-index: 3">
+          <sc-for list="{{thumbs}}" as="t" hint-placeholder-count="3">
+            <button type="button" class="{{t.cls}}" onClick="{{t.pick}}" aria-label="Ir a foto: {{t.label}}" style="flex-grow: 1; height: 3px; border: 0; padding: 0; border-radius: 3px; background: rgba(255,255,255,0.28); overflow: hidden; position: relative"><span></span></button>
+          </sc-for>
+        </div>
+    <div style="position: absolute; top: 24px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center">
+      <a href="Movil.dc.html" aria-label="Volver a servicios" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(12,12,14,0.7); color: #ffffff; display: grid; place-items: center; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+      <div style="display: flex; gap: 8px">
+        <button type="button" aria-label="Compartir por WhatsApp" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(12,12,14,0.7); color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"></path></svg></button>
+        <button type="button" onClick="{{toggleFav}}" aria-pressed="{{favPressed}}" aria-label="{{favLabel}}" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(12,12,14,0.7); color: {{heartColor}}; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="{{heartFill}}" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg></button>
+      </div>
+    </div>
+    <button type="button" onClick="{{prev}}" aria-label="Foto anterior" style="position: absolute; left: 0; top: 70px; bottom: 60px; width: 50%; background: transparent; border: 0"></button>
+    <button type="button" onClick="{{next}}" aria-label="Foto siguiente" style="position: absolute; right: 0; top: 70px; bottom: 60px; width: 50%; background: transparent; border: 0"></button>
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500; pointer-events: none">
+      <span>{{fotoLabel}}</span>
+      <span>{{fotoNum}}</span>
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; padding: 12px 16px 0">
+    <sc-for list="{{thumbs}}" as="t" hint-placeholder-count="3">
+      <button type="button" onClick="{{t.pick}}" aria-label="Ver foto: {{t.label}}" aria-pressed="{{t.pressed}}" style="position: relative; width: 64px; height: 64px; padding: 0; border-radius: 8px; overflow: hidden; border: 2px solid {{t.border}}; background: #151517; opacity: {{t.dim}}">
+        <img src="{{t.src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: {{t.pos}}">
+        <span style="position: absolute; left: 3px; right: 3px; bottom: 3px; background: rgba(12,12,14,0.8); border-radius: 4px; font-size: 7.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: #ffffff">{{t.label}}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="padding: 0 16px">
+    <!-- 2. INFORMACIÓN -->
+    <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 24px">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+          <span style="display: inline-flex; align-items: center; gap: 7px; background: #18181b; border-radius: 5px; padding: 5px 9px; font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>En tendencia</span>
+          <span style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #a6a6a6">Cabello · Color</span>
+        </div>
+        <h1 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 34px; line-height: 1; color: #ffffff; text-transform: uppercase">Balayage</h1>
+        <div style="display: flex; align-items: baseline; gap: 8px">
+          <span style="font-size: 13px; color: #a6a6a6">desde</span>
+          <span style="font-size: 28px; font-weight: 700">S/ 280</span>
+        </div>
+        <span style="font-size: 12px; color: #8a8a90; margin-top: -6px">El precio final depende del largo y grosor del cabello.</span>
+      </div>
+      <!-- Sellos: puntos · reseñas · sello de fidelidad -->
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 10px 0">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; text-decoration: none; color: #ffffff"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="6"></circle><path d="M15.48 13.4 17 22l-5-3-5 3 1.52-8.6"></path><path d="M12 5.6l.9 1.8 2 .3-1.45 1.4.35 2L12 10.15l-1.8.95.35-2L9.1 7.7l2-.3z"></path></svg><span style="font-size: 12.5px; line-height: 1.4; font-weight: 600; color: #ffffff">+28 puntos<br><span style="font-weight: 400; color: #a6a6a6">Ganas 28 puntos</span></span></div>
+        <a href="#resenas" style="display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; text-decoration: none; color: #ffffff"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg><span style="font-size: 12.5px; line-height: 1.4; font-weight: 600; color: #ffffff">4.9 · 32 reseñas<br><span style="font-weight: 600; color: #a9c6ec">Ver reseñas →</span></span></a>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; text-decoration: none; color: #ffffff"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"></path><path d="m9 12 2 2 4-4"></path></svg><span style="font-size: 12.5px; line-height: 1.4; font-weight: 600; color: #ffffff">Suma sello<br><span style="font-weight: 400; color: #a6a6a6">de fidelidad</span></span></div>
+      </div>
+
+      <p style="margin: 0; font-size: 14px; line-height: 1.7; color: #d9d9dc">El color de la temporada: aclarado a mano alzada que crea un degradado natural de raíz a puntas. Como el aclarado no empieza en la raíz, el color crece sin marcar línea y puedes espaciar tus retoques.</p>
+
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06)">
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border-right: 1px solid #1f1f22; border-bottom: 1px solid #1f1f22">
+          <span style="font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a8a90">Duración</span>
+          <span style="font-size: 15px; font-weight: 600">3 h aprox.</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border-bottom: 1px solid #1f1f22">
+          <span style="font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a8a90">Cupos esta semana</span>
+          <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 600"><span style="width: 7px; height: 7px; border-radius: 50%; background: #3ecf6a"></span>4 disponibles</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border-right: 1px solid #1f1f22">
+          <span style="font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a8a90">A domicilio</span>
+          <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 600; color: #a6a6a6"><span style="width: 7px; height: 7px; border-radius: 50%; background: #5a5a60"></span>Solo en local</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; padding: 14px 16px">
+          <span style="font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #8a8a90">El resultado dura</span>
+          <span style="font-size: 15px; font-weight: 600">3–4 meses</span>
+        </div>
+      </div>
+
+      <a href="#ayuda" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; text-decoration: none; padding: 14px 0; border-top: 1px solid #1f1f22; border-bottom: 1px solid #1f1f22; color: #ffffff; font-size: 13px">
+        <span style="display: inline-flex; align-items: center; gap: 10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>¿Dudas? Escríbenos por WhatsApp</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17 17 7M8 7h9v9"></path></svg>
+      </a>
+    </div>
+
+    <!-- Adelanto y cancelación -->
+    <section style="margin-top: 28px; display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06)">
+      <div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-bottom: 1px solid #1f1f22;">
+        <span style="flex-shrink: 0; color: #a9c6ec; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle><path d="M6 12h.01M18 12h.01"></path></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; color: #ffffff">Adelanto obligatorio para separar tu cita</span><span style="font-size: 12.5px; line-height: 1.5; color: #a6a6a6">Deja el mínimo de [S/ X] o paga el total. Por Yape, Plin o transferencia; se descuenta del total.</span></span>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-bottom: 1px solid #1f1f22;">
+        <span style="flex-shrink: 0; color: #a9c6ec; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path><path d="M12 7v5l3 2"></path></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; color: #ffffff">Cambios o cancelación hasta [24 h] antes</span><span style="font-size: 12.5px; line-height: 1.5; color: #a6a6a6">Después de ese plazo, el adelanto no se devuelve.</span></span>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px; ">
+        <span style="flex-shrink: 0; color: #a9c6ec; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"></path><path d="M12 3v6"></path></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13.5px; font-weight: 600; color: #ffffff">El saldo lo pagas en el local</span><span style="font-size: 12.5px; line-height: 1.5; color: #a6a6a6">Efectivo, Yape, Plin, transferencia o tarjeta de crédito/débito (solo en el local).</span></span>
+      </div>
+    </section>
+  
+        <!-- 3. CÓMO ES EL SERVICIO -->
+    <section style="margin-top: 40px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 19px; text-transform: uppercase">Cómo es el servicio</h2>
+        <span style="font-size: 12px; color: #a6a6a6">Total <b style="color: #ffffff">180 min</b></span>
+      </div>
+      <div style="display: flex; gap: 3px; height: 8px; margin-top: 18px">
+        <sc-for list="{{pasos}}" as="p" hint-placeholder-count="4"><div style="width: {{p.w}}%; background: {{p.color}}; border-radius: 3px"></div></sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; margin-top: 8px">
+        <sc-for list="{{pasos}}" as="p" hint-placeholder-count="4">
+          <div style="display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid #1f1f22">
+            <span style="width: 10px; height: 10px; margin-top: 4px; flex-shrink: 0; border-radius: 3px; background: {{p.color}}"></span>
+            <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1">
+              <div style="display: flex; justify-content: space-between; gap: 10px"><span style="font-size: 14px; font-weight: 600">{{p.n}}</span><span style="flex-shrink: 0; font-size: 12px; color: #a6a6a6">{{p.dur}}</span></div>
+              <span style="font-size: 12.5px; line-height: 1.55; color: #a6a6a6">{{p.txt}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- Antes y después de tu cita -->
+    <section style="margin-top: 40px">
+      <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 19px; color: #ffffff; text-transform: uppercase">Cuidados antes y después</h2>
+      <div style="display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 12px; margin-top: 18px">
+        <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 20px">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px">
+            <span style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Antes de tu cita</span><span style="font-size: 12px; color: #8a8a90">Para que el color agarre parejo</span></span>
+          </div>
+          <ul style="margin: 0; padding: 0; list-style: none">
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Ven con el cabello seco y sin cremas, aceites ni fijadores.</span></li>
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>No lo laves el mismo día: la grasa natural protege el cuero cabelludo del aclarado.</span></li>
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Si te hiciste alisado, tinte o keratina en los últimos 3 meses, avísanos al reservar.</span></li>
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Llega 10 minutos antes para el diagnóstico sin apuros.</span></li>
+          </ul>
+        </div>
+        <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 20px">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px">
+            <span style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Después de tu cita</span><span style="font-size: 12px; color: #8a8a90">Para que el resultado dure 3–4 meses</span></span>
+          </div>
+          <ul style="margin: 0; padding: 0; list-style: none">
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Espera 48 horas antes del primer lavado.</span></li>
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Usa shampoo sin sulfatos y un matizador una vez por semana.</span></li>
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Aplica termoprotector antes de secadora o plancha.</span></li>
+            <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #1f1f22; font-size: 13.5px; line-height: 1.55; color: #d9d9dc"><span style="flex-shrink: 0; color: #a9c6ec; margin-top: 2px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span>Agenda tu retoque de tonalizado cada 6 a 8 semanas.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  
+        <!-- 4. ESPECIFICACIONES · HERRAMIENTAS · MATERIALES -->
+    <section style="margin-top: 36px; display: flex; flex-direction: column; gap: 12px">
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; padding: 20px">
+        <h3 style="margin: 0 0 12px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #a9c6ec; font-weight: 600">Especificaciones técnicas</h3>
+        <sc-for list="{{specs}}" as="s" hint-placeholder-count="6">
+          <div style="display: flex; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid #1f1f22; font-size: 13px"><span style="color: #a6a6a6">{{s.k}}</span><span style="font-weight: 500; text-align: right">{{s.v}}</span></div>
+        </sc-for>
+      </div>
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; padding: 20px">
+        <h3 style="margin: 0 0 12px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #a9c6ec; font-weight: 600">Herramientas usadas</h3>
+        <sc-for list="{{herr}}" as="h" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid #1f1f22; font-size: 13px"><span style="font-weight: 500">{{h.n}}</span><span style="color: #8a8a90; font-size: 12px">{{h.d}}</span></div>
+        </sc-for>
+      </div>
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; padding: 20px">
+        <h3 style="margin: 0 0 12px; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #a9c6ec; font-weight: 600">Materiales usados</h3>
+        <sc-for list="{{mat}}" as="m" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid #1f1f22; font-size: 13px"><span style="font-weight: 500">{{m.n}}</span><span style="color: #8a8a90; font-size: 12px">{{m.d}}</span></div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- Reseñas destacadas -->
+    <section id="resenas" style="margin-top: 40px; padding-top: 32px; border-top: 1px solid #1f1f22">
+      <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 19px; color: #ffffff; text-transform: uppercase">Lo que dicen nuestras clientas</h2>
+      <div style="display: flex; flex-direction: column; gap: 22px; margin-top: 20px">
+        <div style="display: flex; flex-direction: column; gap: 14px; ">
+          <div style="display: flex; align-items: baseline; gap: 12px"><span style="font-size: 44px; font-weight: 700; line-height: 1">4.9</span><span style="font-size: 13px; color: #a6a6a6">de 5</span></div>
+          <span style="display: inline-flex; gap: 2px; color: #a9c6ec"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg></span>
+          <span style="font-size: 13px; color: #a6a6a6">32 reseñas de clientas que se hicieron este servicio</span>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px">
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #a6a6a6"><span style="width: 10px">5</span><span style="flex-grow: 1; height: 6px; border-radius: 3px; background: #1f1f22; overflow: hidden"><span style="display: block; width: 90.6%; height: 100%; background: #a9c6ec; border-radius: 3px"></span></span><span style="width: 18px; text-align: right">29</span></div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #a6a6a6"><span style="width: 10px">4</span><span style="flex-grow: 1; height: 6px; border-radius: 3px; background: #1f1f22; overflow: hidden"><span style="display: block; width: 9.4%; height: 100%; background: #a9c6ec; border-radius: 3px"></span></span><span style="width: 18px; text-align: right">3</span></div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #a6a6a6"><span style="width: 10px">3</span><span style="flex-grow: 1; height: 6px; border-radius: 3px; background: #1f1f22; overflow: hidden"><span style="display: block; width: 0.0%; height: 100%; background: #a9c6ec; border-radius: 3px"></span></span><span style="width: 18px; text-align: right">0</span></div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #a6a6a6"><span style="width: 10px">2</span><span style="flex-grow: 1; height: 6px; border-radius: 3px; background: #1f1f22; overflow: hidden"><span style="display: block; width: 0.0%; height: 100%; background: #a9c6ec; border-radius: 3px"></span></span><span style="width: 18px; text-align: right">0</span></div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #a6a6a6"><span style="width: 10px">1</span><span style="flex-grow: 1; height: 6px; border-radius: 3px; background: #1f1f22; overflow: hidden"><span style="display: block; width: 0.0%; height: 100%; background: #a9c6ec; border-radius: 3px"></span></span><span style="width: 18px; text-align: right">0</span></div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px"><button type="button" style="display: inline-flex; align-items: center; gap: 8px; background: #a9c6ec; color: #0b0b0c; border: 0; border-radius: 999px; padding: 11px 18px; font-size: 13px; font-weight: 600; font-family: inherit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.4 3.6a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4Z"></path></svg>Escribir una reseña</button><a href="#resenas" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #3a3a3f; border-radius: 999px; padding: 11px 18px; font-size: 13px; font-weight: 600; color: #ffffff; text-decoration: none">Ver las 32 reseñas</a></div>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #8a8a90">Solo pueden reseñar las clientas que ya se hicieron este servicio.</span>
+        </div>
+        <div style="display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px">
+          <article style="flex-shrink: 0; width: 270px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="width: 38px; height: 38px; border-radius: 50%; background: #1d2633; color: #a9c6ec; display: grid; place-items: center; font-weight: 700">M</span>
+              <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Mariana R.</span><span style="font-size: 11.5px; color: #8a8a90">hace 1 semana</span></span>
+            </div>
+            <span style="display: inline-flex; gap: 2px; color: #a9c6ec"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg></span>
+            <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #d9d9dc">Quería un cambio sin verme muy rubia y lo lograron. El degradado quedó súper natural y ya pasaron dos meses sin que se note la raíz.</p>
+            <span style="margin-top: auto; align-self: flex-start; background: #18181b; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #a6a6a6">Clienta verificada</span>
+          </article>
+          <article style="flex-shrink: 0; width: 270px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="width: 38px; height: 38px; border-radius: 50%; background: #1d2633; color: #a9c6ec; display: grid; place-items: center; font-weight: 700">K</span>
+              <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Karla P.</span><span style="font-size: 11.5px; color: #8a8a90">hace 3 semanas</span></span>
+            </div>
+            <span style="display: inline-flex; gap: 2px; color: #a9c6ec"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg></span>
+            <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #d9d9dc">Me explicaron todo antes de empezar y me hicieron prueba de mechón. Salí con el cabello suave, nada maltratado.</p>
+            <span style="margin-top: auto; align-self: flex-start; background: #18181b; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #a6a6a6">Clienta verificada</span>
+          </article>
+          <article style="flex-shrink: 0; width: 270px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px; display: flex; flex-direction: column; gap: 12px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="width: 38px; height: 38px; border-radius: 50%; background: #1d2633; color: #a9c6ec; display: grid; place-items: center; font-weight: 700">L</span>
+              <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">Lucía T.</span><span style="font-size: 11.5px; color: #8a8a90">hace 1 mes</span></span>
+            </div>
+            <span style="display: inline-flex; gap: 2px; color: #a9c6ec"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg></span>
+            <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #d9d9dc">El resultado me encantó. Demoró un poco más de las 3 horas, pero valió la pena. Voy a volver para el tonalizado.</p>
+            <span style="margin-top: auto; align-self: flex-start; background: #18181b; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #a6a6a6">Clienta verificada</span>
+          </article>
+        </div>
+      </div>
+    </section>
+  
+      <!-- Combo sugerido -->
+    <section style="margin-top: 40px">
+      <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 19px; color: #ffffff; text-transform: uppercase">Se suele reservar junto con</h2>
+      <div style="margin-top: 18px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 18; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; gap: 12px"><span style="position: relative; width: 64px; height: 64px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: #151517;"><img src="/_blob/15d677b5c8532df4ee70250ac28c8d30" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: 78% 30%"></span><span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 13px; font-weight: 600">Balayage</span><span style="font-size: 12px; color: #a6a6a6">S/ 280 · 180 min</span></span></div>
+          <div style="display: flex; align-items: center; gap: 12px"><span style="position: relative; width: 64px; height: 64px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: radial-gradient(110% 90% at 30% 20%, #c9a27e 0%, transparent 55%), linear-gradient(150deg, #1d1712, #4a3526 65%, #a9c6ec 140%);"></span><span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 13px; font-weight: 600">Hidratación profunda</span><span style="font-size: 12px; color: #a6a6a6">S/ 70 · 60 min</span></span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; padding-top: 16px; border-top: 1px solid #1f1f22">
+          <span style="display: flex; flex-direction: column; gap: 3px"><span style="font-size: 12px; color: #a6a6a6">Total juntos · 4 h aprox.</span><span style="font-size: 22px; font-weight: 700">S/ 350</span><span style="font-size: 11.5px; color: #8a8a90">La hidratación sella el color recién hecho.</span></span>
+          <button type="button" onClick="{{agregarCombo}}" style="display: inline-flex; justify-content: space-between; align-items: center; gap: 14px; background: {{comboBg}}; color: {{comboFg}}; border: 1px solid #a9c6ec; border-radius: 999px; padding: 6px 6px 6px 20px; font-weight: 600; font-size: 14px">{{comboLabel}}<span style="width: 34px; height: 34px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span></button>
+        </div>
+      </div>
+    </section>
+  
+        <!-- 5. TAMBIÉN TE PUEDE INTERESAR -->
+    <section style="margin-top: 40px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+        <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 17px; text-transform: uppercase">También te puede interesar</h2>
+        <a href="Movil.dc.html" style="flex-shrink: 0; color: #a9c6ec; text-decoration: none; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase">Ver todo</a>
+      </div>
+      <div style="display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px">
+        <sc-for list="{{rel}}" as="it" hint-placeholder-count="4">
+          <article style="flex-shrink: 0; width: 158px; display: flex; flex-direction: column; gap: 8px">
+            <div style="position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #151517">
+              <sc-if value="{{it.hasImg}}" hint-placeholder-val="{{true}}"><img src="{{it.src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: {{it.pos}}"></sc-if>
+              <sc-if value="{{it.noImg}}" hint-placeholder-val="{{false}}"><div style="position: absolute; inset: 0; background: {{it.grad}}"></div></sc-if>
+              <span style="position: absolute; left: 8px; bottom: 8px; background: rgba(12,12,14,0.8); border-radius: 5px; padding: 3px 7px; font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700">{{it.t}}</span>
+              <span style="position: absolute; bottom: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: #ffffff; color: #111111; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></span>
+            </div>
+            <span style="font-weight: 700; font-size: 13.5px; line-height: 1.25">{{it.n}}</span>
+            <span style="font-size: 12px; color: #a6a6a6; margin-top: -4px">desde <b style="color: #ffffff">{{it.price}}</b> · {{it.dur}}</span>
+          </article>
+        </sc-for>
+      </div>
+    </section>
+
+    <footer id="ayuda" style="margin-top: 40px; padding: 20px 0 120px; border-top: 1px solid #1f1f22; display: flex; justify-content: space-between; color: #8a8a90; font-size: 12px">
+      <span>© Jaise Beauty</span><span>PieClienteWeb</span>
+    </footer>
+  </div>
+
+  <!-- Barra inferior fija (en la app: position fixed; aquí anclada al final de la 1.ª pantalla) -->
+  <div style="position: absolute; left: 0; right: 0; top: 752px; z-index: 10; display: flex; align-items: center; gap: 12px; padding: 12px 16px 16px; background: rgba(11,11,12,0.94); border-top: 1px solid #1f1f22; backdrop-filter: blur(16px)">
+    <div style="display: flex; flex-direction: column; gap: 2px; flex-shrink: 0">
+      <span style="font-size: 11px; color: #a6a6a6">desde · 3 h</span>
+      <span style="font-size: 19px; font-weight: 700">S/ 280</span>
+    </div>
+    <button type="button" onClick="{{toggleCita}}" style="flex-grow: 1; display: inline-flex; justify-content: space-between; align-items: center; background: {{addBg}}; color: {{addFg}}; border: 1px solid #a9c6ec; border-radius: 999px; padding: 6px 6px 6px 18px; font-weight: 600; font-size: 14px">{{addLabel}}<span style="width: 36px; height: 36px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center">
+      <sc-if value="{{enCita}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+      <sc-if value="{{notEnCita}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"></path></svg></sc-if>
+    </span></button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":5000}}'>
+const IMG = { a: '/_blob/e8abf252c3b6e737dc21b2d19fe86ca1', b: '/_blob/15d677b5c8532df4ee70250ac28c8d30', c: '/_blob/b9042418035cf22641ce2fcee2dda675' };
+const FOTOS = [
+  { src: IMG.b, pos: '78% 30%', label: 'Resultado' },
+  { src: IMG.a, pos: '76% 30%', label: 'Antes' },
+  { src: IMG.c, pos: '70% 30%', label: 'Después' }
+];
+const PASOS = [
+  { n: 'Diagnóstico y prueba de mechón', m: 20, txt: 'Revisamos el estado del cabello y probamos el aclarado en un mechón para elegir el tono.' },
+  { n: 'Aclarado a mano alzada', m: 90, txt: 'Pintamos las mechas a pincel, más suaves en la raíz y más claras hacia las puntas.' },
+  { n: 'Tonalizado', m: 30, txt: 'Neutralizamos el tono amarillo y le damos el matiz final: miel, ceniza o caramelo.' },
+  { n: 'Lavado, tratamiento y brushing', m: 40, txt: 'Hidratación con protector de enlaces y brushing para que veas el resultado final.' }
+];
+const COLORES = ['#dbe7f7', '#a9c6ec', '#6f8fbd', '#3d5680'];
+const SPECS = [
+  { k: 'Tipo de servicio', v: 'Coloración parcial' },
+  { k: 'Técnica', v: 'Mano alzada (freehand)' },
+  { k: 'Largo recomendado', v: 'Medio a largo' },
+  { k: 'Aclara hasta', v: '3–4 tonos' },
+  { k: 'Mantenimiento', v: 'Tonalizado cada 6–8 semanas' },
+  { k: 'Incluye diagnóstico', v: 'Sí' }
+];
+const HERR = [
+  { n: 'Pinceles de balayage', d: 'Cerda plana para trazos suaves' },
+  { n: 'Paleta de aplicación', d: 'Para pintar la mecha sin papel' },
+  { n: 'Papel de algodón / film', d: 'Separa las mechas mientras procesa' },
+  { n: 'Secadora profesional', d: 'Para el brushing final' },
+  { n: 'Plancha u ondulador', d: 'Acabado con ondas (opcional)' }
+];
+const MAT = [
+  { n: 'Decolorante en polvo', d: '[MARCA] · bajo amoniaco' },
+  { n: 'Oxidante 20 vol', d: '[MARCA]' },
+  { n: 'Tonalizante', d: '[MARCA] · tono según diagnóstico' },
+  { n: 'Protector de enlaces', d: '[MARCA] · protege la fibra del aclarado' },
+  { n: 'Mascarilla hidratante', d: '[MARCA]' }
+];
+function grad(id) {
+  const x = 15 + (id * 29) % 70, y = 10 + (id * 43) % 75, ang = 120 + (id * 37) % 90;
+  return 'radial-gradient(110% 90% at ' + x + '% ' + y + '%, #c9a27e 0%, transparent 55%), linear-gradient(' + ang + 'deg, #1d1712, #4a3526 65%, #a9c6ec 140%)';
+}
+const REL = [
+  { id: 2, n: 'Keratina', t: 'Tratamiento', p: 180, d: 150, img: 'c', pos: '70% 30%' },
+  { id: 3, n: 'Corte + brushing', t: 'Corte', p: 45, d: 60, img: 'a', pos: '78% 30%' },
+  { id: 9, n: 'Tinte completo', t: 'Color', p: 120, d: 120 },
+  { id: 11, n: 'Mechas babylights', t: 'Color', p: 220, d: 180 }
+];
+const TOTAL = PASOS.reduce((t, p) => t + p.m, 0);
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { foto: 0, cita: false, fav: false, combo: false };
+  }
+  componentDidMount() { this.arm(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  // Cambia de foto cada 5 s; al tocar una miniatura, flecha o barra se reinicia el conteo.
+  arm() {
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this.setState({ foto: (this.state.foto + 1) % FOTOS.length }), 5000);
+  }
+  renderVals() {
+    const st = this.state, n = FOTOS.length;
+    const ir = (i) => { this.setState({ foto: (i + n) % n }); this.arm(); };
+    return {
+      fotos: FOTOS.map((f, i) => Object.assign({}, f, { op: i === st.foto ? 1 : 0 })),
+      thumbs: FOTOS.map((f, i) => Object.assign({}, f, { border: i === st.foto ? '#ffffff' : 'transparent', dim: i === st.foto ? 1 : 0.55, pressed: i === st.foto ? 'true' : 'false', cls: i === st.foto ? 'bar run' : (i < st.foto ? 'bar done' : 'bar'), dotW: i === st.foto ? 18 : 6, dotBg: i === st.foto ? '#ffffff' : 'rgba(255,255,255,0.45)', pick: () => ir(i) })),
+      fotoLabel: FOTOS[st.foto].label,
+      fotoNum: (st.foto + 1) + ' / ' + n,
+      prev: () => ir(st.foto - 1),
+      next: () => ir(st.foto + 1),
+      pasos: PASOS.map((p, i) => ({ num: '0' + (i + 1), n: p.n, txt: p.txt, dur: p.m + ' min', w: (p.m / TOTAL * 100).toFixed(2), color: COLORES[i] })),
+      specs: SPECS, herr: HERR, mat: MAT,
+      rel: REL.map((s) => ({ n: s.n, t: s.t, price: 'S/ ' + s.p, dur: s.d + ' min', hasImg: !!s.img, noImg: !s.img, src: s.img ? IMG[s.img] : '', pos: s.pos || '78% 30%', grad: grad(s.id) })),
+      enCita: st.cita, notEnCita: !st.cita,
+      addLabel: st.cita ? 'Agregado a tu cita' : 'Agregar a mi cita',
+      addBg: st.cita ? 'transparent' : '#a9c6ec', addFg: st.cita ? '#a9c6ec' : '#0b0b0c',
+      toggleCita: () => this.setState({ cita: !st.cita }),
+      favPressed: st.fav ? 'true' : 'false',
+      favLabel: st.fav ? 'Quitar de favoritos' : 'Guardar en favoritos',
+      heartFill: st.fav ? 'currentColor' : 'none',
+      heartColor: st.fav ? '#ff5c85' : '#ffffff',
+      toggleFav: () => this.setState({ fav: !st.fav }),
+      agregarCombo: () => this.setState({ cita: true, combo: !st.combo }),
+      comboLabel: st.combo ? 'Agregados a tu cita' : 'Agregar los dos a mi cita',
+      comboBg: st.combo ? 'transparent' : '#a9c6ec',
+      comboFg: st.combo ? '#a9c6ec' : '#0b0b0c',
+      dockN: st.combo ? '2 servicios' : '1 servicio',
+      dockT: st.combo ? 'S/ 350' : 'S/ 280'
+    };
+  }
+}
+</script>
+</body>
+</html>

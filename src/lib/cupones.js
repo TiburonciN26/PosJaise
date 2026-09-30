@@ -11,6 +11,7 @@ export const ETIQUETAS_ORIGEN_CUPON = {
   REFERIDO_BIENVENIDA: 'Cupón de bienvenida',
   REFERIDO_RECOMPENSA: 'Cupón por referir',
   FIDELIZACION: 'Cupón de fidelización',
+  PROMOCION: 'Cupón de promoción',
 }
 
 // "Peso"/color del cupón según su valor — mismo espíritu que los niveles

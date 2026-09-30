@@ -9,16 +9,20 @@ import PortalCliente from './pages/PortalCliente.jsx'
 import InicioCliente from './pages/cliente/InicioCliente.jsx'
 import MiPerfil from './pages/cliente/MiPerfil.jsx'
 import ServiciosCliente from './pages/cliente/ServiciosCliente.jsx'
+import DetalleServicioCliente from './pages/cliente/DetalleServicioCliente.jsx'
 import ProductosCliente from './pages/cliente/ProductosCliente.jsx'
+import DetalleProductoCliente from './pages/cliente/DetalleProductoCliente.jsx'
 import CitasCliente from './pages/cliente/CitasCliente.jsx'
 import HistorialCliente from './pages/cliente/HistorialCliente.jsx'
 import FidelizacionCliente from './pages/cliente/FidelizacionCliente.jsx'
 import OfertasCliente from './pages/cliente/OfertasCliente.jsx'
 import NosotrosCliente from './pages/cliente/NosotrosCliente.jsx'
 import CarritoCliente from './pages/cliente/CarritoCliente.jsx'
+import CarritoServiciosCliente from './pages/cliente/CarritoServiciosCliente.jsx'
 import MisResenasCliente from './pages/cliente/MisResenasCliente.jsx'
 import MisPuntosCliente from './pages/cliente/MisPuntosCliente.jsx'
 import DireccionesCliente from './pages/cliente/DireccionesCliente.jsx'
+import PedidosCliente from './pages/cliente/PedidosCliente.jsx'
 import NotificacionesCliente from './pages/cliente/NotificacionesCliente.jsx'
 import SeguridadCuentaCliente from './pages/cliente/SeguridadCuentaCliente.jsx'
 import ReferidosCliente from './pages/cliente/ReferidosCliente.jsx'
@@ -93,8 +97,11 @@ function App() {
               <Route path="inicio" element={<InicioCliente />} />
               <Route path="mi-perfil" element={<MiPerfil />} />
               <Route path="servicios" element={<ServiciosCliente />} />
+              <Route path="servicios/:id" element={<DetalleServicioCliente />} />
               <Route path="productos" element={<ProductosCliente />} />
+              <Route path="productos/:id" element={<DetalleProductoCliente />} />
               <Route path="citas" element={<CitasCliente />} />
+              <Route path="citas/carrito" element={<CarritoServiciosCliente />} />
               <Route path="historial" element={<HistorialCliente />} />
               <Route path="fidelizacion" element={<FidelizacionCliente />} />
               <Route path="ofertas" element={<OfertasCliente />} />
@@ -103,6 +110,7 @@ function App() {
               <Route path="mis-resenas" element={<MisResenasCliente />} />
               <Route path="mis-puntos" element={<MisPuntosCliente />} />
               <Route path="mi-perfil/direcciones" element={<DireccionesCliente />} />
+              <Route path="mi-perfil/pedidos" element={<PedidosCliente />} />
               <Route path="mi-perfil/notificaciones" element={<NotificacionesCliente />} />
               <Route path="mi-perfil/seguridad" element={<SeguridadCuentaCliente />} />
               <Route path="mi-perfil/referidos" element={<ReferidosCliente />} />

@@ -20,7 +20,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
-import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO, parsearFechaISOLima } from '../lib/fechas.js'
+import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -70,14 +70,18 @@ function formatearTituloDia(fecha) {
 function agruparPorDia(registros) {
   const grupos = new Map()
   for (const registro of registros) {
-    // parsearFechaISOLima, no new Date(registro.fecha) (bug real
-    // reportado por el usuario): registro.fecha es una columna `date`
-    // de Postgres ("YYYY-MM-DD", sin hora) — new Date() de un string
-    // así se interpreta como medianoche UTC, y claveDiaLima() la lee
-    // en hora de Lima (UTC-5), corriéndola un día para atrás (una
-    // visita del 25 se agrupaba bajo el 24). parsearFechaISOLima ya
-    // existe en fechas.js para exactamente este caso.
-    const fecha = parsearFechaISOLima(registro.fecha)
+    // registro_servicios.fecha es `timestamp with time zone` (confirmado
+    // en la base) — un instante real, no una columna `date` de solo
+    // fecha (a diferencia de deudas.fecha/mobiliario_compras.fecha, que
+    // sí lo son). new Date(registro.fecha) es lo correcto acá;
+    // parsearFechaISOLima (pensada para strings "YYYY-MM-DD" sin hora)
+    // se coló por error de un fix parecido en otra pantalla — al
+    // partirla por guiones con hora y offset de por medio ("...T06:14:00
+    // +00:00") el día quedaba `NaN`, y eso rompía formatearTituloDia()
+    // con "RangeError: Invalid time value" apenas había algún registro
+    // real (bug reportado por el usuario: página en blanco para
+    // cualquier admin/asistente con atenciones propias).
+    const fecha = new Date(registro.fecha)
     const clave = claveDiaLima(fecha)
     if (!grupos.has(clave)) grupos.set(clave, { clave, fecha, registros: [] })
     grupos.get(clave).registros.push(registro)
@@ -549,7 +553,7 @@ export default function MiPanel({ activo = true }) {
                       // criterio que es_hoy() en el servidor) — antes el botón
                       // aparecía igual en días pasados y el intento fallaba con
                       // un toast de error confuso.
-                      const puedeCancelar = esAdmin || esHoyLima(parsearFechaISOLima(registro.fecha))
+                      const puedeCancelar = esAdmin || esHoyLima(new Date(registro.fecha))
                       const puedeConfirmar = esAdmin || registro.usuario_id === usuario?.id
                       const registroAbierto = registrosAbiertos.has(registro.id)
 

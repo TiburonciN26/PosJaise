@@ -63,25 +63,77 @@ export function CarritoClienteProvider({ children }) {
     [usuario],
   )
 
+  // Vacía de una sola vez los servicios que ya se convirtieron en una
+  // cita real (mini-carrito de Citas → ModalAgendarCitaCliente) —
+  // dejarlos ahí después de agendar sería como un carrito de compras
+  // que no se vacía al pagar. Un solo DELETE con `.in()`, no un
+  // quitarServicio() por cada uno.
+  const vaciarServiciosReservados = useCallback(
+    async (servicioIds) => {
+      if (!servicioIds || servicioIds.length === 0) return
+      const { error } = await supabase
+        .from('carrito_servicios')
+        .delete()
+        .eq('cliente_web_id', usuario.id)
+        .in('servicio_id', servicioIds)
+      if (error) return
+      setServiciosCarrito((anterior) => {
+        const siguiente = new Set(anterior)
+        for (const id of servicioIds) siguiente.delete(id)
+        return siguiente
+      })
+    },
+    [usuario],
+  )
+
   const agregarProducto = useCallback(
-    async (productoId) => {
-      const cantidadActual = productosCarrito.get(productoId)
+    // `cantidad`: cuántas unidades sumar de una vez (no reemplaza lo que
+    // ya había en el carrito, se suma) — ProductosCliente.jsx la usa con
+    // su propio selector de cantidad local, independiente de lo que el
+    // carrito ya tenga; ServiciosCliente-style "Agregar" simple sigue
+    // funcionando igual al no pasar nada (default 1).
+    //
+    // Se vuelve a pedir `stock_actual` acá (no confiar en el tope que ya
+    // aplicó ProductosCliente.jsx) — bug real reportado por el usuario:
+    // sin este chequeo, volver a Productos después de agregar dejaba
+    // agregar de nuevo hasta el stock completo sin descontar lo que ya
+    // estaba en el carrito (2+2 en un producto con stock real 2). El
+    // límite de verdad (estricto, con `for update`) sigue siendo
+    // confirmar_venta() al verificar el pago — esto es solo para no
+    // dejar que el carrito prometa más de lo que existe.
+    async (productoId, cantidad = 1) => {
+      const cantidadActual = productosCarrito.get(productoId) ?? 0
+
+      const { data: producto } = await supabase
+        .from('productos')
+        .select('stock_actual')
+        .eq('id', productoId)
+        .single()
+      const disponible = Math.max(0, (producto?.stock_actual ?? 0) - cantidadActual)
+      // 0 en vez de false: el llamador necesita saber CUÁNTO se agregó
+      // de verdad (puede ser menos de lo pedido si el stock alcanzaba
+      // para menos) para mostrar un mensaje correcto — no solo si "salió
+      // bien" o no.
+      const cantidadAAgregar = Math.min(cantidad, disponible)
+      if (cantidadAAgregar <= 0) return 0
+
+      const cantidadNueva = cantidadActual + cantidadAAgregar
       const { error } = cantidadActual
         ? await supabase
             .from('carrito_productos')
-            .update({ cantidad: cantidadActual + 1 })
+            .update({ cantidad: cantidadNueva })
             .eq('cliente_web_id', usuario.id)
             .eq('producto_id', productoId)
         : await supabase
             .from('carrito_productos')
-            .insert({ cliente_web_id: usuario.id, producto_id: productoId, cantidad: 1 })
-      if (error) return false
+            .insert({ cliente_web_id: usuario.id, producto_id: productoId, cantidad: cantidadNueva })
+      if (error) return 0
       setProductosCarrito((anterior) => {
         const siguiente = new Map(anterior)
-        siguiente.set(productoId, (cantidadActual ?? 0) + 1)
+        siguiente.set(productoId, cantidadNueva)
         return siguiente
       })
-      return true
+      return cantidadAAgregar
     },
     [usuario, productosCarrito],
   )
@@ -120,17 +172,28 @@ export function CarritoClienteProvider({ children }) {
     [cambiarCantidadProducto],
   )
 
-  const totalItems = serviciosCarrito.size + productosCarrito.size
+  // Solo productos: el ícono de carrito del header lleva a /carrito, que
+  // desde el rediseño de Fase 1-4 es solo-productos — contar servicios
+  // ahí también prometía un número que no coincidía con lo que esa
+  // pantalla mostraba (bug real, corregido acá). Los servicios agregados
+  // se ven y cuentan aparte, en su propio mini-carrito dentro de Citas.
+  //
+  // Suma las CANTIDADES, no `productosCarrito.size` (bug real reportado
+  // por el usuario): `.size` cuenta líneas de producto distintas, así
+  // que 2 unidades de un solo producto mostraban "1" en el badge — el
+  // cliente esperaba ver el total de unidades, no de líneas.
+  const totalItemsProductos = [...productosCarrito.values()].reduce((suma, cantidad) => suma + cantidad, 0)
 
   const value = useMemo(
     () => ({
       serviciosCarrito,
       productosCarrito,
       cargando,
-      totalItems,
+      totalItemsProductos,
       recargar,
       agregarServicio,
       quitarServicio,
+      vaciarServiciosReservados,
       agregarProducto,
       quitarProducto,
       cambiarCantidadProducto,
@@ -139,10 +202,11 @@ export function CarritoClienteProvider({ children }) {
       serviciosCarrito,
       productosCarrito,
       cargando,
-      totalItems,
+      totalItemsProductos,
       recargar,
       agregarServicio,
       quitarServicio,
+      vaciarServiciosReservados,
       agregarProducto,
       quitarProducto,
       cambiarCantidadProducto,

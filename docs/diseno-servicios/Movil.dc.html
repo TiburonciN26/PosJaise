@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Servicios · Móvil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+@font-face{font-family:'Heavitas';src:url('/_blob/23f90573110d55aa2787d6f37972937b') format('truetype');font-display:swap}
+@font-face{font-family:'Kunaroh';src:url('/_blob/220688f96c44e1e4fc8ef9af50bec003') format('truetype');font-display:swap}
+body{margin:0;background:#0b0b0c;font-family:'Inter',system-ui,sans-serif}
+a{color:#ffffff}a:hover{color:#a9c6ec}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #a9c6ec;outline-offset:2px}
+.thumb img,.thumb .ph{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.thumb:hover img,.thumb:hover .ph{transform:scale(1.045)}
+.bar span{position:absolute;inset:0;background:#ffffff;transform-origin:left;transform:scaleX(0)}
+.bar.done span{transform:scaleX(1)}
+.bar.run span{animation:barfill 5s linear forwards}
+@keyframes barfill{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.thumb img,.thumb .ph{transition:none}.bar.run span{animation:none;transform:scaleX(1)}}
+/* Entrada de la página: cada bloque llega a su lugar con tiempos distintos para que se sienta que la página "se arma" */
+.in-left,.in-right,.in-up,.in-photo{animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.7,.2,1);animation-fill-mode:both}
+.in-left{animation-name:inLeft}
+.in-right{animation-name:inRight}
+.in-up{animation-name:inUp;animation-duration:.8s}
+.in-photo{animation-name:inPhoto;animation-duration:1.3s}
+@keyframes inLeft{from{opacity:0;transform:translateX(-40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inRight{from{opacity:0;transform:translateX(40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@keyframes inPhoto{from{opacity:0;transform:translateX(48px) scale(1.03);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+@media (prefers-reduced-motion:reduce){.in-left,.in-right,.in-up,.in-photo{animation:none}}
+</style>
+</helmet>
+<div id="dc-root" style="position: relative; width: 390px; height: 3920px; box-sizing: border-box; padding: 0 16px; background: #0b0b0c; color: #ffffff; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; overflow: hidden">
+
+  <!-- Header del portal (referencia, no cambia) -->
+  
+
+  <!-- 1. HERO -->
+  <section style="display: flex; flex-direction: column; gap: 22px; padding: 16px 0 28px">
+    <div style="display: flex; flex-direction: column; justify-content: space-between; gap: 22px; padding: 0">
+      <div style="display: flex; flex-direction: column">
+        <span class="in-left" style="animation-delay: 350ms; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #a6a6a6">Tendencias y lo más pedido</span>
+        <div class="in-left" style="animation-delay: 480ms; display: grid; margin-top: 18px">
+          <sc-for list="{{heroTxt}}" as="ht" hint-placeholder-count="3">
+            <div aria-hidden="{{ht.hidden}}" style="grid-area: 1 / 1; display: flex; flex-direction: column; pointer-events: {{ht.pe}}">
+              <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 999px; background: #18181b; font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; color: #e8e8ea; opacity: {{ht.op}}; transform: translateY({{ht.y}}px); transition: opacity 0.6s ease {{ht.d0}}ms, transform 0.6s ease {{ht.d0}}ms"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>{{ht.tag}}</span>
+              <h1 style="margin: 14px 0 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 34px; line-height: 1.02; color: #ffffff; text-transform: uppercase; opacity: {{ht.op}}; filter: blur({{ht.blur}}px); transform: translateY({{ht.y}}px); transition: opacity 0.7s ease {{ht.d1}}ms, filter 0.7s ease {{ht.d1}}ms, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) {{ht.d1}}ms">{{ht.n}}</h1>
+              <p style="margin: 18px 0 0; max-width: 44ch; font-size: 14px; line-height: 1.65; color: #d9d9dc; opacity: {{ht.op}}; transform: translateY({{ht.y}}px); transition: opacity 0.7s ease {{ht.d2}}ms, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) {{ht.d2}}ms">{{ht.desc}}</p>
+              <span style="margin-top: 14px; font-size: 13px; color: #a6a6a6; opacity: {{ht.op}}; transition: opacity 0.7s ease {{ht.d2}}ms">desde <b style="color: #ffffff; font-weight: 600">{{ht.price}}</b> · {{ht.dur}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div class="in-left" style="animation-delay: 650ms; display: flex; gap: 12px; align-items: center; margin-top: 20px">
+          <button type="button" onClick="{{reservar}}" style="flex-grow: 1; justify-content: space-between; display: inline-flex; align-items: center; gap: 12px; background: #a9c6ec; color: #0b0b0c; border: 0; border-radius: 999px; padding: 7px 7px 7px 22px; font-weight: 600; font-size: 14px">Reservar cita <span style="width: 32px; height: 32px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span></button>
+          <button type="button" aria-label="Ver detalles del servicio (página de detalle, más adelante)" style="flex-grow: 1; text-align: center; text-decoration: none; border: 1px solid #2e2e2e; border-radius: 999px; padding: 13px 22px; font-size: 14px; color: #e8e8ea; background: transparent; font-family: inherit">Ver detalles</button>
+        </div>
+      </div>
+      <div class="in-left" style="animation-delay: 780ms; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; font-size: 12px; color: #8a8a90">
+        <span style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e8e8ea">Catálogo</span>
+        <span>/</span>
+        <span style="color: #e8e8ea; font-weight: 500">18 servicios</span>
+        <span>·</span><span>desde S/ 30</span><span>·</span><span>Lun–Sáb 9:00–20:00</span>
+      </div>
+    </div>
+
+    <div class="in-photo" style="animation-delay: 100ms; order: -1; position: relative; height: 380px; border-radius: 18px; overflow: hidden; background: #050505; isolation: isolate">
+      <sc-for list="{{slides}}" as="sl" hint-placeholder-count="3">
+        <div style="position: absolute; inset: 0; opacity: {{sl.op}}; transition: opacity 1.1s ease">
+          <img src="{{sl.src}}" alt="{{sl.n}}" style="width: 100%; height: 100%; object-fit: cover; object-position: {{sl.pos}}; transform: scale({{sl.scale}}); transition: transform 6s ease-out">
+        </div>
+      </sc-for>
+      <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.72) 100%); pointer-events: none"></div>
+      <div style="position: absolute; top: 14px; left: 16px; right: 16px; display: flex; gap: 6px; z-index: 2">
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="3">
+          <button type="button" class="{{b.cls}}" onClick="{{b.go}}" aria-label="{{b.label}}" style="flex-grow: 1; height: 3px; border: 0; padding: 0; border-radius: 3px; background: rgba(255,255,255,0.25); overflow: hidden; position: relative"><span></span></button>
+        </sc-for>
+      </div>
+      <div style="position: absolute; left: 18px; right: 18px; bottom: 16px; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; pointer-events: none">
+        <span style="display: flex; align-items: center; gap: 8px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>{{cur.num}}</span>
+        <span style="color: #eeeeee">desde <b style="font-weight: 600">{{cur.price}}</b> · {{cur.dur}}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. FILTROS (sticky en la app) -->
+  <div id="catalogo" class="in-up" style="animation-delay: 900ms; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 -16px; padding: 12px 16px; border-top: 1px solid #1f1f22; border-bottom: 1px solid #1f1f22; background: rgba(11,11,12,0.86)">
+    
+    <div style="order: 2; flex-basis: 100%; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; min-width: 0">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="6">
+        <button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="flex-shrink: 0; border: 0; border-radius: 999px; padding: 8px 15px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <label style="display: flex; align-items: center; gap: 8px; width: 100%; height: 38px; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: #18181b; color: #8a8a90">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input type="text" value="{{q}}" onChange="{{onQ}}" placeholder="Buscar servicio…" aria-label="Buscar servicio" style="flex-grow: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #ffffff; font-size: 13px; font-family: inherit">
+    </label>
+    
+  </div>
+
+  <!-- 3. CATÁLOGO -->
+  <!-- 3a. "Todos": una fila por categoría, solo las primeras 4 -->
+  <sc-if value="{{grouped}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; flex-direction: column; gap: 40px; padding-top: 24px">
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+        <section style="display: flex; flex-direction: column; gap: 14px">
+          <div class="in-left" style="animation-delay: {{g.delay}}ms; display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+            <div style="display: flex; align-items: baseline; gap: 12px; min-width: 0; flex-wrap: wrap">
+              <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 17px; color: #ffffff; text-transform: uppercase">{{g.name}}</h2>
+              <span style="font-size: 12px; color: #8a8a90">{{g.count}}</span>
+            </div>
+            <button type="button" onClick="{{g.verTodo}}" style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0; padding: 4px 0; color: #a9c6ec; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-family: inherit">{{g.verLabel}} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+          </div>
+          <div style="display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; scroll-snap-type: x mandatory">
+            <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+              <div style="flex-shrink: 0; width: 158px; scroll-snap-align: start">
+                <article class="{{it.anim}}" style="animation-delay: {{it.delay}}ms; display: flex; flex-direction: column; gap: 10px; min-width: 0">
+        <div class="thumb" style="position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #151517">
+          <sc-if value="{{it.hasImg}}" hint-placeholder-val="{{true}}">
+            <img src="{{it.src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: {{it.pos}}">
+          </sc-if>
+          <sc-if value="{{it.noImg}}" hint-placeholder-val="{{false}}">
+            <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{it.grad}}; color: rgba(255,255,255,0.6)"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"></path></svg></div>
+          </sc-if>
+          <button type="button" aria-label="Ver {{it.n}}" style="position: absolute; inset: 0; z-index: 1; background: transparent; border: 0"></button>
+          <div style="position: absolute; left: 10px; bottom: 10px; right: 46px; z-index: 2; display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none">
+            <sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="1">
+              <span style="background: rgba(12,12,14,0.8); color: #ffffff; border-radius: 5px; padding: 3px 7px; font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700">{{tg.t}}</span>
+            </sc-for>
+          </div>
+          <button type="button" aria-label="Ver detalles de {{it.n}}" title="Ver detalles" style="position: absolute; bottom: 8px; right: 8px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; border: 0; background: #ffffff; color: #111111; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-weight: 700; font-size: 13.5px; line-height: 1.25">{{it.n}}</span>
+          <span style="flex-shrink: 0; font-size: 12px; color: #a6a6a6">desde <b style="color: #ffffff; font-weight: 600; font-size: 13px">{{it.price}}</b></span>
+        </div>
+        <span style="margin-top: -4px; font-size: 12px; color: #8a8a90">{{it.dur}}</span>
+      </article>
+              </div>
+            </sc-for>
+            <sc-if value="{{g.more}}" hint-placeholder-val="{{true}}">
+              <button type="button" onClick="{{g.verTodo}}" class="in-right" style="animation-delay: {{g.moreDelay}}ms; flex-shrink: 0; width: 120px; height: 158px; border-radius: 10px; border: 1px dashed #2e2e2e; background: #111113; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-size: 12px; font-weight: 600; font-family: inherit; scroll-snap-align: start"><span style="width: 36px; height: 36px; border-radius: 50%; background: #ffffff; color: #111111; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>{{g.moreLabel}}</button>
+            </sc-if>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- 3b. Una categoría o una búsqueda: grilla completa -->
+  <sc-if value="{{flat}}" hint-placeholder-val="{{false}}">
+    <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 24px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 17px; color: #ffffff; text-transform: uppercase">{{flatTitle}}</h2>
+          <span style="font-size: 12px; color: #8a8a90">{{flatCount}}</span>
+        </div>
+        <sc-if value="{{showBack}}" hint-placeholder-val="{{true}}">
+          <button type="button" onClick="{{backTodos}}" style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0; padding: 4px 0; color: #a9c6ec; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-family: inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg> Todas las categorías</button>
+        </sc-if>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 12px">
+        <sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+          <article class="{{it.anim}}" style="animation-delay: {{it.delay}}ms; display: flex; flex-direction: column; gap: 10px; min-width: 0">
+        <div class="thumb" style="position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #151517">
+          <sc-if value="{{it.hasImg}}" hint-placeholder-val="{{true}}">
+            <img src="{{it.src}}" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: {{it.pos}}">
+          </sc-if>
+          <sc-if value="{{it.noImg}}" hint-placeholder-val="{{false}}">
+            <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{it.grad}}; color: rgba(255,255,255,0.6)"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"></path></svg></div>
+          </sc-if>
+          <button type="button" aria-label="Ver {{it.n}}" style="position: absolute; inset: 0; z-index: 1; background: transparent; border: 0"></button>
+          <div style="position: absolute; left: 10px; bottom: 10px; right: 46px; z-index: 2; display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none">
+            <sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="1">
+              <span style="background: rgba(12,12,14,0.8); color: #ffffff; border-radius: 5px; padding: 3px 7px; font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700">{{tg.t}}</span>
+            </sc-for>
+          </div>
+          <button type="button" aria-label="Ver detalles de {{it.n}}" title="Ver detalles" style="position: absolute; bottom: 8px; right: 8px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; border: 0; background: #ffffff; color: #111111; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-weight: 700; font-size: 13.5px; line-height: 1.25">{{it.n}}</span>
+          <span style="flex-shrink: 0; font-size: 12px; color: #a6a6a6">desde <b style="color: #ffffff; font-weight: 600; font-size: 13px">{{it.price}}</b></span>
+        </div>
+        <span style="margin-top: -4px; font-size: 12px; color: #8a8a90">{{it.dur}}</span>
+      </article>
+        </sc-for>
+        <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+          <p style="grid-column: 1 / -1; text-align: center; color: #8a8a90; padding: 40px 0; margin: 0">{{emptyMsg}}</p>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+
+  <!-- 4. CÓMO RESERVAR -->
+  <section style="margin-top: 48px; padding-top: 32px; border-top: 1px solid #1f1f22">
+    <span style="font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #a6a6a6">Así de simple</span>
+    <h2 style="margin: 10px 0 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 22px; color: #ffffff; text-transform: uppercase">Cómo reservar</h2>
+    <div style="display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 12px; margin-top: 20px">
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px">
+        <span style="font-size: 11px; letter-spacing: 0.2em; color: #a9c6ec">PASO 1</span>
+        <h3 style="font-size: 15px; margin: 10px 0 6px">Elige tus servicios</h3>
+        <p style="margin: 0; color: #a6a6a6; line-height: 1.55; font-size: 13px">Toca un servicio (o la flecha ↗) para ver todos sus detalles y agrégalo a tu cita. Puedes combinar varios.</p>
+      </div>
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px">
+        <span style="font-size: 11px; letter-spacing: 0.2em; color: #a9c6ec">PASO 2</span>
+        <h3 style="font-size: 15px; margin: 10px 0 6px">Escoge día y hora</h3>
+        <p style="margin: 0; color: #a6a6a6; line-height: 1.55; font-size: 13px">En Citas ves los horarios libres según la duración total de lo que elegiste.</p>
+      </div>
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px">
+        <span style="font-size: 11px; letter-spacing: 0.2em; color: #a9c6ec">PASO 3</span>
+        <h3 style="font-size: 15px; margin: 10px 0 6px">Confirma y listo</h3>
+        <p style="margin: 0; color: #a6a6a6; line-height: 1.55; font-size: 13px">Te llega la confirmación en Notificaciones y sumas puntos de fidelidad con cada visita.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. AYUDA (solo estético por ahora) -->
+  <section style="margin-top: 56px; padding-top: 40px; border-top: 1px solid #1f1f22">
+    <div style="display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; flex-direction: column; gap: 14px; max-width: 560px">
+        <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 28px; line-height: 1.05; color: #ffffff; text-transform: uppercase">¿No encuentras tu servicio?</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #a6a6a6">¿En qué podemos ayudarte hoy? Cuéntanos qué buscas y te orientamos con el servicio ideal, o resolvemos tus dudas sobre reservas y pagos.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;  flex-shrink: 0">
+        <span style="font-size: 22px; font-weight: 700; color: #ffffff">Lun–Sáb 9:00–20:00</span>
+        <span style="font-size: 12px; color: #8a8a90">horario de atención por WhatsApp y en el local</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 12px; margin-top: 28px">
+        <div style="display: flex; flex-direction: column; gap: 10px; background: #111113; border: 1px solid #1f1f22; border-radius: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 26px">
+          <span style="width: 38px; height: 38px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></span>
+          <h3 style="margin: 16px 0 0; font-size: 15px; font-weight: 700; color: #ffffff">Escríbenos por WhatsApp</h3>
+          <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #a6a6a6">Te recomendamos el servicio según tu cabello, piel o la ocasión, y te ayudamos a reservar.</p>
+          <button type="button" style="align-self: flex-start; background: transparent; border: 1px solid #3a3a3f; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #ffffff; font-family: inherit">Abrir WhatsApp</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; background: #111113; border: 1px solid #1f1f22; border-radius: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 26px">
+          <span style="width: 38px; height: 38px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
+          <h3 style="margin: 16px 0 0; font-size: 15px; font-weight: 700; color: #ffffff">Contacto y ubicación</h3>
+          <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #a6a6a6">Llámanos o visítanos: [DIRECCIÓN] · [TELÉFONO]. Te atendemos en el mismo horario.</p>
+          <button type="button" style="align-self: flex-start; background: transparent; border: 1px solid #3a3a3f; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #ffffff; font-family: inherit">Ver contacto</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; background: #111113; border: 1px solid #1f1f22; border-radius: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 26px">
+          <span style="width: 38px; height: 38px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></span>
+          <h3 style="margin: 16px 0 0; font-size: 15px; font-weight: 700; color: #ffffff">Preguntas frecuentes</h3>
+          <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #a6a6a6">Reservas, pagos, cambios y cancelaciones: todo en un solo lugar.</p>
+          <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; border: 1px dashed #2e2e2e; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #8a8a90">Muy pronto</span>
+        </div>
+    </div>
+  </section>
+
+  <footer style="margin-top: 48px; padding-top: 20px; border-top: 1px solid #1f1f22; display: flex; justify-content: space-between; color: #8a8a90; font-size: 12px">
+    <span>© Jaise Beauty</span><span>PieClienteWeb (sin cambios)</span>
+  </footer>
+
+  <!-- Barra flotante "Tu cita" -->
+  <sc-if value="{{showDock}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 10; width: 358px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 20px; background: rgba(20,20,23,0.92); border: 1px solid #2a2a2f; border-radius: 999px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); backdrop-filter: blur(16px)">
+      <span style="flex-grow: 1; font-size: 13px"><b style="font-weight: 600">{{dockN}}</b> <span style="color: #a6a6a6">en tu cita ·</span> <b style="font-weight: 600">{{dockT}}</b></span>
+      <a href="#catalogo" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; background: #a9c6ec; color: #0b0b0c; border-radius: 999px; padding: 5px 5px 5px 18px; font-weight: 600; font-size: 13px">Reservar <span style="width: 28px; height: 28px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3920}}'>
+const H = 3920;
+const IMG = { a: '/_blob/e8abf252c3b6e737dc21b2d19fe86ca1', b: '/_blob/15d677b5c8532df4ee70250ac28c8d30', c: '/_blob/b9042418035cf22641ce2fcee2dda675' };
+// Degradado de respaldo para servicios sin foto: paleta por categoría, variada por id.
+const PAL = {
+  'Cabello': ['#c9a27e', '#1d1712', '#4a3526', '#a9c6ec'],
+  'Uñas': ['#ff85a1', '#2b1a2a', '#6b3a5c', '#a9c6ec'],
+  'Pestañas y cejas': ['#a9c6ec', '#141c2b', '#33466b', '#ff85a1'],
+  'Facial y maquillaje': ['#cfe0f6', '#1b2530', '#4d6f8f', '#ff85a1']
+};
+function gradFor(s) {
+  const p = PAL[s.c[0]] || PAL['Facial y maquillaje'];
+  const x = 15 + (s.id * 29) % 70, y = 10 + (s.id * 43) % 75, ang = 120 + (s.id * 37) % 90;
+  return 'radial-gradient(110% 90% at ' + x + '% ' + y + '%, ' + p[0] + ' 0%, transparent 55%), linear-gradient(' + ang + 'deg, ' + p[1] + ', ' + p[2] + ' 65%, ' + p[3] + ' 140%)';
+}
+const S = [
+  { id: 1, n: 'Balayage', c: ['Cabello'], t: ['Color'], p: 280, d: 180, img: 'b', pos: '78% 30%' },
+  { id: 2, n: 'Keratina', c: ['Cabello'], t: ['Tratamiento'], p: 180, d: 150, img: 'c', pos: '70% 30%' },
+  { id: 3, n: 'Corte + brushing', c: ['Cabello'], t: ['Corte'], p: 45, d: 60, img: 'a', pos: '78% 30%' },
+  { id: 9, n: 'Tinte completo', c: ['Cabello'], t: ['Color'], p: 120, d: 120 },
+  { id: 10, n: 'Hidratación profunda', c: ['Cabello'], t: ['Tratamiento'], p: 70, d: 60 },
+  { id: 11, n: 'Mechas babylights', c: ['Cabello'], t: ['Color'], p: 220, d: 180 },
+  { id: 4, n: 'Manicure semipermanente', c: ['Uñas'], t: ['Manos'], p: 45, d: 60 },
+  { id: 5, n: 'Uñas acrílicas', c: ['Uñas'], t: ['Manos'], p: 90, d: 120 },
+  { id: 12, n: 'Pedicure spa', c: ['Uñas'], t: ['Pies'], p: 55, d: 75 },
+  { id: 13, n: 'Nail art', c: ['Uñas'], t: ['Diseño'], p: 30, d: 30 },
+  { id: 14, n: 'Uñas esculpidas en gel', c: ['Uñas'], t: ['Manos'], p: 110, d: 150 },
+  { id: 6, n: 'Lifting de pestañas', c: ['Pestañas y cejas'], t: ['Pestañas'], p: 70, d: 60 },
+  { id: 15, n: 'Extensiones clásicas', c: ['Pestañas y cejas'], t: ['Pestañas'], p: 130, d: 120 },
+  { id: 16, n: 'Diseño de cejas', c: ['Pestañas y cejas'], t: ['Cejas'], p: 30, d: 30 },
+  { id: 17, n: 'Laminado de cejas', c: ['Pestañas y cejas'], t: ['Cejas'], p: 60, d: 45 },
+  { id: 7, n: 'Limpieza facial profunda', c: ['Facial y maquillaje'], t: ['Facial'], p: 90, d: 75 },
+  { id: 8, n: 'Maquillaje social', c: ['Facial y maquillaje'], t: ['Maquillaje', 'Evento'], p: 120, d: 60, img: 'a', pos: '88% 20%' },
+  { id: 18, n: 'Maquillaje de novia', c: ['Facial y maquillaje'], t: ['Maquillaje', 'Evento'], p: 250, d: 120 }
+];
+const POR_FILA = 4;
+// Entrada de la página (ms): filas y tarjetas del catálogo. En la app, las filas bajo el primer pantallazo se animan al entrar en pantalla (IntersectionObserver), no al cargar.
+const ENTRADA = { fila: 1050, paso: 220, carta: 120, entre: 90 };
+const HERO = {
+  1: { tag: 'En tendencia', desc: 'El color de la temporada: aclarado a mano alzada con degradado natural de raíz a puntas, pensado para que crezca sin marcar línea.' },
+  2: { tag: 'Lo más pedido', desc: 'Adiós al frizz hasta por 4 meses. Alisado progresivo que deja el cabello suave, con brillo y fácil de peinar cada mañana.' },
+  3: { tag: 'Lo más pedido', desc: 'Corte según tu rostro y tipo de cabello, con lavado y brushing incluidos para que salgas lista.' }
+};
+const DEST = [1, 2, 3];
+const soles = (v) => 'S/ ' + v;
+function view(s) {
+  return { id: s.id, n: s.n, price: soles(s.p), dur: s.d + ' min', hasImg: !!s.img, noImg: !s.img, src: s.img ? IMG[s.img] : '', pos: s.pos || '78% 30%', grad: gradFor(s) };
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { idx: 0, cat: 'Todos', q: '', soloFav: false, favs: [2], cita: [], open: null, sheetTop: 760 };
+  }
+  componentDidMount() { this.arm(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  arm() {
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this.setState({ idx: (this.state.idx + 1) % DEST.length }), 5000);
+  }
+  go(i) { this.setState({ idx: i }); this.arm(); }
+  toggle(key, id) {
+    const a = this.state[key];
+    this.setState({ [key]: a.includes(id) ? a.filter((x) => x !== id) : a.concat(id) });
+  }
+  card(s) {
+    return Object.assign(view(s), { tags: (s.t || s.c).map((t) => ({ t })), anim: '', delay: 0 });
+  }
+  renderVals() {
+    const st = this.state;
+    const dest = DEST.map((id) => S.find((s) => s.id === id));
+    const cats = ['Todos'].concat([...new Set(S.map((s) => s.c[0]))]);
+    const q = st.q.trim().toLowerCase();
+    const grouped = st.cat === 'Todos' && !q;
+    const list = S.filter((s) => (st.cat === 'Todos' || s.c[0] === st.cat) && (!q || s.n.toLowerCase().includes(q)));
+    const sel = S.filter((s) => st.cita.includes(s.id));
+    const plural = (n) => n + (n === 1 ? ' servicio' : ' servicios');
+    return {
+      slides: dest.map((s, i) => ({ n: s.n, src: IMG[s.img], pos: s.pos, op: i === st.idx ? 1 : 0, scale: i === st.idx ? 1 : 1.06 })),
+      bars: dest.map((s, i) => ({ label: 'Ir a ' + s.n, cls: i === st.idx ? 'bar run' : (i < st.idx ? 'bar done' : 'bar'), go: () => this.go(i) })),
+      cur: Object.assign(view(dest[st.idx]), { num: '0' + (st.idx + 1) + ' / 0' + dest.length }),
+      heroTxt: dest.map((s, i) => {
+        const on = i === st.idx, prev = i === (st.idx - 1 + dest.length) % dest.length;
+        return { n: s.n, tag: HERO[s.id].tag, desc: HERO[s.id].desc, price: soles(s.p), dur: s.d + ' min', hidden: on ? 'false' : 'true', pe: on ? 'auto' : 'none', op: on ? 1 : 0, blur: on ? 0 : 8, y: on ? 0 : (prev ? -16 : 16), d0: on ? 250 : 0, d1: on ? 350 : 0, d2: on ? 480 : 0 };
+      }),
+      reservar: () => { const id = dest[st.idx].id; if (!st.cita.includes(id)) this.toggle('cita', id); },
+      chips: cats.map((c) => {
+        const on = st.cat === c;
+        return { label: c, pressed: on ? 'true' : 'false', bg: on ? '#ffffff' : '#18181b', fg: on ? '#0b0b0c' : '#d6d6da', pick: () => this.setState({ cat: c }) };
+      }),
+      q: st.q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      count: plural(grouped ? S.length : list.length),
+      grouped,
+      flat: !grouped,
+      groups: cats.slice(1).map((c, gi) => {
+        const all = S.filter((s) => s.c[0] === c);
+        return { name: c, count: plural(all.length), verLabel: 'Ver todo (' + all.length + ')', more: all.length > POR_FILA, moreLabel: 'Ver los ' + all.length, delay: ENTRADA.fila + gi * ENTRADA.paso, moreDelay: ENTRADA.fila + gi * ENTRADA.paso + ENTRADA.carta + POR_FILA * ENTRADA.entre, items: all.slice(0, POR_FILA).map((s, k) => Object.assign(this.card(s), { anim: 'in-right', delay: ENTRADA.fila + gi * ENTRADA.paso + ENTRADA.carta + k * ENTRADA.entre })), verTodo: () => this.setState({ cat: c }) };
+      }),
+      flatTitle: q ? 'Resultados' : st.cat,
+      flatCount: plural(list.length),
+      showBack: st.cat !== 'Todos',
+      backTodos: () => this.setState({ cat: 'Todos' }),
+      items: list.map((s) => this.card(s)),
+      empty: list.length === 0,
+      emptyMsg: 'Sin resultados para “' + st.q + '”.',
+      showDock: sel.length > 0,
+      dockN: plural(sel.length),
+      dockT: soles(sel.reduce((t, s) => t + s.p, 0))
+    };
+  }
+}
+</script>
+</body>
+</html>

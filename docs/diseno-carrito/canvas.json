@@ -1,0 +1,96 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Cupones.dc.html": {
+      "h": 2160,
+      "is_interactive": true,
+      "title": "Cupones abiertos · escritorio",
+      "w": 1440,
+      "x": 1502,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 2160,
+      "is_interactive": true,
+      "title": "Carrito · escritorio",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Movil.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Carrito · móvil",
+      "w": 390,
+      "x": 0,
+      "y": 2280
+    },
+    "MovilCupones.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "Cupones · móvil",
+      "w": 390,
+      "x": 470,
+      "y": 2280
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-26T15:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "backend": {
+      "fill": "orange",
+      "size": 24,
+      "text": "FALTA EN EL BACKEND para que funcione\n\n• Hoy los Pedidos Web NO validan cupones (95_cupones_referido.sql). Sumar p_codigo_cupon a confirmar_pedido_productos().\n• Columnas cupon_id y descuento_monto en pedidos_web; mostrarlas en Pedidos Web del POS.\n• Marcar el cupón CANJEADO al confirmar y devolverlo si se anula el pedido (como 96_anular_venta_revierte_cupon).\n• Reglas: 1 cupón por pedido; % sobre el subtotal de productos; monto fijo nunca mayor al subtotal; el delivery no se descuenta.\n• Descuento por producto: hoy productos solo tiene `precio`; haría falta un precio anterior/oferta (ej. precio_antes) editable desde Inventario.\n• Pago con captura: guardar metodo_pago y la imagen del comprobante (Storage) en pedidos_web, y mostrarla en Pedidos Web del POS para validarla. Número de Yape/Plin y cuenta bancaria configurables (ya existe cuenta_transferencia en 52_cuenta_transferencia_negocio.sql).\n• Día y hora: guardar fecha_entrega y franja en pedidos_web; días/horas desde el horario de atención (74_horario_atencion.sql).\n• Comprobante: guardar tipo (BOLETA/FACTURA), ruc y razon_social en pedidos_web.",
+      "w": 400,
+      "x": 1840,
+      "y": 2280
+    },
+    "existe": {
+      "fill": "green",
+      "size": 24,
+      "text": "YA EXISTE en el sistema (se mantiene)\n\n• Servicios y Productos en bloques separados.\n• Servicios: solo se reservan (Reservar cita → ModalAgendarCitaCliente).\n• Productos con cantidad y checkbox; Recojo en tienda o Delivery por zona (zonas_delivery) + dirección guardada.\n• Pedido sin pago online (confirmar_pedido_productos → Pedidos Web del POS).\n• Cupones Bronce/Plata/Oro de mis_cupones() (Referidos y Fidelización).\n• Tarjeta de puntos Básico → Premium → VIP.",
+      "w": 380,
+      "x": 960,
+      "y": 2280
+    },
+    "nuevo": {
+      "fill": "blue",
+      "size": 24,
+      "text": "NUEVO en este diseño\n\n• Escritorio en 2 columnas: izquierda Dirección, Comprobante, Productos; derecha Resumen del pedido + ayuda.\n• Dirección de entrega (solo con Delivery): muestra la predeterminada; “Cambiar” despliega las demás. Sin editar ni borrar desde el carrito.\n• Comprobante: Boleta (a nombre de la clienta, por WhatsApp) o Factura (RUC + razón social obligatorios).\n• Productos: etiqueta de stock bajo la foto, etiqueta “−20%” y precio anterior tachado; agotados al final, opacos, con “Producto no disponible”.\n• Resumen: día y hora de entrega/recojo (obligatorios), zona, cupón con la tarjeta Bronce/Plata/Oro, línea “Descuento en productos”, total con el precio sin descuento tachado.\n• Panel “Tus cupones” sin salir del carrito: ahorro por cupón, “Mejor opción”, código manual, usados.\n• Método de pago (Yape, Plin, Transferencia, Efectivo) con QR e instrucción; “Confirmar pedido” (verde #3ECF6A) se activa solo con día, hora, factura completa y captura del pago.\n• Debajo del resumen: WhatsApp “¿Dudas con tu pedido?” y 3 garantías.",
+      "w": 380,
+      "x": 1400,
+      "y": 2280
+    },
+    "pendiente": {
+      "fill": "gray",
+      "size": 24,
+      "text": "Datos de ejemplo y pendientes\n\nProductos, precios, direcciones, días/horas, QR, [NÚMERO], [TITULAR], [BANCO] y [NOMBRE DE LA CLIENTA] son de muestra.\n\nOjo: en escritorio se quitó el bloque Servicios; en móvil todavía aparece. Decidir si va o no.\n\nPara probar: pulsa Play, abre “Agregar cupón”, escribe A3F9C1 (válido) o 9D4E21 (ya usado).",
+      "w": 380,
+      "x": 2300,
+      "y": 2280
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "Carrito — Jaise Beauty Academy",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Cupones.dc.html",
+    "Movil.dc.html",
+    "MovilCupones.dc.html"
+  ],
+  "pages": [],
+  "title": "Carrito Jaise — rediseño"
+}

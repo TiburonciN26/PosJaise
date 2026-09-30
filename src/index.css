@@ -1,4 +1,11 @@
 @import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+/*
+ ---break---
+ */
+@custom-variant dark (&:is(.dark *));
 
 /*
  * Tema POS — Negocio 2 — oscuro (por defecto) y claro
@@ -382,7 +389,7 @@
 
 :root {
   /* Radio de borde estándar del proyecto: usar rounded-lg (8px) en componentes */
-  --radius: 8px;
+  --radius: 0.625rem;
   color-scheme: dark;
   /* Anillo de foco de teclado (regla :focus-visible más abajo). En
      oscuro el ámbar de marca contrasta de sobra; claro lo redefine. */
@@ -395,6 +402,37 @@
   --dur-rapida: 150ms;
   --dur-media: 250ms;
   --dur-lenta: 350ms;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 /* C2 de la auditoría frontend (WCAG 2.4.7): el proyecto usa
@@ -1750,6 +1788,29 @@ input[type='search']::-webkit-search-decoration {
   font-display: swap;
 }
 
+/* Heavitas: reservada para títulos importantes de pantallas nuevas de la
+   Web ("Tu carrito", "Tus cupones" — ver el diseño de docs/diseno-carrito/)
+   en blanco sólido, sin cursiva ni degradado — a diferencia de Kunaroh
+   (logo/Inicio) o del acento serif itálico de otras secciones. Mismo
+   motivo que Kunaroh arriba: no está en Google Fonts, va como @font-face
+   local con el .ttf que subió el usuario. */
+@font-face {
+  font-family: 'Heavitas';
+  src: url('./assets/fonts/Heavitas.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.lw-titulo-heavitas {
+  margin: 0;
+  font-family: 'Heavitas', 'Inter', sans-serif;
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
 /* --lw-metal-azul: el "acero pulido" de la referencia (--metal en su
    styles.css) — un degradado con una banda clara al centro, no un color
    plano, para que se vea con brillo/reflejo en vez de chato. §7.38: el
@@ -1843,12 +1904,6 @@ input[type='search']::-webkit-search-decoration {
 .lw-cta-hero:hover::before {
   opacity: 0;
 }
-.lw-cta-hero:hover .lw-metal-azul-texto {
-  background: none;
-  -webkit-background-clip: initial;
-  background-clip: initial;
-  color: #0b0b0c;
-}
 .lw-cta-hero:hover .lw-cta-flecha {
   transform: translate(2px, -2px);
 }
@@ -1879,4 +1934,753 @@ input[type='search']::-webkit-search-decoration {
   text-transform: uppercase;
   line-height: 1.6;
   color: #f5f5f4;
+}
+/*
+ ---break---
+ */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+/*
+ ---break---
+ */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* ═══════════════════════════════════════════════════════
+   React Bits — ShinyText (§7.60, src/components/ShinyText.jsx):
+   degradado en movimiento recortado al texto (background-clip:text),
+   background-size 200% + una animación que corre background-position
+   de 100% a -100% — la banda clara del degradado, al desplazarse, se
+   lee como un brillo recorriendo el texto. Gris/blanco acá abajo es
+   el look real de React Bits, sin tocar — para el botón de Inicio se
+   usa la variante .lw-cta-shiny más abajo, que reemplaza el color por
+   --lw-metal-azul en vez de gris. */
+.shiny-text {
+  display: inline-block;
+  color: #b5b5b5a4;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shiny-text-recorrido 5s linear infinite;
+}
+@keyframes shiny-text-recorrido {
+  0% {
+    background-position: 100%;
+  }
+  100% {
+    background-position: -100%;
+  }
+}
+.shiny-text.disabled {
+  animation: none;
+}
+
+/* Variante para "Reserva tu cita" (hero de Inicio, pedido del usuario:
+   "no modifiques los colores azul metálico").
+   §7.61 — bug real corregido: la primera versión usaba TODO
+   --lw-metal-azul (opaco de punta a punta, sin transparencia) como
+   fondo animado. El bucle de ShinyText es continuo SOLO porque el
+   degradado original es transparente en las dos puntas (rgba(...,0) a
+   los costados) — al llegar a -100% y volver a saltar a 100%, las dos
+   puntas transparentes coinciden visualmente (se ve el color base de
+   fondo en ambas) y el salto es invisible. Con un degradado 100%
+   opaco, cada punta muestra un tramo de color DISTINTO — el salto de
+   vuelta se nota como un corte a la mitad del texto cada dos vueltas
+   (bug reportado por el usuario).
+   Fix: mismo mecanismo que el original — color base SÓLIDO (#a9c6ec,
+   ya un color propio de --lw-metal-azul, no uno nuevo) + un degradado
+   de brillo con las puntas transparentes de verdad, usando el tono
+   más claro del mismo degradado (#d3e4f8) con alfa en vez de blanco.
+   Nada de --lw-metal-azul directo como fondo animado. */
+.shiny-text.lw-cta-shiny {
+  /* alfa .78, NO #a9c6ec sólido (§7.62, bug real: por qué no se veía
+     el efecto) — con color 100% opaco, el propio relleno del texto
+     tapa por completo el degradado animado de atrás (background-clip
+     solo hace visible el fondo donde el color de encima lo deja pasar
+     — mismo motivo por el que el ShinyText original de React Bits usa
+     un gris con alfa, `#b5b5b5a4`, no un gris sólido). Con esto el
+     brillo blanco-azulado del centro (alfa 1) SÍ se nota al pasar. */
+  color: rgba(169, 198, 236, 0.78);
+  background: linear-gradient(120deg, rgba(211, 228, 248, 0) 40%, rgba(211, 228, 248, 1) 50%, rgba(211, 228, 248, 0) 60%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* En hover el botón se invierte a fondo claro/texto oscuro sólido
+   (.lw-cta-hero:hover, más arriba) — el brillo animado no tiene
+   sentido ahí, se apaga junto con el resto. */
+.lw-cta-hero:hover .shiny-text.lw-cta-shiny {
+  background: none;
+  animation: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: #0b0b0c;
+}
+
+/* Carrito (§ docs/diseno-carrito/) — diseño aprobado, portado tal cual
+   del `<style>` del mock a clases reusables acá (mismo criterio que
+   `.liquid-glass`/`.lw-bar`: una clase compartida, no repetir un string
+   larguísimo de Tailwind arbitrario en cada bloque del carrito). Los
+   nombres llevan el prefijo `lw-` para no chocar con nada global —
+   `.field`/`.chip`/`.seg` del mock son demasiado genéricos para vivir
+   sueltos en un CSS compartido por toda la app. */
+.landing-web .lw-panel {
+  background: #111113;
+  border: 1px solid #1f1f22;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+.landing-web .lw-seg {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #2e2e2e;
+  background: transparent;
+  color: #bdbdbd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: 500 14px Inter, sans-serif;
+  cursor: pointer;
+}
+.landing-web .lw-seg:hover {
+  border-color: #4a4a4f;
+}
+.landing-web .lw-seg.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+  color: var(--lw-gold);
+}
+
+.landing-web .lw-campo {
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #2e2e2e;
+  background: #141416;
+  color: #fff;
+  padding: 0 12px;
+  font: 14px Inter, sans-serif;
+  outline: none;
+}
+.landing-web .lw-campo:focus {
+  border-color: var(--lw-gold);
+}
+
+.landing-web .lw-stepper {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid #2e2e2e;
+  border-radius: 999px;
+  padding: 0 4px;
+}
+.landing-web .lw-stepper button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: none;
+  color: #d0d0d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.landing-web .lw-stepper button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.landing-web .lw-stepper button:disabled {
+  color: #555;
+  cursor: default;
+}
+
+.landing-web .lw-chip {
+  font: 600 11px Inter, sans-serif;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lw-gold) 12%, transparent);
+  color: var(--lw-gold);
+  white-space: nowrap;
+}
+
+.landing-web .lw-chip-pred {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lw-gold) 15%, transparent);
+  color: var(--lw-gold);
+  font: 500 10px Inter, sans-serif;
+}
+
+.landing-web .lw-tarjeta-direccion {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid #232326;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+.landing-web .lw-tarjeta-direccion.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 4%, transparent);
+}
+
+.landing-web .lw-etq-stock {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #1a1a1c;
+  border: 1px solid #3a3a3f;
+  color: #d0d0d0;
+  font: 600 10px Inter, sans-serif;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+
+.landing-web .lw-etq-desc {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #ff85a1;
+  color: #0b0b0c;
+  font: 700 11px Inter, sans-serif;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.landing-web .lw-capsula-agotado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  white-space: nowrap;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: #1a1a1c;
+  border: 1px solid #3a3a3f;
+  color: #ffffff;
+  font: 600 12px Inter, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+.landing-web .lw-precio-antes {
+  font-size: 13px;
+  font-weight: 400;
+  color: #8f8f8f;
+  text-decoration: line-through;
+}
+
+.landing-web .lw-pago-opcion {
+  min-height: 46px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid #2e2e2e;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+.landing-web .lw-pago-opcion:hover {
+  border-color: #4a4a4f;
+}
+.landing-web .lw-pago-opcion.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+}
+
+.landing-web .lw-comprobante-opcion {
+  height: 40px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid #2e2e2e;
+  background: transparent;
+  color: #ffffff;
+  font: 600 14px Inter, sans-serif;
+  cursor: pointer;
+}
+.landing-web .lw-comprobante-opcion:hover {
+  border-color: #4a4a4f;
+}
+.landing-web .lw-comprobante-opcion.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+}
+
+.landing-web .lw-subir-captura {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px dashed var(--lw-gold);
+  color: var(--lw-gold);
+  font: 600 13px Inter, sans-serif;
+  cursor: pointer;
+  position: relative;
+}
+.landing-web .lw-subir-captura:hover {
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+}
+
+.landing-web .lw-cuponrow {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: 0;
+  border-top: 1px solid #232326;
+  border-bottom: 1px solid #232326;
+  padding: 14px 0;
+  cursor: pointer;
+  color: #fff;
+  font: 600 14px Inter, sans-serif;
+  text-align: left;
+}
+.landing-web .lw-cuponrow:hover .lw-plus {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.landing-web .lw-plus {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid #3a3a3f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.landing-web .lw-wa-ayuda {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(62, 207, 106, 0.3);
+  background: rgba(62, 207, 106, 0.07);
+  color: #7fe0a0;
+  font: 600 14px Inter, sans-serif;
+}
+.landing-web .lw-wa-ayuda:hover {
+  background: rgba(62, 207, 106, 0.12);
+  color: #9ff0bb;
+}
+
+@keyframes lw-panel-entra-derecha {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes lw-panel-sube {
+  from {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.landing-web .lw-panel-cupones {
+  animation: lw-panel-sube 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 1024px) {
+  .landing-web .lw-panel-cupones {
+    animation-name: lw-panel-entra-derecha;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-panel-cupones {
+    animation: none;
+  }
+}
+
+/* Barras de progreso del carrusel de fotos (hero de Servicios y galería
+   del Detalle): se llenan solas en 5s mientras esa foto está activa —
+   mismo truco CSS que el lienzo aprobado (.bar/.bar.run/.bar.done): el
+   navegador reinicia la animación solo con que la clase `activa` deje de
+   aplicar y vuelva a aplicar (no hace falta remontar nada a mano). */
+@keyframes lw-barra-progreso {
+  to {
+    transform: scaleX(1);
+  }
+}
+.landing-web .lw-barra-progreso {
+  position: relative;
+  flex-grow: 1;
+  height: 3px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+}
+.landing-web .lw-barra-progreso > span {
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: #fff;
+}
+.landing-web .lw-barra-progreso.completa > span {
+  transform: scaleX(1);
+}
+.landing-web .lw-barra-progreso.activa > span {
+  animation: lw-barra-progreso 5s linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-barra-progreso.activa > span {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
+/* Animación de entrada de Servicios (docs/diseno-servicios/README.md,
+   "Animación de entrada" — valores exactos de Main.dc.html/Movil.dc.html):
+   cada bloque llega a su lugar con un retraso distinto (puesto inline vía
+   animationDelay desde ServiciosCliente.jsx, resuelto una sola vez al
+   montar según el breakpoint lg) para que la pestaña se sienta armar en
+   vez de aparecer de golpe. Solo opacity/transform/filter — nunca layout. */
+.landing-web .in-left,
+.landing-web .in-right,
+.landing-web .in-up,
+.landing-web .in-photo {
+  animation-duration: 0.9s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation-fill-mode: both;
+}
+.landing-web .in-left {
+  animation-name: lw-in-left;
+}
+.landing-web .in-right {
+  animation-name: lw-in-right;
+}
+.landing-web .in-up {
+  animation-name: lw-in-up;
+  animation-duration: 0.8s;
+}
+.landing-web .in-photo {
+  animation-name: lw-in-photo;
+  animation-duration: 1.3s;
+}
+@keyframes lw-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes lw-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes lw-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lw-in-photo {
+  from {
+    opacity: 0;
+    transform: translateX(48px) scale(1.03);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .in-left,
+  .landing-web .in-right,
+  .landing-web .in-up,
+  .landing-web .in-photo {
+    animation: none;
+  }
+}
+
+/* Cinta continua de Productos (Ofertas/Destacados) — docs/diseno-productos/
+   README.md, sección "Ofertas y destacados: dos filas en movimiento
+   continuo". El desplazamiento en sí lo lleva useCintaContinua.js (JS,
+   requestAnimationFrame) — esto solo desvanece los bordes laterales de
+   la fila para que las tarjetas entren/salgan sin un corte brusco. */
+.lw-cinta-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+
+/* "Resultados reales" (Inicio) — cada foto cae como un meteorito: acelera
+   (ease-in), choca, se aplasta un poco y rebota; destello + onda expansiva
+   + sacudida de la fila en el impacto (~0.52s). Valores exactos de
+   docs/diseno-inicio/Main.dc.html. Disparada por src/hooks/useSecuenciaScroll.js
+   vía las clases .foto.espera/.foto.cae y .sacA/.sacB (alternadas para que
+   la sacudida se reinicie en cada foto, ya que CSS no reinicia una
+   animación si la clase no cambia). */
+.landing-web .foto.espera {
+  opacity: 0;
+}
+.landing-web .foto.cae {
+  z-index: 5;
+  animation: lw-caer 0.75s both;
+}
+.landing-web .foto.cae::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  animation: lw-destello 0.45s ease-out 0.52s both;
+}
+.landing-web .foto.cae::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--lw-gold);
+  opacity: 0;
+  pointer-events: none;
+  animation: lw-onda 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.52s both;
+}
+@keyframes lw-caer {
+  0% {
+    opacity: 0.12;
+    transform: scale(2.6);
+    filter: blur(8px);
+    animation-timing-function: cubic-bezier(0.6, 0, 1, 0.4);
+  }
+  70% {
+    opacity: 0.9;
+    transform: scale(1.03);
+    filter: blur(1px);
+    animation-timing-function: cubic-bezier(0, 0, 0.3, 1);
+  }
+  78% {
+    opacity: 1;
+    transform: scale(0.95);
+    filter: blur(0);
+  }
+  89% {
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes lw-destello {
+  0% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lw-onda {
+  0% {
+    opacity: 0.8;
+    inset: 0;
+  }
+  100% {
+    opacity: 0;
+    inset: -28px;
+  }
+}
+.landing-web .sacA {
+  animation: lw-sacudirA 0.32s linear 0.52s;
+}
+.landing-web .sacB {
+  animation: lw-sacudirB 0.32s linear 0.52s;
+}
+@keyframes lw-sacudirA {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(4px, -3px);
+  }
+  60% {
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    transform: translate(2px, -1px);
+  }
+}
+@keyframes lw-sacudirB {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(4px, -3px);
+  }
+  60% {
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    transform: translate(2px, -1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .foto.cae,
+  .landing-web .foto.cae::before,
+  .landing-web .foto.cae::after,
+  .landing-web .sacA,
+  .landing-web .sacB {
+    animation: none;
+  }
+}
+
+/*
+ ---break---
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

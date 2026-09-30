@@ -1,0 +1,78 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Main.dc.html": {
+      "h": 2600,
+      "is_interactive": true,
+      "title": "Mis citas · escritorio",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Movil.dc.html": {
+      "h": 4300,
+      "is_interactive": true,
+      "title": "Mis citas · móvil",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-28T15:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "backend": {
+      "fill": "orange",
+      "size": 24,
+      "text": "PARA IMPLEMENTAR\n\n• Próximas citas: consulta aparte (fecha_hora >= ahora, estado PENDIENTE/CONFIRMADA, sin límite de mes).\n• Sello y punto por visita: 1 por DÍA (mi_fidelizacion()/mis_puntos() ya usan count(distinct fecha); no cambia el backend). En la UI, solo la primera cita no cancelada de cada día lleva «+1 sello» y suma puntos_por_visita; el resto solo puntos_por_sol_gastado × total.\n• Adelanto: citas.adelanto (informativo).\n• Calificar: resenas_servicio es por servicio; mostrarlo si algún servicio de la cita completada no tiene reseña.\n• Volver a reservar: agrega esos servicios al carrito de servicios y abre /citas/carrito.\n• Cómo llegar / WhatsApp / dirección: datos_contacto().\n• Textos del bloque «Cómo ganas…»: armar con config_puntos (puntos_por_visita, 1/puntos_por_sol_gastado = «cada S/ 20», umbral_premium, umbral_vip), no fijos: el negocio los puede cambiar en «Puntos Web».",
+      "w": 420,
+      "x": 1990,
+      "y": 1200
+    },
+    "existe": {
+      "fill": "green",
+      "size": 24,
+      "text": "SE MANTIENE (ya existe)\n\n• Calendario mensual idéntico: grilla lunes–domingo, «Hoy», día elegido relleno azul metálico, hoy con borde, puntito en días con citas.\n• Reprogramar / Cancelar solo hasta 3 h antes (cancelar_mi_cita_web / reprogramar_mi_cita_web).\n• Modal Agendar (ModalAgendarCitaCliente) para el botón «Agendar cita».\n• Puntos: mis_puntos() + config_puntos (1 pt por visita + 0.05 pt por sol).",
+      "w": 420,
+      "x": 1990,
+      "y": 0
+    },
+    "nuevo": {
+      "fill": "blue",
+      "size": 24,
+      "text": "NUEVO\n\n• Título «MIS CITAS»; a su izquierda del botón «Agendar cita», botón de CARRITO DE SERVICIOS con contador → abre la pestaña nueva /citas/carrito (se especifica en docs/diseno-carrito-servicios/README.md, no en este lienzo).\n• El mini-carrito ya NO vive en Citas.\n• «Tu próxima cita»: día, fecha, hora, cuenta regresiva, servicios, asistente, estado, «+N pts», adelanto y acciones.\n• «Próximas citas» SIEMPRE visibles, agrupadas por fecha, cada una con «+N pts». Tocar un día filtra a ese día.\n• «Puntos y sellos»: total, nivel, barra al siguiente nivel, «+N pts por ganar» y tarjeta de sellos (3 de 5).\n• SELLOS: 1 sello por DÍA. Si hay varias citas el mismo día, solo la primera muestra «+1 sello»; las demás «Sello ya contado ese día» (ver 3 oct).\n• «Historial» plegable (ArrowBigDown): completadas con «+N pts» ganados, «Calificar», «Volver a reservar».\n• Al final, «CÓMO GANAS PUNTOS Y SELLOS»: bloque explicativo (no preguntas/respuestas; eso será otra pestaña): Puntos (1 por día atendido + 1 por cada S/ 20, niveles Básico 0 / Premium 10 / VIP 30), Sellos (1 por día, 5 = cupón 20%), Cuándo se suman (Pendiente → Confirmada → solo COMPLETADA suma) y qué no suma.\n• «Antes de tu cita»: regla de 3 h, horario, dirección, WhatsApp.\n• Animación de entrada escalonada; el calendario entra entero.",
+      "w": 420,
+      "x": 1990,
+      "y": 520
+    },
+    "pendiente": {
+      "fill": "gray",
+      "size": 24,
+      "text": "DATOS DE EJEMPLO\n\n«Hoy» = lun 28 sep 2026, 12:00. Citas, asistente, precios, puntos (18, Premium → VIP 30; umbrales reales por defecto de config_puntos) y [DIRECCIÓN DEL LOCAL] son de muestra.\n\nPara probar (Play): toca un día con puntito, cancela una cita, pliega el Historial. En Tweaks: «sinCitas» y «carritoVacio» (carrito sin contador).\n\nEstados: Pendiente = borde punteado azul, Confirmada = azul relleno.",
+      "w": 420,
+      "x": 1990,
+      "y": 1800
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 1910,
+      "text": "Citas — Jaise Beauty Academy",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Movil.dc.html"
+  ],
+  "pages": [],
+  "title": "Citas Jaise — rediseño"
+}

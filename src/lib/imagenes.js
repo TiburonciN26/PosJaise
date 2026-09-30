@@ -62,3 +62,25 @@ export function urlPublicaFoto(bucket, ruta) {
   if (!ruta) return null
   return supabase.storage.from(bucket).getPublicUrl(ruta).data.publicUrl
 }
+
+// galeria_web.antes_url/despues_url guardan la URL YA RESUELTA (ver
+// 98_galeria_web.sql), a diferencia del resto de fotos del proyecto: puede
+// ser una URL completa de Storage (foto real subida por el admin) o una
+// ruta relativa a /public (la fila de prueba con fotos de referencia,
+// reusada por NosotrosCliente.jsx e InicioCliente.jsx).
+export function resolverUrlGaleria(url) {
+  if (!url) return null
+  if (/^https?:\/\//.test(url)) return url
+  return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
+}
+
+// Para buckets PRIVADOS (ej. comprobantes-pedidos-web) — getPublicUrl no
+// sirve ahí, el archivo nunca es accesible sin firmar la URL. `segundos`
+// por default alcanza para que el admin la abra desde el panel sin que
+// la URL quede viva innecesariamente mucho tiempo después.
+export async function urlFirmadaFoto(bucket, ruta, segundos = 300) {
+  if (!ruta) return null
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(ruta, segundos)
+  if (error) throw error
+  return data.signedUrl
+}

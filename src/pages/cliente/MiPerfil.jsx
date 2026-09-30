@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Cake, Lock, MapPin, Pencil, Phone, X } from 'lucide-react'
+import { Cake, Lock, MapPin, Pencil, Phone, ShoppingBag, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
@@ -344,6 +344,13 @@ export default function MiPerfil() {
               >
                 <MapPin className="h-3.5 w-3.5" />
                 Mis direcciones
+              </Link>
+              <Link
+                to="/mi-perfil/pedidos"
+                className="flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
+              >
+                <ShoppingBag className="h-3.5 w-3.5" />
+                Mis pedidos
               </Link>
             </div>
           )}

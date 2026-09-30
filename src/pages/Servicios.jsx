@@ -80,7 +80,9 @@ export default function Servicios({ activo = true }) {
     if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('servicios')
-      .select('id, nombre, categoria, precio, duracion_min, activo, foto_url')
+      .select(
+        'id, nombre, categoria, precio, duracion_min, activo, foto_url, descripcion, en_tendencia, a_domicilio, costo_domicilio, precio_variable, nota_precio, duracion_resultado, pasos, especificaciones, herramientas, materiales, cuidados_antes, cuidados_despues, combo_con',
+      )
       .order('nombre')
 
     if (!vigente.actual) return
@@ -336,6 +338,7 @@ export default function Servicios({ activo = true }) {
         <ModalServicio
           servicio={modalServicio === 'nuevo' ? null : modalServicio}
           categoriasExistentes={categoriasExistentes}
+          serviciosExistentes={servicios}
           onCerrar={() => setModalServicio(null)}
           onGuardado={() => {
             const esNuevo = modalServicio === 'nuevo'

@@ -39,7 +39,9 @@ const ORDEN_A_COLUMNA = {
 const TAMANO_PAGINA = 50
 
 const SELECT_PRODUCTOS =
-  'id, codigo_barras, nombre, categoria, precio, costo, stock_actual, stock_minimo, proveedor, foto_url, activo'
+  'id, codigo_barras, nombre, categoria, subcategoria, precio, precio_antes, oferta_hasta, costo, stock_actual, stock_minimo, ' +
+  'proveedor, foto_url, activo, descripcion, contenido, rinde, frecuencia, combo_con, destacado, nuevo, en_inicio, ' +
+  'especificaciones, modo_uso, ideal_para, tips, ingredientes, libre_de'
 
 const RESUMEN_VACIO = {
   total: 0,
@@ -500,6 +502,7 @@ export default function Inventario({ activo = true }) {
         <ModalProducto
           producto={modalProducto === 'nuevo' ? null : modalProducto}
           categoriasExistentes={categoriasExistentes}
+          productosExistentes={productos}
           onCerrar={() => setModalProducto(null)}
           onGuardado={(productoActualizado) => {
             const esNuevo = modalProducto === 'nuevo'

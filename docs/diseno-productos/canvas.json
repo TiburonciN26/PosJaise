@@ -1,0 +1,121 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "DetalleMovil.dc.html": {
+      "h": 5600,
+      "is_interactive": true,
+      "page": "page-ik6lwr",
+      "title": "Detalle del producto · Móvil (390)",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    },
+    "DetalleProducto.dc.html": {
+      "h": 4180,
+      "is_interactive": true,
+      "page": "page-ik6lwr",
+      "title": "Detalle del producto · Escritorio (1440)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 5160,
+      "is_interactive": true,
+      "title": "Productos · Escritorio (1440)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Movil.dc.html": {
+      "h": 4620,
+      "is_interactive": true,
+      "title": "Productos · Móvil (390)",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-28T01:56:54Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "backend": {
+      "fill": "orange",
+      "text": "BACKEND QUE FALTA (preguntar antes de migrar)\n- productos.destacado (boolean, manual desde el POS). Ofertas ya salen de precio_antes (104_precio_antes_productos.sql).\n- Subcategoría para la etiqueta de la tarjeta (productos.subcategoria) o reutilizar otra columna.\n- productos da SELECT por columna: toda columna nueva necesita grant select (col) on productos to authenticated.\n- Fotos: bucket fotos-productos (las siluetas del lienzo son solo de ejemplo).",
+      "w": 420,
+      "x": 1990,
+      "y": 1160
+    },
+    "cambios": {
+      "fill": "pink",
+      "text": "CAMBIOS VS. ACTUAL\n- Sale la tarjeta iridiscente con tilt 3D (.iri-*): se usa la tarjeta plana de Servicios.\n- Corazón, compartir, selector de cantidad y \"Agregar\" salen de la tarjeta y pasan a un Detalle del producto (por diseñar, como el de servicios).\n- Agotado: sigue apareciendo, foto atenuada + etiqueta \"Agotado\"; no entra a las filas de ofertas/destacados.\n- Móvil pasa de 3 a 2 columnas.",
+      "w": 420,
+      "x": 1990,
+      "y": 700
+    },
+    "detalle": {
+      "fill": "blue",
+      "page": "page-ik6lwr",
+      "text": "DETALLE DEL PRODUCTO (misma estructura que Detalle del servicio)\n1. Migas + Volver a productos.\n2. Galería: miniaturas Frente / Textura / En uso / Detrás, carrusel de 5 s con barras, flechas, etiqueta de oferta.\n3. Info: categoría · subcategoría, nombre (Heavitas), precio + tachado + \"Ahorras S/ X\" + vigencia de la oferta; descripción; Presentación (250 ml / 500 ml, cada una con su precio y stock); 4 datos: Stock (verde / ámbar si quedan ≤5 / gris agotado), Contenido, Entrega (recojo gratis o envío a [ZONA]), Rinde.\n   Cantidad (− 1 +, tope = stock − lo que ya está en el carrito) + Agregar al carrito · S/ total (pasa a \"Agregado ✓\" 2 s; en la app además useToast). Si ya no queda stock: \"Ya tienes todo el stock\". Comprar ahora (→ Carrito), favorito, compartir. Nota con lo que ya tiene en el carrito.\n   WhatsApp + 3 íconos: +puntos, 4.8 · 24 reseñas → Ver reseñas, \"Lo usamos en el salón\".\n4. Franja: pago al confirmar (Yape/Plin/transferencia + comprobante + cupones), recojo gratis o envío a [ZONA], cambios hasta [7 días] solo sellado.\n5. Cómo se usa (4 pasos numerados + frecuencia).\n6. ¿Es para ti?: Ideal para / Tips y precauciones.\n7. Especificaciones · Ingredientes clave · Libre de.\n8. Reseñas (id=resenas), solo de quien compró el producto; \"Compra verificada\".\n9. Se suele comprar junto con (combo → Agregar los dos al carrito).\n10. También te puede interesar (tarjeta del catálogo).\nMóvil: foto a todo el ancho con volver/compartir/favorito, miniaturas debajo, mismo orden en una columna, reseñas deslizables, barra inferior fija con precio + Agregar.",
+      "w": 420,
+      "x": 1990,
+      "y": 0
+    },
+    "detalleBack": {
+      "fill": "orange",
+      "page": "page-ik6lwr",
+      "text": "BACKEND PARA EL DETALLE (preguntar antes de migrar)\n- productos.descripcion, contenido, rinde, marca, modo_uso (pasos), ideal_para / tips (text[]), ingredientes (jsonb), libre_de (text[]), vence, registro_sanitario.\n- producto_fotos (varias fotos con etiqueta Frente/Textura/En uso/Detrás y orden). Hoy solo productos.foto_url.\n- Presentaciones: tabla producto_variantes (etiqueta, precio, precio_antes, stock) o dejar un producto por tamaño.\n- Vigencia de la oferta: productos.oferta_hasta (date).\n- Reseñas por producto: resenas con producto_id + validar que lo compró (security definer, como guardar_mi_resena_servicio).\n- Combo sugerido: productos.combo_con o el par más comprado junto en pedidos_web.\n- Favoritos ya existe (favoritos_productos).\n- productos da SELECT por columna: grant select (col) por cada columna nueva.",
+      "w": 420,
+      "x": 1990,
+      "y": 1000
+    },
+    "orden": {
+      "fill": "blue",
+      "text": "ORDEN DE LA PESTAÑA\n0. Inicio (mismo efecto que el hero de Servicios): izquierda = etiqueta fija \"Novedades y lo más vendido\", cápsula blanca (En oferta −X% / Lo más vendido / Nuevo), nombre en Heavitas, descripción, precio (tachado si hay oferta); botones Agregar al carrito y Ver detalles; abajo la línea de catálogo. Derecha = foto grande con barras de progreso + 3 fotos chicas con los 3 productos que siguen. Cada 5 s cambian las 4 fotos con fundido y el texto entra con desenfoque. Tocar una foto chica o una barra la pone en grande y reinicia el conteo. Móvil: fotos arriba, texto abajo.\n1. Ofertas y destacados: frase arriba y 2 filas en movimiento continuo y suave, cada una con su título (Ofertas a la izquierda, Destacados a la derecha) y debajo su indicador de posición (‹ rayitas ›: una por producto, la blanca avanza con la fila, se detiene con ella; las flechas corren la fila una tarjeta). Escritorio: ~4½ fotos a la vista (296×390), 36 px/s; móvil: tarjetas 200×264, 28 px/s. Fila 1 = Ofertas (productos con precio_antes), se mueve a la DERECHA. Fila 2 = Destacados, se mueve a la IZQUIERDA.\n   Al pasar el mouse por una foto: la foto crece un poco (scale 1.06), SOLO esa fila se detiene y aparece la cápsula \"Ver detalles ↗\" en la tarjeta. Al salir, sigue moviéndose.\n   Móvil: tocar la foto la enfoca (se detiene + cápsula).\n2. Filtros sticky: categorías, buscador, conteo (igual que Servicios).\n3. Catálogo idéntico a las categorías de Servicios: una fila por categoría con 4 productos + Ver todo (N); elegir categoría → grilla completa + ← Todas las categorías; buscar → grilla plana. Tarjeta igual a la de servicio (foto cuadrada, subcategoría abajo-izq, flecha ↗), más: −% arriba-izq si está en oferta, precio tachado y estado de stock.\n4. Cómo comprar (3 pasos).\n5. ¿No encuentras tu producto? (WhatsApp, Contacto, FAQ \"Muy pronto\").\n6. Barra flotante \"Tu carrito\" → Carrito.",
+      "w": 420,
+      "x": 1990,
+      "y": 0
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 1910,
+      "text": "Productos — portal cliente",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "titulo2": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "page-ik6lwr",
+      "text": "Detalle del producto",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Movil.dc.html",
+    "DetalleProducto.dc.html",
+    "DetalleMovil.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Page 1"
+    },
+    {
+      "id": "page-ik6lwr",
+      "name": "Page 2"
+    }
+  ],
+  "title": "Productos Jaise"
+}

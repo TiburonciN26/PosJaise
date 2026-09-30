@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Scripts sueltos de Playwright para reproducir bugs de UI a mano
+# (sesión de debugging, no un test suite del proyecto — no hay uno
+# configurado, ver CLAUDE.md).
+.pw-scratch/
+
 # Backups de ventas/gastos: van al repo privado PosJaise-backups, nunca a
 # este repo (que es público, para poder usar GitHub Pages gratis).
 backups/
@@ -54,4 +59,8 @@ src/assets/*
 # cae en silencio al fallback 'Orbitron' del font-family.
 !src/assets/fonts/
 !src/assets/fonts/Kunaroh.ttf
+# Heavitas: títulos importantes de la Web en blanco sólido (memoria
+# feedback_tipografias_web.md) — mismo motivo que Kunaroh arriba, sin
+# esto el título del carrito cae en silencio al fallback del proyecto.
+!src/assets/fonts/Heavitas.ttf
 headerYServicios.html

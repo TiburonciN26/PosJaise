@@ -5,6 +5,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
+import EditorListaJson from './EditorListaJson.jsx'
 import {
   eliminarFoto,
   procesarImagen,
@@ -26,7 +27,15 @@ const formularioVacio = {
   categoriaNueva: '',
   precio: '',
   duracionMin: '',
+  descripcion: '',
   activo: true,
+  enTendencia: false,
+  aDomicilio: false,
+  costoDomicilio: '',
+  precioVariable: false,
+  notaPrecio: '',
+  duracionResultado: '',
+  comboCon: '',
 }
 
 function formularioDesdeServicio(servicio) {
@@ -36,7 +45,15 @@ function formularioDesdeServicio(servicio) {
     categoriaNueva: '',
     precio: String(servicio.precio ?? ''),
     duracionMin: servicio.duracion_min != null ? String(servicio.duracion_min) : '',
+    descripcion: servicio.descripcion ?? '',
     activo: servicio.activo ?? true,
+    enTendencia: servicio.en_tendencia ?? false,
+    aDomicilio: servicio.a_domicilio ?? false,
+    costoDomicilio: servicio.costo_domicilio != null ? String(servicio.costo_domicilio) : '',
+    precioVariable: servicio.precio_variable ?? false,
+    notaPrecio: servicio.nota_precio ?? '',
+    duracionResultado: servicio.duracion_resultado ?? '',
+    comboCon: servicio.combo_con ?? '',
   }
 }
 
@@ -61,6 +78,13 @@ function validar(formulario) {
     }
   }
 
+  if (formulario.aDomicilio && formulario.costoDomicilio.trim()) {
+    const costo = parseFloat(formulario.costoDomicilio)
+    if (Number.isNaN(costo) || costo < 0) {
+      return 'El costo a domicilio debe ser un número mayor o igual a 0.'
+    }
+  }
+
   return null
 }
 
@@ -68,6 +92,7 @@ export default function ModalServicio({
   servicio,
   nombreInicial,
   categoriasExistentes,
+  serviciosExistentes,
   onCerrar,
   onGuardado,
 }) {
@@ -92,6 +117,34 @@ export default function ModalServicio({
   const [errorFoto, setErrorFoto] = useState(null)
   const [mostrarCamara, setMostrarCamara] = useState(false)
 
+  // Galería de la Web (servicio_fotos, migración 110) — varias fotos con
+  // etiqueta Resultado/Antes/Después, para el carrusel del Detalle del
+  // servicio (docs/diseno-servicios/README.md). Mismo patrón "se procesa
+  // al elegir, se sube recién al guardar" que la foto principal de
+  // arriba: `esNueva: true` = todavía es un blob local; `id` real =
+  // fila que ya existe en la tabla. `orden` no se guarda en el estado,
+  // se deriva del índice en el array al guardar.
+  const [fotosGaleria, setFotosGaleria] = useState([])
+  const [idsGaleriaEliminados, setIdsGaleriaEliminados] = useState([])
+  const [cargandoGaleria, setCargandoGaleria] = useState(esEdicion)
+  const [procesandoGaleria, setProcesandoGaleria] = useState(false)
+  const [errorGaleria, setErrorGaleria] = useState(null)
+
+  // Contenido editorial del Detalle del servicio (migración 113: pasos,
+  // especificaciones, herramientas, materiales, cuidados) — jsonb,
+  // editado entero con EditorListaJson.jsx. Los cuidados llegan de la
+  // base como array de strings; se guardan acá como [{ texto }] para
+  // reusar el mismo editor de filas que el resto (se aplana de vuelta a
+  // strings al guardar).
+  const [pasos, setPasos] = useState(() => servicio?.pasos ?? [])
+  const [especificaciones, setEspecificaciones] = useState(() => servicio?.especificaciones ?? [])
+  const [herramientas, setHerramientas] = useState(() => servicio?.herramientas ?? [])
+  const [materiales, setMateriales] = useState(() => servicio?.materiales ?? [])
+  const [cuidadosAntes, setCuidadosAntes] = useState(() => (servicio?.cuidados_antes ?? []).map((texto) => ({ texto })))
+  const [cuidadosDespues, setCuidadosDespues] = useState(() =>
+    (servicio?.cuidados_despues ?? []).map((texto) => ({ texto })),
+  )
+
   useCerrarConEscape(onCerrar)
 
   useEffect(() => {
@@ -99,6 +152,33 @@ export default function ModalServicio({
       if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
     }
   }, [fotoNueva])
+
+  useEffect(() => {
+    if (!esEdicion) return undefined
+    let vigente = true
+
+    supabase
+      .from('servicio_fotos')
+      .select('id, foto_url, etiqueta')
+      .eq('servicio_id', servicio.id)
+      .order('orden')
+      .then(({ data }) => {
+        if (!vigente) return
+        setFotosGaleria(
+          (data ?? []).map((fila) => ({
+            id: fila.id,
+            etiqueta: fila.etiqueta,
+            fotoUrl: fila.foto_url,
+            esNueva: false,
+          })),
+        )
+        setCargandoGaleria(false)
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [esEdicion, servicio?.id])
 
   async function procesarNuevaFoto(archivo) {
     if (!tipoDeImagenValido(archivo)) {
@@ -136,6 +216,50 @@ export default function ModalServicio({
     if (fotoNueva?.previewUrl) URL.revokeObjectURL(fotoNueva.previewUrl)
     setFotoNueva(null)
     setFotoEliminada(true)
+  }
+
+  async function agregarFotoGaleria(archivo) {
+    if (!tipoDeImagenValido(archivo)) {
+      setErrorGaleria('Formato no admitido. Usa JPG, PNG o WEBP.')
+      return
+    }
+
+    setErrorGaleria(null)
+    setProcesandoGaleria(true)
+    try {
+      const { blob, extension } = await procesarImagen(archivo, OPCIONES_FOTO_SERVICIO)
+      setFotosGaleria((anterior) => [
+        ...anterior,
+        { id: null, etiqueta: 'Resultado', esNueva: true, blob, extension, previewUrl: URL.createObjectURL(blob) },
+      ])
+    } catch {
+      setErrorGaleria('No se pudo procesar la imagen. Intenta con otra.')
+    } finally {
+      setProcesandoGaleria(false)
+    }
+  }
+
+  function elegirFotoGaleria(evento) {
+    const archivo = evento.target.files?.[0]
+    evento.target.value = ''
+    if (!archivo) return
+    agregarFotoGaleria(archivo)
+  }
+
+  function quitarFotoGaleria(indice) {
+    setFotosGaleria((anterior) => {
+      const item = anterior[indice]
+      if (item.esNueva) {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+      } else {
+        setIdsGaleriaEliminados((ids) => [...ids, item.id])
+      }
+      return anterior.filter((_, i) => i !== indice)
+    })
+  }
+
+  function cambiarEtiquetaGaleria(indice, etiqueta) {
+    setFotosGaleria((anterior) => anterior.map((foto, i) => (i === indice ? { ...foto, etiqueta } : foto)))
   }
 
   const previewFoto = fotoNueva
@@ -191,8 +315,34 @@ export default function ModalServicio({
       categoria: categoriaFinal,
       precio: parseFloat(formulario.precio),
       duracion_min: formulario.duracionMin.trim() ? parseInt(formulario.duracionMin, 10) : null,
+      descripcion: formulario.descripcion.trim() ? formulario.descripcion.trim() : null,
       activo: formulario.activo,
+      en_tendencia: formulario.enTendencia,
+      a_domicilio: formulario.aDomicilio,
+      costo_domicilio: formulario.aDomicilio && formulario.costoDomicilio.trim() ? parseFloat(formulario.costoDomicilio) : null,
+      precio_variable: formulario.precioVariable,
+      nota_precio: formulario.precioVariable && formulario.notaPrecio.trim() ? formulario.notaPrecio.trim() : null,
+      duracion_resultado: formulario.duracionResultado.trim() ? formulario.duracionResultado.trim() : null,
+      combo_con: formulario.comboCon || null,
       foto_url: fotoFinal,
+      pasos: pasos
+        .filter((paso) => paso.nombre?.trim())
+        .map((paso) => ({
+          nombre: paso.nombre.trim(),
+          minutos: paso.minutos ? parseInt(paso.minutos, 10) || null : null,
+          texto: paso.texto?.trim() ?? '',
+        })),
+      especificaciones: especificaciones
+        .filter((spec) => spec.clave?.trim())
+        .map((spec) => ({ clave: spec.clave.trim(), valor: spec.valor?.trim() ?? '' })),
+      herramientas: herramientas
+        .filter((item) => item.nombre?.trim())
+        .map((item) => ({ nombre: item.nombre.trim(), descripcion: item.descripcion?.trim() ?? '' })),
+      materiales: materiales
+        .filter((item) => item.nombre?.trim())
+        .map((item) => ({ nombre: item.nombre.trim(), descripcion: item.descripcion?.trim() ?? '' })),
+      cuidados_antes: cuidadosAntes.map((item) => item.texto?.trim()).filter(Boolean),
+      cuidados_despues: cuidadosDespues.map((item) => item.texto?.trim()).filter(Boolean),
     }
 
     const { data: filaGuardada, error: errorGuardado } = esEdicion
@@ -210,6 +360,33 @@ export default function ModalServicio({
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
     if (fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
+
+    // Galería (servicio_fotos): se procesa DESPUÉS de que el servicio ya
+    // tiene id real (necesario para uno nuevo). Si una foto puntual
+    // falla no se bloquea el guardado del servicio, que ya quedó bien —
+    // se puede reintentar reabriendo el modal.
+    if (idsGaleriaEliminados.length > 0) {
+      await supabase.from('servicio_fotos').delete().in('id', idsGaleriaEliminados)
+    }
+    for (let indice = 0; indice < fotosGaleria.length; indice += 1) {
+      const item = fotosGaleria[indice]
+      if (item.esNueva) {
+        try {
+          const ruta = `${crypto.randomUUID()}.${item.extension}`
+          const rutaSubida = await subirFoto(BUCKET_FOTOS, ruta, item.blob)
+          await supabase.from('servicio_fotos').insert({
+            servicio_id: filaGuardada.id,
+            foto_url: rutaSubida,
+            etiqueta: item.etiqueta,
+            orden: indice,
+          })
+        } catch {
+          // ver comentario arriba
+        }
+      } else {
+        await supabase.from('servicio_fotos').update({ etiqueta: item.etiqueta, orden: indice }).eq('id', item.id)
+      }
+    }
 
     onGuardado(filaGuardada)
   }
@@ -300,6 +477,74 @@ export default function ModalServicio({
           </div>
 
           <div>
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={formulario.precioVariable}
+                onChange={(evento) => actualizarCampo('precioVariable', evento.target.checked)}
+                className="h-4 w-4 accent-amber"
+              />
+              El precio puede variar (ej. según largo de cabello)
+            </label>
+            {formulario.precioVariable && (
+              <input
+                type="search"
+                autoComplete="new-password"
+                value={formulario.notaPrecio}
+                onChange={(evento) => actualizarCampo('notaPrecio', evento.target.value)}
+                placeholder='Nota para la clienta, ej. "El precio final depende del largo y grosor del cabello"'
+                className="mt-2 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+              />
+            )}
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-duracion-resultado`}>El resultado dura</Etiqueta>
+            <input
+              id={`${idBase}-duracion-resultado`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.duracionResultado}
+              onChange={(evento) => actualizarCampo('duracionResultado', evento.target.value)}
+              placeholder='Opcional, ej. "3-4 meses"'
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+            />
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-combo`}>Combo sugerido ("se suele reservar junto con")</Etiqueta>
+            <select
+              id={`${idBase}-combo`}
+              value={formulario.comboCon}
+              onChange={(evento) => actualizarCampo('comboCon', evento.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
+            >
+              <option value="">
+                Sin forzar — usar el más reservado junto (si hay historial)
+              </option>
+              {(serviciosExistentes ?? [])
+                .filter((otro) => otro.id !== servicio?.id)
+                .map((otro) => (
+                  <option key={otro.id} value={otro.id}>
+                    {otro.nombre}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-descripcion`}>Descripción</Etiqueta>
+            <textarea
+              id={`${idBase}-descripcion`}
+              rows={3}
+              value={formulario.descripcion}
+              onChange={(evento) => actualizarCampo('descripcion', evento.target.value)}
+              placeholder="Opcional — se muestra en el detalle del servicio en la Web"
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+            />
+          </div>
+
+          <div>
             <Etiqueta>Foto</Etiqueta>
             <div className="flex items-center gap-3">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
@@ -346,6 +591,125 @@ export default function ModalServicio({
           </div>
 
           <div>
+            <Etiqueta>Galería (Resultado / Antes / Después)</Etiqueta>
+            {cargandoGaleria ? (
+              <p className="text-xs text-ink/50">Cargando galería...</p>
+            ) : (
+              <div className="space-y-2">
+                {fotosGaleria.map((foto, indice) => (
+                  <div key={foto.id ?? foto.previewUrl} className="flex items-center gap-2">
+                    <img
+                      src={foto.esNueva ? foto.previewUrl : urlPublicaFoto(BUCKET_FOTOS, foto.fotoUrl)}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover"
+                    />
+                    <select
+                      value={foto.etiqueta}
+                      onChange={(evento) => cambiarEtiquetaGaleria(indice, evento.target.value)}
+                      className="flex-1 rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-amber"
+                    >
+                      <option value="Resultado">Resultado</option>
+                      <option value="Antes">Antes</option>
+                      <option value="Después">Después</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => quitarFotoGaleria(indice)}
+                      aria-label="Quitar foto de la galería"
+                      className="shrink-0 p-1.5 text-ink/60 transition-colors hover:text-red"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber">
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  {procesandoGaleria ? 'Procesando...' : '+ Agregar foto'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={elegirFotoGaleria}
+                    disabled={procesandoGaleria}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+            {errorGaleria && <p className="mt-1 text-xs text-red">{errorGaleria}</p>}
+          </div>
+
+          <p className="border-t border-border pt-3 text-xs font-medium uppercase tracking-wide text-ink/50">
+            Contenido del Detalle del servicio (Web)
+          </p>
+
+          <EditorListaJson
+            etiqueta="Cómo es el servicio (pasos)"
+            items={pasos}
+            onCambiar={setPasos}
+            vacio={{ nombre: '', minutos: '', texto: '' }}
+            textoAgregar="+ Agregar paso"
+            campos={[
+              { clave: 'nombre', placeholder: 'Nombre del paso' },
+              { clave: 'minutos', placeholder: 'Minutos', tipo: 'numero' },
+              { clave: 'texto', placeholder: 'Explicación para la clienta', tipo: 'textarea' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Especificaciones técnicas"
+            items={especificaciones}
+            onCambiar={setEspecificaciones}
+            vacio={{ clave: '', valor: '' }}
+            textoAgregar="+ Agregar especificación"
+            campos={[
+              { clave: 'clave', placeholder: 'Ej. Técnica' },
+              { clave: 'valor', placeholder: 'Ej. Mano alzada (freehand)' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Herramientas usadas"
+            items={herramientas}
+            onCambiar={setHerramientas}
+            vacio={{ nombre: '', descripcion: '' }}
+            textoAgregar="+ Agregar herramienta"
+            campos={[
+              { clave: 'nombre', placeholder: 'Nombre' },
+              { clave: 'descripcion', placeholder: 'Descripción corta' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Materiales usados"
+            items={materiales}
+            onCambiar={setMateriales}
+            vacio={{ nombre: '', descripcion: '' }}
+            textoAgregar="+ Agregar material"
+            campos={[
+              { clave: 'nombre', placeholder: 'Nombre' },
+              { clave: 'descripcion', placeholder: 'Marca / detalle' },
+            ]}
+          />
+
+          <EditorListaJson
+            etiqueta="Cuidados antes de la cita"
+            items={cuidadosAntes}
+            onCambiar={setCuidadosAntes}
+            vacio={{ texto: '' }}
+            textoAgregar="+ Agregar indicación"
+            campos={[{ clave: 'texto', placeholder: 'Ej. Ven con el cabello seco' }]}
+          />
+
+          <EditorListaJson
+            etiqueta="Cuidados después de la cita"
+            items={cuidadosDespues}
+            onCambiar={setCuidadosDespues}
+            vacio={{ texto: '' }}
+            textoAgregar="+ Agregar indicación"
+            campos={[{ clave: 'texto', placeholder: 'Ej. Espera 48 horas antes de lavar' }]}
+          />
+
+          <div>
             <Etiqueta>Estado</Etiqueta>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -371,6 +735,39 @@ export default function ModalServicio({
                 Inactivo
               </button>
             </div>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              checked={formulario.enTendencia}
+              onChange={(evento) => actualizarCampo('enTendencia', evento.target.checked)}
+              className="h-4 w-4 accent-amber"
+            />
+            Destacar en "Tendencias y lo más pedido" (Web)
+          </label>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={formulario.aDomicilio}
+                onChange={(evento) => actualizarCampo('aDomicilio', evento.target.checked)}
+                className="h-4 w-4 accent-amber"
+              />
+              Se puede hacer a domicilio
+            </label>
+            {formulario.aDomicilio && (
+              <input
+                type="search"
+                inputMode="decimal"
+                autoComplete="new-password"
+                value={formulario.costoDomicilio}
+                onChange={(evento) => actualizarCampo('costoDomicilio', evento.target.value)}
+                placeholder="Costo adicional — vacío o 0 = gratis"
+                className="mt-2 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+              />
+            )}
           </div>
         </div>
 

@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Productos · Escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+@font-face{font-family:'Heavitas';src:url('/_blob/d0b29dbb4e2407499100928b5c695342') format('truetype');font-display:swap}
+body{margin:0;background:#0b0b0c;font-family:'Inter',system-ui,sans-serif}
+a{color:#ffffff}a:hover{color:#a9c6ec}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #a9c6ec;outline-offset:2px}
+.thumb img,.thumb .ph{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.thumb:hover img,.thumb:hover .ph{transform:scale(1.045)}
+/* Carrusel doble de Ofertas y destacados: cinta continua; la lista va duplicada y se desplaza exactamente el 50% para que el bucle no tenga salto (por eso cada tarjeta usa margin-right y no gap). */
+.mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%)}
+.mq-track{display:flex;width:max-content;animation:mqIzq 80s linear infinite}
+.mq-der{animation-name:mqDer}
+@keyframes mqIzq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes mqDer{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+/* Al pasar el mouse (o enfocar con teclado) por una foto, SOLO esa fila se detiene */
+/* Al pasar el mouse (o tocar/enfocar) una foto, SOLO esa fila se detiene: la cinta y su indicador */
+.fila:has(.pc:hover) .mq-track,.fila:has(.pc:hover) .ind-thumb,.fila:has(.pc:focus) .mq-track,.fila:has(.pc:focus) .ind-thumb,.fila:has(.pc:focus-within) .mq-track,.fila:has(.pc:focus-within) .ind-thumb{animation-play-state:paused}
+.ind-thumb{animation-name:indMover;animation-iteration-count:infinite}
+@keyframes indMover{from{transform:translateX(var(--ini))}to{transform:translateX(var(--fin))}}
+.pc{position:relative;flex-shrink:0;overflow:hidden;transition:transform .55s cubic-bezier(.2,.7,.2,1),box-shadow .55s ease}
+.pc:hover,.pc:focus-within{transform:scale(1.06);box-shadow:0 18px 50px rgba(0,0,0,.55);z-index:2}
+.pc .ph{transition:transform .8s cubic-bezier(.2,.7,.2,1)}
+.pc:hover .ph{transform:scale(1.05)}
+.pc .velo{opacity:0;transition:opacity .4s ease}
+.pc:hover .velo,.pc:focus-within .velo{opacity:1}
+.pc .cap{opacity:0;transform:translate(-50%,10px);transition:opacity .35s ease,transform .45s cubic-bezier(.2,.7,.2,1)}
+.pc:hover .cap,.pc:focus-within .cap{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.thumb img,.thumb .ph,.pc,.pc .ph{transition:none}.mq-track{animation:none}}
+/* Entrada de la página (mismo patrón que Servicios) */
+.in-left,.in-right,.in-up,.in-photo{animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.7,.2,1);animation-fill-mode:both}
+.in-left{animation-name:inLeft}
+.in-right{animation-name:inRight}
+.in-up{animation-name:inUp;animation-duration:.8s}
+@keyframes inLeft{from{opacity:0;transform:translateX(-40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inRight{from{opacity:0;transform:translateX(40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.in-left,.in-right,.in-up{animation:none}}
+.bar span{position:absolute;inset:0;background:#ffffff;transform-origin:left;transform:scaleX(0)}
+.bar.done span{transform:scaleX(1)}
+.bar.run span{animation:barfill 5s linear forwards}
+@keyframes barfill{to{transform:scaleX(1)}}
+.in-photo{animation-name:inPhoto;animation-duration:1.3s}
+@keyframes inPhoto{from{opacity:0;transform:translateX(48px) scale(1.03);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+.mini .ph{transition:transform .6s cubic-bezier(.2,.7,.2,1),opacity .9s ease}
+.mini:hover .ph{transform:scale(1.06)}
+@media (prefers-reduced-motion:reduce){.bar.run span{animation:none;transform:scaleX(1)}.in-photo{animation:none}}
+</style>
+</helmet>
+<div id="dc-root" style="position: relative; width: 1440px; height: 5160px; box-sizing: border-box; padding: 0 48px; background: #0b0b0c; color: #ffffff; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; overflow: hidden">
+
+  <!-- 0. INICIO: producto destacado que cambia cada 5 s (mismo efecto que el hero de Servicios) -->
+  <section style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 64px; padding: 48px 0 24px">
+    <div style="display: flex; flex-direction: column; justify-content: space-between; padding: 8px 0">
+      <div style="display: flex; flex-direction: column">
+        <span class="in-left" style="animation-delay: 150ms; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #a6a6a6">Novedades y lo más vendido</span>
+        <div class="in-left" style="animation-delay: 300ms; display: grid; margin-top: 22px">
+          <sc-for list="{{heroTxt}}" as="ht" hint-placeholder-count="5">
+            <div aria-hidden="{{ht.hidden}}" style="grid-area: 1 / 1; display: flex; flex-direction: column; pointer-events: {{ht.pe}}">
+              <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 7px; padding: 6px 13px; border-radius: 999px; background: #ffffff; color: #0b0b0c; font-size: 12px; font-weight: 600; opacity: {{ht.op}}; transform: translateY({{ht.y}}px); transition: opacity 0.6s ease {{ht.d0}}ms, transform 0.6s ease {{ht.d0}}ms"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"></path><path d="M19 3v4M21 5h-4"></path></svg>{{ht.tag}}</span>
+              <h1 style="margin: 20px 0 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 60px; line-height: 1.02; color: #ffffff; text-transform: uppercase; opacity: {{ht.op}}; filter: blur({{ht.blur}}px); transform: translateY({{ht.y}}px); transition: opacity 0.7s ease {{ht.d1}}ms, filter 0.7s ease {{ht.d1}}ms, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) {{ht.d1}}ms">{{ht.n}}</h1>
+              <p style="margin: 18px 0 0; max-width: 44ch; font-size: 15px; line-height: 1.65; color: #d9d9dc; opacity: {{ht.op}}; transform: translateY({{ht.y}}px); transition: opacity 0.7s ease {{ht.d2}}ms, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) {{ht.d2}}ms">{{ht.desc}}</p>
+              <span style="margin-top: 14px; font-size: 13px; color: #a6a6a6; opacity: {{ht.op}}; transition: opacity 0.7s ease {{ht.d2}}ms"><b style="color: #ffffff; font-weight: 600; font-size: 15px">{{ht.price}}</b> <s style="margin-left: 4px">{{ht.antes}}</s> · {{ht.sub}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div class="in-left" style="animation-delay: 500ms; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 30px">
+          <button type="button" onClick="{{heroAdd}}" style="display: inline-flex; align-items: center; gap: 12px; background: #a9c6ec; color: #0b0b0c; border: 0; border-radius: 999px; padding: 7px 7px 7px 22px; font-weight: 600; font-size: 14px">Agregar al carrito <span style="width: 32px; height: 32px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span></button>
+          <a href="DetalleProducto.dc.html" aria-label="Ver detalles del producto" style="text-decoration: none; box-sizing: border-box; border: 1px solid #2e2e2e; border-radius: 999px; padding: 13px 22px; font-size: 14px; color: #e8e8ea; background: transparent; font-family: inherit">Ver detalles</a>
+        </div>
+      </div>
+      <div class="in-left" style="animation-delay: 650ms; display: flex; gap: 14px; align-items: baseline; font-size: 12px; color: #8a8a90">
+        <span style="font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: #e8e8ea">Catálogo</span>
+        <span>/</span>
+        <span style="color: #e8e8ea; font-weight: 500">18 productos</span>
+        <span>·</span><span>Recojo en el local</span><span>·</span><span>Envío a [ZONA]</span>
+      </div>
+    </div>
+    <div class="in-photo" style="animation-delay: 200ms; display: flex; flex-direction: column; gap: 10px">
+      <div style="position: relative; height: 420px; border-radius: 16px; overflow: hidden; background: #050505; isolation: isolate">
+        <sc-for list="{{slides}}" as="sl" hint-placeholder-count="5">
+          <div style="position: absolute; inset: 0; opacity: {{sl.op}}; transition: opacity 1.1s ease">
+            <div style="position: absolute; inset: 0; display: grid; place-items: center; background: {{sl.grad}}; transform: scale({{sl.scale}}); transition: transform 6s ease-out">
+              <svg width="190" height="266" viewBox="0 0 100 140" aria-hidden="true"><path d="{{sl.shape}}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1"></path></svg>
+            </div>
+          </div>
+        </sc-for>
+        <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.6) 100%); pointer-events: none"></div>
+        <div style="position: absolute; top: 14px; left: 16px; right: 16px; display: flex; gap: 6px; z-index: 2">
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="5">
+            <button type="button" class="{{b.cls}}" onClick="{{b.go}}" aria-label="{{b.label}}" style="flex-grow: 1; height: 3px; border: 0; padding: 0; border-radius: 3px; background: rgba(255,255,255,0.25); overflow: hidden; position: relative"><span></span></button>
+          </sc-for>
+        </div>
+        <div style="position: absolute; left: 18px; right: 18px; bottom: 16px; z-index: 2; display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; pointer-events: none">
+          <span style="display: flex; align-items: center; gap: 8px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>{{cur.num}}</span>
+          <span style="color: #eeeeee; font-size: 12px"><b style="font-weight: 600">{{cur.price}}</b></span>
+        </div>
+      </div>
+      <!-- Las 3 fotos de abajo muestran los 3 productos que siguen; cambian junto con la grande. Tocar una la pone en grande. -->
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+        <sc-for list="{{thumbs}}" as="th" hint-placeholder-count="3">
+          <button type="button" class="mini" onClick="{{th.go}}" aria-label="{{th.label}}" style="position: relative; height: 180px; border: 0; padding: 0; border-radius: 14px; overflow: hidden; background: #151517">
+            <sc-for list="{{th.layers}}" as="ly" hint-placeholder-count="5">
+              <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{ly.grad}}; opacity: {{ly.op}}">
+                <svg width="76" height="106" viewBox="0 0 100 140" aria-hidden="true"><path d="{{ly.shape}}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1"></path></svg>
+              </div>
+            </sc-for>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. OFERTAS Y DESTACADOS: dos filas en movimiento continuo, cada una con su título y su indicador de posición -->
+  <section style="display: flex; flex-direction: column; gap: 36px; padding: 40px 0 44px">
+    <p class="in-left" style="animation-delay: 800ms; margin: 0; max-width: 52ch; font-size: 15px; line-height: 1.65; color: #d9d9dc">Los mismos productos que usamos en el salón, para que tu resultado dure en casa.</p>
+    <div style="display: flex; flex-direction: column; gap: 40px">
+      <!-- Fila 1: Ofertas, título a la izquierda, se mueve hacia la DERECHA -->
+      <div class="fila in-left" style="animation-delay: 900ms; display: flex; flex-direction: column">
+        <div style="display: flex; justify-content: flex-start; align-items: baseline; gap: 12px">
+          <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 30px; line-height: 1.05; color: #ffffff; text-transform: uppercase">Ofertas</h2>
+          <span style="font-size: 12px; color: #8a8a90">{{fila1.count}}</span>
+        </div>
+        <div class="mq" style="margin: 0 -48px; padding: 24px 0">
+          <div class="mq-track mq-der" style="animation-duration: {{fila1.dur}}s; animation-delay: {{fila1.delay}}s">
+            <sc-for list="{{fila1.cards}}" as="p" hint-placeholder-count="6">
+            <article class="pc" style="width: 296px; height: 390px; margin-right: 24px; border-radius: 14px; background: #151517">
+              <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{p.grad}}">
+                <svg width="140" height="196" viewBox="0 0 100 140" aria-hidden="true"><path d="{{p.shape}}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1"></path></svg>
+              </div>
+              <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.78) 100%); pointer-events: none"></div>
+              <div class="velo" style="position: absolute; inset: 0; background: rgba(8,8,10,0.28); pointer-events: none"></div>
+              <span style="position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px; background: rgba(12,12,14,0.8); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: #ffffff"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>{{p.tag}}</span>
+              <div style="position: absolute; left: 14px; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 4px; pointer-events: none">
+                <span style="font-weight: 700; font-size: 15px; line-height: 1.25">{{p.n}}</span>
+                <span style="font-size: 13px; color: #ffffff; font-weight: 600">{{p.price}} <s style="margin-left: 6px; color: #a6a6a6; font-weight: 400; font-size: 12px">{{p.antes}}</s></span>
+              </div>
+              <a href="DetalleProducto.dc.html" class="cap" aria-label="Ver detalles de {{p.n}}" style="text-decoration: none; box-sizing: border-box; position: absolute; left: 50%; top: 50%; margin-top: -21px; z-index: 3; display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 6px 0 18px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.94); color: #0b0b0c; font-size: 13px; font-weight: 600; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.35); backdrop-filter: blur(10px)">Ver detalles <span style="width: 30px; height: 30px; border-radius: 50%; background: #0b0b0c; color: #ffffff; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></span></a>
+            </article>
+            </sc-for>
+          </div>
+        </div>
+        <!-- Indicador de posición: una rayita por producto; la blanca avanza con la fila y se detiene con ella -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 14px">
+          <button type="button" onClick="{{fila1.prev}}" aria-label="Producto anterior en Ofertas" style="width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: #8a8a90; font-family: inherit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div style="position: relative; display: flex; gap: 5px; align-items: center; height: 3px">
+            <sc-for list="{{fila1.dashes}}" as="d" hint-placeholder-count="7">
+              <span style="width: 18px; height: 2px; border-radius: 2px; background: #3a3a3f"></span>
+            </sc-for>
+            <span class="ind-thumb" style="position: absolute; left: 0; top: 0; width: 18px; height: 3px; border-radius: 2px; background: #ffffff; --ini: {{fila1.ini}}px; --fin: {{fila1.fin}}px; animation-duration: {{fila1.tdur}}s; animation-delay: {{fila1.delay}}s; animation-timing-function: steps({{fila1.n}}, end)"></span>
+          </div>
+          <button type="button" onClick="{{fila1.next}}" aria-label="Siguiente producto en Ofertas" style="width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: #8a8a90; font-family: inherit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></button>
+        </div>
+      </div>
+      <!-- Fila 2: Destacados, título a la derecha, se mueve hacia la IZQUIERDA -->
+      <div class="fila in-right" style="animation-delay: 1100ms; display: flex; flex-direction: column">
+        <div style="display: flex; justify-content: flex-end; align-items: baseline; gap: 12px">
+          <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 30px; line-height: 1.05; color: #ffffff; text-transform: uppercase">Destacados</h2>
+          <span style="font-size: 12px; color: #8a8a90">{{fila2.count}}</span>
+        </div>
+        <div class="mq" style="margin: 0 -48px; padding: 24px 0">
+          <div class="mq-track" style="animation-duration: {{fila2.dur}}s; animation-delay: {{fila2.delay}}s">
+            <sc-for list="{{fila2.cards}}" as="p" hint-placeholder-count="6">
+            <article class="pc" style="width: 296px; height: 390px; margin-right: 24px; border-radius: 14px; background: #151517">
+              <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{p.grad}}">
+                <svg width="140" height="196" viewBox="0 0 100 140" aria-hidden="true"><path d="{{p.shape}}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1"></path></svg>
+              </div>
+              <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.78) 100%); pointer-events: none"></div>
+              <div class="velo" style="position: absolute; inset: 0; background: rgba(8,8,10,0.28); pointer-events: none"></div>
+              <span style="position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px; background: rgba(12,12,14,0.8); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700; color: #ffffff"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>{{p.tag}}</span>
+              <div style="position: absolute; left: 14px; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 4px; pointer-events: none">
+                <span style="font-weight: 700; font-size: 15px; line-height: 1.25">{{p.n}}</span>
+                <span style="font-size: 13px; color: #ffffff; font-weight: 600">{{p.price}} <s style="margin-left: 6px; color: #a6a6a6; font-weight: 400; font-size: 12px">{{p.antes}}</s></span>
+              </div>
+              <a href="DetalleProducto.dc.html" class="cap" aria-label="Ver detalles de {{p.n}}" style="text-decoration: none; box-sizing: border-box; position: absolute; left: 50%; top: 50%; margin-top: -21px; z-index: 3; display: inline-flex; align-items: center; gap: 10px; height: 42px; padding: 0 6px 0 18px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.94); color: #0b0b0c; font-size: 13px; font-weight: 600; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.35); backdrop-filter: blur(10px)">Ver detalles <span style="width: 30px; height: 30px; border-radius: 50%; background: #0b0b0c; color: #ffffff; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></span></a>
+            </article>
+            </sc-for>
+          </div>
+        </div>
+        <!-- Indicador de posición: una rayita por producto; la blanca avanza con la fila y se detiene con ella -->
+        <div style="display: flex; justify-content: center; align-items: center; gap: 14px">
+          <button type="button" onClick="{{fila2.prev}}" aria-label="Producto anterior en Destacados" style="width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: #8a8a90; font-family: inherit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+          <div style="position: relative; display: flex; gap: 5px; align-items: center; height: 3px">
+            <sc-for list="{{fila2.dashes}}" as="d" hint-placeholder-count="7">
+              <span style="width: 18px; height: 2px; border-radius: 2px; background: #3a3a3f"></span>
+            </sc-for>
+            <span class="ind-thumb" style="position: absolute; left: 0; top: 0; width: 18px; height: 3px; border-radius: 2px; background: #ffffff; --ini: {{fila2.ini}}px; --fin: {{fila2.fin}}px; animation-duration: {{fila2.tdur}}s; animation-delay: {{fila2.delay}}s; animation-timing-function: steps({{fila2.n}}, end)"></span>
+          </div>
+          <button type="button" onClick="{{fila2.next}}" aria-label="Siguiente producto en Destacados" style="width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: #8a8a90; font-family: inherit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. FILTROS (sticky en la app) — igual que Servicios -->
+  <div id="catalogo" class="in-up" style="animation-delay: 1300ms; display: flex; align-items: center; gap: 12px; margin: 0 -48px; padding: 12px 48px; border-top: 1px solid #1f1f22; border-bottom: 1px solid #1f1f22; background: rgba(11,11,12,0.86)">
+    <div style="display: flex; gap: 8px; flex-grow: 1; min-width: 0">
+      <sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+        <button type="button" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="border: 0; border-radius: 999px; padding: 8px 15px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; background: {{c.bg}}; color: {{c.fg}}">{{c.label}}</button>
+      </sc-for>
+    </div>
+    <label style="display: flex; align-items: center; gap: 8px; width: 230px; height: 34px; padding: 0 14px; box-sizing: border-box; border-radius: 999px; background: #18181b; color: #8a8a90">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <input type="text" value="{{q}}" onChange="{{onQ}}" placeholder="Buscar producto…" aria-label="Buscar producto" style="flex-grow: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: #ffffff; font-size: 13px; font-family: inherit">
+    </label>
+    <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #8a8a90">{{count}}</span>
+  </div>
+
+  <!-- 3. CATÁLOGO — idéntico a las categorías de Servicios -->
+  <!-- 3a. "Todos": una fila por categoría, solo los primeros 4 -->
+  <sc-if value="{{grouped}}" hint-placeholder-val="{{true}}">
+    <div style="display: flex; flex-direction: column; gap: 56px; padding-top: 32px">
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+        <section style="display: flex; flex-direction: column; gap: 18px">
+          <div class="in-left" style="animation-delay: {{g.delay}}ms; display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+            <div style="display: flex; align-items: baseline; gap: 12px; min-width: 0; flex-wrap: wrap">
+              <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 22px; color: #ffffff; text-transform: uppercase">{{g.name}}</h2>
+              <span style="font-size: 12px; color: #8a8a90">{{g.count}}</span>
+            </div>
+            <button type="button" onClick="{{g.verTodo}}" style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0; padding: 4px 0; color: #a9c6ec; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-family: inherit">{{g.verLabel}} <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 20px">
+            <sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+              <article class="{{it.anim}}" style="animation-delay: {{it.delay}}ms; display: flex; flex-direction: column; gap: 10px; min-width: 0">
+                <div class="thumb" style="position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #151517">
+                  <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{it.grad}}; opacity: {{it.op}}">
+                    <svg width="96" height="134" viewBox="0 0 100 140" aria-hidden="true"><path d="{{it.shape}}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1"></path></svg>
+                  </div>
+                  <a href="DetalleProducto.dc.html" aria-label="Ver {{it.n}}" style="display: block; text-decoration: none; box-sizing: border-box; position: absolute; inset: 0; z-index: 1; background: transparent; border: 0"></a>
+                  <sc-if value="{{it.oferta}}" hint-placeholder-val="{{false}}">
+                    <span style="position: absolute; top: 10px; left: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; background: rgba(12,12,14,0.8); color: #ffffff; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; pointer-events: none"><span style="width: 5px; height: 5px; border-radius: 50%; background: #ff85a1"></span>{{it.dcto}}</span>
+                  </sc-if>
+                  <div style="position: absolute; left: 10px; bottom: 10px; right: 52px; z-index: 2; display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none">
+                    <sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="1">
+                      <span style="background: rgba(12,12,14,0.8); color: #ffffff; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700">{{tg.t}}</span>
+                    </sc-for>
+                  </div>
+                  <a href="DetalleProducto.dc.html" aria-label="Ver detalles de {{it.n}}" title="Ver detalles" style="text-decoration: none; box-sizing: border-box; position: absolute; bottom: 10px; right: 10px; z-index: 2; width: 36px; height: 36px; border-radius: 50%; border: 0; background: #ffffff; color: #111111; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></a>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+                  <span style="font-weight: 700; font-size: 15px; line-height: 1.25">{{it.n}}</span>
+                  <span style="flex-shrink: 0; font-size: 12px; color: #a6a6a6"><s style="margin-right: 6px">{{it.antes}}</s><b style="color: #ffffff; font-weight: 600; font-size: 13px">{{it.price}}</b></span>
+                </div>
+                <span style="margin-top: -6px; font-size: 12px; color: #8a8a90">{{it.stock}}</span>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- 3b. Una categoría o una búsqueda: grilla completa -->
+  <sc-if value="{{flat}}" hint-placeholder-val="{{false}}">
+    <div style="display: flex; flex-direction: column; gap: 18px; padding-top: 32px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <div style="display: flex; align-items: baseline; gap: 12px">
+          <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 22px; color: #ffffff; text-transform: uppercase">{{flatTitle}}</h2>
+          <span style="font-size: 12px; color: #8a8a90">{{flatCount}}</span>
+        </div>
+        <sc-if value="{{showBack}}" hint-placeholder-val="{{true}}">
+          <button type="button" onClick="{{backTodos}}" style="flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 0; padding: 4px 0; color: #a9c6ec; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; font-family: inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg> Todas las categorías</button>
+        </sc-if>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 20px">
+        <sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+          <article style="display: flex; flex-direction: column; gap: 10px; min-width: 0">
+            <div class="thumb" style="position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #151517">
+              <div class="ph" style="position: absolute; inset: 0; display: grid; place-items: center; background: {{it.grad}}; opacity: {{it.op}}">
+                <svg width="96" height="134" viewBox="0 0 100 140" aria-hidden="true"><path d="{{it.shape}}" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.35)" stroke-width="1"></path></svg>
+              </div>
+              <a href="DetalleProducto.dc.html" aria-label="Ver {{it.n}}" style="display: block; text-decoration: none; box-sizing: border-box; position: absolute; inset: 0; z-index: 1; background: transparent; border: 0"></a>
+              <sc-if value="{{it.oferta}}" hint-placeholder-val="{{false}}">
+                <span style="position: absolute; top: 10px; left: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 6px; background: rgba(12,12,14,0.8); color: #ffffff; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; pointer-events: none"><span style="width: 5px; height: 5px; border-radius: 50%; background: #ff85a1"></span>{{it.dcto}}</span>
+              </sc-if>
+              <div style="position: absolute; left: 10px; bottom: 10px; right: 52px; z-index: 2; display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none">
+                <sc-for list="{{it.tags}}" as="tg" hint-placeholder-count="1">
+                  <span style="background: rgba(12,12,14,0.8); color: #ffffff; border-radius: 5px; padding: 4px 9px; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700">{{tg.t}}</span>
+                </sc-for>
+              </div>
+              <a href="DetalleProducto.dc.html" aria-label="Ver detalles de {{it.n}}" title="Ver detalles" style="text-decoration: none; box-sizing: border-box; position: absolute; bottom: 10px; right: 10px; z-index: 2; width: 36px; height: 36px; border-radius: 50%; border: 0; background: #ffffff; color: #111111; display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M8 7h9v9"></path></svg></a>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+              <span style="font-weight: 700; font-size: 15px; line-height: 1.25">{{it.n}}</span>
+              <span style="flex-shrink: 0; font-size: 12px; color: #a6a6a6"><s style="margin-right: 6px">{{it.antes}}</s><b style="color: #ffffff; font-weight: 600; font-size: 13px">{{it.price}}</b></span>
+            </div>
+            <span style="margin-top: -6px; font-size: 12px; color: #8a8a90">{{it.stock}}</span>
+          </article>
+        </sc-for>
+        <sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+          <p style="grid-column: 1 / -1; text-align: center; color: #8a8a90; padding: 40px 0; margin: 0">{{emptyMsg}}</p>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- 4. CÓMO COMPRAR -->
+  <section style="margin-top: 64px; padding-top: 40px; border-top: 1px solid #1f1f22">
+    <span style="font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #a6a6a6">Así de simple</span>
+    <h2 style="margin: 10px 0 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 28px; color: #ffffff; text-transform: uppercase">Cómo comprar</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 24px">
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px">
+        <span style="font-size: 11px; letter-spacing: 0.2em; color: #a9c6ec">PASO 1</span>
+        <h3 style="font-size: 15px; margin: 10px 0 6px">Elige tus productos</h3>
+        <p style="margin: 0; color: #a6a6a6; line-height: 1.55; font-size: 13px">Toca un producto (o la flecha ↗) para ver sus detalles, elige la cantidad y agrégalo a tu carrito.</p>
+      </div>
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px">
+        <span style="font-size: 11px; letter-spacing: 0.2em; color: #a9c6ec">PASO 2</span>
+        <h3 style="font-size: 15px; margin: 10px 0 6px">Confirma tu pedido</h3>
+        <p style="margin: 0; color: #a6a6a6; line-height: 1.55; font-size: 13px">En el carrito aplica tu cupón, paga por Yape, Plin o transferencia y sube tu comprobante.</p>
+      </div>
+      <div style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 22px">
+        <span style="font-size: 11px; letter-spacing: 0.2em; color: #a9c6ec">PASO 3</span>
+        <h3 style="font-size: 15px; margin: 10px 0 6px">Recoge o recibe</h3>
+        <p style="margin: 0; color: #a6a6a6; line-height: 1.55; font-size: 13px">Te avisamos en Notificaciones cuando tu pedido esté listo para recoger o en camino a [ZONA].</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. AYUDA (solo estético por ahora) -->
+  <section style="margin-top: 72px; padding-top: 56px; border-top: 1px solid #1f1f22">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 14px; max-width: 560px">
+        <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 46px; line-height: 1.05; color: #ffffff; text-transform: uppercase">¿No encuentras tu producto?</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.65; color: #a6a6a6">Cuéntanos qué buscas y te recomendamos el producto ideal para tu tipo de cabello, uñas o piel.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end; text-align: right; flex-shrink: 0">
+        <span style="font-size: 26px; font-weight: 700; color: #ffffff">Lun–Sáb 9:00–20:00</span>
+        <span style="font-size: 12px; color: #8a8a90">horario de atención por WhatsApp y en el local</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 40px">
+      <div style="display: flex; flex-direction: column; gap: 10px; background: #111113; border: 1px solid #1f1f22; border-radius: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 26px">
+        <span style="width: 38px; height: 38px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></span>
+        <h3 style="margin: 16px 0 0; font-size: 15px; font-weight: 700; color: #ffffff">Escríbenos por WhatsApp</h3>
+        <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #a6a6a6">Te decimos si lo tenemos, cuándo llega o cuál te conviene más.</p>
+        <button type="button" style="align-self: flex-start; background: transparent; border: 1px solid #3a3a3f; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #ffffff; font-family: inherit">Abrir WhatsApp</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; background: #111113; border: 1px solid #1f1f22; border-radius: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 26px">
+        <span style="width: 38px; height: 38px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg></span>
+        <h3 style="margin: 16px 0 0; font-size: 15px; font-weight: 700; color: #ffffff">Contacto y ubicación</h3>
+        <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #a6a6a6">Llámanos o visítanos: [DIRECCIÓN] · [TELÉFONO]. Te atendemos en el mismo horario.</p>
+        <button type="button" style="align-self: flex-start; background: transparent; border: 1px solid #3a3a3f; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #ffffff; font-family: inherit">Ver contacto</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; background: #111113; border: 1px solid #1f1f22; border-radius: 14px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 26px">
+        <span style="width: 38px; height: 38px; border-radius: 10px; border: 1px solid #2e2e2e; background: #18181b; color: #ffffff; display: grid; place-items: center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><path d="M12 17h.01"></path></svg></span>
+        <h3 style="margin: 16px 0 0; font-size: 15px; font-weight: 700; color: #ffffff">Preguntas frecuentes</h3>
+        <p style="margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: #a6a6a6">Envíos, pagos, cambios y devoluciones: todo en un solo lugar.</p>
+        <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; border: 1px dashed #2e2e2e; border-radius: 999px; padding: 10px 18px; font-size: 13px; font-weight: 600; color: #8a8a90">Muy pronto</span>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top: 48px; padding-top: 20px; border-top: 1px solid #1f1f22; display: flex; justify-content: space-between; color: #8a8a90; font-size: 12px">
+    <span>© Jaise Beauty</span><span>PieClienteWeb (sin cambios)</span>
+  </footer>
+
+  <!-- Barra flotante "Tu carrito" -->
+  <sc-if value="{{showDock}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 10; width: 560px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 20px; background: rgba(20,20,23,0.92); border: 1px solid #2a2a2f; border-radius: 999px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); backdrop-filter: blur(16px)">
+      <span style="flex-grow: 1; font-size: 13px"><b style="font-weight: 600">{{dockN}}</b> <span style="color: #a6a6a6">en tu carrito ·</span> <b style="font-weight: 600">{{dockT}}</b></span>
+      <a href="#catalogo" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; background: #a9c6ec; color: #0b0b0c; border-radius: 999px; padding: 5px 5px 5px 18px; font-weight: 600; font-size: 13px">Ver carrito <span style="width: 28px; height: 28px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></a>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5160}}'>
+// Siluetas de producto (viewBox 0 0 100 140) — solo para el mockup; en la app van las fotos reales del bucket fotos-productos.
+const FORMA = {
+  frasco: 'M40 8h20v16H40z M32 28h36a8 8 0 0 1 8 8v88a8 8 0 0 1-8 8H32a8 8 0 0 1-8-8V36a8 8 0 0 1 8-8z',
+  pote: 'M20 50h60v12H20z M24 66h52v52a12 12 0 0 1-12 12H36a12 12 0 0 1-12-12z',
+  gotero: 'M46 4h8v22h-8z M40 26h20v12H40z M32 42h36a6 6 0 0 1 6 6v74a8 8 0 0 1-8 8H34a8 8 0 0 1-8-8V48a6 6 0 0 1 6-6z',
+  esmalte: 'M43 6h14v44H43z M30 56h40a10 10 0 0 1 10 10v52a12 12 0 0 1-12 12H32a12 12 0 0 1-12-12V66a10 10 0 0 1 10-10z',
+  spray: 'M42 4h18v10H42z M60 7h16v4H60z M40 16h22v12H40z M32 32h38a6 6 0 0 1 6 6v84a8 8 0 0 1-8 8H34a8 8 0 0 1-8-8V38a6 6 0 0 1 6-6z'
+};
+// Degradado de respaldo para productos sin foto: paleta por categoría, variada por id (mismo criterio que Servicios).
+const PAL = {
+  'Cuidado del cabello': ['#c9a27e', '#1d1712', '#4a3526', '#a9c6ec'],
+  'Styling': ['#a9c6ec', '#141c2b', '#33466b', '#ff85a1'],
+  'Uñas': ['#ff85a1', '#2b1a2a', '#6b3a5c', '#a9c6ec'],
+  'Rostro y piel': ['#cfe0f6', '#1b2530', '#4d6f8f', '#ff85a1']
+};
+function gradFor(s) {
+  const p = PAL[s.c] || PAL['Rostro y piel'];
+  const x = 15 + (s.id * 29) % 70, y = 10 + (s.id * 43) % 75, ang = 120 + (s.id * 37) % 90;
+  return 'radial-gradient(110% 90% at ' + x + '% ' + y + '%, ' + p[0] + ' 0%, transparent 55%), linear-gradient(' + ang + 'deg, ' + p[1] + ', ' + p[2] + ' 65%, ' + p[3] + ' 140%)';
+}
+// a = precio_antes (oferta), st = stock_actual, dest = destacado. Datos de ejemplo.
+const P = [
+  { id: 1, n: 'Shampoo reparador', c: 'Cuidado del cabello', t: 'Shampoo', p: 45, a: 56, st: 12, f: 'frasco' },
+  { id: 2, n: 'Acondicionador nutritivo', c: 'Cuidado del cabello', t: 'Acondicionador', p: 42, st: 8, f: 'frasco', dest: true },
+  { id: 3, n: 'Mascarilla de keratina', c: 'Cuidado del cabello', t: 'Mascarilla', p: 68, a: 85, st: 5, f: 'pote' },
+  { id: 4, n: 'Sérum anti-frizz', c: 'Cuidado del cabello', t: 'Sérum', p: 55, st: 0, f: 'gotero' },
+  { id: 5, n: 'Aceite de argán', c: 'Cuidado del cabello', t: 'Tratamiento', p: 60, a: 72, st: 6, f: 'gotero' },
+  { id: 6, n: 'Protector térmico', c: 'Styling', t: 'Protector', p: 49, st: 10, f: 'spray', dest: true },
+  { id: 7, n: 'Spray fijador', c: 'Styling', t: 'Fijador', p: 38, st: 14, f: 'spray', dest: true },
+  { id: 8, n: 'Cera modeladora', c: 'Styling', t: 'Cera', p: 32, st: 9, f: 'pote' },
+  { id: 9, n: 'Crema para rizos', c: 'Styling', t: 'Rizos', p: 46, a: 55, st: 7, f: 'frasco' },
+  { id: 10, n: 'Esmalte semipermanente', c: 'Uñas', t: 'Esmalte', p: 25, st: 30, f: 'esmalte', dest: true },
+  { id: 11, n: 'Top coat brillo', c: 'Uñas', t: 'Top coat', p: 22, a: 28, st: 18, f: 'esmalte' },
+  { id: 12, n: 'Base fortalecedora', c: 'Uñas', t: 'Base', p: 24, st: 11, f: 'esmalte' },
+  { id: 13, n: 'Aceite de cutícula', c: 'Uñas', t: 'Cuidado', p: 18, st: 20, f: 'gotero', dest: true },
+  { id: 14, n: 'Removedor sin acetona', c: 'Uñas', t: 'Removedor', p: 15, st: 16, f: 'frasco' },
+  { id: 15, n: 'Sérum de vitamina C', c: 'Rostro y piel', t: 'Sérum', p: 79, a: 95, st: 4, f: 'gotero' },
+  { id: 16, n: 'Crema hidratante', c: 'Rostro y piel', t: 'Crema', p: 65, st: 7, f: 'pote', dest: true },
+  { id: 17, n: 'Agua micelar', c: 'Rostro y piel', t: 'Limpieza', p: 39, st: 13, f: 'frasco', dest: true },
+  { id: 18, n: 'Protector solar FPS 50', c: 'Rostro y piel', t: 'Solar', p: 58, a: 68, st: 3, f: 'frasco' }
+];
+const POR_FILA = 4;
+// Mínimo de tarjetas distintas por cinta antes de duplicarla: si hay pocas ofertas, la lista se repite para llenar el ancho.
+const MIN_CINTA = 10;
+const ENTRADA = { fila: 1500, paso: 220, carta: 120, entre: 90 };
+const soles = (v) => 'S/ ' + v;
+const dcto = (s) => '−' + Math.round((1 - s.p / s.a) * 100) + '%';
+function stockTxt(s) {
+  if (s.st <= 0) return 'Agotado';
+  if (s.st <= 5) return 'Últimas ' + s.st + ' unidades';
+  return 'En stock';
+}
+// Medidas de la cinta en este artboard: ancho de tarjeta + separación (px) y velocidad (px/s).
+const CINTA = { paso: 320, vel: 36 };
+const RAYA = 23; // 18px de rayita + 5px de separación en el indicador
+// Cinta: la lista se repite (k veces) hasta llenar el ancho y luego se duplica para el bucle sin salto.
+// El indicador tiene una rayita por producto distinto; la blanca da un paso por tarjeta que pasa (steps(n)).
+// Las flechas corren la fila y su indicador una tarjeta hacia el lado de la flecha (› = rayita a la derecha), cambiando animation-delay.
+function cinta(lista, tag, derecha, off, mover) {
+  const n = lista.length;
+  const k = Math.max(1, Math.ceil(MIN_CINTA / n));
+  let base = [];
+  for (let i = 0; i < k; i++) base = base.concat(lista);
+  const dur = +(base.length * CINTA.paso / CINTA.vel).toFixed(2);
+  const porTarjeta = dur / base.length;
+  return {
+    n, dur,
+    tdur: +(dur / k).toFixed(3),
+    delay: -(+(dur * 10 + off * porTarjeta).toFixed(3)),
+    ini: derecha ? 0 : (n - 1) * RAYA,
+    fin: derecha ? n * RAYA : -RAYA,
+    count: n + (n === 1 ? ' producto' : ' productos'),
+    dashes: lista.map((s) => ({ id: s.id })),
+    prev: () => mover(derecha ? -1 : 1),
+    next: () => mover(derecha ? 1 : -1),
+    cards: base.concat(base).map((s) => ({ n: s.n, price: soles(s.p), antes: s.a ? soles(s.a) : '', grad: gradFor(s), shape: FORMA[s.f], tag: tag(s) }))
+  };
+}
+// Inicio: productos que rotan cada 5 s. La etiqueta de oferta se calcula sola; las demás se eligen en el POS.
+const HERO_P = [
+  { id: 3, desc: 'Reconstruye la fibra dañada por tintes y planchas. Úsala una vez por semana y el brillo del salón te dura en casa.' },
+  { id: 6, tag: 'Lo más vendido', desc: 'Protege tu cabello del calor de la plancha y la secadora sin dejarlo pesado ni grasoso.' },
+  { id: 15, desc: 'Unifica el tono y le da luz a tu piel. Unas gotas cada mañana, antes del protector solar.' },
+  { id: 10, tag: 'Lo más vendido', desc: 'Color intenso y brillo de gel que dura hasta tres semanas sin descascararse.' },
+  { id: 16, tag: 'Nuevo', desc: 'Hidratación ligera para todo el día, pensada para piel sensible después de un facial.' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cat: 'Todos', q: '', carrito: [3, 10], off1: 0, off2: 0, hidx: 0 };
+  }
+  componentDidMount() { this.arm(); }
+  componentWillUnmount() { clearInterval(this.timer); }
+  arm() {
+    clearInterval(this.timer);
+    if (HERO_P.length > 1) this.timer = setInterval(() => this.setState({ hidx: (this.state.hidx + 1) % HERO_P.length }), 5000);
+  }
+  go(i) { this.setState({ hidx: i }); this.arm(); }
+  card(s) {
+    const tags = [{ t: s.t }].concat(s.st <= 0 ? [{ t: 'Agotado' }] : []);
+    return { n: s.n, price: soles(s.p), antes: s.a ? soles(s.a) : '', oferta: !!s.a, dcto: s.a ? dcto(s) : '', grad: gradFor(s), shape: FORMA[s.f], op: s.st <= 0 ? 0.45 : 1, tags, stock: stockTxt(s), anim: '', delay: 0 };
+  }
+  renderVals() {
+    const st = this.state;
+    const cats = ['Todos'].concat([...new Set(P.map((s) => s.c))]);
+    const q = st.q.trim().toLowerCase();
+    const grouped = st.cat === 'Todos' && !q;
+    const list = P.filter((s) => (st.cat === 'Todos' || s.c === st.cat) && (!q || s.n.toLowerCase().includes(q)));
+    const sel = P.filter((s) => st.carrito.includes(s.id));
+    const plural = (n) => n + (n === 1 ? ' producto' : ' productos');
+    const dest = HERO_P.map((h) => Object.assign({}, P.find((s) => s.id === h.id), { tag0: h.tag || 'Destacado', desc: h.desc }));
+    const N = dest.length, hi = st.hidx;
+    return {
+      heroTxt: dest.map((s, i) => {
+        const on = i === hi, prev = i === (hi - 1 + N) % N;
+        return { n: s.n, tag: s.a ? 'En oferta ' + dcto(s) : s.tag0, desc: s.desc, price: soles(s.p), antes: s.a ? soles(s.a) : '', sub: s.t, hidden: on ? 'false' : 'true', pe: on ? 'auto' : 'none', op: on ? 1 : 0, blur: on ? 0 : 8, y: on ? 0 : (prev ? -16 : 16), d0: on ? 250 : 0, d1: on ? 350 : 0, d2: on ? 480 : 0 };
+      }),
+      slides: dest.map((s, i) => ({ grad: gradFor(s), shape: FORMA[s.f], op: i === hi ? 1 : 0, scale: i === hi ? 1 : 1.06 })),
+      bars: dest.map((s, i) => ({ label: 'Ir a ' + s.n, cls: i === hi ? 'bar run' : (i < hi ? 'bar done' : 'bar'), go: () => this.go(i) })),
+      thumbs: [1, 2, 3].map((j) => {
+        const t = (hi + j) % N;
+        return { label: 'Ver ' + dest[t].n, go: () => this.go(t), layers: dest.map((s, i) => ({ grad: gradFor(s), shape: FORMA[s.f], op: i === t ? 1 : 0 })) };
+      }),
+      cur: { num: '0' + (hi + 1) + ' / 0' + N, price: soles(dest[hi].p) },
+      heroAdd: () => { const id = dest[hi].id; if (!st.carrito.includes(id)) this.setState({ carrito: st.carrito.concat(id) }); },
+      fila1: cinta(P.filter((s) => s.a && s.st > 0), (s) => 'Oferta ' + dcto(s), true, st.off1, (d) => this.setState({ off1: st.off1 + d })),
+      fila2: cinta(P.filter((s) => s.dest && s.st > 0), () => 'Destacado', false, st.off2, (d) => this.setState({ off2: st.off2 + d })),
+      chips: cats.map((c) => {
+        const on = st.cat === c;
+        return { label: c, pressed: on ? 'true' : 'false', bg: on ? '#ffffff' : '#18181b', fg: on ? '#0b0b0c' : '#d6d6da', pick: () => this.setState({ cat: c }) };
+      }),
+      q: st.q,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      count: plural(grouped ? P.length : list.length),
+      grouped,
+      flat: !grouped,
+      groups: cats.slice(1).map((c, gi) => {
+        const all = P.filter((s) => s.c === c);
+        return { name: c, count: plural(all.length), verLabel: 'Ver todo (' + all.length + ')', more: all.length > POR_FILA, moreLabel: 'Ver los ' + all.length, moreDelay: ENTRADA.fila + gi * ENTRADA.paso + ENTRADA.carta + POR_FILA * ENTRADA.entre, items: all.slice(0, POR_FILA).map((s, k) => Object.assign(this.card(s), { anim: (k < POR_FILA / 2 ? 'in-left' : 'in-right'), delay: ENTRADA.fila + gi * ENTRADA.paso + ENTRADA.carta + k * ENTRADA.entre })), delay: ENTRADA.fila + gi * ENTRADA.paso, verTodo: () => this.setState({ cat: c }) };
+      }),
+      flatTitle: q ? 'Resultados' : st.cat,
+      flatCount: plural(list.length),
+      showBack: st.cat !== 'Todos',
+      backTodos: () => this.setState({ cat: 'Todos' }),
+      items: list.map((s) => this.card(s)),
+      empty: list.length === 0,
+      emptyMsg: 'Sin resultados para “' + st.q + '”.',
+      showDock: sel.length > 0,
+      dockN: plural(sel.length),
+      dockT: soles(sel.reduce((t, s) => t + s.p, 0))
+    };
+  }
+}
+</script>
+</body>
+</html>

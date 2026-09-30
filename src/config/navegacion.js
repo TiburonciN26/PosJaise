@@ -22,6 +22,7 @@ import {
   PiggyBank,
   Gift,
   Stamp,
+  Image,
 } from 'lucide-react'
 
 export const secciones = [
@@ -141,6 +142,14 @@ export const secciones = [
     path: '/fidelizacion-web',
     label: 'Fidelización Web',
     icono: Stamp,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    path: '/galeria-web',
+    label: 'Galería Web',
+    icono: Image,
     roles: ['ADMINISTRADOR'],
     tema: 'rojo',
     padre: '/web',

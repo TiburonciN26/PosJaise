@@ -572,14 +572,18 @@ de prioridad:
 
 1. ✅ **Equipo** — construido y aplicado (SQL 83, corrida a mano por el
    usuario). Tarjetas de personal en el portal cliente.
-2. **Galería** (antes/después) — depende 100% de fotos reales del
-   salón, no construir con placeholders/stock.
-3. **Reseñas** — testimonios públicos de clientas; reutilizaría el
-   componente de revelado palabra-por-palabra de Inicio.
-4. **Contacto** — historia corta, dirección+mapa, horario, contadores
-   animados (count-up al hacer scroll).
-5. **Referidos** (§2.8, ya estaba en el roadmap desde antes) — código/
-   link para compartir, recompensa ligada a Fidelización.
+2. **Galería** (antes/después) — único punto pendiente de esta lista.
+   Depende 100% de fotos reales del salón, no construir con
+   placeholders/stock — sigue como "Próximamente" en
+   `NosotrosCliente.jsx` hasta que el usuario las pase.
+3. ✅ **Reseñas** — construido (§7.4, SQL 86). Muro público de
+   testimonios + "Tus reseñas" para escribir/editar la propia.
+4. ✅ **Contacto** — construido (§7.5, SQL 87). Dirección, horario,
+   WhatsApp y redes — sin contadores animados (no pedidos después,
+   se dejó de lado).
+5. ✅ **Referidos** (§2.8) — construido (§7.26/7.27, SQL 94-95).
+   Código/link para compartir + cupón de un solo uso, integrado al
+   sistema de cupones que después reusó Fidelización (§7.58).
 
 **Decisión de IA (arquitectura de información) — confirmada por el
 usuario**: estas 4 páginas de marca (Equipo/Galería/Reseñas/Contacto) NO
@@ -2974,3 +2978,2744 @@ cupones de % todavía:
   era un bug de frontend, no de datos). Sin verificación visual en
   vivo (mismo bloqueo de permisos que en §7.37-7.58) — pendiente que
   el usuario reintente el canje con `npm run dev`.
+
+### 7.60 React Bits ShinyText, agregado y aplicado al botón "Reserva tu cita"
+
+Nuevo componente `src/components/ShinyText.jsx` — puerto fiel de la
+versión JS + CSS de [React Bits ShinyText](https://reactbits.dev/text-animations/shiny-text):
+un `<div>` con un degradado recortado al texto (`background-clip:
+text`) y `background-size:200%`, animando `background-position` de
+100% a -100% — la banda clara del degradado, al desplazarse, se lee
+como un brillo recorriendo el texto. Mismas props que el original
+(`text`, `disabled`, `speed`, `className`). El CSS (`.shiny-text` +
+`@keyframes shiny-text-recorrido`) vive en `src/index.css`, no en un
+`.css` propio — mismo criterio que ya usa el resto del CSS a medida
+del proyecto (un solo archivo, no uno por componente).
+
+Aplicado en `InicioCliente.jsx`, botón "Reserva tu cita" del hero —
+`<ShinyText text="Reserva tu cita" speed={4} className="lw-cta-shiny" />`
+en vez del `<span className="lw-metal-azul-texto">` que tenía antes.
+El gris/blanco por defecto de React Bits queda intacto para cualquier
+otro uso futuro del componente — el botón usa `.lw-cta-shiny`
+(selector compuesto `.shiny-text.lw-cta-shiny`, gana por especificidad
+sin depender del orden en el archivo) que reemplaza el degradado por
+`var(--lw-metal-azul)` en vez de gris — pedido explícito del usuario
+("no modifiques los colores azul metálico"). No es un color nuevo: es
+el MISMO degradado que ya usan el nav activo/migaja/insignia del
+carrito (§7.57) — su propia banda clara (`#d3e4f8`) es la que hace de
+brillo al desplazarse, con `background-size:250%` (más ancho que el
+200% default) para que el recorrido se note más en un botón chico.
+También se agregó el apagado en hover (`.lw-cta-hero:hover
+.shiny-text.lw-cta-shiny`, reemplaza al `.lw-metal-azul-texto` viejo
+que quedó sin uso y se borró) — el botón se invierte a fondo claro/
+texto oscuro sólido ahí, un brillo animado no tendría sentido.
+- Build y lint verificados, sin warnings nuevos. Confirmado en el CSS
+  compilado que `.shiny-text`, `.shiny-text.lw-cta-shiny` y el
+  `@keyframes` quedaron bien generados. Sin verificación visual en
+  vivo (mismo bloqueo de permisos que en §7.37-7.59) — pendiente que
+  el usuario lo confirme con `npm run dev`.
+
+### 7.61 ShinyText: el bucle se cortaba a mitad de texto cada dos vueltas — causa real
+
+El usuario reportó el patrón exacto: primera vuelta completa bien,
+segunda vuelta se corta a la mitad, tercera vuelta completa de nuevo,
+así siempre — y pidió `speed={3}` + un `delay` de 1s (no existía ese
+prop).
+
+**Causa real**: §7.60 hizo que `.lw-cta-shiny` animara `background-
+position` sobre TODO `--lw-metal-azul` — un degradado 100% opaco de
+punta a punta, sin ninguna transparencia. El bucle de ShinyText solo
+es continuo porque el degradado ORIGINAL de React Bits es transparente
+en sus dos puntas (`rgba(255,255,255,0)` a los costados): al llegar a
+`background-position:-100%` y la animación saltar de vuelta a `100%`
+(el salto instantáneo que hace cualquier `animation: ... infinite`
+lineal al reiniciar), las dos puntas transparentes muestran lo mismo
+(el `color` de base asomando) — el ojo no nota el salto. Con
+`--lw-metal-azul` completo (sin transparencia), cada punta del
+degradado es un tramo de AZUL DISTINTO — ese salto se ve como un corte
+real cada vez que la animación reinicia, es decir, cada dos "vueltas"
+visuales del brillo (una vuelta = el recorrido completo; el corte pasa
+en el instante del reinicio, en el medio del texto porque ahí es donde
+estaba la banda clara en ese momento del ciclo).
+
+**Fix**: se volvió al mecanismo real de ShinyText — color de base
+SÓLIDO (`#a9c6ec`, ya un tono propio de `--lw-metal-azul`, no uno
+nuevo) + un degradado de brillo con las puntas de verdad transparentes,
+tomando el tono más claro del mismo degradado (`#d3e4f8`) con alfa en
+vez de blanco. `--lw-metal-azul` completo ya NO se usa como fondo
+animado en ningún lado del botón — solo sus dos colores por separado,
+que es lo que en realidad pedía "no modifiques los colores azul
+metálico" (mismos colores, mecanismo correcto).
+
+También: `delay` (prop nueva en `ShinyText.jsx`, no existe en el
+original de React Bits — se agregó porque hacía falta acá) vía
+`animation-delay` inline, mismo patrón que `speed`/`animation-
+duration`. Uso final: `speed={3} delay={1}`.
+- Build y lint verificados. Confirmado en el CSS compilado que el
+  degradado de `.lw-cta-shiny` quedó con alfa 0 en las dos puntas
+  (`#d3e4f800 ... #d3e4f8e6 ... #d3e4f800`). Sin verificación visual en
+  vivo (mismo bloqueo de permisos que en §7.37-7.60) — pendiente que
+  el usuario lo confirme con `npm run dev`.
+
+### 7.62 ShinyText: el efecto no se veía — bug real, `color` opaco tapaba el degradado animado
+
+El usuario pidió más intensidad y avisó que en la Web no se notaba el
+efecto para nada.
+
+**Causa real:** `.lw-cta-shiny` tenía `color: #a9c6ec` — SÓLIDO, alfa
+100%. `background-clip: text` pinta el degradado animado clipeado a la
+forma del texto, pero el relleno propio del texto (`color`) se pinta
+ENCIMA — si es 100% opaco, tapa el degradado por completo, sin
+importar cuánto brille. Por eso el ShinyText original de React Bits
+NUNCA usa un color sólido de base: usa `#b5b5b5a4` (gris con alfa
+~64%) — a propósito, para que el degradado de atrás sí se alcance a
+ver a través. Mi versión anterior copió el color pero sin el alfa, lo
+que apagaba el efecto entero sin que se notara en el CSS a simple
+vista (compilaba bien, no tiraba ningún error, simplemente no se veía).
+
+**Fix:** `color` pasa a `rgba(169, 198, 236, 0.78)` (el mismo
+`#a9c6ec` de siempre, con alfa) — dejando pasar el brillo del centro,
+que además ya quedó en alfa 1 (pedido anterior) para que se note
+fuerte al cruzar. Ancho de la banda vuelto a 40%/60% (el usuario pidió
+explícitamente no ensancharla, solo más intensidad — el ensanche de
+§7.61 quedó revertido).
+- Build y lint verificados. Confirmado en el CSS compilado
+  (`color:#a9c6ecc7`, alfa real aplicada). Sin verificación visual en
+  vivo (mismo bloqueo de permisos que en §7.37-7.61) — pendiente que
+  el usuario lo confirme con `npm run dev`.
+
+### 7.63 Galería construida (SQL 98) — cierra el último punto pendiente del §7
+
+El usuario destrabó el único punto que quedaba de la guía (§7.2 de esta
+sección, la lista de "contenido de marca"): usar las mismas dos fotos
+del hero de Inicio como prueba (nunca hubo fotos reales del salón
+disponibles) y armar el formato como el comparison-slider de ReactBits
+Pro — un slider horizontal arrastrable, no el círculo que revela con el
+cursor que ya tenía el hero. Además pidió su propio panel de control en
+Web POS para poder cargar más fotos.
+
+**`98_galeria_web.sql`** (aplicada en vivo vía Supabase MCP,
+verificada: tabla + RPC + fila de prueba confirmadas con SQL directo):
+- Tabla nueva `galeria_web` (titulo, antes_url, despues_url, orden,
+  activo, creado_en). RLS mismo patrón que `asistentes`
+  (`rol_actual() is not null` para leer, admin-only para escribir) +
+  el GRANT explícito que este proyecto siempre necesita a mano (ver
+  nota de memoria "Grants no automáticos en Supabase" — RLS sin GRANT
+  no alcanza).
+- Bucket nuevo `fotos-galeria` (público, solo admin escribe) — mismo
+  patrón que `fotos-asistentes` (83_equipo_web.sql).
+- `galeria_para_web()`: recorte security definer con solo lo activo,
+  mismo patrón que `equipo_para_web()` — único canal de lectura para
+  el cliente, la tabla entera sigue bloqueada para el rol CLIENTE.
+- **Decisión de diseño no trivial**: a diferencia de
+  `asistentes.foto_url`/`servicios.foto_url` (que guardan solo la RUTA
+  dentro de su bucket, resuelta con `urlPublicaFoto()` al leer),
+  `antes_url`/`despues_url` guardan la URL ya resuelta completa. Motivo:
+  esta tabla tiene que poder mostrar tanto una foto real subida a
+  Storage (URL pública completa) como la fila de prueba pedida por el
+  usuario, que apunta a las fotos que YA existían en `public/inicio-web/`
+  (nunca estuvieron en Storage, no tienen bucket) — no hay un único
+  bucket al que asumirle la ruta en todos los casos. El front distingue
+  los dos casos por si la URL empieza con `http` o no (`resolverUrlGaleria()`
+  en `NosotrosCliente.jsx`, `urlDeItem()` duplicado en el panel admin):
+  si no, se resuelve contra `import.meta.env.BASE_URL`, mismo criterio
+  que ya usa `InicioCliente.jsx` para esas mismas fotos.
+- Fila de prueba insertada en la misma migración: título "Foto de
+  prueba (Inicio)", con las rutas relativas de esas dos fotos.
+
+**`src/components/ComparadorAntesDespues.jsx`** (nuevo, genérico): el
+slider pedido — reconstruido a mano siguiendo el patrón general de este
+tipo de componente (no es el código de ReactBits Pro, que es de pago;
+se armó el mecanismo estándar: "después" de fondo a ancho completo,
+"antes" encima recortado con `clip-path: inset()` hasta la posición del
+handle, arrastrable con mouse/táctil vía `setPointerCapture` en vez de
+listeners en `window` — el arrastre no se corta si el cursor sale del
+contenedor a media pasada). Handle: línea vertical + círculo blanco con
+ícono `MoveHorizontal`; etiquetas "Antes"/"Después" en las esquinas.
+Deliberadamente DISTINTO del mecanismo de Inicio (círculo que revela
+con el cursor, `useRevelarAntes`): son dos formatos a propósito, cada
+uno pensado para su contexto (un hero grande vs. una grilla de varias
+fotos chicas donde arrastrar con el dedo es más natural que pasar el
+cursor sobre cada una).
+
+**`NosotrosCliente.jsx`**: `SeccionGaleria` reemplaza el placeholder
+"Próximamente" de esa sub-sección — mismo patrón de fetch que
+`SeccionEquipo` (`supabase.rpc('galeria_para_web')`), grilla de
+`ComparadorAntesDespues` (2 columnas en `sm:`, 1 en móvil).
+`SeccionProximamente` se queda en el código como el estado vacío (si el
+admin borra todas las fotos) en vez de borrarse.
+
+**Panel admin nuevo — "Galería Web"** (cuelga de `/web`, admin-only,
+mismo patrón que Fidelización/Referidos/Puntos Web):
+- `src/pages/GaleriaWeb.jsx`: lista + botón "Agregar foto" + editar/
+  eliminar por fila (con confirmación, mismo modal de
+  `Asistentes.jsx`) — al eliminar, borra también los 2 archivos del
+  bucket (si la fila era una foto real subida, no la de prueba).
+- `src/components/ModalGaleriaWeb.jsx`: formulario con DOS fotos
+  (antes/después, cada una obligatoria solo al crear), título opcional,
+  orden y el switch "Visible en la Web" — mismo patrón de
+  "se procesa al elegir, se sube recién al guardar" que
+  `ModalAsistente.jsx`/`ModalServicio.jsx`, duplicado para las dos
+  fotos (hook local `useFoto()` por cada una). Al reemplazar una foto
+  ya subida, borra la vieja del bucket tras guardar (si tenía una ruta
+  de Storage real).
+- Registrado en `Web.jsx` (tarjeta nueva), `navegacion.js`
+  (`/galeria-web`, `padre: '/web'`) y `PestanasCacheadas.jsx` (lazy +
+  mapa de rutas) — mismo trío de archivos que hay que tocar por cada
+  subpestaña nueva de Web (ya eran 3 puntos de registro antes de esta
+  fase, no algo nuevo que se agregó acá).
+- Se actualizó el checklist del §7 (arriba en este mismo archivo,
+  estaba desactualizado: solo marcaba "Equipo" como ✅ cuando Reseñas/
+  Contacto/Referidos también ya estaban construidos desde §7.4/7.5/
+  7.26) para reflejar que ya no queda ningún punto pendiente de esa
+  lista.
+- Build y lint verificados (un bug de lint real encontrado y corregido
+  en el camino: el hook local se había nombrada `usarFoto`, que NO pasa
+  la regla `react-hooks/rules-of-hooks` — el nombre tiene que empezar
+  literal con "use", no "usar"; renombrado a `useFoto`). Sin
+  verificación visual en vivo (mismo bloqueo de permisos que en
+  §7.37-7.62) — pendiente que el usuario lo confirme con `npm run dev`,
+  tanto el slider en Nosotros → Galería como el panel nuevo en Web →
+  Galería Web.
+
+### 7.64 ComparadorAntesDespues: reconstruido contra la tabla de props real del componente de pago
+
+El usuario aclaró §7.63: nunca hubo acceso al código del
+comparison-slider de ReactBits Pro (está detrás de un paywall) — lo de
+§7.63 fue el patrón genérico de este tipo de slider, no una réplica de
+ese componente. Pasó una captura de la tabla de props real de esa
+documentación (30 props) y pidió aplicarlas.
+
+**`ComparadorAntesDespues.jsx` reescrito** contra esa tabla —sigue sin
+ser su código fuente, ahora es su API/comportamiento documentado,
+traducido a props en español con los mismos defaults de la captura:
+- `orientacion` ('horizontal' | 'vertical'): el clip-path y la barra
+  divisoria cambian de eje según cuál.
+- `inercia` (true por default): al soltar el arrastre, la posición
+  sigue moviéndose y frena sola (fricción 0.94/frame) en vez de
+  quedarse clavada donde soltó el mouse — se mide la velocidad real
+  del arrastre (Δposición/Δtiempo) en los últimos `pointermove`.
+- `arrastrarEnHover` (false por default): si se prende, mover el
+  cursor por encima ya corre el slider sin necesidad de click —mismo
+  concepto que `useRevelarAntes` del hero de Inicio, pero como prop
+  opcional acá en vez de ser el único modo.
+- `animarAutomatico` (false por default): sin interacción, el slider
+  se mueve solo entre posiciones aleatorias suavizadas (mismo lerp que
+  ya usa `useRevelarAntes`) — arranca solo si no hay inercia corriendo,
+  se corta apenas el usuario agarra el handle.
+- `grosorDivisor`/`colorDivisor`/`mostrarHandle`/`tamanoHandle`/
+  `colorHandle`/`iconoHandle`: todo lo visual de la línea y el handle
+  configurable — el ícono por default cambia solo entre
+  `MoveHorizontal`/`MoveVertical` según `orientacion`.
+- `mostrarEtiquetas`/`textoEtiquetas`/`posicionEtiquetas` (+ 3 props de
+  className) y `mostrarPorcentaje`/`posicionPorcentaje`: apagados por
+  default (igual que la captura) — la Galería del cliente los prende a
+  mano (`mostrarEtiquetas`) para mantener las píldoras "Antes"/
+  "Después" que ya tenía.
+- `alCambiarPosicion`/`alIniciarArrastre`/`alTerminarArrastre`
+  (`onPositionChange`/`onDragStart`/`onDragEnd`), `ariaLabel` (+ ahora
+  `role="slider"`, `aria-valuenow/min/max` reales y flechas de teclado
+  para mover el divisor — no estaba en la tabla de props explícitamente
+  pero es lo que un `ariaLabel` en un slider real necesita para no
+  quedar solo decorativo) y `movimientoReducido` (apaga inercia/
+  auto-animación cuando está en true).
+- `titulo` sigue siendo la única prop sin equivalente en esa tabla — el
+  pie de foto con el dato real de `galeria_web.titulo`, ajeno al
+  componente de referencia.
+- `NosotrosCliente.jsx` actualizado al nuevo nombre de props
+  (`alt` → `altAntes`/`altDespues`) + `mostrarEtiquetas` explícito.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario compare
+  el resultado contra la demo interactiva de la captura.
+
+### 7.65 Divisor invisible + vaivén determinístico en vez del autoAnimate random
+
+El usuario pidió no poder ver un video (esta sesión no puede reproducir
+video, solo imágenes/PDF — se ofreció extraer frames con `ffmpeg`, que
+sí está instalado en la máquina, pero el usuario prefirió describirlo en
+palabras) y describió dos cambios puntuales sobre §7.64:
+
+1. La raya divisora no debe ser visible nunca.
+2. Esa raya (invisible) tiene que animarse sola en bucle: arranca en el
+   centro, se mueve un poco a la derecha con "cambios de velocidad
+   irregulares pero suaves", vuelve al centro, sigue un poco a la
+   izquierda, y el bucle se repite.
+
+**`mostrarDivisor` (prop nueva) + `mostrarHandle`**: ambas pasan a
+`false` por default — el divisor sigue existiendo y moviendo el
+clip-path exactamente igual, solo que ya no se pinta (`background:
+'transparent'` en vez de `colorDivisor`) ni se renderiza el círculo del
+handle. Quien quiera el look "slider visible" de §7.64 los puede
+prender a mano — la Galería del cliente no los toca, así que hereda el
+nuevo default invisible.
+
+**`iniciarVaiven()` reemplaza a `iniciarAutoAnimacion()`** (que eligía un
+destino al azar cada ~2s y hacía *ease* hacia él — "irregular" pero
+saltado, no lo que se pidió). La nueva versión es una función matemática
+determinística, no aleatoria: `50 + 9·sen(2πt/8) + 3·sen(2πt/4)` (`t` en
+segundos, reloj real desde que se montó el componente). Por qué esta
+fórmula cumple el pedido punto por punto:
+- En `t=0` ambos senos valen 0 → arranca siempre en el centro (50%).
+- La derivada en `t=0` es positiva (la suma de las dos pendientes en el
+  origen) → arranca moviéndose a la derecha, como se pidió.
+- Al ser periódica (período de 8s), cruza el centro de vuelta, sigue
+  hacia la izquierda y se repite — el "bucle" que se pidió, en un ciclo
+  matemáticamente exacto, no aproximado.
+- "Velocidad irregular PERO suave": la SUMA de dos senos de distinta
+  frecuencia da una velocidad instantánea que cambia todo el tiempo (eso
+  es lo irregular), pero cada seno por separado es infinitamente
+  derivable — nunca hay un salto ni un quiebre (eso es lo suave). Un
+  `Math.random()` habría dado la parte irregular pero nunca la suave —
+  por eso no se usó, a pesar de que la v1 de este archivo (§7.63) sí
+  tiraba de random para el autoAnimate.
+- Amplitud total ±12 (9+3) alrededor del 50%, o sea el rango 38%-62% —
+  "un poco" a cada lado, no un barrido completo de la foto.
+- `animarAutomatico` pasa a `true` por default (antes `false`): sin
+  nada visible que arrastrar, el vaivén es ahora el único motivo por el
+  que la comparación se nota — dejarlo apagado por default habría
+  dejado la foto de "después" fija sin razón de ser.
+- El reloj (`inicioRelojRef`) nunca se reinicia (ni al arrastrar ni al
+  soltar): al retomar tras una interacción, la posición hace *ease*
+  (factor 0.05) hacia dondequiera que esté la curva EN ESE MOMENTO del
+  reloj real, no desde cero — así el bucle sigue "vivo" en el tiempo de
+  fondo aunque se interrumpa, en vez de reiniciarse cada vez que alguien
+  toca el slider.
+- La función de teclado (flechas, agregada en §7.64 para accesibilidad)
+  ahora también retoma el vaivén después de mover con el teclado, cosa
+  que se había quedado sin encadenar en la versión anterior.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que el movimiento se ve como lo describió.
+
+### 7.66 §7.65 fue un malentendido — el divisor vuelve, ahora como "rayo de luz" tenue
+
+El usuario aclaró que nunca quiso que la línea fuera invisible — dijo
+mal "invisible" queriendo decir "muy tenue" (poco notoria). Pasó una
+captura de referencia (colores exagerados a propósito, rosa/rojo fuerte,
+"solo para que veas la forma, no el color real") de una línea vertical
+que se ve como un rayo de luz: delgada en las puntas de arriba/abajo,
+más "gordita" (con resplandor difuminado) en el medio, con el handle
+emitiendo su propio halo de luz alrededor.
+
+**`mostrarDivisor`/`mostrarHandle` vuelven a `true`** (estaban en `false`
+desde §7.65, ese default quedó mal apenas un mensaje).
+
+**Divisor rediseñado** (`ComparadorAntesDespues.jsx`): dejó de ser una
+sola barra de ancho constante — ahora son dos capas dentro del mismo
+punto de anclaje:
+1. Una línea delgada de punta a punta (`grosorDivisor`, opacity 0.35 —
+   el "tenue" real que pidió, en blanco, no en el rojo de la captura,
+   que era solo para mostrar la forma).
+2. Un bulto centrado en el medio del eje perpendicular: un rectángulo
+   angosto y largo con `rounded-full` (da forma de cápsula) + `blur-md`,
+   más opaco (0.75) — es lo que da el efecto "más gordito al centro, se
+   afina hacia los costados" sin necesitar un SVG a medida.
+
+**Handle con halo**: además del círculo sólido de siempre, ahora tiene
+detrás un círculo más grande (2.4× su tamaño), mismo `colorHandle`,
+difuminado (`blur-lg`) y semi-transparente (opacity 0.5) — el "emite una
+especie de luz a su alrededor" pedido.
+
+Ambas capas nuevas reusan `colorDivisor`/`colorHandle` (sin agregar
+props nuevas): la opacidad de cada capa está fija en el código, no
+expuesta como prop — es un ajuste de estética puntual, no parte de la
+tabla de props original, así que no había necesidad de hacerlo
+configurable todavía.
+
+`animarAutomatico` se queda en `true` (sin cambios de §7.65) — con la
+línea otra vez visible, el vaivén ahora se ve literalmente como el rayo
+de luz moviéndose solo, que es el efecto final que se buscaba desde el
+principio.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que la forma/opacidad del rayo de luz calza con lo
+  que tenía en mente (son valores a ojo, fáciles de ajustar si no).
+
+### 7.67 El "bulto" de §7.66 se veía como una mancha blanca, comparado contra la referencia real
+
+El usuario mandó captura comparando lado a lado su referencia real
+(línea roja delgada y nítida sobre la pantalla del Macintosh) contra el
+resultado de §7.66 en la Galería del cliente: la cápsula ancha con
+`blur-md` que se agregó ahí se veía sobredimensionada — gigante, muy
+opaca, más una mancha blanca que un brillo.
+
+**Causa real**: la cápsula medía `grosorDivisor * 14` (42px) de ancho ×
+55% del alto del contenedor, a opacity 0.75 — sumado al halo del handle
+(2.4× su tamaño, `blur-lg`/16px, opacity 0.5) justo encima, las dos
+capas difuminadas se superponían y se leían como un solo bloque blanco
+borroso. La referencia real no tiene nada de eso: es una línea delgada
+y NÍTIDA casi de punta a punta, con el único brillo real concentrado
+muy cerca del handle, no una forma aparte que ocupe más de medio alto
+de la imagen.
+
+**Fix**: se sacó la cápsula por completo. Ahora solo hay dos capas,
+mucho más chicas:
+- La línea: sin cambios de tamaño, pero de opacity 0.35 a 0.4, sin
+  ningún blur — nítida en toda su extensión, igual que la referencia.
+- El halo del handle: de 2.4× a 1.6× su tamaño, de `blur-lg` (16px) a
+  `blur-sm` (4px), de opacity 0.5 a 0.25 — un brillo apagado y
+  contenido, no un bloque sólido. Como el halo está clavado en el mismo
+  centro por donde pasa la línea, esa combinación ya alcanza para leerse
+  como "más grueso justo ahí" sin necesitar la segunda forma que se
+  sacó — mismo efecto visual, con mucho menos peso.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ya no se ve como mancha.
+
+### 7.68 Línea con degradado de transparencia real, no opacity fija — "raya rectangular cruda"
+
+El usuario mandó una referencia real de una línea de luz horizontal
+(fondo negro transparente, checkerboard de por medio): se APAGA por
+completo en las dos puntas y se ve más ancha/brillante solo cerca del
+centro, un degradado continuo a lo largo de todo su largo — nada que
+ver con lo de §7.67, que seguía siendo "una raya rectangular cruda"
+(ancho y opacity CONSTANTES de punta a punta, sin ningún desvanecido).
+
+**Causa real**: opacity fija (0.4) aplicada sobre un `background` de
+color sólido cambia cuánto se ve la línea, pero no CÓMO se ve a lo largo
+de su largo — sigue siendo la misma línea, uniforme, del principio al
+final. Para el efecto "se apaga en las puntas" hace falta que la
+transparencia varíe punto por punto a lo largo del eje, no un multiplicador
+único para toda la capa.
+
+**Fix**: la línea pasó a usar `linear-gradient(transparent → color →
+transparent)` a lo largo de su eje (vertical → degradado de arriba a
+abajo; horizontal → de izquierda a derecha) en vez de un `background`
+sólido + opacity plana, en dos capas que comparten el MISMO degradado:
+- Núcleo: fino (`grosorDivisor`), sin blur, opacity 0.9 — nítido, se
+  apaga solo en las puntas por el degradado.
+- Resplandor: más ancho (`grosorDivisor * 9`), con `blur-md`, opacity
+  0.55 — al compartir el mismo degradado, en las puntas ya vale ~0 (no
+  se nota ahí, no hay riesgo de que vuelva a verse como mancha) y solo
+  "florece" cerca del centro, que es donde el degradado está en su pico
+  — de ahí sale el "más ancha/brillante al medio" sin necesitar una
+  forma aparte.
+
+El halo del handle (§7.67, sin cambios de tamaño/blur/opacity) queda
+clavado en el mismo punto donde el degradado de la línea ya está en su
+pico, así que las dos cosas refuerzan el mismo lugar en vez de competir.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que el degradado se parece a la referencia (valores
+  de ancho/blur/opacity a ojo, fáciles de ajustar).
+
+Ajuste inmediato: el usuario pidió disminuir un poco el ancho de la capa
+de resplandor — bajó de `grosorDivisor * 9` a `grosorDivisor * 6` (el
+núcleo fino y el halo del handle quedaron igual). Build y lint
+verificados.
+
+Segundo ajuste: mismo problema en el halo del handle que ya se había
+corregido en la línea (§7.68) — era un círculo de color sólido + blur,
+con la misma intensidad hasta cerca del borde y ahí sí se apagaba de
+golpe, no un degradado real. Se pasó a `radial-gradient(circle,
+colorHandle 0%, colorHandle 15%, transparent 68%)` (sin blur, ya no
+hace falta): notable solo en un radio chico al centro, se extiende y se
+apaga solo hasta desaparecer, tal como se pidió. De paso subió un poco
+de tamaño (1.6× → 2× el handle) para que el degradado tenga más recorrido
+donde desvanecerse. Build y lint verificados.
+
+Tercer ajuste: pidió que en los extremos del halo "casi no se note" el
+brillo, para que se sienta como un emisor de luz tenue. El stop
+`transparent` bajó de 68% a 45% del radio (se apaga del todo mucho antes
+de llegar al borde del círculo de 2× el handle) y la opacidad general de
+0.28 a 0.2 — mismo core chico al centro (10% en vez de 15%), caída más
+rápida hacia afuera. Build y lint verificados.
+
+Cuarto ajuste: la opacidad 0.2 del paso anterior se pasó de tenue — el
+usuario reportó que el handle "casi no brilla" (en general, no solo en
+las puntas como se buscaba). Subida a 0.4 — el radio de caída (45%)
+queda igual, solo el núcleo del centro vuelve a notarse. De paso, en la
+línea vertical: el resplandor bajó de `grosorDivisor * 6` a `* 4`
+(menos ancho) y de opacity 0.55 a 0.4 (menos intensidad) — el núcleo
+fino (opacity 0.9) no se tocó, es el resplandor ancho el que se pidió
+atenuar. Build y lint verificados.
+
+Quinto ajuste: núcleo de la línea ("un poquito" más delgado) —
+`grosorDivisor` default bajó de 3 a 2. Como el resplandor se calcula
+como `grosorDivisor * 4`, también se achica en la misma proporción
+(12px → 8px), efecto colateral esperado y correcto (todo el rayo se ve
+un poco más fino, no solo el núcleo). Build y lint verificados.
+
+Sexto ajuste: "radio mayor de luz, bien difuminado y sutil" en el
+handle — tamaño del halo de 2× a 3× el handle, stop `transparent`
+corrido de 45% a 60% (con la caja más grande, ese tramo de caída es más
+largo en píxeles reales → se siente más difuminado/gradual) y opacidad
+bajada de 0.4 a 0.32 para compensar que un radio más grande no se
+sienta más intenso, solo más amplio y sutil. Build y lint verificados.
+
+### 7.71 El halo del handle igual se notaba "cortado" sobre fondo oscuro — gradiente de 2 stops no alcanza
+
+El usuario mandó dos capturas comparando su resultado en vivo (el halo
+del §7.70) contra una referencia real: sobre un fondo bien oscuro, el
+borde del círculo de luz se notaba clarísimo en la suya, mientras que en
+la referencia se pierde del todo en el negro, sin ningún borde
+perceptible.
+
+**Causa real**: un `radial-gradient(color 0%, color 8%, transparent
+60%)` solo tiene DOS puntos de control para toda la caída (de "color
+sólido" a "nada"), interpolados linealmente — matemáticamente sí llega a
+0 opacidad en el 60%, pero el ojo humano no percibe el brillo de forma
+lineal: es mucho más sensible a diferencias pequeñas de luz cerca del
+negro que cerca del blanco (por eso una caída lineal, sobre fondo
+oscuro, "se corta" antes de tiempo a la vista aunque el número siga
+bajando). Una referencia real de un brillo perdiéndose en la oscuridad
+tiene una caída MUCHO más lenta al principio y un final larguísimo casi
+imperceptible, no una rampa recta.
+
+**Fix**: el halo pasó a un `radial-gradient` de 6 stops usando
+`color-mix(in srgb, colorHandle X%, transparent)` para los tramos
+intermedios (en vez de saltar directo de color sólido a `transparent`),
+aproximando esa curva de apagado lenta-luego-larga — y se sumó
+`blur-md` encima de todo el elemento para que no quede ni un pixel de
+borde nítido en ningún punto de la transición. Tamaño subido de 3× a
+3.5× el handle (más lugar donde diluirse), opacidad general sin cambios
+(0.32).
+
+Nota técnica: `color-mix()` es una función CSS relativamente moderna
+(Chrome 111+/Firefox 113+/Safari 16.2+) — consistente con otras técnicas
+ya usadas en este mismo componente/proyecto (`mask-composite`,
+`backdrop-filter`), ninguna soportada en navegadores muy viejos.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ya no se nota el borde sobre fondo oscuro.
+
+### 7.72 El regreso al centro al soltar arrancaba rápido — era un lerp (ease-out), no un ease-in
+
+El usuario describió el comportamiento exacto que quería al soltar el
+arrastre en cualquier punto de la foto: "que comience a regresar lento y
+al llegar casi al centro un poquito más rápido" — un ease-IN. Lo que
+había (desde §7.65) era lo opuesto.
+
+**Causa real**: soltar el arrastre encadenaba directo a `iniciarVaiven()`,
+que persigue su objetivo con un lerp por frame
+(`pos += (objetivo - pos) * 0.05`). Un lerp así es matemáticamente una
+curva EASE-OUT: el salto por frame es proporcional a la distancia que
+falta, así que es más grande cuanto más lejos está (arranca "rápido") y
+se va achicando a medida que se acerca (se siente "lento" cerca del
+destino) — exactamente al revés de lo pedido.
+
+**Fix**: se separó el regreso al soltar del vaivén continuo. Nueva
+función `iniciarRegresoOrganico()`: un tween de duración FIJA (900ms,
+`DURACION_REGRESO_MS`) que interpola desde la posición donde se soltó
+hacia un objetivo, usando `facilEntrada(t) = t³` (ease-in cúbico: arranca
+lento, acelera hacia el final — la curva que se pidió). El objetivo no
+es simplemente "50": es `valorVaiven()` (la misma fórmula del vaivén,
+extraída a su propia función reusable) evaluado en el FUTURO —
+exactamente en el instante en que el tween va a terminar, no en el
+presente— así que al cabo de los 900ms el tween entrega el control a
+`iniciarVaiven()` (el loop continuo de siempre) sin ningún salto, porque
+ya está parado justo donde esa curva continúa. Se aplica en los 3 puntos
+donde antes se llamaba directo a `iniciarVaiven()` tras soltar: el
+arrastre normal, el fin de la inercia (flick rápido) y el movimiento por
+teclado.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que el regreso ahora se siente orgánico (lento →
+  acelera cerca del centro), no el salto inicial de antes.
+
+### 7.73 §7.72 fue ease-in puro (acelera todo el recorrido) — el usuario pedía ease-in-out
+
+Aclaró la curva exacta: "comienza lento y aumenta gradualmente en su
+centro [el punto medio de la animación] y cuando casi llega al centro
+[el destino] nuevamente se hace lento" — lento al empezar, más rápido a
+la mitad, lento otra vez al llegar. `facilEntrada(t) = t³` de §7.72 es
+un ease-IN: sí arranca lento, pero sigue acelerando hasta el final —
+llega rápido, no lento. Pidió además que todo el tween sea "más
+despacio" en general.
+
+**Fix**: `facilEntrada` → `facilEntradaSalida`, un ease-in-out cúbico
+estándar (`t<0.5 ? 4t³ : 1-(-2t+2)³/2`) — simétrico: lento-rápido-lento.
+`DURACION_REGRESO_MS` subido de 900 a 1400ms ("más despacio"). Nada más
+cambió: sigue siendo el mismo tween de duración fija que apunta a
+`valorVaiven()` evaluado en el futuro para empalmar sin saltos con el
+vaivén continuo, en los mismos 3 puntos de siempre (arrastre normal, fin
+de inercia, teclado).
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ahora sí es lento-rápido-lento, no solo lento-
+  cada-vez-más-rápido.
+
+### 7.74 "Efecto pelota": un toque chico mandaba el divisor disparado hasta el extremo
+
+El usuario describió el bug con una analogía exacta: mover el handle con
+el mouse y soltar con solo "un toque" hacía que se fuera disparado hasta
+el extremo (0% o 100%) y de ahí recién volviera — como empujar una
+pelota, no como soltar algo donde lo dejaste.
+
+**Causa real**: `iniciarInercia()` (la rama de `continuarTrasSoltar()`
+para arrastres rápidos) tomaba `velocidadRef.current` (%/ms, medida
+entre los últimos dos `pointermove`) sin ningún tope, la escalaba ×16 y
+la dejaba decaer con fricción 0.94/frame. La distancia TOTAL que
+recorre una fricción geométrica así es `v0 / (1 - fricción)` ≈ 16.7×
+`v0` — con `v0` ya escalado ×16, el multiplicador real sobre la
+velocidad medida es ≈267×. El problema de fondo: `dt` (el tiempo entre
+dos `pointermove`) a veces es de solo 1-2ms (el piso duro es
+`Math.max(1, dt)`) — un movimiento de mouse de apenas unos px en esos
+1-2ms da una velocidad instantánea gigante, que multiplicada por 267
+manda el divisor a un extremo casi seguro, sin importar de dónde se
+soltó. Eso es literalmente "un toque" con un resultado exagerado — el
+reporte del usuario fue exacto.
+
+**Fix, dos partes**:
+1. Tope real a la velocidad MEDIDA en `alMover` (±0.3 %/ms, antes sin
+   límite) — corrige la causa de fondo, para cualquiera que use
+   `inercia` en el futuro.
+2. `inercia` pasa de `true` a `false` por default: más allá del bug ya
+   corregido, un "fling físico" al soltar no es lo que se pidió en
+   ningún momento de esta conversación — lo único que debe pasar al
+   soltar es el regreso orgánico (§7.72-7.73), nunca un envión hacia un
+   extremo. La prop se queda (paridad con `enableInertia` de la tabla de
+   referencia), pero ya no se ejerce en la Galería del cliente al no
+   pasarla explícita.
+
+También, mismo pedido de siempre: `DURACION_REGRESO_MS` subió de 1400 a
+1900ms ("disminuye más las velocidades de regreso").
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ya no se dispara hacia los extremos al soltar.
+
+Ajuste inmediato: radio del halo del handle de 3.5× a 3× su tamaño
+("disminuye un poquito"). Build y lint verificados.
+
+Otro más: halo de 3× a 2.5× + el círculo del handle en sí (`tamanoHandle`
+default) de 48 a 40px — se achica dos veces (el círculo directo, y el
+halo indirectamente al ser un múltiplo de `tamanoHandle`). Build y lint
+verificados.
+
+### 7.75 La línea todavía se sentía "en bloque" sobre fondos muy oscuros — mismo bug del handle, sin corregir ahí
+
+El usuario reportó que, aun con los ajustes anteriores, tanto el handle
+como la raya vertical seguían sintiéndose como "un bloque de luz" en vez
+de luz natural sobre fondos muy oscuros — pidió aumentar más el
+difuminado de los dos.
+
+**Causa real (línea)**: el degradado de la línea (núcleo y resplandor,
+§7.68) seguía siendo de 3 stops simples (`transparent 0%, color 50%,
+transparent 100%`) — el MISMO problema de caída lineal que ya se había
+diagnosticado y corregido en el halo del handle en §7.71 (el ojo percibe
+un borde duro cerca del negro aunque el número matemático sí llegue a 0)
+nunca se le aplicó a la línea, que se quedó con la versión vieja.
+
+**Fix**:
+- Nueva función reusable `paradasDesvanecidas(color)` — la misma
+  técnica de `color-mix()` en varios stops intermedios del halo del
+  handle, extraída para no duplicarla, aplicada ahora TANTO al núcleo
+  como al resplandor de la línea (antes solo el handle la tenía).
+- Blur del resplandor de la línea: `blur-md` (12px) → `blur-xl` (24px).
+- Blur del halo del handle: `blur-md` (12px) → `blur-xl` (24px), más un
+  stop extra (80%, alfa muy baja) para alargar todavía más la cola final.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ya no se siente "en bloque" sobre fondos oscuros.
+
+Ajuste inmediato: línea vertical confirmada al 100% por el usuario, sin
+más cambios ahí. Halo del handle de 2.5× a 2.3× ("casi nada"). Build y
+lint verificados.
+
+### 7.76 Handle: cola del degradado extendida — que se pierda del todo en negro puro
+
+El usuario pidió, otra vez, que el halo del handle se difumine "aún más"
+en sus extremos, específicamente para que se pierda en fondos negros —
+la ronda anterior (§7.75) ya había mejorado esto pero seguía sin ser
+suficiente contra negro puro.
+
+**Ajuste**: la caída de 6 stops pasó a 7, todos más espaciados y con
+porcentajes de color más bajos desde antes (a partir del 34% del radio
+ya está en 22% de color, no 45%) — una cola mucho más larga y gradual.
+Blur de `blur-xl` (24px) a `blur-2xl` (40px, confirmado en el CSS
+compilado: `--blur-2xl:40px`). Radio de 2.3× a 2.6× el handle, para que
+esa cola más larga tenga espacio real donde disolverse antes de tocar el
+borde de la caja (si no, el blur la recortaría de golpe justo ahí,
+reintroduciendo el mismo borde que se quiere evitar).
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` sobre un fondo bien oscuro.
+
+### 7.77 El radio de §7.76 sobraba — `blur()` no se recorta en el borde de su propia caja
+
+El usuario prefería el radio de 2.3× (§7.74) y preguntó si la cola larga
+del degradado de §7.76 podía mantenerse sin el radio más grande (2.6×)
+que esa ronda había agregado "para darle espacio a la cola".
+
+Respuesta corta: sí, esa suposición era innecesaria. El filtro CSS
+`blur()` no recorta su propio resultado en el borde del elemento al que
+se aplica — solo lo recorta un ANCESTRO con `overflow: hidden` (acá, el
+borde de la foto en sí, no la cajita del halo). Una cola de degradado
+más larga sigue difuminándose bien aunque la caja donde vive el
+`radial-gradient` sea más chica; el radio extra de §7.76 no aportaba
+nada real, era una precaución de más.
+
+**Fix**: radio de vuelta a 2.3× (era 2.6×) — los 7 stops y el `blur-2xl`
+de §7.76 se quedan sin cambios.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que la cola larga se sigue viendo igual de difuminada
+  con el radio más chico.
+
+### 7.78 Etiquetas "Antes"/"Después" — una en cada extremo de la foto, no juntas arriba
+
+Con `posicionEtiquetas` default (`'top-left'`), las dos píldoras
+comparten la misma franja vertical (`top-3`), diferenciadas solo por
+`left-3`/`right-3` — en una captura se veían pegadas/superpuestas cerca
+de la esquina superior en vez de leerse como "una en cada punta de la
+foto".
+
+**Fix**: nuevo valor `'centro'` en `ETIQUETA_POSICION_CLASES` (`top-1/2
+-translate-y-1/2`, sin equivalente en la tabla de props real) — cada
+etiqueta sigue clavada en su propio extremo horizontal (eso ya estaba
+bien, `left-3`/`right-3` fijos en el JSX de cada una) pero ahora
+centrada verticalmente, no arriba — "Antes" en la punta izquierda de la
+foto, "Después" en la punta derecha, a la misma altura. `NosotrosCliente.jsx`
+pasa `posicionEtiquetas="centro"` en la Galería; los 4 valores de esquina
+originales (`top-left`, etc.) se quedan intactos para quien los quiera.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev`.
+
+### 7.79 Bug real encontrado: `.liquid-glass` pisaba el `position: absolute` de las 3 etiquetas — CSS, no JSX
+
+El usuario mandó captura de §7.78: las píldoras seguían viéndose
+pegadas una junto a otra, ahora además aclaró que nunca quiso
+centrado vertical — quería cada una en SU esquina (antes en el lado
+donde se ve la foto de antes, después en el lado de después), como ya
+estaba antes de §7.78.
+
+**Causa real (no era el `posicionEtiquetas` de §7.78, ni un typo de
+`left-3`/`right-3`)**: `.liquid-glass` (`index.css`) define su propio
+`position: relative` bajo el selector `.landing-web .liquid-glass` —
+especificidad (0,2,0), MÁS ALTA que la clase `.absolute` de Tailwind
+(0,1,0) — así que gana y pisa silenciosamente el `position: absolute`
+de cualquier elemento que combine ambas clases. Sin `position: absolute`
+real, un elemento no se posiciona contra su contenedor: pasa a flujo
+normal del documento, donde `left`/`right`/`top` ya no son coordenadas
+absolutas sino OFFSETS relativos a la posición que hubiera tenido en
+ese flujo — por eso las dos etiquetas (y también el indicador de %,
+mismo combo `liquid-glass` + `absolute`) terminaban juntas cerca de
+donde arranca el contenido, sin importar qué digan sus clases de
+posición. Ningún cambio de §7.78 (ni antes) podía arreglar esto: el
+problema nunca estuvo en qué valor de posición se pedía, sino en que
+NINGÚN valor de posición se estaba aplicando de verdad.
+
+**Fix**: `style={{ position: 'absolute' }}` inline en los 3 elementos
+(etiqueta "Antes", etiqueta "Después", indicador de %) — un estilo en
+línea gana por especificidad a cualquier selector de clase, sin tener
+que tocar `.liquid-glass` (compartido con decenas de otros lugares del
+proyecto). Se sacó el value `'centro'` agregado en §7.78 (ya no hace
+falta, era una respuesta a un síntoma que en realidad era este bug) y
+`NosotrosCliente.jsx` vuelve a su llamada simple sin `posicionEtiquetas`
+(default `'top-left'`: "Antes" arriba-izquierda, "Después"
+arriba-derecha — la esquina de cada foto, como se pidió).
+
+Nota para el futuro: cualquier otro lugar del proyecto que combine
+`.liquid-glass` con `absolute`/`fixed` de Tailwind tiene el mismo riesgo
+latente — no se auditó el resto del código por estar fuera del alcance
+de este pedido puntual.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ahora sí quedan cada una en su esquina.
+
+## 8. Rediseño del Carrito (docs/diseno-carrito/)
+
+Diseño aprobado por el usuario en un lienzo aparte (`Main.dc.html`
+escritorio, `Movil.dc.html` móvil, más las variantes con el panel de
+cupones abierto) — ver `docs/diseno-carrito/README.md` para el detalle
+completo y las reglas de estilo. Antes de tocar código se acordaron dos
+cambios sobre ese diseño (conversación previa a esta sección, resumida
+en el propio README):
+1. El carrito queda SOLO para productos — el bloque "Servicios para
+   reservar" que traía el diseño (ya sacado en el mock de escritorio,
+   todavía en el de móvil) se elimina por completo. Reservar servicios
+   pasa a un mini-carrito propio dentro de Citas, alimentado desde una
+   vista rica de Servicios (fotos/reseñas) — tarea aparte, futura, no
+   parte de este rediseño.
+2. Sin "Efectivo" como método de pago — el diseño lo traía como 4ta
+   opción sin exigir captura ("pagas al recibir"), pero ya se había
+   acordado que el pago es 100% obligatorio y verificado (Yape/Plin/
+   Transferencia) para cualquier pedido web, sin excepción por
+   modalidad de entrega.
+
+También se acordó el plan en 4 fases (frontend puro → conectar a datos
+que ya existen → backend nuevo, una migración a la vez con aprobación
+previa → conectar cada pieza) — separado explícitamente de "tocar
+Supabase" porque el usuario pidió poder ver y ajustar el diseño antes de
+comprometerse a ninguna migración.
+
+### 8.1 Fase 1 — Layout puro, sin Supabase (`CarritoCliente.jsx` reescrito)
+
+Reescritura completa de `CarritoCliente.jsx`, calcado de
+`Main.dc.html`/`Movil.dc.html` en un solo árbol responsive (quiebre
+`lg:`, mismo criterio que el resto del proyecto — no dos archivos
+separados por ancho como el mock). Todo con datos de ejemplo locales
+(`PRODUCTOS_EJEMPLO`, `DIRECCIONES_EJEMPLO`, `CUPONES_EJEMPLO`,
+`ZONAS_EJEMPLO`, `DIAS_EJEMPLO`/`HORAS_EJEMPLO`, `METODOS_PAGO`) — CERO
+llamadas a Supabase en esta fase, a propósito (eso es lo que pidió el
+usuario: "es posible primero hacer el diseño sin funcionalidades").
+
+**Fuente Heavitas**: la memoria del usuario (`feedback_tipografias_web.md`)
+ya tenía decidido "Heavitas para títulos importantes en blanco sólido",
+pero el archivo de fuente nunca había llegado al proyecto — el primer
+intento de encontrarlo en Descargas solo encontró `heavitas.zip` con la
+licencia en PDF, sin el `.ttf` real adentro. El usuario subió
+`Heavitas.ttf` directo a `src/assets/fonts/`. Mismo patrón exacto que
+Kunaroh (§7.37): `@font-face` local en `index.css` (`.lw-titulo-heavitas`,
+sin cursiva ni degradado — a diferencia de Kunaroh, que sí lleva
+`--lw-metal-azul`) + excepción nueva en `.gitignore`
+(`!src/assets/fonts/Heavitas.ttf`, `src/assets/*` sigue ignorando todo
+lo demás suelto). Confirmado en el CSS compilado que el `.ttf` se
+empaquetó de verdad (`Heavitas-BE4TTxyk.ttf`), no solo que compiló sin
+error.
+
+**CSS nuevo, reusable** (`index.css`, sección "Carrito"): se portaron las
+clases del `<style>` del mock a clases propias con prefijo `lw-`
+(`.lw-panel`, `.lw-seg`, `.lw-campo`, `.lw-stepper`, `.lw-chip`,
+`.lw-chip-pred`, `.lw-tarjeta-direccion`, `.lw-etq-stock`, `.lw-etq-desc`,
+`.lw-capsula-agotado`, `.lw-precio-antes`, `.lw-pago-opcion`,
+`.lw-comprobante-opcion`, `.lw-subir-captura`, `.lw-cuponrow`, `.lw-plus`,
+`.lw-wa-ayuda`, más las animaciones de entrada del panel de cupones) —
+mismo criterio que `.liquid-glass`/`.lw-bar`: una clase compartida en vez
+de repetir un string larguísimo de Tailwind arbitrario en cada bloque.
+Nombres genéricos del mock (`.field`, `.chip`, `.seg`) NO se usaron tal
+cual — son demasiado genéricos para vivir sueltos en un CSS compartido
+por toda la app, de ahí el prefijo.
+
+**Estructura construida**: título "Tu carrito" (Heavitas) + contador de
+artículos; columna izquierda (Dirección de entrega — solo si Delivery,
+con "Cambiar" desplegando las demás con radio; Comprobante Boleta/
+Factura con RUC+razón social obligatorios en Factura; Productos con
+checkbox, miniatura con etiqueta de stock y "−N%" si hay descuento,
+stepper de cantidad, agotados al final con la cápsula "Producto no
+disponible" y sin poder marcarse; "Seguir comprando"); columna derecha
+(barra de puntos Básico→Premium, Entrega Recojo/Delivery con día/hora
+obligatorios y zona solo en Delivery, fila de cupón o `TarjetaCupon.jsx`
+aplicado con "Cambiar"/"Quitar" debajo, desglose de totales con
+"Descuento en productos" y cupón restando aparte, Total con el precio
+sin descuentos tachado cuando hay ahorro, botón verde "Confirmar
+pedido" — único uso de `#3ECF6A` en esta pantalla, memoria
+`feedback_boton_verde_exclusivo.md` — con aviso de qué falta, Método de
+pago Yape/Plin/Transferencia con panel de QR + "Subir captura" que
+bloquea el botón hasta adjuntar algo, debajo el enlace de WhatsApp y las
+3 garantías). Panel "Tus cupones": hoja inferior en móvil, panel lateral
+derecho en escritorio (mismo componente, cambia de posición vía
+Tailwind responsive — no dos implementaciones separadas), con código
+manual, disponibles (reusando `TarjetaCupon.jsx` + "Ahorras/Usar"
+debajo) y ya usados.
+
+**Nota técnica — por qué el panel de cupones NO usa `useModalA11y`**: ese
+hook (usado en los otros ~22 modales del proyecto) asume el patrón
+"overlay `fixed inset-0` + panel centrado que escala/desvanece" y le
+suma su propia animación de entrada — el panel de cupones necesita un
+slide lateral/hacia arriba distinto (`.lw-panel-cupones`, con `sube` en
+móvil y `entra desde la derecha` en escritorio, respetando
+`prefers-reduced-motion`), y las dos animaciones a la vez se hubieran
+pisado. Se armó a mano en su lugar: `role="dialog"`/`aria-modal`/
+`aria-labelledby` puestos directo en el JSX, más `useCerrarConEscape()`
+(que sí es independiente de cualquier animación) para que Esc cierre el
+panel — cumple la convención del proyecto sin arrastrar el conflicto.
+
+**Pendiente confirmar con el usuario** (igual que dejó pendiente el
+propio README del diseño): el copy de las 3 garantías se deja tal cual
+(confirmado — "solo es estético"); el número de WhatsApp, el nombre del
+titular de Yape/Plin, el número de cuenta de Transferencia y el QR
+siguen siendo placeholders literales (`[NOMBRE DEL DUEÑO]`, `[QR ...]`)
+hasta que existan las columnas reales de la Fase 3.
+- Build y lint verificados (un warning real de lint encontrado y
+  corregido en el camino: `formatearValorCupon` importado sin usarse —
+  ya lo usa `TarjetaCupon.jsx` internamente, no hacía falta importarlo
+  acá también). Confirmado en el CSS compilado que `Heavitas.ttf` se
+  empaquetó de verdad. Sin verificación visual en vivo (mismo bloqueo de
+  permisos de siempre) — pendiente que el usuario lo confirme con
+  `npm run dev` antes de pasar a la Fase 2.
+
+### 8.2 Ajustes tras la primera revisión de la Fase 1
+
+Ronda de retoques puntuales pedidos por el usuario después de ver el
+layout de la Fase 1, todos siguiendo dentro de "solo frontend, sin
+Supabase":
+
+- **Ancho de columnas**: el resumen del pedido pasó de 420px a 500px
+  fijos (`lg:grid-cols-[1fr_500px]`) — la columna izquierda, al ser
+  `1fr`, se angosta sola en proporción.
+- **Borde azulado de la dirección**: `.lw-tarjeta-direccion.on` (borde
+  `--lw-gold`) solo tiene sentido cuando hay varias direcciones para
+  elegir — mostrando solo la predeterminada (cerrado) no hay nada que
+  resaltar contra. Ahora esa clase solo se aplica cuando `mostrarRadio`
+  (el desplegable de "Cambiar" está abierto) Y está seleccionada; cerrado
+  se ve como una tarjeta de info plana, borde gris igual que el panel.
+- **Selector de día → mini-calendario real**: se investigó el patrón ya
+  usado en `CitasCliente.jsx` (grilla de 42 celdas / 6 semanas, helpers
+  de zona horaria de `src/lib/fechas.js`, colores dorado para
+  seleccionado/hoy) y se copió/adaptó como `SelectorDia` dentro del mismo
+  archivo — con una diferencia a propósito: acá los días PASADOS quedan
+  deshabilitados (no tiene sentido pedir un delivery para ayer), algo que
+  el calendario de Citas no hace porque ahí se navegan citas ya
+  agendadas, pasadas incluidas. Bug evitado a propósito: `claveDiaLima()`
+  devuelve una clave tipo `"2026-8-26"` (mes sin padding) pensada solo
+  para IGUALDAD, nunca para comparar con `<` como string (compararía mal
+  cruzando decenas: `"...-9-10"` sale "menor" que `"...-9-2"`) — el chequeo
+  de "es un día pasado" compara los timestamps reales
+  (`dia.getTime() < iniciarDia(new Date()).getTime()`), no las claves.
+- **Selector de hora → grilla de horarios reales**: reemplaza el
+  `<select>` de rangos inventados por botones generados a partir de los
+  2 bloques reales del horario del negocio (10:00-13:00 y 15:00-20:30,
+  mismo horario que ya expone `horario_atencion()`) vía una función
+  `generarHorasDelDia()` nueva — de ejemplo todavía (Fase 3 conecta el
+  RPC real), pero ya con la forma real de 2 bloques con descanso, no una
+  lista plana inventada.
+- **Texto "elige el día y hora" bajo el botón Confirmar**: se sacó por
+  completo junto con todo el cálculo `avisoCta` que lo alimentaba — el
+  usuario lo consideró innecesario ahí.
+- **Métodos de pago**: se sumaron los íconos reales de `public/icons/`
+  (`yape.svg`, `transferencia.svg`) a la izquierda del texto de cada
+  botón — Plin no tiene ícono propio en esa carpeta todavía, así que se
+  quedó con un ícono genérico de repuesto (`Wallet` de lucide) hasta que
+  exista uno real. `.lw-pago-opcion` bajó de columna a fila (`flex-direction:
+  row`) para que el ícono quede al lado del texto, con menos alto/padding
+  (56px/8px → 46px/4px×10px).
+- **Nuevo componente reusable `CampoSubirArchivo.jsx`**: reemplaza el
+  "subir captura" que tenía el carrito armado a mano — agrega una
+  animación de carga (spinner, puramente estética por ahora vía
+  `setTimeout`, ya que no hay upload real todavía) entre elegir el
+  archivo y mostrarlo como adjunto. Pensado desde el nombre para
+  reusarse en cualquier otro campo del proyecto que pida subir un
+  archivo — el propio usuario pidió que los que ya existen en otras
+  pantallas se migren a este mismo componente más adelante (no se tocó
+  ninguno de esos otros lugares todavía, fuera del alcance de este
+  pedido puntual sobre el carrito).
+- **Barra de puntos**: se sacó del resumen del pedido — el usuario la
+  consideró que no aportaba nada ahí.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev`, en particular el calendario/horario nuevos y el
+  ícono de repuesto de Plin.
+
+### 8.3 Día/hora: calendario y grilla de horas pasan a desplegables
+
+El calendario y la grilla de horas de §8.2 quedaban siempre abiertos —
+el usuario pidió que cada uno se abra recién al hacer clic en su campo,
+y se cierre solo al elegir un día/hora (no con un botón "Cancelar"
+aparte).
+
+Cada campo pasó a un botón tipo `.lw-campo` (mismo look que un `<select>`
+del resto del carrito) que muestra el valor elegido o un placeholder
+("Elige el día"/"Elige la hora"), con una flecha `ArrowBigDown` que rota
+180° al abrir — ícono de desplegable obligatorio en todo el proyecto,
+memoria `feedback_icono_desplegables.md` (no `ChevronDown`, que había
+usado por descuido en el plan inicial y se corrigió antes de escribir el
+código). Al tocar el botón se despliega el calendario/la grilla debajo;
+elegir un día o una hora corre `onElegir`/`onClick` Y cierra el
+desplegable en el mismo gesto (`setDia(clave); setDiaAbierto(false)`,
+mismo patrón para hora) — un solo clic para elegir y cerrar, sin paso
+extra.
+
+Nuevo helper `formatearClaveDia(clave)`: la `claveDiaLima` que ya usa
+`SelectorDia` internamente (ej. `"2026-8-26"`) no es un texto pensado
+para mostrarse — se reconstruye un `Date` en UTC directo con esos mismos
+3 números (año/mes/día) y se formatea con `timeZone: 'UTC'`, no con
+`'America/Lima'`: esa clave YA está corregida a Lima (ver el comentario
+de `claveDiaLima` en `fechas.js`), así que formatear de nuevo con
+`America/Lima` la desplazaría una segunda vez.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que abren/cierran como se pidió.
+
+### 8.4 Fase 2 — Carrito conectado a datos reales (sin migraciones)
+
+Se reemplazaron los 4 arreglos de ejemplo (`PRODUCTOS_EJEMPLO`,
+`DIRECCIONES_EJEMPLO`, `ZONAS_EJEMPLO`, `CUPONES_EJEMPLO`) por datos
+reales, todos de tablas/RPCs que YA existían — cero migraciones nuevas,
+tal como estaba planeado:
+- **Productos**: `carrito_productos` join `productos(nombre, precio,
+  stock_actual, categoria, foto_url)` — mismo query que ya usaba el
+  `CarritoCliente.jsx` viejo. `categoria` hace de "detalle" (no hay un
+  campo de presentación/tamaño en `productos` — se verificó el esquema
+  real antes de asumirlo). `foto_url` se resuelve con `urlPublicaFoto()`
+  contra el bucket `fotos-productos` (el mismo que ya usa
+  `ModalProducto.jsx` en Inventario) — si el producto no tiene foto,
+  sigue cayendo al ícono `ShoppingBag` de antes.
+- **Direcciones**: `direcciones_cliente`, mismo select/orden que ya
+  usaba el carrito viejo. `SeccionDireccion` suma un estado nuevo para
+  cuando la clienta no tiene ninguna guardada todavía: un enlace a Mis
+  direcciones en vez de una lista vacía.
+- **Zonas de delivery**: `zonas_delivery` — se confirmó que la RLS ya
+  filtra `activo = true` del lado del servidor (`zonas_delivery_select`,
+  85_carrito_pedidos_web.sql), así que el select del cliente no necesita
+  repetir ese filtro.
+- **Cupones**: `mis_cupones()` — se leyó su definición real en la base
+  para confirmar las columnas exactas (`id, codigo, origen, valor,
+  tipo_descuento, estado, creado_en, canjeado_en`) antes de mapear,
+  coincide 1:1 con la forma que ya esperaba `TarjetaCupon.jsx`.
+- **Cantidad/quitar**: vuelven a escribir de verdad en
+  `carrito_productos` (`update`/`delete`, filtrado por
+  `cliente_web_id = usuario.id`) y llaman a `recargarCarrito()`
+  (`CarritoClienteContext`) para que el contador del header se
+  mantenga sincronizado — "marcar/desmarcar" sigue siendo puramente
+  local (nunca se persistía, ni en el carrito viejo).
+- **`confirmar()` sigue sin llamar a ningún RPC** — a propósito:
+  `confirmar_pedido_productos()` todavía no acepta día/hora/pago/
+  comprobante/cupón, eso es exactamente lo que trae la Fase 3.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` con datos reales de su cuenta.
+
+### 8.5 Efecto "Counter" (reactbits.dev) en cantidades y montos del carrito
+
+El usuario pidió conectarse por MCP a reactbits.dev y aplicar su
+componente "Counter" (dígitos que ruedan al cambiar el número) a los
+botones de cantidad de productos y a cualquier monto que cambie por
+esa cantidad (precio de la línea, subtotal, delivery, descuentos,
+total).
+
+**No existe ningún MCP de reactbits configurado** en este entorno (se
+buscó antes de descartarlo, no se asumió). Se intentó además traer la
+página real con WebFetch — sin éxito: reactbits.dev es una SPA que se
+renderiza en el navegador, así que WebFetch solo trae el cascarón HTML
+vacío (el `<title>`, nada del componente en sí). Mismo bloqueo que ya
+se había encontrado antes con el comparison-slider (§7.66) y con
+ShinyText en su momento — sin código fuente real disponible.
+
+**Fix**: reconstrucción a mano del efecto que describe el nombre
+"Counter" — un odómetro de dígitos — usando `framer-motion` (ya
+instalado en el proyecto, `^13.3.0`). Nuevo componente
+`Contador.jsx`: cada dígito es una columna de 0-9 apilada verticalmente
+(10 filas de 1em), trasladada con `animate={{ y: '-Nem' }}` (spring)
+para que el dígito correcto quede en la ventana visible de 1em — el
+mecanismo real de cualquier "rolling counter"/odómetro, con o sin
+código de referencia de por medio. Recibe el texto YA formateado (ej.
+`"S/ 45.00"`, `"3"`) y solo anima los caracteres que son dígitos —
+`S/`, el punto decimal y los espacios quedan estáticos, sin animación.
+
+Aplicado en: el número de cantidad del stepper, el precio de línea de
+cada producto (precio × cantidad), y en el resumen — Subtotal,
+Delivery, Descuento en productos, Cupón y Total — todos los montos que
+de verdad cambian cuando se toca `+`/`−` o se marca/desmarca un
+producto.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que el efecto se parece a lo que tenía en mente
+  (sin el componente real de referencia, es una reconstrucción
+  razonada, no una copia).
+
+### 8.6 Contador reescrito con el código REAL de React Bits (registro @react-bits)
+
+El usuario insistió en que sí había una vía MCP — resultó tener razón a
+medias: no existe un MCP dedicado de reactbits.dev, pero el proyecto ya
+tenía configurado un registro `@react-bits` en `components.json` (el
+mismo protocolo que usa shadcn/ui para distribuir componentes) — el MCP
+de shadcn, que sí está conectado, lo puede consultar. Con
+`search_items_in_registries`/`view_items_in_registries` se encontró
+`Counter-JS-TW` (la variante JS+Tailwind, la que calza con este
+proyecto) y, al no traer el contenido completo esas herramientas,
+`npx shadcn view @react-bits/Counter-JS-TW` sí devolvió el código fuente
+real completo.
+
+**Diferencia real con la reconstrucción de §8.5**: el Counter de
+verdad NO recorta un texto ya formateado — recibe un número crudo y
+arma sus propias "posiciones" (unidades, decenas, centenas, decimales)
+como potencias de 10, con un resorte (`useSpring`) independiente POR
+DÍGITO y un truco de "camino más corto" al dar la vuelta (pasar de 9 a
+0 gira 1 paso hacia adelante, no 9 hacia atrás) — mecánica bastante más
+prolija que el "saltar directo a la posición" que tenía la v1.
+
+`Contador.jsx` se reescribió como port fiel de ese código real, con
+tres cambios deliberados:
+- `motion/react` → `framer-motion` (el paquete que ya está instalado en
+  este proyecto; mismos hooks `useSpring`/`useTransform`, incompatible
+  en el nombre del paquete nada más).
+- `value` (número) se queda igual, pero se sumó `decimales` — el
+  original calcula sus posiciones por default a partir de
+  `value.toString()`, que en JS recorta ceros finales
+  (`(45).toString()` da `"45"`, nunca `"45.00"`) — para montos en soles
+  eso daba un ancho inconsistente según el valor. `calcularPlaces()`
+  fuerza siempre la misma cantidad de decimales.
+- Se sacaron las props de estilo que no hacían falta (gradientes de
+  desvanecido arriba/abajo, estilos de contenedor a medida) — se
+  mantuvo intacta la mecánica del resorte/camino-corto, que es la parte
+  que de verdad valía la pena traer fiel.
+
+**Bug propio encontrado y corregido antes de terminar**: la v1 de este
+port usaba `alto = '1em'` (string) pensando en que calzara solo con el
+tamaño de letra de alrededor — pero la animación multiplica
+`numero * alto` en JS (aritmética real, no CSS), así que multiplicar
+por un string rompía la cuenta en silencio. Se volvió al criterio del
+original: `tamano` es un número en px (como su `fontSize`), pasado a
+mano en cada lugar donde se usa `Contador` según el tamaño real del
+texto que lo rodea (14px en la mayoría de montos del resumen, 26px en
+el Total grande). El símbolo `S/` ya no vive dentro del componente
+(el real tampoco lo hacía) — se escribe aparte, como texto plano, antes
+de cada `<Contador>`.
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` que ahora sí se parece al Counter real.
+
+### 8.7 Campana de notificaciones (BellToggle de React Bits) en los dos headers
+
+El usuario pidió aplicar el componente "Bell Toggle" de React Bits al
+ícono de notificaciones que "todavía no está en el header del POS ni en
+el de la Web" — con el mismo criterio de §8.6 (buscar el código real en
+el registro `@react-bits` antes de construir nada).
+
+**Aclaración importante antes de tocar código**: el `BellToggle` real
+(visto con `npx shadcn view @react-bits/BellToggle-JS-TW`) NO es un
+ícono que abre una lista — es una píldora interruptor de encendido/
+apagado ("Notify me" / "You'll be notified") que se ensancha con un
+`clip-path` al tocarla. Se le preguntó al usuario cómo quería usarlo;
+confirmó: solo el ícono + el repique + el badge de conteo, sin la
+píldora ni el estado on/off — el clic debe abrir el panel de
+notificaciones, no alternar una preferencia.
+
+**`IconoCampana.jsx`** (nuevo, en `src/components/`): recorte del
+`BellToggle` real con esa forma. Dos detalles técnicos que valen la
+pena anotar:
+- El repique de la campana en el componente real NO usa `framer-motion`
+  ni ninguna librería de animación — usa `element.animate()` nativo del
+  navegador (Web Animations API) con keyframes calculados a mano
+  (`ringKeyframes`, con un "camino más corto" para que la campana
+  siempre gire hacia el lado más rápido de volver a cero). Se portó tal
+  cual, así que este ícono no suma ninguna dependencia nueva.
+- El original trae su ícono por default desde `@hugeicons/react` +
+  `@hugeicons/core-free-icons` (dos paquetes que el proyecto no tiene) —
+  pero también trae una variante `clapper` con un SVG de campana propio
+  (sin esa dependencia). Se usó esa variante siempre, así que tampoco
+  hacía falta instalar nada para el ícono en sí.
+- `estiloBadge` es una prop nueva (no existía en el original, que traía
+  colores fijos) para poder pintar el badge distinto en cada header sin
+  duplicar el componente — ver más abajo.
+
+**Header del POS** (`src/components/Header.jsx`): campana agregada
+entre la etiqueta de la pestaña actual y `<MenuUsuario />`, con
+`contador={0}` (badge apagado) y el clic mostrando un toast
+"próximamente" — a propósito: hoy NO existe ningún sistema de
+notificaciones para el personal (eso es la campanita de staff que se
+diseñó en una conversación anterior de esta misma sesión, pendiente,
+necesita tablas/triggers nuevos), así que sería falso mostrar un ícono
+"funcional" sin datos reales detrás. Badge en rojo (default del
+componente), que ya es el color de alerta que usa el resto del POS.
+
+**Header de la Web** (`src/pages/PortalCliente.jsx`): acá SÍ hay datos
+reales — se investigó primero (agente de exploración) y se confirmó que
+`NotificacionesClienteContext.jsx` (contador de no leídas),
+`NotificacionesCliente.jsx` (la bandeja completa, ruta
+`/mi-perfil/notificaciones`) y el marcado de leída YA existían desde
+antes — lo único que faltaba era el ícono en el header en sí (hoy la
+campana solo vivía adentro del menú del avatar). Nuevo componente
+`BotonNotificaciones`, mismo patrón "se vuelve botón de volver si ya
+estás en su propia página" que ya usan `BotonChanchito`/`BotonCarrito`
+en este mismo archivo — clic navega a `/mi-perfil/notificaciones` (o
+`navigate(-1)` si ya estás ahí), contador real desde
+`useNotificacionesCliente()`. Badge con `estiloBadge` en
+`--lw-metal-azul`/texto negro, igual que la insignia del carrito
+(§7.57: el azul metálico es el acento único de todo el portal cliente,
+no rojo).
+
+Queda tal cual sin tocar el bell que ya vivía dentro de
+`MenuUsuarioCliente.jsx` (mismo dato, dos lugares donde se ve — no es
+un error, es el mismo criterio que ya usan otras apps: un ícono en el
+header y además la entrada resaltada en el menú).
+- Build y lint verificados. Sin verificación visual en vivo (mismo
+  bloqueo de permisos de siempre) — pendiente que el usuario confirme
+  con `npm run dev` en las dos apps (POS y Web).
+
+### 8.8 Migración 2 de Fase 3 — pago, comprobante y verificación (`100_pedidos_web_pago.sql`)
+
+Segunda migración del rediseño del carrito (`docs/diseno-carrito/`),
+aplicada en vivo vía MCP de Supabase por pedido explícito del usuario
+("escribelo y ejecutalo"). Antes de escribir una sola línea se leyó el
+cuerpo completo real de `confirmar_venta()` (con `pg_get_functiondef`,
+no de memoria) — descubrir que esa función YA validaba y redimía
+cupones de punta a punta permitió simplificar de entrada lo que se
+tenía planeado para la futura Migración 4 (cupones en pedidos web), en
+vez de duplicar esa lógica en `confirmar_pedido_productos()`.
+
+**Contenido de la migración**:
+- Bucket privado `comprobantes-pedidos-web` (RLS: cada clienta solo
+  puede subir/ver los suyos, por carpeta `auth.uid()`; admin ve todos).
+- Bucket público `qr-pagos` (lectura pública, escritura solo admin) —
+  para los QR de Yape/Plin que el negocio suba desde el panel.
+- `estado_negocio` gana `yape_numero/titular/qr_url` y
+  `plin_numero/titular/qr_url` (Transferencia reutiliza el
+  `cuenta_transferencia` que ya existía).
+- `pedidos_web` gana `metodo_pago`, `comprobante_url`, `cupon_codigo`,
+  `pago_verificado` (default `false`), `pago_verificado_en/por`,
+  `venta_id`.
+- `confirmar_pedido_productos()` cambia de firma otra vez — de 7 a 10
+  parámetros (`p_metodo_pago, p_comprobante_url, p_codigo_cupon`
+  nuevos) — mismo `drop function` obligatorio antes del `create or
+  replace` (§99, ya documentado como regla). Valida método de pago,
+  exige comprobante, y si hay cupón solo verifica que EXISTA y esté
+  `DISPONIBLE` — a propósito NO lo redime todavía: eso pasa recién al
+  verificar el pago (ver abajo). Ningún efecto financiero real (stock,
+  cupón, puntos) puede ocurrir antes de que un admin confirme que el
+  comprobante es válido — regla de negocio ya establecida en una
+  conversación anterior de esta sesión.
+- `confirmar_venta()` también cambia de firma (8 → 9 parámetros,
+  `p_costo_delivery` al final) — mismo `drop function` obligatorio. Se
+  mantuvo su cuerpo original intacto y se agregó una sola línea
+  (`v_total := v_total + p_costo_delivery`) justo después del bloque de
+  cupón/descuento y antes de la validación de Efectivo — así el
+  delivery nunca se descuenta con un cupón. Decisión deliberada: el
+  delivery NO es una línea propia en `venta_items` (esa tabla solo
+  entiende PRODUCTO/SERVICIO) — para ventas que vienen de un pedido
+  web, `ventas.total` puede superar la suma de `venta_items.subtotal`
+  en exactamente el costo de delivery, reconciliable vía
+  `pedidos_web.costo_delivery` a través de `pedidos_web.venta_id`.
+- Nueva `verificar_pago_pedido_web(p_pedido_id)` — solo admin, bloquea
+  la fila del pedido (`for update`), rechaza si ya estaba verificado o
+  cancelado, arma el arreglo de items desde `pedidos_web_items` y llama
+  a `confirmar_venta()` por dentro con el método de pago, cliente,
+  cupón y costo de delivery del pedido — ahí sí se redime el cupón y se
+  descuenta el stock, todo dentro de la misma transacción. Al terminar
+  marca `pago_verificado=true`, guarda quién y cuándo, enlaza
+  `venta_id` y pone el pedido en `LISTO`. Caso límite documentado a
+  propósito sin resolver: si un producto se borra entre que se crea el
+  pedido y se verifica el pago, `producto_id` queda en null (`on delete
+  set null`) y esa línea se excluye en silencio de la venta —
+  aceptable por lo raro que sería, no vale la pena más lógica para eso.
+
+**Verificación post-aplicación** (no se asumió éxito solo por el
+`{"success":true}` del MCP): se consultó `pg_proc` por nombre y
+`pronargs` — `confirmar_pedido_productos` quedó en 10 argumentos,
+`confirmar_venta` en 9, `verificar_pago_pedido_web` en 1, cada nombre
+una sola vez (sin overload viejo colgando). Se revisaron también los
+advisors de seguridad del proyecto después de aplicar — sin hallazgos
+nuevos atribuibles a esta migración (los `SECURITY DEFINER` marcados
+como ejecutables por `authenticated` son el patrón ya usado en todo el
+proyecto para estas funciones, no una regresión).
+
+Pendiente (Fase 4, frontend): `CarritoCliente.jsx` todavía no llama a
+la función real — su `confirmar()` sigue siendo un placeholder que solo
+muestra un toast ("Diseño en construcción"). Falta además que
+`alSubirCaptura` retenga el `File` real (hoy solo guarda el nombre y
+una preview local) antes de poder subirlo de verdad al bucket.
+
+### 8.9 Migración 3 de Fase 3 — comprobante fiscal (`101_pedidos_web_comprobante.sql`)
+
+Tercera migración del rediseño del carrito. El toggle Boleta/Factura
+con RUC y razón social ya existía en el carrito desde la Fase 1
+(`SeccionComprobante`, con la validación `facturaCompleta` en el
+navegador) pero esos datos se perdían al confirmar — el servidor no los
+guardaba ni los volvía a validar. **Aclaración importante, porque el
+nombre puede sonar a más de lo que es**: esto NO es facturación
+electrónica de verdad — no hay integración con SUNAT, series ni
+números correlativos. Solo se guarda la elección de la clienta para
+que el negocio emita el comprobante real por fuera del sistema, como
+ya lo hace hoy. Se confirmó primero que `ventas`/`confirmar_venta()` no
+tiene ningún concepto de comprobante fiscal — por eso esto vive
+enteramente en `pedidos_web`, sin tocar esa función.
+
+- `pedidos_web` gana `tipo_comprobante` (`BOLETA`/`FACTURA`, `not null
+  default 'BOLETA'` — la tabla seguía vacía, sin backfill necesario),
+  `ruc`, `razon_social`.
+- `confirmar_pedido_productos()` cambia de firma otra vez — de 10 a 13
+  parámetros (`p_tipo_comprobante, p_ruc, p_razon_social`, los 3 con
+  default al final) — mismo `drop function` obligatorio de siempre.
+  Valida server-side lo mismo que ya validaba el navegador: con
+  `FACTURA` exige `p_ruc` de exactamente 11 dígitos (`~ '^\d{11}$'`,
+  algo más estricto que el `length === 11` del frontend, a propósito —
+  un RUC real siempre es numérico) y `razon_social` no vacía.
+- Verificado post-aplicación: `confirmar_pedido_productos` con 13
+  argumentos (una sola función), columnas nuevas presentes con el
+  default esperado.
+
+Con esta migración, las 3 primeras de las 5 planeadas en Fase 3 están
+aplicadas. Se revisó de cerca la Migración 4 (cupones) antes de
+escribirla — resultó no necesitar SQL nuevo: `pedidos_web.cupon_codigo`
+ya existe desde §8.8, `confirmar_pedido_productos()` ya valida que el
+cupón exista y esté `DISPONIBLE`, y `verificar_pago_pedido_web()` ya le
+pasa ese código a `confirmar_venta()`, que redime el cupón, aplica el
+descuento y hasta dispara la recompensa de referido — todo ya
+construido de fondo en la Migración 2. Queda solo Migración 5
+(`precio_antes` en productos, no bloquea nada de esto).
+
+### 8.10 Fase 4 — `CarritoCliente.jsx` conectado al RPC real
+
+Con las migraciones 1-3 de Fase 3 ya aplicadas, `confirmar()` deja de
+ser el placeholder que solo mostraba un toast ("Diseño en
+construcción") y pasa a llamar de verdad a
+`confirmar_pedido_productos()` (los 13 parámetros vigentes tras
+§8.9), subiendo antes el comprobante real a Storage.
+
+**Gap cerrado**: `alSubirCaptura` solo guardaba `archivo.name` + una
+preview local (`URL.createObjectURL`) — nunca el `File` en sí, así que
+no había nada que subir de verdad. Se agregó el estado
+`capturaArchivo` (guarda el `File` real) junto a los ya existentes
+`captura`/`capturaPreview`; `faltaPago` (que habilita el botón
+Confirmar) ahora se calcula sobre `capturaArchivo`, no sobre el string
+del nombre.
+
+**`confirmar()`**, con el mismo patrón que ya usan `MiPerfil.jsx` /
+`MenuUsuario.jsx` para fotos de perfil (`procesarImagen` +
+`subirFoto`, ambos de `src/lib/imagenes.js`, ruta
+`{usuario.id}/{crypto.randomUUID()}.{extension}`):
+1. Comprime la captura a webp/jpg (`ladoMaximo: 1400, calidad: 0.9` —
+   más alto que el default de 600px/0.8 de las fotos de perfil, porque
+   acá lo que importa es que el monto y la hora de la operación se
+   sigan leyendo bien en la captura).
+2. La sube al bucket privado `comprobantes-pedidos-web` (de §8.8) —
+   nunca a uno público, es un comprobante de pago.
+3. Llama a `supabase.rpc('confirmar_pedido_productos', {...})` con los
+   13 parámetros: productos marcados, entrega, fecha (convertida de
+   la clave `claveDiaLima` del calendario a un ISO real con el nuevo
+   helper local `claveDiaAISO` — la clave nunca debe viajar tal cual a
+   un campo `date`, ver el comentario ya existente sobre
+   `claveDiaLima` en `src/lib/fechas.js`), hora, método de pago, la
+   ruta del comprobante recién subido, zona/dirección/celular (solo si
+   `DELIVERY`), el código del cupón aplicado, y tipo de comprobante +
+   RUC/razón social (solo si `FACTURA`).
+4. Si el RPC lanza una excepción (cualquiera de las validaciones del
+   servidor — día/hora fuera de horario, RUC inválido, cupón ya usado,
+   etc.), se muestra tal cual en un toast de error — el servidor ya
+   redacta esos mensajes en español, pensados para mostrarse directo.
+5. Si sale bien: toast de éxito, `recargarCarrito()` (refresca el
+   contador del header) y `navigate('/inicio')`.
+
+**Pendiente, fuera de esta tarea a propósito**: no existe todavía
+ninguna pantalla de "mis pedidos" en el portal cliente — hoy
+`confirmar()` no tiene a dónde más mandar a la clienta a seguir su
+pedido más que Inicio. `HistorialCliente.jsx` es de atenciones/citas,
+no de pedidos de productos. Construir esa pantalla es tarea aparte, no
+pedida todavía.
+- Build y lint verificados (`npm run build`, `npm run lint` — oxlint,
+  sin advertencias nuevas). Sin verificación visual en vivo de un
+  pedido real de punta a punta (mismo bloqueo de permisos de siempre)
+  — pendiente que el usuario confirme con `npm run dev` que el flujo
+  completo (subir captura → Confirmar pedido) funciona y que el pedido
+  aparece bien en "Pedidos Web" del POS.
+
+### 8.11 Fix: el panel admin no mostraba la captura ni el cupón del pedido
+
+El usuario reportó dos pedidos de prueba reales (con cupón C36673, 20%
+PORCENTAJE) donde el panel admin de "Pedidos Web" no dejaba ver la
+captura de pago ni reflejaba el descuento del cupón. Investigando con
+datos reales de esos 2 pedidos se encontraron dos problemas distintos,
+uno de cada lado:
+
+**1. Bug real en el servidor, no solo de pantalla**: `confirmar_pedido_
+productos()` (desde §8.8) valida que el cupón exista y esté
+`DISPONIBLE`, pero nunca restaba su descuento del `total` — guardaba
+`total = subtotal + costo_delivery` sin tocar el cupón para nada. Los
+2 pedidos de prueba lo confirmaron: subtotal 12.00 con cupón de 20%
+tenían `total` en 22.00 y 12.00 (sin descuento), en vez de 19.60 y
+9.60. La redención real del cupón (marcarlo `CANJEADO`, aplicarlo a la
+`venta`) sigue pasando recién en `verificar_pago_pedido_web()` — eso
+está bien, es la regla de "nada financiero real antes de verificar el
+pago" ya establecida. Lo que faltaba era calcular ese mismo descuento
+por ADELANTADO (sin redimir el cupón todavía) para que el total que ve
+la clienta en el carrito, el monto que se le pide pagar, y lo que ve
+el admin, coincidan los tres.
+
+**`102_pedidos_web_descuento_cupon.sql`** (aplicada en vivo): agrega
+`pedidos_web.descuento_cupon numeric(10,2) default 0`, y reescribe
+`confirmar_pedido_productos()` (mismos 13 parámetros, sin `drop
+function` esta vez porque la firma no cambia) para calcular el
+descuento con la misma fórmula que ya usa `confirmar_venta()`
+(PORCENTAJE sobre el subtotal de productos, nunca sobre el delivery;
+MONTO_FIJO topado al subtotal, con excepción si el cupón vale más que
+el pedido) y restarlo del `total`. Se corrigieron también con un
+`update` los 2 pedidos de prueba ya existentes (seguían `PENDIENTE`,
+sin `venta_id`, sin ningún efecto financiero real que se viera
+afectado por corregirlos).
+
+**2. El panel admin nunca mostraba la captura, y "Marcar listo" nunca
+pasaba por la verificación de pago real**: revisando `PedidosWeb.jsx`
+para agregar el botón de ver la captura salió un problema más de
+fondo — el comentario del archivo seguía hablando de una versión vieja
+sin pago online (`85_carrito_pedidos_web.sql`, migración que ya no
+existe con ese número) y el botón "Marcar listo" hacía un `update`
+crudo de `estado` a `LISTO`, sin llamar nunca a
+`verificar_pago_pedido_web()`. Eso significa que CUALQUIER pedido
+marcado "Listo" hasta ahora nunca generó una venta real: nunca se
+descontó el stock, nunca se redimió el cupón, nunca existió una fila
+en `ventas` detrás — el admin solo estaba cambiando una etiqueta, no
+confirmando el pago de verdad. Confirmado con los 2 pedidos de prueba:
+ambos con `venta_id` y `pago_verificado` en null/false porque nunca se
+verificaron.
+
+Fix en `PedidosWeb.jsx`:
+- El botón "Marcar listo" (solo visible en `PENDIENTE`) se reemplaza
+  por "Verificar pago", que llama a
+  `supabase.rpc('verificar_pago_pedido_web', { p_pedido_id })` — el
+  único camino real de ahí en adelante para pasar a `LISTO`. "Listo →
+  Entregado" y "Cancelar" siguen siendo un `update` simple, sin efecto
+  financiero, tal cual estaban.
+- Nueva función `verComprobante(pedido)` + helper `urlFirmadaFoto()`
+  (nuevo, en `src/lib/imagenes.js`) — el bucket `comprobantes-pedidos-
+  web` es privado (§8.8), así que `getPublicUrl()` no sirve; hace
+  falta firmar la URL cada vez que se abre (`createSignedUrl`, 5
+  minutos de vigencia). Botón "Ver comprobante" abre esa URL firmada
+  en una pestaña nueva — mismo patrón que los links de WhatsApp que ya
+  existían en este panel (abrir hacia afuera, sin preview inline, para
+  no complicar el panel con estado de imágenes cacheadas).
+- Se agregó al desglose del pedido: la línea del cupón aplicado (con
+  su descuento real, ahora que el fix de arriba lo calcula bien),
+  método de pago, insignia de "verificado" cuando `pago_verificado` es
+  `true`, y los datos de factura (RUC/razón social) cuando
+  `tipo_comprobante = 'FACTURA'` — nada de esto se mostraba antes.
+- Build y lint verificados. Sin verificación visual en vivo — pendiente
+  que el usuario confirme con `npm run dev` que "Verificar pago" sobre
+  los 2 pedidos de prueba efectivamente descuenta el stock, redime el
+  cupón y crea la venta.
+
+### 8.12 Nueva pestaña "Pedidos" en el portal cliente
+
+Pedido del usuario: la clienta no tenía dónde ver el estado de sus
+pedidos de productos ni forma de cancelarlos — hasta ahora ese lado
+del flujo solo existía en el panel admin (`PedidosWeb.jsx`, §8.11).
+Regla de cancelación explícita del usuario: solo se puede cancelar
+mientras el admin NO haya confirmado (verificado) el pago todavía; una
+vez que ya se generó la venta, hay que hablar directo con el negocio
+para pedir la devolución — la app no la revierte sola.
+
+**`103_cancelar_pedido_web.sql`** (aplicada en vivo): nuevo RPC
+`cancelar_mi_pedido_web(p_pedido_id)`, mismo patrón que
+`cancelar_mi_cita_web()` (security definer, valida dueño vía
+`mi_cliente_id()`, `for update` antes de tocar la fila). No existía
+ninguna policy de UPDATE para el cliente sobre `pedidos_web` (solo
+`pedidos_web_update_admin`) — a propósito: la regla de "solo si
+`pago_verificado = false`" se valida en un solo lugar controlado
+(el RPC), no en una policy de RLS ni solo en el botón del frontend.
+Si el pago ya fue verificado, la función lanza una excepción con el
+mismo mensaje que se le muestra a la clienta ("comunícate
+directamente con el negocio para solicitar la devolución") — nunca
+confía en que el botón ya esté deshabilitado del lado del cliente.
+
+**`PedidosCliente.jsx`** (nuevo, en `src/pages/cliente/`), ruta
+`/mi-perfil/pedidos` — mismo patrón anidado bajo Mi Perfil que
+Direcciones/Notificaciones/Seguridad/Referidos (`titulosSubpaginasCliente`
+para la migaja, entrada nueva en el menú del avatar
+`MenuUsuarioCliente.jsx` junto a "Direcciones", y un segundo botón
+rápido "Mis pedidos" en `MiPerfil.jsx` al lado de "Mis direcciones").
+Cada pedido muestra: estado (mismas 4 etiquetas de color que ya usa
+`PedidosWeb.jsx` admin — Pendiente/ámbar, Listo/azul, Entregado/verde,
+Cancelado/gris — los tokens `--color-amber/blue/green` son globales,
+no exclusivos del tema POS, así que funcionan igual acá), los
+productos, el desglose con cupón si aplica (ahora correcto gracias al
+fix de §8.11), día/hora de entrega o recojo, método de pago, y el
+total.
+
+- Si el pedido sigue `PENDIENTE` y `pago_verificado` es `false`:
+  botón "Cancelar pedido" con confirmación (mismo modal `lw-bar` que ya
+  usa `DireccionesCliente.jsx` al eliminar una dirección) → llama a
+  `cancelar_mi_pedido_web()`.
+- Si `pago_verificado` es `true` (y el pedido no está ya Entregado o
+  Cancelado): en vez del botón, un aviso + link de WhatsApp real al
+  negocio (mismo `datos_contacto()`/`numeroWhatsapp()` que ya usan
+  `NosotrosCliente.jsx`/`PieClienteWeb.jsx`, no un número de relleno)
+  para pedir la devolución directamente.
+- Build y lint verificados. Sin verificación visual en vivo — pendiente
+  que el usuario confirme con `npm run dev` que la pestaña se ve bien y
+  que cancelar un pedido `PENDIENTE` (como los 2 de prueba, todavía sin
+  verificar) funciona de punta a punta.
+
+### 8.13 Migración 5 de Fase 3 — `precio_antes` en productos (última de las 5)
+
+Última migración planeada del rediseño del carrito.
+`CarritoCliente.jsx` ya tenía TODA la lógica visual lista desde la
+Fase 1 (etiqueta de % de descuento, precio tachado, línea de
+"Descuento en productos" en el resumen) pero la traía hardcodeada en
+`null` porque la columna no existía.
+
+**`104_precio_antes_productos.sql`** (aplicada en vivo):
+`productos.precio_antes numeric(10,2)`, opcional, con
+`check (precio_antes is null or precio_antes > 0)`. `productos_vista`
+(la vista que lee Inventario, con columnas explícitas — no
+`select *`) necesitó su propio `create or replace view` para sumar la
+columna — **error real encontrado al aplicarlo**: Postgres compara las
+columnas de una vista por POSICIÓN, no por nombre, así que insertarla
+entre `precio` y `costo` corrió a `costo` un lugar y Postgres lo leyó
+como "le cambiaste el nombre a la columna costo" (`cannot change name
+of view column`) — se resolvió agregando `precio_antes` al FINAL de la
+lista de columnas en vez de junto a `precio` (donde iría por lógica).
+Sin ningún `grant` nuevo: `authenticated` ya tenía `SELECT` a nivel de
+tabla completa desde antes, una columna nueva queda cubierta sola.
+
+Frontend:
+- `ModalProducto.jsx` (crear/editar producto, usado por
+  `Inventario.jsx`): nuevo campo "Precio antes (oferta)", opcional.
+  Valida que si se llena sea mayor a 0 y mayor al precio de venta
+  actual (si no, no sería un descuento).
+- `Inventario.jsx`: suma `precio_antes` a su `SELECT_PRODUCTOS`.
+- `CarritoCliente.jsx`: el `select` de `carrito_productos` ahora pide
+  `productos(...,precio_antes,...)` y `precioAntes` deja de ser
+  `null` fijo — lee el valor real.
+
+**Fuera de esta migración a propósito**: el catálogo público
+(`ProductosCliente.jsx`) sigue mostrando solo el precio actual, sin la
+etiqueta de "% off" — el precio que se cobra ya es el correcto (nunca
+dependió de esta columna), es solo que el badge visual de descuento no
+se agregó ahí. La tarjeta iridiscente tiene el `.iri-share`
+(28×28, esquina superior izquierda) y `.iri-heart` (32×32, superior
+derecha) ya ocupando las dos esquinas de arriba — sumar la etiqueta
+`.lw-etq-desc` (pensada para la tarjeta rectangular del carrito, no
+para esta tarjeta con esquinas ya ocupadas) habría necesitado una
+posición nueva a medida, y no era parte de lo pedido. Se deja anotado
+como pulido opcional a futuro, no como pendiente bloqueante.
+- Build y lint verificados. Sin verificación visual en vivo — pendiente
+  que el usuario pruebe con `npm run dev` poniéndole un precio de
+  oferta a un producto real y viéndolo reflejado en el carrito.
+
+### 8.14 Datos reales de pago (Yape/Plin/Transferencia) en el carrito
+
+Último punto pendiente de todo el rediseño del carrito, y el más
+urgente de los que quedaban: `CarritoCliente.jsx` mostraba literalmente
+`"[QR Yape]"` como texto y una instrucción con `"[NOMBRE DEL DUEÑO]"` y
+un número de cuenta/celular inventado — las columnas reales
+(`estado_negocio.yape_numero/titular/qr_url`, `plin_*`,
+`cuenta_transferencia`) ya existían desde la Migración 2 (§8.8) pero
+nadie las llenaba ni el carrito las leía. Sin esto, ningún pedido real
+podía probarse de punta a punta: la clienta habría visto instrucciones
+falsas.
+
+**`ContactoWeb.jsx`** (panel admin, ya editaba dirección/teléfono/
+redes de `estado_negocio`) gana una sección nueva "Métodos de pago del
+carrito web": número + titular + subir QR para Yape y Plin (nuevo
+componente interno `CampoMetodoPago`, mismo patrón de foto que
+`ModalProducto.jsx` — sube primero a Storage, borra la anterior recién
+cuando el guardado en BD ya fue exitoso, para no dejar huérfanos), más
+el campo de cuenta de Transferencia (reutiliza `cuenta_transferencia`,
+la misma columna que ya se edita rápido desde Ventas.jsx al cobrar en
+el mostrador — un aviso en el propio campo aclara que es el mismo
+dato, para que no parezca un tercer lugar desincronizado). Los QR se
+suben al bucket público `qr-pagos` (de §8.8).
+
+**`EstadoNegocioContext.jsx`** (ya existía, ya leía `abierto` +
+`cuenta_transferencia` con Realtime) se extendió para traer también
+`yape_numero/titular/qr_url` y `plin_numero/titular/qr_url`,
+agrupados en un solo objeto `pagos` — se eligió extender este context
+en vez de que `CarritoCliente.jsx` hiciera su propio fetch aparte,
+porque ya está montado en toda la app (`main.jsx`) y ya mantiene estos
+datos al día con Realtime sin código nuevo.
+
+**`CarritoCliente.jsx`**: `instruccionPago` y el bloque del QR ya no
+tienen ningún dato inventado — usan `pagos`/`cuentaTransferencia` del
+context. Si el admin todavía no configuró un método (número vacío),
+se avisa explícitamente ("El negocio todavía no configuró Yape —
+escríbenos por WhatsApp antes de pagar.") en vez de mostrar un campo
+vacío o un placeholder que pudiera confundirse con un dato real.
+- Confirmado en la base antes de tocar código: la policy de SELECT de
+  `estado_negocio` es `rol_actual() is not null` (cualquier sesión con
+  rol resuelto, incluida una clienta) — a nivel de FILA, así que las
+  columnas nuevas quedan cubiertas solas, sin policy ni grant nuevo.
+  El bucket `qr-pagos` es público (`storage.buckets.public = true`),
+  confirmado con una consulta antes de asumirlo — por eso el QR se
+  puede mostrar con `urlPublicaFoto()` directo, sin firmar ninguna URL
+  (a diferencia del comprobante de pago, que sí es privado).
+- Build y lint verificados. Sin verificación visual en vivo — pendiente
+  que el usuario configure un Yape/Plin real desde `ContactoWeb.jsx`
+  con `npm run dev` y confirme que el carrito los muestra bien.
+
+Con esto, las 5 migraciones de Fase 3, la Fase 4 (frontend), los fixes
+de §8.11 (comprobante + verificación real en el panel admin) y la
+nueva pestaña de pedidos del cliente (§8.12) quedan completos — el
+flujo de compra de productos por la Web queda de punta a punta con
+datos reales, sin ningún placeholder pendiente. Lo que sigue, fuera de
+este roadmap (ver conversación): notificaciones push reales para el
+personal, y el mini-carrito de servicios dentro de Citas.
+
+## 9. Mini-carrito de servicios en Citas
+
+Pedido del usuario, ya anticipado desde el inicio del rediseño del
+carrito (§8, decisión "servicios pasan a un mini-carrito propio dentro
+de Citas — tarea aparte, futura"). Antes de tocar código se investigó
+el estado real: **la mitad de esto ya existía y estaba huérfano**.
+`ServiciosCliente.jsx` ya tenía un botón "Agregar" por servicio,
+respaldado por una tabla real `carrito_servicios` y
+`CarritoClienteContext.jsx` (`serviciosCarrito`, un `Set` de IDs,
+`agregarServicio`/`quitarServicio`) — nada de esto se tocó nunca
+durante el rediseño del carrito de productos, solo dejó de tener
+dónde mostrarse cuando se sacó el bloque "Servicios para reservar" del
+carrito viejo. `ModalAgendarCitaCliente.jsx` incluso ya tenía una prop
+`serviciosIniciales` con un comentario que describía exactamente ese
+flujo removido ("Precargados desde el carrito... → 'Reservar cita'").
+
+Se confirmaron 3 decisiones de diseño con el usuario antes de escribir
+nada:
+1. El ícono de carrito del header (arriba de toda la Web) — **bug
+   real encontrado de paso**: contaba `serviciosCarrito.size +
+   productosCarrito.size` pero siempre lleva a `/carrito`, que es
+   solo-productos desde el rediseño — el número mostrado nunca
+   coincidía con lo que esa pantalla mostraba. Se corrigió para que
+   cuente solo productos.
+2. El mini-carrito vive al lado derecho del calendario en Citas (no
+   un panel deslizante).
+3. Al confirmar una cita con esos servicios, se quitan del
+   mini-carrito — ya se convirtieron en algo real, dejarlos ahí sería
+   como un carrito de compras que no se vacía al pagar.
+
+**`CarritoClienteContext.jsx`**: `totalItems` (servicios+productos) se
+reemplaza por `totalItemsProductos` (solo productos) — único
+consumidor era `BotonCarrito` en `PortalCliente.jsx`, corregido para
+usar el nuevo valor. Nueva función `vaciarServiciosReservados(ids)` —
+un solo `delete ... in()`, no un `quitarServicio()` por servicio.
+
+**`MiniCarritoServiciosCitas.jsx`** (nuevo, en `src/components/`):
+lee `serviciosCarrito` del context y pide nombre/precio/duración solo
+de esos IDs (no el catálogo completo, eso lo sigue haciendo
+`ModalAgendarCitaCliente` al abrirse). Lista con botón de quitar por
+servicio, total de precio y duración, botón "Reservar cita" que
+entrega la lista completa (no solo IDs) al llamador. Estado vacío con
+link a "Ver servicios".
+
+**`CitasCliente.jsx`**: pasa de una sola columna (`max-w-md`) a una
+grilla de 2 columnas en `lg+` (`420px` calendario + `360px`
+mini-carrito, centradas como par) — en móvil se apilan, mini-carrito
+después de las citas del día. Nuevo estado `serviciosParaReservar`:
+se llena con los IDs al tocar "Reservar cita" desde el mini-carrito, se
+vacía (`[]`) al tocar el botón "Agendar" de siempre (agendado en
+blanco, como ya funcionaba) — ambos casos abren el mismo modal, la
+única diferencia es qué le llega en `serviciosIniciales`. Al agendar
+con éxito, se llama a `vaciarServiciosReservados()` con los servicios
+que `ModalAgendarCitaCliente` ya devolvía en su callback
+`onAgendada(fechaHora, serviciosReservados)` — ese segundo argumento
+ya existía, `CitasCliente.jsx` simplemente no lo usaba todavía.
+
+**`ServiciosCliente.jsx`**: el botón decía "En tu carrito" una vez
+agregado — confuso ahora que el destino real es Citas, no `/carrito`.
+Cambiado a "Agregado" + un toast nuevo solo al agregar ("Agregado —
+resérvalo desde Citas."), nada al quitar.
+
+- Build y lint verificados (`npm run build`, `npm run lint`). Sin
+  verificación visual en vivo — pendiente que el usuario confirme con
+  `npm run dev` que el mini-carrito se ve bien al lado del calendario
+  en desktop, se apila bien en móvil, y que agregar en Servicios →
+  reservar desde Citas → la cita se agenda y el servicio desaparece
+  del mini-carrito, todo de punta a punta.
+
+## 10. Fix: Mi Panel en blanco ("Algo salió mal") para cualquier admin/asistente con atenciones propias
+
+Reportado por el usuario: Mi Panel no cargaba para la admin Claudia
+("Algo salió mal"), pero sí para el admin Miguel Jesús. Con la
+consola del navegador (captura del usuario) se vio el error real:
+`RangeError: Invalid time value` en `formatearTituloDia`, disparado
+desde `agruparPorDia` dentro de `MiPanel.jsx` — un bug **preexistente**,
+no introducido en esta sesión (no se había tocado `MiPanel.jsx` ni
+nada de lo que usa, hasta ahora).
+
+**Causa real**: `agruparPorDia` llamaba a `parsearFechaISOLima(registro.
+fecha)`, una función pensada para columnas `date` puras
+("YYYY-MM-DD", ver su doc en `src/lib/fechas.js`) — pero se confirmó
+en la base que `registro_servicios.fecha` es en realidad `timestamp
+with time zone` (un valor real tipo
+`"2026-09-27T06:14:00+00:00"`). Al partir ESE string por guiones, el
+"día" quedaba como `"27T06:14:00+00:00"` → `Number(...)` da `NaN` →
+`Date.UTC` con `NaN` da una fecha inválida → recién explota más tarde,
+al intentar formatearla con `Intl.DateTimeFormat` en
+`formatearTituloDia`. El comentario que justificaba ese código decía
+literalmente "registro.fecha es una columna `date` de Postgres" — dato
+falso, nunca verificado contra el esquema real; lo más probable es que
+se copió de un fix parecido y válido para otra pantalla (`deudas.fecha`
+y `mobiliario_compras.fecha` sí son `date` de verdad — se confirmaron
+los 6 usos de una columna "fecha" en todo el proyecto antes de tocar
+nada, para no repetir el mismo error de suposición).
+
+**Por qué solo le pasaba a Claudia**: un admin ve por defecto SU
+PROPIO panel filtrado (línea ~131, "el admin ve su propio panel por
+defecto"). Miguel Jesús no tiene ninguna atención propia registrada
+este período, así que `grupos` quedaba vacío y el `.map()` que dispara
+el bug nunca llegaba a ejecutarse — Claudia sí tenía atenciones reales,
+así que para ella siempre fallaba, desde que se cargaba la pantalla.
+
+**Fix**: en las 2 líneas donde se usaba mal (`agruparPorDia` y el
+cálculo de `puedeCancelar`, que hacía lo mismo para revisar si una
+atención es de hoy), se cambió `parsearFechaISOLima(registro.fecha)`
+por `new Date(registro.fecha)` — lo correcto para un timestamp real,
+mismo criterio que ya usaba correctamente `formatearHora(registro.
+fecha)` unas líneas más abajo en el mismo archivo (nunca se tocó,
+porque nunca estuvo mal). Import de `parsearFechaISOLima` retirado del
+archivo, ya no se usa ahí.
+
+- Build y lint verificados. Sin verificación visual en vivo — pendiente
+  que el usuario confirme con la cuenta de Claudia que Mi Panel ahora
+  carga bien.
+
+## 11. Fix: el carrito web no mostraba el QR de Yape/Plin recién subido
+
+Reportado por el usuario justo después de subir un QR real desde
+`ContactoWeb.jsx` (§8.14) y guardar: en el carrito web las fotos no
+cargaban. Se verificó paso a paso antes de tocar nada:
+- El archivo SÍ quedó bien subido a Storage (`storage.objects`
+  confirmado, tamaño y `mimetype: image/webp` correctos).
+- La URL pública responde `200 OK` real (probado con `curl` directo,
+  `Content-Type: image/webp`, `Access-Control-Allow-Origin: *`) — el
+  archivo en sí nunca fue el problema.
+- La fila en `estado_negocio` tenía los valores correctos guardados
+  (`yape_qr_url`, `plin_qr_url`, etc.).
+
+Con la subida y los datos descartados, quedaba la lectura del lado del
+cliente. Causa real: la policy de `SELECT` de `estado_negocio` era
+`rol_actual() is not null` — y `rol_actual()` busca la sesión en
+`usuarios` (personal del POS: admin/cajera/asistente). Una clienta real
+vive en `clientes`, nunca en `usuarios`, así que para ella
+`rol_actual()` siempre daba `null` y la policy bloqueaba TODA la fila
+completa (no solo el QR — también `yape_numero`, `cuenta_
+transferencia`, todo). Este hueco nunca se había notado porque el
+único componente que antes leía algo de `EstadoNegocioContext.jsx`
+(`AvisoNegocioCerrado.jsx`, el aviso de "negocio cerrado") solo vive
+en `Layout.jsx`, el shell del POS — nunca se montó en el portal
+cliente hasta que `CarritoCliente.jsx` empezó a usar este mismo
+context en la Fase 4 (§8.14). Fue la primera vez que una sesión de
+clienta de verdad intentaba leer esta tabla.
+
+**`105_estado_negocio_select_clientes.sql`** (aplicada en vivo):
+`alter policy estado_negocio_select ... using (rol_actual() is not
+null or mi_cliente_id() is not null)` — mismo helper `mi_cliente_id()`
+que ya usan las policies de `pedidos_web`/`carrito_productos`/etc.
+Verificado post-aplicación con `pg_policy`.
+
+No fue necesario tocar nada del frontend — `EstadoNegocioContext.jsx`
+y `CarritoCliente.jsx` ya estaban bien escritos, simplemente nunca
+recibían la fila porque RLS la bloqueaba antes de llegar al cliente.
+- Pendiente que el usuario confirme con `npm run dev` (sesión de
+  clienta real, no de personal) que el QR ahora sí se ve en el
+  carrito.
+
+## 12. Fix: el botón "Agregar" de Productos quedaba persistente
+
+Reportado por el usuario: en `ProductosCliente.jsx` (catálogo web),
+tocar "Agregar" convertía el botón en un stepper que reflejaba la
+cantidad REAL del carrito y se quedaba así mientras el producto
+siguiera ahí — "persistente para siempre". Pedido explícito: dos
+controles separados — un selector de cantidad (para elegir cuántas) y
+un botón "Agregar" aparte que mande esa cantidad de una vez; después
+de agregar, la tarjeta vuelve sola a su estado normal (cantidad 1,
+botón "Agregar"), aunque el carrito de verdad ya tenga esas unidades.
+
+**`CarritoClienteContext.jsx`**: `agregarProducto(productoId, cantidad
+= 1)` gana un segundo parámetro — sigue funcionando igual si no se
+pasa nada (default 1), pero ahora puede sumar varias unidades de una
+sola vez en vez de siempre +1.
+
+**`ProductosCliente.jsx`**: la tarjeta de cada producto se extrajo a
+su propio componente `TarjetaProducto` — necesitaba su propio
+`useState` de cantidad LOCAL (independiente del carrito), algo que no
+se puede hacer bien dentro de un `.map()` inline. Ya no lee
+`productosCarrito` en absoluto: el selector +/− cambia solo la
+cantidad local (tope en `stock_actual`, igual que el stepper del
+carrito), y "Agregar" llama a `agregarProducto(id, cantidad)` — si
+sale bien, resetea la cantidad local a 1 (el "regreso a la normalidad"
+pedido) y muestra un toast confirmando cuántos se agregaron, ya que la
+tarjeta ya no tiene ninguna señal visual persistente de "esto está en
+tu carrito" (antes lo era el stepper mismo).
+- Build y lint verificados. Sin verificación visual en vivo — pendiente
+  que el usuario confirme con `npm run dev` que poner cantidad 2 y
+  tocar Agregar dos veces deja 2 unidades reales en el carrito, con la
+  tarjeta volviendo a cantidad 1 cada vez.
+
+## 13. Fixes tras probar el nuevo flujo de "Agregar" en Productos
+
+El usuario probó el cambio de §12 con un producto real (Anillo  A-013,
+stock real 2) y reportó 3 problemas. Se investigó cada uno contra la
+base de datos real antes de tocar nada (fila de `carrito_productos`,
+policies de RLS de `productos`/`carrito_productos`) para no adivinar.
+
+**1. El badge del header mostraba "1" en vez de "2"** — confirmado,
+bug real: `totalItemsProductos` contaba `productosCarrito.size`
+(líneas de producto distintas), no la suma de cantidades. Con 1
+producto en cantidad 2, el tamaño del Map es 1. Fix: suma las
+cantidades de verdad (`[...productosCarrito.values()].reduce(...)`).
+
+**2. El producto no se veía en `/carrito`** — se investigó a fondo
+(fila real en `carrito_productos`, policies de RLS de esa tabla y de
+`productos`, todas permisivas y correctas para este caso) sin
+encontrar ningún bloqueo del lado del servidor. La fila sí existía en
+la base. Quedó pendiente confirmar con el usuario si sigue
+reproduciéndose después del fix del punto 3 (la explicación más
+probable, dado lo que sí se encontró ahí: ver abajo).
+
+**3. Volver a Productos dejaba agregar más del stock real** — este sí
+se confirmó con datos reales: el producto (stock 2) terminó con
+`cantidad: 4` en `carrito_productos` — el selector de cantidad de la
+tarjeta topaba en `stock_actual` a secas, sin descontar lo que ya
+estaba en el carrito de esa misma clienta. Muy probablemente esto
+también explica el punto 2: el segundo "Agregar" (que llevó la
+cantidad a 4) pudo haber sido parte de la misma sesión de prueba antes
+de mirar el carrito.
+
+**Fix (frontend + defensa en el servidor)**:
+- `ProductosCliente.jsx`: `TarjetaProducto` ahora recibe
+  `cantidadEnCarrito` (de `productosCarrito`, el mismo Map del
+  context) y calcula `disponibleParaAgregar = stock_actual -
+  cantidadEnCarrito` — el selector +/− y el botón "Agregar" topan ahí,
+  no en el stock total. Si ya no queda nada para agregar (pero el
+  producto no está agotado del todo), la tarjeta muestra "Ya tienes
+  todo el stock (N) en tu carrito" en vez del selector.
+- `CarritoClienteContext.jsx`: `agregarProducto()` ahora vuelve a
+  pedir `stock_actual` real antes de escribir (no confía en el tope
+  que ya aplicó la tarjeta — nunca confiar solo en lo que ya validó el
+  navegador) y recorta la cantidad a lo que en verdad quepa. Cambió su
+  valor de retorno de `boolean` a la cantidad REAL agregada (`0` si no
+  se pudo nada) — así el toast de `ProductosCliente.jsx` puede avisar
+  "Solo se agregaron N — es lo que quedaba disponible" en vez de
+  mentir sobre cuánto se agregó.
+- Se corrigió a mano la fila de prueba que quedó en `cantidad: 4`
+  (ahora en 2, igual al stock real) para no arrastrar el dato viejo a
+  la siguiente prueba.
+
+**Decisión de diseño confirmada con el usuario**: el comportamiento
+actual ya es el que quiere — `confirmar_pedido_productos()` no valida
+stock al crear el pedido; el único chequeo real (con bloqueo de fila
+`for update`, a prueba de condiciones de carrera entre 2 clientes
+comprando lo último que queda) vive en `confirmar_venta()`, al momento
+en que el admin verifica el pago (§8.8). No hace falta ningún cambio
+ahí.
+
+### 13.1 Dos causas más detrás de "sigue sin verse en el carrito"
+
+El usuario reportó que, incluso después del fix de arriba, el
+problema de no ver productos en `/carrito` seguía. Se investigaron dos
+causas reales, una en cada lado:
+
+**A. Estado de React desincronizado por HMR** (explica el contador que
+"ya no sube" y volver a poder agregar de más): `CarritoClienteContext.jsx`
+se editó varias veces con la pestaña del navegador abierta — el hot
+reload de React en modo desarrollo no siempre logra aplicar bien
+cambios a un *contexto*, dejando el estado en memoria de esa sesión
+desincronizado del código real ya corregido. Confirmado con la base:
+el carrito real tenía `cantidad: 6` para un producto con `stock_actual:
+2`, mostrando que el tope nuevo nunca se llegó a ejecutar en esa
+sesión. Un refresco completo (Ctrl+Shift+R) lo resolvió — el contador
+del header volvió a mostrar el número real.
+
+**B. 403 real en la consulta del carrito** (la causa de fondo de
+"no se ven los productos", con consola del navegador confirmándolo):
+`productos` en este proyecto otorga `SELECT` **por columna**, no por
+tabla completa (para esconder `costo` de quien no sea admin, visible
+solo a través de `productos_vista`). `INSERT`/`UPDATE`/`REFERENCES` sí
+están a nivel de tabla completa. La migración 104 (`precio_antes`)
+agregó la columna y automáticamente heredó esos 3 privilegios de
+tabla, pero **nunca un `SELECT` explícito** — confirmado con
+`information_schema.column_privileges`. Cualquier consulta que pidiera
+`precio_antes` (como el `productos(...)` embebido de
+`CarritoCliente.jsx`) fallaba con 403 real, tumbando la consulta
+COMPLETA — por eso "0 artículos" aunque el producto sí estuviera
+guardado. El catálogo de Productos nunca pide esa columna, por eso
+esa pantalla siempre cargó bien y solo el carrito se veía afectado.
+
+**`106_grant_select_precio_antes.sql`** (aplicada en vivo):
+`grant select (precio_antes) on public.productos to authenticated;` —
+un grant aditivo por columna, no reemplaza nada de lo que ya existía.
+Verificado post-aplicación con `information_schema.column_privileges`.
+
+Se corrige también, con esto, la memoria del proyecto "Grants no
+automáticos en Supabase" — el hueco esta vez no fue una TABLA nueva
+sin grant (el caso ya documentado ahí), fue una COLUMNA nueva en una
+tabla cuyo `SELECT` ya era por columna en vez de por tabla completa —
+un caso más específico a tener en cuenta la próxima vez que se agregue
+una columna a `productos` (o a cualquier otra tabla con el mismo
+patrón de columnas escondidas).
+
+## 14. Rediseño de Servicios/Detalle del servicio (docs/diseno-servicios/) + sus 10 migraciones
+
+Aplicado el diseño aprobado (`docs/diseno-servicios/README.md`):
+reescritura completa de `ServiciosCliente.jsx` (hero con carrusel de
+foto+texto cada 5s, filtros sticky, catálogo agrupado por categoría o
+grilla plana, "Cómo reservar", ayuda, barra flotante "Tu cita") y
+pestaña nueva `DetalleServicioCliente.jsx` (ruta `servicios/:id`) —
+galería, información, adelanto y pago, cómo es el servicio, cuidados,
+especificaciones/herramientas/materiales, reseñas, combo sugerido y
+"también te puede interesar". Salió la tarjeta iridiscente 3D y el
+corazón/"Agregar"/compartir de la tarjeta de Servicios (se fueron al
+Detalle); esas técnicas siguen intactas en `ProductosCliente.jsx`.
+
+Nuevos archivos: `src/lib/serviciosVisual.js` (degradado de respaldo +
+`formatearDuracion`), `src/components/TarjetaServicioCliente.jsx`
+(tarjeta compartida), `src/components/BarraTuCitaFlotante.jsx` (dock
+"Tu cita" compartido — ver bug de `overflow-hidden` más abajo),
+`src/components/EditorListaJson.jsx` (editor de listas jsonb genérico,
+usado por 6 campos de `ModalServicio.jsx`).
+
+**Bug real encontrado y corregido de paso**: `servicios.id` es `uuid`,
+no un entero secuencial — el primer intento de `degradadoServicio()`
+hacía `id * 29` (da `NaN` con un uuid, rompía el gradiente de respaldo
+entero) y el hero ordenaba "más recientes" con `b.id - a.id` (resta de
+uuids, no hace nada). Se corrigió hasheando el string del id en vez de
+tratarlo como número.
+
+**Bug real de CSS encontrado y corregido**: `BarraTuCitaFlotante`
+(`position: fixed`) vivía dentro del `<main overflow-hidden>` de
+`PortalCliente.jsx` — un ancestro con `overflow-hidden` recorta a sus
+descendientes `fixed` aunque el containing block sea el viewport (gotcha
+real de CSS, no de React). Se resolvió con un portal (`createPortal`)
+directo a `.landing-web` (no a `document.body`, para seguir heredando
+`--lw-gold`, declarada ahí).
+
+Las 10 migraciones del "Backend que falta" del README, aplicadas en
+vivo vía el MCP de Supabase (reconectado a mitad de esta tanda; mientras
+estuvo desconectado se escribieron los `.sql` igual, para correr a mano):
+
+1. **`107_servicios_descripcion.sql`** — `servicios.descripcion` (text).
+2. **`108_servicios_en_tendencia.sql`** + **`109_servicios_mas_pedidos.sql`**
+   — `en_tendencia` (bool, manual desde `ModalServicio.jsx`) y la función
+   `servicios_mas_pedidos(dias)` (security definer, cuenta
+   `cita_servicios` de los últimos N días excluyendo `CANCELADA`) para
+   "Lo más pedido" sin columna nueva. De paso resolvió también el
+   "Pendiente de decidir" del orden dentro de cada fila de categoría:
+   se usa ese mismo ranking en vez de sumar `servicios.orden`.
+3. **`110_servicio_fotos.sql`** — tabla `servicio_fotos` (varias fotos
+   por servicio, etiqueta Resultado/Antes/Después/orden), mismo bucket
+   `fotos-servicios`. Editor de galería nuevo en `ModalServicio.jsx`;
+   carrusel + miniaturas reales en el Detalle.
+4. **`111_servicios_a_domicilio.sql`** — `a_domicilio` (bool) +
+   `costo_domicilio`.
+5. **`112_servicios_precio_variable.sql`** — `precio_variable` (bool) +
+   `nota_precio` + `duracion_resultado`.
+6. **`113_servicios_pasos_specs_cuidados.sql`** — 6 columnas `jsonb`
+   (`pasos`, `especificaciones`, `herramientas`, `materiales`,
+   `cuidados_antes`, `cuidados_despues`), editadas fila por fila con el
+   nuevo `EditorListaJson.jsx` (decisión confirmada con el usuario:
+   editor de filas, no texto libre por línea).
+7. **`114_servicios_combo.sql`** — `combo_con` (override manual) +
+   `servicios_combo_sugerido()` (calcula el servicio más reservado junto
+   a este, security definer sobre `cita_servicios`).
+8. **`115_estado_negocio_adelanto.sql`** — `adelanto_minimo` y
+   `cancelacion_plazo_horas` en `estado_negocio` (config del negocio, no
+   por servicio) — editables desde `ContactoWeb.jsx`, expuestos por
+   `EstadoNegocioContext.jsx`.
+9. **`116_resenas_servicio.sql`** — tabla `resenas_servicio` +
+   `guardar_mi_resena_servicio()` / `mi_resena_servicio()` /
+   `resenas_servicio_publicas()` / `resenas_servicio_resumen()`. A
+   propósito NO se tocó `resenas` (86_resenas.sql): tiene
+   `unique(cliente_id)`, una sola reseña general de por vida para el
+   muro de Nosotros — forzar `servicio_id` ahí arriesgaba esa función ya
+   en producción. La regla pendiente ("¿quién puede reseñar?") quedó
+   resuelta dentro de `guardar_mi_resena_servicio()`: solo clientas con
+   una cita `COMPLETADA` que incluyó ese servicio.
+
+Todas siguen el patrón ya documentado en las memorias del proyecto:
+`servicios` y `estado_negocio` otorgan `SELECT/INSERT/UPDATE` a nivel de
+TABLA completa a `authenticated` (a diferencia de `productos`), así que
+un `ALTER TABLE ADD COLUMN` alcanzó solo, sin un `GRANT` explícito
+aparte — confirmado con `information_schema.column_privileges` después
+de cada una. Las funciones nuevas son todas `security definer` (mismo
+criterio que `resenas_publicas()`/`mis_puntos()`): necesitan ver datos
+de TODAS las clientas (conteos agregados, nunca filas identificables) o
+validar algo que el cliente no puede autoevaluar solo (que de verdad se
+hizo el servicio).
+
+Pendiente real (no se inventó): "cupos de la semana" sigue mostrando un
+texto genérico ("Consulta en Citas") — calcularlo de verdad necesita
+cruzar `horario_atencion()` con las citas ya agendadas, una feature de
+disponibilidad aparte, no una columna.
+
+## 15. Rediseño de Productos/Detalle del producto (docs/diseno-productos/) + sus 8 migraciones
+
+Aplicado el diseño aprobado (`docs/diseno-productos/README.md`), en 3
+fases:
+
+**Fase 1 — `ProductosCliente.jsx` reescrito**: inicio "Novedades y lo
+más vendido" (mismo carrusel foto+texto cada 5s que el hero de
+Servicios), dos cintas continuas "Ofertas"/"Destacados" con indicador de
+posición y flechas, filtros sticky + catálogo agrupado por categoría
+(idéntico a Servicios), "Cómo comprar", ayuda y barra flotante "Tu
+carrito". Salieron la tarjeta iridiscente 3D y el corazón/cantidad/
+Agregar de la tarjeta (se fueron al Detalle); esas técnicas quedaron sin
+tocar en `index.css` (`.iri-*`) por si algo más las usa.
+
+Nuevo: `src/components/TarjetaProductoCliente.jsx` (nace de
+`TarjetaServicioCliente.jsx`, le suma etiqueta "−X%", precio anterior
+tachado y línea de stock), `src/components/BarraTuCarritoFlotante.jsx`
+(mismo patrón de portal que `BarraTuCitaFlotante.jsx`, pero sobre
+`productosCarrito`) y `src/hooks/useCintaContinua.js`.
+
+**Cinta continua, la parte no trivial**: el lienzo aprobado simulaba el
+movimiento con `@keyframes` + un truco de `animation-delay` para que las
+flechas "saltaran" a la tarjeta siguiente — el README pedía explícito
+que en la app esto se sintiera real ("debe deslizarse"). Se resolvió con
+`useCintaContinua.js`: un solo offset en px llevado por
+`requestAnimationFrame`, mutado directo por ref sobre `style.transform`
+(mismo truco que ya usaba el tilt de la tarjeta iridiscente — pasar esto
+por React state a 60fps re-renderizaría la fila entera en cada frame).
+`mover(±1)` (las flechas) desplaza ese mismo offset, así que el
+indicador de posición siempre refleja dónde está la fila de verdad, sin
+importar si se movió sola o a mano. Pausa por fila (no ambas a la vez)
+vía `onMouseOver`/`onMouseOut`/`onFocus`/`onBlur` con delegación en el
+contenedor, revisando `closest('.cinta-tarjeta')` — sin depender de
+`:has()` en CSS, que hubiera exigido volver a animación pura por CSS.
+
+**Fase 2 — `DetalleProductoCliente.jsx` nuevo** (ruta `productos/:id`,
+igual patrón que `servicios/:id`): galería, información (precio, ahorro,
+datos clave, cantidad + Agregar), franja de pago/entrega/cambios, cómo
+se usa, ¿es para ti?, especificaciones/ingredientes/libre de, reseñas,
+combo sugerido y "también te puede interesar". El carrito mantiene EXACTO
+el comportamiento que ya vivía en `ProductosCliente.jsx` antes del
+rediseño: tope `stock_actual − cantidadEnCarrito`, se recorta solo,
+vuelve a 1 al agregar, mismos mensajes de `useToast`.
+
+En esta fase, sin las migraciones todavía aplicadas, las secciones que
+dependían de columnas inexistentes se ocultaron con `// TODO backend` en
+vez de inventar contenido (regla del CLAUDE.md) — corregido en la Fase 3.
+
+**Fase 3 — 8 migraciones (`117` a `124`)**, aplicadas en vivo vía el MCP
+de Supabase, con las decisiones que confirmó el usuario primero:
+
+1. **`117_productos_destacado_nuevo_inicio.sql`** — `destacado`, `nuevo`,
+   `en_inicio` (bool, los 3 a mano desde `ModalProducto.jsx` — decisión
+   confirmada, mismo criterio que `servicios.en_tendencia`) y
+   `subcategoria` (text, etiqueta de la tarjeta).
+2. **`118_productos_descripcion_datos_clave.sql`** — `descripcion`,
+   `contenido`, `rinde`, `frecuencia`, `oferta_hasta`.
+3. **`119_producto_fotos.sql`** — tabla `producto_fotos` (varias fotos,
+   etiqueta Frente/Textura/En uso/Detrás), mismo patrón que
+   `servicio_fotos`. Editor de galería nuevo en `ModalProducto.jsx`;
+   carrusel + miniaturas reales en el Detalle.
+4. **`120_producto_variantes.sql`** — presentaciones (ej. 250 ml/500 ml)
+   en tabla aparte, decisión confirmada con el usuario sobre las dos
+   opciones del README. **Solo el esquema**: no toca `carrito_productos`
+   ni `pedidos_web_items` (siguen referenciando `producto_id` a secas) ni
+   el flujo de cantidad/Agregar del Detalle — esa integración (elegir
+   presentación, tope de stock por variante,
+   `confirmar_pedido_productos()` con variante) queda como tarea aparte.
+5. **`121_productos_contenido_editorial.sql`** — 6 columnas `jsonb`
+   (`especificaciones`, `modo_uso`, `ideal_para`, `tips`, `ingredientes`,
+   `libre_de`), editadas fila por fila con el `EditorListaJson.jsx` que
+   ya existía de Servicios.
+6. **`122_productos_combo.sql`** — `combo_con` (override manual) +
+   `productos_combo_sugerido()` (calcula el producto más comprado junto
+   a este, security definer sobre `pedidos_web_items`).
+7. **`123_resenas_producto.sql`** — tabla `resenas_producto` +
+   `guardar_mi_resena_producto()` / `mi_resena_producto()` /
+   `resenas_producto_publicas()` / `resenas_producto_resumen()`. Decisión
+   confirmada con el usuario: solo puede reseñar quien tiene un
+   `pedidos_web` en estado `ENTREGADO` con ese producto (validado dentro
+   de la función, no confiando en el cliente). No se tocó `resenas`
+   (86_resenas.sql), misma razón que en Servicios.
+8. **`124_productos_vista_completa.sql`** — reconstruye `productos_vista`
+   con todas las columnas nuevas, para que `Inventario.jsx` las siga
+   viendo (lee de la vista, no de la tabla cruda).
+
+A diferencia de `servicios`, `productos` da `SELECT` **por columna** (para
+ocultar `costo`, ver `03_rls.sql`) — cada una de las migraciones 117/118/
+121/122 incluye su propio `grant select (...) on productos to
+authenticated`, si no la primera consulta que pidiera esa columna
+respondía 403 la request entera (memoria del proyecto). Después de
+aplicar las 8, `get_advisors` no mostró ningún hallazgo nuevo (los
+`security_definer` que aparecen son el mismo patrón ya aceptado en todo
+el proyecto para RPCs que necesitan ver datos agregados de todas las
+clientas).
+
+Con las migraciones aplicadas, se volvió a `ProductosCliente.jsx` (fila
+"Destacados" real, inicio usando `en_inicio`, etiqueta del hero con
+prioridad oferta > Nuevo > Destacado, `TarjetaProductoCliente.jsx` usando
+`subcategoria`) y `DetalleProductoCliente.jsx` (todas las secciones que
+tenían `// TODO backend` ahora leen datos reales y se ocultan solas si
+el admin todavía no las llenó) para que dejaran de ocultar contenido.
+`ModalProducto.jsx` del POS se actualizó con todos los campos/editores
+nuevos (reusando `EditorListaJson.jsx`) y `Inventario.jsx` pasa
+`productosExistentes` para el selector de combo y pide las columnas
+nuevas en su `SELECT_PRODUCTOS` (si no, el modal de edición no las
+precargaba).
+
+**Aclaración de UX, sin cambio de esquema**: el usuario reportó que
+"Precio antes de la oferta" en `ModalProducto.jsx` parecía "al revés"
+(pedía un monto MAYOR al precio de venta, cuando esperaba poner ahí el
+precio CON descuento). Se confirmó que el modelo actual es correcto
+(`precio` = lo que de verdad se cobra; `precio_antes` = solo la
+referencia tachada, más alta) y coincide con el diseño aprobado — se
+dejó solo una nota aclaratoria en el campo, sin tocar la validación.
+Quedó una idea de rediseño (precio "normal" fijo + precio de oferta que
+al vencer vuelve solo al normal) explícitamente pospuesta por el usuario
+para una tarea aparte, porque toca `Ventas.jsx`/`Inventario.jsx`, no solo
+la Web de clientes.
+
+## 16. Rediseño de Citas (docs/diseno-citas/) — 2026-09-28
+
+Aplicado el diseño aprobado (`docs/diseno-citas/README.md`) a
+`src/pages/cliente/CitasCliente.jsx`, sin migraciones (todo lo que usa ya
+existía en la base):
+
+- **Calendario**: idéntico al anterior (grilla de 42 días, navegación por
+  mes, puntito en días con citas). Lo que cambió es qué significa
+  seleccionar un día: `diaSeleccionado` ahora empieza en `null` y es
+  puramente un *filtro* — "Próximas citas" se ve siempre, con su propia
+  consulta aparte (`fecha_hora >= now()`, `estado in
+  (PENDIENTE,CONFIRMADA)`, sin límite de mes). Tocar un día filtra la
+  lista a las citas de ese día (de cualquier estado, salen de la consulta
+  por mes que ya existía para los puntitos); tocarlo de nuevo, o el chip
+  "Ver todas las próximas", quita el filtro.
+- **Historial**: bloque plegable nuevo (abierto por defecto), consulta
+  propia (`fecha_hora < now()` o estado en
+  COMPLETADA/CANCELADA/NO_ASISTIO, sin límite de mes ni paginación —
+  mismo criterio sin límite que ya usa `HistorialCliente.jsx`).
+- **Puntos y sellos**: 1 sello y 1 "punto por visita" por día — solo la
+  primera cita no cancelada/no-asistió de cada día (cronológicamente)
+  cuenta, igual que hace el servidor en `mis_puntos()`/
+  `mi_fidelizacion()` (`count(distinct fecha)`); el resto de las citas
+  de ese mismo día muestran "Sello ya contado ese día". El estimado de
+  puntos por cita usa `config_puntos` (no números fijos), igual que los
+  textos de "Cómo ganas puntos y sellos" (S/X por punto, umbrales de
+  nivel, sellos por recompensa). Solo cuentan las citas COMPLETADAS —
+  confirmar una cita no suma nada, solo completarla en caja.
+- **Calificar**: reseñas por servicio (`resenas_servicio`,
+  116_resenas_servicio.sql) — una cita completada muestra "Calificar" si
+  algún servicio suyo todavía no tiene reseña propia (se reusa la RPC
+  `mi_resena_servicio()` del Detalle de servicio, sin reinventar el
+  formulario) y lleva a `/servicios/:id#resenas`; si ya los reseñó todos,
+  muestra "Calificada".
+- **Carrito de servicios**: se quitó `MiniCarritoServiciosCitas` de esta
+  pestaña (el componente queda sin uso, sin borrar — es del alcance del
+  carrito de servicios aparte). En su lugar, el botón circular con
+  ícono de carrito (con contador de `serviciosCarrito.size`) a la
+  izquierda de "Agendar cita" — como la ruta `/citas/carrito`
+  (`docs/diseno-carrito-servicios/README.md`) todavía no existe, apunta a
+  `/servicios` por ahora; solo hay que cambiar ese `to` cuando se
+  implemente esa pestaña. "Volver a reservar" (en una tarjeta de la
+  lista o en Historial) agrega los servicios de esa cita al carrito
+  (`CarritoClienteContext`) y abre `ModalAgendarCitaCliente` con esos
+  servicios precargados, mismo criterio.
+- **Plazo de cancelación**: `puedeModificar()` y el texto "hasta N horas
+  antes" ahora leen `estado_negocio.cancelacion_plazo_horas` (vía
+  `useEstadoNegocio()`), con `3` como respaldo si el negocio no lo
+  configuró — antes estaba fijo en 3.
+- **Animación de entrada**: patrón estándar
+  (`docs/patrones/animacion-entrada.md`). El bloque "Puntos + Antes de tu
+  cita" se anima como una sola pieza en escritorio (aparecen juntos,
+  `aside`) pero como dos bloques independientes en móvil (delays
+  distintos) — se resolvió con dos copias del mismo contenido (funciones
+  `bloquePuntos()`/`bloqueAntes()` llamadas dos veces) mostradas/
+  ocultadas por CSS (`hidden lg:flex` / `lg:hidden`), no por JS, para que
+  la estructura responda de verdad al viewport en vivo y no solo al
+  ancho que había al montar. El listado "Próximas citas"/día filtrado
+  solo anima la primera vez que se pinta con datos reales (un `ref` que
+  se apaga con `requestAnimationFrame` apenas `cargandoInicial` pasa a
+  `false`) — cambiar de día después no la repite.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas.
+**No se pudo probar en navegador en esta sesión** (sin herramienta de
+automatización) — pendiente de revisar en `npm run dev`:
+
+- El layout de "Tu próxima cita" (3 columnas), el calendario, y que
+  Calendario/Próximas/Puntos+Antes queden bien distribuidos en 3
+  columnas en escritorio y apilados en el orden correcto en móvil
+  (Próximas → Calendario → Historial → Puntos → Antes de tu cita).
+- Que el sello/los puntos estimados de cada tarjeta coincidan con lo que
+  ya sabías de esas citas (en especial un día con 2+ citas tuyas).
+- El botón "Calificar" navegando a `/servicios/:id#resenas` (el scroll
+  automático al ancla depende del navegador con react-router, no hay
+  manejo explícito — si no salta a la sección, decime y le agrego un
+  `scrollIntoView`).
+- Cancelar/reprogramar/agendar desde las tarjetas nuevas (que
+  "Próximas"/Historial se actualicen solos después).
+- El botón de carrito (círculo con contador) yendo a `/servicios` — y
+  confirmar si esto se deja así hasta que exista `/citas/carrito` o
+  preferís otra cosa mientras tanto.
+
+**Ajuste post-revisión (mismo día)**: el chip "+1 sello" de la cita que
+de verdad gana el sello del día se perdía cuando esa cita ya estaba
+COMPLETADA (`calcularChipsSello()` la excluía a propósito, copiando
+demasiado literal un caso raro del lienzo de referencia) — ahora se
+muestra en cualquier estado relevante (vigente o completada), y solo se
+oculta del todo para una cita cancelada/no-asistió. También se movió el
+chip de sello a la misma fila que el de puntos (antes iba en una fila
+aparte debajo) y se le dio el mismo color dorado que el chip de puntos
+en su estado "ganado" (el chip "Sello ya contado ese día" sigue gris).
+
+## 17. Reprogramar cita: ahora se pueden editar todos los campos, no solo fecha/hora — 2026-09-28
+
+A pedido del usuario, el botón "Reprogramar" del portal cliente dejó de
+ser solo un cambio de fecha/hora: ahora abre el mismo tipo de flujo que
+"Agendar" (servicios, asistente, fecha, horario y nota), precargado con
+lo que la cita ya tenía, y guarda todo junto.
+
+**Backend — `supabase/sql/125_reprogramar_cita_web_completa.sql`**
+(aplicada con el MCP de Supabase al proyecto `WedJaiseReact`): la
+función vieja `reprogramar_mi_cita_web(p_cita_id, p_nueva_fecha_hora)`
+solo tocaba `fecha_hora`. Se hizo `drop function` de esa firma y se creó
+una nueva con `(p_cita_id, p_asistente_id, p_nueva_fecha_hora,
+p_servicio_ids, p_nota)`:
+
+- Revalida todo lo que ya validaba `agendar_cita_web` (asistente
+  activo/no-cajera, servicios activos, horario realmente libre vía
+  `horarios_disponibles_cita(..., p_excluir_cita_id)`), más las reglas
+  que ya tenía reprogramar (dueña de la cita, no cancelada/completada,
+  ≥3 h de anticipación, nueva fecha futura).
+- **Decisión confirmada con el usuario (AskUserQuestion)**: el precio de
+  cada servicio de la cita se actualiza al precio ACTUAL del catálogo al
+  guardar — no queda congelado al precio con el que se agendó
+  originalmente. Se implementó reemplazando `cita_servicios` entero
+  (`delete` + `insert`, mismo patrón que `agendar_cita_web`) en vez de
+  un diff fila por fila; seguro porque nada fuera de la función mira
+  `cita_servicios.id` (`guardar_mi_resena_servicio()` solo usa
+  `cita_id`/`servicio_id`/`estado`) y solo puede pasar con la cita
+  todavía no COMPLETADA (ya validado arriba), así que nunca se pisa el
+  historial de una cita ya cerrada.
+- **Decisión confirmada con el usuario**: también se puede cambiar de
+  asistente (no solo servicios/fecha), así que el flujo de horarios se
+  recalcula igual que en Agendar cada vez que cambian servicios o
+  asistente.
+
+**Frontend — `src/components/ModalReprogramarCitaCliente.jsx`
+reescrito**: mismo layout/checklist que `ModalAgendarCitaCliente.jsx`
+(checkboxes de servicios con precio/duración actual, select de
+asistente, fecha, grilla de horarios, nota), pero con los tres primeros
+campos precargados desde la cita (`cita.cita_servicios[].servicio_id`,
+`cita.asistente_id`, `cita.nota`) — el horario sigue sin precargarse a
+propósito, para obligar a re-elegir con la duración/asistente que
+queden después de editar. `CitasCliente.jsx` no necesitó cambios: ya le
+pasaba el objeto `cita` completo (con `cita_servicios` y `servicio_id`
+desde el rediseño de la sección 16) y el callback `onReprogramada`
+sigue recibiendo solo la fecha/hora nueva.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas. No
+se pudo probar en navegador en esta sesión — pendiente de revisar en
+`npm run dev`: abrir "Reprogramar" desde una cita, quitar/agregar
+servicios y también cambiar de asistente, confirmar que el horario se
+recalcula bien y que la cita queda con los servicios/precio nuevos al
+volver a Citas.
+
+## 18. Nueva pestaña: Carrito de servicios (`/citas/carrito`) — 2026-09-28
+
+Implementado `docs/diseno-carrito-servicios/README.md`: copia adaptada
+de `CarritoCliente.jsx` (carrito de productos) para reservar los
+servicios que la clienta ya agregó desde Servicios/Detalle. Antes de
+tocar la base de datos se resolvieron con el usuario (AskUserQuestion)
+las 4 "Decisiones abiertas" del README, y se le pidió confirmación
+explícita de la migración antes de aplicarla:
+
+- **"Agendar cita" reemplaza al modal**: el botón de Citas y el de la
+  tarjeta vacía llevan directo a `/citas/carrito` en vez de abrir
+  `ModalAgendarCitaCliente.jsx` — ese componente quedó sin ningún
+  llamador y se borró (junto con `MiniCarritoServiciosCitas.jsx`, ya sin
+  uso desde el rediseño de Citas de la sección 16).
+- **Adelanto siempre obligatorio**: `estado_negocio.adelanto_minimo`, o
+  el 100% del total si el negocio no configuró un mínimo. No hay forma
+  de reservar sin adelanto ni de elegir pagar menos del mínimo exigido.
+- **Sin cupones** en esta versión (queda para una tarea aparte).
+- **Sin "cualquier asistente disponible"** — se sigue eligiendo uno
+  específico, como en Agendar/Reprogramar.
+
+**Backend — `supabase/sql/126_citas_web_pago_adelanto.sql`** (aplicada
+con el MCP de Supabase, confirmada por el usuario antes de correrla):
+
+- Bucket privado `comprobantes-citas-web` (mismo patrón que
+  `comprobantes-pedidos-web`: solo la dueña y el admin lo leen).
+- Columnas en `citas`: `metodo_pago`, `comprobante_url`,
+  `pago_verificado` (default `false`), `pago_verificado_en`,
+  `pago_verificado_por` — sin GRANT extra porque `citas` ya da
+  SELECT/INSERT/UPDATE a nivel de tabla completa (no es como
+  `productos`, que da por columna).
+- `agendar_cita_web` cambia de firma: se le suman `p_metodo_pago`,
+  `p_comprobante_url` y `p_adelanto` (antes de `p_nota`, que sigue
+  opcional). Valida método/comprobante obligatorios y
+  `p_adelanto >= coalesce(adelanto_minimo, precio_total_servicios)`. Se
+  hizo `drop function` de la firma vieja de 4 parámetros porque su único
+  llamador se borró en este mismo cambio.
+- Mismo patrón que `pedidos_web` (100_pedidos_web_pago.sql): esto solo
+  guarda la INTENCIÓN de pago (comprobante subido, sin verificar) — la
+  cita entra como PENDIENTE igual que siempre. Un botón "Verificar
+  pago" en el POS (como en Pedidos Web) queda **fuera de esta tarea**
+  (no fue pedido) — las columnas ya están listas para esa función
+  futura.
+
+**Frontend — `src/pages/cliente/CarritoServiciosCliente.jsx`** (nuevo):
+mismo layout de 2 columnas, mismas clases `.lw-panel`/`.lw-campo`/
+`.lw-seg`/`.lw-pago-opcion`/`.lw-chip`/`.lw-wa-ayuda` y el mismo flujo de
+captura (`CampoSubirArchivo`, `procesarImagen`/`subirFoto` de
+`lib/imagenes.js`) que `CarritoCliente.jsx`, con lo propio de un
+servicio:
+
+- **Servicios**: fila con checkbox (incluir en esta reserva, todos
+  marcados por defecto), foto o degradado de `degradadoServicio()`
+  (mismo fallback que `TarjetaServicioCliente`), duración, precio y
+  basurero para quitar del carrito. Sin cantidad/stock — un servicio no
+  se pide en cantidad.
+- **Asistente**: tarjetas seleccionables desde `asistentes_para_citas()`
+  (obligatorio).
+- **Día y hora**: fila de chips con los próximos 14 días (deshabilita
+  los que el negocio no atiende, según `horario_atencion()`), y al
+  elegir asistente+día se llama `horarios_disponibles_cita()` con la
+  duración total de los servicios MARCADOS, mostrada en chips agrupados
+  Mañana/Tarde. Cambiar servicios, asistente o día limpia la hora
+  elegida (se recalcula sola vía el `useEffect` de horarios).
+- **Resumen de tu reserva**: cuándo (inicio–fin calculado con la
+  duración total), con quién, servicios marcados + duración total +
+  total, barra de nivel + "Ganarás +N pts · +1 sello" (o "sello ya
+  contado ese día" si la clienta ya tiene otra cita — vigente o
+  completada — ese mismo día calendario, consultado aparte al elegir el
+  día), adelanto ahora / saldo en el local, método de pago con QR +
+  captura, botón verde "Confirmar reserva" (deshabilitado con un aviso
+  de qué falta) y política de cancelación con
+  `cancelacionPlazoHoras`.
+- **Simplificación consciente**: no hay un chip de puntos por cada fila
+  de servicio — los puntos se ganan por VISITA completa, no por
+  servicio individual, así que solo se muestra el estimado agregado de
+  la reserva completa (evita inventar una fórmula "por servicio" que no
+  existe en el backend).
+- **Barra fija móvil** ("Total · +N pts" + "Confirmar") portaleada a
+  `.landing-web` (no a `document.body`), mismo motivo que
+  `BarraTuCitaFlotante.jsx`: el `<main overflow-hidden>` de
+  `PortalCliente.jsx` recorta cualquier `fixed` de adentro.
+- **Al confirmar**: `agendar_cita_web` con los nuevos parámetros →
+  toast "Cita reservada." → `vaciarServiciosReservados()` (solo los
+  servicios reservados; los desmarcados se quedan en el carrito) →
+  navega a `/citas`.
+- **Carrito vacío**: ícono, "Todavía no agregaste servicios", botón "Ver
+  servicios" → `/servicios`. Sin resumen.
+
+**Entradas reconectadas**: botón carrito de `CitasCliente.jsx` (antes
+apuntaba a `/servicios` como respaldo temporal), "Volver a reservar" de
+la lista y del Historial de Citas, y `BarraTuCitaFlotante.jsx` — las
+tres ahora llevan a `/citas/carrito`. Ruta agregada en `App.jsx`
+(`citas/carrito`, dentro del árbol del portal cliente) y título en
+`src/config/navegacionCliente.js`.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas. No
+se pudo probar en navegador en esta sesión — pendiente de revisar en
+`npm run dev`:
+
+- El flujo completo: agregar servicios desde Servicios, ir al carrito,
+  elegir asistente/día/hora, subir una captura y confirmar — que la
+  cita aparezca en Citas con el adelanto correcto.
+- Que el adelanto mostrado/exigido sea el correcto según
+  `adelanto_minimo` esté o no configurado en Contacto Web/estado del
+  negocio.
+- "Sello ya contado ese día" en el resumen cuando ya hay otra cita ese
+  día.
+- Los tres puntos de entrada (botón carrito de Citas, "Volver a
+  reservar", barra flotante de Servicios) llegando todos a
+  `/citas/carrito` con los servicios correctos ya marcados.
+- El carrito vacío al entrar sin haber agregado nada.
+- La barra fija de "Confirmar" en móvil (portaleada, no debería
+  recortarse ni superponerse mal con el contenido).
+
+**Ajustes post-revisión (mismo día):**
+
+1. **"Agendar cita" ya no manda siempre al carrito**: si el carrito
+   está vacío, mandaba a una página que solo decía "andá a Servicios" —
+   un redirect inútil (bug reportado por el usuario). Ahora
+   `destinoAgendar` en `CitasCliente.jsx` es condicional:
+   `serviciosCarrito.size > 0` → `/citas/carrito` (ya hay algo que
+   reservar); si no → `/servicios` (a elegir primero). Mismo criterio en
+   los dos lugares donde aparece el botón (encabezado y estado "sin
+   citas").
+2. **Elegir entre adelanto mínimo o pagar todo ahora**: el usuario notó
+   que el carrito daba por sentado que la captura era siempre de un
+   adelanto parcial, sin dejar pagar el total de una vez.
+   `agendar_cita_web` ya aceptaba cualquier `p_adelanto` mayor o igual
+   al mínimo exigido — **no hizo falta tocar el backend**, era pura
+   limitación de la pantalla. Se agregó un selector "Adelanto · S/X /
+   Todo ahora · S/Y" (mismas `.lw-seg` del carrito de productos) que
+   solo aparece cuando de verdad hay una diferencia real entre ambos
+   montos (`adelanto_minimo` configurado y menor al total — si es null o
+   ya es el total, no hay nada que elegir). Los textos de "adelanto
+   exacto"/"captura de tu adelanto" se volvieron neutros ("monto
+   exacto"/"captura de tu pago") porque ahora pueden ser el pago
+   completo, y el aviso de "el saldo se paga en el local" cambia a
+   "quedas con todo pagado" cuando el saldo llega a S/ 0.
+
+`npm run build` y `npm run lint` siguen sin errores ni advertencias
+nuevas tras estos dos ajustes.
+
+## 19. Rediseño de Inicio (`docs/diseno-inicio/`) — 2026-09-28
+
+Implementado `docs/diseno-inicio/README.md` (`Main.dc.html`/`Movil.dc.html`
+como referencia de estructura/estilo). `InicioCliente.jsx` quedó
+reescrito de punta a punta — se fue el hero full-bleed con foto de fondo
++ las 4 secciones de video/filosofía genéricas (stock sin relación con
+el salón), reemplazadas por el orden aprobado: Hero (grid texto|foto,
+ya no full-bleed) → Tira personal → Promoción activa → Lo más pedido →
+Resultados reales → Reseñas → Sobre nosotros (un solo bloque) →
+Visítanos → Pie. "Explora por categoría" se quitó a pedido del usuario.
+Se quitó también la migaja "Inicio" bajo el menú (`PortalCliente.jsx`:
+antes se mostraba sola en esa ruta, ahora no se pinta nada ahí) y la
+banda negra vacía que quedaba tras el hero viejo (resuelta sola al
+pasar a un hero compacto seguido directo de la tira personal).
+
+**Hero**: conserva el mecanismo existente (`useRevelarAntes`, círculo
+bajo el cursor, mismas fotos de referencia) pero pasa de foto de fondo
++ texto superpuesto a un grid de 2 columnas (texto | foto en caja,
+apilado con la foto arriba en móvil) — cambio de layout, no solo de
+contenido, siguiendo la estructura real de `Main.dc.html`/`Movil.dc.html`
+(el propio dc.html fusiona lo que el README llama "Hero" dentro de su
+sección "2. TIRA PERSONAL"; la migaja de comentario del export no
+coincide 1:1 con la numeración del README). Se sumó la etiqueta
+("Uñas · Pestañas · Cejas · Micropigmentación", copy fijo del negocio,
+no un dato de BD), el subtítulo, el botón "Ver servicios" y la línea de
+confianza (★ promedio + N reseñas de `resenas_publicas()` agregadas en
+el cliente, horario de `horario_atencion()`, "Abierto ahora" de
+`EstadoNegocioContext` — cada dato se oculta solo si falta).
+
+**Animación de entrada**: patrón estándar
+(`docs/patrones/animacion-entrada.md`) con los delays exactos de
+Main.dc.html/Movil.dc.html, aplicado solo al contenido fijo del primer
+pantallazo (Hero, tira personal, promoción) — el resto de secciones
+(Lo más pedido, Resultados reales, Reseñas, Sobre nosotros, Visítanos)
+no lleva clases `in-*` porque el dc.html tampoco las define ahí.
+
+**"Resultados reales" — animación por scroll** (la pieza más delicada
+del encargo): sacada a `src/hooks/useSecuenciaScroll.js`, documentado
+en el propio hook. 6 fotos (antes1→después1→antes2…), cada una cae como
+un meteorito (clases `.foto.espera`/`.foto.cae` + `@keyframes lw-caer/
+lw-destello/lw-onda/lw-sacudirA/lw-sacudirB`, agregadas en `index.css`
+antes del marcador `---break---`, prefijadas `lw-` como el resto de
+keyframes de la Web para no chocar con otras animaciones). La foto 1
+arranca sola al verse completa (`IntersectionObserver` threshold 1);
+cuando la fila queda centrada (otro `IntersectionObserver`, `rootMargin`
+negativo simétrico) la página se fija bloqueando `wheel`/`touchmove` del
+propio contenedor con scroll (`overflow-y-auto` de `.landing-web`, no
+`window` ni `overflow:hidden` en `body` — este proyecto no tiene ese
+`<body>` fijo del lienzo, el scroll real vive en ese div); cada gesto
+nuevo (pausa >220ms en rueda, o dirección detectada por umbral en touch)
+dispara la siguiente foto, uno a la vez, sin cortar una que ya empezó.
+Scroll hacia arriba mientras está fijada libera sin animar (con un
+"cooldown" hasta que la fila salga del centro, para no volver a atraparla
+de inmediato). Al caer la 6ª foto se libera para siempre — se repite en
+cada montaje de la ruta (estado en memoria de React, sin
+`sessionStorage`, tal como pidió el usuario). Fuente de las 3 parejas:
+se decidió reusar `galeria_para_web()` (`98_galeria_web.sql`, ya
+existía con la forma antes_url/después_url exacta que hacía falta) en
+vez de crear una tabla nueva — hoy solo tiene la fila de prueba con las
+fotos de referencia del hero, así que la sección queda oculta en la
+práctica hasta que el admin cargue al menos 3 parejas reales desde el
+panel Galería Web ya existente. `prefers-reduced-motion`: todo visible,
+sin fijar nada (cubierto tanto en el hook como en el CSS).
+
+**Backend — `supabase/sql/127_reclamar_cupon_promocion.sql`** (aplicada
+con el MCP de Supabase al proyecto `WedJaiseReact`, con el plan
+confirmado por el usuario antes de correrla): `cupones.promocion_id` +
+índice único parcial `(cliente_id, promocion_id) where promocion_id is
+not null` (un cupón por clienta por promoción; no afecta a los cupones
+de Referidos/Fidelización, que no tienen `promocion_id`), nuevo origen
+`'PROMOCION'` en `cupones_origen_check`, `mis_cupones()` recreada (drop
++ create, cambia el tipo de retorno) para exponer `promocion_id` —así
+el Inicio sabe si la clienta ya reclamó el cupón de la promoción activa
+sin necesitar una función de consulta aparte—, y
+`reclamar_cupon_promocion(p_promocion_id)` security definer, idempotente
+(revalida en el servidor que la promoción sigue activa/vigente con la
+misma condición que la policy `promociones_select_web`; si ya existe un
+cupón para esa clienta+promoción, lo devuelve tal cual en vez de
+duplicar o fallar). Se sumó `PROMOCION: 'Cupón de promoción'` a
+`ETIQUETAS_ORIGEN_CUPON` (`lib/cupones.js`) para que se vea bien en Mis
+cupones/Ofertas, que ya reusan `TarjetaCupon.jsx` sin cambios.
+
+**Dirección corregida** (confirmado con el usuario): `estado_negocio.
+direccion` pasó de "Av. Argentina H_ 12" a "Av. Argentina H-12" —
+aplicado directo en la base de datos (no en el frontend, que solo
+muestra el dato tal cual viene de `datos_contacto()`), se refleja solo
+en Inicio/Visítanos/el pie.
+
+**Otros datos reales usados** (todos con su fallback de "sección/línea
+oculta si falta"): `servicios_mas_pedidos()` + `servicios` para "Lo más
+pedido" (usa `TarjetaServicioCliente.jsx` tal cual, sin el badge de
+ranking del mockup — el README pidió explícitamente reusar esa tarjeta,
+no crear una variante); consulta directa a `citas` (mismo patrón que
+`CitasCliente.jsx`) para la próxima cita pendiente de la tira personal;
+`mis_puntos()` para los puntos; "Visítanos" con WhatsApp
+(`numeroWhatsapp()`) y un mapa embebido de Google (`maps?q=...&output=
+embed`, sin API key) armado con la dirección real — sin dirección, ni
+botón "Cómo llegar" ni mapa. "Sobre nosotros" no tiene una fuente clara
+de foto real del equipo/local en la base (no se inventó una relación
+con `equipo_para_web()`), así que ese bloque muestra un placeholder
+visual neutro en vez de una imagen — pendiente de una foto real más
+adelante.
+
+**Refactor menor**: `nombrePublico()` (trunca "María López" → "María
+L.", criterio de privacidad ya usado en el muro de Nosotros) y
+`resolverUrlGaleria()` (resuelve `antes_url`/`despues_url` de
+`galeria_web`, ruta relativa a `/public` o URL completa de Storage)
+vivían solo dentro de `NosotrosCliente.jsx`; con Inicio como segundo
+consumidor real se sacaron a `src/lib/resenas.js` y
+`src/lib/imagenes.js` respectivamente, y `Estrellas` (fila de 5
+estrellas) a `src/components/Estrellas.jsx` — `NosotrosCliente.jsx`
+ahora importa las tres en vez de redefinirlas.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas.
+**No se pudo probar en navegador en esta sesión** (sin herramienta de
+automatización) — pendiente de revisar en `npm run dev`:
+
+- El hero nuevo (grid texto|foto) en varios anchos, que el efecto
+  antes/después con el cursor se siga viendo bien dentro de la caja más
+  chica, y que el hint "Pasa el cursor..." quede bien ubicado.
+- La tira personal con y sin cita próxima, y con/sin puntos.
+- La promoción activa: "Reclamar cupón" de verdad guarda el cupón (ya
+  aplicado el backend), el toast, el cambio a "Guardado en Mis cupones"
+  sin recargar, y que aparezca en Ofertas/Mis cupones con la etiqueta
+  correcta. Probar también tocarlo dos veces seguidas (no debería
+  duplicar nada) y entrar de nuevo al Inicio ya habiéndolo reclamado
+  antes (debería partir directo en "Guardado").
+- **Lo más importante de revisar**: la animación de "Resultados reales"
+  con datos reales cargados en Galería Web (hoy con 1 sola fila de
+  prueba queda oculta) — cargar al menos 3 parejas desde ese panel y
+  probar el scroll completo: que la foto 1 dispare sola, que la página
+  se fije al centrar la fila, que cada gesto (rueda, trackpad, touch)
+  dispare una sola foto, que un gesto a mitad de animación se ignore,
+  que scrollear hacia arriba libere sin animar y sin quedar atrapada, y
+  que se libere sola al terminar la 6ª. Probar también con
+  `prefers-reduced-motion` activado (debería verse todo fijo, sin
+  fijar el scroll).
+- Que "Lo más pedido"/"Resultados reales"/"Reseñas" se oculten bien
+  cuando no hay datos suficientes (hoy: reseñas hay más de 3, así que
+  esa sección debería verse; Resultados reales debería estar oculta).
+- El mapa embebido de Visítanos (sin API key — puede mostrar una marca
+  de agua de Google, es una limitación conocida del embed simple) y el
+  botón "Cómo llegar".
+- Que la migaja "Inicio" ya no aparezca en esa pestaña, y que siga
+  apareciendo normal en el resto (Servicios, Productos, Citas,
+  Nosotros, subpáginas).
+
+**Ajustes post-revisión (mismo día)**: el usuario probó en `npm run dev`
+y reportó tres problemas reales:
+
+1. **"Resultados reales" no aparecía** pese a tener ya una pareja real
+   cargada en Galería Web — la condición exigía mínimo 3 parejas (lectura
+   demasiado literal del "diseño aprobado son 3"). Se relajó: la sección
+   se muestra con 1 o 2 parejas (`useSecuenciaScroll.js` ahora recibe
+   `totalFotos` dinámico = 2 × parejas reales, en vez de la constante fija
+   `TOTAL_FOTOS = 6`, y el grid usa `lg:grid-cols-1/2/3` según cuántas
+   haya) — sigue mostrando hasta 3 (el tope del diseño), pero ya no exige
+   las 3 completas para aparecer.
+2. **El hero se veía como "dos bloques" con un corte de color** (la caja
+   de la foto en `#111113` junto al fondo `#0b0b0c` del texto) — el grid
+   de 2 columnas (texto | foto en caja separada) que se armó siguiendo
+   *Main.dc.html* literal rompía la composición real: las fotos de
+   referencia ya traen una franja negra natural del lado izquierdo,
+   pensada para que el texto flote encima de la MISMA foto, no al lado en
+   una caja aparte. Se volvió al layout full-bleed original (foto como
+   fondo absoluto de toda la sección, `aspect-[1680/944]`, texto
+   superpuesto con `z-10` sobre esa franja negra) — mismo mecanismo que
+   ya existía antes del rediseño, con los elementos nuevos (etiqueta,
+   subtítulo, botón "Ver servicios", línea de confianza) agregados
+   adentro del mismo bloque de texto.
+3. **El efecto antes/después dejó de reaccionar al cursor** (solo se veía
+   la foto "después") — causado por el mismo cambio de estructura: el
+   `contenedorHeroRef` que usa `useRevelarAntes` para calcular la
+   posición del mouse pasó a apuntar a una caja más chica y separada. Se
+   resolvió solo al volver el `ref` a la `<section>` completa (como
+   estaba originalmente), que es sobre la que el efecto siempre calculó
+   coordenadas correctamente.
+
+De paso, la **tira personal** y la **promoción activa** tenían un bug de
+ancho real (reportado por el usuario): usaban `mx-4`/`sm:mx-8` (margen
+fijo en píxeles) en vez de `mx-auto max-w-[1700px]` (mismo ancho de
+columna que el resto de secciones de la página) — se separó el margen
+exterior (ahora un `<div>` wrapper con `max-w-[1700px]`, igual que "Lo
+más pedido"/"Resultados reales"/etc.) del padding interno de cada caja.
+
+`npm run build` y `npm run lint` siguen sin errores ni advertencias
+nuevas tras estos ajustes.
+
+**Segunda ronda de ajustes (mismo día)**: probado de nuevo en
+`npm run dev`, el usuario reportó que el hero seguía mostrando la foto
+"antes" fija (sin reaccionar al cursor) y que "Resultados reales" solo
+mostraba una de las dos fotos de su única pareja cargada. Diagnóstico
+real de cada uno (confirmado comparando los archivos de
+`public/inicio-web/` con `Read`, no a simple prueba y error):
+
+1. **Hero — bug real en `useRevelarAntes`**: el hook recibía
+   `contenedorRef`/`imagenAntesRef` como objetos de `useRef` y su
+   `useEffect` tenía esos objetos como dependencias. El problema: un
+   objeto de `useRef` NUNCA cambia de identidad entre renders — así que
+   ese efecto corre UNA sola vez. Como `InicioCliente` muestra un
+   `if (cargando) return <p>Cargando...</p>` mientras llegan los datos,
+   el PRIMER render real (el único que ejecuta el efecto) es ese
+   placeholder, no el hero — en ese momento ambos refs son `null`, el
+   efecto no hace nada y nunca se vuelve a disparar cuando el hero de
+   verdad se monta (tras `cargando = false`). Resultado: el
+   `mask-image` que oculta la foto "antes" nunca se aplicaba, así que
+   esa foto (que va arriba en el DOM, sin mask) tapaba a "después" para
+   siempre, sin reaccionar al mouse. Se resolvió cambiando el hook a
+   **callback refs con `useState`** (`contenedorHeroRef`/`imagenAntesRef`
+   ahora son `setContenedor`/`setImagenAntes`, no objetos `useRef`): una
+   función de callback ref SÍ se re-invoca cada vez que React monta un
+   nodo real, así que guardarla en estado hace que el `useEffect` (con
+   ese estado como dependencia) se vuelva a ejecutar en cuanto el hero
+   real aparece.
+2. **"Resultados reales" con 1 sola pareja**: no era un bug de datos
+   (revisado `ModalGaleriaWeb.jsx` — cada foto usa su propio estado e
+   input, sin duplicación) sino de la propia animación: con el layout
+   compacto, la sección ya queda completamente visible al cargar la
+   página, así que el `IntersectionObserver` de "foto 1 completa"
+   dispara solo, sin que la clienta scrollee nada — "antes 1" cae de
+   inmediato, y "después 1" (la única foto que falta con 1 sola pareja)
+   queda esperando el gesto exacto de "la fila se centra en pantalla",
+   que con tan poco contenido es fácil que nunca ocurra — se ve como una
+   foto perdida, no como una animación. `useSecuenciaScroll.js` ahora
+   solo activa la secuencia completa con `totalFotos >= 4` (2+ parejas);
+   con menos, todas las fotos se muestran directo, sin fijar el scroll.
+
+`npm run build` y `npm run lint` siguen sin errores ni advertencias
+nuevas.
+
+**Tercera ronda (mismo día)**: el hero ya reaccionaba bien al cursor,
+pero "Resultados reales" seguía mostrando solo 1 foto pese a que el
+usuario había cargado (según él) 2 parejas reales en Galería Web —
+"no es la falta de scroll", aclaró. Antes de seguir ajustando umbrales a
+ciegas se consultó la base de datos directo (`execute_sql`): la tabla
+`galeria_web` tenía solo **2 filas en total**, no 3 — la fila de prueba
+original (`"Foto de prueba (Inicio)"`, con las fotos de stock del hero,
+`orden = 0`) más **una sola** fila real del usuario (título vacío,
+subida el 28-sep). El usuario no había cargado 2 parejas propias, había
+cargado 1 — la segunda que "faltaba" era, sin que él lo supiera, la fila
+de prueba contando como si fuera una pareja más.
+
+Con eso confirmado, el bug de UX quedó claro: con esas 2 filas
+(`totalFotos = 4`), el umbral de la ronda anterior SÍ activaba la
+secuencia animada — y con una sección tan corta, la fila entera ya
+quedaba centrada en el viewport inicial junto con la primera foto, así
+que la página se fijaba SOLA al cargar, sin que el usuario hiciera
+ningún gesto. Eso disparaba la primera pareja (la de prueba) de una,
+dejando la pareja real del usuario (la segunda fila) con sus fotos en
+`opacity:0` esperando un gesto que nadie sabía que hacía falta — se veía
+como "solo una foto" y, como la fila real no tiene título, su link
+"Reservar este servicio" quedaba pegado justo debajo del de la fila de
+prueba (dos links seguidos, sin nada entre medio, otro síntoma reportado
+por el usuario).
+
+Dos correcciones, ninguna más un ajuste de umbral a ciegas:
+
+1. `useSecuenciaScroll.js`: la secuencia animada ahora exige las **3
+   parejas completas** del diseño (`totalFotos >= 6`), no 2. Con menos
+   (el caso normal mientras el negocio va cargando fotos de a poco), se
+   muestran todas directo, sin fijar el scroll — una sección corta es
+   justamente el caso con más riesgo de fijarse sola sin que la clienta
+   haga nada.
+2. **Fila de prueba desactivada** en la base de datos (`update
+   galeria_web set activo = false where titulo = 'Foto de prueba
+   (Inicio)'`, confirmado con el usuario antes de tocarla — no se borró,
+   solo se desactivó, reversible desde el panel Galería Web): ya no
+   tiene sentido mezclar fotos de stock genéricas con la primera foto
+   real del negocio, y hoy contaba como una pareja más "invisible" a los
+   ojos del usuario, empujando el conteo real sin que se notara.
+
+`npm run build` sin errores tras el ajuste.
+
+**Cuarta ronda (mismo día)**: el usuario cargó 4 parejas reales más en
+Galería Web (llegando a las 3+ que activan la secuencia animada) y
+reportó que solo la primera foto se animaba — "las demás ni aparecen".
+El diseño del hook tenía dos debilidades REALES de fondo (no un umbral
+mal puesto esta vez), diagnosticadas por inspección de código, no por
+prueba y error, y corregidas ambas en `useSecuenciaScroll.js`:
+
+1. **El detector de "fila centrada" se disparaba demasiado pronto.**
+   Usaba un `IntersectionObserver` con una banda fija (`rootMargin` del
+   16% del alto del viewport) y `threshold: 0` — dispara con la mínima
+   intersección, no con estar realmente centrado. Con 3+ parejas el
+   bloque de fotos (170-360px por fila, en 1-2 filas de grid según el
+   ancho) mide más que esa banda, así que bastaba con que el borde del
+   bloque la rozara para fijar la página — mucho antes de que estuviera
+   centrada de verdad, y sin que el usuario hubiera scrolleado lo
+   suficiente para notarlo. Reemplazado por una comparación directa:
+   `getBoundingClientRect()` del bloque y del contenedor en cada evento
+   de `scroll` real (con throttle de un cálculo por frame vía
+   `requestAnimationFrame`), fijando quando el CENTRO del bloque está a
+   menos de 80px del centro del contenedor — funciona igual sin importar
+   cuántas parejas haya ni en cuántas filas de grid caigan.
+2. **Un scroll continuo contaba como un solo gesto.** La regla de "gesto
+   nuevo" agrupaba eventos de rueda por PAUSA de tiempo (>220ms sin
+   eventos = gesto nuevo) — pero un scroll normal, sin soltar la rueda
+   del mouse ni el dedo, no deja pausas de 220ms entre eventos: TODO ese
+   scroll contaba como un único gesto, revelando una sola foto sin
+   importar cuánto se siguiera scrolleando después. Reemplazado por
+   distancia ACUMULADA: se suma el `deltaY` de cada evento de rueda (o
+   los px de cada `touchmove`), y cada 90px acumulados dispara un
+   avance — funciona igual con scroll continuo o a los saltos, y sigue
+   respetando que un avance bloqueado por una animación en curso no
+   hace nada (hay que seguir scrolleando para la siguiente, tal como
+   pide el README).
+
+De paso, el `touchmove` pasó del mismo criterio "una resolución por
+touch" (con umbral de 12px) al mismo acumulador de distancia que la
+rueda, por consistencia entre ambos caminos de entrada.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas.
+Con `.slice(0, 3)` en `InicioCliente.jsx`, si el usuario cargó 4
+parejas solo las primeras 3 (por `orden`, luego `creado_en`) se
+muestran y animan — la 4ª queda fuera del tope del diseño, no es un bug.
+
+**Quinta ronda (mismo día)**: con las 3 parejas cargadas, el usuario
+reportó que la página NUNCA se fijaba ("sigue el scroll") y que solo la
+foto 1 se animaba. Causa raíz real, no otro ajuste de umbral: tanto el
+`IntersectionObserver` de centrado como los listeners de
+`wheel`/`touchmove` dependían de `contenedorRef` (el div con
+`overflow-y-auto` de la página) — pero el ÚNICO mecanismo de esta
+pantalla que el usuario había confirmado que SÍ funciona (la foto 1
+cayendo sola) usa un `IntersectionObserver` **sin** `root` en absoluto,
+o sea, el viewport real del navegador, no ningún contenedor puntual.
+Nunca se verificó que `contenedorRef` fuera de verdad el elemento que
+recibe el scroll real de la página — evidentemente no lo era (o el
+`root` de un `IntersectionObserver` que no es un verdadero ancestro de
+scroll del elemento observado simplemente no dispara como se espera), y
+por eso ni el centrado ni el bloqueo del scroll se activaban nunca.
+
+Se unificó TODO al mismo criterio que ya se sabía que funcionaba:
+- El `IntersectionObserver` de centrado dejó de especificar `root`
+  (usa el viewport, como el de la foto 1) y ahora usa un `threshold`
+  de 21 pasos (cada 5% de intersección) en vez de uno solo — el
+  navegador garantiza disparar el callback en cada cruce, así que no se
+  salta el momento exacto del centrado aunque el scroll avance en
+  saltos grandes (rueda de mouse, trackpad rápido).
+- Los listeners de `wheel`/`touchmove` se movieron de `contenedorRef` a
+  `window` — esos eventos hacen bubble hasta `window` sin importar en
+  qué elemento anidado ocurra el scroll real, así que `preventDefault()`
+  ahí bloquea la acción sin depender de acertar cuál es "el" contenedor.
+- `contenedorRef` ya no es un parámetro de `useSecuenciaScroll` (se quitó
+  también de la llamada en `InicioCliente.jsx`) — dejó de hacer falta.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas.
+
+**Sexta ronda — diagnóstico con Playwright, causa raíz real (mismo
+día)**: el usuario reportó que seguía sin funcionar ("no se bloquea al
+llegar al medio, sigue el scroll") y, ante una quinta ronda de hipótesis
+sin poder verificar nada, autorizó instalar Playwright (`npm i -D
+playwright` + `npx playwright install chromium`) para probar de verdad
+en un navegador — dejó de ser "ajustar y esperar el siguiente reporte".
+Se creó una cuenta de cliente de prueba (`playwright.test.inicio@
+gmail.com`, email confirmado a mano vía SQL, `clientes_web`/`clientes`
+insertados directo) para poder loguearse en el portal y llegar a Inicio
+sin depender de una cuenta ajena.
+
+Instrumentando `IntersectionObserver` y los listeners de scroll desde
+afuera (interceptando el constructor global, contando eventos
+recibidos) se encontraron DOS bugs reales, no otro ajuste de umbral:
+
+1. **El detector de centrado (con 21 `threshold`, de la ronda
+   anterior) nunca detectaba el centro.** Un `IntersectionObserver` solo
+   dispara su callback cuando el RATIO de intersección cambia — y como
+   el bloque de fotos es más chico que el viewport, apenas entra
+   completo (ratio=1.0) el ratio queda CONSTANTE mientras el bloque se
+   mueve libremente dentro del viewport (confirmado con logs: el
+   observer se disparó en `rectTop=416`, después en `rectTop=56`, y el
+   punto centrado quedó justo en el medio, sin ningún disparo ahí). Un
+   `IntersectionObserver` sirve para detectar cruces de visibilidad, no
+   para medir posición continua. Reemplazado por `getBoundingClientRect()`
+   directo sobre la fila en cada evento de scroll real — escuchado en
+   `document` con `capture: true` (confirmado con Playwright que SÍ
+   dispara, a diferencia de un listener normal sin capture: el scroll de
+   un elemento con overflow interno no burbujea, pero sí pasa por la
+   fase de captura de cualquier ancestro).
+2. **El bug real de fondo: `const terminadoRef = useRef(!listo)`.**
+   Mismo patrón que ya había roto el hero (`useRevelarAntes`) en una
+   ronda anterior — un `useRef` fija su valor en el PRIMER render y
+   nunca se resincroniza. Como `InicioCliente` monta un placeholder
+   "Cargando..." mientras llegan los datos, ese primer render tenía
+   `listo = false`, así que `terminadoRef.current` quedaba en `true`
+   PARA SIEMPRE — la condición `if (terminadoRef.current || ...) return`
+   bloqueaba el fijado desde el principio, sin importar cuánto se
+   scrolleara. Confirmado con un log temporal (`terminado=true` en
+   TODOS los chequeos, desde el primero). Se eliminó `terminadoRef` por
+   completo: "ya terminó" se deriva de `visto < totalFotos` en el propio
+   chequeo, que sí está siempre sincronizado (es un `useRef` que se
+   reescribe en cada render, no uno que se lee sin reescribir).
+
+Un tercer ajuste menor encontrado en el mismo diagnóstico: `alRueda`
+llamaba `evento.preventDefault()` ANTES de mirar la dirección, así que
+el primer gesto de "liberar hacia arriba" quedaba cancelado igual —
+la página no se movía hasta el SEGUNDO scroll hacia arriba. Reordenado
+para no prevenir ese gesto específico, dejándolo pasar de inmediato.
+
+Verificado de punta a punta con Playwright (no solo "compila"): login
+real, scroll simulado con `page.mouse.wheel()`, y lectura directa del
+DOM en cada paso — la fila se fija exactamente cuando el cálculo cruza
+el centro, cada gesto adicional revela una foto respetando la animación
+en curso (900 ms), se libera sola al completar las 6, y un scroll hacia
+arriba libera y mueve la página en el mismo gesto. Captura de la
+secuencia completa enviada al usuario como evidencia.
+
+Limpieza tras la sesión de debugging: servidor de desarrollo de prueba
+(puerto 5199) detenido, scripts sueltos de Playwright borrados,
+`.pw-scratch/` agregado a `.gitignore` (no hay test suite configurado en
+este proyecto, ver CLAUDE.md — esto fue una sesión de debugging puntual,
+no una suite que quede corriendo). `playwright` queda instalado como
+devDependency por si hace falta reproducir otro bug de UI así. La cuenta
+de prueba `playwright.test.inicio@gmail.com` se conserva a pedido del
+usuario, para reusarla en la próxima sesión de debugging.
+
+`npm run build` y `npm run lint` sin errores ni advertencias nuevas.

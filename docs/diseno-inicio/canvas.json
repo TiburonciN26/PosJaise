@@ -1,0 +1,74 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Main.dc.html": {
+      "h": 4100,
+      "is_interactive": true,
+      "title": "Inicio · Escritorio (1440)",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Movil.dc.html": {
+      "h": 5220,
+      "is_interactive": true,
+      "title": "Inicio · Móvil (390)",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-28T12:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "backend": {
+      "fill": "orange",
+      "text": "DATOS / BACKEND\nYa existe: servicios_mas_pedidos(), resenas_publicas(), datos_contacto(), horario_atencion(), mis_puntos(), citas de la clienta, promociones.\nFalta:\n- Reclamar cupón: función security definer reclamar_cupon_promocion(promocion_id) que crea el cupón de la clienta (o devuelve el que ya tiene: uno por clienta), valida que la promoción esté activa y vigente, y lo deja en Mis cupones. Confirmación con useToast(). El Inicio consulta si ya lo reclamó para mostrar el estado \"Guardado\".\n- Fotos reales: servicios.foto_url está vacío en todos; hoy se usa degradado por categoría.\n- Galería antes/después del salón (¿reusar GaleriaWeb / bucket?). Hasta tenerla, la sección se oculta.\n- Reseñas: si hay menos de 3, ocultar la sección.\n- Instagram / Facebook / TikTok vacíos en Contacto web.\n- Dirección guardada como \"Av. Argentina H_ 12\" (¿H-12?).\n- Categorías duplicadas: Micropigmentacion / Micropigmentación, catPrueba y serPrueba de prueba.",
+      "w": 420,
+      "x": 1990,
+      "y": 1180
+    },
+    "cambios": {
+      "fill": "pink",
+      "text": "CAMBIOS VS. ACTUAL\n- Sale la migaja \"Inicio\" bajo el menú (sobra en la portada).\n- Salen las fotos de stock que no son del salón (galaxia, cañón, bosque, laptop, montaña) y el video.\n- Salen las 3 secciones que repetían el mismo mensaje; queda una sola, corta.\n- Menos espacio muerto: hoy hay ~250 px negros tras el hero y márgenes enormes entre secciones.\n- Todo lo que dice [entre corchetes] es un dato real que falta o que sale de la base de datos.",
+      "w": 420,
+      "x": 1990,
+      "y": 640
+    },
+    "orden": {
+      "fill": "blue",
+      "text": "ORDEN DEL INICIO\n1. Hero: se conserva la foto y el efecto antes/después que YA existe (círculo bajo el cursor, \"Pasa el cursor. Mira su antes.\"; en celular solo la foto después, como hoy). Nuevo: línea de qué somos y dónde, 2 botones (Reserva tu cita / Ver servicios) y línea de confianza (★ reseñas · horario · abierto ahora).\n2. Tira personal \"Hola, [Nombre]\": próxima cita o invitación a reservar + puntos.\n3. Promoción activa (solo si hay una): cupón con % grande, nombre, vigencia y botón \"Reclamar cupón\". Al tocarlo se guarda en Mis cupones de la clienta y el botón pasa a \"Guardado en Mis cupones\" + Ver mis cupones / Reservar y usarlo. Si ya lo reclamó antes, entra directo en ese estado.\n4. Lo más pedido: 4 servicios reales (servicios_mas_pedidos()).\n5. Resultados reales (antes / después): 3 trabajos del salón.\n6. Lo que dicen nuestras clientas: resumen + 3 reseñas.\n7. Sobre nosotros: UN bloque con foto real + enlace a Nosotros.\n8. Visítanos: dirección, horario, WhatsApp, cómo llegar.\n9. Pie.\n(Explora por categoría: quitada por el usuario en escritorio y móvil.)",
+      "w": 420,
+      "x": 1990,
+      "y": 0
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 1910,
+      "text": "Inicio — portal cliente",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "animResultados": {
+      "fill": "teal",
+      "w": 420,
+      "x": 1990,
+      "y": 1760,
+      "text": "RESULTADOS REALES — ANIMACIÓN POR SCROLL\nOrden: antes 1 → después 1 → antes 2 → después 2 → antes 3 → después 3.\nCada foto cae como meteorito (0.75 s): parte en scale(2.6), opacidad 0.12 y blur 8px, ACELERA hacia su lugar (ease-in), choca a los ~0.52 s, se aplasta a 0.95, rebota a 1.015 y se asienta. En el impacto: destello blanco (0.35 → 0), onda expansiva azul metálico que se abre 28 px y se desvanece, y la fila se sacude ~5 px durante 0.32 s. Valores exactos en <helmet><style> de Main.dc.html (.foto.cae, caer, destello, onda, sacA/sacB). Antes de su turno está invisible (opacity 0) pero ocupa su espacio.\n1. Foto 1 (antes 1): arranca sola cuando la tarjeta se ve COMPLETA en pantalla (IntersectionObserver, threshold 1). La página sigue scrolleando normal.\n2. Cuando la fila entera queda centrada en la pantalla, la página se FIJA ahí (se bloquea el scroll de la página).\n3. Con la página fijada, cada GESTO NUEVO de scroll (rueda/trackpad: un nuevo gesto = pausa >220 ms sin eventos; celular: un nuevo touchstart) dispara la siguiente foto. Si llega un gesto mientras una foto anima, se consume y no hace nada: hay que volver a scrollear. Una foto que empezó nunca se corta.\n4. Al terminar la foto 6 se libera el scroll y la página sigue normal.\n5. Terminado, queda fijo: subir/bajar o volver a pasar no repite nada mientras se siga en el Inicio. DECIDIDO: cada vez que la clienta entra al Inicio (nuevo montaje) se repite; no se guarda en sessionStorage.\n6. Scroll hacia arriba mientras está fijada: se libera la página sin animar (no se queda atrapada).\n7. prefers-reduced-motion: todo visible, sin fijar.\nMóvil: 3 filas apiladas (antes | después, 170 px) para que el bloque entero entre en la pantalla.\nEn el lienzo (Play): ruedita o clic sobre la sección = un gesto; el lienzo no puede fijar la página. Ajuste \"resultados\" = todas visibles / animación para reiniciar."
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Movil.dc.html"
+  ],
+  "pages": [],
+  "title": "Inicio Jaise"
+}

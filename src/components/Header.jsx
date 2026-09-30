@@ -2,13 +2,16 @@ import { useLocation } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { useToast } from '../context/ToastContext.jsx'
 import { secciones } from '../config/navegacion.js'
 import MenuUsuario from './MenuUsuario.jsx'
 import IconoMartillo from './IconoMartillo.jsx'
+import IconoCampana from './IconoCampana.jsx'
 
 export default function Header({ menuAbierto, onToggleMenu }) {
   const { rol } = useAuth()
   const { tema } = useTheme()
+  const { mostrarToast } = useToast()
   const { pathname } = useLocation()
   const seccionesVisibles = secciones.filter((seccion) => seccion.roles.includes(rol))
   const seccionActual = seccionesVisibles.find((seccion) => pathname.startsWith(seccion.path))
@@ -50,7 +53,19 @@ export default function Header({ menuAbierto, onToggleMenu }) {
             por el logo) pasó al menú de usuario (avatar, esquina derecha) —
             el logo quedó como firma de marca al fondo de ese menú, no como
             disparador de nada. */}
-        <MenuUsuario />
+        <div className="flex shrink-0 items-center gap-1">
+          {/* Campana de notificaciones para el personal — solo el ícono
+              por ahora (sin badge real: todavía no existe ningún sistema
+              de notificaciones para el staff, esa es una tarea aparte,
+              futura — ver implementacionesWed.md). Tocarla no abre nada
+              todavía, a propósito. */}
+          <IconoCampana
+            contador={0}
+            className="text-ink hover:text-amber"
+            onClick={() => mostrarToast('Notificaciones del personal — próximamente.', 'info')}
+          />
+          <MenuUsuario />
+        </div>
       </div>
     </header>
   )

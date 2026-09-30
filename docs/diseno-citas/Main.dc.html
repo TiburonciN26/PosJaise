@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mis citas — escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Instrument+Serif&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0b0c}
+*{box-sizing:border-box}
+a{color:#a9c6ec;text-decoration:none}a:hover{color:#d3e4f8}
+@font-face{font-family:'Kunaroh';src:url(/_blob/9786c6537423391bbe4dbf9c603aac42) format('truetype');font-display:swap}
+@font-face{font-family:'Heavitas';src:url(/_blob/106acd085f12cbe3360170287f5415df) format('truetype');font-display:swap}
+.kuna{font-family:'Kunaroh',sans-serif;text-transform:uppercase;letter-spacing:.16em;line-height:1.05}
+.heav{font-family:'Heavitas',Inter,sans-serif;font-weight:400;color:#ffffff;letter-spacing:.02em;line-height:1.1;text-transform:uppercase}
+.serif{font-family:'Instrument Serif',serif}
+.mono{font-family:'Space Mono',ui-monospace,monospace}
+.metal{background:linear-gradient(90deg,#86a9d8 0%,#a9c6ec 40%,#d3e4f8 50%,#a9c6ec 60%,#86a9d8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.navlink{color:#a6a6a6;font-size:14px;padding:8px 14px;border-radius:999px}
+.navlink:hover{color:#fff}
+.navlink.on{color:#fff;background:rgba(255,255,255,.06)}
+.blk{background:#111113;border:1px solid #1f1f22;border-radius:10px;box-shadow:inset 0 1px 1px rgba(255,255,255,.06)}
+.lbl{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8f8f95}
+.btn-pri{height:48px;padding:0 6px 0 22px;border-radius:999px;border:0;background:#a9c6ec;color:#0b0b0c;font:600 14px Inter,sans-serif;display:inline-flex;align-items:center;gap:14px;cursor:pointer}
+.btn-pri:hover{background:#bcd3f1}
+.btn-pri .circ{width:36px;height:36px;border-radius:999px;background:#0b0b0c;color:#a9c6ec;display:flex;align-items:center;justify-content:center}
+.btn-sec{height:40px;padding:0 16px;border-radius:999px;border:1px solid #2e2e33;background:transparent;color:#e6e6e6;font:500 13px Inter,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+.btn-sec:hover{border-color:#a9c6ec;color:#a9c6ec}
+.btn-sec.rojo{color:#ff7b7b}
+.btn-sec.rojo:hover{border-color:#ff7b7b;color:#ff9b9b}
+.ghost{height:44px;border-radius:999px;border:1px solid #a9c6ec;background:transparent;color:#a9c6ec;font:600 14px Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;width:100%}
+.ghost:hover{background:rgba(169,198,236,.08)}
+.linkbtn{background:none;border:0;padding:0;cursor:pointer;font:500 13px Inter,sans-serif;color:#a9c6ec;display:inline-flex;align-items:center;gap:6px}
+.linkbtn:hover{color:#d3e4f8}
+.est{flex-shrink:0;padding:3px 10px;border-radius:999px;font:600 11px Inter,sans-serif;letter-spacing:.02em;white-space:nowrap}
+.est-PENDIENTE{border:1px dashed rgba(169,198,236,.6);color:#a9c6ec}
+.est-CONFIRMADA{background:#a9c6ec;color:#0b0b0c}
+.est-COMPLETADA{background:rgba(62,207,106,.14);color:#7fe0a0}
+.est-CANCELADA{background:rgba(255,255,255,.08);color:#9a9aa0}
+.est-NO_ASISTIO{background:rgba(255,107,107,.14);color:#ff8f8f}
+.rel{padding:4px 12px;border-radius:999px;background:rgba(169,198,236,.12);color:#a9c6ec;font:600 12px Inter,sans-serif}
+.calnav{display:flex;align-items:center;justify-content:space-between;padding:10px 8px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px)}
+.calnav .flecha{width:32px;height:32px;border:0;background:none;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.calnav .flecha:hover{color:#a9c6ec}
+.hoy-btn{border:1px solid rgba(255,255,255,.15);background:none;border-radius:999px;padding:2px 8px;font:12px Inter,sans-serif;color:rgba(255,255,255,.7);cursor:pointer}
+.hoy-btn:hover{border-color:#a9c6ec;color:#a9c6ec}
+.dia{aspect-ratio:1/1;border:1px solid transparent;border-radius:8px;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:14px Inter,sans-serif;color:#ffffff;cursor:pointer;transition:background .2s}
+.dia:hover{background:rgba(255,255,255,.05)}
+.dia.fuera{color:rgba(255,255,255,.3)}
+.dia.hoy{border-color:#a9c6ec;color:#a9c6ec}
+.dia.sel{background:#a9c6ec;color:#0b0b0c;font-weight:600}
+.punto{width:4px;height:4px;border-radius:999px;background:transparent}
+.punto.si{background:#a9c6ec}
+.dia.sel .punto.si{background:#0b0b0c}
+.cita{padding:16px;display:flex;flex-direction:column;gap:10px}
+.cita.prox{border-color:rgba(169,198,236,.45)}
+.meta{display:flex;align-items:center;gap:6px;font-size:12px;color:#9a9aa0}
+.filtro{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 6px 0 12px;border-radius:999px;border:1px solid #a9c6ec;background:rgba(169,198,236,.08);color:#a9c6ec;font:500 12px Inter,sans-serif;cursor:pointer}
+.filtro:hover{background:rgba(169,198,236,.16)}
+.acc-hist{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;padding:20px 24px;cursor:pointer;color:#fff;text-align:left}
+.caret{transition:transform .3s;color:rgba(255,255,255,.5)}
+.caret.on{transform:rotate(180deg)}
+.fila-h{display:grid;grid-template-columns:150px minmax(0,1fr) 110px 100px 260px;gap:16px;align-items:center;padding:14px 24px;border-top:1px solid #1f1f22;font-size:13px}
+.trash{width:32px;height:32px;border-radius:999px;border:0;background:none;color:rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.trash:hover{background:rgba(255,255,255,.05);color:#ff7b7b}
+.tip{display:flex;gap:10px;font-size:13px;line-height:1.5;color:#b4b4ba}
+.tip svg{flex-shrink:0;margin-top:2px;color:#a9c6ec}
+.wa-ayuda{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;border-radius:10px;border:1px solid rgba(62,207,106,.3);background:rgba(62,207,106,.07);color:#7fe0a0;font:600 14px Inter,sans-serif}
+.wa-ayuda:hover{background:rgba(62,207,106,.12);color:#9ff0bb}
+.velo{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding-top:360px}
+.dialogo{width:400px;padding:24px;border-radius:10px;border:1px solid #2a2a2e;background:#141416;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.in-left,.in-right,.in-up{animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.7,.2,1);animation-fill-mode:both}
+.in-left{animation-name:inLeft}
+.in-right{animation-name:inRight}
+.in-up{animation-name:inUp;animation-duration:.8s}
+@keyframes inLeft{from{opacity:0;transform:translateX(-40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inRight{from{opacity:0;transform:translateX(40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.in-left,.in-right,.in-up{animation:none}}
+.carrito-btn{position:relative;width:48px;height:48px;border-radius:999px;border:1px solid #2e2e33;background:rgba(169,198,236,.06);color:#a9c6ec;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.carrito-btn:hover{border-color:#a9c6ec;color:#d3e4f8}
+.badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;border:2px solid #0b0b0c;background:#a9c6ec;color:#0b0b0c;font:700 11px Inter,sans-serif;display:flex;align-items:center;justify-content:center}
+.pts{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;padding:3px 9px;border-radius:999px;border:1px solid rgba(169,198,236,.35);background:rgba(169,198,236,.06);color:#d3e4f8;font:600 11px Inter,sans-serif;white-space:nowrap}
+.pts svg{color:#a9c6ec}
+.barra{height:6px;border-radius:999px;background:#1f1f22;overflow:hidden}
+.barra span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#86a9d8,#d3e4f8)}
+.sello{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;padding:3px 9px;border-radius:999px;border:1px solid #3a3a3f;background:rgba(255,255,255,.04);color:#e6e6e6;font:600 11px Inter,sans-serif;white-space:nowrap}
+.sello.off{border-style:dashed;background:none;color:#7d7d84;font-weight:500}
+.sello-dot{width:24px;height:24px;border-radius:999px;border:1.5px dashed #3a3a3f;display:flex;align-items:center;justify-content:center;color:transparent}
+.sello-dot.on{border:0;background:#a9c6ec;color:#0b0b0c}
+.como-ico{width:36px;height:36px;border-radius:10px;background:rgba(169,198,236,.1);color:#a9c6ec;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.regla{display:flex;gap:10px;font-size:13px;line-height:1.5;color:#c4c4ca}
+.regla b{color:#ffffff;font-weight:600}
+.regla::before{content:'';width:5px;height:5px;border-radius:999px;background:#a9c6ec;margin-top:8px;flex-shrink:0}
+.nivel{flex:1;padding:8px 10px;border-radius:8px;border:1px solid #2a2a2e;display:flex;flex-direction:column;gap:2px;font-size:11px;color:#8f8f95}
+.nivel b{font-size:13px;color:#ffffff;font-weight:600}
+.paso{display:flex;gap:12px;align-items:flex-start;position:relative}
+.paso .pt{width:22px;height:22px;border-radius:999px;border:1.5px solid #3a3a3f;background:#0b0b0c;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#0b0b0c;z-index:1}
+.paso.on .pt{border:0;background:#3ECF6A}
+.paso .tx{display:flex;flex-direction:column;gap:2px;font-size:12px;color:#8f8f95;padding-bottom:18px}
+.paso .tx b{font-size:13px;color:#d0d0d5;font-weight:600}
+.paso.on .tx b{color:#7fe0a0}
+.linea{position:absolute;left:10px;top:22px;bottom:0;width:1.5px;background:#2a2a2e}
+</style>
+</helmet>
+<div style="width: 1440px; height: 2600px; position: relative; overflow: hidden; background: #0b0b0c; color: #ffffff; font-family: Inter, ui-sans-serif, system-ui, sans-serif;">
+
+
+
+<main style="padding: 40px 72px 64px; display: flex; flex-direction: column; gap: 32px;">
+
+<div class="in-left" style="animation-delay: 100ms; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<h1 class="heav" style="margin: 0; font-size: 32px;">Mis citas</h1>
+<p style="margin: 0; font-size: 14px; color: #a6a6a6;">Revisa tus reservas, reprograma o agenda una nueva.</p>
+</div>
+<div style="display: flex; align-items: center; gap: 12px;">
+<sc-if value="{{hayCarrito}}" hint-placeholder-val="{{ true }}">
+<a href="#" class="carrito-btn" aria-label="Carrito de servicios, {{carritoCount}} por reservar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg><span class="badge">{{carritoCount}}</span></a>
+</sc-if>
+<sc-if value="{{sinCarrito}}" hint-placeholder-val="{{ false }}">
+<a href="#" class="carrito-btn" aria-label="Carrito de servicios, vacío"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg></a>
+</sc-if>
+<button type="button" class="btn-pri">Agendar cita<span class="circ"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></span></button>
+</div>
+</div>
+
+<section aria-labelledby="t-prox" class="blk in-up" style="animation-delay: 250ms; padding: 28px 32px; border-color: rgba(169,198,236,0.35); background: radial-gradient(120% 160% at 0% 0%, rgba(169,198,236,0.10), transparent 55%), #111113;">
+<sc-if value="{{hayProxima}}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: 330px minmax(0, 1fr) 300px; gap: 40px; align-items: center;">
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<h2 id="t-prox" class="lbl" style="margin: 0;">Tu próxima cita</h2>
+<span class="rel">{{prox.rel}}</span>
+</div>
+<div class="heav" style="font-size: 30px;">{{prox.diaSemana}}</div>
+<div style="font-size: 16px; color: #d0d0d5;">{{prox.fechaLarga}}</div>
+<div class="mono metal" style="font-size: 26px; font-weight: 700;">{{prox.hora}}</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding-left: 40px; border-left: 1px solid #242428;">
+<sc-for list="{{prox.servicios}}" as="s" hint-placeholder-count="1">
+<div style="display: flex; justify-content: space-between; gap: 16px;">
+<span style="font-size: 16px; font-weight: 600;">{{s.n}}</span>
+<span style="font-size: 13px; color: #9a9aa0; white-space: nowrap;">{{s.meta}}</span>
+</div>
+</sc-for>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; padding-top: 12px; border-top: 1px solid #242428;">
+<span class="meta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>{{prox.asis}}</span>
+<span class="meta"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>{{prox.dur}}</span>
+<span class="est est-{{prox.estado}}">{{prox.estadoTxt}}</span>
+<span class="pts"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>{{prox.pts}}</span>
+<sc-if value="{{prox.sello}}" hint-placeholder-val="{{ false }}"><span class="sello"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"></path><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"></path><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"></path></svg><span>+1 sello</span></span></sc-if><sc-if value="{{prox.selloRepetido}}" hint-placeholder-val="{{ false }}"><span class="sello off" title="Solo se suma 1 sello por día, aunque tengas varias citas ese día">Sello ya contado ese día</span></sc-if>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: baseline;">
+<sc-if value="{{prox.tieneAdelanto}}" hint-placeholder-val="{{ true }}">
+<span style="font-size: 13px; color: #9a9aa0;">{{prox.adelantoTxt}}</span>
+</sc-if>
+<sc-if value="{{prox.sinAdelanto}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 13px; color: #9a9aa0;">Total estimado</span>
+</sc-if>
+<span class="mono" style="font-size: 20px; font-weight: 700;">{{prox.total}}</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<button type="button" class="btn-sec"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg>Reprogramar</button>
+<button type="button" class="btn-sec rojo" onClick="{{prox.pedirCancelar}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>Cancelar</button>
+<a href="#" class="btn-sec"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>Cómo llegar</a>
+<a href="#" class="btn-sec"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>WhatsApp</a>
+</div>
+<p style="margin: 0; font-size: 12px; color: #7d7d84; text-align: center;">Puedes reprogramar o cancelar hasta 3 horas antes.</p>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{sinProxima}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<h2 id="t-prox" class="lbl" style="margin: 0;">Tu próxima cita</h2>
+<div class="heav" style="font-size: 24px;">No tienes citas agendadas</div>
+<p style="margin: 0; font-size: 14px; color: #a6a6a6;">Elige tus servicios y reserva el día y la hora que te acomoden.</p>
+</div>
+<div style="display: flex; gap: 10px;">
+<a href="#" class="btn-sec">Ver servicios</a>
+<button type="button" class="btn-pri">Agendar cita<span class="circ"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></span></button>
+</div>
+</div>
+</sc-if>
+</section>
+
+<div style="display: grid; grid-template-columns: 400px minmax(0, 1fr) 340px; gap: 32px; align-items: start;">
+
+<section aria-labelledby="t-cal" class="in-left" style="animation-delay: 450ms; display: flex; flex-direction: column; gap: 14px;">
+<h2 id="t-cal" class="heav" style="margin: 0; font-size: 16px;">Calendario</h2>
+<div>
+<div class="calnav">
+<button type="button" class="flecha" onClick="{{mesAnterior}}" aria-label="Mes anterior"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
+<div style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 14px; font-weight: 600;">{{mesLabel}}</span>
+<button type="button" class="hoy-btn" onClick="{{irHoy}}">Hoy</button>
+</div>
+<button type="button" class="flecha" onClick="{{mesSiguiente}}" aria-label="Mes siguiente"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
+</div>
+<div style="margin-top: 12px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; font-size: 11px; color: rgba(255,255,255,0.5);">
+<span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+</div>
+<div style="margin-top: 4px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px;">
+<sc-for list="{{dias}}" as="c" hint-placeholder-count="42">
+<button type="button" class="dia {{c.mod}}" onClick="{{c.pick}}" aria-label="{{c.aria}}"><span>{{c.num}}</span><span class="punto {{c.dot}}"></span></button>
+</sc-for>
+</div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #7d7d84;">Toca un día para ver solo las citas de esa fecha.</p>
+</section>
+
+<section aria-labelledby="t-lista" class="in-up" style="animation-delay: 600ms; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px;">
+<h2 id="t-lista" class="heav" style="margin: 0; font-size: 16px;">{{listaTitulo}}</h2>
+<sc-if value="{{hayFiltro}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="filtro" onClick="{{quitarFiltro}}">Ver todas las próximas<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+</sc-if>
+<sc-if value="{{sinFiltro}}" hint-placeholder-val="{{ true }}">
+<span style="font-size: 13px; color: #8f8f95;">{{listaConteo}}</span>
+</sc-if>
+</div>
+<sc-if value="{{listaVacia}}" hint-placeholder-val="{{ false }}">
+<div class="blk" style="padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8"></path><path d="M3 10h18"></path><path d="M16 19h6"></path><path d="M19 16v6"></path></svg>
+<p style="margin: 0; font-size: 14px; color: #9a9aa0;">{{listaVaciaTxt}}</p>
+</div>
+</sc-if>
+<sc-for list="{{grupos}}" as="g" hint-placeholder-count="3">
+<div class="in-right" style="animation-delay: {{g.delay}}ms; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; align-items: baseline; gap: 10px; font-size: 13px;">
+<span style="font-weight: 600; color: #e6e6e6;">{{g.fecha}}</span>
+<span style="color: #a9c6ec;">{{g.rel}}</span>
+</div>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="1">
+<article class="blk cita {{it.claseProx}}">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+<span class="mono metal" style="font-size: 14px; font-weight: 700;">{{it.hora}}</span>
+<span style="font-size: 15px; font-weight: 500;">{{it.servicios}}</span>
+</div>
+<span class="est est-{{it.estado}}">{{it.estadoTxt}}</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+<div style="display: flex; gap: 16px;">
+<span class="meta"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>{{it.asis}}</span>
+<span class="meta"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>{{it.dur}}</span>
+<span class="pts"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>{{it.pts}}</span>
+</div>
+<span class="mono" style="font-size: 14px; font-weight: 700;">{{it.total}}</span>
+</div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;"><sc-if value="{{it.sello}}" hint-placeholder-val="{{ false }}"><span class="sello"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"></path><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"></path><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"></path></svg>+1 sello</span></sc-if><sc-if value="{{it.selloRepetido}}" hint-placeholder-val="{{ false }}"><span class="sello off" title="Solo se suma 1 sello por día, aunque tengas varias citas ese día">Sello ya contado ese día</span></sc-if></div>
+<sc-if value="{{it.modificable}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid #1f1f22;">
+<button type="button" class="btn-sec" style="flex: 1; height: 36px;">Reprogramar</button>
+<button type="button" class="btn-sec rojo" style="flex: 1; height: 36px;" onClick="{{it.pedirCancelar}}">Cancelar</button>
+</div>
+</sc-if>
+<sc-if value="{{it.completada}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid #1f1f22;">
+<button type="button" class="btn-sec" style="flex: 1; height: 36px;">{{it.calificarTxt}}</button>
+<button type="button" class="btn-sec" style="flex: 1; height: 36px;">Volver a reservar</button>
+</div>
+</sc-if>
+</article>
+</sc-for>
+</div>
+</sc-for>
+</section>
+
+<aside class="in-right" style="animation-delay: 750ms; display: flex; flex-direction: column; gap: 20px;">
+<section aria-labelledby="t-puntos" class="blk" style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+<h2 id="t-puntos" class="heav" style="margin: 0; font-size: 15px;">PUNTOS&nbsp;</h2>
+<span style="padding: 3px 10px; border-radius: 999px; background: rgba(169,198,236,0.12); color: #a9c6ec; font-size: 11px; font-weight: 600;">{{nivel}}</span>
+</div>
+<div style="display: flex; align-items: baseline; gap: 8px; font-weight: 400"><span class="mono metal" style="font-size: 30px; font-weight: 700;">{{misPuntos}}</span><span style="font-size: 13px; color: #9a9aa0;">pts</span></div>
+<div class="barra"><span style="width: {{barraPct}};"></span></div>
+<span style="font-size: 12px; color: #8f8f95;">{{faltanTxt}}</span>
+<sc-if value="{{hayPorGanar}}" hint-placeholder-val="{{ true }}">
+
+</sc-if>
+<a href="#" class="linkbtn" style="font-size: 13px; min-height: 32px; align-self: flex-start;">Ver mis puntos<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></a>
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid #1f1f22;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 13px; font-weight: 600;">Sellos de fidelidad</span><span style="font-size: 12px; color: #8f8f95;">{{sellosTxt}}</span></div>
+<div style="display: flex; gap: 8px;">
+<sc-for list="{{sellosLista}}" as="d" hint-placeholder-count="5">
+<span class="sello-dot {{d.cls}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"></path><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"></path><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"></path></svg></span>
+</sc-for>
+</div>
+<span style="font-size: 12px; line-height: 1.5; color: #8f8f95;">Se suma <strong style="color: #fff;">1 sello por día</strong> que te atiendes, aunque tengas varias citas ese mismo día.</span>
+<a href="#" class="linkbtn" style="font-size: 13px; min-height: 32px; align-self: flex-start;">Ver mi fidelización<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></a>
+</div>
+</section>
+
+<section aria-labelledby="t-antes" class="blk" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+<h2 id="t-antes" class="heav" style="margin: 0; font-size: 15px;">Antes de tu cita</h2>
+<div class="tip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>Reprograma o cancela desde aquí hasta <strong style="color: #fff;">3 horas antes</strong>. Después, escríbenos por WhatsApp.</span></div>
+<div class="tip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8"></path><path d="M3 10h18"></path></svg><span>Atendemos Lun–Sáb, 9:00–20:00.</span></div>
+<div class="tip"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg><span>[DIRECCIÓN DEL LOCAL]</span></div>
+<a href="#" class="wa-ayuda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>¿Dudas con tu cita?</a>
+</section>
+</aside>
+</div>
+
+<section aria-labelledby="t-hist" class="blk in-up" style="animation-delay: 950ms;">
+<button type="button" class="acc-hist" onClick="{{toggleHist}}" aria-expanded="{{histAbierto}}">
+<h2 id="t-hist" class="heav" style="margin: 0; font-size: 16px;">Historial</h2>
+<span style="font-size: 13px; color: #8f8f95;">{{histConteo}}</span>
+<span style="flex: 1;"></span>
+<svg class="caret {{caretMod}}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6v6h4l-7 7-7-7h4V6h6z"></path></svg>
+</button>
+<sc-if value="{{histAbierto}}" hint-placeholder-val="{{ true }}">
+<div>
+<sc-for list="{{historial}}" as="h" hint-placeholder-count="4">
+<div class="fila-h">
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-weight: 600;">{{h.fecha}}</span>
+<span class="mono" style="font-size: 12px; color: #8f8f95;">{{h.hora}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<span>{{h.servicios}}</span>
+<span style="font-size: 12px; color: #8f8f95;">{{h.asis}}</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px;"><span class="est est-{{h.estado}}">{{h.estadoTxt}}</span><sc-if value="{{h.gano}}" hint-placeholder-val="{{ false }}"><span class="pts"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg>{{h.pts}}</span></sc-if><sc-if value="{{h.sello}}" hint-placeholder-val="{{ false }}"><span class="sello"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"></path><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"></path><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"></path></svg>+1 sello</span></sc-if><sc-if value="{{h.selloRepetido}}" hint-placeholder-val="{{ false }}"><span class="sello off" title="Solo se suma 1 sello por día, aunque tengas varias citas ese día">Sello ya contado ese día</span></sc-if></div>
+<span class="mono" style="font-weight: 700; text-align: right;">{{h.total}}</span>
+<div style="display: flex; justify-content: flex-end; gap: 16px;">
+<sc-if value="{{h.puedeCalificar}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="linkbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>Calificar</button>
+</sc-if>
+<sc-if value="{{h.calificada}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 13px; color: #8f8f95;">Calificada</span>
+</sc-if>
+<button type="button" class="linkbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>Volver a reservar</button>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</section>
+
+<section aria-labelledby="t-como" class="blk in-up" style="animation-delay: 1050ms; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<h2 id="t-como" class="heav" style="margin: 0; font-size: 20px;">Cómo ganas puntos y sellos</h2>
+<p style="margin: 0; font-size: 13px; color: #8f8f95;">Así funciona tu tarjeta de fidelización en Jaise.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px;">
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; align-items: center; gap: 12px;"><span class="como-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path></svg></span><h3 class="heav" style="margin: 0; font-size: 15px;">Puntos</h3></div>
+<div class="regla"><span><b>1 punto</b> por cada día que te atiendes.</span></div>
+<div class="regla"><span><b>1 punto</b> por cada <b>S/ 20</b> que pagas en servicios.</span></div>
+<div class="regla"><span>Con más puntos sube tu tarjeta de nivel:</span></div>
+<div style="display: flex; gap: 8px;">
+<div class="nivel"><b>Básico</b>desde 0 pts</div>
+<div class="nivel"><b>Premium</b>desde 10 pts</div>
+<div class="nivel"><b>VIP</b>desde 30 pts</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; align-items: center; gap: 12px;"><span class="como-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"></path><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"></path><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"></path></svg></span><h3 class="heav" style="margin: 0; font-size: 15px;">Sellos</h3></div>
+<div class="regla"><span><b>1 sello por día</b> que te atiendes, aunque ese día tengas varias citas a distintas horas.</span></div>
+<div class="regla"><span>Al juntar <b>5 sellos</b> puedes generar un <b>cupón de 20%</b> desde Fidelización y usarlo al pagar en caja.</span></div>
+<div class="regla"><span><b>Muy pronto:</b> una nueva sección de <b>Recompensas</b> donde podrás canjear tus puntos y sellos por <b>cupones de todo tipo</b>, o directamente por <b>servicios y productos</b>. <span style="display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; border: 1px dashed rgba(169,198,236,0.6); color: #a9c6ec; font-size: 11px; font-weight: 600;">Próximamente</span></span></div>
+<div class="regla"><span>Cada 5 sellos se llena una tarjeta y empieza otra. Los cupones que aún no generaste te siguen esperando.</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; align-items: center; gap: 12px;"><span class="como-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><h3 class="heav" style="margin: 0; font-size: 15px;">Cuándo se suman</h3></div>
+<div style="display: flex; flex-direction: column;">
+<div class="paso"><span class="linea"></span><span class="pt"></span><span class="tx"><b>Pendiente</b>Reservaste tu cita. Aún no suma.</span></div>
+<div class="paso"><span class="linea"></span><span class="pt"></span><span class="tx"><b>Confirmada</b>El salón aceptó tu cita. Aún no suma.</span></div>
+<div class="paso on"><span class="pt"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></span><span class="tx"><b>Completada</b>Te atendimos y se registró en caja: aquí se suman tus puntos y tu sello.</span></div>
+</div>
+</div>
+</div>
+<div style="display: flex; gap: 10px; align-items: flex-start; padding: 14px 16px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px dashed #2a2a2e; font-size: 13px; line-height: 1.5; color: #a6a6a6;"><span style="flex-shrink: 0; margin-top: 2px; color: #8f8f95;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m4.9 4.9 14.2 14.2"></path></svg></span><span><b style="color: #fff; font-weight: 600;">No suman</b> las citas canceladas, las citas a las que no asististe ni las compras de productos. Si un servicio se anula en caja, se descuentan sus puntos y su sello.</span></div>
+</section>
+
+</main>
+
+<sc-if value="{{hayCancelar}}" hint-placeholder-val="{{ false }}">
+<div class="velo">
+<div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="t-cancelar">
+<h2 id="t-cancelar" style="margin: 0; font-size: 16px; font-weight: 600;">¿Cancelar esta cita?</h2>
+<p style="margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: #a6a6a6;">{{cancelarTxt}}. Esta acción no se puede deshacer.</p>
+<div style="display: flex; gap: 10px; margin-top: 20px;">
+<button type="button" class="btn-sec" style="flex: 1;" onClick="{{cerrarCancelar}}">Volver</button>
+<button type="button" onClick="{{confirmarCancelar}}" style="flex: 1; height: 40px; border: 0; border-radius: 999px; background: #e5484d; color: #ffffff; font: 600 13px Inter, sans-serif; cursor: pointer;">Sí, cancelar</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sinCitas":{"editor":"boolean","default":false,"section":"Estados"},"carritoVacio":{"editor":"boolean","default":false,"section":"Estados"},"$preview":{"width":1440,"height":2600}}'>
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_C = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const DIAS_L = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DIAS_C = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIA_MS = 86400000;
+// "Hoy" de ejemplo: lunes 28 sep 2026, 12:00.
+const HOY = Date.UTC(2026, 8, 28);
+const AHORA = Date.UTC(2026, 8, 28, 12, 0);
+const CITAS = [
+  { id: 'a', y: 2026, m: 8, d: 29, h: 10, mi: 30, estado: 'CONFIRMADA', asis: 'Claudia Sánchez', adelanto: 20, serv: [{ n: 'Pedicure Gel', min: 90, p: 60 }] },
+  { id: 'b', y: 2026, m: 9, d: 3, h: 16, mi: 0, estado: 'PENDIENTE', asis: null, adelanto: 0, serv: [{ n: 'Reconstrucción de uñas', min: 10, p: 10 }, { n: 'Acripie', min: 10, p: 10 }] },
+  { id: 'h', y: 2026, m: 9, d: 3, h: 18, mi: 0, estado: 'PENDIENTE', asis: 'Claudia Sánchez', adelanto: 0, serv: [{ n: 'Cejas con hilo', min: 20, p: 12 }] },
+  { id: 'c', y: 2026, m: 9, d: 15, h: 11, mi: 0, estado: 'CONFIRMADA', asis: 'Claudia Sánchez', adelanto: 0, serv: [{ n: 'Depilación de rostro con navaja', min: 20, p: 15 }] },
+  { id: 'd', y: 2026, m: 8, d: 28, h: 10, mi: 0, estado: 'COMPLETADA', asis: 'Claudia Sánchez', resena: false, serv: [{ n: 'Depilación de rostro con navaja', min: 20, p: 15 }, { n: 'Acripie', min: 10, p: 10 }] },
+  { id: 'e', y: 2026, m: 8, d: 28, h: 10, mi: 30, estado: 'CANCELADA', asis: 'Claudia Sánchez', serv: [{ n: 'Acripie', min: 10, p: 10 }] },
+  { id: 'f', y: 2026, m: 8, d: 26, h: 15, mi: 0, estado: 'COMPLETADA', asis: 'Claudia Sánchez', resena: true, serv: [{ n: 'Manicure clásica', min: 40, p: 25 }] },
+  { id: 'g', y: 2026, m: 8, d: 12, h: 11, mi: 0, estado: 'NO_ASISTIO', asis: null, serv: [{ n: 'Cejas con hilo', min: 20, p: 12 }] },
+];
+const CARRITO = [
+  { id: 's1', n: 'Pedicure Gel', min: 90, p: 60 },
+  { id: 's2', n: 'Reconstrucción de uñas', min: 10, p: 10 },
+  { id: 's3', n: 'Acripie', min: 10, p: 10 },
+];
+const ESTADOS = { PENDIENTE: 'Pendiente', CONFIRMADA: 'Confirmada', COMPLETADA: 'Completada', CANCELADA: 'Cancelada', NO_ASISTIO: 'No asistió' };
+const ENTRADA = { lista: 700, paso: 110 };
+
+function soles(n) { return 'S/ ' + n.toFixed(2); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function hora(h, mi) { return (((h + 11) % 12) + 1) + ':' + pad(mi) + (h < 12 ? ' a. m.' : ' p. m.'); }
+function clave(y, m, d) { return y * 10000 + m * 100 + d; }
+function ts(c) { return Date.UTC(c.y, c.m, c.d, c.h, c.mi); }
+function relativo(c) {
+  const dias = Math.round((Date.UTC(c.y, c.m, c.d) - HOY) / DIA_MS);
+  if (dias === 0) return 'Hoy';
+  if (dias === 1) return 'Mañana';
+  if (dias > 1) return 'En ' + dias + ' días';
+  return '';
+}
+function fechaCorta(c) { return DIAS_C[new Date(Date.UTC(c.y, c.m, c.d)).getUTCDay()] + ' ' + c.d + ' ' + MESES_C[c.m]; }
+function minutos(c) { return c.serv.reduce((a, s) => a + s.min, 0); }
+function total(c) { return c.serv.reduce((a, s) => a + s.p, 0); }
+// Estimado con la misma fórmula de mis_puntos() (config_puntos): 1 pt por visita + 0.05 pt por sol, redondeado hacia abajo.
+const CFG_PUNTOS = { visita: 1, porSol: 0.05 };
+function puntosCita(c, conSello) { return Math.floor((conSello ? CFG_PUNTOS.visita : 0) + total(c) * CFG_PUNTOS.porSol); }
+// 1 sello (= 1 visita) por DÍA: igual que mi_fidelizacion()/mis_puntos(), que cuentan count(distinct fecha).
+// Solo la primera cita no cancelada de cada día lo suma; las demás de ese día muestran "Sello ya contado ese día".
+function idsConSello(citas) {
+  const vistos = {};
+  const ids = {};
+  citas.filter((c) => c.estado !== 'CANCELADA' && c.estado !== 'NO_ASISTIO')
+    .sort((a, b) => ts(a) - ts(b))
+    .forEach((c) => { const k = clave(c.y, c.m, c.d); if (!vistos[k]) { vistos[k] = true; ids[c.id] = true; } });
+  return ids;
+}
+const MIS_SELLOS = { actuales: 3, meta: 5 };
+// Datos de ejemplo de mis_puntos().
+const MIS_PUNTOS = { puntos: 18, nivel: 'Premium', siguiente: 'VIP', umbral: 30, desde: 10 };
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mes: { y: 2026, m: 8 }, sel: null, histAbierto: true, cancelar: null, cancelados: [], carrito: CARRITO };
+  }
+
+  citas() {
+    return CITAS.map((c) => (this.state.cancelados.indexOf(c.id) >= 0 ? Object.assign({}, c, { estado: 'CANCELADA' }) : c));
+  }
+
+  vigente(c) { return (c.estado === 'PENDIENTE' || c.estado === 'CONFIRMADA') && ts(c) >= AHORA; }
+
+  tarjeta(c, proxId) {
+    const vig = this.vigente(c);
+    return {
+      id: c.id,
+      hora: hora(c.h, c.mi),
+      servicios: c.serv.map((s) => s.n).join(', '),
+      asis: c.asis || 'Por asignar',
+      dur: minutos(c) + ' min',
+      total: soles(total(c)),
+      pts: '+' + puntosCita(c, Boolean(this._sellos[c.id])) + ' pts',
+      sello: Boolean(this._sellos[c.id]) && c.estado !== 'COMPLETADA',
+      selloRepetido: !this._sellos[c.id] && (vig || c.estado === 'COMPLETADA'),
+      estado: c.estado,
+      estadoTxt: ESTADOS[c.estado],
+      modificable: vig && ts(c) - AHORA > 3 * 3600000,
+      completada: c.estado === 'COMPLETADA',
+      calificarTxt: c.resena ? 'Calificada' : 'Calificar',
+      claseProx: c.id === proxId ? 'prox' : '',
+      pedirCancelar: () => this.setState({ cancelar: c.id }),
+    };
+  }
+
+  renderVals() {
+    const sinCitas = this.props.sinCitas ?? false;
+    const carritoVacioProp = this.props.carritoVacio ?? false;
+    const todas = sinCitas ? [] : this.citas();
+    const vigentes = todas.filter((c) => this.vigente(c)).sort((a, b) => ts(a) - ts(b));
+    const pasadas = todas.filter((c) => !this.vigente(c)).sort((a, b) => ts(b) - ts(a));
+    this._sellos = idsConSello(todas);
+    const p = vigentes[0];
+    const proxId = p ? p.id : null;
+
+    let prox = {};
+    if (p) {
+      const t = total(p);
+      prox = {
+        rel: relativo(p),
+        diaSemana: DIAS_L[new Date(Date.UTC(p.y, p.m, p.d)).getUTCDay()],
+        fechaLarga: p.d + ' de ' + MESES[p.m].toLowerCase() + ' de ' + p.y,
+        hora: hora(p.h, p.mi),
+        servicios: p.serv.map((s) => ({ n: s.n, meta: soles(s.p) + ' · ' + s.min + ' min' })),
+        asis: p.asis || 'Por asignar',
+        dur: minutos(p) + ' min',
+        estado: p.estado,
+        estadoTxt: ESTADOS[p.estado],
+        tieneAdelanto: p.adelanto > 0,
+        sinAdelanto: !(p.adelanto > 0),
+        adelantoTxt: 'Dejaste ' + soles(p.adelanto || 0) + ' de adelanto · total',
+        total: soles(t),
+        pts: '+' + puntosCita(p, Boolean(this._sellos[p.id])) + ' pts',
+        sello: Boolean(this._sellos[p.id]),
+        selloRepetido: !this._sellos[p.id],
+        pedirCancelar: () => this.setState({ cancelar: p.id }),
+      };
+    }
+
+    // Calendario (igual al actual): 42 días desde el lunes de la semana del día 1.
+    const { y, m } = this.state.mes;
+    const inicio = Date.UTC(y, m, 1);
+    const dow = new Date(inicio).getUTCDay();
+    const offset = dow === 0 ? 6 : dow - 1;
+    const conCitas = {};
+    todas.forEach((c) => { conCitas[clave(c.y, c.m, c.d)] = true; });
+    const hoyK = clave(2026, 8, 28);
+    const dias = [];
+    for (let i = 0; i < 42; i++) {
+      const f = new Date(inicio + (i - offset) * DIA_MS);
+      const fy = f.getUTCFullYear(), fm = f.getUTCMonth(), fd = f.getUTCDate();
+      const k = clave(fy, fm, fd);
+      const mod = k === this.state.sel ? 'sel' : k === hoyK ? 'hoy' : fm !== m ? 'fuera' : '';
+      dias.push({
+        num: fd,
+        mod: mod,
+        dot: conCitas[k] ? 'si' : '',
+        aria: fd + ' de ' + MESES[fm],
+        pick: () => this.setState({ sel: this.state.sel === k ? null : k }),
+      });
+    }
+
+    // Lista: sin filtro = todas las vigentes; con día elegido = todas las de ese día.
+    const sel = this.state.sel;
+    let lista;
+    let titulo = 'Próximas citas';
+    if (sel) {
+      lista = todas.filter((c) => clave(c.y, c.m, c.d) === sel).sort((a, b) => ts(a) - ts(b));
+      const sy = Math.floor(sel / 10000), sm = Math.floor(sel / 100) % 100, sd = sel % 100;
+      titulo = 'Citas del ' + fechaCorta({ y: sy, m: sm, d: sd }).toLowerCase();
+    } else {
+      lista = vigentes;
+    }
+    const grupos = [];
+    lista.forEach((c) => {
+      const k = clave(c.y, c.m, c.d);
+      let g = grupos.find((x) => x.k === k);
+      if (!g) { g = { k: k, fecha: fechaCorta(c), rel: sel ? '' : relativo(c), items: [] }; grupos.push(g); }
+      g.items.push(this.tarjeta(c, sel ? null : proxId));
+    });
+    grupos.forEach((g, i) => { g.delay = ENTRADA.lista + i * ENTRADA.paso; });
+
+    const carrito = carritoVacioProp ? [] : this.state.carrito;
+    const cMin = carrito.reduce((a, s) => a + s.min, 0);
+    const cTot = carrito.reduce((a, s) => a + s.p, 0);
+
+    const cit = this.state.cancelar ? CITAS.find((c) => c.id === this.state.cancelar) : null;
+
+    return {
+      hayProxima: Boolean(p),
+      sinProxima: !p,
+      prox: prox,
+      mesLabel: MESES[m] + ' ' + y,
+      dias: dias,
+      mesAnterior: () => this.setState({ mes: m === 0 ? { y: y - 1, m: 11 } : { y: y, m: m - 1 } }),
+      mesSiguiente: () => this.setState({ mes: m === 11 ? { y: y + 1, m: 0 } : { y: y, m: m + 1 } }),
+      irHoy: () => this.setState({ mes: { y: 2026, m: 8 }, sel: hoyK }),
+      listaTitulo: titulo,
+      listaConteo: vigentes.length === 1 ? '1 cita' : vigentes.length + ' citas',
+      hayFiltro: Boolean(sel),
+      sinFiltro: !sel,
+      quitarFiltro: () => this.setState({ sel: null }),
+      grupos: grupos,
+      listaVacia: lista.length === 0,
+      listaVaciaTxt: sel ? 'No tienes citas este día.' : 'No tienes citas próximas.',
+      carrito: carrito.map((s) => ({ n: s.n, meta: soles(s.p) + ' · ' + s.min + ' min', quitar: () => this.setState({ carrito: this.state.carrito.filter((x) => x.id !== s.id) }) })),
+      carritoVacio: carrito.length === 0,
+      carritoLleno: carrito.length > 0,
+      carritoCount: carrito.length,
+      hayCarrito: carrito.length > 0,
+      sinCarrito: carrito.length === 0,
+      misPuntos: MIS_PUNTOS.puntos,
+      nivel: 'Nivel ' + MIS_PUNTOS.nivel,
+      barraPct: Math.round(((MIS_PUNTOS.puntos - MIS_PUNTOS.desde) / (MIS_PUNTOS.umbral - MIS_PUNTOS.desde)) * 100) + '%',
+      faltanTxt: (MIS_PUNTOS.umbral - MIS_PUNTOS.puntos) + ' pts para ' + MIS_PUNTOS.siguiente,
+      hayPorGanar: vigentes.length > 0,
+      porGanar: '+' + vigentes.reduce((a, c) => a + puntosCita(c, Boolean(this._sellos[c.id])), 0) + ' pts',
+      sellosTxt: MIS_SELLOS.actuales + ' de ' + MIS_SELLOS.meta + ' · ' + (MIS_SELLOS.meta - MIS_SELLOS.actuales) + ' para tu 20%',
+      sellosLista: Array.from({ length: MIS_SELLOS.meta }, (_, i) => ({ cls: i < MIS_SELLOS.actuales ? 'on' : '' })),
+      carritoResumen: carrito.length + (carrito.length === 1 ? ' servicio · ' : ' servicios · ') + cMin + ' min',
+      carritoTotal: soles(cTot),
+      histAbierto: this.state.histAbierto,
+      caretMod: this.state.histAbierto ? 'on' : '',
+      toggleHist: () => this.setState({ histAbierto: !this.state.histAbierto }),
+      histConteo: pasadas.length + ' citas pasadas',
+      historial: pasadas.map((c) => ({
+        fecha: fechaCorta(c),
+        hora: hora(c.h, c.mi),
+        servicios: c.serv.map((s) => s.n).join(', '),
+        asis: c.asis || 'Sin asignar',
+        estado: c.estado,
+        estadoTxt: ESTADOS[c.estado],
+        total: soles(total(c)),
+        gano: c.estado === 'COMPLETADA',
+        pts: '+' + puntosCita(c, Boolean(this._sellos[c.id])) + ' pts',
+        sello: c.estado === 'COMPLETADA' && Boolean(this._sellos[c.id]),
+        selloRepetido: false,
+        puedeCalificar: c.estado === 'COMPLETADA' && !c.resena,
+        calificada: c.estado === 'COMPLETADA' && Boolean(c.resena),
+      })),
+      hayCancelar: Boolean(cit),
+      cancelarTxt: cit ? fechaCorta(cit) + ', ' + hora(cit.h, cit.mi) + ' — ' + cit.serv.map((s) => s.n).join(', ') : '',
+      cerrarCancelar: () => this.setState({ cancelar: null }),
+      confirmarCancelar: () => this.setState({ cancelados: this.state.cancelados.concat([this.state.cancelar]), cancelar: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

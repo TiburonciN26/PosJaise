@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inicio · Móvil</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+@font-face{font-family:'Heavitas';src:url('/_blob/d17eb8decc0286762490f70633e75779') format('truetype');font-display:swap}
+@font-face{font-family:'Kunaroh';src:url('/_blob/05ac3638b72794ad46c1f01a1ceb85cb') format('truetype');font-display:swap}
+body{margin:0;background:#0b0b0c;font-family:'Inter',system-ui,sans-serif}
+a{color:#ffffff}a:hover{color:#a9c6ec}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid #a9c6ec;outline-offset:2px}
+.fila{scrollbar-width:none}.fila::-webkit-scrollbar{display:none}
+/* Caída tipo meteorito: acelera (ease-in), choca, se aplasta un poco y rebota; destello + onda expansiva + sacudida de la fila en el impacto (~0.52 s) */
+.foto.espera{opacity:0}
+.foto.cae{z-index:5;animation:caer .75s both}
+.foto.cae::before{content:'';position:absolute;inset:0;border-radius:inherit;background:#ffffff;opacity:0;pointer-events:none;animation:destello .45s ease-out .52s both}
+.foto.cae::after{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid #a9c6ec;opacity:0;pointer-events:none;animation:onda .6s cubic-bezier(.2,.7,.2,1) .52s both}
+@keyframes caer{
+0%{opacity:.12;transform:scale(2.6);filter:blur(8px);animation-timing-function:cubic-bezier(.6,0,1,.4)}
+70%{opacity:.9;transform:scale(1.03);filter:blur(1px);animation-timing-function:cubic-bezier(0,0,.3,1)}
+78%{opacity:1;transform:scale(.95);filter:blur(0)}
+89%{transform:scale(1.015)}
+100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes destello{0%{opacity:.35}100%{opacity:0}}
+@keyframes onda{0%{opacity:.8;inset:0}100%{opacity:0;inset:-28px}}
+.sacA{animation:sacudirA .32s linear .52s}
+.sacB{animation:sacudirB .32s linear .52s}
+@keyframes sacudirA{0%,100%{transform:none}20%{transform:translate(-5px,3px)}40%{transform:translate(4px,-3px)}60%{transform:translate(-3px,2px)}80%{transform:translate(2px,-1px)}}
+@keyframes sacudirB{0%,100%{transform:none}20%{transform:translate(-5px,3px)}40%{transform:translate(4px,-3px)}60%{transform:translate(-3px,2px)}80%{transform:translate(2px,-1px)}}
+@media (prefers-reduced-motion:reduce){.foto.cae,.foto.cae::before,.foto.cae::after,.sacA,.sacB{animation:none}}
+.in-left,.in-right,.in-up,.in-photo{animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.7,.2,1);animation-fill-mode:both}
+.in-left{animation-name:inLeft}
+.in-right{animation-name:inRight}
+.in-up{animation-name:inUp;animation-duration:.8s}
+.in-photo{animation-name:inPhoto;animation-duration:1.3s}
+@keyframes inLeft{from{opacity:0;transform:translateX(-40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inRight{from{opacity:0;transform:translateX(40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@keyframes inPhoto{from{opacity:0;transform:translateX(48px) scale(1.03);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+@media (prefers-reduced-motion:reduce){.in-left,.in-right,.in-up,.in-photo{animation:none}}
+</style>
+</helmet>
+<div id="dc-root" style="position: relative; width: 390px; height: 5220px; box-sizing: border-box; background: #0b0b0c; color: #ffffff; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; overflow: hidden">
+
+  <!-- Header (referencia) -->
+  <header style="height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #161618">
+    <span style="font-family: 'Kunaroh', sans-serif; font-size: 19px; letter-spacing: 0.08em">JAISE</span>
+    <div style="display: flex; align-items: center; gap: 4px; color: #d9d9dc">
+      <button type="button" aria-label="Carrito" style="width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 0; color: inherit"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path></svg></button>
+      <button type="button" aria-label="Menú" style="width: 44px; height: 44px; display: grid; place-items: center; background: transparent; border: 0; color: inherit"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"></path></svg></button>
+    </div>
+  </header>
+
+  <!-- 1. HERO: foto arriba. Igual que hoy: en celular solo se ve la foto "después" (el revelado del antes es con mouse). -->
+  <section style="padding: 16px 16px 0">
+    <div class="in-photo" style="animation-delay: 100ms; position: relative; height: 440px; border-radius: 10px; overflow: hidden; background: #111113">
+      <img src="/_blob/0f07b198aef3f8b5a0a65c0d083ab0e6" alt="Resultado después del servicio" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 20%">
+    </div>
+
+    <div style="display: flex; flex-direction: column; padding: 26px 0 0">
+      <span class="in-left" style="animation-delay: 350ms; display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #a6a6a6"><span style="width: 6px; height: 6px; border-radius: 50%; background: #ff85a1"></span>Uñas · Pestañas · Cejas · Micro</span>
+      <h1 class="in-left" style="animation-delay: 480ms; margin: 16px 0 0; font-family: 'Kunaroh', sans-serif; font-weight: 400; font-size: 44px; line-height: 1.04; text-transform: uppercase; color: #ffffff">Belleza<br>que transforma</h1>
+      <p class="in-left" style="animation-delay: 560ms; margin: 16px 0 0; font-size: 15px; line-height: 1.6; color: #d9d9dc">Tu salón de belleza en Av. Argentina. Reserva en línea en un minuto y paga el saldo en el local.</p>
+      <div class="in-left" style="animation-delay: 650ms; display: flex; flex-direction: column; gap: 10px; margin-top: 22px">
+        <a href="#" style="display: flex; align-items: center; justify-content: space-between; background: #a9c6ec; color: #0b0b0c; border-radius: 999px; padding: 6px 6px 6px 22px; font-weight: 600; font-size: 15px; text-decoration: none">Reserva tu cita <span style="width: 38px; height: 38px; border-radius: 50%; background: #0b0b0c; color: #a9c6ec; display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span></a>
+        <a href="#" style="text-align: center; text-decoration: none; border: 1px solid #2e2e2e; border-radius: 999px; padding: 14px 22px; font-size: 15px; color: #e8e8ea">Ver servicios</a>
+      </div>
+      <div class="in-left" style="animation-delay: 780ms; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 22px; padding-top: 16px; border-top: 1px solid #1f1f22; font-size: 12.5px; color: #a6a6a6">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="#a9c6ec" aria-hidden="true"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"></path></svg><b style="color: #ffffff; font-weight: 600">[4.9]</b> · [N] reseñas</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; color: #e8e8ea"><span style="width: 7px; height: 7px; border-radius: 50%; background: #a9c6ec"></span>Abierto ahora</span>
+        <span>Lun–Sáb 10:00–13:00 · 15:00–20:30</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. TIRA PERSONAL -->
+  <section class="in-up" style="animation-delay: 900ms; margin: 24px 16px 0; padding: 18px; display: flex; flex-direction: column; gap: 14px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06)">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <span style="font-size: 15.5px; font-weight: 600">Hola, [Nombre]</span>
+      <span style="font-size: 12px; color: #a6a6a6"><b style="color: #ffffff; font-size: 15px">[120]</b> puntos</span>
+    </div>
+    <sc-if value="{{conCita}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span style="font-size: 13px; line-height: 1.5; color: #a6a6a6">Tu próxima cita<br><b style="color: #ffffff; font-weight: 600">[jue 2 oct · 4:00 p. m.]</b> · [Pedicure Gel]</span>
+        <a href="#" style="flex-shrink: 0; text-decoration: none; border: 1px solid #2e2e2e; border-radius: 999px; padding: 12px 16px; font-size: 13px; color: #e8e8ea">Ver cita</a>
+      </div>
+    </sc-if>
+    <sc-if value="{{sinCita}}" hint-placeholder-val="{{false}}">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+        <span style="font-size: 13px; line-height: 1.5; color: #a6a6a6">No tienes citas pendientes. ¿Agendamos la próxima?</span>
+        <a href="#" style="flex-shrink: 0; text-decoration: none; background: #a9c6ec; color: #0b0b0c; font-weight: 600; border-radius: 999px; padding: 12px 16px; font-size: 13px">Reservar</a>
+      </div>
+    </sc-if>
+  </section>
+
+  <!-- 2b. PROMOCIÓN ACTIVA: bajo la tira; solo si hay una activa -->
+  <sc-if value="{{hayPromo}}" hint-placeholder-val="{{true}}">
+  <section class="in-up" style="animation-delay: 1000ms; margin: 12px 16px 0; display: flex; flex-direction: column; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; overflow: hidden; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06)">
+    <div style="display: flex; align-items: center; gap: 16px; padding: 16px 18px; background: #141b26; border-bottom: 1px dashed #2e3a4d">
+      <span style="font-family: 'Heavitas', 'Inter', sans-serif; font-size: 34px; line-height: 1; color: #a9c6ec">[20%]</span>
+      <span style="display: flex; flex-direction: column; gap: 4px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: #a6a6a6"><span style="width: 5px; height: 5px; border-radius: 50%; background: #ff85a1"></span>Promoción activa</span>
+        <span style="font-size: 12px; color: #d9d9dc">de descuento · hasta [fecha]</span>
+      </span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px">
+      <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 20px; text-transform: uppercase; color: #ffffff">[Nombre de la promoción]</h2>
+      <p style="margin: 0; font-size: 13.5px; line-height: 1.55; color: #d9d9dc">[Descripción corta] · Válido en [servicios]. Un uso por clienta.</p>
+      <sc-if value="{{noReclamado}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{reclamar}}" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #a9c6ec; color: #0b0b0c; border: 0; border-radius: 999px; padding: 14px 20px; font-weight: 600; font-size: 15px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3a3 3 0 0 0 0 6v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a3 3 0 0 0 0-6z"></path><path d="M13 5v2M13 11v2M13 17v2"></path></svg>Reclamar cupón</button>
+        <span style="text-align: center; font-size: 11.5px; color: #a6a6a6">Se guarda en Mis cupones</span>
+      </sc-if>
+      <sc-if value="{{reclamado}}" hint-placeholder-val="{{false}}">
+        <span role="status" style="margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 18px; border: 1px solid #2e3a4d; border-radius: 999px; background: #141b26; color: #a9c6ec; font-weight: 600; font-size: 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>Guardado en Mis cupones</span>
+        <span style="display: flex; justify-content: space-between; font-size: 13px"><a href="#" style="text-decoration: none; color: #e8e8ea; padding: 10px 0">Ver mis cupones</a><a href="#" style="text-decoration: none; color: #a9c6ec; padding: 10px 0">Reservar y usarlo →</a></span>
+      </sc-if>
+    </div>
+  </section>
+  </sc-if>
+
+  <!-- 3. LO MÁS PEDIDO -->
+  <section style="padding: 64px 16px 0">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #a6a6a6">Lo que más reservan</span>
+        <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 26px; text-transform: uppercase; color: #ffffff">Lo más pedido</h2>
+      </div>
+      <a href="#" style="font-size: 13px; text-decoration: none; color: #e8e8ea; padding: 12px 0">Ver todos →</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px">
+      <sc-for list="{{top}}" as="s" hint-placeholder-count="4">
+        <a href="#" style="display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: #ffffff">
+          <div style="position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: {{s.bg}}">
+            <span style="position: absolute; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; background: rgba(11,11,12,0.7); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600"><span style="width: 5px; height: 5px; border-radius: 50%; background: #ff85a1"></span>#{{s.rank}}</span>
+            <span style="position: absolute; bottom: 10px; left: 10px; padding: 3px 7px; border-radius: 5px; background: rgba(255,255,255,0.1); font-size: 10px; color: #e8e8ea">{{s.cat}}</span>
+            <span style="position: absolute; bottom: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: #ffffff; color: #0b0b0c; display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></span>
+          </div>
+          <span style="font-size: 13.5px; font-weight: 600; line-height: 1.3">{{s.n}}</span>
+          <span style="margin-top: -6px; font-size: 12px; color: #a6a6a6">desde <b style="color: #ffffff; font-weight: 600">{{s.p}}</b></span>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- 4. CATEGORÍAS: fila deslizable -->
+  
+
+  <!-- 5. RESULTADOS REALES: 3 filas (antes | después) para que todo el bloque entre en la pantalla y se pueda fijar al centro. Misma animación que escritorio; en el celular cada toque/deslizamiento nuevo = un gesto. -->
+  <section onWheel="{{alRueda}}" onClick="{{alClic}}" style="padding: 64px 16px 0; position: relative">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #a6a6a6">Trabajos del salón</span>
+        <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 26px; text-transform: uppercase; color: #ffffff">Resultados reales</h2>
+      </div>
+      <a href="#" style="font-size: 13px; text-decoration: none; color: #e8e8ea; padding: 12px 0">Galería →</a>
+    </div>
+    <div class="{{sacudida}}" style="display: flex; flex-direction: column; gap: 16px">
+      <sc-for list="{{trabajos}}" as="t" hint-placeholder-count="3">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px; height: 170px">
+            <div ref="{{t.ref}}" class="foto {{t.a}}" style="position: relative; border-radius: 10px 0 0 10px; background: #1c1c20; display: grid; place-items: center; color: #7a7a80; font-size: 11px; text-align: center; padding: 10px">[Foto real: antes]<span style="position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 5px; background: rgba(255,255,255,0.08); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #e8e8ea">Antes</span></div>
+            <div class="foto {{t.d}}" style="position: relative; border-radius: 0 10px 10px 0; background: #222228; display: grid; place-items: center; color: #7a7a80; font-size: 11px; text-align: center; padding: 10px">[Foto real: después]<span style="position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 5px; background: rgba(255,255,255,0.08); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #e8e8ea">Después</span></div>
+          </div>
+          <span style="font-size: 13.5px; font-weight: 600">{{t.n}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{enCurso}}" hint-placeholder-val="{{false}}">
+      <span aria-live="polite" style="margin-top: 14px; display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #a6a6a6"><span style="display: flex; gap: 4px"><sc-for list="{{puntos}}" as="d" hint-placeholder-count="6"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{d.c}}"></span></sc-for></span>Sigue deslizando</span>
+    </sc-if>
+  </section>
+
+  <!-- 6. RESEÑAS -->
+  <section style="padding: 64px 0 0">
+    <div style="display: flex; flex-direction: column; gap: 10px; margin: 0 16px 18px">
+      <span style="font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #a6a6a6">Opiniones verificadas</span>
+      <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 24px; line-height: 1.15; text-transform: uppercase; color: #ffffff">Lo que dicen nuestras clientas</h2>
+      <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px">
+        <span style="font-size: 40px; font-weight: 700; line-height: 1">[4.9]</span>
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <span style="display: flex; gap: 3px; color: #a9c6ec"><sc-for list="{{estrellas}}" as="e" hint-placeholder-count="5"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"></path></svg></sc-for></span>
+          <span style="font-size: 12px; color: #a6a6a6">[N] reseñas · <a href="#" style="color: #e8e8ea; text-decoration: none">Ver todas</a></span>
+        </div>
+      </div>
+    </div>
+    <div class="fila" style="display: flex; gap: 10px; overflow-x: auto; padding: 0 16px">
+      <sc-for list="{{resenas}}" as="r" hint-placeholder-count="3">
+        <figure style="flex-shrink: 0; width: 290px; margin: 0; display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); box-sizing: border-box">
+          <span style="display: flex; gap: 3px; color: #a9c6ec"><sc-for list="{{estrellas}}" as="e" hint-placeholder-count="5"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"></path></svg></sc-for></span>
+          <blockquote style="margin: 0; font-size: 14px; line-height: 1.6; color: #d9d9dc">[Comentario real de la clienta, tal como lo escribió en su reseña.]</blockquote>
+          <figcaption style="display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid #1f1f22">
+            <span style="width: 30px; height: 30px; border-radius: 50%; background: #1f1f22; display: grid; place-items: center; font-size: 12px; font-weight: 600">{{r.ini}}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 600">[Nombre de la clienta]</span><span style="font-size: 11.5px; color: #a6a6a6">{{r.serv}}</span></span>
+          </figcaption>
+        </figure>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- 8. SOBRE NOSOTROS -->
+  <section style="padding: 64px 16px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="height: 260px; border-radius: 10px; background: #151517; border: 1px solid #1f1f22; display: grid; place-items: center; color: #6f6f75; font-size: 12px; text-align: center; padding: 20px">[Foto real del equipo o del local]</div>
+    <span style="margin-top: 8px; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #a6a6a6">Sobre nosotros</span>
+    <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 26px; line-height: 1.12; text-transform: uppercase; color: #ffffff">Cuidado y confianza en cada cita</h2>
+    <p style="margin: 0; font-size: 14.5px; line-height: 1.65; color: #d9d9dc">Creemos en escuchar antes de proponer. Cada cita empieza con una pregunta sobre lo que quieres lograr, y cada tratamiento se diseña a tu medida.</p>
+    <div style="display: flex; flex-direction: column; border: 1px solid #1f1f22; border-radius: 10px; background: #111113">
+      <div style="display: flex; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #1f1f22"><span style="font-size: 12px; color: #a9c6ec; font-weight: 600">01</span><span style="font-size: 13.5px"><b style="font-weight: 600">Te escuchamos</b> <span style="color: #a6a6a6">· diagnóstico antes de empezar</span></span></div>
+      <div style="display: flex; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #1f1f22"><span style="font-size: 12px; color: #a9c6ec; font-weight: 600">02</span><span style="font-size: 13.5px"><b style="font-weight: 600">A tu medida</b> <span style="color: #a6a6a6">· diseño pensado para ti</span></span></div>
+      <div style="display: flex; gap: 14px; padding: 14px 16px"><span style="font-size: 12px; color: #a9c6ec; font-weight: 600">03</span><span style="font-size: 13.5px"><b style="font-weight: 600">Con detalle</b> <span style="color: #a6a6a6">· cuidamos el resultado</span></span></div>
+    </div>
+    <a href="#" style="font-size: 14px; text-decoration: none; color: #e8e8ea; padding: 8px 0">Conoce al equipo →</a>
+  </section>
+
+  <!-- 9. VISÍTANOS -->
+  <section style="padding: 56px 16px 0; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; flex-direction: column; gap: 18px; padding: 22px 20px; background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06)">
+      <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 26px; text-transform: uppercase; color: #ffffff">Visítanos</h2>
+      <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px; color: #d9d9dc">
+        <span style="display: flex; gap: 12px; align-items: flex-start"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>Av. Argentina H-12</span>
+        <span style="display: flex; gap: 12px; align-items: flex-start"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg><span>Lunes a sábado<br><span style="color: #a6a6a6">10:00 a. m. – 1:00 p. m.<br>3:00 p. m. – 8:30 p. m.</span></span></span>
+        <span style="display: flex; gap: 12px; align-items: flex-start"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path></svg>917 160 188</span>
+      </div>
+      <a href="#" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: #a9c6ec; color: #0b0b0c; border-radius: 999px; padding: 14px 20px; font-weight: 600; font-size: 14.5px; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5z"></path></svg>Escríbenos por WhatsApp</a>
+      <a href="#" style="margin-top: -8px; text-align: center; text-decoration: none; border: 1px solid #2e2e2e; border-radius: 999px; padding: 14px 20px; font-size: 14.5px; color: #e8e8ea">Cómo llegar</a>
+    </div>
+    <div style="height: 200px; border-radius: 10px; background: #151517; border: 1px solid #1f1f22; display: grid; place-items: center; color: #6f6f75; font-size: 12px">[Mapa de Google]</div>
+  </section>
+
+  <!-- 10. PIE -->
+  <footer style="position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 16px; border-top: 1px solid #161618; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; font-size: 12px; color: #a6a6a6">
+    <span style="font-family: 'Kunaroh', sans-serif; font-size: 17px; letter-spacing: 0.08em; color: #ffffff">JAISE</span>
+    <span>Av. Argentina H-12 · 917 160 188</span>
+    <span style="display: flex; gap: 16px"><a href="#" style="text-decoration: none; color: #d9d9dc">[Instagram]</a><a href="#" style="text-decoration: none; color: #d9d9dc">[TikTok]</a></span>
+    <span>© 2026 Jaise Beauty Academy</span>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tira":{"editor":"enum","options":["con cita","sin cita"],"default":"con cita"},"promo":{"editor":"boolean","default":true},"resultados":{"editor":"enum","options":["animación","todas visibles"],"default":"animación"},"$preview":{"width":390,"height":5220}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { reclamado: false, visto: 0 };
+    // Resultados reales: 6 fotos, una por gesto, sin cortar la animación.
+    this.animando = false;
+    this.ultimaRueda = 0;
+    this.gesto = 0;
+    this.gestoUsado = -1;
+    this.setPrimera = (el) => {
+      if (!el || this.obs || typeof IntersectionObserver === 'undefined') return;
+      this.obs = new IntersectionObserver((ents) => {
+        if (ents[0].intersectionRatio >= 0.99 && this.state.visto === 0) {
+          this.avanzar();
+          this.obs.disconnect();
+        }
+      }, { threshold: [1] });
+      this.obs.observe(el);
+    };
+  }
+  componentWillUnmount() {
+    if (this.obs) this.obs.disconnect();
+    clearTimeout(this.timer);
+  }
+  componentDidUpdate(prev) {
+    if (prev.resultados !== this.props.resultados) {
+      this.animando = false;
+      this.setState({ visto: this.props.resultados === 'todas visibles' ? 6 : 0 });
+    }
+  }
+  avanzar() {
+    if (this.animando || this.state.visto >= 6) return false;
+    this.animando = true;
+    this.setState({ visto: this.state.visto + 1 });
+    this.timer = setTimeout(() => { this.animando = false; this.forceUpdate(); }, 900);
+    return true;
+  }
+  renderVals() {
+    const tira = this.props.tira ?? 'con cita';
+    const visto = this.state.visto;
+    const todas = this.props.resultados === 'todas visibles';
+    const clase = (i) => (todas ? '' : i < visto ? 'cae' : 'espera');
+    return {
+      alRueda: (e) => {
+        if (e.deltaY <= 0 || todas) return;
+        const ahora = Date.now();
+        if (ahora - this.ultimaRueda > 220) this.gesto += 1;
+        this.ultimaRueda = ahora;
+        if (this.gestoUsado === this.gesto) return;
+        this.gestoUsado = this.gesto;
+        this.avanzar();
+      },
+      alClic: () => { if (!todas) this.avanzar(); },
+      sacudida: todas || visto === 0 ? '' : visto % 2 ? 'sacA' : 'sacB',
+      enCurso: !todas && visto >= 1 && visto < 6,
+      puntos: [0, 1, 2, 3, 4, 5].map((i) => ({ c: i < visto || todas ? '#a9c6ec' : '#2e2e33' })),
+      conCita: tira === 'con cita',
+      sinCita: tira === 'sin cita',
+      hayPromo: this.props.promo ?? true,
+      reclamado: this.state.reclamado,
+      noReclamado: !this.state.reclamado,
+      reclamar: () => this.setState({ reclamado: true }),
+      estrellas: [1, 2, 3, 4, 5],
+      top: [
+        { rank: 1, n: 'Pedicure Gel', p: 'S/ 60', cat: 'Pedicure', bg: 'linear-gradient(150deg, #3a2a3f 0%, #1a1420 70%)' },
+        { rank: 2, n: 'Micro lips Neutralización', p: 'S/ 350', cat: 'Micropigmentación', bg: 'linear-gradient(150deg, #43282c 0%, #17100f 70%)' },
+        { rank: 3, n: 'Rubber gel', p: 'S/ 60', cat: 'Manicure gel', bg: 'linear-gradient(150deg, #22304a 0%, #10141c 70%)' },
+        { rank: 4, n: 'Depilación de rostro con navaja', p: 'S/ 15', cat: 'Depilación', bg: 'linear-gradient(150deg, #33302a 0%, #14130f 70%)' }
+      ],
+      cats: [
+        { n: 'Manicure gel', color: '#a9c6ec' },
+        { n: 'Pedicure', color: '#c7a6e0' },
+        { n: 'Sistemas artificiales', color: '#ff85a1' },
+        { n: 'Pestañas', color: '#e8e8ea' },
+        { n: 'Cejas', color: '#d9b98c' },
+        { n: 'Micropigmentación', color: '#e39a8f' },
+        { n: 'Depilación', color: '#9fd3c7' },
+        { n: 'Make up', color: '#f0c3d4' }
+      ],
+      trabajos: [
+        { n: '[Uñas acrílicas]', a: clase(0), d: clase(1), ref: this.setPrimera },
+        { n: '[Micropigmentación de labios]', a: clase(2), d: clase(3), ref: null },
+        { n: '[Diseño de cejas]', a: clase(4), d: clase(5), ref: null }
+      ],
+      resenas: [
+        { ini: 'A', serv: '[Pedicure Gel]' },
+        { ini: 'B', serv: '[Rubber gel]' },
+        { ini: 'C', serv: '[Micro lips]' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tu carrito — escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Instrument+Serif:ital@0;1&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0b0c}
+*{box-sizing:border-box}
+a{color:#a9c6ec;text-decoration:none}a:hover{color:#d3e4f8}
+.serif{font-family:'Instrument Serif',serif;font-weight:400}
+.it{font-style:normal}
+@font-face{font-family:'Kunaroh';src:url(/_blob/db44f0e86202c537b3c2d8c12617bf97) format('truetype');font-weight:400;font-style:normal;font-display:swap}
+.kuna{font-family:'Kunaroh','Orbitron',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.08em;line-height:1.05}
+@font-face{font-family:'Heavitas';src:url(/_blob/150f5e089d61e359a58b0f93ebba2eb1) format('truetype');font-weight:400;font-style:normal;font-display:swap}
+.heav{font-family:'Heavitas',Inter,sans-serif;font-weight:400;color:#ffffff;letter-spacing:.02em;line-height:1.1}
+.mono{font-family:'Space Mono',ui-monospace,monospace}
+.metal{background:linear-gradient(90deg,#86a9d8 0%,#a9c6ec 40%,#d3e4f8 50%,#a9c6ec 60%,#86a9d8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.navlink{color:#a6a6a6;font-size:14px;padding:8px 14px;border-radius:999px}
+.navlink:hover{color:#fff}
+.iconbtn{width:40px;height:40px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;color:#a6a6a6;background:none;border:0;cursor:pointer;flex-shrink:0}
+.iconbtn:hover{color:#fff;background:rgba(255,255,255,.06)}
+.check{width:18px;height:18px;margin:0;accent-color:#a9c6ec;cursor:pointer}
+.stepper{display:inline-flex;align-items:center;height:40px;border:1px solid #2e2e2e;border-radius:999px;padding:0 4px}
+.stepper button{width:32px;height:32px;border-radius:999px;border:0;background:none;color:#d0d0d0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.stepper button:hover{background:rgba(255,255,255,.06);color:#fff}
+.stepper button:disabled{color:#555;cursor:default;background:none}
+.seg{flex:1;height:44px;border-radius:12px;border:1px solid #2e2e2e;background:transparent;color:#bdbdbd;display:flex;align-items:center;justify-content:center;gap:8px;font:500 14px Inter,sans-serif;cursor:pointer}
+.seg:hover{border-color:#4a4a4f}
+.seg.on{border-color:#a9c6ec;background:rgba(169,198,236,.08);color:#a9c6ec}
+.field{width:100%;height:44px;border-radius:12px;border:1px solid #2e2e2e;background:#141416;color:#fff;padding:0 12px;font:14px Inter,sans-serif;outline:none}
+.field:focus{border-color:#a9c6ec}
+.cta{width:100%;height:56px;border-radius:999px;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font:600 18px Inter,sans-serif;color:#000000;background:#3ECF6A}
+.cta:hover{filter:brightness(1.06)}
+.ghost{height:48px;border-radius:999px;border:1px solid #a9c6ec;background:transparent;color:#a9c6ec;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 14px Inter,sans-serif;padding:0 22px}
+.ghost:hover{background:rgba(169,198,236,.08)}
+.ghost:disabled{opacity:.4;cursor:default}
+.linkbtn{background:none;border:0;padding:0;cursor:pointer;font:500 13px Inter,sans-serif;color:#a9c6ec}
+.linkbtn:hover{color:#d3e4f8}
+.cuponrow{width:100%;min-height:56px;display:flex;align-items:center;gap:12px;background:none;border:0;border-top:1px solid #232326;border-bottom:1px solid #232326;padding:14px 0;cursor:pointer;color:#fff;font:600 14px Inter,sans-serif;text-align:left}
+.cuponrow:hover .plus{background:rgba(255,255,255,.08)}
+.plus{width:36px;height:36px;border-radius:999px;border:1px solid #3a3a3f;display:flex;align-items:center;justify-content:center;color:#fff}
+.chip{font:600 11px Inter,sans-serif;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:rgba(169,198,236,.12);color:#a9c6ec}
+.cupon{position:relative;overflow:hidden;border-radius:0}
+.cupon-bronce{border:1px solid rgba(200,147,90,.5);background:linear-gradient(rgba(200,147,90,.1),rgba(200,147,90,.1)),#0d0c0b}
+.cupon-plata{border:1px solid transparent;background:linear-gradient(#0e0e0f,#0e0e0f) padding-box,linear-gradient(120deg,#4a4e54,#d9dde2 45%,#4a4e54 70%,#2a2c30) border-box;box-shadow:0 0 30px -6px rgba(220,226,234,.14)}
+.cupon-plata::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.05),transparent 45%);pointer-events:none}
+.cupon-plata::after{content:'';position:absolute;top:0;bottom:0;left:-45%;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:skewX(-20deg);animation:cupon-sheen 7s ease-in-out infinite;pointer-events:none}
+.cupon-oro{border:1px solid transparent;background:radial-gradient(120% 140% at 0% 0%,rgba(169,198,236,.14),transparent 55%) padding-box,linear-gradient(#100d07,#100d07) padding-box,linear-gradient(120deg,#a9c6ec,#fff1c2 38%,#a9c6ec 58%,#5e4818 100%) border-box;animation:cupon-glow 4.5s ease-in-out infinite}
+.cupon-oro::after{content:'';position:absolute;top:0;bottom:0;left:-45%;width:34%;background:linear-gradient(90deg,transparent,rgba(255,246,216,.22),transparent);transform:skewX(-20deg);animation:cupon-sheen 4.5s ease-in-out infinite;pointer-events:none}
+.cupon-texto-oro{background:linear-gradient(100deg,#a9c6ec 0%,#a9c6ec 35%,#fff3cf 50%,#a9c6ec 65%,#a9c6ec 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:cupon-brillo-texto 4.5s linear infinite}
+.tx-bronce{color:#c8935a}
+.tx-plata{color:#e3e6ea}
+.ic-bronce{color:#c8935a}
+.ic-plata{color:#cfd4da}
+.ic-oro{color:#a9c6ec}
+.cupon-chispa{position:absolute;z-index:2;color:#a9c6ec;opacity:0;animation:cupon-titilar 3.2s ease-in-out infinite;filter:drop-shadow(0 0 6px #a9c6ec);pointer-events:none}
+.cupon-etiqueta-nueva{position:absolute;top:-9px;right:-6px;z-index:3;display:flex;align-items:center;padding:3px 9px;border-radius:999px;border:1.5px solid #ff2d3f;background:#050505;color:#ff2d3f;text-shadow:0 0 8px rgba(255,45,63,.55);box-shadow:0 0 10px -1px rgba(255,45,63,.55),inset 0 0 6px -2px rgba(255,45,63,.5);font:700 10px ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;line-height:1}
+.cupon-apagado{opacity:.5}
+.cupon-fila{position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:12px;text-align:left;background:none;border:0;color:inherit;cursor:pointer;font:inherit}
+.cupon-pie{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid rgba(255,255,255,.1);padding:8px 12px;font-size:11px;color:rgba(255,255,255,.55)}
+.flecha{transition:transform .3s;color:rgba(255,255,255,.45);flex-shrink:0}
+.flecha.on{transform:rotate(180deg)}
+.pill-mejor{font:700 9px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#0b0b0c;background:#a9c6ec;padding:3px 7px}
+.bajo-cupon{display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:10px 2px 0;font-size:12px;color:#a6a6a6}
+.fila-prod{position:relative}
+.fila-agotada>:not(.capsula-agotado){opacity:.3}
+.capsula-agotado{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;white-space:nowrap;padding:7px 16px;border-radius:999px;background:#1a1a1c;border:1px solid #3a3a3f;color:#ffffff;font:600 12px Inter,sans-serif;letter-spacing:.04em;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.etq-desc{position:absolute;top:6px;left:6px;padding:3px 7px;border-radius:999px;background:#ff85a1;color:#0b0b0c;font:700 11px Inter,sans-serif;letter-spacing:.02em;line-height:1.2}
+.precio-antes{font-size:13px;font-weight:400;color:#8f8f8f;text-decoration:line-through}
+.etq-stock{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:3px 8px;border-radius:999px;background:#1a1a1c;border:1px solid #3a3a3f;color:#d0d0d0;font:600 10px Inter,sans-serif;letter-spacing:.03em;line-height:1.2}
+.dir-card{display:flex;gap:12px;align-items:flex-start;padding:16px;background:rgba(255,255,255,.01);border:1px solid #232326;box-shadow:inset 0 1px 1px rgba(255,255,255,.1);cursor:pointer}
+.dir-card.on{border-color:#a9c6ec;background:rgba(169,198,236,.04)}
+.dir-radio{width:18px;height:18px;margin:2px 0 0;accent-color:#a9c6ec;cursor:pointer;flex-shrink:0}
+.chip-pred{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;padding:2px 8px;border-radius:999px;background:rgba(169,198,236,.15);color:#a9c6ec;font:500 10px Inter,sans-serif}
+.dir-acc{padding:8px;border:0;background:none;color:rgba(255,255,255,.6);cursor:pointer;display:flex}
+.dir-acc:hover{background:rgba(255,255,255,.05);color:#fff}
+.cta:disabled{opacity:.35;cursor:not-allowed;filter:none}
+.pago-op{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px;border-radius:10px;border:1px solid #2e2e2e;background:transparent;color:#ffffff;cursor:pointer;font:inherit}
+.pago-op:hover{border-color:#4a4a4f}
+.pago-op.on{border-color:#a9c6ec;background:rgba(169,198,236,.08)}
+.pago-panel{display:flex;gap:20px;align-items:center;padding:20px;border-radius:10px;border:1px solid #232326;background:#0d0d0f}
+.qr{width:112px;height:112px;flex-shrink:0;border-radius:8px;background:#f1f3f5;color:#0b0b0c;display:flex;align-items:center;justify-content:center;font:600 12px Inter,sans-serif}
+.subir{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;min-height:40px;padding:0 16px;border-radius:999px;border:1px dashed #a9c6ec;color:#a9c6ec;font:600 13px Inter,sans-serif;cursor:pointer;position:relative}
+.subir:hover{background:rgba(169,198,236,.08)}
+.sr-file{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.comp-op{height:40px;padding:0 22px;border-radius:999px;border:1px solid #2e2e2e;background:transparent;color:#ffffff;font:600 14px Inter,sans-serif;cursor:pointer}
+.comp-op:hover{border-color:#4a4a4f}
+.comp-op.on{border-color:#a9c6ec;background:rgba(169,198,236,.08)}
+.wa-ayuda{display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 16px;border-radius:10px;border:1px solid rgba(62,207,106,.3);background:rgba(62,207,106,.07);color:#7fe0a0;font:600 14px Inter,sans-serif}
+.wa-ayuda:hover{background:rgba(62,207,106,.12);color:#9ff0bb}
+.garantia{display:flex;align-items:center;gap:10px;font-size:13px;color:#a6a6a6}
+.garantia svg{flex-shrink:0;color:#8f8f8f}
+.usar{min-height:36px;padding:0 2px;border:0;background:none;color:#a9c6ec;font:600 13px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.usar:hover{color:#d3e4f8;text-decoration:underline;text-underline-offset:3px}
+.usar.on{color:#a6a6a6;cursor:default;text-decoration:none}
+@keyframes cupon-sheen{0%{left:-45%}55%,100%{left:130%}}
+@keyframes cupon-brillo-texto{0%{background-position:130% 0}100%{background-position:-130% 0}}
+@keyframes cupon-glow{0%,100%{box-shadow:0 0 26px -6px rgba(169,198,236,.3)}50%{box-shadow:0 0 52px 0 rgba(169,198,236,.5)}}
+@keyframes cupon-titilar{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}45%{opacity:1;transform:scale(1) rotate(45deg)}70%{opacity:0;transform:scale(.4) rotate(90deg)}}
+@media (prefers-reduced-motion: reduce){.cupon-plata::after,.cupon-oro,.cupon-oro::after,.cupon-texto-oro,.cupon-chispa{animation:none}}
+@keyframes entra{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+.drawer{animation:entra .28s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion: reduce){.drawer{animation:none}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 2160px; position: relative; overflow: hidden; background: #0b0b0c; color: #ffffff; font-family: Inter, ui-sans-serif, system-ui, sans-serif;">
+
+<header style="height: 76px; display: flex; align-items: center; justify-content: space-between; padding: 0 64px; border-bottom: 1px solid #1a1a1c; background: rgba(255,255,255,0.02);">
+<a href="#" style="display: flex; align-items: baseline; gap: 10px;">
+<span class="metal kuna" style="font-size: 22px; letter-spacing: 0.16em;">JAISE</span>
+<span class="serif it" style="font-size: 17px; color: #a6a6a6;">Beauty Academy</span>
+</a>
+<nav aria-label="Principal" style="display: flex; gap: 4px;">
+<a class="navlink" href="#">Inicio</a>
+<a class="navlink" href="#">Servicios</a>
+<a class="navlink" href="#">Productos</a>
+<a class="navlink" href="#">Citas</a>
+<a class="navlink" href="#">Nosotros</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px;">
+<a href="#" aria-label="Carrito, {{totalItems}} artículos" style="position: relative; width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #a9c6ec; background: rgba(169,198,236,0.08);">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+<span style="position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; border-radius: 999px; background: #a9c6ec; color: #0b0b0c; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px;">{{totalItems}}</span>
+</a>
+<div aria-hidden="true" style="width: 40px; height: 40px; border-radius: 999px; background: #1e1e21; border: 1px solid #2e2e2e; display: flex; align-items: center; justify-content: center; color: #d0d0d0; font-size: 14px; font-weight: 600;">MR</div>
+</div>
+</header>
+
+<div style="padding: 20px 72px 0; font-size: 13px; color: #8f8f8f; display: flex; gap: 10px;">
+<a href="#" style="color: #8f8f8f;">Inicio</a><span aria-hidden="true">|</span><span style="color: #ffffff;">Tu carrito</span>
+</div>
+
+<main style="padding: 36px 72px 64px; display: flex; flex-direction: column; gap: 40px;">
+<div style="display: flex; align-items: flex-end; justify-content: space-between;">
+<h1 class="heav" style="margin: 0; font-size: 28px">Tu carrito</h1>
+<span style="font-size: 14px; color: #a6a6a6;">{{totalItems}} artículos</span>
+</div>
+<div style="display: grid; grid-template-columns: 688px minmax(0, 1fr); gap: 48px; align-items: start;">
+
+
+
+<div style="display: flex; flex-direction: column; gap: 40px">
+
+
+<sc-if value="{{esDelivery}}" hint-placeholder-val="{{ true }}">
+<section aria-labelledby="h-dir" style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 28px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+<h2 id="h-dir" style="margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+Dirección de entrega
+</h2>
+<sc-if value="{{dirCerrada}}" hint-placeholder-val="{{ true }}"><button class="linkbtn" style="min-height: 36px;" onClick="{{abrirDirecciones}}">Cambiar</button></sc-if>
+<sc-if value="{{dirAbierta}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 16px;"><a href="#" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; min-height: 36px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Agregar</a><button class="linkbtn" style="min-height: 36px; color: #a6a6a6;" onClick="{{cerrarDirecciones}}">Cancelar</button></span></sc-if>
+</div>
+<sc-if value="{{dirAbierta}}" hint-placeholder-val="{{ false }}"><p style="margin: 0; font-size: 13px; color: #a6a6a6;">Elige dónde quieres recibir este pedido.</p></sc-if>
+<sc-for list="{{direccionesVisibles}}" as="d" hint-placeholder-count="1">
+<label class="dir-card {{d.claseSel}}">
+<sc-if value="{{dirAbierta}}" hint-placeholder-val="{{ false }}"><input type="radio" name="h-dir-sel" class="dir-radio" checked="{{d.seleccionada}}" onChange="{{d.elegir}}" aria-label="Entregar en {{d.etiqueta}}"></sc-if>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+<span style="display: flex; align-items: center; gap: 8px;">
+<span style="font-size: 14px; font-weight: 600; color: #ffffff;">{{d.etiqueta}}</span>
+<sc-if value="{{d.predeterminada}}" hint-placeholder-val="{{ false }}"><span class="chip-pred"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>Predeterminada</span></sc-if>
+</span>
+<span style="display: flex; align-items: flex-start; gap: 6px; font-size: 14px; color: rgba(255,255,255,0.7);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 2px; color: rgba(255,255,255,0.4);"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>{{d.direccion}}</span>
+<span style="display: flex; align-items: center; gap: 6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; color: rgba(255,255,255,0.4);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"></path></svg><span class="mono" style="font-size: 12px; color: rgba(255,255,255,0.55);">{{d.celular}}</span></span>
+<sc-if value="{{d.referencia}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: rgba(255,255,255,0.55);">{{d.referencia}}</span></sc-if>
+</span>
+</label>
+</sc-for>
+</section>
+</sc-if>
+<section aria-labelledby="h-comp" style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+<h2 id="h-comp" style="margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 17.5v-11"></path></svg>Comprobante</h2>
+<div role="group" aria-label="Tipo de comprobante" style="display: flex; gap: 10px;">
+<button class="comp-op {{compBoletaCls}}" aria-pressed="{{esBoleta}}" onClick="{{elegirBoleta}}">Boleta</button>
+<button class="comp-op {{compFacturaCls}}" aria-pressed="{{esFactura}}" onClick="{{elegirFactura}}">Factura</button>
+</div>
+<sc-if value="{{esBoleta}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; font-size: 13px; color: #a6a6a6;">La boleta se emite a nombre de <span style="color: #ffffff;">[NOMBRE DE LA CLIENTA]</span> y te llega por WhatsApp.</p>
+</sc-if>
+<sc-if value="{{esFactura}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<div>
+<label for="h-comp-ruc" style="display: block; font-size: 12px; color: #a6a6a6; margin-bottom: 6px;">RUC<span style="color: #f06565;" aria-hidden="true"> *</span></label>
+<input id="h-comp-ruc" class="field mono" inputmode="numeric" maxlength="11" placeholder="20XXXXXXXXX" required="" value="{{ruc}}" onChange="{{cambiarRuc}}">
+</div>
+<div>
+<label for="h-comp-razon" style="display: block; font-size: 12px; color: #a6a6a6; margin-bottom: 6px;">Razón social<span style="color: #f06565;" aria-hidden="true"> *</span></label>
+<input id="h-comp-razon" class="field" placeholder="Nombre de la empresa" required="" value="{{razon}}" onChange="{{cambiarRazon}}">
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; color: #a6a6a6;">La factura te llega por WhatsApp.</p>
+</sc-if>
+</section>
+<section aria-labelledby="h-prod" style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06); padding: 28px; display: flex; flex-direction: column;">
+<div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px;">
+<h2 id="h-prod" style="margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+Productos
+</h2>
+<span style="font-size: 12px; color: #8f8f8f;">Marca los que quieres pedir ahora</span>
+</div>
+<sc-for list="{{productos}}" as="p" hint-placeholder-count="3">
+<div class="fila-prod {{p.filaCls}}" style="display: flex; gap: 18px; padding: 22px 0; border-top: 1px solid #1f1f22;">
+<sc-if value="{{p.agotado}}" hint-placeholder-val="{{ false }}"><span class="capsula-agotado">Producto no disponible</span></sc-if>
+<div style="display: flex; align-items: center;">
+<input type="checkbox" class="check" checked="{{p.marcado}}" onChange="{{p.alternar}}" disabled="{{p.agotado}}" aria-label="Incluir {{p.nombre}} en el pedido">
+</div>
+<div aria-hidden="true" style="position: relative; width: 84px; height: 84px; border-radius: 5px; background: #141416; border: 1px solid #1f1f22; display: flex; align-items: center; justify-content: center; color: #4a4a4f; flex-shrink: 0">
+<sc-if value="{{p.conDescuento}}" hint-placeholder-val="{{ false }}"><span class="etq-desc" style="top: -3px; left: -13px">{{p.descTxt}}</span></sc-if>
+<span class="etq-stock">Stock: {{p.stock}}</span>
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v3H9z"></path><path d="M8 6h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9Z"></path><path d="M7 13h10"></path></svg>
+</div>
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 15px; font-weight: 600;">{{p.nombre}}</span>
+<span style="font-size: 13px; color: #a6a6a6;">{{p.detalle}}</span>
+<div style="margin-top: 10px">
+<div class="stepper" role="group" aria-label="Cantidad de {{p.nombre}}">
+<button onClick="{{p.menos}}" disabled="{{p.enMinimo}}" aria-label="Quitar uno"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg></button>
+<span style="min-width: 28px; text-align: center; font-size: 14px; font-weight: 600;">{{p.cantidad}}</span>
+<button onClick="{{p.mas}}" disabled="{{p.enMaximo}}" aria-label="Agregar uno"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></button>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between;">
+<span style="display: flex; align-items: baseline; gap: 8px;"><sc-if value="{{p.conDescuento}}" hint-placeholder-val="{{ false }}"><s class="precio-antes" aria-label="Antes {{p.antesTxt}}">{{p.antesTxt}}</s></sc-if><span style="font-size: 16px; font-weight: 700;">{{p.totalTxt}}</span></span>
+<button class="iconbtn" onClick="{{p.quitar}}" aria-label="Quitar {{p.nombre}} del carrito">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{sinProductos}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 18px 0; border-top: 1px solid #1f1f22; font-size: 14px; color: #8f8f8f;">Todavía no agregaste productos. <a href="#">Ver productos</a></p>
+</sc-if>
+</section>
+
+
+<div style="margin-top: -16px;">
+<a href="#" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #a6a6a6;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+Seguir comprando
+</a>
+</div>
+</div><div style="display: flex; flex-direction: column; gap: 24px;">
+<aside aria-labelledby="h-res" style="background: #111113; border: 1px solid #1f1f22; border-radius: 10px; padding: 28px; display: flex; flex-direction: column; gap: 22px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06)">
+<h2 id="h-res" style="margin: 0; font-size: 18px; font-weight: 600;">Resumen del pedido</h2>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; justify-content: space-between; font-size: 13px;">
+<span style="color: #d0d0d0;">Tarjeta <strong style="color: #fff;">Básico</strong> · 7 de 10 pts para Premium</span>
+<a href="#" style="font-size: 13px;">Mis puntos</a>
+</div>
+<div aria-hidden="true" style="height: 6px; border-radius: 999px; background: #232326; overflow: hidden;">
+<div style="width: 70%; height: 100%; border-radius: 999px; background: linear-gradient(90deg,#86a9d8,#d3e4f8);"></div>
+</div>
+</div>
+
+
+
+
+
+<div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px;">
+<div style="display: flex; justify-content: space-between; color: #d0d0d0;"><span>Subtotal ({{nProductosMarcados}} productos)</span><span>{{subtotalTxt}}</span></div>
+<div style="display: flex; justify-content: space-between; color: #d0d0d0;"><span>{{deliveryLabel}}</span><span>{{deliveryTxt}}</span></div>
+<sc-if value="{{hayDescProductos}}" hint-placeholder-val="{{ false }}"><div style="display: flex; justify-content: space-between; color: #a9c6ec;"><span>Descuento en productos</span><span>− {{descProductosTxt}}</span></div></sc-if>
+<sc-if value="{{conCupon}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; justify-content: space-between; color: #a9c6ec;"><span>Cupón {{aplicado.codigo}}</span><span>− {{descuentoTxt}}</span></div>
+</sc-if>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 18px; border-top: 1px solid #232326;">
+<span style="font-size: 16px; font-weight: 600;">Total</span>
+<div style="display: flex; align-items: baseline; gap: 10px;">
+<sc-if value="{{hayAhorroTotal}}" hint-placeholder-val="{{ false }}"><s class="precio-antes" style="font-size: 16px;" aria-label="Antes {{totalAntesTxt}}">{{totalAntesTxt}}</s></sc-if>
+<span style="font-size: 26px; font-weight: 700;">{{totalTxt}}</span>
+</div>
+</div>
+
+
+<button class="cta" onClick="{{confirmar}}" disabled="{{ctaDeshabilitado}}" style="border-radius: 10px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+<span>Confirmar pedido ({{nProductosMarcados}})</span>
+</button>
+<sc-if value="{{hayAvisoCta}}" hint-placeholder-val="{{ true }}"><p style="margin: 0; text-align: center; font-size: 12px; color: #a9c6ec;">{{avisoCta}}</p></sc-if><div style="display: flex; flex-direction: column; gap: 10px;">
+<sc-if value="{{sinCupon}}" hint-placeholder-val="{{ true }}">
+<button class="cuponrow" onClick="{{abrirCupones}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+<span style="flex-grow: 1;">Agregar cupón</span>
+<span class="chip">{{nDisponibles}} disponibles</span>
+<span class="plus" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></span>
+</button>
+
+</sc-if>
+<sc-if value="{{conCupon}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; color: #a6a6a6; text-transform: uppercase; letter-spacing: 0.12em;">Cupón aplicado</span>
+<div class="{{aplicado.claseEnvoltura}}" style="position: relative;">
+<sc-if value="{{aplicado.esNuevo}}" hint-placeholder-val="{{ false }}"><span class="cupon-etiqueta-nueva">Nuevo</span></sc-if>
+<sc-if value="{{aplicado.esOro}}" hint-placeholder-val="{{ false }}">
+<svg class="cupon-chispa" style="top: -8px; left: 30px; width: 12px; height: 12px;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+<svg class="cupon-chispa" style="top: 10px; right: -10px; width: 9px; height: 9px; animation-delay: -0.9s;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+<svg class="cupon-chispa" style="bottom: -8px; right: 70px; width: 10px; height: 10px; animation-delay: -1.8s;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+</sc-if>
+<div class="cupon {{aplicado.clase}}">
+<button class="cupon-fila" onClick="{{aplicado.alternar}}" aria-expanded="{{aplicado.abierto}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="{{aplicado.icono}}" style="flex-shrink: 0;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span class="mono {{aplicado.claseTexto}}" style="font-size: 16px; font-weight: 700; letter-spacing: 0.18em;">{{aplicado.codigo}}</span>
+<span style="font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{aplicado.origen}} · {{aplicado.nivel}}</span>
+</span>
+<span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+<span class="{{aplicado.claseTexto}}" style="font-size: 16px; font-weight: 600;">{{aplicado.valorTxt}}</span>
+<span style="font-size: 11px; color: rgba(255,255,255,0.55);">Aplicado</span>
+</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="flecha {{aplicado.flechaCls}}"><path d="M15 6v6h4l-7 7-7-7h4V6h6z"></path></svg>
+</button>
+<sc-if value="{{aplicado.abierto}}" hint-placeholder-val="{{ false }}">
+<div class="cupon-pie" style="justify-content: flex-start; gap: 16px;"><span>Creado: {{aplicado.creado}}</span><sc-if value="{{aplicado.canjeado}}" hint-placeholder-val="{{ false }}"><span>Canjeado: {{aplicado.canjeado}}</span></sc-if></div>
+</sc-if>
+</div>
+<div class="bajo-cupon" style="height: 30px; gap: 12px; padding-top: 5px; padding-bottom: 5px">
+
+<span style="display: flex; gap: 16px;"><button class="linkbtn" style="min-height: 36px;" onClick="{{abrirCupones}}">Cambiar</button><button class="linkbtn" style="min-height: 36px; color: #a6a6a6;" onClick="{{quitarCupon}}">Quitar</button></span>
+</div>
+</div>
+</sc-if>
+</div><div style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; color: #a6a6a6; text-transform: uppercase; letter-spacing: 0.12em;">Entrega</span>
+<div style="display: flex; gap: 10px;">
+<button class="seg {{segRecojo}}" onClick="{{elegirRecojo}}" aria-pressed="{{esRecojo}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path><path d="M2 7h20"></path></svg>
+Recojo en tienda
+</button>
+<button class="seg {{segDelivery}}" onClick="{{elegirDelivery}}" aria-pressed="{{esDelivery}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18.5" cy="17.5" r="3.5"></circle><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="15" cy="5" r="1"></circle><path d="M12 17.5V14l-3-3 4-3 2 3h2"></path></svg>
+Delivery
+</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<div>
+<label for="fe-dia" style="display: block; font-size: 12px; color: #a6a6a6; margin-bottom: 6px;">{{etiquetaDia}}<span style="color: #f06565;" aria-hidden="true"> *</span></label>
+<select id="fe-dia" class="field" required="" value="{{dia}}" onChange="{{cambiarDia}}">
+<option value="">Elige el día</option>
+<option value="2026-09-26">Hoy · sáb 26 sep</option><option value="2026-09-28">Lun 28 sep</option><option value="2026-09-29">Mar 29 sep</option><option value="2026-09-30">Mié 30 sep</option><option value="2026-10-01">Jue 1 oct</option><option value="2026-10-02">Vie 2 oct</option>
+</select>
+</div>
+<div>
+<label for="fe-hora" style="display: block; font-size: 12px; color: #a6a6a6; margin-bottom: 6px;">{{etiquetaHora}}<span style="color: #f06565;" aria-hidden="true"> *</span></label>
+<select id="fe-hora" class="field" required="" value="{{hora}}" onChange="{{cambiarHora}}">
+<option value="">Elige la hora</option>
+<option value="10:00 – 12:00">10:00 – 12:00</option><option value="12:00 – 14:00">12:00 – 14:00</option><option value="15:00 – 17:00">15:00 – 17:00</option><option value="17:00 – 19:00">17:00 – 19:00</option>
+</select>
+</div>
+</div>
+<sc-if value="{{esDelivery}}" hint-placeholder-val="{{ true }}">
+<div>
+<label for="zona" style="display: block; font-size: 12px; color: #a6a6a6; margin-bottom: 6px;">Zona</label>
+<select id="zona" class="field" value="{{zona}}" onChange="{{cambiarZona}}">
+<option value="nch">Nuevo Chimbote — S/ 10.00</option>
+<option value="ch">Chimbote — S/ 15.00</option>
+</select>
+</div>
+</sc-if>
+<sc-if value="{{esRecojo}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 13px; color: #a6a6a6; display: flex; gap: 8px; align-items: center;">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+Recoges en el salón cuando te confirmemos que está listo.
+</p>
+</sc-if>
+</div><section aria-labelledby="h-pago" style="display: flex; flex-direction: column; gap: 16px; padding-top: 18px; border-top: 1px solid #232326;">
+<h2 id="h-pago" style="margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a9c6ec" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"></rect><path d="M2 10h20"></path></svg>Método de pago</h2>
+<div role="group" aria-label="Elige cómo pagar" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
+<sc-for list="{{metodos}}" as="m" hint-placeholder-count="4">
+<button class="pago-op {{m.cls}}" aria-pressed="{{m.on}}" onClick="{{m.elegir}}"><span style="font-size: 14px; font-weight: 700;">{{m.nombre}}</span></button>
+</sc-for>
+</div><div class="pago-panel" style="flex-direction: row; padding: 16px; gap: 16px;">
+<sc-if value="{{pagoConQR}}" hint-placeholder-val="{{ true }}"><div class="qr" role="img" aria-label="Código QR de {{pagoNombre}}">[QR {{pagoNombre}}]</div></sc-if>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; align-self: stretch; justify-content: center;">
+<p style="margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4;">{{pagoInstruccion}}</p>
+<sc-if value="{{requiereCaptura}}" hint-placeholder-val="{{ true }}">
+<p style="margin: 0; font-size: 13px; color: #a6a6a6;">Sube la captura de tu pago para confirmar el pedido.</p>
+<sc-if value="{{sinCaptura}}" hint-placeholder-val="{{ true }}">
+<label class="subir"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m17 8-5-5-5 5"></path><path d="M12 3v12"></path></svg>Subir captura<input type="file" accept="image/*" class="sr-file" onChange="{{subirCaptura}}" aria-label="Subir captura del pago"></label>
+</sc-if>
+<sc-if value="{{conCaptura}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(62,207,106,0.08); border: 1px solid rgba(62,207,106,0.35);">
+<div style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 6px; background: #1a1a1c; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #6b6b70;">
+<sc-if value="{{capturaUrl}}" hint-placeholder-val="{{ false }}"><img src="{{capturaUrl}}" alt="Captura del pago" style="width: 44px; height: 44px; object-fit: cover;"></sc-if>
+<sc-if value="{{sinCapturaUrl}}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"></path></svg></sc-if>
+</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #3ecf6a;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Captura adjunta</span>
+<span style="font-size: 12px; color: #a6a6a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{capturaNombre}}</span>
+</div>
+<button class="linkbtn" style="min-height: 36px; color: #a6a6a6;" onClick="{{quitarCaptura}}">Quitar</button>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{esEfectivo}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 13px; color: #a6a6a6;">Ten el monto exacto a la mano; pagas al recibir tu pedido.</p>
+</sc-if>
+</div>
+</div>
+
+<p style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #a6a6a6;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>Por ahora no aceptamos tarjetas de crédito ni débito.</p>
+</section>
+<p style="margin: -8px 0 0; text-align: center; font-size: 12px; color: #8f8f8f; line-height: 1.5;">Revisamos tu comprobante y te confirmamos el pedido.</p>
+</aside>
+<div style="display: flex; flex-direction: column; gap: 18px;">
+<a class="wa-ayuda" href="https://wa.me/[NÚMERO]" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>¿Dudas con tu pedido? Escríbenos</a>
+<ul style="margin: 0; padding: 0 0 0 4px; list-style: none; display: flex; flex-direction: column; gap: 10px;">
+<li class="garantia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"></path><path d="m9 12 2 2 4-4"></path></svg>Productos 100% originales</li>
+<li class="garantia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>Cambios dentro de 7 días (productos sellados)</li>
+<li class="garantia"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"></path></svg>Si no estás en casa, te llamamos antes de volver</li>
+</ul>
+</div>
+</div>
+</div>
+</main>
+
+<sc-if value="{{aviso}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position: absolute; left: 50%; bottom: 32px; transform: translateX(-50%); background: #f1f3f5; color: #0b0b0c; padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+{{aviso}}
+</div>
+</sc-if>
+
+<sc-if value="{{drawer}}" hint-placeholder-val="{{ false }}">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.62);"></div>
+<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="h-cup" style="position: absolute; top: 0; right: 0; bottom: 0; width: 500px; background: #0f0f11; border-left: 1px solid #232326; padding: 32px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto;">
+<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<h2 id="h-cup" class="heav" style="margin: 0; font-size: 28px;">Tus cupones</h2>
+<p style="margin: 0; font-size: 14px; color: #a6a6a6; line-height: 1.5;">Elige uno para este pedido. Se descuenta de tus productos, no del delivery.</p>
+</div>
+<button class="iconbtn" onClick="{{cerrarCupones}}" aria-label="Cerrar cupones">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<label for="codigo" style="font-size: 12px; color: #a6a6a6; text-transform: uppercase; letter-spacing: 0.12em;">¿Tienes un código?</label>
+<div style="display: flex; gap: 8px;">
+<input id="codigo" class="field mono" style="text-transform: uppercase; letter-spacing: 0.2em;" placeholder="Ej. A3F9C1" maxlength="6" value="{{codigo}}" onChange="{{escribirCodigo}}">
+<button class="ghost" style="height: 44px;" onClick="{{aplicarCodigo}}">Aplicar</button>
+</div>
+<sc-if value="{{error}}" hint-placeholder-val="{{ false }}">
+<p role="alert" style="margin: 0; font-size: 13px; color: #f06565;">{{error}}</p>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<span style="font-size: 12px; color: #a6a6a6; text-transform: uppercase; letter-spacing: 0.12em;">Disponibles ({{nDisponibles}})</span>
+<sc-for list="{{disponibles}}" as="c" hint-placeholder-count="3">
+<div class="{{c.claseEnvoltura}}" style="position: relative;">
+<sc-if value="{{c.esNuevo}}" hint-placeholder-val="{{ false }}"><span class="cupon-etiqueta-nueva">Nuevo</span></sc-if>
+<sc-if value="{{c.esOro}}" hint-placeholder-val="{{ false }}">
+<svg class="cupon-chispa" style="top: -8px; left: 30px; width: 12px; height: 12px;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+<svg class="cupon-chispa" style="top: 10px; right: -10px; width: 9px; height: 9px; animation-delay: -0.9s;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+<svg class="cupon-chispa" style="bottom: -8px; right: 70px; width: 10px; height: 10px; animation-delay: -1.8s;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+</sc-if>
+<div class="cupon {{c.clase}}">
+<button class="cupon-fila" onClick="{{c.alternar}}" aria-expanded="{{c.abierto}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="{{c.icono}}" style="flex-shrink: 0;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span class="mono {{c.claseTexto}}" style="font-size: 16px; font-weight: 700; letter-spacing: 0.18em;">{{c.codigo}}</span>
+<span style="font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{c.origen}} · {{c.nivel}}</span>
+</span>
+<span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+<span class="{{c.claseTexto}}" style="font-size: 16px; font-weight: 600;">{{c.valorTxt}}</span>
+<span style="font-size: 11px; color: rgba(255,255,255,0.55);">Úsalo en este pedido</span>
+</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="flecha {{c.flechaCls}}"><path d="M15 6v6h4l-7 7-7-7h4V6h6z"></path></svg>
+</button>
+<sc-if value="{{c.abierto}}" hint-placeholder-val="{{ false }}">
+<div class="cupon-pie" style="justify-content: flex-start; gap: 16px;"><span>Creado: {{c.creado}}</span><sc-if value="{{c.canjeado}}" hint-placeholder-val="{{ false }}"><span>Canjeado: {{c.canjeado}}</span></sc-if></div>
+</sc-if>
+</div>
+<div class="bajo-cupon" style="padding-top: 5px; padding-bottom: 5px; height: 30px">
+<span style="display: flex; align-items: center; gap: 8px;"><sc-if value="{{c.esMejor}}" hint-placeholder-val="{{ false }}"><span class="pill-mejor">Mejor opción</span></sc-if><span>Ahorras <strong style="color: #fff;">{{c.ahorroTxt}}</strong></span></span>
+<button class="usar {{c.claseBoton}}" onClick="{{c.usar}}">{{c.textoBoton}}</button>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; color: #8f8f8f; text-transform: uppercase; letter-spacing: 0.12em;">Ya usados</span>
+<sc-for list="{{usados}}" as="u" hint-placeholder-count="1">
+<div class="{{u.claseEnvoltura}}" style="position: relative;">
+<sc-if value="{{u.esNuevo}}" hint-placeholder-val="{{ false }}"><span class="cupon-etiqueta-nueva">Nuevo</span></sc-if>
+<sc-if value="{{u.esOro}}" hint-placeholder-val="{{ false }}">
+<svg class="cupon-chispa" style="top: -8px; left: 30px; width: 12px; height: 12px;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+<svg class="cupon-chispa" style="top: 10px; right: -10px; width: 9px; height: 9px; animation-delay: -0.9s;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+<svg class="cupon-chispa" style="bottom: -8px; right: 70px; width: 10px; height: 10px; animation-delay: -1.8s;" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z"></path></svg>
+</sc-if>
+<div class="cupon {{u.clase}}">
+<button class="cupon-fila" onClick="{{u.alternar}}" aria-expanded="{{u.abierto}}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="{{u.icono}}" style="flex-shrink: 0;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span class="mono {{u.claseTexto}}" style="font-size: 16px; font-weight: 700; letter-spacing: 0.18em;">{{u.codigo}}</span>
+<span style="font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{u.origen}} · {{u.nivel}}</span>
+</span>
+<span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+<span class="{{u.claseTexto}}" style="font-size: 16px; font-weight: 600;">{{u.valorTxt}}</span>
+<span style="font-size: 11px; color: rgba(255,255,255,0.55);">{{u.estadoTxt}}</span>
+</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="flecha {{u.flechaCls}}"><path d="M15 6v6h4l-7 7-7-7h4V6h6z"></path></svg>
+</button>
+<sc-if value="{{u.abierto}}" hint-placeholder-val="{{ false }}">
+<div class="cupon-pie" style="justify-content: flex-start; gap: 16px;"><span>Creado: {{u.creado}}</span><sc-if value="{{u.canjeado}}" hint-placeholder-val="{{ false }}"><span>Canjeado: {{u.canjeado}}</span></sc-if></div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top: auto; padding-top: 18px; border-top: 1px solid #232326; display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+<span style="color: #a6a6a6;">¿Quieres más cupones?</span>
+<a href="#" style="display: flex; justify-content: space-between;">Invita a una amiga con tu código <span aria-hidden="true">→</span></a>
+<a href="#" style="display: flex; justify-content: space-between;">Canjea tu fidelización <span aria-hidden="true">→</span></a>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"abrirCupones":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":2160}}'>
+const ABRIR_CUPONES = false;
+class Component extends DCLogic {
+  state = {
+    entrega: 'DELIVERY', zona: 'nch', dir: 'd1', metodo: 'YAPE', dia: '', hora: '', comprobante: 'BOLETA', ruc: '', razon: '', captura: '', capturaUrl: '', dirAbierta: false,
+    qty: { p4: 1, p1: 1, p2: 2, p3: 1 },
+    selP: { p4: true, p1: true, p2: true, p3: false },
+    selS: { s1: true, s2: true },
+    fueraP: {}, fueraS: {},
+    abiertos: {}, cupon: null, drawer: null, codigo: '', error: '', aviso: ''
+  };
+  avisar(texto) {
+    this.setState({ aviso: texto });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ aviso: '' }), 2400);
+  }
+  renderVals() {
+    const s = this.state;
+    const soles = (n) => 'S/ ' + n.toFixed(2);
+    const set = (p) => this.setState(p);
+    const PRODUCTOS = [
+      { id: 'p1', nombre: 'Shampoo reparador', detalle: '300 ml', precio: 45, precioAntes: 56, stock: 12 },
+      { id: 'p4', nombre: 'Sérum anti-frizz', detalle: '100 ml', precio: 49, stock: 0 },
+      { id: 'p2', nombre: 'Aceite de argán', detalle: '50 ml', precio: 38, stock: 3 },
+      { id: 'p3', nombre: 'Mascarilla hidratante', detalle: '250 ml', precio: 52, stock: 9 }
+    ];
+    const SERVICIOS = [
+      { id: 's1', nombre: 'Corte + brushing', min: 60, precio: 35 },
+      { id: 's2', nombre: 'Tinte completo', min: 120, precio: 120 }
+    ];
+    const ZONAS = { nch: { nombre: 'Nuevo Chimbote', costo: 10 }, ch: { nombre: 'Chimbote', costo: 15 } };
+    const CUPONES = [
+      { codigo: 'E41C8A', origen: 'Cupón de fidelización', corto: 'cupón de fidelización', tipo: 'PORCENTAJE', valor: 20, estado: 'DISPONIBLE', creado: '12 sep 2026' },
+      { codigo: '7B20DE', origen: 'Cupón por referir', corto: 'cupón por referir', tipo: 'MONTO_FIJO', valor: 10, estado: 'DISPONIBLE', creado: '24 sep 2026', nuevo: true },
+      { codigo: 'A3F9C1', origen: 'Cupón de bienvenida', corto: 'cupón de bienvenida', tipo: 'MONTO_FIJO', valor: 5, estado: 'DISPONIBLE', creado: '3 ago 2026' },
+      { codigo: '9D4E21', origen: 'Cupón por referir', corto: '', tipo: 'MONTO_FIJO', valor: 10, estado: 'CANJEADO', fecha: '2 sep 2026', creado: '20 ago 2026' }
+    ];
+    const nivel = (c) => (c.valor >= 20 ? 'Oro' : c.valor >= 10 ? 'Plata' : 'Bronce');
+    const valorTxt = (c) => (c.tipo === 'PORCENTAJE' ? c.valor + '% dcto.' : soles(c.valor));
+
+    const toggle = (key, id) => () => set({ [key]: { ...s[key], [id]: !s[key][id] } });
+    const productos = PRODUCTOS.filter((p) => !s.fueraP[p.id]).map((p) => {
+      const cantidad = s.qty[p.id];
+      const agotado = p.stock <= 0;
+      return {
+        ...p, cantidad, agotado,
+        filaCls: agotado ? 'fila-agotada' : '',
+        marcado: !agotado && !!s.selP[p.id],
+        unitTxt: soles(p.precio),
+        totalTxt: soles(p.precio * cantidad),
+        conDescuento: !!p.precioAntes && p.precioAntes > p.precio,
+        antesTxt: p.precioAntes ? soles(p.precioAntes * cantidad) : '',
+        descTxt: p.precioAntes ? '−' + Math.round((1 - p.precio / p.precioAntes) * 100) + '%' : '',
+        pocoStock: !agotado && p.stock <= 3,
+        stockCls: p.stock <= 3 ? 'bajo' : '',
+        enMinimo: agotado || cantidad <= 1,
+        enMaximo: cantidad >= p.stock,
+        alternar: agotado ? () => {} : toggle('selP', p.id),
+        menos: () => set({ qty: { ...s.qty, [p.id]: Math.max(1, cantidad - 1) } }),
+        mas: () => set({ qty: { ...s.qty, [p.id]: Math.min(p.stock, cantidad + 1) } }),
+        quitar: () => { set({ fueraP: { ...s.fueraP, [p.id]: true } }); this.avisar(p.nombre + ' quitado del carrito'); }
+      };
+    }).sort((a, b) => Number(a.agotado) - Number(b.agotado));
+    const DIRECCIONES = [
+      { id: 'd1', etiqueta: 'Casa', direccion: 'Urb. Buenos Aires Mz. B Lt. 12, Nuevo Chimbote', celular: '900 000 001', referencia: 'Frente al parque', predeterminada: true },
+      { id: 'd2', etiqueta: 'Trabajo', direccion: 'Av. José Pardo 450, Chimbote', celular: '900 000 002', referencia: '', predeterminada: false }
+    ];
+    const direcciones = DIRECCIONES.map((d) => ({
+      ...d,
+      seleccionada: s.dir === d.id,
+      claseSel: s.dirAbierta && s.dir === d.id ? 'on' : '',
+      elegir: () => set({ dir: d.id, dirAbierta: false })
+    }));
+    const direccionesVisibles = s.dirAbierta ? direcciones : direcciones.filter((d) => d.seleccionada);
+    const servicios = SERVICIOS.filter((x) => !s.fueraS[x.id]).map((x) => ({
+      ...x,
+      marcado: !!s.selS[x.id],
+      precioTxt: soles(x.precio),
+      duracionTxt: x.min + ' min',
+      alternar: toggle('selS', x.id),
+      quitar: () => set({ fueraS: { ...s.fueraS, [x.id]: true } })
+    }));
+    const servMarcados = servicios.filter((x) => x.marcado);
+    const minTot = servMarcados.reduce((a, x) => a + x.min, 0);
+    const durTxt = minTot >= 60 ? Math.floor(minTot / 60) + ' h' + (minTot % 60 ? ' ' + (minTot % 60) + ' min' : '') : minTot + ' min';
+
+    const marcados = productos.filter((p) => p.marcado);
+    const subtotal = marcados.reduce((a, p) => a + p.precio * p.cantidad, 0);
+    const delivery = s.entrega === 'DELIVERY' ? ZONAS[s.zona].costo : 0;
+
+    const ahorro = (c) => Math.round((c.tipo === 'PORCENTAJE' ? subtotal * c.valor / 100 : Math.min(c.valor, subtotal)) * 100) / 100;
+    const disp = CUPONES.filter((c) => c.estado === 'DISPONIBLE');
+    const mejorC = disp.reduce((m, c) => (ahorro(c) > ahorro(m) ? c : m), disp[0]);
+    const usar = (c) => () => { set({ cupon: c.codigo, drawer: false, error: '', codigo: '' }); this.avisar('Cupón ' + c.codigo + ' aplicado'); };
+    const decorar = (c) => {
+      const n = nivel(c);
+      const esAplicado = s.cupon === c.codigo;
+      return {
+        ...c, nivel: n,
+        clase: 'cupon-' + n.toLowerCase(),
+        claseTexto: n === 'Oro' ? 'cupon-texto-oro' : 'tx-' + n.toLowerCase(),
+        icono: 'ic-' + n.toLowerCase(),
+        esOro: n === 'Oro' && c.estado === 'DISPONIBLE',
+        esNuevo: !!c.nuevo,
+        claseEnvoltura: c.estado === 'DISPONIBLE' ? '' : 'cupon-apagado',
+        estadoTxt: c.estado === 'ANULADO' ? 'Anulado' : 'Ya canjeado',
+        canjeado: c.estado === 'CANJEADO' ? c.fecha : '',
+        abierto: !!s.abiertos[c.codigo],
+        flechaCls: s.abiertos[c.codigo] ? 'on' : '',
+        alternar: () => set({ abiertos: { ...s.abiertos, [c.codigo]: !s.abiertos[c.codigo] } }),
+        valorTxt: valorTxt(c),
+        ahorroTxt: soles(ahorro(c)),
+        origenCorto: c.corto,
+        esMejor: c === mejorC,
+        aplicado: esAplicado,
+        claseBoton: esAplicado ? 'on' : '',
+        textoBoton: esAplicado ? 'Aplicado' : 'Usar cupón',
+        usar: esAplicado ? () => set({ drawer: false }) : usar(c)
+      };
+    };
+    const disponibles = disp.map(decorar);
+    const usados = CUPONES.filter((c) => c.estado !== 'DISPONIBLE').map(decorar);
+    const aplicadoC = CUPONES.find((c) => c.codigo === s.cupon);
+    const descuento = aplicadoC ? ahorro(aplicadoC) : 0;
+    const total = Math.max(0, subtotal - descuento) + delivery;
+    const subtotalLista = marcados.reduce((a, p) => a + (p.precioAntes || p.precio) * p.cantidad, 0);
+    const descProductos = subtotalLista - subtotal;
+    const totalAntes = marcados.reduce((a, p) => a + (p.precioAntes || p.precio) * p.cantidad, 0) + delivery;
+    const METODOS = [
+      { id: 'YAPE', nombre: 'Yape', sub: 'Pago inmediato', qr: true },
+      { id: 'PLIN', nombre: 'Plin', sub: 'Pago inmediato', qr: true },
+      { id: 'TRANSFERENCIA', nombre: 'Transferencia', sub: 'Cuenta bancaria', qr: false },
+      { id: 'EFECTIVO', nombre: 'Efectivo', sub: 'Contra entrega', qr: false }
+    ];
+    const metodoSel = METODOS.find((x) => x.id === s.metodo) || METODOS[0];
+    const metodos = METODOS.map((x) => ({
+      ...x, on: x.id === metodoSel.id, cls: x.id === metodoSel.id ? 'on' : '',
+      elegir: () => { if (x.id !== s.metodo) set({ metodo: x.id, captura: '', capturaUrl: '' }); }
+    }));
+    const totalPagoTxt = soles(total);
+    const pagoInstruccion = metodoSel.id === 'YAPE' ? 'Yapea ' + totalPagoTxt + ' al [NÚMERO] · a nombre de [TITULAR]'
+      : metodoSel.id === 'PLIN' ? 'Plinea ' + totalPagoTxt + ' al [NÚMERO] · a nombre de [TITULAR]'
+      : metodoSel.id === 'TRANSFERENCIA' ? 'Transfiere ' + totalPagoTxt + ' a [BANCO] · Cta. [N° DE CUENTA] · a nombre de [TITULAR]'
+      : 'Pagas ' + totalPagoTxt + ' en efectivo al recibir tu pedido';
+    const requiereCaptura = metodoSel.id !== 'EFECTIVO';
+    const faltaCaptura = requiereCaptura && !s.captura;
+    const DIAS = [
+      { id: '2026-09-26', label: 'Hoy · sáb 26 sep' },
+      { id: '2026-09-28', label: 'Lun 28 sep' },
+      { id: '2026-09-29', label: 'Mar 29 sep' },
+      { id: '2026-09-30', label: 'Mié 30 sep' },
+      { id: '2026-10-01', label: 'Jue 1 oct' },
+      { id: '2026-10-02', label: 'Vie 2 oct' }
+    ];
+    const HORAS = ['10:00 – 12:00', '12:00 – 14:00', '15:00 – 17:00', '17:00 – 19:00'];
+    const faltaFecha = !s.dia || !s.hora;
+    const faltaFactura = s.comprobante === 'FACTURA' && (String(s.ruc || '').length !== 11 || !String(s.razon || '').trim());
+    const avisoCta = faltaFecha ? (s.entrega === 'DELIVERY' ? 'Elige el día y la hora de entrega.' : 'Elige el día y la hora de recojo.')
+      : faltaFactura ? 'Completa el RUC y la razón social para la factura.'
+      : faltaCaptura ? 'Sube la captura de tu pago para activar este botón.' : '';
+    const drawer = s.drawer === null ? !!(this.props.abrirCupones ?? ABRIR_CUPONES) : s.drawer;
+
+    return {
+      esBoleta: s.comprobante !== 'FACTURA', esFactura: s.comprobante === 'FACTURA',
+      compBoletaCls: s.comprobante !== 'FACTURA' ? 'on' : '', compFacturaCls: s.comprobante === 'FACTURA' ? 'on' : '',
+      elegirBoleta: () => set({ comprobante: 'BOLETA' }),
+      elegirFactura: () => set({ comprobante: 'FACTURA' }),
+      ruc: s.ruc, razon: s.razon,
+      cambiarRuc: (e) => set({ ruc: String(e.target.value || '').replace(/\D/g, '').slice(0, 11) }),
+      cambiarRazon: (e) => set({ razon: e.target.value }),
+      dias: DIAS, horas: HORAS, dia: s.dia, hora: s.hora,
+      etiquetaDia: s.entrega === 'DELIVERY' ? 'Día de entrega' : 'Día de recojo',
+      etiquetaHora: s.entrega === 'DELIVERY' ? 'Hora de entrega' : 'Hora de recojo',
+      cambiarDia: (e) => set({ dia: e.target.value }),
+      cambiarHora: (e) => set({ hora: e.target.value }),
+      avisoCta, hayAvisoCta: !!avisoCta,
+      metodos, pagoInstruccion, requiereCaptura,
+      pagoConQR: metodoSel.qr, pagoNombre: metodoSel.nombre, esEfectivo: metodoSel.id === 'EFECTIVO',
+      sinCaptura: !s.captura, conCaptura: !!s.captura, capturaNombre: s.captura,
+      capturaUrl: s.capturaUrl, sinCapturaUrl: !s.capturaUrl,
+      subirCaptura: (e) => {
+        const f = e && e.target && e.target.files && e.target.files[0];
+        if (!f) return;
+        let url = '';
+        try { url = URL.createObjectURL(f); } catch (err) { url = ''; }
+        set({ captura: f.name, capturaUrl: url });
+        this.avisar('Captura adjunta');
+      },
+      quitarCaptura: () => set({ captura: '', capturaUrl: '' }),
+      faltaCaptura,
+      ctaDeshabilitado: faltaCaptura || faltaFecha || faltaFactura || marcados.length === 0,
+      productos, servicios, direcciones, direccionesVisibles,
+      dirAbierta: s.dirAbierta, dirCerrada: !s.dirAbierta,
+      abrirDirecciones: () => set({ dirAbierta: true }),
+      cerrarDirecciones: () => set({ dirAbierta: false }),
+      totalItems: productos.length + servicios.length,
+      hayServicios: servicios.length > 0,
+      sinServicios: servicios.length === 0,
+      sinProductos: productos.length === 0,
+      nServiciosMarcados: servMarcados.length,
+      sinServiciosMarcados: servMarcados.length === 0,
+      serviciosTotalTxt: soles(servMarcados.reduce((a, x) => a + x.precio, 0)),
+      serviciosDuracionTxt: durTxt,
+      reservar: () => this.avisar('Se abre “Agendar cita” con ' + servMarcados.length + ' servicios'),
+      esRecojo: s.entrega === 'RECOJO_TIENDA',
+      esDelivery: s.entrega === 'DELIVERY',
+      segRecojo: s.entrega === 'RECOJO_TIENDA' ? 'on' : '',
+      segDelivery: s.entrega === 'DELIVERY' ? 'on' : '',
+      elegirRecojo: () => set({ entrega: 'RECOJO_TIENDA' }),
+      elegirDelivery: () => set({ entrega: 'DELIVERY' }),
+      zona: s.zona,
+      cambiarZona: (e) => set({ zona: e.target.value }),
+      nProductosMarcados: marcados.length,
+      subtotalTxt: soles(subtotalLista),
+      hayDescProductos: descProductos > 0.004,
+      descProductosTxt: soles(descProductos),
+      deliveryLabel: s.entrega === 'DELIVERY' ? 'Delivery · ' + ZONAS[s.zona].nombre : 'Recojo en tienda',
+      deliveryTxt: s.entrega === 'DELIVERY' ? soles(delivery) : 'Gratis',
+      sinCupon: !aplicadoC,
+      conCupon: !!aplicadoC,
+      aplicado: aplicadoC ? decorar(aplicadoC) : { codigo: '', clase: '', claseTexto: '', valorTxt: '', origen: '', nivel: '', icono: '', claseEnvoltura: '', flechaCls: '', creado: '', canjeado: '', alternar: () => {} },
+      mejor: decorar(mejorC),
+      usarMejor: usar(mejorC),
+      nDisponibles: disp.length,
+      descuentoTxt: soles(descuento),
+      totalTxt: soles(total),
+      totalAntesTxt: soles(totalAntes),
+      hayAhorroTotal: totalAntes - total > 0.004,
+      disponibles, usados,
+      drawer,
+      abrirCupones: () => set({ drawer: true, error: '' }),
+      cerrarCupones: () => set({ drawer: false }),
+      quitarCupon: () => set({ cupon: null }),
+      codigo: s.codigo,
+      error: s.error,
+      escribirCodigo: (e) => set({ codigo: String(e.target.value || '').toUpperCase(), error: '' }),
+      aplicarCodigo: () => {
+        const code = s.codigo.trim().toUpperCase();
+        const c = CUPONES.find((x) => x.codigo === code);
+        if (!code) return set({ error: 'Escribe el código de 6 caracteres de tu cupón.' });
+        if (!c) return set({ error: 'No encontramos ese código entre tus cupones.' });
+        if (c.estado !== 'DISPONIBLE') return set({ error: 'Este cupón ya se usó el ' + c.fecha + '.' });
+        usar(c)();
+      },
+      confirmar: () => this.avisar('Pedido confirmado' + (aplicadoC ? ' con cupón ' + aplicadoC.codigo : '')),
+      aviso: s.aviso
+    };
+  }
+}
+</script>
+</body>
+</html>

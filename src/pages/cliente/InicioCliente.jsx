@@ -1,32 +1,52 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useInView } from 'framer-motion'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Sparkles, Ticket, Users } from 'lucide-react'
+import { supabase } from '../../lib/supabase.js'
+import { useToast } from '../../context/ToastContext.jsx'
+import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
+import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
+import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
+import { useSecuenciaScroll } from '../../hooks/useSecuenciaScroll.js'
+import { formatearSoles } from '../../lib/moneda.js'
+import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { resolverUrlGaleria } from '../../lib/imagenes.js'
+import { nombrePublico } from '../../lib/resenas.js'
+import Estrellas from '../../components/Estrellas.jsx'
+import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
+import ShinyText from '../../components/ShinyText.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
-// Fotos de referencia del nuevo hero "antes/después" (§7.36
-// implementacionesWed.md) — igual que los videos de más abajo, son
-// material de stock que el negocio aprobó para armar esta primera
-// versión, no fotos reales de una clienta. Reemplazar en cuanto existan
-// fotos reales del salón (mismo pendiente que la Galería de Nosotros).
+// Fotos de referencia del hero antes/después (§7.36 implementacionesWed.md)
+// — material de stock aprobado por el negocio para esta primera versión,
+// no fotos reales de una clienta. Reemplazar en cuanto existan fotos
+// reales del salón (mismo pendiente que la Galería de "Resultados reales").
 const FOTO_DESPUES = `${import.meta.env.BASE_URL}inicio-web/hero-despues-referencia.jpg`
 const FOTO_ANTES = `${import.meta.env.BASE_URL}inicio-web/hero-antes-referencia.jpg`
-
-// Radio máximo (en px) del círculo que revela la foto "antes" al pasar
-// el cursor — mismo valor que la referencia del usuario.
 const RADIO_REVELADO = 340
 
 // Revela la foto "antes" bajo el cursor sin re-renderizar React en cada
 // movimiento: interpola posición y radio a mano y escribe el resultado
-// directo en el style de la imagen "antes" (vía mask-image), en vez de
-// guardarlo en estado. Sin etiqueta "ANTES" flotante (§7.39
-// implementacionesWed.md, a pedido del usuario) — el hint de abajo
-// ("Pasa el cursor. Mira su antes.") ya explica el gesto, la etiqueta
-// quedaba redundante.
-function useRevelarAntes(contenedorRef, imagenAntesRef) {
+// directo en el style de la imagen "antes" (vía mask-image). Mecanismo
+// interno conservado tal cual (docs/diseno-inicio/README.md: "se conserva
+// el efecto antes/después que YA existe"), pero expuesto como CALLBACK
+// REFS (useState, no useRef) — bug real encontrado en esta pantalla: con
+// `useRef`, el objeto ref nunca cambia de identidad entre renders, así
+// que un useEffect con `[contenedorRef, imagenAntesRef]` como dependencias
+// corre UNA sola vez y no vuelve a dispararse. Como este componente
+// muestra un "Cargando..." (otro árbol de JSX) mientras `cargando` es
+// true, esa primera — y única — ejecución del efecto encontraba los refs
+// en null (el hero real todavía no existía) y nunca reaccionaba cuando el
+// hero se montaba de verdad: el mask nunca se aplicaba y la foto "antes"
+// quedaba tapando a "después" para siempre, sin reaccionar al mouse. Con
+// callback refs (funciones que React invoca cada vez que el nodo se
+// monta/desmonta) guardadas en estado, el efecto sí vuelve a correr en
+// cuanto el hero real aparece.
+function useRevelarAntes() {
+  const [contenedor, setContenedor] = useState(null)
+  const [imagenAntes, setImagenAntes] = useState(null)
+
   useEffect(() => {
-    const contenedor = contenedorRef.current
-    const imagenAntes = imagenAntesRef.current
     if (!contenedor || !imagenAntes) return undefined
 
     const objetivo = { x: contenedor.clientWidth, y: contenedor.clientHeight / 2 }
@@ -41,9 +61,9 @@ function useRevelarAntes(contenedorRef, imagenAntesRef) {
       objetivo.y = clienteY - rect.top
     }
     // Solo mouse/lápiz: en touch, un "pointerdown+move" es indistinguible
-    // de la intención de hacer scroll — se ignora ahí para no interferir
-    // con el scroll normal de la página (el hint de abajo también se
-    // esconde en móvil, así que no se promete un gesto que no existe).
+    // de la intención de hacer scroll — se ignora ahí (el hint de abajo
+    // también se esconde en móvil, así que no se promete un gesto que no
+    // existe).
     function esTactil(evento) {
       return evento.pointerType === 'touch'
     }
@@ -87,18 +107,14 @@ function useRevelarAntes(contenedorRef, imagenAntesRef) {
       contenedor.removeEventListener('pointerleave', alSoltar)
       contenedor.removeEventListener('pointercancel', alSoltar)
     }
-  }, [contenedorRef, imagenAntesRef])
+  }, [contenedor, imagenAntes])
+
+  return { contenedorHeroRef: setContenedor, imagenAntesRef: setImagenAntes }
 }
 
-// Acento de esquina arriba/abajo del bloque de título — se había sacado
-// en §7.38 siguiendo al pie de la letra un checklist que pedía
-// replicar el HTML original 1:1, pero el usuario lo pidió de vuelta
-// (§7.39 implementacionesWed.md): es una diferencia a propósito
-// respecto a la referencia pura, igual que la migaja de pan.
-// Tamaño por className (h-/w-), no por atributos width/height del SVG:
-// un atributo width="14" es fijo siempre, no admite variantes de
-// Tailwind como max-[640px]: — con clases sí se puede achicar solo en
-// celular sin afectar el resto de vistas (pedido del usuario).
+// Acento de esquina arriba/abajo del bloque de título — pedido explícito
+// del usuario en una sesión anterior (§7.39 implementacionesWed.md),
+// conservado tal cual.
 function EsquinaBracket({ voltear = false }) {
   return (
     <svg
@@ -114,417 +130,308 @@ function EsquinaBracket({ voltear = false }) {
   )
 }
 
-// Videos de referencia pegados tal cual por el negocio para armar esta
-// primera versión de la landing (§6 implementacionesWed.md) — no son
-// grabaciones del salón, el negocio los aprobó a sabiendas de eso.
-// Reemplazar por material real del salón en cuanto exista.
-const VIDEO_DESTACADO =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260402_054547_9875cfc5-155a-4229-8ec8-b7ba7125cbf8.mp4'
-const VIDEO_FILOSOFIA =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260307_083826_e938b29f-a43a-41ec-a153-3d4730578ab8.mp4'
-const VIDEO_SERVICIO_1 =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4'
-const VIDEO_SERVICIO_2 =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260324_151826_c7218672-6e92-402c-9e45-f1e0f454bdc4.mp4'
+const formatoFechaCitaLarga = new Intl.DateTimeFormat('es-PE', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'America/Lima',
+})
+const formatoFechaCitaCorta = new Intl.DateTimeFormat('es-PE', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'America/Lima',
+})
+const formatoHoraCita = new Intl.DateTimeFormat('es-PE', {
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZone: 'America/Lima',
+})
 
-const SERVICIOS_DESTACADOS = [
-  {
-    video: VIDEO_SERVICIO_1,
-    etiqueta: 'Diagnóstico',
-    titulo: 'Análisis personalizado',
-    descripcion:
-      'Antes de cualquier tratamiento conversamos sobre tu cabello, tu piel y lo que buscas — así cada servicio parte de lo que realmente necesitas.',
-  },
-  {
-    video: VIDEO_SERVICIO_2,
-    etiqueta: 'Estilo',
-    titulo: 'Diseño y ejecución',
-    descripcion:
-      'De la idea al resultado final cuidamos cada detalle para que la experiencia se sienta impecable y el resultado se vea extraordinario.',
-  },
-]
+function formatearValorPromocion(promocion) {
+  return promocion.tipo_descuento === 'PORCENTAJE' ? `${promocion.valor}%` : formatearSoles(promocion.valor)
+}
 
-function SeccionSobreNosotros() {
-  const ref = useRef(null)
-  const enVista = useInView(ref, { once: true, margin: '-100px' })
-
+function PuntosAvance({ puntos }) {
   return (
-    <section className="relative overflow-hidden px-6 pb-10 pt-32 md:pb-14 md:pt-44">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.03)_0%,_transparent_70%)]" />
-      <div ref={ref} className="relative mx-auto max-w-4xl">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={enVista ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-sm uppercase tracking-widest text-white/40"
-        >
-          Sobre nosotros
-        </motion.p>
-        <motion.h2
-          initial={{ opacity: 0, y: 40 }}
-          animate={enVista ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="lw-serif-regular mt-4 text-4xl leading-[1.1] tracking-tight text-white md:text-6xl lg:text-7xl"
-        >
-          Cuidamos <span className="lw-serif text-white/60">cada detalle</span>
-          <br className="hidden md:block" /> para que <span className="lw-serif text-white/60">tu belleza brille.</span>
-        </motion.h2>
-      </div>
-    </section>
+    <span aria-live="polite" className="inline-flex items-center gap-2.5 text-[11px] uppercase tracking-widest text-white/60">
+      <span className="flex gap-1">
+        {puntos.map((caido, i) => (
+          <span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full transition-colors"
+            style={{ background: caido ? 'var(--lw-gold)' : '#2e2e33' }}
+          />
+        ))}
+      </span>
+      Sigue deslizando
+    </span>
   )
 }
 
-function SeccionVideoDestacado() {
-  const ref = useRef(null)
-  const enVista = useInView(ref, { once: true, margin: '-100px' })
-
-  return (
-    <section className="px-6 pb-20 pt-6 md:pb-32 md:pt-10">
-      <motion.div
-        ref={ref}
-        initial={{ opacity: 0, y: 60 }}
-        animate={enVista ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.9 }}
-        className="relative mx-auto aspect-video w-full max-w-6xl overflow-hidden rounded-3xl"
-      >
-        <video
-          className="h-full w-full object-cover"
-          src={VIDEO_DESTACADO}
-          muted
-          autoPlay
-          loop
-          playsInline
-          preload="auto"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-4 p-6 md:flex-row md:items-end md:justify-between md:p-10">
-          <div className="liquid-glass max-w-md rounded-none p-6 md:p-8">
-            <p className="mb-3 text-xs uppercase tracking-widest text-white/50">Nuestro enfoque</p>
-            <p className="text-sm leading-relaxed text-white md:text-base">
-              Creemos en escuchar antes de proponer. Cada cita empieza con una pregunta sobre lo que
-              quieres lograr, y cada tratamiento se diseña a tu medida.
-            </p>
-          </div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link
-              to="/servicios"
-              className="liquid-glass inline-block rounded-full px-8 py-3 text-sm font-medium text-white"
-            >
-              Ver servicios
-            </Link>
-          </motion.div>
-        </div>
-      </motion.div>
-    </section>
-  )
-}
-
-function SeccionFilosofia() {
-  const ref = useRef(null)
-  const enVista = useInView(ref, { once: true, margin: '-100px' })
-
-  return (
-    <section ref={ref} className="overflow-hidden px-6 py-28 md:py-40">
-      <div className="mx-auto max-w-6xl">
-        <motion.h2
-          initial={{ opacity: 0, y: 40 }}
-          animate={enVista ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="lw-serif-regular mb-16 text-5xl tracking-tight text-white md:mb-24 md:text-7xl lg:text-8xl"
-        >
-          Cuidado <span className="lw-serif text-white/40">x</span> Confianza
-        </motion.h2>
-
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={enVista ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="aspect-[4/3] overflow-hidden rounded-3xl"
-          >
-            <video
-              className="h-full w-full object-cover"
-              src={VIDEO_FILOSOFIA}
-              muted
-              autoPlay
-              loop
-              playsInline
-              preload="auto"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={enVista ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="flex flex-col justify-center gap-8"
-          >
-            <div>
-              <p className="mb-4 text-xs uppercase tracking-widest text-white/40">Elige tu momento</p>
-              <p className="text-base leading-relaxed text-white/70 md:text-lg">
-                Cada visita empieza contigo: tu tiempo, tu estilo y lo que necesitas hoy. Trabajamos
-                codo a codo con nuestras clientas para convertir una idea en un resultado que se nota
-                y se siente.
-              </p>
-            </div>
-            <div className="h-px w-full bg-white/10" />
-            <div>
-              <p className="mb-4 text-xs uppercase tracking-widest text-white/40">Vive el cambio</p>
-              <p className="text-base leading-relaxed text-white/70 md:text-lg">
-                Creemos que el mejor trabajo aparece cuando la técnica se encuentra con el cuidado.
-                Por eso cada servicio se piensa para que salgas con más confianza que con la que
-                llegaste.
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function SeccionServicios() {
-  const ref = useRef(null)
-  const enVista = useInView(ref, { once: true, margin: '-100px' })
-
-  return (
-    <section className="relative overflow-hidden px-6 py-28 md:py-40">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.02)_0%,_transparent_60%)]" />
-      <div ref={ref} className="relative mx-auto max-w-6xl">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={enVista ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7 }}
-          className="mb-12 flex items-end justify-between md:mb-16"
-        >
-          <h2 className="lw-serif-regular text-3xl tracking-tight text-white md:text-5xl">Qué hacemos</h2>
-          <span className="hidden text-sm text-white/40 md:inline">Nuestros servicios</span>
-        </motion.div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
-          {SERVICIOS_DESTACADOS.map((servicio, indice) => (
-            <motion.div
-              key={servicio.titulo}
-              initial={{ opacity: 0, y: 50 }}
-              animate={enVista ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: indice * 0.15 }}
-              className="liquid-glass group overflow-hidden rounded-none"
-            >
-              <div className="relative aspect-video overflow-hidden">
-                <video
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  src={servicio.video}
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  preload="auto"
-                />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              </div>
-              <div className="p-6 md:p-8">
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-widest text-white/40">{servicio.etiqueta}</span>
-                  <span className="liquid-glass rounded-full p-2">
-                    <ArrowUpRight className="h-4 w-4 text-white" />
-                  </span>
-                </div>
-                <h3 className="mb-3 text-xl tracking-tight text-white md:text-2xl">{servicio.titulo}</h3>
-                <p className="text-sm leading-relaxed text-white/50">{servicio.descripcion}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// Landing de Inicio (§6 implementacionesWed.md): hero a pantalla completa
-// con video de fondo (loop con crossfade manual, sin corte) + 4 secciones
-// de scroll (Sobre nosotros, Video destacado, Filosofía, Servicios), todo
-// bajo .landing-web/.liquid-glass (index.css). El header real (logo,
-// hamburguesa, avatar) sigue siendo el de PortalCliente.jsx — este
-// componente no repite un navbar propio, evita duplicar login/logout que
-// ya existen ahí. Sin formulario de newsletter ni botones Sign Up/Login:
-// esta pantalla la ve un cliente que ya inició sesión.
+// Rediseño de Inicio (docs/diseno-inicio/README.md): Hero (foto/efecto
+// antes-después existente + copy nuevo) → tira personal → promoción
+// activa → lo más pedido → resultados reales (animación por scroll,
+// useSecuenciaScroll.js) → reseñas → sobre nosotros → visítanos → pie.
+// Reemplaza por completo el hero full-bleed + las 4 secciones de
+// video/filosofía anteriores (ver git blame) — ese material era stock
+// genérico sin relación con el salón; el usuario pidió un solo bloque de
+// marca corto en su lugar. Nada de lo mostrado se inventa: cada dato que
+// puede faltar (reseñas, próxima cita, promoción, fotos de resultados,
+// contacto) oculta su línea o su sección entera en vez de mostrar un
+// placeholder falso.
 export default function InicioCliente() {
-  const contenedorHeroRef = useRef(null)
-  const imagenAntesRef = useRef(null)
-  useRevelarAntes(contenedorHeroRef, imagenAntesRef)
+  const { mostrarToast } = useToast()
+  const { abierto } = useEstadoNegocio()
+  const { perfil } = usePerfilCliente()
+  const { serviciosCarrito } = useCarritoCliente()
+  const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
+
+  const contenedorRef = useRef(null)
+  const { contenedorHeroRef, imagenAntesRef } = useRevelarAntes()
+
+  const [cargando, setCargando] = useState(true)
+  const [topServicios, setTopServicios] = useState([])
+  const [proximaCita, setProximaCita] = useState(null)
+  const [puntosCliente, setPuntosCliente] = useState(null)
+  const [promocion, setPromocion] = useState(null)
+  const [cuponPromocion, setCuponPromocion] = useState(null)
+  const [reclamando, setReclamando] = useState(false)
+  const [resenas, setResenas] = useState([])
+  const [galeria, setGaleria] = useState([])
+  const [contacto, setContacto] = useState(null)
+  const [horario, setHorario] = useState(null)
+
+  useEffect(() => {
+    let vigente = true
+
+    async function cargar() {
+      const ahoraIso = new Date().toISOString()
+      const [
+        serviciosRes,
+        masPedidoRes,
+        proximaCitaRes,
+        puntosRes,
+        promocionesRes,
+        cuponesRes,
+        resenasRes,
+        galeriaRes,
+        contactoRes,
+        horarioRes,
+      ] = await Promise.all([
+        supabase.from('servicios').select('id, nombre, categoria, precio, duracion_min, foto_url').eq('activo', true),
+        supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
+        supabase
+          .from('citas')
+          .select('id, fecha_hora, cita_servicios(servicios(nombre))')
+          .gte('fecha_hora', ahoraIso)
+          .in('estado', ['PENDIENTE', 'CONFIRMADA'])
+          .order('fecha_hora')
+          .limit(1),
+        supabase.rpc('mis_puntos'),
+        supabase
+          .from('promociones')
+          .select('id, titulo, descripcion, tipo_descuento, valor, vigente_hasta')
+          .order('vigente_hasta', { ascending: true, nullsFirst: false }),
+        supabase.rpc('mis_cupones'),
+        supabase.rpc('resenas_publicas'),
+        supabase.rpc('galeria_para_web'),
+        supabase.rpc('datos_contacto'),
+        supabase.rpc('horario_atencion'),
+      ])
+
+      if (!vigente) return
+
+      const servicios = serviciosRes.data ?? []
+      const masPedidoIds = (masPedidoRes.data ?? []).map((fila) => fila.servicio_id)
+      setTopServicios(
+        masPedidoIds
+          .map((id) => servicios.find((s) => s.id === id))
+          .filter(Boolean)
+          .slice(0, 4),
+      )
+
+      setProximaCita(proximaCitaRes.data?.[0] ?? null)
+      setPuntosCliente(puntosRes.data?.[0] ?? null)
+
+      const promocionActiva = promocionesRes.data?.[0] ?? null
+      setPromocion(promocionActiva)
+      if (promocionActiva) {
+        // promocion_id todavía no existe en mis_cupones() hasta aplicar
+        // 127_reclamar_cupon_promocion.sql — hasta entonces esto no
+        // encuentra nada y el botón siempre parte en "Reclamar cupón".
+        const cuponExistente = (cuponesRes.data ?? []).find((c) => c.promocion_id === promocionActiva.id)
+        setCuponPromocion(cuponExistente ?? null)
+      }
+
+      setResenas(resenasRes.data ?? [])
+      // El diseño aprobado son 3 parejas (tope acá), pero el negocio las
+      // está cargando de a poco en Galería Web — se muestran las que ya
+      // existan (mínimo 1) en vez de exigir las 3 completas.
+      setGaleria((galeriaRes.data ?? []).slice(0, 3))
+      setContacto(contactoRes.data?.[0] ?? null)
+      setHorario(horarioRes.data?.[0] ?? null)
+      setCargando(false)
+    }
+
+    cargar()
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  const ENTRADA_FIJA = esDesktop
+    ? { foto: 200, eyebrow: 150, titulo: 300, subtitulo: 420, botones: 540, confianza: 680, tira: 850, promo: 950 }
+    : { foto: 100, eyebrow: 350, titulo: 480, subtitulo: 560, botones: 650, confianza: 780, tira: 900, promo: 1000 }
+
+  const { primeraFotoRef, filaRef, estadoFoto, claseSacudida, enCurso, puntos } = useSecuenciaScroll({
+    activo: !cargando && galeria.length > 0,
+    reducirMovimiento,
+    totalFotos: galeria.length * 2,
+  })
+
+  async function reclamarCupon() {
+    if (!promocion || reclamando) return
+    setReclamando(true)
+    const { data, error } = await supabase.rpc('reclamar_cupon_promocion', { p_promocion_id: promocion.id })
+    setReclamando(false)
+    if (error) {
+      mostrarToast(error.message || 'No se pudo reclamar el cupón. Intenta de nuevo.', 'error')
+      return
+    }
+    setCuponPromocion(data?.[0] ?? null)
+    mostrarToast('Cupón guardado en Mis cupones.', 'exito')
+  }
+
+  if (cargando) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <p className="font-mono text-sm text-white/50">Cargando...</p>
+      </div>
+    )
+  }
+
+  const nombreCliente = perfil?.nombre ? perfil.nombre.trim().split(/\s+/)[0] : null
+  const destinoReservar = serviciosCarrito.size > 0 ? '/citas/carrito' : '/servicios'
+
+  const promedioResenas = resenas.length ? resenas.reduce((suma, r) => suma + r.calificacion, 0) / resenas.length : null
+  const horarioTexto = horario
+    ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}${
+        horario.bloque2_inicio ? ` · ${formatearHora(horario.bloque2_inicio)}-${formatearHora(horario.bloque2_fin)}` : ''
+      }`
+    : null
+
+  const hayLineaConfianza = Boolean(promedioResenas || horarioTexto || abierto)
+  const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
+  const hayVisitanos = Boolean(contacto?.direccion || horarioTexto || contacto?.telefono)
 
   return (
-    <div className="landing-web flex-1 overflow-y-auto">
-      {/* Tope de ancho en pantallas muy anchas (27"+, ver
-          implementacionesWed.md §7.38): la referencia no define un
-          max-width (fue pensada como mockup fijo), pero sin uno acá la
-          foto/el título se estiran y se ven distorsionados en un
-          monitor grande de verdad. mx-auto centra la sección capada;
-          .landing-web ya pinta #000 detrás (arriba en este archivo), así
-          que lo que sobra a los costados se ve negro solo, sin agregar
-          otro color.
-          aspect-[1680/944] (§7.39-7.40): min-h-[85svh] por sí solo fija
-          la altura SOLO por el alto de la ventana, sin relación con el
-          ancho — a medida que el ancho crecía (hasta el tope de arriba)
-          con la altura fija, la caja se iba haciendo cada vez más
-          apaisada, y object-cover tenía que recortar más arriba/abajo
-          de la foto para llenarla: se veía como si "la chica creciera"
-          (más zoom sobre la cara según el ancho). §7.39 probó
-          aspect-[1.9] (una mejora, pero 1.9 sigue siendo más ancho que
-          la foto real → seguía recortando un poco verticalmente, bug
-          reportado de nuevo con captura). 1680/944 es el tamaño real en
-          px de hero-despues-referencia.jpg/hero-antes-referencia.jpg
-          (≈1.78, o sea 16:9) — con la caja exactamente en la relación
-          de aspecto nativa de la foto, object-cover ya no tiene que
-          recortar arriba/abajo en ningún ancho hasta el tope de 1800px:
-          todo el recorte que hace falta es horizontal, desde la
-          izquierda (fondo negro vacío en la foto), nunca sobre la cara.
-          Sin min-h (§7.49, antes min-h-[85svh] md:min-h-0 de §7.47): el
-          usuario pidió que el celular tenga el MISMO formato que
-          desktop (misma relación de aspecto de la foto, sin un piso de
-          alto aparte que la desvíe) — así que ya no hay ningún piso,
-          en ningún ancho: aspect-[1680/944] manda siempre, celular
-          incluido. Ver el aviso en implementacionesWed.md §7.49 sobre
-          lo que esto implica en celulares muy angostos (el contenido
-          — título + botón — puede necesitar más alto del que la sola
-          relación de aspecto da a ese ancho; el navegador no recorta
-          contenido visible, así que ahí la sección puede terminar más
-          alta que el aspect-ratio puro, no es un bug nuevo, es cómo
-          se resuelve ese choque).
-          px-8 (§7.46): antes este padding vivía en la columna de
-          contenido de 1400px de abajo, con valores distintos por
-          breakpoint para calzar con el padding real del <header> + el
-          ancho del botón de hamburguesa (§7.45) — el usuario lo
-          simplificó a un valor fijo de 32px acá en la sección de
-          1800px en vez de eso. Sigue sin afectar a la foto de fondo
-          (absolute inset-0 más abajo: el padding de un elemento no
-          reduce el área de sus hijos posicionados en absoluto). */}
+    <div ref={contenedorRef} className="landing-web flex-1 overflow-y-auto">
+      {/* 1. HERO — una sola pieza: la foto (con el efecto antes/después
+          existente) es el FONDO COMPLETO de la sección, no una caja
+          separada; el texto flota encima, sobre la franja negra que ya
+          trae la propia foto del lado izquierdo (mismo mecanismo y
+          fotos de siempre — solo se agregó etiqueta, subtítulo, botón
+          "Ver servicios" y la línea de confianza al bloque de texto). */}
       <section
         ref={contenedorHeroRef}
-        className="relative mx-auto flex aspect-[1680/944] w-full max-w-[1800px] flex-col bg-[#0b0b0c] px-8"
+        className="relative mx-auto flex aspect-[1680/944] w-full max-w-[1800px] cursor-crosshair flex-col bg-[#0b0b0c] px-4 sm:px-8"
       >
-        {/* Sin degradado oscuro sobre la foto (§7.39): la referencia no
-            tiene overlay — las dos fotos ya traen fondo negro puro del
-            lado izquierdo (donde va el texto), así que un overlay extra
-            acá solo apagaba el color real de la foto ("se ve pálida",
-            reportado por el usuario) sin aportar nada que las fotos no
-            dieran solas. */}
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <img
             src={FOTO_DESPUES}
-            alt="Clienta después de su transformación en el salón"
+            alt="Resultado después del servicio"
             className="absolute inset-0 h-full w-full object-cover object-[right_center]"
           />
           <img
             ref={imagenAntesRef}
             src={FOTO_ANTES}
-            alt="La misma clienta antes de su transformación"
+            alt=""
+            aria-hidden="true"
             style={{ filter: 'grayscale(0.35) brightness(0.97)' }}
             className="absolute inset-0 h-full w-full object-cover object-[right_center]"
           />
         </div>
 
-        {/* Columna de contenido (§7.44-7.45): la <section> de arriba sigue
-            creciendo libre hasta 1800px (así la FOTO llena ese ancho
-            completo) — lo que se acota acá es el contenido de encima
-            (título, botón, hint), en su propio `mx-auto max-w-[1400px]`
-            independiente, centrado DENTRO de la sección de 1800px. Centrar
-            una caja de 1400px adentro de otra de 1800px que a su vez está
-            centrada en la pantalla da el mismo borde izquierdo, en
-            cualquier ancho de ventana, que centrar esos mismos 1400px
-            directo en la pantalla — que es exactamente lo que hace la fila
-            del header (`max-w-[1400px]` en PortalCliente.jsx). Por eso el
-            título/botón quedan siempre alineados bajo el logo/nav sin
-            importar cuánto se estire la ventana, mientras la foto de atrás
-            sigue teniendo sus 1800px enteros para respirar (bug reportado
-            con captura: antes el texto colgaba del ancho de la sección de
-            1800px, no del de 1400px del header).
-            `pl-*`/`pr-*` en vez de `px-*` simétrico (§7.45): esto SOLO
-            alinea los dos contenedores de 1400px entre sí — adentro, el
-            logo arranca pegado al borde de su fila (padding 0, ver
-            PortalCliente.jsx), mientras que acá el título tenía su propio
-            padding extra (antes `px-6 sm:px-10 md:px-16`), así que
-            quedaba corrido a la derecha del logo (bug reportado con
-            captura + inspector). `pr-*` copia tal cual el padding propio
-            del <header> (`px-4 sm:px-6 md:px-8`) — ahí no hay nada raro
-            del lado derecho. `pl-*` tiene que sumarle ADEMÁS el ancho
-            real que ocupa el botón de hamburguesa + su gap en el header
-            cuando está visible (`-ml-2 h-11 w-11` = 36px netos, + `gap-3`
-            = 12px → 48px), porque ese botón corre el logo hacia la
-            derecha en pantallas angostas y desaparece recién en `lg`
-            (1024px, `lg:hidden` en PortalCliente.jsx) — por eso el salto
-            hacia ABAJO en `lg:pl-8` (sin los 48px extra) en vez de seguir
-            creciendo. Si el padding del <header> o el ancho/gap de la
-            hamburguesa cambian alguna vez, estos valores hay que
-            recalcularlos a mano — no hay forma de derivarlos solos sin
-            tocar el <header>, que el usuario pidió explícitamente no
-            tocar acá.
-            §7.46: el usuario simplificó esto — el padding horizontal ya
-            no vive acá (esta columna queda sin `pl-*`/`pr-*` propio,
-            pegada a sus propios bordes de 1400px), se movió como
-            `px-8` fijo (32px, sin variar por breakpoint) a la
-            `<section>` de 1800px de arriba. Ver el comentario de esa
-            `<section>` para el resultado final. */}
-        {/* Todo el bloque de acá adentro escala fluido con clamp() en vez
-            de saltar entre breakpoints (§7.50, a pedido del usuario —
-            "mismo formato en miniatura" en celular, no un layout roto):
-            el gap entre título/botón y el tamaño de letra del título
-            comparten la idea de "un piso chico para celular, un techo
-            grande para desktop, y una pendiente en vw en el medio sin
-            saltos" — mismo mecanismo que ya tenía el título desde §7.44
-            (clamp(40px,5.2vw,74px)), extendido a todo lo demás porque
-            §7.49 sacó min-h-[85svh] de la <section> y a partir de ahí,
-            en celular, esos paddings/gap FIJOS no entraban en una
-            sección ahora mucho más baja (proporción de la foto, ~210px
-            a 375px de ancho) — el título se veía enorme y el layout se
-            rompía (bug reportado con captura). El piso del título bajó
-            de 40px a 24px (era "muy grande en móvil", reportado).
-            pt simétrico con pb (§7.51, antes pt-[clamp(28px,8vw,112px)]
-            max-[640px]:pt-28, mucho más grande que pb): ese pt extra
-            compensaba el header flotante/transparente de §7.37, que ya
-            no existe — el header ahora es opaco y el wrapper de
-            PortalCliente.jsx vuelve a reservarle su alto SIEMPRE (mismo
-            cambio, ver el comentario ahí). Dejar el pt grande acá
-            hubiera sumado ESE espacio dos veces y corrido el título
-            hacia abajo, ya no centrado de verdad dentro de la sección. */}
-        <div className="relative z-10 mx-auto flex w-full max-w-[1700px] flex-1 flex-col justify-center py-[clamp(16px,3vw,40px)]">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col items-start gap-[clamp(12px,3vw,28px)] max-[640px]:gap-[8px] md:max-w-xl"
-          >
-            {/* Sin overflow-hidden en la <section> (arriba): con
-                line-height 1.05 las colas/floreos de Kunaroh en la "R" de
-                TRANSFORMA quedaban cortadas por el borde de la sección
-                (bug reportado por el usuario con captura) — el layer de
-                fondo ya se clippea solo (overflow-hidden propio, arriba),
-                así que sacarlo de acá no afecta a las fotos. */}
-            <EsquinaBracket />
-            <h1 className="lw-titulo-kunaroh text-[clamp(10px,4vw,50px)] text-white">
-              <span className="block">Belleza</span>
-              <span className="block">que</span>
-              <span className="block">Transforma</span>
-            </h1>
-            <EsquinaBracket voltear />
-            <Link to="/citas" className="lw-cta-hero mt-2">
-              <span className="lw-metal-azul-texto">Reserva tu cita</span>
-              <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
-            </Link>
-          </motion.div>
+        <div className="relative z-10 mx-auto flex w-full max-w-[1700px] flex-1 flex-col justify-center gap-[clamp(10px,1.8vw,20px)] py-[clamp(16px,3vw,40px)]">
+          <div className="flex flex-col items-start gap-[clamp(10px,1.8vw,20px)] md:max-w-xl">
+            <span
+              className={`inline-flex w-fit items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/60 ${
+                reducirMovimiento ? '' : 'in-left'
+              }`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
+              Uñas · Pestañas · Cejas · <span className="hidden sm:inline">Micropigmentación</span>
+              <span className="sm:hidden">Micro</span>
+            </span>
+
+            <div
+              className={`flex flex-col items-start gap-2 ${reducirMovimiento ? '' : 'in-left'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.titulo}ms` }}
+            >
+              <EsquinaBracket />
+              <h1 className="lw-titulo-kunaroh text-[clamp(34px,5.2vw,74px)] leading-[1.03] text-white">
+                <span className="block">Belleza</span>
+                <span className="block">que</span>
+                <span className="block">transforma</span>
+              </h1>
+              <EsquinaBracket voltear />
+            </div>
+
+            <p
+              className={`max-w-[42ch] text-[15px] leading-relaxed text-[#d9d9dc] sm:text-base ${
+                reducirMovimiento ? '' : 'in-left'
+              }`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.subtitulo}ms` }}
+            >
+              Tu salón de belleza en Av. Argentina. Reserva en línea en un minuto y paga el saldo en el local.
+            </p>
+
+            <div
+              className={`flex flex-col gap-2.5 sm:flex-row sm:items-center ${reducirMovimiento ? '' : 'in-left'}`}
+              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.botones}ms` }}
+            >
+              <Link to="/citas" className="lw-cta-hero">
+                <ShinyText text="Reserva tu cita" speed={3} delay={1.5} className="lw-cta-shiny" />
+                <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
+              </Link>
+              <Link
+                to="/servicios"
+                className="rounded-full border border-white/15 px-6 py-3.5 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+              >
+                Ver servicios
+              </Link>
+            </div>
+
+            {hayLineaConfianza && (
+              <div
+                className={`flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-4 text-[13px] text-[#a6a6a6] ${
+                  reducirMovimiento ? '' : 'in-left'
+                }`}
+                style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.confianza}ms` }}
+              >
+                {promedioResenas && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-[var(--lw-gold)]" />
+                    <b className="font-semibold text-white">{promedioResenas.toFixed(1)}</b> ·{' '}
+                    {resenas.length} {resenas.length === 1 ? 'reseña' : 'reseñas'}
+                  </span>
+                )}
+                {horarioTexto && <span>{horarioTexto}</span>}
+                {abierto && (
+                  <span className="inline-flex items-center gap-1.5 text-[#e8e8ea]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-gold)]" />
+                    Abierto ahora
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* El hint ("Pasa el cursor...") salió de la columna centrada de
-            arriba (§7.48): estando adentro, como hermano del bloque de
-            título en un flex-col con justify-center, empujaba el cálculo
-            del centrado (el título ya no quedaba centrado solo, sino
-            junto con el hint, corriéndolo hacia arriba). Ahora es
-            position:absolute clavado en la esquina inferior derecha de
-            la FOTO (relativo a la <section> de 1800px, no a la columna
-            de 1400px) — ya no participa del layout en flujo de nada, así
-            que no interfiere con el centrado del título. */}
         <div className="lw-hint-cursor absolute bottom-8 right-8 z-10 hidden sm:flex">
-          <svg width="46" height="46" viewBox="0 0 64 64" fill="none" stroke="#f5f5f4" strokeWidth="1.2" className="shrink-0" aria-hidden="true">
+          <svg width="40" height="40" viewBox="0 0 64 64" fill="none" stroke="#f5f5f4" strokeWidth="1.2" className="shrink-0" aria-hidden="true">
             <circle cx="32" cy="32" r="28" />
             <circle cx="32" cy="32" r="18" strokeDasharray="3 3" />
             <path d="M32 4v56" />
@@ -537,10 +444,373 @@ export default function InicioCliente() {
         </div>
       </section>
 
-      <SeccionSobreNosotros />
-      <SeccionVideoDestacado />
-      <SeccionFilosofia />
-      <SeccionServicios />
+      {/* 2. TIRA PERSONAL — mismo ancho de columna (max-w-[1700px] con el
+          mismo padding lateral) que el resto de secciones de la página;
+          el padding de la propia <section> es el respiro INTERNO de la
+          caja, no el margen contra el borde de pantalla. */}
+      <div className="mx-auto mt-8 w-full max-w-[1700px] px-4 sm:px-8">
+        <section
+          className={`flex flex-col gap-4 rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:gap-7 sm:p-[22px_28px] ${
+            reducirMovimiento ? '' : 'in-up'
+          }`}
+          style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.tira}ms` }}
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1b2230] text-[var(--lw-gold)]">
+            <CalendarPlus className="h-5 w-5" />
+          </span>
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="text-base font-semibold text-white">Hola{nombreCliente ? `, ${nombreCliente}` : ''}</span>
+            {proximaCita ? (
+              <span className="text-[13.5px] text-[#a6a6a6]">
+                Tu próxima cita:{' '}
+                <b className="font-semibold text-white">
+                  {(esDesktop ? formatoFechaCitaLarga : formatoFechaCitaCorta).format(new Date(proximaCita.fecha_hora))} ·{' '}
+                  {formatoHoraCita.format(new Date(proximaCita.fecha_hora))}
+                </b>
+                {(proximaCita.cita_servicios ?? []).length > 0 &&
+                  ` · ${proximaCita.cita_servicios.map((cs) => cs.servicios?.nombre).filter(Boolean).join(', ')}`}
+              </span>
+            ) : (
+              <span className="text-[13.5px] text-[#a6a6a6]">No tienes citas pendientes. ¿Agendamos la próxima?</span>
+            )}
+          </div>
+          {puntosCliente && (
+            <div className="flex items-center gap-1.5 border-white/10 sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
+              <span className="text-xl font-bold text-white">{puntosCliente.puntos}</span>
+              <span className="text-[11px] uppercase tracking-widest text-[#a6a6a6]">Mis puntos</span>
+            </div>
+          )}
+          {proximaCita ? (
+            <Link
+              to="/citas"
+              className="shrink-0 rounded-full border border-white/15 px-[22px] py-3 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+            >
+              Ver mi cita
+            </Link>
+          ) : (
+            <Link
+              to={destinoReservar}
+              className="shrink-0 rounded-full bg-[var(--lw-gold)] px-[22px] py-3 text-center text-sm font-semibold text-black"
+            >
+              Reservar
+            </Link>
+          )}
+        </section>
+      </div>
+
+      {/* 2b. PROMOCIÓN ACTIVA — solo si hay una vigente (RLS de
+          promociones ya filtra activo/vigente_desde/vigente_hasta). */}
+      {promocion && (
+        <div className="mx-auto mt-4 w-full max-w-[1700px] px-4 sm:px-8">
+        <section
+          className={`grid overflow-hidden rounded-[10px] border border-white/10 bg-[#111113] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] lg:grid-cols-[220px_minmax(0,1fr)_auto] ${
+            reducirMovimiento ? '' : 'in-up'
+          }`}
+          style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.promo}ms` }}
+        >
+          <div className="flex items-center gap-4 border-b border-dashed border-[#2e3a4d] bg-[#141b26] px-5 py-4 lg:flex-col lg:justify-center lg:gap-1 lg:border-b-0 lg:border-r lg:py-6">
+            <span className="lw-titulo-heavitas text-[34px] leading-none text-[var(--lw-gold)] lg:text-[44px]">
+              {formatearValorPromocion(promocion)}
+            </span>
+            <span className="text-[11px] uppercase tracking-[0.2em] text-[#a6a6a6]">de descuento</span>
+          </div>
+
+          <div className="flex flex-col justify-center gap-2 px-5 py-4 lg:px-8">
+            <span className="inline-flex w-fit items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#a6a6a6]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
+              Promoción activa
+              {promocion.vigente_hasta && ` · hasta ${promocion.vigente_hasta}`}
+            </span>
+            <h2 className="lw-titulo-heavitas text-xl text-white lg:text-2xl">{promocion.titulo}</h2>
+            {promocion.descripcion && <p className="text-sm leading-relaxed text-[#d9d9dc]">{promocion.descripcion}</p>}
+            <span className="text-xs text-[#a6a6a6]">Un uso por clienta.</span>
+          </div>
+
+          <div className="flex flex-col justify-center gap-2.5 px-5 pb-5 lg:items-end lg:px-7 lg:pb-0">
+            {cuponPromocion ? (
+              <>
+                <span
+                  role="status"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#2e3a4d] bg-[#141b26] px-[18px] py-3 text-sm font-semibold text-[var(--lw-gold)]"
+                >
+                  <Ticket className="h-4 w-4" />
+                  Guardado en Mis cupones
+                </span>
+                <span className="flex justify-between gap-4 text-[13px] sm:justify-end">
+                  <Link to="/ofertas" className="text-[#e8e8ea] hover:text-white">
+                    Ver mis cupones
+                  </Link>
+                  <Link to={destinoReservar} className="text-[var(--lw-gold)]">
+                    Reservar y usarlo →
+                  </Link>
+                </span>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={reclamarCupon}
+                  disabled={reclamando}
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-[var(--lw-gold)] px-6 py-3.5 text-sm font-semibold text-black disabled:opacity-60"
+                >
+                  <Ticket className="h-[17px] w-[17px]" />
+                  {reclamando ? 'Reclamando...' : 'Reclamar cupón'}
+                </button>
+                <span className="text-center text-xs text-[#a6a6a6] lg:text-right">Se guarda en Mis cupones</span>
+              </>
+            )}
+          </div>
+        </section>
+        </div>
+      )}
+
+      {/* 3. LO MÁS PEDIDO */}
+      {topServicios.length > 0 && (
+        <section className="mx-auto mt-24 w-full max-w-[1700px] px-4 sm:px-8">
+          <div className="mb-7 flex items-end justify-between gap-3">
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Lo que más reservan este mes</span>
+              <h2 className="lw-titulo-heavitas text-2xl text-white sm:text-[40px]">Lo más pedido</h2>
+            </div>
+            <Link to="/servicios" className="shrink-0 text-sm text-[#e8e8ea] hover:text-white">
+              Ver todos los servicios →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+            {topServicios.map((servicio) => (
+              <TarjetaServicioCliente key={servicio.id} servicio={servicio} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 5. RESULTADOS REALES — animación por scroll, ver
+          src/hooks/useSecuenciaScroll.js. Oculta si el negocio todavía no
+          cargó ninguna pareja real en Galería Web; muestra hasta 3 (el
+          diseño aprobado), pero no exige las 3 completas. Con menos de 2
+          parejas (el hook lo decide con `totalFotos >= 4`), se muestran
+          directas sin la secuencia de scroll fijado — con tan poco
+          contenido esa animación se siente como una foto rota, no como
+          un efecto. */}
+      {galeria.length > 0 && (
+        <section className="mx-auto mt-24 w-full max-w-[1700px] px-4 sm:px-8">
+          <div className="mb-7 flex items-end justify-between gap-3">
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Trabajos hechos en el salón</span>
+              <h2 className="lw-titulo-heavitas text-2xl text-white sm:text-[40px]">Resultados reales</h2>
+            </div>
+            <div className="flex items-center gap-5">
+              {enCurso && <PuntosAvance puntos={puntos} />}
+              <Link to="/nosotros" className="shrink-0 text-sm text-[#e8e8ea] hover:text-white">
+                Ver galería →
+              </Link>
+            </div>
+          </div>
+          <div
+            ref={filaRef}
+            className={`grid grid-cols-1 gap-4 lg:gap-5 ${
+              { 1: 'lg:grid-cols-1', 2: 'lg:grid-cols-2' }[galeria.length] ?? 'lg:grid-cols-3'
+            } ${claseSacudida}`}
+          >
+            {galeria.map((item, indice) => (
+              <div key={item.id} className="flex flex-col gap-3.5">
+                <div className="grid h-[170px] grid-cols-2 gap-1 lg:h-[360px]">
+                  <div
+                    ref={indice === 0 ? primeraFotoRef : undefined}
+                    className={`foto relative overflow-hidden rounded-l-[10px] bg-[#1c1c20] ${estadoFoto(indice * 2)}`}
+                  >
+                    <img
+                      src={resolverUrlGaleria(item.antes_url)}
+                      alt={`${item.titulo ?? 'Trabajo del salón'} — antes`}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] uppercase tracking-wider text-[#e8e8ea]">
+                      Antes
+                    </span>
+                  </div>
+                  <div className={`foto relative overflow-hidden rounded-r-[10px] bg-[#222228] ${estadoFoto(indice * 2 + 1)}`}>
+                    <img
+                      src={resolverUrlGaleria(item.despues_url)}
+                      alt={`${item.titulo ?? 'Trabajo del salón'} — después`}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] uppercase tracking-wider text-[#e8e8ea]">
+                      Después
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-baseline justify-between gap-2">
+                  {item.titulo && <span className="text-[15px] font-semibold text-white">{item.titulo}</span>}
+                  <Link to="/servicios" className="hidden text-[13px] text-[var(--lw-gold)] lg:inline">
+                    Reservar este servicio
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 6. RESEÑAS — oculta con menos de 3 aprobadas. */}
+      {resenas.length >= 3 && (
+        <section className="mx-auto mt-24 w-full max-w-[1700px] px-4 sm:px-8">
+          <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <div className="flex flex-col gap-3.5">
+              <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Opiniones verificadas</span>
+              <h2 className="lw-titulo-heavitas text-[26px] leading-[1.1] text-white sm:text-[34px]">
+                Lo que dicen nuestras clientas
+              </h2>
+              <div className="mt-3 flex items-baseline gap-3">
+                <span className="text-[44px] font-bold leading-none text-white sm:text-[56px]">
+                  {promedioResenas.toFixed(1)}
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  <Estrellas calificacion={Math.round(promedioResenas)} className="h-[15px] w-[15px]" />
+                  <span className="text-[13px] text-[#a6a6a6]">
+                    {resenas.length} reseñas de clientas que ya vinieron
+                  </span>
+                </div>
+              </div>
+              <Link to="/nosotros" className="mt-2.5 text-sm text-[#e8e8ea] hover:text-white">
+                Ver todas las reseñas →
+              </Link>
+            </div>
+            <div className="-mx-4 flex gap-3.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0">
+              {resenas.slice(0, 3).map((resena) => (
+                <figure
+                  key={resena.id}
+                  className="flex w-[280px] shrink-0 flex-col gap-4 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:w-auto"
+                >
+                  <Estrellas calificacion={resena.calificacion} className="h-[13px] w-[13px]" />
+                  <blockquote className="flex-1 text-[14.5px] leading-relaxed text-[#d9d9dc]">
+                    {resena.comentario}
+                  </blockquote>
+                  <figcaption className="flex items-center gap-2.5 border-t border-white/10 pt-3.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1f1f22] text-xs font-semibold text-white">
+                      {nombrePublico(resena.nombre).charAt(0)}
+                    </span>
+                    <span className="text-[13.5px] font-semibold text-white">{nombrePublico(resena.nombre)}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 7. SOBRE NOSOTROS — un solo bloque (reemplaza las 3 secciones de
+          video/filosofía anteriores). */}
+      <section className="mx-auto mt-24 grid w-full max-w-[1700px] items-center gap-10 px-4 sm:px-8 lg:grid-cols-2 lg:gap-14">
+        <div className="flex h-[260px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#151517] text-white/25 lg:h-[480px]">
+          <Users className="h-10 w-10" />
+        </div>
+        <div className="flex flex-col gap-4">
+          <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Sobre nosotros</span>
+          <h2 className="lw-titulo-heavitas text-[28px] leading-[1.1] text-white sm:text-[40px]">
+            Cuidado y confianza en cada cita
+          </h2>
+          <p className="max-w-[52ch] text-[15.5px] leading-relaxed text-[#d9d9dc]">
+            Creemos en escuchar antes de proponer. Cada cita empieza con una pregunta sobre lo que quieres lograr, y
+            cada tratamiento se diseña a tu medida.
+          </p>
+          <div className="mt-1 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            {[
+              { n: '01', t: 'Te escuchamos', d: 'Diagnóstico antes de empezar.' },
+              { n: '02', t: 'A tu medida', d: 'Diseño pensado para ti.' },
+              { n: '03', t: 'Con detalle', d: 'Cuidamos el resultado final.' },
+            ].map((paso) => (
+              <div key={paso.n} className="flex flex-col gap-1.5 rounded-[10px] border border-white/10 bg-[#111113] p-[18px]">
+                <span className="text-xs font-semibold text-[var(--lw-gold)]">{paso.n}</span>
+                <span className="text-sm font-semibold text-white">{paso.t}</span>
+                <span className="text-[12.5px] leading-relaxed text-[#a6a6a6]">{paso.d}</span>
+              </div>
+            ))}
+          </div>
+          <Link to="/nosotros" className="mt-1.5 text-sm text-[#e8e8ea] hover:text-white">
+            Conoce al equipo →
+          </Link>
+        </div>
+      </section>
+
+      {/* 8. VISÍTANOS */}
+      {hayVisitanos && (
+        <section className="mx-auto mt-24 grid w-full max-w-[1700px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <div className="flex flex-col gap-5 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-9">
+            <h2 className="lw-titulo-heavitas text-[26px] text-white sm:text-[34px]">Visítanos</h2>
+            <div className="flex flex-col gap-3.5 text-[14.5px] text-[#d9d9dc]">
+              {contacto?.direccion && (
+                <span className="flex items-start gap-3">
+                  <MapPin className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
+                  {contacto.direccion}
+                </span>
+              )}
+              {horario && (
+                <span className="flex items-start gap-3">
+                  <span className="mt-0.5 h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--lw-gold)]" />
+                  <span>
+                    {formatearDias(horario.dias_atencion)}
+                    <br />
+                    <span className="text-[#a6a6a6]">
+                      {formatearHora(horario.bloque1_inicio)} – {formatearHora(horario.bloque1_fin)}
+                      {horario.bloque2_inicio && (
+                        <>
+                          {' '}
+                          · {formatearHora(horario.bloque2_inicio)} – {formatearHora(horario.bloque2_fin)}
+                        </>
+                      )}
+                    </span>
+                  </span>
+                </span>
+              )}
+              {contacto?.telefono && (
+                <span className="flex items-start gap-3">
+                  <MessageCircle className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
+                  {contacto.telefono}
+                </span>
+              )}
+            </div>
+            <div className="mt-auto flex flex-col gap-2.5 sm:flex-row">
+              {whatsapp && (
+                <a
+                  href={`https://wa.me/${whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2.5 rounded-full bg-[var(--lw-gold)] px-[22px] py-3.5 text-sm font-semibold text-black"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Escríbenos por WhatsApp
+                </a>
+              )}
+              {contacto?.direccion && (
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contacto.direccion)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center rounded-full border border-white/15 px-[22px] py-3.5 text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+                >
+                  Cómo llegar
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="min-h-[220px] overflow-hidden rounded-[10px] border border-white/10 bg-[#151517] lg:min-h-[380px]">
+            {contacto?.direccion ? (
+              <iframe
+                title="Ubicación en el mapa"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(contacto.direccion)}&output=embed`}
+                className="h-full w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-white/25">
+                <MapPin className="h-8 w-8" />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       <PieClienteWeb />
     </div>
   )
