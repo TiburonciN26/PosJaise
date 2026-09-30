@@ -102,9 +102,46 @@ re-derived per tab:
 
 ### Supabase conventions (the sharp edges)
 
-- Migrations live in `supabase/sql/NNN_description.sql`, numbered
-  sequentially, each wrapped in `begin; ... commit;`. They document
-  *why*, not just *what*, in comments — keep that up when adding one.
+- Migrations live in `supabase/migrations/YYYYMMDDHHMMSS_description.sql`
+  (Supabase CLI convention), each wrapped in `begin; ... commit;`,
+  documenting *why*, not just *what*, in comments — keep that up when
+  adding one. **This folder is the source of truth as of migration 128.**
+  `supabase/sql/NNN_description.sql` is the historical/legacy record of
+  migrations 001–127, from before the local QA environment existed —
+  frozen, readable for context, never appended to. Don't create new files
+  there and don't duplicate a new migration into both folders.
+- Creating a new migration: run `supabase migration new <description>`
+  (or hand-name the file with the same `YYYYMMDDHHMMSS_` pattern)
+  directly inside `supabase/migrations/`. That file is what gets applied
+  to both environments — never draft it in `sql/` first.
+- QA loop before touching production: apply the migration to the local
+  Supabase test project with `supabase migration up` (applies only what's
+  pending, keeps whatever test data is already loaded in local Studio).
+  If a migration fails or local state gets messy, `supabase db reset`
+  rebuilds everything from scratch (all migrations + `seed.sql`) as a
+  reproducibility check, not a routine step. Verify with `npm run dev`
+  pointed at the local instance before moving on.
+  **If the migration fails locally, or any related local verification
+  fails, it must NOT be applied to production via MCP** until the
+  problem is fixed and the migration passes cleanly in local — never use
+  prod as the place to debug a migration that hasn't proven out locally.
+- Applying to production: passing locally is necessary but never
+  sufficient — it does NOT auto-authorize applying to prod. Once verified
+  locally, always ask the user for explicit confirmation before using MCP
+  to apply that migration to production; don't treat a prior approval
+  (of this or any other migration) as blanket authorization. Only after
+  that confirmation, apply the *same* SQL to prod via the Supabase MCP
+  tools (`apply_migration` / `execute_sql` / `list_projects`, project
+  `WedJaiseReact`). The MCP talks directly to the remote project and
+  doesn't read local files — paste the exact SQL from the `migrations/`
+  file so the repo and what's applied to prod never drift apart. If the
+  MCP is disconnected, still write the file to `migrations/` (never to
+  `sql/`) and tell the user to run it manually (SQL Editor in prod, or
+  `migration up` locally).
+- The local project isn't linked (`supabase link`) to the remote one —
+  `db push`/`db pull` aren't part of the flow today. If that changes
+  later, check that the remote migration history (via MCP) and the local
+  one haven't drifted out of sync.
 - **RLS and GRANTs are two separate, independently-enforced gates.**
   RLS row-filtering returns HTTP 200 with fewer/no rows. A missing
   column/table GRANT returns HTTP 403 for the *entire* request —
@@ -138,13 +175,6 @@ re-derived per tab:
   client can't self-report (e.g. "you may only review a service you
   actually had done") also goes through one of these instead of a raw
   table insert policy — see `guardar_mi_resena_servicio()`.
-- Applying migrations: the Supabase MCP tools
-  (`mcp__claude_ai_Supabase__apply_migration` / `execute_sql` /
-  `list_projects`) are the normal path when connected — the project is
-  `WedJaiseReact` (list projects to get the current id, it has changed
-  connection state mid-session before). If that MCP server is
-  disconnected, still write the numbered `.sql` file and tell the user
-  to run it in the Supabase SQL Editor; don't skip writing it.
 - Photo uploads follow one pattern everywhere (`lib/imagenes.js`):
   process/resize into a local blob on selection, upload only on Save,
   delete the *old* file only after the DB write for the new one
