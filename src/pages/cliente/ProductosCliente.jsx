@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, Search, ShoppingBag, Sparkles, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
@@ -69,10 +70,15 @@ export default function ProductosCliente() {
   // Productos (docs/diseno-productos/README.md, "Animación de entrada").
   const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
 
+  // QA-020: el calendario original (filas de categoría a 1500/1600 ms + 220 ms
+  // por fila) mantenía transparentes tarjetas ya cargadas ~1,7 s en cada
+  // entrada/regreso. Misma coreografía (hero, ofertas, destacados, filtros,
+  // filas) y mismas animaciones, con los retrasos comprimidos para que lo útil
+  // aparezca en ~0,5 s tras cargar.
   const ENTRADA_FIJA = esDesktop
-    ? { eyebrow: 150, foto: 200, bloque: 300, botones: 500, catalogoLinea: 650, fraseOfertas: 800, filaOfertas: 900, filaDestacados: 1100, filtros: 1300 }
-    : { eyebrow: 350, foto: 100, bloque: 480, botones: 650, catalogoLinea: 780, fraseOfertas: 900, filaOfertas: 1000, filaDestacados: 1150, filtros: 1400 }
-  const ENTRADA_FILA = { fila: esDesktop ? 1500 : 1600, paso: 220, carta: 120, entre: 90 }
+    ? { eyebrow: 100, foto: 100, bloque: 150, botones: 250, catalogoLinea: 300, fraseOfertas: 350, filaOfertas: 400, filaDestacados: 450, filtros: 500 }
+    : { eyebrow: 150, foto: 80, bloque: 200, botones: 280, catalogoLinea: 320, fraseOfertas: 360, filaOfertas: 400, filaDestacados: 450, filtros: 500 }
+  const ENTRADA_FILA = { fila: esDesktop ? 500 : 520, paso: 100, carta: 60, entre: 50 }
   const cintaMedidas = esDesktop ? CINTA_MEDIDAS.desktop : CINTA_MEDIDAS.movil
   const cintaPasoPx = cintaMedidas.ancho + cintaMedidas.separacion
 
@@ -80,24 +86,28 @@ export default function ProductosCliente() {
     let vigente = true
 
     async function cargar() {
-      const [productosRes, contactoRes, horarioRes] = await Promise.all([
-        supabase
-          .from('productos')
-          .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url, descripcion, destacado, nuevo, en_inicio')
-          .eq('activo', true)
-          .order('nombre'),
-        supabase.rpc('datos_contacto'),
-        supabase.rpc('horario_atencion'),
-      ])
+      const productosRes = await supabase
+        .from('productos')
+        .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url, descripcion, destacado, nuevo, en_inicio')
+        .eq('activo', true)
+        .order('nombre')
 
       if (!vigente) return
       setProductos(productosRes.data ?? [])
-      setContacto(contactoRes.data?.[0] ?? null)
-      setHorario(horarioRes.data?.[0] ?? null)
       setCargando(false)
     }
 
     cargar()
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  // QA-022: contacto/horario son secundarios: no bloquean la lista.
+  useEffect(() => {
+    let vigente = true
+    obtenerContacto().then((fila) => vigente && setContacto(fila))
+    obtenerHorario().then((fila) => vigente && setHorario(fila))
     return () => {
       vigente = false
     }

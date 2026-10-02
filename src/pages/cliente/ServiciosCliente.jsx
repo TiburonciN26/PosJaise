@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarPlus, HelpCircle, MapPin, MessageCircle, Search, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
@@ -65,35 +66,43 @@ export default function ServiciosCliente() {
   const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
 
   // Retrasos exactos de Main.dc.html/Movil.dc.html.
+  // QA-020: retrasos comprimidos (antes filas a 1000/1050 ms + 220 ms por fila,
+  // que mantenían transparentes tarjetas ya cargadas ~1,2 s); misma coreografía.
   const ENTRADA_FIJA = esDesktop
-    ? { eyebrow: 150, foto: 200, bloque: 300, botones: 500, catalogoLinea: 650, filtros: 800 }
-    : { eyebrow: 350, foto: 100, bloque: 480, botones: 650, catalogoLinea: 780, filtros: 900 }
-  const ENTRADA_FILA = { fila: esDesktop ? 1000 : 1050, paso: 220, carta: 120, entre: 90 }
+    ? { eyebrow: 100, foto: 100, bloque: 150, botones: 250, catalogoLinea: 300, filtros: 350 }
+    : { eyebrow: 150, foto: 80, bloque: 200, botones: 280, catalogoLinea: 320, filtros: 380 }
+  const ENTRADA_FILA = { fila: esDesktop ? 400 : 420, paso: 100, carta: 60, entre: 50 }
 
   useEffect(() => {
     let vigente = true
 
     async function cargar() {
-      const [serviciosRes, masPedidoRes, contactoRes, horarioRes] = await Promise.all([
+      const [serviciosRes, masPedidoRes] = await Promise.all([
         supabase
           .from('servicios')
           .select('id, nombre, categoria, precio, duracion_min, foto_url, descripcion, en_tendencia')
           .eq('activo', true)
           .order('nombre'),
         supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
-        supabase.rpc('datos_contacto'),
-        supabase.rpc('horario_atencion'),
       ])
 
       if (!vigente) return
       setServicios(serviciosRes.data ?? [])
       setMasPedidoIds((masPedidoRes.data ?? []).map((fila) => fila.servicio_id))
-      setContacto(contactoRes.data?.[0] ?? null)
-      setHorario(horarioRes.data?.[0] ?? null)
       setCargando(false)
     }
 
     cargar()
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  // QA-022: contacto/horario son secundarios: no bloquean la lista.
+  useEffect(() => {
+    let vigente = true
+    obtenerContacto().then((fila) => vigente && setContacto(fila))
+    obtenerHorario().then((fila) => vigente && setHorario(fila))
     return () => {
       vigente = false
     }

@@ -1,35 +1,21 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import { rutaInicialPara } from './config/navegacion.js'
+import { pagina, precargarPortalYRuta } from './config/paginasCliente.js'
 import RutaProtegida from './components/RutaProtegida.jsx'
 import Layout from './components/Layout.jsx'
 import PestanasCacheadas from './components/PestanasCacheadas.jsx'
-import PortalCliente from './pages/PortalCliente.jsx'
-import InicioCliente from './pages/cliente/InicioCliente.jsx'
-import MiPerfil from './pages/cliente/MiPerfil.jsx'
-import ServiciosCliente from './pages/cliente/ServiciosCliente.jsx'
-import DetalleServicioCliente from './pages/cliente/DetalleServicioCliente.jsx'
-import ProductosCliente from './pages/cliente/ProductosCliente.jsx'
-import DetalleProductoCliente from './pages/cliente/DetalleProductoCliente.jsx'
-import CitasCliente from './pages/cliente/CitasCliente.jsx'
-import HistorialCliente from './pages/cliente/HistorialCliente.jsx'
-import FidelizacionCliente from './pages/cliente/FidelizacionCliente.jsx'
-import OfertasCliente from './pages/cliente/OfertasCliente.jsx'
-import NosotrosCliente from './pages/cliente/NosotrosCliente.jsx'
-import CarritoCliente from './pages/cliente/CarritoCliente.jsx'
-import CarritoServiciosCliente from './pages/cliente/CarritoServiciosCliente.jsx'
-import MisResenasCliente from './pages/cliente/MisResenasCliente.jsx'
-import MisPuntosCliente from './pages/cliente/MisPuntosCliente.jsx'
-import DireccionesCliente from './pages/cliente/DireccionesCliente.jsx'
-import PedidosCliente from './pages/cliente/PedidosCliente.jsx'
-import NotificacionesCliente from './pages/cliente/NotificacionesCliente.jsx'
-import SeguridadCuentaCliente from './pages/cliente/SeguridadCuentaCliente.jsx'
-import ReferidosCliente from './pages/cliente/ReferidosCliente.jsx'
 
 // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
 // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
 const Login = lazy(() => import('./pages/Login.jsx'))
+
+// QA-021: el portal cliente (PortalCliente + ~20 páginas) viajaba en el bundle
+// inicial de TODOS los roles, incluido el POS que jamás lo usa. Ahora cada página
+// es un chunk precargable (ver config/paginasCliente.js por qué no React.lazy).
+const { PortalCliente } = pagina
+const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, FidelizacionCliente, OfertasCliente, NosotrosCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, MisPuntosCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente } = pagina
 
 function CargandoPantalla() {
   return (
@@ -48,6 +34,21 @@ function App() {
   // cliente puro (rol === 'CLIENTE', sin fila en "usuarios") no depende
   // de esto en absoluto, siempre entra por la primera condición.
   const vistaCliente = rol === 'CLIENTE' || (Boolean(rol) && rol !== 'CLIENTE' && modoVista === 'CLIENTE')
+
+  // El portal (y la página de la URL actual) se descargan ANTES de montarlo, con
+  // el mismo "Cargando..." de siempre: así React no muestra ni estrangula un
+  // fallback de Suspense (~300 ms medidos) y los POS no descargan nada de esto.
+  const [portalListo, setPortalListo] = useState(false)
+  useEffect(() => {
+    if (!vistaCliente) return undefined
+    let vigente = true
+    precargarPortalYRuta()
+      .catch(() => {})
+      .then(() => vigente && setPortalListo(true))
+    return () => {
+      vigente = false
+    }
+  }, [vistaCliente])
 
   if (cargando) {
     return <CargandoPantalla />
@@ -92,7 +93,17 @@ function App() {
             // POS, solo para personal) — su único árbol es este. Personal
             // en "modo cliente" (ver arriba) también cae acá, con la misma
             // sesión — MenuUsuarioCliente.jsx le suma un botón para volver.
-            <Route element={<PortalCliente />}>
+            <Route
+              element={
+                portalListo ? (
+                  <Suspense fallback={<CargandoPantalla />}>
+                    <PortalCliente />
+                  </Suspense>
+                ) : (
+                  <CargandoPantalla />
+                )
+              }
+            >
               <Route index element={<Navigate to="/inicio" replace />} />
               <Route path="inicio" element={<InicioCliente />} />
               <Route path="mi-perfil" element={<MiPerfil />} />

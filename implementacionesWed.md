@@ -5925,3 +5925,143 @@ Re-test en `testing` (4 archivos de prueba, 28 casos): QA-016, QA-017 y QA-018
 pasan sanos con `expectedFailureIDs` vacío; fallo de regresión detectado y
 corregido (arriba). Los casos CSV y TICKET fallan solo en solitario por la
 precondición `…-sale.json` (la crea otro caso de la suite completa).
+
+
+---
+
+## 26. Correcciones QA — QA-030 (retorno de foco, ciclo de página montada) y preparación de CSV/TICKET — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo frontend, Supabase Local TEST.
+
+**QA-030** (`useModalA11y.js`). La corrección de QA-017 capturaba el disparador
+en el render y lo anulaba al renderizar con `activo=false`, justo antes de que
+la limpieza del efecto intentara devolver el foco: en los diálogos cuya página
+permanece montada (Eliminar en Inventario, etc.) el foco terminaba en `BODY`.
+Nuevo ciclo: el disparador se captura en el render en que `activo` pasa a true
+(antes del commit, así un `autoFocus` no lo suplanta); no se anula al renderizar
+ni en la limpieza (StrictMode corre y repite el efecto al montar); un efecto
+aparte lo reinicia al pasar a inactivo, que corre DESPUÉS de las limpiezas del
+mismo commit; y solo se devuelve el foco si el disparador sigue conectado
+(`isConnected`). Cada activación vuelve a capturar (la fila 5 no devuelve el
+foco al botón de la fila 2).
+Pruebas nuevas en `tests/e2e/a11y-modales.spec.mjs`: ciclo "se desmonta"
+(Nuevo producto) y ciclo "página montada" (Inventario/Eliminar producto y
+Servicios/Eliminar servicio), abriendo con teclado real y sin confirmar nunca
+una eliminación: contención de foco (Tab/Shift+Tab), Escape, Cancelar,
+reapertura, otra fila, tercera apertura y retorno al disparador conectado;
+además el caso de cancelar pedido del portal (`phase2-delivery.spec.mjs`).
+Reproducido contra el hook anterior (falla Inventario) y verificado con el
+nuevo. Alcance honesto: se comprobaron 2 consumidores del ciclo "página montada"
+en el POS, 1 en el portal y 1 del ciclo "se desmonta"; el resto de los ~40
+usos del hook comparte el mismo código pero no tiene prueba propia.
+
+**CSV/TICKET.** Los casos leían `<runId>-sale.json`, creado por otro caso (POS)
+de otro archivo; con fixtures nuevos fallaban si corrían antes. Nuevo
+`tests/e2e/sale-fixture.mjs` (`ensureAnnulledSale`): crea por UI, en un contexto
+aislado (`qaContext`, orígenes externos bloqueados), un producto TEST propio y
+una venta de 3 unidades que anula, con archivo propio por ejecución
+(`…-csv-ticket-sale.json`). No toca el producto del caso del POS, conserva las
+aserciones funcionales y las guardas. Verificado ejecutándolos solos con
+fixtures nuevos y dentro del archivo completo.
+
+---
+
+## 27. Correcciones QA — Grupo 7: rendimiento (QA-020, QA-022, QA-021, QA-023) — 2026-10-02
+
+Rama `fix/qa-correcciones`. Solo Supabase Local TEST, cuenta CLIENTE ficticia,
+orígenes externos y Service Worker bloqueados. Sin migraciones.
+
+### Método (mismo antes y después)
+- **Catálogos y galería**: servidor de desarrollo (`npm run dev`, StrictMode
+  activo), contexto nuevo por escenario, N=5 cargas, mediana. "Tarjeta"= enlace
+  `a.aspect-square` de producto/servicio; "visible" = opacidad efectiva ≥ 0,05
+  durante 4 fotogramas seguidos (una versión previa contaba un destello de un
+  fotograma al navegar y se descartó); "asentadas" = todas las tarjetas en
+  pantalla con opacidad ≥ 0,99. Entrada directa = recarga en la ruta;
+  "navegando" = clic en el menú desde Inicio. Contacto retenido = solo la
+  petición `datos_contacto` demorada 1000 ms (no se alteran datos).
+- **Carga inicial**: build de producción local en `vite preview`, 390×844, N=3,
+  medianas; "limitado" = latencia 150 ms, 1,6/0,75 Mbps, CPU 4x (simulación, no
+  un teléfono). Bytes = tamaño transferido (codificado) de los `.js`.
+- Scripts y resultados crudos: `tests/e2e/performance-grupo7-*.mjs` y
+  `tests/e2e/results/performance-grupo7/`. Línea base coherente con la auditoría
+  de Codex (1744–1761 ms /productos, 1217–1266 ms /servicios; 1,002,616 B JS).
+
+### QA-020 y QA-022 — catálogos (ms, mediana)
+| Escenario | Tarjeta en DOM antes → después | Tarjeta visible antes → después | Asentadas antes → después |
+|---|---:|---:|---:|
+| /productos directa 1440×900 | 275 → 282 | 1930 → 877 | 3113 → 1810 |
+| /servicios directa 1440×900 | 276 → 278 | 1430 → 765 | 2613 → 1699 |
+| /productos directa 390×844 | 275 → 262 | 2030 → 863 | 3213 → 1797 |
+| /servicios directa 390×844 | 278 → 280 | 1480 → 781 | 2663 → 1714 |
+| /productos navegando desde Inicio | 58 → 60 | 1744 → 693 | 2927 → 1626 |
+| /servicios navegando desde Inicio | 61 → 56 | 1244 → 601 | 2427 → 1535 |
+| /productos con `datos_contacto` retenido 1 s | 1258 → 368 | 2913 → 993 | 4097 → 1925 |
+| /servicios con `datos_contacto` retenido 1 s | 1283 → 410 | 2429 → 894 | 3614 → 1828 |
+
+- **QA-022**: `ProductosCliente`/`ServiciosCliente` agrupaban lista + contacto +
+  horario en un `Promise.all`. Ahora la lista se muestra al llegar y
+  contacto/horario se piden aparte (`src/lib/datosNegocioWeb.js`, caché
+  compartida de 60 s con el pie, que antes repetía las dos consultas; un
+  error no se cachea). Con contacto retenido 1 s la primera tarjeta ya no
+  espera ese segundo.
+- **QA-020**: la causa era la coreografía de entrada (filas de categoría a
+  1500/1600 ms +220 ms por fila en Productos; 1000/1050 en Servicios), no la
+  carga. Se conservaron la coreografía y las animaciones, con los retrasos
+  comprimidos (filas a 500/520 y 400/420 ms, paso 100 ms; bloques fijos de
+  100–500 ms). Cambia una decisión de diseño aprobada (`docs/diseno-productos`,
+  `docs/diseno-servicios`, `docs/patrones/animacion-entrada.md`: los valores
+  exactos de esos documentos ya no coinciden) para dejar lo útil visible en
+  ~0,7–0,9 s; `prefers-reduced-motion` no cambia. La mejora se midió con el
+  mismo método; "asentadas" sigue ~1,5–1,8 s porque la duración de cada
+  animación (0,9 s) no se tocó.
+
+### QA-021 — carga inicial de código (tamaño transferido, 390×844)
+| Medida | Antes | Después |
+|---|---:|---:|
+| Archivo de entrada (build) | 1.003,88 kB (gzip 270,43) | 335 kB (gzip ~102,7) |
+| JS al abrir /login (local) | 279.843 B, 6 archivos | 164.794 B, 7 archivos |
+| FCP del login, local / limitado | 104 / 2144 ms | 68 / 1480 ms |
+| CAJERA: Entrar → menú, local / limitado | 236 / 944 ms | 248 / 948 ms |
+| CLIENTE: Entrar → menú, local / limitado | 240 / 914 ms | 246 / 936 ms |
+
+Qué se hizo: el portal cliente (`PortalCliente` + 20 páginas) deja de importarse
+de forma estática desde `App.jsx`; cada página es un chunk
+(`src/config/paginasCliente.js`). Dos hallazgos medidos en el camino:
+1. Con `React.lazy` el portal aparecía a ~520 ms aunque los chunks llegaban a
+   ~190 ms: React suspende siempre en el primer render de un `lazy` y
+   estrangula ~300 ms la revelación de un `Suspense` cuyo fallback ya se mostró.
+   Se sustituyó por un componente que lee el import con `use()` sobre una
+   promesa con su `status` registrado (resuelve de forma síncrona una vez
+   precargada), y `App` espera la precarga del portal y de la página de la
+   URL actual (con el mismo "Cargando...") antes de montarlo. Resultado:
+   CLIENTE Entrar → menú pasó de 876 a ~240 ms (local).
+2. Mover el portal fuera del arranque lo trasladaba a después del login
+   (CLIENTE limitado: 914 → 1493 ms). Mitigado precargándolo en reposo mientras
+   se muestra el formulario de login (el POS paga ~45 kB que antes cargaba
+   junto con ~115 kB más) y precargando en reposo las pestañas principales del
+   portal. El resultado neto: el POS y el login cargan antes (FCP −0,65 s con
+   red limitada), el CLIENTE tarda lo mismo tras "Entrar". Las páginas que no
+   son pestañas principales se descargan al primer uso.
+Limitación: no se midió caché del Service Worker/PWA (bloqueado para comparar
+contextos limpios); el precaché (`vite.config.js`) ya descarga todo en segundo
+plano en visitas siguientes.
+
+### QA-023 — fotos de galería de Inicio
+| Medida (Inicio, sin desplazarse) | Antes | Después |
+|---|---:|---:|
+| Fotos de galería descargadas | 4 archivos, 332.684 B | 0 |
+| Imágenes totales descargadas | 6 archivos, 536.431 B | 2 archivos, 203.747 B |
+| Tras recorrer la página | 4 archivos | 4 archivos, 6/6 imágenes cargadas |
+
+`loading="lazy"` solo no bastaba: la galería queda a ~1000–1400 px bajo el
+borde y el umbral nativo de Chrome (≥ 1250 px) las traía igual. Las fotos
+reciben su `src` cuando la galería se acerca a 300 px de la pantalla
+(IntersectionObserver); los contenedores tienen alto fijo y fondo, sin salto de
+diseño; `alt` intacto.
+
+### Límites
+Dev server con StrictMode (no equivale a producción), red/CPU simulados, un
+equipo, N pequeño (rango en los JSON). No se midió INP, un teléfono físico,
+GitHub Pages ni el precaché. No se verificó visualmente la animación;
+la comprobación visual y de accesibilidad queda a cargo del Re-test.
