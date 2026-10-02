@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Sparkles, Ticket, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
 import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
@@ -207,6 +208,7 @@ export default function InicioCliente() {
 
     async function cargar() {
       const ahoraIso = new Date().toISOString()
+      const miId = await obtenerMiClienteId()
       const [
         serviciosRes,
         masPedidoRes,
@@ -221,13 +223,16 @@ export default function InicioCliente() {
       ] = await Promise.all([
         supabase.from('servicios').select('id, nombre, categoria, precio, duracion_min, foto_url').eq('activo', true),
         supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
-        supabase
-          .from('citas')
-          .select('id, fecha_hora, cita_servicios(servicios(nombre))')
-          .gte('fecha_hora', ahoraIso)
-          .in('estado', ['PENDIENTE', 'CONFIRMADA'])
-          .order('fecha_hora')
-          .limit(1),
+        miId
+          ? supabase
+              .from('citas')
+              .select('id, fecha_hora, cita_servicios(servicios(nombre))')
+              .eq('cliente_id', miId)
+              .gte('fecha_hora', ahoraIso)
+              .in('estado', ['PENDIENTE', 'CONFIRMADA'])
+              .order('fecha_hora')
+              .limit(1)
+          : Promise.resolve({ data: [] }),
         supabase.rpc('mis_puntos'),
         supabase
           .from('promociones')

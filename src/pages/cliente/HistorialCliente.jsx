@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { History, Scissors, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { formatearSoles } from '../../lib/moneda.js'
-import { formatearFechaSoloDia } from '../../lib/fechas.js'
+import { formatearFechaISO, formatearFechaSoloDia } from '../../lib/fechas.js'
 
 // Historial de visitas — 100% lectura, sin RPC de escritura. Fuente:
 // registro_servicios (no citas): así aparece tanto lo agendado por la
@@ -18,13 +19,22 @@ export default function HistorialCliente() {
   useEffect(() => {
     let vigente = true
 
-    Promise.all([
-      supabase
-        .from('registro_servicios')
-        .select('id, fecha, precio, usuario_id, servicios(nombre)')
-        .order('fecha', { ascending: false }),
-      supabase.rpc('usuarios_para_citas'),
-    ]).then(([registrosRes, usuariosRes]) => {
+    // QA-011: filtro explícito por la clienta de la sesión (el personal en
+    // "Mi perfil de clienta" leería todos los registros por su RLS de staff).
+    obtenerMiClienteId()
+      .then((miId) =>
+        Promise.all([
+          miId
+            ? supabase
+                .from('registro_servicios')
+                .select('id, fecha, precio, usuario_id, servicios(nombre)')
+                .eq('cliente_id', miId)
+                .order('fecha', { ascending: false })
+            : Promise.resolve({ data: [] }),
+          supabase.rpc('usuarios_para_citas'),
+        ]),
+      )
+      .then(([registrosRes, usuariosRes]) => {
       if (!vigente) return
       setRegistros(registrosRes.data ?? [])
       setNombresPorUsuario(
@@ -69,7 +79,7 @@ export default function HistorialCliente() {
                     <p className="truncate text-sm font-medium text-white">
                       {registro.servicios?.nombre ?? 'Servicio'}
                     </p>
-                    <p className="text-xs text-white/60">{formatearFechaSoloDia(registro.fecha, { mesLargo: true })}</p>
+                    <p className="text-xs text-white/60">{formatearFechaSoloDia(formatearFechaISO(new Date(registro.fecha)), { mesLargo: true })}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-white/50">
                       <User className="h-3 w-3" />
                       {nombresPorUsuario.get(registro.usuario_id) ?? 'Personal'}

@@ -205,11 +205,16 @@ export default function Dashboard({ activo = true }) {
   }, [activo, filtro, personalizado.desde, personalizado.hasta])
 
   const ingresoBruto = metricas.ingresoProductos + metricas.ingresoServicios
+  // QA-024: ingresoProductos/ingresoServicios suman venta_items.subtotal (antes
+  // del descuento de la venta). Estadísticas parte de sum(ventas.total), ya
+  // descontado — la cascada debe partir del mismo ingreso neto en ambas
+  // pantallas, o la ganancia final difiere para el mismo período.
+  const ingresoNeto = redondear2(ingresoBruto - metricas.descuentos)
   const gananciaProductos = metricas.ingresoProductos - metricas.costoProductos
 
   const { gastosOperativos, utilidadNeta, montoDiezmo, gananciaFinal, metaEquilibrio } =
     calcularCascadaGanancia({
-      ingresoBruto,
+      ingresoBruto: ingresoNeto,
       costoProductos: metricas.costoProductos,
       comisionesPagadas: metricas.comisionesPagadas,
       gastosMes: metricas.gastosMes,
@@ -217,6 +222,7 @@ export default function Dashboard({ activo = true }) {
 
   const pasosPrevios = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto },
+    { etiqueta: 'Descuentos', valor: -metricas.descuentos },
     { etiqueta: '10% gastos operativos (estimado)', valor: -gastosOperativos },
     { etiqueta: 'Costo de productos vendidos', valor: -metricas.costoProductos },
     { etiqueta: 'Comisión pagada a asistentes', valor: -metricas.comisionesPagadas },
@@ -266,7 +272,7 @@ export default function Dashboard({ activo = true }) {
         <>
           {/* Punto de equilibrio: barra tipo termómetro */}
           <div className="mt-4">
-            <BarraTermometro filtro={filtro} ingresoBruto={ingresoBruto} meta={metaEquilibrio} />
+            <BarraTermometro filtro={filtro} ingresoBruto={ingresoNeto} meta={metaEquilibrio} />
           </div>
 
           {/* Resumen del período: lista (antes eran tarjetas sueltas) */}

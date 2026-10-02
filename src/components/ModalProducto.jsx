@@ -87,9 +87,16 @@ function validar(formulario) {
     }
   }
 
+  // parseInt a secas trunca en silencio ("5.7" -> 5, "5abc" -> 5) sin
+  // avisar — QA-003: comparar contra Number() del mismo texto detecta
+  // cualquier resto no entero que parseInt descartaría calladamente.
   const stockInicial = parseInt(formulario.stockInicial, 10)
-  if (Number.isNaN(stockInicial) || stockInicial < 0) {
-    return 'El stock inicial debe ser 0 o más.'
+  if (
+    Number.isNaN(stockInicial) ||
+    stockInicial < 0 ||
+    stockInicial !== Number(formulario.stockInicial)
+  ) {
+    return 'El stock debe ser un número entero de 0 o más (sin decimales).'
   }
 
   return null

@@ -297,7 +297,7 @@ export default function ProductosCliente() {
               <span>·</span>
               <span>Recojo en el local</span>
               <span>·</span>
-              <span>Envío a [ZONA]</span>
+              <span>Envío a domicilio</span>
             </div>
           </div>
 
@@ -571,7 +571,7 @@ export default function ProductosCliente() {
             {[
               { paso: 'Paso 1', titulo: 'Elige tus productos', texto: 'Toca un producto (o la flecha ↗) para ver sus detalles, elige la cantidad y agrégalo a tu carrito.' },
               { paso: 'Paso 2', titulo: 'Confirma tu pedido', texto: 'En el carrito aplica tu cupón, paga por Yape, Plin o transferencia y sube tu comprobante.' },
-              { paso: 'Paso 3', titulo: 'Recoge o recibe', texto: 'Te avisamos en Notificaciones cuando tu pedido esté listo para recoger o en camino a [ZONA].' },
+              { paso: 'Paso 3', titulo: 'Recoge o recibe', texto: 'Te avisamos en Notificaciones cuando tu pedido esté listo para recoger o en camino, según la entrega que elijas.' },
             ].map((item) => (
               <div key={item.paso} className="rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
                 <span className="text-[11px] tracking-widest text-[var(--lw-gold)]">{item.paso.toUpperCase()}</span>

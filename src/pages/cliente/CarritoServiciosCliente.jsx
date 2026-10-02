@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
@@ -318,12 +319,18 @@ export default function CarritoServiciosCliente() {
     let vigente = true
     const inicio = new Date(`${diaClave}T00:00:00-05:00`)
     const fin = sumarDias(inicio, 1)
-    supabase
-      .from('citas')
-      .select('id')
-      .gte('fecha_hora', inicio.toISOString())
-      .lt('fecha_hora', fin.toISOString())
-      .not('estado', 'in', '(CANCELADA,NO_ASISTIO)')
+    obtenerMiClienteId()
+      .then((miId) =>
+        miId
+          ? supabase
+              .from('citas')
+              .select('id')
+              .eq('cliente_id', miId)
+              .gte('fecha_hora', inicio.toISOString())
+              .lt('fecha_hora', fin.toISOString())
+              .not('estado', 'in', '(CANCELADA,NO_ASISTIO)')
+          : { data: [] },
+      )
       .then(({ data }) => {
         if (!vigente) return
         setYaTieneCitaEseDia((data ?? []).length > 0)

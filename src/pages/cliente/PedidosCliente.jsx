@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bike, MapPin, MessageCircle, ShoppingBag, Store, Ticket, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
 import { formatearSoles } from '../../lib/moneda.js'
@@ -53,15 +54,19 @@ export default function PedidosCliente() {
   useCerrarConEscape(() => setPedidoCancelando(null), Boolean(pedidoCancelando))
 
   async function cargar() {
+    const miId = await obtenerMiClienteId()
     const [pedidosRes, contactoRes] = await Promise.all([
-      supabase
-        .from('pedidos_web')
-        .select(
-          'id, tipo_entrega, direccion_entrega, costo_delivery, subtotal, descuento_cupon, cupon_codigo, ' +
-            'total, estado, metodo_pago, pago_verificado, fecha_entrega, hora_entrega, creado_en, ' +
-            'zonas_delivery(nombre), pedidos_web_items(id, nombre_producto, cantidad, precio_unitario, subtotal)',
-        )
-        .order('creado_en', { ascending: false }),
+      miId
+        ? supabase
+            .from('pedidos_web')
+            .select(
+              'id, tipo_entrega, direccion_entrega, costo_delivery, subtotal, descuento_cupon, cupon_codigo, ' +
+                'total, estado, metodo_pago, pago_verificado, fecha_entrega, hora_entrega, creado_en, ' +
+                'zonas_delivery(nombre), pedidos_web_items(id, nombre_producto, cantidad, precio_unitario, subtotal)',
+            )
+            .eq('cliente_id', miId)
+            .order('creado_en', { ascending: false })
+        : Promise.resolve({ data: [] }),
       supabase.rpc('datos_contacto'),
     ])
     setPedidos(pedidosRes.data ?? [])

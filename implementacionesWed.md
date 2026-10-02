@@ -5719,3 +5719,178 @@ de prueba `playwright.test.inicio@gmail.com` se conserva a pedido del
 usuario, para reusarla en la próxima sesión de debugging.
 
 `npm run build` y `npm run lint` sin errores ni advertencias nuevas.
+
+---
+
+## 20. Correcciones QA — Grupo 1: integridad de datos (QA-004, QA-003, QA-012) — 2026-10-02
+
+Rama `fix/qa-correcciones`. Trabajo solo contra Supabase Local TEST con datos
+ficticios; nada aplicado a producción. Evidencia de cada hallazgo: base
+Notion "QA — Sistema Jaise Pos y Wed". Estado en Notion sin tocar: todos
+quedan para Re-test de Codex (Verificado = defecto confirmado por el
+usuario, no corregido).
+
+**QA-004 — editar una cita podía dejarla sin servicios.** `ModalCita.jsx`
+guardaba una edición en 3 llamadas HTTP (UPDATE citas, DELETE
+cita_servicios, INSERT cita_servicios). Una recarga o corte de red entre
+el DELETE y el INSERT dejaba la cita persistida sin ningún servicio.
+Corrección: migración `20261002000001_guardar_cita_pos.sql` con el RPC
+`guardar_cita_pos` (SECURITY DEFINER, mismo gate `rol_actual() is not
+null` que las políticas RLS vigentes) que crea/edita la cita y reemplaza
+sus líneas en una sola transacción; `ModalCita.jsx` lo llama en vez de las
+3 llamadas. Precio y duración por línea siguen siendo editables en POS
+(no se recalculan del catálogo, a diferencia de `reprogramar_mi_cita_web`).
+Verificado por RPC contra Local: crear, editar, y un guardado inválido
+(servicio inexistente) falla sin borrar las líneas ni cambiar la nota
+(rollback). **Aviso para Re-test:** el caso Playwright QA-004 retiene el
+POST REST a `cita_servicios`; esa llamada ya no existe, así que el caso
+debe adaptarse (ahora el guardado es `POST /rest/v1/rpc/guardar_cita_pos`).
+
+**QA-003 — stock fraccionario se truncaba en silencio.** La columna
+`stock_actual` es `integer` (correcto), pero `validar()` de
+`ModalProducto.jsx` usaba `parseInt`, que descarta el resto sin avisar
+("2.7" → 2, "5abc" → 5). Ahora compara contra `Number()` del mismo texto
+y rechaza con mensaje claro. Sin migración.
+
+**QA-012 — dos atenciones el mismo día duplicaban visitas, puntos y
+sellos.** `registro_servicios.fecha` es `timestamptz` (hora exacta) y
+`mis_puntos()`, `mi_fidelizacion()`, `generar_cupon_fidelizacion()` y
+`mi_historial_fidelizacion()` contaban `count(distinct fecha)`: instantes
+distintos, no días distintos. Migración
+`20261002000002_fidelizacion_dia_lima.sql` trunca a día en hora de Perú
+(mismo criterio que `es_hoy()`); fórmulas y umbrales intactos.
+`mi_historial_fidelizacion()` además podía devolver el mismo día dos
+veces. Comprobado en SQL (08:00 y 19:00 del mismo día: antes 2, ahora 1);
+falta el Re-test end-to-end con un CLIENTE (la suite exige rama `testing`).
+
+`npm run build` sin errores.
+
+---
+
+## 21. Correcciones QA — Grupo 2: cálculos financieros (QA-024) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo Supabase Local TEST, sin migración.
+
+**QA-024 — Dashboard calculaba la ganancia antes de descuentos.** El
+Dashboard partía de `ingreso_productos + ingreso_servicios`
+(`venta_items.subtotal`, previo al descuento de la venta) y nunca restaba
+`descuentos`; Estadísticas parte de `sum(ventas.total)`, ya descontado.
+Para el mismo período con ventas descontadas la "Ganancia final" difería
+(también el 10% operativo, el diezmo y la meta de equilibrio, que se
+calculan sobre ese ingreso). Corrección en `Dashboard.jsx`: la cascada y la
+barra de equilibrio parten del ingreso neto (`bruto − descuentos`); se
+añadió el paso "Descuentos" a la cascada para que los números cuadren a la
+vista. Se conserva "Ingreso bruto" antes de descuentos en el resumen. No se
+tocaron `finanzas.js` ni las RPC (siguen siendo la única fuente de la
+cascada). Comprobado contra Local con una venta ficticia con 20% de
+descuento (anulada después): antes Dashboard −50.98 vs Estadísticas −52.12;
+ahora ambos −52.12. Pendiente: Re-test de Codex en UI.
+
+---
+
+## 22. Correcciones QA — Grupo 3: separación de roles e interfaz (QA-011, QA-001) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo Supabase Local TEST, sin migración y sin
+tocar RLS/GRANTs (las restricciones del backend se conservan).
+
+**QA-011 — "Mi perfil de clienta" del personal mostraba datos de otros
+clientes.** Alcance real (medido en Local): ADMINISTRADOR, CAJERA y
+ASISTENTE leen TODAS las filas de `citas` (32) y `registro_servicios`
+(65-70) por su RLS de personal, que es correcta para el POS; ADMINISTRADOR
+además lee todos los `pedidos_web` (11). El ticket citaba solo CAJERA, pero
+el defecto es de las pantallas del portal, que dependían solo de la RLS para
+acotar a "lo mío". Corrección: nuevo `src/lib/clienteWeb.js`
+(`obtenerMiClienteId()` → RPC `mi_cliente_id()`); `CitasCliente` (mes,
+próximas, historial), `HistorialCliente`, `InicioCliente` (próxima cita),
+`CarritoServiciosCliente` ("ya tienes cita ese día") y `PedidosCliente`
+filtran por esa clienta; sin perfil vinculado muestran vacío, nunca sin
+filtro. Para un CLIENTE real no cambia nada (su RLS ya lo acotaba).
+Comprobado en Local: con el filtro, un cliente con 4 citas devuelve 4 y 0
+ajenas. Fuera de alcance: `mis_puntos`/`mis_cupones`/etc. ya son RPC por
+`mi_cliente_id()`.
+
+**QA-001 — «Crear servicio» visible sin permiso.** La RLS
+(`servicios_insert_admin`) solo deja insertar al ADMINISTRADOR. Se oculta la
+opción en `ModalCita` y `ModalRegistroAtencion` salvo para ADMINISTRADOR (con
+un "No hay servicios que coincidan." para el resto). Comprobado en Local que
+CAJERA y ASISTENTE siguen rechazados por el servidor (RLS), es decir el
+defecto era solo de interfaz.
+
+`npm run build` y lint sin avisos nuevos. Pendiente: Re-test de Codex en UI.
+
+---
+
+## 23. Correcciones QA — Grupo 4: pedidos y cupones (QA-009, QA-005, QA-019) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo Supabase Local TEST. Una migración:
+`20261002000003_pedidos_cupones_ambiguedades_pago.sql` (sin aplicar a producción).
+Los tres defectos se reprodujeron antes de corregir (transacción con
+rollback, sesión simulada vía `request.jwt.claims`).
+
+- **QA-005** `reclamar_cupon_promocion()`: "column reference id is
+  ambiguous". `RETURNS TABLE(id, codigo, ...)` crea variables OUT que chocan
+  con `where id = p_promocion_id`; se califica `public.promociones.id`.
+- **QA-019** `confirmar_venta()` con cupón: "column reference codigo is
+  ambiguous" (mismo patrón, otro origen: `RETURNS TABLE(venta_id, codigo,
+  ...)` vs `where codigo = ...` del UPDATE a `cupones`). Se califica con la
+  tabla; cuerpo restante idéntico a la versión viva.
+- **QA-009** `verificar_pago_pedido_web()`: `pedidos_web.metodo_pago` guarda
+  `YAPE/PLIN/TRANSFERENCIA` y se pasaba tal cual a `confirmar_venta`;
+  `ventas_metodo_pago_check` solo acepta `Efectivo/Tarjeta/Transferencia/Yape`
+  (fallaban los tres medios, no solo Yape). Se traduce (YAPE→Yape,
+  TRANSFERENCIA→Transferencia) y, como Plin no tiene equivalente, se agrega
+  `'Plin'` al CHECK de ventas en lugar de registrarlo como otro medio;
+  `Estadisticas.jsx` e `Historial.jsx` ganan su color/filtro "Plin".
+
+Comprobado en Local (todo con rollback): reclamar una promoción es
+idempotente (mismo cupón, 1 solo cupón); venta POS con cupón del 20% →
+cupón CANJEADO y ligado a la venta, stock −1, `descuento_pct` 20; anular →
+cupón DISPONIBLE sin venta y stock restaurado. Verificar pago de pedidos
+YAPE, PLIN y TRANSFERENCIA (este último con cupón): venta con el medio
+correcto, pedido LISTO y ligado, stock descontado en los 3 productos;
+anular las tres ventas → stock restaurado y cupón DISPONIBLE. No se abordó la
+entrega del pedido ni la reseña de compra (ver ENTREGA-CLAUDE.md).
+`npm run build` sin errores. Pendiente: Re-test de Codex en UI.
+
+---
+
+## 24. Correcciones QA — Grupo 5: validaciones y funcionamiento de interfaz (QA-014, 006, 015, 013, 010, 008, 007) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo frontend (sin migración). Cada causa se
+confirmó leyendo el código y, donde aplicaba, contra Supabase Local.
+
+- **QA-014** `ModalGasto.jsx`: `parseFloat("12abc")` daba 12. Ahora se valida
+  y guarda con `Number()` del texto completo (rechaza "12abc"; "1,5" con coma
+  también se rechaza en vez de guardarse como 1). Mismo patrón existe en
+  precio/costo de `ModalProducto.jsx`; fuera de este ticket, sin tocar.
+- **QA-006** `MiPerfil.jsx` + `clienteWeb.js#telefonoValido`: solo se admiten
+  dígitos con separadores habituales y "+" inicial, 7 a 15 dígitos. Validación
+  de interfaz; la RPC `vincular_o_crear_cliente_web` no se modificó.
+- **QA-015** `MiPerfil.jsx`: "Editar" quedaba habilitado mientras
+  `PerfilClienteContext` aún cargaba (formulario con Nombre vacío). Ahora se
+  deshabilita y `empezarEdicion` no hace nada hasta que termina la carga.
+- **QA-013** `Historial.jsx`: la búsqueda comparaba solo contra `VEN019`, pero
+  la pantalla muestra `V019`. Ahora también compara contra el código corto.
+- **QA-010** `HistorialCliente.jsx`: `registro_servicios.fecha` es
+  `timestamptz` pero se pasaba a `formatearFechaSoloDia` (pensada para `date`),
+  que daba "NaN de septiembre". Se convierte antes a día de Lima con
+  `formatearFechaISO`.
+- **QA-008** `DetalleProductoCliente.jsx` y `DetalleServicioCliente.jsx`:
+  `mi_resena_*()` devuelve una fila con todo nulo cuando no hay reseña (objeto
+  truthy) y el botón decía "Editar tu reseña". Solo cuenta si trae `id`
+  (el detalle de servicio tenía el mismo defecto; `CitasCliente` ya lo
+  resolvía así).
+- **QA-007** marcadores sin completar: `[ZONA]`, `[S/ X]`, `[7 días]`,
+  `[1–2 días]` en `ProductosCliente.jsx` y `DetalleProductoCliente.jsx`. El
+  envío ahora muestra "desde S/ {costo más bajo de `zonas_delivery` activas}"
+  (nuevo `src/lib/zonasDelivery.js`). **Decisión de negocio pendiente:** no
+  existe configuración de plazo de cambios; en vez de inventar "7 días" se
+  dejó "Solo con el producto sellado y sin usar. Consulta el plazo con el
+  negocio." Queda un fallback `[S/ X]` en `DetalleServicioCliente.jsx:553`
+  (adelanto mínimo, solo si el negocio no lo cargó) fuera del alcance del
+  ticket.
+
+Comprobado con casos concretos (montos, teléfonos, fechas con hora cerca de
+medianoche UTC, búsqueda V019/v019/VEN019/019, y la RPC de reseña vacía contra
+Local). `npm run build` sin errores. QA-015, QA-008 y QA-007 son de interfaz:
+pendientes de Re-test de Codex en pantalla.
