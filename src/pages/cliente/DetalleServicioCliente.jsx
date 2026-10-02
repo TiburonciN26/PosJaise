@@ -66,7 +66,7 @@ export default function DetalleServicioCliente() {
   const { usuario } = useAuth()
   const { mostrarToast } = useToast()
   const { serviciosCarrito, agregarServicio, quitarServicio } = useCarritoCliente()
-  const { adelantoMinimo, cancelacionPlazoHoras } = useEstadoNegocio()
+  const { adelantoMinimo, cancelacionPlazoHoras, cargando: cargandoNegocio } = useEstadoNegocio()
 
   const [servicio, setServicio] = useState(null)
   const [galeria, setGaleria] = useState([])
@@ -550,8 +550,14 @@ export default function DetalleServicioCliente() {
             <span className="flex flex-col gap-1">
               <span className="text-[13.5px] font-semibold text-white">Adelanto obligatorio para separar tu cita</span>
               <span className="text-[12.5px] leading-relaxed text-white/60">
-                Deja el mínimo de {adelantoMinimo != null ? formatearSoles(adelantoMinimo) : '[S/ X]'} o paga el
-                total. Por Yape, Plin o transferencia; se descuenta del total.
+                {/* QA-029: sin adelanto configurado (null) el sistema exige pagar el total
+                    (reservar_cita_web usa coalesce(adelanto_minimo, precio_total) y el carrito
+                    igual): se dice eso, sin inventar un monto ni mostrar un marcador. */}
+                {cargandoNegocio
+                  ? 'Cargando las condiciones de pago…'
+                  : adelantoMinimo != null
+                    ? `Deja el mínimo de ${formatearSoles(Number(adelantoMinimo))} o paga el total. Por Yape, Plin o transferencia; se descuenta del total.`
+                    : 'Para separar tu cita se paga el total del servicio por adelantado (el negocio aún no define un adelanto menor). Por Yape, Plin o transferencia.'}
               </span>
             </span>
           </div>
@@ -559,9 +565,17 @@ export default function DetalleServicioCliente() {
             <Clock className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
               <span className="text-[13.5px] font-semibold text-white">
-                Cambios o cancelación hasta {cancelacionPlazoHoras != null ? `${cancelacionPlazoHoras} h` : '[24 h]'} antes
+                {cargandoNegocio
+                  ? 'Cambios o cancelación'
+                  : cancelacionPlazoHoras != null
+                    ? `Cambios o cancelación hasta ${cancelacionPlazoHoras} h antes`
+                    : 'Cambios o cancelación: consulta el plazo con el negocio'}
               </span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">Después de ese plazo, el adelanto no se devuelve.</span>
+              <span className="text-[12.5px] leading-relaxed text-white/60">
+                {cancelacionPlazoHoras != null || cargandoNegocio
+                  ? 'Después de ese plazo, el adelanto no se devuelve.'
+                  : 'Pasado el plazo que te indique el negocio, el adelanto no se devuelve.'}
+              </span>
             </span>
           </div>
           <div className="flex gap-3.5 px-6 py-5">
