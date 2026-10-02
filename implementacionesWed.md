@@ -6065,3 +6065,98 @@ Dev server con StrictMode (no equivale a producción), red/CPU simulados, un
 equipo, N pequeño (rango en los JSON). No se midió INP, un teléfono físico,
 GitHub Pages ni el precaché. No se verificó visualmente la animación;
 la comprobación visual y de accesibilidad queda a cargo del Re-test.
+
+
+---
+
+## 28. Correcciones QA — QA-027, QA-028, QA-025, QA-029, QA-026 — 2026-10-02
+
+Rama `fix/qa-correcciones`. Solo Supabase Local TEST con datos ficticios. Una
+migración nueva (`20261002000004`), aplicada únicamente en Local (nada en
+producción). Pruebas de regresión en `tests/e2e/qa-025-029.spec.mjs`; cada caso
+falló contra el código/BD anteriores (reproducción previa) y pasa ahora.
+
+### QA-027 — anular la venta de un pedido web
+- **Causa:** `verificar_pago_pedido_web()` deja el pedido LISTO, `pago_verificado`
+  y `venta_id`; `anular_venta()` (096) repone stock y deshace cupón/atención pero
+  no tocaba el pedido, así que seguía LISTO y el panel permitía entregarlo con
+  el stock ya repuesto. Reproducido antes por SQL (pedido `LISTO` y UPDATE a
+  `ENTREGADO` aceptado tras anular) y por UI (la prueba falla en `LISTO`).
+- **Regla aplicada (sin inventar estados):** al anular la venta, los pedidos
+  vinculados pasan a `CANCELADO` (estado ya existente; el trigger de
+  notificaciones avisa a la clienta). `pago_verificado` no se reescribe (el pago
+  sí se recibió; devolver el dinero sigue siendo trato directo con el negocio, igual
+  que en `cancelar_mi_pedido_web`, 103). Un trigger `BEFORE UPDATE OF estado`
+  rechaza mover a LISTO/ENTREGADO un pedido cuya venta está ANULADA (UPDATE crudo,
+  pestaña desactualizada), así que no depende de ocultar el botón. La segunda
+  anulación ya fallaba ("Esta venta ya está anulada") y no repone stock otra vez.
+- **UI:** `PedidosWeb.cambiarEstado` muestra el motivo del backend y refresca.
+- **Migración:** `supabase/migrations/20261002000004_anular_venta_concilia_pedido_web.sql`
+  (`create or replace anular_venta` + función/trigger `validar_pedido_web_venta_vigente`).
+- **Verificado:** ciclo completo por UI (verificar → anular en Historial →
+  stock 9→10, pedido CANCELADO con `pago_verificado`), recarga, pestaña vieja
+  que pulsa "Marcar entregado" (toast con el motivo), PATCH directo a ENTREGADO y
+  LISTO rechazados, segunda anulación rechazada sin doble reposición, la clienta
+  ve "Cancelado". Además por SQL: pedido ya ENTREGADO y anulado por una CAJERA →
+  CANCELADO.
+- **DECISIÓN DE NEGOCIO PENDIENTE:** `CANCELADO` es el estado existente más cercano;
+  si el negocio quiere un estado propio (p. ej. "DEVUELTO") o otro tratamiento para
+  pedidos ya ENTREGADOS, se define aparte. Observado y NO tocado: el botón
+  "Cancelar" del panel sobre un pedido LISTO (ya con venta) sigue siendo un UPDATE
+  de estado sin anular la venta ni reponer stock.
+
+### QA-028 — costo y precio con texto parcial
+- **Causa:** `ModalProducto` validaba y convertía con `parseFloat` ("5abc" → 5).
+- **Cambio:** `leerImporte()` en `src/lib/moneda.js`: texto COMPLETO, dígitos con
+  punto decimal opcional y hasta 2 decimales (la columna es `numeric(10,2)`: con
+  más decimales se redondearía en silencio). Rechaza letras, espacios internos,
+  `1e1`, `0x10`, `Infinity`, coma decimal (igual que Gastos, QA-014), negativos
+  y vacío. Costo 0 sigue admitido; precio > 0. También se aplicó a "Precio antes
+  de la oferta" (mismo patrón, sugerido por el ticket). Mensajes: vacío/negativo
+  conservan los textos de siempre; texto parcial/decimales de más tienen aviso
+  propio. La validación de stock entero (QA-003) no cambia.
+- **Verificado:** 16 entradas inválidas rechazadas sin ninguna escritura al
+  servidor; alta con 5.5 / 12.50; persistencia tras recarga; edición inválida
+  rechazada; edición válida (costo 0, precio 8.25) persistida.
+- **Límite:** un administrador que antes escribía "12,5" ahora recibe el aviso (no
+  se interpreta la coma, para no confundirla con separador de miles).
+
+### QA-025 — etiqueta en Estadísticas
+- El importe de la tarjeta es `sum(ventas.total)` (después de descuentos; también
+  incluye el delivery cobrado, que se suma tras el descuento). Se rotula **Ingreso
+  neto**; Dashboard conserva Ingreso bruto / Descuentos / neto. Fórmulas sin cambio.
+- **Verificado:** con una venta POS ficticia con 20 % de descuento, "Ingreso neto" de
+  Estadísticas = bruto − descuentos de Dashboard (Este mes), y ya no existe "Ingreso bruto"
+  en Estadísticas.
+- **Límite/observación:** en ventas con delivery (pedidos web con envío) Estadísticas
+  incluye el envío y la cascada del Dashboard parte de los ítems: es una diferencia
+  distinta, no cubierta aquí (no se probó una venta con delivery).
+
+### QA-029 — marcadores en el detalle de servicio
+- Sin `adelanto_minimo` el sistema ya exige pagar el total (`reservar_cita_web` usa
+  `coalesce(adelanto_minimo, precio_total)` y el carrito igual): el texto lo dice, sin
+  inventar un monto. Sin `cancelacion_plazo_horas` se escribe "consulta el plazo con el
+  negocio" (misma decisión que QA-007), sin inventar horas. Mientras la
+  configuración carga no se muestra ninguna condición provisional.
+- **Causa adicional:** `EstadoNegocioProvider` marcaba `cargando=false` cuando aún no
+  había sesión (la autenticación resolvía), mostrando el texto de "sin configurar" antes
+  de que llegara la fila; ahora espera a la autenticación.
+- **Verificado:** ausente (estado real de Local), presente, límites 0.01/1 h y
+  99 999 999.99/720 h (el CHECK admite > 0), y carga tardía (muestreo durante 2,5 s).
+- **DECISIÓN PENDIENTE:** el backend `cancelar_mi_cita_web` fija 3 h y el carrito/mis citas
+  usan 3 h por defecto; el detalle no las muestra porque el ticket pide no publicar un
+  plazo no definido. Si el negocio prefiere mostrar 3 h, es un cambio de una línea.
+
+### QA-026 — moderación de reseñas de producto
+- `resenas_producto` (123) ya permite SELECT/UPDATE solo a administración (`es_admin()`)
+  y la lista pública filtra `APROBADA`: **no se tocó RLS ni migraciones**. Faltaba la
+  pantalla: `ResenasWeb` solo leía `resenas`. Ahora lista también `resenas_producto`
+  (rotuladas "Producto: …" vs "Reseña general", búsqueda por clienta o producto) y usa el
+  mismo flujo Aprobar / Rechazar / Quitar de la Web.
+- **Verificado:** compra → entrega → reseña PENDIENTE → aparece en Reseñas → aprobar
+  (recarga: Publicada; pública en el detalle) → quitar (No publicada; ya no pública);
+  la clienta no puede autoaprobarse (PATCH afecta 0 filas) y una CAJERA no lee ni
+  modifica reseñas pendientes.
+- **Observado, fuera de este ticket:** `resenas_servicio` (116) tiene el mismo patrón
+  (nace PENDIENTE, solo admin la actualiza) y tampoco tiene pantalla de moderación.
+  No se tocó; conviene un ticket aparte.

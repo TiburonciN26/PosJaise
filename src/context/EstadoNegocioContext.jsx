@@ -9,7 +9,7 @@ const EstadoNegocioContext = createContext(null)
 // conectado la lee al montar y se mantiene al día vía Realtime, sin
 // necesidad de recargar la página.
 export function EstadoNegocioProvider({ children }) {
-  const { session } = useAuth()
+  const { session, cargando: cargandoAuth } = useAuth()
   // Fail-open a propósito: esto es solo para la UI (mostrar el aviso,
   // habilitar/deshabilitar botones). La barrera real está en el servidor
   // (RLS + RPCs en 45_negocio_cerrado_bloquea_escrituras.sql), así que un
@@ -31,14 +31,17 @@ export function EstadoNegocioProvider({ children }) {
   // Adelanto/cancelación configurables por el negocio (migración 115) —
   // el Detalle del servicio los muestra en la franja "Adelanto y pago" en
   // vez del placeholder [S/ X] / [24 h]; null = el negocio no lo cargó
-  // todavía, y esa pantalla sigue mostrando el placeholder.
+  // todavía, y esa pantalla muestra un texto alternativo claro (QA-029).
   const [adelantoMinimo, setAdelantoMinimo] = useState(null)
   const [cancelacionPlazoHoras, setCancelacionPlazoHoras] = useState(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
     if (!session) {
-      setCargando(false)
+      // QA-029: sin sesión AÚN (la auth sigue resolviendo la sesión guardada) no
+      // es "sin configuración": marcarlo como cargado haría que el detalle del
+      // servicio mostrara el texto de "no configurado" antes de que llegue la fila.
+      if (!cargandoAuth) setCargando(false)
       return undefined
     }
 
@@ -89,7 +92,7 @@ export function EstadoNegocioProvider({ children }) {
       vigente = false
       supabase.removeChannel(canal)
     }
-  }, [session])
+  }, [session, cargandoAuth])
 
   // El servidor decide quién puede llamar esto (RLS admin-only) — acá no
   // se repite ese chequeo, solo se propaga el error si Supabase lo rechaza.

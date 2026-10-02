@@ -347,10 +347,12 @@ export default function Estadisticas({ activo = true }) {
         <EsqueletoResumen cantidad={8} />
       ) : (
         <>
-          {/* 1. KPIs comparativos */}
+          {/* 1. KPIs comparativos. QA-025: el importe es sum(ventas.total), es decir
+              DESPUÉS de descuentos (en Dashboard "Ingreso bruto" es el importe ANTES del
+              descuento): se rotula "Ingreso neto" para no mezclar los dos conceptos. */}
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <TarjetaComparativa
-              etiqueta="Ingreso bruto"
+              etiqueta="Ingreso neto"
               valor={actual.ingresoBruto}
               anterior={anterior.ingresoBruto}
             />

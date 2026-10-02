@@ -16,3 +16,15 @@ export function redondear2(valor) {
 export function sumarMontos(items, seleccionar = (x) => x) {
   return redondear2(items.reduce((acumulado, item) => acumulado + seleccionar(item), 0))
 }
+
+// QA-028: parseFloat acepta un prefijo numérico ("12abc" -> 12) y Number()
+// acepta "1e3", "0x10" o "Infinity". Para un importe tecleado se exige el texto
+// COMPLETO: dígitos con punto decimal opcional y hasta 2 decimales (la columna
+// es numeric(10,2); más decimales se redondearían en silencio). Devuelve NaN si
+// no cumple (vacío, negativo, letras, coma, notación científica, 3+ decimales).
+// La coma decimal no se admite: es lo mismo que hace Gastos (QA-014).
+export function leerImporte(texto) {
+  const limpio = String(texto ?? '').trim()
+  if (!/^(?:\d{1,8}(?:\.\d{1,2})?|\.\d{1,2})$/.test(limpio)) return Number.NaN
+  return Number(limpio)
+}

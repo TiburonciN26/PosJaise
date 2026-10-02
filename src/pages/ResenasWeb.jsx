@@ -32,6 +32,15 @@ function numeroWhatsapp(telefono) {
 // ve público hasta que el admin la aprueba acá. Sin crear/editar
 // contenido — el texto lo escribe la clienta, el admin solo aprueba o
 // rechaza.
+//
+// QA-026: las reseñas POR PRODUCTO (resenas_producto, migración 123) también
+// nacen PENDIENTE y prometen "revisión antes de publicarse", pero este panel
+// solo leía `resenas`, así que nunca llegaban a un administrador. Ahora se
+// listan en el mismo panel, rotuladas con el producto para distinguirlas de
+// la reseña general, y se aprueban/rechazan con el mismo flujo. No cambia
+// RLS: resenas_producto ya permite SELECT/UPDATE al administrador
+// (es_admin()) y la lista pública sigue filtrando por estado = 'APROBADA'.
+const TABLA_POR_ORIGEN = { GENERAL: 'resenas', PRODUCTO: 'resenas_producto' }
 export default function ResenasWeb({ activo = true }) {
   const { mostrarToast } = useToast()
 
@@ -45,16 +54,26 @@ export default function ResenasWeb({ activo = true }) {
 
   async function cargarResenas(silencioso = false) {
     if (!silencioso) setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('resenas')
-      .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono)')
-      .order('creado_en', { ascending: false })
+    const [generales, deProducto] = await Promise.all([
+      supabase
+        .from('resenas')
+        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono)')
+        .order('creado_en', { ascending: false }),
+      supabase
+        .from('resenas_producto')
+        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), productos(nombre)')
+        .order('creado_en', { ascending: false }),
+    ])
 
-    if (errorConsulta) {
+    if (generales.error || deProducto.error) {
       setError('No se pudo cargar las reseñas.')
     } else {
       setError(null)
-      setResenas(data ?? [])
+      const todas = [
+        ...(generales.data ?? []).map((r) => ({ ...r, origen: 'GENERAL' })),
+        ...(deProducto.data ?? []).map((r) => ({ ...r, origen: 'PRODUCTO' })),
+      ].sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
+      setResenas(todas)
     }
     setCargando(false)
   }
@@ -79,7 +98,7 @@ export default function ResenasWeb({ activo = true }) {
   async function cambiarEstado(resena, estado) {
     setActualizando(resena.id)
     const { error: errorActualizar } = await supabase
-      .from('resenas')
+      .from(TABLA_POR_ORIGEN[resena.origen])
       .update({ estado, actualizado_en: new Date().toISOString() })
       .eq('id', resena.id)
     setActualizando(null)
@@ -94,9 +113,13 @@ export default function ResenasWeb({ activo = true }) {
   }
 
   const filtradas = busqueda.trim()
-    ? resenas.filter((r) =>
-        (r.clientes?.nombre ?? '').toLowerCase().includes(busqueda.trim().toLowerCase()),
-      )
+    ? resenas.filter((r) => {
+        const termino = busqueda.trim().toLowerCase()
+        return (
+          (r.clientes?.nombre ?? '').toLowerCase().includes(termino) ||
+          (r.productos?.nombre ?? '').toLowerCase().includes(termino)
+        )
+      })
     : resenas
 
   return (
@@ -108,7 +131,7 @@ export default function ResenasWeb({ activo = true }) {
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
-          placeholder="Buscar por clienta..."
+          placeholder="Buscar por clienta o producto..."
           tema="red"
         />
       </div>
@@ -126,14 +149,14 @@ export default function ResenasWeb({ activo = true }) {
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtradas.map((resena) => {
-            const abierto = abiertos.has(resena.id)
+            const abierto = abiertos.has(`${resena.origen}-${resena.id}`)
             const etiqueta = ETIQUETAS_ESTADO[resena.estado] ?? ETIQUETAS_ESTADO.PENDIENTE
 
             return (
-              <div key={resena.id} className="rounded-lg border border-border bg-surface">
+              <div key={`${resena.origen}-${resena.id}`} className="rounded-lg border border-border bg-surface">
                 <div
-                  onClick={() => alternarAbierto(resena.id)}
-                  onKeyDown={manejarActivacionTeclado(() => alternarAbierto(resena.id))}
+                  onClick={() => alternarAbierto(`${resena.origen}-${resena.id}`)}
+                  onKeyDown={manejarActivacionTeclado(() => alternarAbierto(`${resena.origen}-${resena.id}`))}
                   role="button"
                   tabIndex={0}
                   aria-expanded={abierto}
@@ -145,6 +168,11 @@ export default function ResenasWeb({ activo = true }) {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink">
                       {resena.clientes?.nombre ?? 'Cliente'}
+                    </p>
+                    <p className="truncate text-[11px] text-ink/60">
+                      {resena.origen === 'PRODUCTO'
+                        ? `Producto: ${resena.productos?.nombre ?? 'eliminado'}`
+                        : 'Reseña general'}
                     </p>
                     <div className="flex gap-0.5">
                       {Array.from({ length: 5 }, (_, i) => (

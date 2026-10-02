@@ -106,7 +106,10 @@ export default function PedidosWeb({ activo = true }) {
     setActualizando(null)
 
     if (errorActualizar) {
-      mostrarToast('No se pudo actualizar el pedido.', 'error')
+      // QA-027: el backend rechaza entregar un pedido cuya venta se anuló
+      // (pestaña desactualizada); se muestra su motivo y se refresca el estado.
+      mostrarToast(errorActualizar.message || 'No se pudo actualizar el pedido.', 'error')
+      cargarPedidos(true)
       return
     }
 

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Camera, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { leerImporte } from '../lib/moneda.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
@@ -64,23 +65,32 @@ function formularioDesdeProducto(producto) {
   }
 }
 
+// QA-028: vacío o negativo conservan el mensaje de siempre; un texto que mezcla
+// letras/símbolos o trae más de 2 decimales (antes se guardaba solo el prefijo
+// numérico) recibe un aviso propio.
+function mensajeImporte(texto, mensajeBase, nombre) {
+  const limpio = texto.trim()
+  if (limpio === '' || /^-\d*\.?\d+$/.test(limpio)) return mensajeBase
+  return `${nombre} debe ser un importe completo: solo números y hasta 2 decimales, sin letras ni símbolos.`
+}
+
 function validar(formulario) {
   if (!formulario.nombre.trim()) return 'El nombre es obligatorio.'
 
-  const costo = parseFloat(formulario.costo)
-  if (Number.isNaN(costo) || costo < 0) {
-    return 'El costo debe ser un número mayor o igual a 0.'
+  const costo = leerImporte(formulario.costo)
+  if (Number.isNaN(costo)) {
+    return mensajeImporte(formulario.costo, 'El costo debe ser un número mayor o igual a 0.', 'El costo')
   }
 
-  const precio = parseFloat(formulario.precio)
+  const precio = leerImporte(formulario.precio)
   if (Number.isNaN(precio) || precio <= 0) {
-    return 'El precio de venta debe ser un número mayor a 0.'
+    return mensajeImporte(formulario.precio, 'El precio de venta debe ser un número mayor a 0.', 'El precio de venta')
   }
 
   if (formulario.precioAntes.trim()) {
-    const precioAntes = parseFloat(formulario.precioAntes)
+    const precioAntes = leerImporte(formulario.precioAntes)
     if (Number.isNaN(precioAntes) || precioAntes <= 0) {
-      return 'El precio antes debe ser un número mayor a 0.'
+      return mensajeImporte(formulario.precioAntes, 'El precio antes debe ser un número mayor a 0.', 'El precio antes')
     }
     if (precioAntes <= precio) {
       return 'El precio antes debe ser mayor al precio de venta actual.'
@@ -278,8 +288,9 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }
 
-  const costoNumerico = parseFloat(formulario.costo) || 0
-  const precioNumerico = parseFloat(formulario.precio) || 0
+  // Solo para la vista previa de Ganancia; guardar() valida antes con validar().
+  const costoNumerico = leerImporte(formulario.costo) || 0
+  const precioNumerico = leerImporte(formulario.precio) || 0
   const ganancia = precioNumerico - costoNumerico
 
   // La categoría actual del producto puede no estar en categoriasExistentes
@@ -331,7 +342,7 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
       categoria: categoriaFinal || null,
       subcategoria: formulario.subcategoria.trim() || null,
       precio: precioNumerico,
-      precio_antes: formulario.precioAntes.trim() ? parseFloat(formulario.precioAntes) : null,
+      precio_antes: formulario.precioAntes.trim() ? leerImporte(formulario.precioAntes) : null,
       oferta_hasta: formulario.ofertaHasta || null,
       costo: costoNumerico,
       stock_actual: parseInt(formulario.stockInicial, 10),
