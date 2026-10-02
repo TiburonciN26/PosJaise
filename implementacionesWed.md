@@ -5764,3 +5764,24 @@ veces. Comprobado en SQL (08:00 y 19:00 del mismo día: antes 2, ahora 1);
 falta el Re-test end-to-end con un CLIENTE (la suite exige rama `testing`).
 
 `npm run build` sin errores.
+
+---
+
+## 21. Correcciones QA — Grupo 2: cálculos financieros (QA-024) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo Supabase Local TEST, sin migración.
+
+**QA-024 — Dashboard calculaba la ganancia antes de descuentos.** El
+Dashboard partía de `ingreso_productos + ingreso_servicios`
+(`venta_items.subtotal`, previo al descuento de la venta) y nunca restaba
+`descuentos`; Estadísticas parte de `sum(ventas.total)`, ya descontado.
+Para el mismo período con ventas descontadas la "Ganancia final" difería
+(también el 10% operativo, el diezmo y la meta de equilibrio, que se
+calculan sobre ese ingreso). Corrección en `Dashboard.jsx`: la cascada y la
+barra de equilibrio parten del ingreso neto (`bruto − descuentos`); se
+añadió el paso "Descuentos" a la cascada para que los números cuadren a la
+vista. Se conserva "Ingreso bruto" antes de descuentos en el resumen. No se
+tocaron `finanzas.js` ni las RPC (siguen siendo la única fuente de la
+cascada). Comprobado contra Local con una venta ficticia con 20% de
+descuento (anulada después): antes Dashboard −50.98 vs Estadísticas −52.12;
+ahora ambos −52.12. Pendiente: Re-test de Codex en UI.
