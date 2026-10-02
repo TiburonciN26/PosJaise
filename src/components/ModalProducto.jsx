@@ -83,15 +83,17 @@ function validar(formulario) {
   }
 
   const precio = leerImporte(formulario.precio)
-  if (Number.isNaN(precio) || precio <= 0) {
+  if (Number.isNaN(precio)) {
     return mensajeImporte(formulario.precio, 'El precio de venta debe ser un número mayor a 0.', 'El precio de venta')
   }
+  if (precio <= 0) return 'El precio de venta debe ser un número mayor a 0.'
 
   if (formulario.precioAntes.trim()) {
     const precioAntes = leerImporte(formulario.precioAntes)
-    if (Number.isNaN(precioAntes) || precioAntes <= 0) {
+    if (Number.isNaN(precioAntes)) {
       return mensajeImporte(formulario.precioAntes, 'El precio antes debe ser un número mayor a 0.', 'El precio antes')
     }
+    if (precioAntes <= 0) return 'El precio antes debe ser un número mayor a 0.'
     if (precioAntes <= precio) {
       return 'El precio antes debe ser mayor al precio de venta actual.'
     }
