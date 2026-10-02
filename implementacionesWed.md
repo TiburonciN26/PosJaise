@@ -5719,3 +5719,48 @@ de prueba `playwright.test.inicio@gmail.com` se conserva a pedido del
 usuario, para reusarla en la próxima sesión de debugging.
 
 `npm run build` y `npm run lint` sin errores ni advertencias nuevas.
+
+---
+
+## 20. Correcciones QA — Grupo 1: integridad de datos (QA-004, QA-003, QA-012) — 2026-10-02
+
+Rama `fix/qa-correcciones`. Trabajo solo contra Supabase Local TEST con datos
+ficticios; nada aplicado a producción. Evidencia de cada hallazgo: base
+Notion "QA — Sistema Jaise Pos y Wed". Estado en Notion sin tocar: todos
+quedan para Re-test de Codex (Verificado = defecto confirmado por el
+usuario, no corregido).
+
+**QA-004 — editar una cita podía dejarla sin servicios.** `ModalCita.jsx`
+guardaba una edición en 3 llamadas HTTP (UPDATE citas, DELETE
+cita_servicios, INSERT cita_servicios). Una recarga o corte de red entre
+el DELETE y el INSERT dejaba la cita persistida sin ningún servicio.
+Corrección: migración `20261002000001_guardar_cita_pos.sql` con el RPC
+`guardar_cita_pos` (SECURITY DEFINER, mismo gate `rol_actual() is not
+null` que las políticas RLS vigentes) que crea/edita la cita y reemplaza
+sus líneas en una sola transacción; `ModalCita.jsx` lo llama en vez de las
+3 llamadas. Precio y duración por línea siguen siendo editables en POS
+(no se recalculan del catálogo, a diferencia de `reprogramar_mi_cita_web`).
+Verificado por RPC contra Local: crear, editar, y un guardado inválido
+(servicio inexistente) falla sin borrar las líneas ni cambiar la nota
+(rollback). **Aviso para Re-test:** el caso Playwright QA-004 retiene el
+POST REST a `cita_servicios`; esa llamada ya no existe, así que el caso
+debe adaptarse (ahora el guardado es `POST /rest/v1/rpc/guardar_cita_pos`).
+
+**QA-003 — stock fraccionario se truncaba en silencio.** La columna
+`stock_actual` es `integer` (correcto), pero `validar()` de
+`ModalProducto.jsx` usaba `parseInt`, que descarta el resto sin avisar
+("2.7" → 2, "5abc" → 5). Ahora compara contra `Number()` del mismo texto
+y rechaza con mensaje claro. Sin migración.
+
+**QA-012 — dos atenciones el mismo día duplicaban visitas, puntos y
+sellos.** `registro_servicios.fecha` es `timestamptz` (hora exacta) y
+`mis_puntos()`, `mi_fidelizacion()`, `generar_cupon_fidelizacion()` y
+`mi_historial_fidelizacion()` contaban `count(distinct fecha)`: instantes
+distintos, no días distintos. Migración
+`20261002000002_fidelizacion_dia_lima.sql` trunca a día en hora de Perú
+(mismo criterio que `es_hoy()`); fórmulas y umbrales intactos.
+`mi_historial_fidelizacion()` además podía devolver el mismo día dos
+veces. Comprobado en SQL (08:00 y 19:00 del mismo día: antes 2, ahora 1);
+falta el Re-test end-to-end con un CLIENTE (la suite exige rama `testing`).
+
+`npm run build` sin errores.

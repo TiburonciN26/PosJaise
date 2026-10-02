@@ -336,72 +336,33 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
     setGuardando(true)
     setError(null)
 
-    const datosCita = {
-      cliente_id: formulario.clienteId || null,
-      cliente_nombre_referencia: formulario.clienteId ? null : clienteReferencia.trim() || null,
-      asistente_id: formulario.asistenteId || null,
-      fecha_hora: deInputDatetimeLima(formulario.fechaHora).toISOString(),
-      nota: formulario.nota.trim() || null,
-      adelanto: formulario.adelanto.trim() ? parseFloat(formulario.adelanto) : null,
-    }
-
-    let citaId = esEdicion ? cita.id : null
-
-    if (esEdicion) {
-      const { error: errorCita } = await supabase.from('citas').update(datosCita).eq('id', citaId)
-      if (errorCita) {
-        setGuardando(false)
-        setError(
-          errorCita.message === MENSAJE_NEGOCIO_CERRADO
-            ? MENSAJE_NEGOCIO_CERRADO
-            : 'No se pudo guardar la cita. Intenta de nuevo.',
-        )
-        return
-      }
-      // Se reemplazan todas las líneas — más simple que diffear cuáles
-      // cambiaron, y una cita editada nunca tiene servicios ya completados
-      // sueltos (si tuviera alguno completado, la cita entera ya estaría
-      // en estado COMPLETADA y no pasaría por acá).
-      const { error: errorBorrar } = await supabase
-        .from('cita_servicios')
-        .delete()
-        .eq('cita_id', citaId)
-      if (errorBorrar) {
-        setGuardando(false)
-        setError('No se pudo actualizar los servicios de la cita. Intenta de nuevo.')
-        return
-      }
-    } else {
-      const { data: citaCreada, error: errorCita } = await supabase
-        .from('citas')
-        .insert({ ...datosCita, creado_por: usuario.id })
-        .select()
-        .single()
-      if (errorCita) {
-        setGuardando(false)
-        setError(
-          errorCita.message === MENSAJE_NEGOCIO_CERRADO
-            ? MENSAJE_NEGOCIO_CERRADO
-            : 'No se pudo guardar la cita. Intenta de nuevo.',
-        )
-        return
-      }
-      citaId = citaCreada.id
-    }
-
-    const { error: errorLineas } = await supabase.from('cita_servicios').insert(
-      lineas.map((linea) => ({
-        cita_id: citaId,
+    // Un solo RPC atómico (guardar_cita_pos, 20261002000001_guardar_cita_pos.sql):
+    // antes esto eran 2-3 llamadas HTTP separadas (UPDATE/INSERT citas, DELETE
+    // + INSERT cita_servicios) — una recarga o corte de red entre el DELETE y
+    // el INSERT podía dejar la cita persistida sin ningún servicio (QA-004).
+    const { error: errorRpc } = await supabase.rpc('guardar_cita_pos', {
+      p_cita_id: esEdicion ? cita.id : null,
+      p_cliente_id: formulario.clienteId || null,
+      p_cliente_nombre_referencia: formulario.clienteId ? null : clienteReferencia.trim() || null,
+      p_asistente_id: formulario.asistenteId || null,
+      p_fecha_hora: deInputDatetimeLima(formulario.fechaHora).toISOString(),
+      p_nota: formulario.nota.trim() || null,
+      p_adelanto: formulario.adelanto.trim() ? parseFloat(formulario.adelanto) : null,
+      p_servicios: lineas.map((linea) => ({
         servicio_id: linea.servicioId,
         duracion_min: parseInt(linea.duracionMin, 10),
         precio: parseFloat(linea.precio),
       })),
-    )
+    })
 
     setGuardando(false)
 
-    if (errorLineas) {
-      setError('No se pudieron guardar los servicios de la cita. Intenta de nuevo.')
+    if (errorRpc) {
+      setError(
+        errorRpc.message === MENSAJE_NEGOCIO_CERRADO
+          ? MENSAJE_NEGOCIO_CERRADO
+          : 'No se pudo guardar la cita. Intenta de nuevo.',
+      )
       return
     }
 
