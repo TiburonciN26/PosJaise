@@ -30,6 +30,7 @@ const OPCIONES_METODO = [
   { id: 'Tarjeta', label: 'Tarjeta' },
   { id: 'Transferencia', label: 'Transferencia' },
   { id: 'Yape', label: 'Yape' },
+  { id: 'Plin', label: 'Plin' },
 ]
 
 const TAMANO_PAGINA = 50
@@ -70,6 +71,7 @@ const CLASE_METODO_PAGO_PILL = {
   Tarjeta: 'border border-blue/40 bg-blue/15 text-blue',
   Transferencia: 'border border-gray-300/40 bg-gray-300/15 text-gray-300',
   Yape: 'border border-purple-300/40 bg-purple-300/15 text-purple-300',
+  Plin: 'border border-cyan-300/40 bg-cyan-300/15 text-cyan-300',
 }
 
 // Solo cambia lo que se muestra (VEN007 -> V007) — el código real en la

@@ -19,6 +19,7 @@ const CLASE_METODO_PAGO = {
   Tarjeta: 'bg-blue',
   Transferencia: 'bg-gray-300',
   Yape: 'bg-purple-300',
+  Plin: 'bg-cyan-300',
 }
 
 const RESUMEN_VACIO = {

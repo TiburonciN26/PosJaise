@@ -5817,3 +5817,37 @@ CAJERA y ASISTENTE siguen rechazados por el servidor (RLS), es decir el
 defecto era solo de interfaz.
 
 `npm run build` y lint sin avisos nuevos. Pendiente: Re-test de Codex en UI.
+
+---
+
+## 23. Correcciones QA — Grupo 4: pedidos y cupones (QA-009, QA-005, QA-019) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo Supabase Local TEST. Una migración:
+`20261002000003_pedidos_cupones_ambiguedades_pago.sql` (sin aplicar a producción).
+Los tres defectos se reprodujeron antes de corregir (transacción con
+rollback, sesión simulada vía `request.jwt.claims`).
+
+- **QA-005** `reclamar_cupon_promocion()`: "column reference id is
+  ambiguous". `RETURNS TABLE(id, codigo, ...)` crea variables OUT que chocan
+  con `where id = p_promocion_id`; se califica `public.promociones.id`.
+- **QA-019** `confirmar_venta()` con cupón: "column reference codigo is
+  ambiguous" (mismo patrón, otro origen: `RETURNS TABLE(venta_id, codigo,
+  ...)` vs `where codigo = ...` del UPDATE a `cupones`). Se califica con la
+  tabla; cuerpo restante idéntico a la versión viva.
+- **QA-009** `verificar_pago_pedido_web()`: `pedidos_web.metodo_pago` guarda
+  `YAPE/PLIN/TRANSFERENCIA` y se pasaba tal cual a `confirmar_venta`;
+  `ventas_metodo_pago_check` solo acepta `Efectivo/Tarjeta/Transferencia/Yape`
+  (fallaban los tres medios, no solo Yape). Se traduce (YAPE→Yape,
+  TRANSFERENCIA→Transferencia) y, como Plin no tiene equivalente, se agrega
+  `'Plin'` al CHECK de ventas en lugar de registrarlo como otro medio;
+  `Estadisticas.jsx` e `Historial.jsx` ganan su color/filtro "Plin".
+
+Comprobado en Local (todo con rollback): reclamar una promoción es
+idempotente (mismo cupón, 1 solo cupón); venta POS con cupón del 20% →
+cupón CANJEADO y ligado a la venta, stock −1, `descuento_pct` 20; anular →
+cupón DISPONIBLE sin venta y stock restaurado. Verificar pago de pedidos
+YAPE, PLIN y TRANSFERENCIA (este último con cupón): venta con el medio
+correcto, pedido LISTO y ligado, stock descontado en los 3 productos;
+anular las tres ventas → stock restaurado y cupón DISPONIBLE. No se abordó la
+entrega del pedido ni la reseña de compra (ver ENTREGA-CLAUDE.md).
+`npm run build` sin errores. Pendiente: Re-test de Codex en UI.
