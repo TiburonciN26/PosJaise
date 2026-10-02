@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bike, MapPin, MessageCircle, ShoppingBag, Store, Ticket, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../../hooks/useModalA11y.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearFechaSoloDia } from '../../lib/fechas.js'
 import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
@@ -51,7 +52,11 @@ export default function PedidosCliente() {
   const [pedidoCancelando, setPedidoCancelando] = useState(null)
   const [cancelando, setCancelando] = useState(false)
 
+  const panelCancelarRef = useRef(null)
+
   useCerrarConEscape(() => setPedidoCancelando(null), Boolean(pedidoCancelando))
+  // QA-018: role=dialog, nombre accesible y foco contenido (como el modal de cancelar cita).
+  useModalA11y(panelCancelarRef, Boolean(pedidoCancelando))
 
   async function cargar() {
     const miId = await obtenerMiClienteId()
@@ -227,7 +232,7 @@ export default function PedidosCliente() {
 
       {pedidoCancelando && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
+          <div ref={panelCancelarRef} className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold text-white">¿Cancelar este pedido?</h2>
               <button

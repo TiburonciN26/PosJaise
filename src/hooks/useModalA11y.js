@@ -19,13 +19,19 @@ let contadorId = 0
 // ModalCamara) — sin esto quedarían como diálogo sin nombre accesible.
 export function useModalA11y(panelRef, activo = true, etiquetaFallback) {
   const disparadorRef = useRef(null)
+  // QA-017: el disparador (quien tenía el foco al abrir) se captura en el
+  // render, ANTES del commit: un campo con autoFocus recibe el foco durante
+  // el commit y, capturado en el efecto, el "disparador" resultaba ser ese
+  // campo (que desaparece al cerrar) — el foco caía a <body>.
+  // No se anula en la limpieza del efecto: StrictMode la corre y repite el efecto
+  // al montar. Se reinicia en el render en que `activo` pasa a falso.
+  if (!activo) disparadorRef.current = null
+  else if (disparadorRef.current === null) disparadorRef.current = document.activeElement
 
   useLayoutEffect(() => {
     if (!activo) return undefined
     const panel = panelRef.current
     if (!panel) return undefined
-
-    disparadorRef.current = document.activeElement
 
     panel.setAttribute('role', 'dialog')
     panel.setAttribute('aria-modal', 'true')

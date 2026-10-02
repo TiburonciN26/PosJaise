@@ -144,6 +144,7 @@ export default function GaleriaWeb() {
               <button
                 type="button"
                 onClick={() => setModal(item)}
+                aria-label={`Editar ${item.titulo || 'foto'}`}
                 className="shrink-0 rounded-lg border border-border-strong p-2 text-ink/70 transition-colors hover:border-red hover:text-red"
               >
                 <Pencil className="h-4 w-4" />
@@ -151,6 +152,7 @@ export default function GaleriaWeb() {
               <button
                 type="button"
                 onClick={() => setItemAEliminar(item)}
+                aria-label={`Eliminar ${item.titulo || 'foto'}`}
                 className="shrink-0 rounded-lg border border-border-strong p-2 text-ink/70 transition-colors hover:border-red hover:text-red"
               >
                 <Trash2 className="h-4 w-4" />
