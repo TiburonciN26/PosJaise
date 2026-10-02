@@ -19,14 +19,31 @@ let contadorId = 0
 // ModalCamara) — sin esto quedarían como diálogo sin nombre accesible.
 export function useModalA11y(panelRef, activo = true, etiquetaFallback) {
   const disparadorRef = useRef(null)
-  // QA-017: el disparador (quien tenía el foco al abrir) se captura en el
-  // render, ANTES del commit: un campo con autoFocus recibe el foco durante
-  // el commit y, capturado en el efecto, el "disparador" resultaba ser ese
-  // campo (que desaparece al cerrar) — el foco caía a <body>.
-  // No se anula en la limpieza del efecto: StrictMode la corre y repite el efecto
-  // al montar. Se reinicia en el render en que `activo` pasa a falso.
-  if (!activo) disparadorRef.current = null
-  else if (disparadorRef.current === null) disparadorRef.current = document.activeElement
+  const capturadoRef = useRef(false)
+
+  // Disparador = quien tenía el foco al ACTIVARSE el modal. Se captura en el
+  // render (antes del commit) porque un campo con autoFocus recibe el foco
+  // durante el commit y, capturado en el efecto, el "disparador" sería ese
+  // campo (QA-017). Cubre los dos ciclos de vida: modal que se monta ya abierto
+  // (activo siempre true) y diálogo en una página que permanece montada y cuyo
+  // `activo` cambia (QA-030). Aperturas repetidas: se vuelve a capturar en cada
+  // activación, así la fila 5 no devuelve el foco al botón de la fila 2.
+  if (activo && !capturadoRef.current) {
+    disparadorRef.current = document.activeElement
+    capturadoRef.current = true
+  }
+
+  // Reinicio al pasar a inactivo. Corre DESPUÉS de la limpieza del efecto de
+  // abajo (React ejecuta todas las limpiezas de un commit antes de los
+  // efectos), que es la que usa el disparador para devolver el foco: no puede
+  // anularse en el render (QA-030). Tampoco en la propia limpieza: StrictMode
+  // la corre y repite el efecto al montar.
+  useLayoutEffect(() => {
+    if (!activo) {
+      capturadoRef.current = false
+      disparadorRef.current = null
+    }
+  }, [activo])
 
   useLayoutEffect(() => {
     if (!activo) return undefined
@@ -94,7 +111,8 @@ export function useModalA11y(panelRef, activo = true, etiquetaFallback) {
     return () => {
       document.body.style.overflow = overflowPrevio
       document.removeEventListener('keydown', alPresionarTab)
-      disparadorRef.current?.focus?.()
+      const disparador = disparadorRef.current
+      if (disparador?.isConnected) disparador.focus()
     }
   }, [activo, panelRef])
 }
