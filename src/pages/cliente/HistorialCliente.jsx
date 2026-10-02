@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { History, Scissors, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearFechaSoloDia } from '../../lib/fechas.js'
 
@@ -18,13 +19,22 @@ export default function HistorialCliente() {
   useEffect(() => {
     let vigente = true
 
-    Promise.all([
-      supabase
-        .from('registro_servicios')
-        .select('id, fecha, precio, usuario_id, servicios(nombre)')
-        .order('fecha', { ascending: false }),
-      supabase.rpc('usuarios_para_citas'),
-    ]).then(([registrosRes, usuariosRes]) => {
+    // QA-011: filtro explícito por la clienta de la sesión (el personal en
+    // "Mi perfil de clienta" leería todos los registros por su RLS de staff).
+    obtenerMiClienteId()
+      .then((miId) =>
+        Promise.all([
+          miId
+            ? supabase
+                .from('registro_servicios')
+                .select('id, fecha, precio, usuario_id, servicios(nombre)')
+                .eq('cliente_id', miId)
+                .order('fecha', { ascending: false })
+            : Promise.resolve({ data: [] }),
+          supabase.rpc('usuarios_para_citas'),
+        ]),
+      )
+      .then(([registrosRes, usuariosRes]) => {
       if (!vigente) return
       setRegistros(registrosRes.data ?? [])
       setNombresPorUsuario(

@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
@@ -307,9 +308,16 @@ export default function CitasCliente() {
     const { anio, mes } = anioMesEnLima(fechaMes)
     const inicioMes = iniciarMesLima(anio, mes)
     const finMes = iniciarMesLima(anio, mes + 1)
+    const miId = await obtenerMiClienteId()
+    if (!miId) {
+      setCitasMes([])
+      setCargandoMes(false)
+      return
+    }
     const { data } = await supabase
       .from('citas')
       .select(SELECT_CITA)
+      .eq('cliente_id', miId)
       .gte('fecha_hora', inicioMes.toISOString())
       .lt('fecha_hora', finMes.toISOString())
       .order('fecha_hora')
@@ -319,16 +327,24 @@ export default function CitasCliente() {
 
   async function cargarProximasEHistorial() {
     const ahoraIso = new Date().toISOString()
+    const miId = await obtenerMiClienteId()
+    if (!miId) {
+      setProximas([])
+      setHistorial([])
+      return
+    }
     const [proximasRes, historialRes] = await Promise.all([
       supabase
         .from('citas')
         .select(SELECT_CITA)
+        .eq('cliente_id', miId)
         .gte('fecha_hora', ahoraIso)
         .in('estado', ['PENDIENTE', 'CONFIRMADA'])
         .order('fecha_hora'),
       supabase
         .from('citas')
         .select(SELECT_CITA)
+        .eq('cliente_id', miId)
         .or(`fecha_hora.lt.${ahoraIso},estado.in.(COMPLETADA,CANCELADA,NO_ASISTIO)`)
         .order('fecha_hora', { ascending: false }),
     ])

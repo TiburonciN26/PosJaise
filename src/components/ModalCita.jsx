@@ -171,6 +171,9 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const { usuario } = useAuth()
+  // QA-001: la RLS de servicios solo deja insertar al ADMINISTRADOR; no se
+  // ofrece una acción que el servidor va a rechazar.
+  const puedeCrearServicio = usuario.rol === 'ADMINISTRADOR'
   const esEdicion = Boolean(cita)
 
   const [servicios, setServicios] = useState([])
@@ -535,7 +538,10 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                           )}
                         </button>
                       ))}
-                      {busquedaServicio.trim() && (
+                      {busquedaServicio.trim() && !puedeCrearServicio && sugerenciasServicio.length === 0 && (
+                        <p className="px-3 py-2 text-sm text-ink/60">No hay servicios que coincidan.</p>
+                      )}
+                      {busquedaServicio.trim() && puedeCrearServicio && (
                         <button
                           type="button"
                           onMouseDown={(evento) => evento.preventDefault()}

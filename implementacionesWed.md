@@ -5785,3 +5785,35 @@ tocaron `finanzas.js` ni las RPC (siguen siendo la única fuente de la
 cascada). Comprobado contra Local con una venta ficticia con 20% de
 descuento (anulada después): antes Dashboard −50.98 vs Estadísticas −52.12;
 ahora ambos −52.12. Pendiente: Re-test de Codex en UI.
+
+---
+
+## 22. Correcciones QA — Grupo 3: separación de roles e interfaz (QA-011, QA-001) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo Supabase Local TEST, sin migración y sin
+tocar RLS/GRANTs (las restricciones del backend se conservan).
+
+**QA-011 — "Mi perfil de clienta" del personal mostraba datos de otros
+clientes.** Alcance real (medido en Local): ADMINISTRADOR, CAJERA y
+ASISTENTE leen TODAS las filas de `citas` (32) y `registro_servicios`
+(65-70) por su RLS de personal, que es correcta para el POS; ADMINISTRADOR
+además lee todos los `pedidos_web` (11). El ticket citaba solo CAJERA, pero
+el defecto es de las pantallas del portal, que dependían solo de la RLS para
+acotar a "lo mío". Corrección: nuevo `src/lib/clienteWeb.js`
+(`obtenerMiClienteId()` → RPC `mi_cliente_id()`); `CitasCliente` (mes,
+próximas, historial), `HistorialCliente`, `InicioCliente` (próxima cita),
+`CarritoServiciosCliente` ("ya tienes cita ese día") y `PedidosCliente`
+filtran por esa clienta; sin perfil vinculado muestran vacío, nunca sin
+filtro. Para un CLIENTE real no cambia nada (su RLS ya lo acotaba).
+Comprobado en Local: con el filtro, un cliente con 4 citas devuelve 4 y 0
+ajenas. Fuera de alcance: `mis_puntos`/`mis_cupones`/etc. ya son RPC por
+`mi_cliente_id()`.
+
+**QA-001 — «Crear servicio» visible sin permiso.** La RLS
+(`servicios_insert_admin`) solo deja insertar al ADMINISTRADOR. Se oculta la
+opción en `ModalCita` y `ModalRegistroAtencion` salvo para ADMINISTRADOR (con
+un "No hay servicios que coincidan." para el resto). Comprobado en Local que
+CAJERA y ASISTENTE siguen rechazados por el servidor (RLS), es decir el
+defecto era solo de interfaz.
+
+`npm run build` y lint sin avisos nuevos. Pendiente: Re-test de Codex en UI.
