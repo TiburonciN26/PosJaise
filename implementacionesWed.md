@@ -5851,3 +5851,46 @@ correcto, pedido LISTO y ligado, stock descontado en los 3 productos;
 anular las tres ventas → stock restaurado y cupón DISPONIBLE. No se abordó la
 entrega del pedido ni la reseña de compra (ver ENTREGA-CLAUDE.md).
 `npm run build` sin errores. Pendiente: Re-test de Codex en UI.
+
+---
+
+## 24. Correcciones QA — Grupo 5: validaciones y funcionamiento de interfaz (QA-014, 006, 015, 013, 010, 008, 007) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo frontend (sin migración). Cada causa se
+confirmó leyendo el código y, donde aplicaba, contra Supabase Local.
+
+- **QA-014** `ModalGasto.jsx`: `parseFloat("12abc")` daba 12. Ahora se valida
+  y guarda con `Number()` del texto completo (rechaza "12abc"; "1,5" con coma
+  también se rechaza en vez de guardarse como 1). Mismo patrón existe en
+  precio/costo de `ModalProducto.jsx`; fuera de este ticket, sin tocar.
+- **QA-006** `MiPerfil.jsx` + `clienteWeb.js#telefonoValido`: solo se admiten
+  dígitos con separadores habituales y "+" inicial, 7 a 15 dígitos. Validación
+  de interfaz; la RPC `vincular_o_crear_cliente_web` no se modificó.
+- **QA-015** `MiPerfil.jsx`: "Editar" quedaba habilitado mientras
+  `PerfilClienteContext` aún cargaba (formulario con Nombre vacío). Ahora se
+  deshabilita y `empezarEdicion` no hace nada hasta que termina la carga.
+- **QA-013** `Historial.jsx`: la búsqueda comparaba solo contra `VEN019`, pero
+  la pantalla muestra `V019`. Ahora también compara contra el código corto.
+- **QA-010** `HistorialCliente.jsx`: `registro_servicios.fecha` es
+  `timestamptz` pero se pasaba a `formatearFechaSoloDia` (pensada para `date`),
+  que daba "NaN de septiembre". Se convierte antes a día de Lima con
+  `formatearFechaISO`.
+- **QA-008** `DetalleProductoCliente.jsx` y `DetalleServicioCliente.jsx`:
+  `mi_resena_*()` devuelve una fila con todo nulo cuando no hay reseña (objeto
+  truthy) y el botón decía "Editar tu reseña". Solo cuenta si trae `id`
+  (el detalle de servicio tenía el mismo defecto; `CitasCliente` ya lo
+  resolvía así).
+- **QA-007** marcadores sin completar: `[ZONA]`, `[S/ X]`, `[7 días]`,
+  `[1–2 días]` en `ProductosCliente.jsx` y `DetalleProductoCliente.jsx`. El
+  envío ahora muestra "desde S/ {costo más bajo de `zonas_delivery` activas}"
+  (nuevo `src/lib/zonasDelivery.js`). **Decisión de negocio pendiente:** no
+  existe configuración de plazo de cambios; en vez de inventar "7 días" se
+  dejó "Solo con el producto sellado y sin usar. Consulta el plazo con el
+  negocio." Queda un fallback `[S/ X]` en `DetalleServicioCliente.jsx:553`
+  (adelanto mínimo, solo si el negocio no lo cargó) fuera del alcance del
+  ticket.
+
+Comprobado con casos concretos (montos, teléfonos, fechas con hora cerca de
+medianoche UTC, búsqueda V019/v019/VEN019/019, y la RPC de reseña vacía contra
+Local). `npm run build` sin errores. QA-015, QA-008 y QA-007 son de interfaz:
+pendientes de Re-test de Codex en pantalla.

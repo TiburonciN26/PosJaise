@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
+import { telefonoValido } from '../../lib/clienteWeb.js'
 import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../hooks/useModalA11y.js'
 import {
@@ -88,7 +89,7 @@ function CampoPerfil({ icono: Icono, etiqueta, editando, valor, ...inputProps })
 export default function MiPerfil() {
   const { usuario } = useAuth()
   const { mostrarToast } = useToast()
-  const { perfil, setPerfil } = usePerfilCliente()
+  const { perfil, setPerfil, cargando: cargandoPerfil } = usePerfilCliente()
 
   const [editando, setEditando] = useState(false)
   const [nombre, setNombre] = useState('')
@@ -107,6 +108,8 @@ export default function MiPerfil() {
   useCerrarConEscape(() => setMostrarConfirmarVinculo(false), mostrarConfirmarVinculo)
 
   function empezarEdicion() {
+    // QA-015: sin el perfil cargado el formulario arrancaba con Nombre vacío.
+    if (cargandoPerfil) return
     setNombre(perfil?.nombre ?? '')
     setTelefono(perfil?.telefono ?? '')
     setCumpleanos(perfil?.cumpleanos ?? '')
@@ -157,6 +160,10 @@ export default function MiPerfil() {
     }
     if (!telefono.trim()) {
       setError('El teléfono es obligatorio.')
+      return
+    }
+    if (!telefonoValido(telefono)) {
+      setError('Ingresa un teléfono válido (solo números, de 7 a 15 dígitos).')
       return
     }
 
@@ -333,7 +340,8 @@ export default function MiPerfil() {
               <button
                 type="button"
                 onClick={empezarEdicion}
-                className="flex items-center gap-1.5 rounded-full border border-[var(--lw-gold)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--lw-gold)]"
+                disabled={cargandoPerfil}
+                className="flex items-center gap-1.5 rounded-full border border-[var(--lw-gold)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--lw-gold)] disabled:opacity-40"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Editar

@@ -642,6 +642,7 @@ export default function Historial({ activo = true }) {
         const texto = busqueda.trim().toLowerCase()
         return (
           venta.codigo.toLowerCase().includes(texto) ||
+          codigoCorto(venta.codigo).toLowerCase().includes(texto) ||
           nombreClienteDeVenta(venta).toLowerCase().includes(texto)
         )
       })

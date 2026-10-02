@@ -49,8 +49,12 @@ function formularioDesdeGasto(gasto) {
 function validar(formulario) {
   if (!formulario.nombre.trim()) return 'El nombre es obligatorio.'
 
-  const monto = parseFloat(formulario.monto)
-  if (Number.isNaN(monto) || monto <= 0) return 'El monto debe ser un número mayor a 0.'
+  // QA-014: parseFloat acepta un prefijo numérico ("12abc" -> 12); Number()
+  // rechaza cualquier texto que no sea un número completo.
+  const monto = Number(formulario.monto.trim())
+  if (formulario.monto.trim() === '' || Number.isNaN(monto) || monto <= 0) {
+    return 'El monto debe ser un número mayor a 0.'
+  }
 
   const mes = parseInt(formulario.mes, 10)
   if (Number.isNaN(mes) || mes < 1 || mes > 12) return 'Selecciona un mes válido.'
@@ -95,7 +99,7 @@ export default function ModalGasto({ gasto, mesInicial, anioInicial, usuarioId, 
     const datos = {
       nombre: formulario.nombre.trim(),
       tipo: formulario.tipo,
-      monto: parseFloat(formulario.monto),
+      monto: Number(formulario.monto.trim()),
       mes: parseInt(formulario.mes, 10),
       anio: parseInt(formulario.anio, 10),
     }

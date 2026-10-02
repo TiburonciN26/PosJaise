@@ -129,7 +129,9 @@ export default function DetalleServicioCliente() {
       setResumenResenas(resumenRes.data?.[0] ?? null)
       setResenasPublicas((publicasRes.data ?? []).slice(0, 3))
       const propia = Array.isArray(miResenaRes.data) ? miResenaRes.data[0] : miResenaRes.data
-      setMiResena(propia ?? null)
+      // QA-008: sin reseña propia la RPC devuelve una fila con todo nulo (truthy);
+      // solo cuenta como reseña si trae id.
+      setMiResena(propia?.id ? propia : null)
       setCalificacionForm(propia?.calificacion ?? 0)
       setComentarioForm(propia?.comentario ?? '')
       setFavorito(Boolean(favoritoRes.data))

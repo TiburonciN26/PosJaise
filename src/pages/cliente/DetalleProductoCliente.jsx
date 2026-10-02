@@ -26,6 +26,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
+import { obtenerCostoDeliveryDesde } from '../../lib/zonasDelivery.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
 import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import { degradadoServicio } from '../../lib/serviciosVisual.js'
@@ -63,6 +64,7 @@ export default function DetalleProductoCliente() {
   const [relacionados, setRelacionados] = useState([])
   const [favorito, setFavorito] = useState(false)
   const [contacto, setContacto] = useState(null)
+  const [costoEnvioDesde, setCostoEnvioDesde] = useState(null)
   const [puntosPorSol, setPuntosPorSol] = useState(PUNTOS_POR_SOL_DEFECTO)
   const [cargando, setCargando] = useState(true)
   const [noEncontrado, setNoEncontrado] = useState(false)
@@ -82,6 +84,10 @@ export default function DetalleProductoCliente() {
   const [enviandoResena, setEnviandoResena] = useState(false)
   const [calificacionForm, setCalificacionForm] = useState(0)
   const [comentarioForm, setComentarioForm] = useState('')
+
+  useEffect(() => {
+    obtenerCostoDeliveryDesde().then(setCostoEnvioDesde)
+  }, [])
 
   useEffect(() => {
     let vigente = true
@@ -124,9 +130,11 @@ export default function DetalleProductoCliente() {
       setResumenResenas(resumenRes.data?.[0] ?? null)
       setResenasPublicas((publicasRes.data ?? []).slice(0, 3))
       const propia = Array.isArray(miResenaRes.data) ? miResenaRes.data[0] : miResenaRes.data
-      setMiResena(propia ?? null)
-      setCalificacionForm(propia?.calificacion ?? 0)
-      setComentarioForm(propia?.comentario ?? '')
+      // QA-008: sin reseña propia la RPC devuelve una fila con todo nulo (truthy);
+      // solo cuenta como reseña si trae id.
+      setMiResena(propia?.id ? propia : null)
+      setCalificacionForm(propia?.id ? (propia.calificacion ?? 0) : 0)
+      setComentarioForm(propia?.id ? (propia.comentario ?? '') : '')
       setFavorito(Boolean(favoritoRes.data))
       if (configRes.data) setPuntosPorSol(Number(configRes.data.puntos_por_sol_gastado))
       setContacto(contactoRes.data?.[0] ?? null)
@@ -464,7 +472,11 @@ export default function DetalleProductoCliente() {
               <span className="text-[11px] uppercase tracking-widest text-white/50">Entrega</span>
               <span className="flex flex-col gap-0.5 text-[15px] font-semibold text-white">
                 Recojo gratis en el local
-                <span className="text-xs font-normal text-white/50">o envío a [ZONA] · [S/ X]</span>
+                {costoEnvioDesde != null && (
+                  <span className="text-xs font-normal text-white/50">
+                    o envío a domicilio desde {formatearSoles(costoEnvioDesde)}
+                  </span>
+                )}
               </span>
             </div>
             {producto.contenido && (
@@ -621,17 +633,18 @@ export default function DetalleProductoCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <Truck className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">Recojo gratis o envío a [ZONA]</span>
+              <span className="text-[13.5px] font-semibold text-white">Recojo gratis o envío a domicilio</span>
               <span className="text-[12.5px] leading-relaxed text-white/60">
-                Te avisamos en Notificaciones cuando esté listo para recoger o en camino. Envío: [S/ X] · [1–2 días].
+                Te avisamos en Notificaciones cuando esté listo para recoger o en camino.
+                {costoEnvioDesde != null && ` Envío desde ${formatearSoles(costoEnvioDesde)}, según tu zona.`}
               </span>
             </span>
           </div>
           <div className="flex gap-3.5 px-6 py-5">
             <Package className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">Cambios hasta [7 días] después</span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">Solo con el producto sellado y sin usar.</span>
+              <span className="text-[13.5px] font-semibold text-white">Cambios con el producto sellado</span>
+              <span className="text-[12.5px] leading-relaxed text-white/60">Solo con el producto sellado y sin usar. Consulta el plazo con el negocio.</span>
             </span>
           </div>
         </div>
