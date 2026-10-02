@@ -1,10 +1,11 @@
 import { Menu, ShoppingCart, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
 import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
 import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
+import { precargarPestanasPrincipales } from '../config/paginasCliente.js'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
 import IconoCampana from '../components/IconoCampana.jsx'
@@ -264,6 +265,11 @@ export default function PortalCliente() {
   const location = useLocation()
   const [menuAbierto, setMenuAbierto] = useState(false)
 
+  // QA-021: con el portal ya visible, se descargan en reposo las pestañas más usadas.
+  useEffect(() => {
+    precargarPestanasPrincipales()
+  }, [])
+
   const esInicio = location.pathname === '/inicio'
   const migajas = esInicio ? [] : migajasDeRuta(location.pathname)
 
@@ -460,7 +466,15 @@ export default function PortalCliente() {
               className="relative flex flex-1 flex-col overflow-hidden pt-12 sm:pt-[72px]"
             >
               <main className="flex flex-1 flex-col overflow-hidden">
-                <Outlet />
+                <Suspense
+                  fallback={
+                    <div className="flex flex-1 items-center justify-center p-6">
+                      <p className="font-mono text-sm text-white/50">Cargando...</p>
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
               </main>
               <MenuLateralCliente abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
             </div>

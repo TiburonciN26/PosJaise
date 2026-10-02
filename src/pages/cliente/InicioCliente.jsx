@@ -295,6 +295,29 @@ export default function InicioCliente() {
     totalFotos: galeria.length * 2,
   })
 
+  // QA-023: las fotos de la galería (bajo el contenido inicial) se descargaban al
+  // abrir Inicio aunque nadie bajara. loading="lazy" no basta: el umbral nativo
+  // de Chrome (~1250 px o más) las traía igual (la galería queda a ~1000-1400 px).
+  // Reciben su src cuando la galería se acerca a 300 px de la pantalla; los
+  // contenedores tienen alto fijo y fondo, así que no hay salto de diseño.
+  const [galeriaCerca, setGaleriaCerca] = useState(false)
+  useEffect(() => {
+    if (galeriaCerca || cargando || galeria.length === 0) return undefined
+    const fila = filaRef.current
+    if (!fila) return undefined
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((entrada) => entrada.isIntersecting)) {
+          setGaleriaCerca(true)
+          observador.disconnect()
+        }
+      },
+      { rootMargin: '300px 0px' },
+    )
+    observador.observe(fila)
+    return () => observador.disconnect()
+  }, [galeriaCerca, cargando, galeria.length, filaRef])
+
   async function reclamarCupon() {
     if (!promocion || reclamando) return
     setReclamando(true)
@@ -625,9 +648,11 @@ export default function InicioCliente() {
                     className={`foto relative overflow-hidden rounded-l-[10px] bg-[#1c1c20] ${estadoFoto(indice * 2)}`}
                   >
                     <img
-                      src={resolverUrlGaleria(item.antes_url)}
+                      src={galeriaCerca ? resolverUrlGaleria(item.antes_url) : undefined}
                       alt={`${item.titulo ?? 'Trabajo del salón'} — antes`}
                       className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] uppercase tracking-wider text-[#e8e8ea]">
                       Antes
@@ -635,9 +660,11 @@ export default function InicioCliente() {
                   </div>
                   <div className={`foto relative overflow-hidden rounded-r-[10px] bg-[#222228] ${estadoFoto(indice * 2 + 1)}`}>
                     <img
-                      src={resolverUrlGaleria(item.despues_url)}
+                      src={galeriaCerca ? resolverUrlGaleria(item.despues_url) : undefined}
                       alt={`${item.titulo ?? 'Trabajo del salón'} — después`}
                       className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] uppercase tracking-wider text-[#e8e8ea]">
                       Después

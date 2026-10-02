@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Clock, Globe, MapPin, Phone } from 'lucide-react'
-import { supabase } from '../../lib/supabase.js'
+import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 
 // Pie de página del portal cliente — solo en Inicio y las pestañas
@@ -18,13 +18,11 @@ export default function PieClienteWeb() {
   useEffect(() => {
     let vigente = true
 
-    Promise.all([supabase.rpc('datos_contacto'), supabase.rpc('horario_atencion')]).then(
-      ([contactoRes, horarioRes]) => {
-        if (!vigente) return
-        setContacto(contactoRes.data?.[0] ?? null)
-        setHorario(horarioRes.data?.[0] ?? null)
-      },
-    )
+    Promise.all([obtenerContacto(), obtenerHorario()]).then(([fila, filaHorario]) => {
+      if (!vigente) return
+      setContacto(fila)
+      setHorario(filaHorario)
+    })
 
     return () => {
       vigente = false

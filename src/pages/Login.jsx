@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { precargarPortalEnReposo } from '../config/paginasCliente.js'
 
 // Hallazgo crítico reportado por el usuario (no numerado en ninguna
 // auditoría formal): al cerrar sesión, el navegador autocompletaba el
@@ -20,6 +21,10 @@ import { useToast } from '../context/ToastContext.jsx'
 // un dispositivo compartido conviene además que el personal rechace el
 // "¿Guardar contraseña?" del navegador.
 export default function Login() {
+  useEffect(() => {
+    precargarPortalEnReposo()
+  }, [])
+
   const { usuario, iniciarSesion, registrarCliente, bloqueoLogin } = useAuth()
   const { mostrarToast } = useToast()
   const [modo, setModo] = useState('login') // 'login' | 'registro'

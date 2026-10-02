@@ -95,3 +95,19 @@ y `filter` — nunca layout.
 - Referencia completa de valores (para Servicios): `docs/diseno-servicios/README.md`,
   sección "Animación de entrada", y `Main.dc.html`/`Movil.dc.html`
   (bloque `<helmet><style>` + constante `ENTRADA` en la lógica).
+
+---
+
+## Nota 2026-10-02 (QA-020): retrasos de Productos y Servicios comprimidos
+
+Una auditoría de rendimiento midió que las tarjetas del catálogo, ya cargadas,
+tardaban ~1,2–1,7 s en empezar a verse al entrar o volver a la pestaña (los
+retrasos de las filas de categoría 1500/1600 ms en Productos y 1000/1050 ms en
+Servicios, más 220 ms por fila). Se mantuvieron la coreografía y las
+animaciones, pero los retrasos de `ENTRADA_FIJA`/`ENTRADA_FILA` en
+`ProductosCliente.jsx` y `ServiciosCliente.jsx` se comprimieron (filas a
+500/520 ms y 400/420 ms, paso 100 ms, tarjeta 60 ms, escalonado 50 ms). Los
+valores "exactos" de `docs/diseno-productos` y `docs/diseno-servicios` quedan
+superados por esta nota. Regla para pestañas nuevas: el contenido útil no debe
+esperar más de ~0,5 s tras cargar; medir primero (ver sección 27 de
+`implementacionesWed.md`).
