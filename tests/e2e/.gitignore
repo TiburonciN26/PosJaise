@@ -1,0 +1,9 @@
+artifacts/
+results/
+fixtures/runtime.json
+fixtures/setup-failure.png
+# Informes generados por las ejecuciones (no son fuentes)
+BASELINE-*.md
+CAMPANA-AMPLIADA.md
+RENDIMIENTO-*.md
+RESULTADOS.md
