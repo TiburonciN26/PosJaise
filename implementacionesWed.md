@@ -5894,3 +5894,34 @@ Comprobado con casos concretos (montos, teléfonos, fechas con hora cerca de
 medianoche UTC, búsqueda V019/v019/VEN019/019, y la RPC de reseña vacía contra
 Local). `npm run build` sin errores. QA-015, QA-008 y QA-007 son de interfaz:
 pendientes de Re-test de Codex en pantalla.
+
+---
+
+## 25. Correcciones QA — Grupo 6: accesibilidad (QA-017, QA-018, QA-016) — 2026-10-02
+
+Rama `fix/qa-correcciones`, solo frontend, Supabase Local TEST.
+
+- **QA-017** (`useModalA11y.js`): al cerrar con Escape el foco caía a `<body>`
+  en vez de volver al botón que abrió el modal. Causa medida con eventos de
+  foco: el hook guardaba `document.activeElement` dentro de su efecto, pero un
+  campo con `autoFocus` ya había recibido el foco durante el commit, así que el
+  "disparador" guardado era ese campo (que desaparece al cerrar). Ahora el
+  disparador se captura en el render (antes del commit), y NO se anula en la
+  limpieza del efecto: StrictMode corre y repite el efecto al montar y lo
+  borraba; se reinicia en el render en que `activo` pasa a falso. Beneficia a
+  los 22 modales que usan el hook.
+- **QA-018** (`PedidosCliente.jsx`): el diálogo "¿Cancelar este pedido?" no tenía
+  `role="dialog"` ni contenía el foco. Ahora usa `useModalA11y` con su ref,
+  igual que el de cancelar cita en `CitasCliente`.
+- **QA-016** (`GaleriaWeb.jsx`): los botones de lápiz y papelera solo tenían
+  ícono; ahora `aria-label="Editar {título}"` / `"Eliminar {título}"`.
+
+Ajuste de QA-003 hecho en este re-test: mi mensaje nuevo reemplazaba el de
+stock negativo/vacío que la prueba PRODUCTOS valida; se restituyó
+"El stock inicial debe ser 0 o más." y el mensaje nuevo queda solo para
+decimales o texto adicional.
+
+Re-test en `testing` (4 archivos de prueba, 28 casos): QA-016, QA-017 y QA-018
+pasan sanos con `expectedFailureIDs` vacío; fallo de regresión detectado y
+corregido (arriba). Los casos CSV y TICKET fallan solo en solitario por la
+precondición `…-sale.json` (la crea otro caso de la suite completa).
