@@ -1,6 +1,6 @@
 # Suite QA/E2E local — rama testing
 
-Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite define 101 casos en 18 archivos (ver COBERTURA.md, que lista lo cubierto y las brechas; no es cobertura total).
+Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite define 110 casos en 19 archivos (ver COBERTURA.md, que lista lo cubierto y las brechas; no es cobertura total).
 
 ## Ejecutar
 

@@ -1,11 +1,10 @@
-// Estados de Notion usados SOLO para anotar los reportes (knownIssue). Primer corte: antes de la
-// campaña; actualizado el 2026-10-03 con el estado tras el re-test independiente de Codex
-// (90 aprobados, 1 omitido): Verificado en QA-001, QA-003 a QA-019 y QA-024 a QA-032;
-// QA-020 a QA-023 siguen pendientes de re-test de rendimiento.
-// Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente.
+// Estados de Notion usados SOLO para anotar los reportes (knownIssue); no controlan ninguna expectativa.
+// Actualizado el 2026-10-03 con el estado tras los re-tests independientes de Codex: Verificado en QA-001,
+// QA-003 a QA-019, QA-024 a QA-033; Re-test en QA-020 a QA-023 (rendimiento) y QA-034 (corrección de Claude
+// pendiente de re-test independiente). «Verificado» no deriva expectedFailureIDs: esa lista (abajo) es explícita.
 export const issueStatus = {
-  'QA-034': 'Pendiente',
-  'QA-033': 'Pendiente', // corregido en Local, a la espera de re-test independiente
+  'QA-034': 'Re-test',
+  'QA-033': 'Verificado',
   'QA-032': 'Verificado',
   'QA-031': 'Verificado',
   'QA-030': 'Verificado',
@@ -15,10 +14,10 @@ export const issueStatus = {
   'QA-026': 'Verificado',
   'QA-025': 'Verificado',
   'QA-024': 'Verificado',
-  'QA-023': 'Pendiente',
-  'QA-022': 'Pendiente',
-  'QA-021': 'Pendiente',
-  'QA-020': 'Pendiente',
+  'QA-023': 'Re-test',
+  'QA-022': 'Re-test',
+  'QA-021': 'Re-test',
+  'QA-020': 'Re-test',
   'QA-019': 'Verificado',
   'QA-018': 'Verificado',
   'QA-016': 'Verificado',
