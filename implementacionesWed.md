@@ -6372,3 +6372,16 @@ TRUNCATE salvo el script manual `supabase/sql/RESET_DATOS_PARA_ENTREGA_CLIENTE.s
 como decisión (revocar y verificar los privilegios por defecto de producción, que la migración 04 describe como solo TRUNCATE/REFERENCES/TRIGGER).
 **Nota de fidelidad:** `anon` tiene SELECT a nivel de tabla en las 42 relaciones de Local (RLS lo protege); si producción difiere, los
 códigos HTTP (403 vs 200 con cero filas) pueden ser distintos.
+
+## 34. Corrección QA-035 — solo ADMINISTRADOR y CAJERA agregan stock; el historial solo lo escribe la RPC — 2026-10-03
+
+**Regla aprobada:** solo ADMINISTRADOR y CAJERA pueden agregar stock; ASISTENTE, CLIENTE y las solicitudes sin sesión quedan bloqueados.
+
+**Migración local `20261002000008_agregar_stock_solo_admin_cajera.sql`** (solo Local; **no aplicada a producción**, requiere autorización aparte):
+1. `agregar_stock()` rechaza roles distintos de ADMINISTRADOR y CAJERA («Solo el administrador o la cajera pueden agregar stock»). Sin sesión y CLIENTE (`rol_actual()` nulo) conservan su mensaje. Se mantienen la validación de cantidad, la regla de negocio cerrado (ADMIN exento), el bloqueo de fila y el guardado atómico de stock + historial. Se revoca EXECUTE a PUBLIC/anon.
+2. `movimientos_stock`: se elimina la política `movimientos_insert` y se revocan INSERT/UPDATE/DELETE a `anon` y `authenticated` (incluido ADMIN): el movimiento nace solo dentro de la RPC (security definer). El SELECT no cambia.
+3. Vías relacionadas revisadas: ninguna otra función escribe `movimientos_stock` (solo `agregar_stock`); `productos` conserva sus políticas (solo ADMIN inserta/edita, incluida la edición de `stock_actual` desde el modal de producto, que no genera movimiento: comportamiento existente, sin cambios). No se tocaron TRUNCATE/REFERENCES/TRIGGER (revisión aparte).
+
+**Pruebas (`qa-autorizacion-configuracion.spec.mjs`):** roles no autorizados (RPC, POST, PATCH, DELETE; ASISTENTE, CLIENTE, sin sesión) con stock e historial idénticos; ni CAJERA ni ADMIN escriben `movimientos_stock` directamente; cantidades inválidas (0, negativa, nula, decimal, texto, desborde), producto inexistente y negocio cerrado sin escrituras parciales; alta autorizada por UI de CAJERA y ADMIN (cantidad correcta, un movimiento por agregado y persistencia tras recargar). La evidencia se adjunta antes de las aserciones. QA-035 sale de `expectedFailureIDs` (queda vacía) y pasa a Re-test en Notion.
+
+**Arnés:** «mañana» pasa a ser el siguiente día de atención (el negocio no atiende domingos); una corrida hecha un sábado fallaba en 9 casos de pedido con «El negocio no atiende ese día.», error del arnés y no de la aplicación.
