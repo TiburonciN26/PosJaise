@@ -6160,3 +6160,47 @@ falló contra el código/BD anteriores (reproducción previa) y pasa ahora.
 - **Observado, fuera de este ticket:** `resenas_servicio` (116) tiene el mismo patrón
   (nace PENDIENTE, solo admin la actualiza) y tampoco tiene pantalla de moderación.
   No se tocó; conviene un ticket aparte.
+
+
+---
+
+## 29. Correcciones QA — QA-031 (envío vs. descuentos en Dashboard) y QA-032 (moderación de reseñas de servicio) — 2026-10-02
+
+Rama `fix/qa-correcciones`. Solo Supabase Local TEST con datos ficticios; una
+migración nueva (`20261002000005`), aplicada únicamente en Local. Pruebas en
+`tests/e2e/qa-031-032.spec.mjs`; ambas fallaron antes de corregir y pasan ahora.
+
+### QA-031
+- **Causa:** `resumen_dashboard()` calculaba `descuentos = sum(venta_items.subtotal) −
+  sum(ventas.total)`, pero `ventas.total` incluye el envío (`confirmar_venta` lo suma
+  tras el descuento). Una venta con envío "restaba" el envío de los descuentos.
+  Reproducido antes por SQL (venta de S/10 con envío S/10 y sin descuento →
+  descuentos −10,00) y por UI/RPC (la prueba recibe −10).
+- **Cambio:** `descuentos = sum(items) − sum(total − envío)` y nueva columna
+  `envio_cobrado`. El envío de una venta se lee de `pedidos_web.costo_delivery` (único
+  origen: `verificar_pago_pedido_web` pasa `p_costo_delivery`; el POS nunca lo usa),
+  así que también corrige el histórico sin tocar ninguna venta. Migración
+  `supabase/migrations/20261002000005_resumen_dashboard_envio_separado.sql`
+  (cambia el tipo de retorno → `drop function` + `create function`; mismos grants que
+  tenía, verificado). `Dashboard.jsx`: línea propia «Envío cobrado» y
+  `ingresoNeto = bruto − descuentos + envío`, que sigue siendo `sum(ventas.total)` =
+  «Ingreso neto» de Estadísticas. Importes de ventas y fórmula de ganancia sin cambios;
+  no se asume coste del repartidor (el envío sigue contando como ingreso, como antes).
+- **Verificado:** envío sin cupón (descuentos +0, envío +costo, neto +1+costo, cuadra con
+  Estadísticas, igual tras recarga), anulación (todo vuelve al valor previo) y, por SQL,
+  envío con cupón 15 % (subtotal 10, cupón 1,50, envío 10, total 18,50 → descuentos
+  1,50 como pide el ticket).
+- **Límites:** `resumen_dashboard` es SECURITY INVOKER; la pantalla es solo ADMIN
+  (que lee `pedidos_web`). Una persona sin lectura de `pedidos_web` que llamara al RPC
+  vería envío 0. Quedó una venta TEST activa en Local de la reproducción previa
+  (la prueba falló antes de anularla).
+
+### QA-032
+- Igual que QA-026 pero para `resenas_servicio` (116: nace PENDIENTE, UPDATE solo
+  `es_admin()`, pública solo APROBADA): `ResenasWeb` lista ahora también estas reseñas
+  («Servicio: …», búsqueda por clienta, producto o servicio) con el mismo flujo
+  Aprobar/Rechazar/Quitar de la Web. Sin cambios de RLS ni de migraciones.
+- **Verificado por UI:** ficha de asistente vinculada a la cuenta ADMIN → cita completada →
+  la clienta reseña (PENDIENTE, «en revisión») → aparece en Reseñas → aprobar (tras
+  recarga: Publicada; pública en el detalle) → quitar (ya no pública); la clienta no
+  puede autoaprobarse (PATCH afecta 0 filas) y una CAJERA no lee ni modifica reseñas pendientes.

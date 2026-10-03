@@ -40,7 +40,15 @@ function numeroWhatsapp(telefono) {
 // la reseña general, y se aprueban/rechazan con el mismo flujo. No cambia
 // RLS: resenas_producto ya permite SELECT/UPDATE al administrador
 // (es_admin()) y la lista pública sigue filtrando por estado = 'APROBADA'.
-const TABLA_POR_ORIGEN = { GENERAL: 'resenas', PRODUCTO: 'resenas_producto' }
+//
+// QA-032: lo mismo para las reseñas POR SERVICIO (resenas_servicio, migración 116:
+// nacen PENDIENTE, UPDATE solo administración, pública solo APROBADA): se listan
+// aquí con el nombre del servicio, sin cambios de RLS.
+const TABLA_POR_ORIGEN = {
+  GENERAL: 'resenas',
+  PRODUCTO: 'resenas_producto',
+  SERVICIO: 'resenas_servicio',
+}
 export default function ResenasWeb({ activo = true }) {
   const { mostrarToast } = useToast()
 
@@ -54,7 +62,7 @@ export default function ResenasWeb({ activo = true }) {
 
   async function cargarResenas(silencioso = false) {
     if (!silencioso) setCargando(true)
-    const [generales, deProducto] = await Promise.all([
+    const [generales, deProducto, deServicio] = await Promise.all([
       supabase
         .from('resenas')
         .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono)')
@@ -63,15 +71,20 @@ export default function ResenasWeb({ activo = true }) {
         .from('resenas_producto')
         .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), productos(nombre)')
         .order('creado_en', { ascending: false }),
+      supabase
+        .from('resenas_servicio')
+        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), servicios(nombre)')
+        .order('creado_en', { ascending: false }),
     ])
 
-    if (generales.error || deProducto.error) {
+    if (generales.error || deProducto.error || deServicio.error) {
       setError('No se pudo cargar las reseñas.')
     } else {
       setError(null)
       const todas = [
         ...(generales.data ?? []).map((r) => ({ ...r, origen: 'GENERAL' })),
         ...(deProducto.data ?? []).map((r) => ({ ...r, origen: 'PRODUCTO' })),
+        ...(deServicio.data ?? []).map((r) => ({ ...r, origen: 'SERVICIO' })),
       ].sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
       setResenas(todas)
     }
@@ -117,7 +130,8 @@ export default function ResenasWeb({ activo = true }) {
         const termino = busqueda.trim().toLowerCase()
         return (
           (r.clientes?.nombre ?? '').toLowerCase().includes(termino) ||
-          (r.productos?.nombre ?? '').toLowerCase().includes(termino)
+          (r.productos?.nombre ?? '').toLowerCase().includes(termino) ||
+          (r.servicios?.nombre ?? '').toLowerCase().includes(termino)
         )
       })
     : resenas
@@ -131,7 +145,7 @@ export default function ResenasWeb({ activo = true }) {
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
-          placeholder="Buscar por clienta o producto..."
+          placeholder="Buscar por clienta, producto o servicio..."
           tema="red"
         />
       </div>
@@ -172,7 +186,9 @@ export default function ResenasWeb({ activo = true }) {
                     <p className="truncate text-[11px] text-ink/60">
                       {resena.origen === 'PRODUCTO'
                         ? `Producto: ${resena.productos?.nombre ?? 'eliminado'}`
-                        : 'Reseña general'}
+                        : resena.origen === 'SERVICIO'
+                          ? `Servicio: ${resena.servicios?.nombre ?? 'eliminado'}`
+                          : 'Reseña general'}
                     </p>
                     <div className="flex gap-0.5">
                       {Array.from({ length: 5 }, (_, i) => (
