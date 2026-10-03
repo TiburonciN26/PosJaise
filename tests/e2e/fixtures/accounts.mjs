@@ -9,6 +9,16 @@ export const accounts = {
   ASISTENTE: 'asistentetest01@test.local',
 };
 export const issueURLs = {
+  'QA-033': 'https://app.notion.com/p/3eef27109e6a8173a6a9e13e177cdd19',
+  'QA-034': 'https://app.notion.com/p/3eef27109e6a81ea9020c1db9098e356',
+  'QA-020': 'https://app.notion.com/p/3edf27109e6a81268400df6bb0d19170',
+  'QA-021': 'https://app.notion.com/p/3edf27109e6a8156b9fef7cb91be645d',
+  'QA-022': 'https://app.notion.com/p/3edf27109e6a81e0bbe1d0511bfec5a4',
+  'QA-023': 'https://app.notion.com/p/3edf27109e6a8124bdeaefce568dd181',
+  'QA-024': 'https://app.notion.com/p/3edf27109e6a81d6868adb65e23a76bf',
+  'QA-030': 'https://app.notion.com/p/3edf27109e6a8172ad91d080092143ec',
+  'QA-031': 'https://app.notion.com/p/3edf27109e6a8151a2c4cc2aef957557',
+  'QA-032': 'https://app.notion.com/p/3edf27109e6a813bb999fd28f71c7d72',
   'QA-025': 'https://app.notion.com/p/3edf27109e6a81e8b88bf76ba8ee67e4',
   'QA-026': 'https://app.notion.com/p/3edf27109e6a81568275e3d7537f9950',
   'QA-027': 'https://app.notion.com/p/3edf27109e6a814b80d7dfdaa23f0982',

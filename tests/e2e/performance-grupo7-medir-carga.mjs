@@ -9,7 +9,7 @@ const { password, accounts } = await import(pathToFileURL('C:/WedJaiseReact/test
 const data = JSON.parse(readFileSync('C:/WedJaiseReact/tests/e2e/fixtures/runtime.json', 'utf8'))
 const [dir, puerto, etiqueta] = process.argv.slice(2)
 const SP = 'C:/WedJaiseReact/tests/e2e/results/performance-grupo7'
-const N = 3
+const N = Number(process.env.N ?? 3)
 const srv = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--outDir', dir, '--port', puerto, '--strictPort', '--host', '127.0.0.1', '--base', '/PosJaise/'], { cwd: 'C:/WedJaiseReact', stdio: 'ignore' })
 const base = `http://127.0.0.1:${puerto}/PosJaise`
 for (let i = 0; i < 40; i++) { try { const r = await fetch(base + '/'); if (r.ok) break } catch {} await new Promise((r) => setTimeout(r, 250)) }

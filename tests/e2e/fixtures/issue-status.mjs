@@ -1,24 +1,42 @@
-// Snapshot read from Notion before this QA campaign.
-// Owner clarification: Verificado = defect manually confirmed, not corrected.
+// Estados de Notion usados SOLO para anotar los reportes (knownIssue). Primer corte: antes de la
+// campaña; actualizado el 2026-10-03 con el estado tras el re-test independiente de Codex
+// (90 aprobados, 1 omitido): Verificado en QA-001, QA-003 a QA-019 y QA-024 a QA-032;
+// QA-020 a QA-023 siguen pendientes de re-test de rendimiento.
+// Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente.
 export const issueStatus = {
-  'QA-019': 'Pendiente',
-  'QA-018': 'Pendiente',
-  'QA-016': 'Pendiente',
-  'QA-017': 'Pendiente',
-  "QA-015": "Pendiente",
-  "QA-014": "Pendiente",
+  'QA-034': 'Pendiente',
+  'QA-033': 'Pendiente',
+  'QA-032': 'Verificado',
+  'QA-031': 'Verificado',
+  'QA-030': 'Verificado',
+  'QA-029': 'Verificado',
+  'QA-028': 'Verificado',
+  'QA-027': 'Verificado',
+  'QA-026': 'Verificado',
+  'QA-025': 'Verificado',
+  'QA-024': 'Verificado',
+  'QA-023': 'Pendiente',
+  'QA-022': 'Pendiente',
+  'QA-021': 'Pendiente',
+  'QA-020': 'Pendiente',
+  'QA-019': 'Verificado',
+  'QA-018': 'Verificado',
+  'QA-016': 'Verificado',
+  'QA-017': 'Verificado',
+  "QA-015": 'Verificado',
+  "QA-014": 'Verificado',
   "QA-013": "Verificado",
-  "QA-012": "Pendiente",
-  "QA-011": "Re-test",
+  "QA-012": 'Verificado',
+  "QA-011": 'Verificado',
   "QA-010": "Verificado",
   "QA-009": "Verificado",
   "QA-008": "Verificado",
-  "QA-007": "Pendiente",
+  "QA-007": 'Verificado',
   "QA-006": "Verificado",
   "QA-005": "Verificado",
-  "QA-004": "Pendiente",
+  "QA-004": 'Verificado',
   "QA-003": "Verificado",
-  "QA-001": "Pendiente"
+  "QA-001": 'Verificado'
 };
 
 // Explicitly uncorrected issues, independent of the owner's Notion labels.
@@ -36,4 +54,7 @@ export const issueStatus = {
 //   otra promoción vigente con prioridad) y pasó sana en la repetición.
 // Quedan pendientes solo los del Grupo 6 (accesibilidad).
 export const expectedFailureIDs = new Set([
+  // QA-033: ASISTENTE puede ejecutar confirmar_venta/anular_venta por la API; pendiente de decisión
+  // de negocio (qué roles pueden vender/anular). El test afirma el comportamiento correcto.
+  'QA-033',
 ]);

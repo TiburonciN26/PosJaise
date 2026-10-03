@@ -1,5 +1,7 @@
 // Mediciones del Grupo 7 (solo Local, cuenta CLIENTE ficticia, dev server).
-// uso: node medir-g7.mjs <etiqueta> [catalogos|imagenes|todo]
+// uso: node medir-g7.mjs <etiqueta> [catalogos|imagenes|todo] [filtro]
+// APP_URL (opcional): app servida por `vite preview` de un build optimizado (p. ej. http://127.0.0.1:4173);
+// por defecto el servidor de desarrollo http://localhost:5173. N (opcional): repeticiones (def. 5).
 import { createRequire } from 'node:module'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
@@ -10,11 +12,23 @@ const data = JSON.parse(readFileSync('C:/WedJaiseReact/tests/e2e/fixtures/runtim
 const etiqueta = process.argv[2] ?? 'antes'
 const que = process.argv[3] ?? 'todo'
 const filtro = process.argv[4] ?? ''
-const N = 5
+const N = Number(process.env.N ?? 5)
+const APP = process.env.APP_URL ?? 'http://localhost:5173'
+const APP_ORIGEN = new URL(APP).host.replace(/\./g, '\\.')
+const PERMITIDOS = new RegExp(`^https?://(?!${APP_ORIGEN}|127\\.0\\.0\\.1:54321)`)
 const SP = 'C:/WedJaiseReact/tests/e2e/results/performance-grupo7'
 
-const txt = await (await fetch('http://localhost:5173/src/lib/supabase.js')).text()
-if (!txt.includes('127.0.0.1:54321')) { console.error('ABORTO: no es Local'); process.exit(1) }
+// Guarda de entorno: en desarrollo se lee el módulo servido; en un build se comprueba que el
+// bundle apunta a Supabase Local y a ningún proyecto remoto.
+if (!process.env.APP_URL) {
+  const txt = await (await fetch(`${APP}/src/lib/supabase.js`)).text()
+  if (!txt.includes('127.0.0.1:54321')) { console.error('ABORTO: no es Local'); process.exit(1) }
+} else {
+  const html = await (await fetch(`${APP}/`)).text()
+  const js = [...html.matchAll(/(?:src|href)="([^"]+\.js)"/g)].map((m) => m[1])
+  const cuerpo = (await Promise.all(js.map(async (u) => (await fetch(new URL(u, APP))).text()))).join('\n')
+  if (!cuerpo.includes('127.0.0.1:54321') || /https:\/\/[a-z0-9]{20}\.supabase\.co/.test(cuerpo)) { console.error('ABORTO: el build no apunta solo a Supabase Local'); process.exit(1) }
+}
 
 const INIT = () => {
   const sel = 'main a.aspect-square[href^="/productos/"], main a.aspect-square[href^="/servicios/"]'
@@ -44,9 +58,9 @@ const browser = await chromium.launch()
 const med = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)] }
 const resumen = (a) => ({ mediana: Math.round(med(a)), min: Math.round(Math.min(...a)), max: Math.round(Math.max(...a)), muestras: a.map((x) => Math.round(x)) })
 
-async function contexto(viewport, bloquearContacto = 0) {
-  const ctx = await browser.newContext({ viewport, baseURL: 'http://localhost:5173', serviceWorkers: 'block', timezoneId: 'America/Lima' })
-  await ctx.route(/^https?:\/\/(?!localhost:5173|127\.0\.0\.1:54321)/, (r) => r.abort())
+async function contexto(viewport, bloquearContacto = 0, reducedMotion = 'no-preference') {
+  const ctx = await browser.newContext({ reducedMotion, viewport, baseURL: APP, serviceWorkers: 'block', timezoneId: 'America/Lima' })
+  await ctx.route(PERMITIDOS, (r) => r.abort())
   const page = await ctx.newPage()
   await page.goto('/login')
   await page.getByLabel('Correo', { exact: true }).fill(data.clientEmail)
@@ -60,7 +74,7 @@ async function contexto(viewport, bloquearContacto = 0) {
   return { ctx, page }
 }
 
-const salida = { etiqueta, fecha: new Date().toISOString(), N, entorno: 'dev server local, Supabase Local, orígenes externos bloqueados, serviceWorkers bloqueados' }
+const salida = { etiqueta, fecha: new Date().toISOString(), N, entorno: `${process.env.APP_URL ? 'build optimizado (vite preview)' : 'servidor de desarrollo (StrictMode)'} ${APP}, Supabase Local, orígenes externos bloqueados, serviceWorkers bloqueados` }
 
 if (que === 'todo' || que === 'catalogos') {
   salida.catalogos = {}
@@ -69,11 +83,12 @@ if (que === 'todo' || que === 'catalogos') {
     { nombre: 'directa 390x844', vp: { width: 390, height: 844 }, bloqueo: 0, modo: 'directa' },
     { nombre: 'navegando desde Inicio 1440x900', vp: { width: 1440, height: 900 }, bloqueo: 0, modo: 'nav' },
     { nombre: 'directa 1440x900 con datos_contacto retenido 1000 ms', vp: { width: 1440, height: 900 }, bloqueo: 1000, modo: 'directa' },
+    { nombre: 'directa 1440x900 movimiento reducido', vp: { width: 1440, height: 900 }, bloqueo: 0, modo: 'directa', rm: 'reduce' },
   ]
   for (const esc of escenarios) {
     if (filtro && !esc.nombre.includes(filtro)) continue
     for (const ruta of ['/productos', '/servicios']) {
-      const { ctx, page } = await contexto(esc.vp, esc.bloqueo)
+      const { ctx, page } = await contexto(esc.vp, esc.bloqueo, esc.rm)
       await page.addInitScript(INIT)
       const dom = [], vis = [], settled = []
       for (let i = 0; i < N; i++) {
@@ -98,8 +113,8 @@ if (que === 'todo' || que === 'catalogos') {
 if (que === 'todo' || que === 'imagenes') {
   salida.imagenes = {}
   for (const [nombre, vp] of [['1440x900', { width: 1440, height: 900 }], ['390x844', { width: 390, height: 844 }]]) {
-    const ctx = await browser.newContext({ viewport: vp, baseURL: 'http://localhost:5173', serviceWorkers: 'block', timezoneId: 'America/Lima' })
-    await ctx.route(/^https?:\/\/(?!localhost:5173|127\.0\.0\.1:54321)/, (r) => r.abort())
+    const ctx = await browser.newContext({ viewport: vp, baseURL: APP, serviceWorkers: 'block', timezoneId: 'America/Lima' })
+    await ctx.route(PERMITIDOS, (r) => r.abort())
     const page = await ctx.newPage()
     await page.goto('/login'); await page.getByLabel('Correo', { exact: true }).fill(data.clientEmail); await page.getByLabel('Contraseña', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Entrar', exact: true }).click(); await page.getByRole('button', { name: /Menú de (usuario|cuenta)/ }).waitFor(); await page.waitForLoadState('networkidle')

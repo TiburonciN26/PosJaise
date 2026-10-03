@@ -408,7 +408,6 @@ test('QA-026: reseña de producto pendiente se modera desde Reseñas y la public
     await expect(cliente.getByText(comentario)).toHaveCount(0);
 
     // Permisos: la clienta no puede aprobar su propia reseña (RLS: solo administración actualiza).
-    const rid = (await rest(page, key, 'GET', `/rest/v1/resenas_producto?cliente_id=eq.${own.clientId ?? ''}&select=id`)).json;
     const reseñas = (await rest(page, key, 'GET', `/rest/v1/resenas_producto?producto_id=eq.${product.productId}&select=id,estado`)).json;
     expect(reseñas).toHaveLength(1);
     const intento = await rest(cliente, claveCliente, 'PATCH', `/rest/v1/resenas_producto?id=eq.${reseñas[0].id}`, { estado: 'APROBADA' });

@@ -32,7 +32,7 @@ export const test = base.extend({
 export { expect };
 
 export function knownIssue(info, id) {
-  info.annotations.push({ type: 'issue', description: `${id}: ${issueURLs[id]} (Notion: ${issueStatus[id] ?? 'Pendiente'}; requiere prueba)` });
+  info.annotations.push({ type: 'issue', description: `${id}: ${issueURLs[id]} (Notion: ${issueStatus[id] ?? 'Pendiente'}; ${expectedFailureIDs.has(id) ? 'defecto sin corrección confirmada' : 'caso de regresión'})` });
 }
 
 export function expectKnownFailure(id) {
