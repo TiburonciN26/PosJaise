@@ -6204,3 +6204,75 @@ migración nueva (`20261002000005`), aplicada únicamente en Local. Pruebas en
   la clienta reseña (PENDIENTE, «en revisión») → aparece en Reseñas → aprobar (tras
   recarga: Publicada; pública en el detalle) → quitar (ya no pública); la clienta no
   puede autoaprobarse (PATCH afecta 0 filas) y una CAJERA no lee ni modifica reseñas pendientes.
+
+
+---
+
+## 30. Cierre QA — re-medición de QA-020 a QA-023, hallazgos de autorización (QA-033, QA-034) y cobertura — 2026-10-03
+
+Solo Supabase Local TEST con datos ficticios. Una migración nueva (`20261002000006`), aplicada
+únicamente en Local; nada aplicado a producción.
+
+### Re-medición de rendimiento (QA-020 a QA-023)
+Scripts `tests/e2e/performance-grupo7-*.mjs` (mismas definiciones que el Grupo 7: «tarjeta visible» =
+opacidad ≥ 0,05 durante 4 fotogramas; «asentadas» = todas las de pantalla ≥ 0,99). **Nuevo:** `APP_URL`
+permite medir un **build optimizado** (`vite preview` de un build con `--base /`, comprobado que solo apunta a
+Supabase Local) además del servidor de desarrollo; N = 5; escenario de movimiento reducido; capturas en el
+tiempo (`performance-grupo7-capturas.mjs`). Resultados crudos en
+`tests/e2e/results/performance-grupo7/g7-retest-build-todo.json`, `g7-retest-dev-todo.json`,
+`carga-retest.json` y `capturas-build/` (ignorados por Git).
+
+Catálogos, primera tarjeta visible (mediana, ms), 1440×900 salvo indicación:
+| Escenario | Línea base (Codex/Grupo 7) | Dev ahora | Build ahora |
+|---|---:|---:|---:|
+| /productos directa | 1930 | 863 | 696 |
+| /servicios directa | 1430 | 760 | 596 |
+| /productos navegando desde Inicio | 1744 | 697 | 682 |
+| /servicios navegando desde Inicio | 1244 | 589 | 577 |
+| /productos 390×844 | 2030 | 886 | 729 |
+| /servicios 390×844 | 1480 | 763 | 613 |
+| /productos con `datos_contacto` retenido 1 s (QA-022) | 2913 | 863 | 697 |
+| /servicios con `datos_contacto` retenido 1 s (QA-022) | 2429 | 763 | 596 |
+| movimiento reducido (visible = DOM) | 178 / 93 | 271 / 259 | 107 / 121 |
+
+Con el contacto retenido 1 s el catálogo aparece igual de rápido (697 vs 696): ya no depende de él (QA-022).
+
+QA-021 (build con `--base /PosJaise/`, 390×844, N = 5, limitado = 150 ms / 1,6-0,75 Mbps / CPU 4x): archivo de
+entrada 335,37 kB (gzip 102,76) frente a 1.003,88 kB (270,43); JS al abrir login 164.866 B (antes 279.843),
+FCP del login 68 ms local y 1448 ms limitado (antes 104 y 2144); Entrar → menú CAJERA 236 / 953 ms y CLIENTE
+294 (rango 237–300) / 922 ms (antes 236 / 944 y 240 / 914: sin regresión apreciable).
+
+QA-023: sin desplazarse se descargan 0 fotos de galería (0 B) en 1440×900 y 390×844; las 6 imágenes
+(`loading="lazy"`) se cargan al acercarse (4 archivos, 332.684 B); total de imágenes sin scroll 2 archivos,
+203.747 B.
+
+**Revisión visual de la animación** (capturas a 100–2000 ms, escritorio y móvil, normal y movimiento reducido):
+a 300 ms el área de contenido aún está vacía bajo el encabezado y el breadcrumb; hacia 600–900 ms las tarjetas
+entran con el fundido con desenfoque del diseño (Servicios algo antes que Productos); a 2000 ms la
+disposición final es igual; con movimiento reducido el contenido ya está completo a 100–300 ms; en móvil el
+carrusel por categoría y los títulos se ven correctos. No se apreciaron saltos de diseño ni solapes. Límites:
+Chromium headless, un equipo, red/CPU simulados, N pequeño; no se midió INP, teléfono físico, PWA ni GitHub Pages.
+
+### QA-034 — `es_admin()` devolvía NULL (Alta)
+Al ampliar la cobertura de autorización del backend con sesiones reales se encontró que, para una cuenta
+CLIENTE (sin fila en `usuarios`), `rol_actual()` es NULL y `es_admin()` también; las funciones security definer
+con `if not public.es_admin() then raise …` no se detenían. Reproducido con sesión CLIENTE: `eliminar_producto`
+respondía 200 y borraba el producto; por SQL también `eliminar_servicio`, `eliminar_asistente` y
+`historial_stock_producto`; `verificar_pago_pedido_web` pasaba la guarda y solo la frenaba después
+`confirmar_venta`. Registrado en Notion (QA-034) con la evidencia antes de corregir. Corrección: migración
+`20261002000006_es_admin_siempre_boolean.sql` (`es_admin()` = `coalesce(rol_actual() = 'ADMINISTRADOR', false)`);
+no cambia las políticas RLS (ninguna usa `not es_admin()`), mismos grants. Prueba «QA-034» en
+`qa-cobertura-adicional.spec.mjs` (falló antes, pasa ahora).
+
+### QA-033 — ASISTENTE puede vender/anular por API (Media, sin corregir)
+`confirmar_venta`/`anular_venta` solo exigen `rol_actual() is not null` aunque Ventas/Historial son
+ADMIN/CAJERA. Es una regla de roles que el negocio debe confirmar; registrado en Notion, prueba marcada como
+defecto conocido (`expectedFailureIDs`, lista explícita).
+
+### Cobertura añadida
+`tests/e2e/qa-cobertura-adicional.spec.mjs` (7 casos) y `tests/e2e/COBERTURA.md` (matriz y brechas): autorización
+de backend por rol sin botones, sesión (sin token, alterada, eliminada, refresh tras cerrar sesión), referidos y
+límites de cupones con uso simultáneo, comisión de ASISTENTE con % asignado (33,33 / 100 / 0) y pedido ENTREGADO
+frente a una anulación (comportamiento actual documentado; la decisión de negocio sigue pendiente).
+Trazabilidad del arnés: enlaces y estados de QA-020 a QA-034 en las anotaciones, GET auxiliar inválido de QA-026
+eliminado, README/ENTREGA actualizados.
