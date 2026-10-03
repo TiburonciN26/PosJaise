@@ -1,4 +1,4 @@
-import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
+import { test, expect, knownIssue } from './fixtures.mjs';
 import { login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
@@ -173,31 +173,6 @@ test('QA-034: un CLIENTE no puede ejecutar por RPC las acciones solo de administ
   // Los registros ficticios siguen existiendo (nada se eliminó).
   expect((await rest(page, key, 'GET', `/rest/v1/productos?id=eq.${producto.productId}&select=id`)).json).toHaveLength(1);
   expect((await rest(page, key, 'GET', `/rest/v1/servicios?id=eq.${servicio.serviceId}&select=id`)).json).toHaveLength(1);
-});
-
-test('QA-033: ASISTENTE no debe crear ni anular ventas por la API (Ventas e Historial son solo ADMIN/CAJERA)', async ({ page, browser, data }, info) => {
-  test.setTimeout(150_000);
-  knownIssue(info, 'QA-033');
-  const key = watchApiKey(page);
-  await login(page, 'ADMINISTRADOR', data);
-  const producto = { productName: `${data.prefix} Q033 Producto`, barcode: `${data.barcode}-Q033`, initialStock: 10 };
-  await createProduct(page, producto);
-  const a = await abrirSesion(browser, data, 'ASISTENTE');
-  let vendida;
-  try {
-    vendida = await rpc(a.page, a.box, 'confirmar_venta', { p_metodo_pago: 'Yape', p_monto_recibido: null, p_items: [{ tipo: 'PRODUCTO', producto_id: producto.productId, cantidad: 1 }] });
-    await info.attach('asistente-confirmar-venta', { body: Buffer.from(JSON.stringify({ status: vendida.status, body: vendida.json })), contentType: 'application/json' });
-  } finally {
-    await a.ctx.close();
-  }
-  const ventaId = Array.isArray(vendida.json) ? vendida.json[0]?.venta_id : vendida.json?.venta_id;
-  if (ventaId) {
-    // Se deja la venta ficticia como estaba: la anula ADMIN por su rol, para no dejar stock descontado.
-    const anulada = await rpc(page, key, 'anular_venta', { p_venta_id: ventaId });
-    expect(anulada.status).toBeLessThan(400);
-  }
-  expectKnownFailure('QA-033');
-  expect(vendida.status, 'ASISTENTE no debería poder confirmar ventas por la API').toBeGreaterThanOrEqual(400);
 });
 
 test('SESIÓN: sin token, token alterado, sesión eliminada y refresh tras cerrar sesión', async ({ page, browser, data }) => {

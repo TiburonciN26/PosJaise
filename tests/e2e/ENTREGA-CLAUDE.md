@@ -16,13 +16,14 @@ Cada ejecución completa prepara un CLIENTE y productos/servicio/promoción aisl
 
 ## Cómo interpretar
 
-1. «Verificado» en Notion es una marca de revisión del propietario; no controla expectativas. `expectedFailureIDs` es una lista explícita (hoy solo QA-033, a la espera de decisión de negocio). Vacía no significa «todo resuelto».
+1. «Verificado» en Notion es una marca de revisión del propietario; no controla expectativas. `expectedFailureIDs` es una lista explícita (hoy vacía). Vacía no significa «todo resuelto».
 2. Un fallo esperado es una incidencia reproducida, no funcionalidad aprobada. Un unexpected pass exige re-test y retirar el ID. Una omisión no cuenta como aprobado.
 3. Separar siempre: defectos de la aplicación, errores del arnés/preparación, casos omitidos (con su motivo) y fallos esperados.
 4. No volver a registrar la impresión nativa automática como incidencia: tras confirmar una venta se recarga.
 
 ## Decisiones de negocio pendientes
 
+(QA-033 quedó resuelto con la regla aprobada: solo ADMINISTRADOR y CAJERA crean y anulan ventas, en pantalla y en el backend.)
+
 - Estado de un pedido web cuya venta se anula (hoy `CANCELADO`; ¿`DEVUELTO`? ¿devolución de dinero?), incluido el pedido ya ENTREGADO.
-- QA-033: qué roles pueden vender/anular por la API (hoy cualquier personal; las pantallas son ADMIN/CAJERA).
 - Plazo de cancelación por defecto mostrado en el detalle de servicio (QA-029) y coma decimal en importes (QA-028).

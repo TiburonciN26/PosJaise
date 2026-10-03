@@ -5,7 +5,7 @@
 // Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente.
 export const issueStatus = {
   'QA-034': 'Pendiente',
-  'QA-033': 'Pendiente',
+  'QA-033': 'Pendiente', // corregido en Local, a la espera de re-test independiente
   'QA-032': 'Verificado',
   'QA-031': 'Verificado',
   'QA-030': 'Verificado',
@@ -53,8 +53,8 @@ export const issueStatus = {
 // - QA-005 falló una vez en preparación (la promoción TEST no era visible por
 //   otra promoción vigente con prioridad) y pasó sana en la repetición.
 // Quedan pendientes solo los del Grupo 6 (accesibilidad).
+// 2026-10-03: QA-033 (solo ADMINISTRADOR y CAJERA crean/anulan ventas) corregido en Local con la
+// migración 20261002000007; sus tres pruebas específicas (qa-033-ventas-roles.spec.mjs) pasan de verdad,
+// así que se retiró de la lista. Vacía NO significa que todo esté resuelto en Notion.
 export const expectedFailureIDs = new Set([
-  // QA-033: ASISTENTE puede ejecutar confirmar_venta/anular_venta por la API; pendiente de decisión
-  // de negocio (qué roles pueden vender/anular). El test afirma el comportamiento correcto.
-  'QA-033',
 ]);
