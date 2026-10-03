@@ -6276,3 +6276,31 @@ límites de cupones con uso simultáneo, comisión de ASISTENTE con % asignado (
 frente a una anulación (comportamiento actual documentado; la decisión de negocio sigue pendiente).
 Trazabilidad del arnés: enlaces y estados de QA-020 a QA-034 en las anotaciones, GET auxiliar inválido de QA-026
 eliminado, README/ENTREGA actualizados.
+
+
+---
+
+## 31. Corrección QA-033 — solo ADMINISTRADOR y CAJERA crean y anulan ventas — 2026-10-03
+
+Solo Supabase Local TEST con datos ficticios; migración nueva `20261002000007_ventas_solo_admin_cajera.sql`
+(aplicada solo en Local; las migraciones anteriores no se editan). Regla de negocio aprobada: ASISTENTE, CLIENTE y
+solicitudes sin sesión no pueden crear ni anular ventas; CAJERA conserva «solo ventas de hoy».
+
+- **Vías de escritura revisadas:** `confirmar_venta()` y `anular_venta()` (security definer; solo exigían
+  `rol_actual() is not null`), la política `ventas_insert` (cualquier personal podía insertar en `ventas`) y
+  `venta_items_insert` (exige una venta propia, así que queda cerrada al cerrar la anterior). El frontend nunca
+  inserta ventas directamente; `verificar_pago_pedido_web()` llama a `confirmar_venta()` con la sesión del
+  ADMINISTRADOR, que sigue autorizado. `ventas` solo se actualiza por RLS de administración.
+- **Cambio:** ambas funciones rechazan roles distintos de ADMINISTRADOR/CAJERA («Solo el administrador o la cajera
+  pueden registrar/anular ventas»); sin sesión o CLIENTE conservan «No tienes una sesión activa o válida»;
+  `ventas_insert` exige rol ADMINISTRADOR o CAJERA. No se tocan SELECT/UPDATE de `ventas` ni otras tablas; mismos
+  grants. No se añaden reglas de devolución, reembolso ni estados de pedido.
+- **Pruebas** (`qa-033-ventas-roles.spec.mjs`, falla antes / pasa después): preparación por ADMIN (venta simple, venta con
+  cupón de referido y venta de un pedido del portal creado por la UI); (1) ASISTENTE no crea una venta (RPC ni INSERT
+  directo); (2) ASISTENTE no anula ninguna de las tres ventas (RPC ni PATCH directo); (3) CLIENTE y sin sesión no
+  crean ni anulan; en (1)-(3) un snapshot de ventas, ítems, stock, cupones y pedido queda idéntico; (4) CAJERA vende y
+  anula por la UI, sigue sin anular ventas de otro día y ADMIN anula las tres (pedido → CANCELADO, cupón →
+  DISPONIBLE, stock repuesto). Reproducción previa: ASISTENTE recibía 200 al crear y 204 al anular.
+- **Cobertura:** `expectedFailureIDs` queda vacío (QA-033 retirado solo tras pasar las pruebas específicas);
+  COBERTURA.md recoge además el delivery con cupón porcentual y de monto fijo comprobado por Codex por UI, con los
+  límites de su informe.
