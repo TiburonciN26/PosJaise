@@ -1,9 +1,9 @@
 // Estados de Notion usados SOLO para anotar los reportes (knownIssue); no controlan ninguna expectativa.
 // Sincronizado el 2026-10-03 leyendo la vista de Notion: Verificado en QA-001 y QA-003 a QA-034 (los re-tests
-// independientes de Codex incluyen QA-020 a QA-023 y QA-034); Pendiente en QA-035 (registrado hoy, sin corregir).
+// independientes de Codex incluyen QA-020 a QA-023 y QA-034); Re-test en QA-035 (corregido en Local, pendiente de verificación independiente).
 // Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente de estos estados.
 export const issueStatus = {
-  'QA-035': 'Pendiente',
+  'QA-035': 'Re-test',
   'QA-034': 'Verificado',
   'QA-033': 'Verificado',
   'QA-032': 'Verificado',
@@ -56,8 +56,7 @@ export const issueStatus = {
 // 2026-10-03: QA-033 (solo ADMINISTRADOR y CAJERA crean/anulan ventas) corregido en Local con la
 // migración 20261002000007; sus tres pruebas específicas (qa-033-ventas-roles.spec.mjs) pasan de verdad,
 // así que se retiró de la lista. Vacía NO significa que todo esté resuelto en Notion.
-export const expectedFailureIDs = new Set([
-  // QA-035: CAJERA/ASISTENTE insertan movimientos_stock directamente y ASISTENTE agrega stock por RPC.
-  // Pendiente de confirmar la regla de roles; las pruebas afirman el comportamiento correcto.
-  'QA-035',
-]);
+// 2026-10-03: QA-035 (solo ADMINISTRADOR y CAJERA agregan stock; historial solo por la RPC) corregido en Local con la
+// migración 20261002000008; sus cuatro pruebas específicas (qa-autorizacion-configuracion.spec.mjs) pasan de verdad,
+// así que se retiró de la lista (la lista queda vacía; en Notion sigue en Re-test hasta que Codex lo verifique).
+export const expectedFailureIDs = new Set([]);

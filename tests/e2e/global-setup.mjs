@@ -16,8 +16,11 @@ export default async function setup() {
   }
   const runId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   const prefix = `TEST PW ${runId}`;
-  const tomorrow = new Date();
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  // «Mañana» = el siguiente día de atención: el negocio no atiende los domingos (estado_negocio.dias_atencion = 1..6),
+  // así que un pedido para un domingo se rechaza ('El negocio no atiende ese día.') y no es un defecto de la app.
+  const limaHoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+  const tomorrow = new Date(`${limaHoy}T12:00:00-05:00`);
+  do { tomorrow.setUTCDate(tomorrow.getUTCDate() + 1); } while (tomorrow.getUTCDay() === 0);
   const data = {
     runId, prefix,
     clientEmail: `clientetest-pw-${runId}@test.local`,

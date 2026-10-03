@@ -16,14 +16,14 @@ Cada ejecución completa prepara un CLIENTE y productos/servicio/promoción aisl
 
 ## Cómo interpretar
 
-1. «Verificado» en Notion es una marca de revisión del propietario; no controla expectativas. `expectedFailureIDs` es una lista explícita (hoy solo QA-035, pendiente de confirmar la regla de roles). Vacía no significa «todo resuelto».
+1. «Verificado» en Notion es una marca de revisión del propietario; no controla expectativas. `expectedFailureIDs` es una lista explícita (hoy vacía; QA-035 se corrigió en Local y sus pruebas pasan de verdad). Vacía no significa «todo resuelto».
 2. Un fallo esperado es una incidencia reproducida, no funcionalidad aprobada. Un unexpected pass exige re-test y retirar el ID. Una omisión no cuenta como aprobado.
 3. Separar siempre: defectos de la aplicación, errores del arnés/preparación, casos omitidos (con su motivo) y fallos esperados.
 4. No volver a registrar la impresión nativa automática como incidencia: tras confirmar una venta se recarga.
 
 ## Decisiones de negocio pendientes
 
-- QA-035: roles que pueden agregar stock (hoy cualquier personal por la RPC; Inventario es ADMIN/CAJERA) y si el personal puede insertar movimientos de stock directamente.
+- QA-035 quedó resuelto con la regla aprobada (solo ADMINISTRADOR y CAJERA agregan stock; el historial solo lo escribe la RPC); pendiente solo el re-test de Codex y la autorización aparte para producción (migración 20261002000008).
 - Privilegios por defecto TRUNCATE/REFERENCES/TRIGGER de `anon` y `authenticated` (ver COBERTURA.md): decidir si se revocan.
 
 (QA-033 quedó resuelto con la regla aprobada: solo ADMINISTRADOR y CAJERA crean y anulan ventas, en pantalla y en el backend.)

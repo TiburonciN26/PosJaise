@@ -1,6 +1,6 @@
-import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
+import { test, expect, knownIssue } from './fixtures.mjs';
 import { readFile } from 'node:fs/promises';
-import { login } from './helpers.mjs';
+import { login, formWithTitle } from './helpers.mjs';
 import { isolatedClient, qaContext } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -12,7 +12,7 @@ import { supabaseURL } from './local-safety.mjs';
 //  - galeria_web: lectura solo de personal (el portal usa la RPC galeria_para_web); escritura solo ADMIN.
 //  - auditoria: lectura solo ADMIN; ninguna política de escritura (la llenan triggers).
 //  - gastos_recurrentes: solo ADMIN.
-//  - movimientos_stock: lectura de personal; INSERT permitido con usuario_id = uid (sin comprobar rol).
+//  - movimientos_stock: lectura de personal; escritura directa eliminada por QA-035 (solo la RPC agregar_stock, ADMIN/CAJERA).
 //  - productos.costo: sin SELECT de columna para authenticated; productos_vista lo devuelve solo a ADMIN.
 
 function watchApiKey(page) {
@@ -213,68 +213,157 @@ test.describe.serial('AUTORIZACIÓN: configuraciones, zonas, galería, auditorí
     expect(await leerAdmin(`gastos_recurrentes?id=eq.${S.recurrente}&select=nombre,monto,activo`)).toEqual(base);
   });
 
-  test('Movimientos de stock: CLIENTE no escribe; CAJERA y ADMIN agregan stock por la RPC con un solo movimiento', async ({ browser }) => {
-    test.setTimeout(150_000);
-    const mov = async () => leerAdmin(`movimientos_stock?producto_id=eq.${S.producto}&select=cantidad_agregada,stock_anterior,stock_nuevo,nota&order=fecha`);
-    const stock = async () => (await leerAdmin(`productos_vista?id=eq.${S.producto}&select=stock_actual`))[0].stock_actual;
-    const s0 = await stock();
-    const c = await sesion(browser, S.data, 'CLIENTE', S.own);
-    try {
-      expect((await rest(c.page, c.box, 'POST', 'movimientos_stock', { producto_id: S.producto, cantidad_agregada: 5, stock_anterior: 0, stock_nuevo: 5, usuario_id: c.page && (await rest(c.page, c.box, 'GET', 'productos?select=id&limit=1')).userId })).status, 'CLIENTE: INSERT').toBeGreaterThanOrEqual(400);
-      expect((await rpc(c.page, c.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 5, p_nota: 'x' })).status, 'CLIENTE: RPC').toBeGreaterThanOrEqual(400);
-      expect((await rest(c.page, c.box, 'GET', 'movimientos_stock?select=id&limit=3')).json, 'CLIENTE: lectura').toEqual([]);
-    } finally { await c.ctx.close(); }
-    expect(await mov()).toEqual([]);
-    expect(await stock()).toBe(s0);
-    // Flujos autorizados (Inventario es ADMIN/CAJERA)
-    const cj = await sesion(browser, S.data, 'CAJERA');
-    try {
-      const r = await rpc(cj.page, cj.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 5, p_nota: `${S.data.prefix} CFG cajera` });
-      expect(r.status, JSON.stringify(r.json)).toBeLessThan(300);
-    } finally { await cj.ctx.close(); }
-    const ra = await rpc(S.admin.page, S.admin.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 2, p_nota: `${S.data.prefix} CFG admin` });
-    expect(ra.status).toBeLessThan(300);
-    expect(await stock()).toBe(s0 + 7);
-    const registrados = await mov();
-    expect(registrados.map((m) => m.cantidad_agregada), 'un movimiento por cada agregado').toEqual([5, 2]);
-    expect(registrados[0].stock_nuevo - registrados[0].stock_anterior).toBe(5);
-    // Historial legible solo por ADMIN (RPC)
-    const cj2 = await sesion(browser, S.data, 'CAJERA');
-    try {
-      const h = await rpc(cj2.page, cj2.box, 'historial_stock_producto', { p_producto_id: S.producto });
-      expect(h.status, 'CAJERA: historial (solo ADMIN)').toBeGreaterThanOrEqual(400);
-    } finally { await cj2.ctx.close(); }
-    expect((await rpc(S.admin.page, S.admin.box, 'historial_stock_producto', { p_producto_id: S.producto })).json).toHaveLength(2);
+  // QA-035 (regla aprobada): solo ADMINISTRADOR y CAJERA agregan stock; el historial solo lo escribe agregar_stock().
+  const estadoStock = async () => ({
+    stock: (await leerAdmin(`productos_vista?id=eq.${S.producto}&select=stock_actual`))[0].stock_actual,
+    movimientos: await leerAdmin(`movimientos_stock?producto_id=eq.${S.producto}&select=*&order=fecha`),
   });
+  const resumenRes = (r) => ({ status: r.status, codigo: r.json?.code ?? null, mensaje: r.json?.message ?? null, filas: Array.isArray(r.json) ? r.json.length : null });
+  const resumenEstado = (e) => ({ stock: e.stock, movimientos: e.movimientos.length });
 
-  test('QA-035: CAJERA y ASISTENTE no deben insertar movimientos de stock directamente (historial falsificable)', async ({ browser }, info) => {
-    test.setTimeout(150_000);
+  test('QA-035: ASISTENTE, CLIENTE y sin sesión no agregan stock ni escriben el historial; stock e historial idénticos', async ({ browser }, info) => {
+    test.setTimeout(180_000);
     knownIssue(info, 'QA-035');
-    const resultados = {};
-    for (const rol of ['CAJERA', 'ASISTENTE']) {
-      const s = await sesion(browser, S.data, rol);
+    const antes = await estadoStock();
+    expect(antes.movimientos, 'precondición: producto sin movimientos').toEqual([]);
+    const evidencia = {};
+    const ataques = async (etiqueta, p, b, uid, sinToken) => {
+      const o = sinToken ? { sinToken: true } : undefined;
+      evidencia[etiqueta] = {
+        rpc: resumenRes(await rpc(p, b, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 100, p_nota: `${S.data.prefix} CFG ${etiqueta}` }, o)),
+        post: resumenRes(await rest(p, b, 'POST', 'movimientos_stock', { producto_id: S.producto, cantidad_agregada: 999, stock_anterior: 0, stock_nuevo: 999, nota: `${S.data.prefix} CFG FORJADO ${etiqueta}`, usuario_id: uid }, o)),
+        patch: resumenRes(await rest(p, b, 'PATCH', `movimientos_stock?producto_id=eq.${S.producto}`, { cantidad_agregada: 1 }, o)),
+        delete: resumenRes(await rest(p, b, 'DELETE', `movimientos_stock?producto_id=eq.${S.producto}`, undefined, o)),
+      };
+    };
+    for (const rol of ['ASISTENTE', 'CLIENTE']) {
+      const s = await sesion(browser, S.data, rol, rol === 'CLIENTE' ? S.own : S.data);
       try {
         const uid = (await rest(s.page, s.box, 'GET', 'productos?select=id&limit=1')).userId;
-        resultados[rol] = await rest(s.page, s.box, 'POST', 'movimientos_stock', { producto_id: S.producto, cantidad_agregada: 999, stock_anterior: 0, stock_nuevo: 999, nota: `${S.data.prefix} CFG FORJADO ${rol}`, usuario_id: uid });
+        await ataques(rol, s.page, s.box, uid, false);
       } finally { await s.ctx.close(); }
     }
-    await info.attach('forja-movimientos', { body: Buffer.from(JSON.stringify(Object.fromEntries(Object.entries(resultados).map(([k, v]) => [k, { status: v.status, filas: Array.isArray(v.json) ? v.json.length : null }])))), contentType: 'application/json' });
-    expectKnownFailure('QA-035');
-    for (const [rol, r] of Object.entries(resultados)) expect(r.status, `${rol}: INSERT directo en movimientos_stock`).toBeGreaterThanOrEqual(400);
-    expect((await leerAdmin(`productos_vista?id=eq.${S.producto}&select=stock_actual`))[0].stock_actual, 'el stock real no cambia con un movimiento forjado').toBeLessThan(900);
+    await ataques('SIN_SESION', S.admin.page, S.admin.box, S.adminId, true);
+    const despues = await estadoStock();
+    // La evidencia se adjunta antes de cualquier aserción que pueda fallar.
+    await info.attach('qa-035-roles-no-autorizados', { body: Buffer.from(JSON.stringify({ evidencia, antes: resumenEstado(antes), despues: resumenEstado(despues) }, null, 2)), contentType: 'application/json' });
+    for (const [rol, r] of Object.entries(evidencia)) {
+      expect(r.rpc.status, `${rol}: agregar_stock`).toBeGreaterThanOrEqual(400);
+      expect(r.post.status, `${rol}: INSERT directo en movimientos_stock`).toBeGreaterThanOrEqual(400);
+      expect(r.patch.status >= 400 || r.patch.filas === 0, `${rol}: PATCH movimientos_stock`).toBeTruthy();
+      expect(r.delete.status >= 400 || r.delete.filas === 0, `${rol}: DELETE movimientos_stock`).toBeTruthy();
+    }
+    expect(evidencia.ASISTENTE.rpc.mensaje, 'ASISTENTE: mensaje de rol').toContain('Solo el administrador o la cajera');
+    expect(despues, 'stock e historial exactamente iguales').toEqual(antes);
   });
 
-  test('QA-035: ASISTENTE no debe agregar stock por la RPC (Inventario es solo ADMIN/CAJERA)', async ({ browser }, info) => {
+  test('QA-035: ni CAJERA ni ADMIN insertan, modifican o borran movimientos directamente (solo la RPC los genera)', async ({ browser }, info) => {
     test.setTimeout(150_000);
     knownIssue(info, 'QA-035');
-    const antes = (await leerAdmin(`productos_vista?id=eq.${S.producto}&select=stock_actual`))[0].stock_actual;
-    const s = await sesion(browser, S.data, 'ASISTENTE');
-    let r;
-    try { r = await rpc(s.page, s.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 100, p_nota: `${S.data.prefix} CFG asistente` }); } finally { await s.ctx.close(); }
-    await info.attach('asistente-agregar-stock', { body: Buffer.from(JSON.stringify({ status: r.status, body: r.json })), contentType: 'application/json' });
-    expectKnownFailure('QA-035');
-    expect(r.status, 'ASISTENTE: agregar_stock').toBeGreaterThanOrEqual(400);
-    expect((await leerAdmin(`productos_vista?id=eq.${S.producto}&select=stock_actual`))[0].stock_actual).toBe(antes);
+    const antes = await estadoStock();
+    const evidencia = {};
+    const ataques = async (etiqueta, p, b, uid) => {
+      evidencia[etiqueta] = {
+        post: resumenRes(await rest(p, b, 'POST', 'movimientos_stock', { producto_id: S.producto, cantidad_agregada: 999, stock_anterior: 0, stock_nuevo: 999, nota: `${S.data.prefix} CFG FORJADO ${etiqueta}`, usuario_id: uid })),
+        postMin: resumenRes(await rest(p, b, 'POST', 'movimientos_stock', { producto_id: S.producto, cantidad_agregada: 1, stock_anterior: 0, stock_nuevo: 1, usuario_id: uid }, { prefer: 'return=minimal' })),
+        patch: resumenRes(await rest(p, b, 'PATCH', `movimientos_stock?producto_id=eq.${S.producto}`, { cantidad_agregada: 1 })),
+        delete: resumenRes(await rest(p, b, 'DELETE', `movimientos_stock?producto_id=eq.${S.producto}`)),
+      };
+    };
+    const cj = await sesion(browser, S.data, 'CAJERA');
+    try { await ataques('CAJERA', cj.page, cj.box, (await rest(cj.page, cj.box, 'GET', 'productos?select=id&limit=1')).userId); } finally { await cj.ctx.close(); }
+    await ataques('ADMINISTRADOR', S.admin.page, S.admin.box, S.adminId);
+    const despues = await estadoStock();
+    await info.attach('qa-035-escritura-directa', { body: Buffer.from(JSON.stringify({ evidencia, antes: resumenEstado(antes), despues: resumenEstado(despues) }, null, 2)), contentType: 'application/json' });
+    for (const [rol, r] of Object.entries(evidencia)) {
+      expect(r.post.status, `${rol}: INSERT directo`).toBeGreaterThanOrEqual(400);
+      expect(r.postMin.status, `${rol}: INSERT directo (minimal)`).toBeGreaterThanOrEqual(400);
+      expect(r.patch.status >= 400 || r.patch.filas === 0, `${rol}: PATCH`).toBeTruthy();
+      expect(r.delete.status >= 400 || r.delete.filas === 0, `${rol}: DELETE`).toBeTruthy();
+    }
+    expect(despues, 'stock e historial exactamente iguales').toEqual(antes);
+  });
+
+  test('QA-035: cantidades inválidas y producto inexistente no dejan escrituras parciales; negocio cerrado sigue bloqueando a CAJERA', async ({ browser }, info) => {
+    test.setTimeout(180_000);
+    knownIssue(info, 'QA-035');
+    const antes = await estadoStock();
+    const invalidas = { cero: 0, negativa: -3, nula: null, decimal: 1.5, texto: 'abc', desborde: 2147483647 };
+    const evidencia = {};
+    const inexistente = '00000000-0000-4000-8000-000000000035';
+    const cj = await sesion(browser, S.data, 'CAJERA');
+    const estado0 = (await leerAdmin('estado_negocio?id=eq.1&select=abierto'))[0].abierto;
+    try {
+      for (const [nombre, cantidad] of Object.entries(invalidas)) {
+        evidencia[nombre] = resumenRes(await rpc(cj.page, cj.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: cantidad, p_nota: 'x' }));
+      }
+      evidencia.inexistente = resumenRes(await rpc(cj.page, cj.box, 'agregar_stock', { p_producto_id: inexistente, p_cantidad: 1, p_nota: 'x' }));
+      evidencia.adminDesborde = resumenRes(await rpc(S.admin.page, S.admin.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 2147483647, p_nota: 'x' }));
+      // Regla de negocio cerrado: CAJERA bloqueada con el mensaje existente.
+      try {
+        expect((await rest(S.admin.page, S.admin.box, 'PATCH', 'estado_negocio?id=eq.1', { abierto: false })).status).toBeLessThan(300);
+        evidencia.cerrado = resumenRes(await rpc(cj.page, cj.box, 'agregar_stock', { p_producto_id: S.producto, p_cantidad: 1, p_nota: 'x' }));
+      } finally {
+        await rest(S.admin.page, S.admin.box, 'PATCH', 'estado_negocio?id=eq.1', { abierto: estado0 });
+      }
+    } finally { await cj.ctx.close(); }
+    const despues = await estadoStock();
+    await info.attach('qa-035-cantidades-invalidas', { body: Buffer.from(JSON.stringify({ evidencia, antes: resumenEstado(antes), despues: resumenEstado(despues) }, null, 2)), contentType: 'application/json' });
+    expect((await leerAdmin('estado_negocio?id=eq.1&select=abierto'))[0].abierto, 'estado del negocio restaurado').toBe(estado0);
+    for (const [nombre, r] of Object.entries(evidencia)) expect(r.status, `rechazo: ${nombre}`).toBeGreaterThanOrEqual(400);
+    expect(evidencia.cerrado.mensaje).toContain('El negocio se encuentra cerrado');
+    expect(evidencia.inexistente.mensaje).toContain('El producto no existe');
+    expect(despues, 'sin escrituras parciales: stock e historial exactamente iguales').toEqual(antes);
+    expect(await leerAdmin(`movimientos_stock?producto_id=eq.${inexistente}&select=id`), 'nada para el producto inexistente').toEqual([]);
+  });
+
+  test('QA-035: CAJERA y ADMIN agregan stock desde Inventario (UI): cantidad correcta, un movimiento por agregado y persistencia tras recargar', async ({ browser }, info) => {
+    test.setTimeout(240_000);
+    knownIssue(info, 'QA-035');
+    const nombre = `${S.data.prefix} CFG Producto`;
+    const s0 = (await estadoStock()).stock;
+    const registros = [];
+    for (const [rol, cantidad] of [['CAJERA', 5], ['ADMINISTRADOR', 2]]) {
+      const s = rol === 'CAJERA' ? await sesion(browser, S.data, 'CAJERA') : S.admin;
+      try {
+        const antesRol = await estadoStock();
+        await s.page.goto('/inventario');
+        await s.page.getByPlaceholder('Buscar producto...').fill(nombre);
+        const fila = () => s.page.getByRole('row').filter({ hasText: nombre });
+        await fila().getByRole('button', { name: 'Agregar stock', exact: true }).click();
+        const form = formWithTitle(s.page, 'Agregar stock');
+        for (const c of ['0', '-1', 'abc']) {
+          await form.getByRole('searchbox').first().fill(c);
+          await form.getByRole('button', { name: 'Agregar', exact: true }).click();
+          await expect(form.getByText('La cantidad debe ser un número mayor a 0.', { exact: true }), `${rol}: la UI rechaza «${c}»`).toBeVisible();
+        }
+        expect(await estadoStock(), `${rol}: cantidades inválidas sin escrituras`).toEqual(antesRol);
+        await form.getByRole('searchbox').first().fill(String(cantidad));
+        await form.getByPlaceholder('Ej: Compra proveedor X').fill(`${S.data.prefix} CFG ${rol}`);
+        await form.getByRole('button', { name: 'Agregar', exact: true }).click();
+        await expect(form).toHaveCount(0);
+        await s.page.reload();
+        await s.page.getByPlaceholder('Buscar producto...').fill(nombre);
+        await expect(fila().getByRole('cell').nth(rol === 'CAJERA' ? 3 : 5), `${rol}: stock persistido tras recargar`).toHaveText(String(antesRol.stock + cantidad));
+        const despuesRol = await estadoStock();
+        registros.push({ rol, antes: antesRol.stock, agregado: cantidad, despues: despuesRol.stock, movimientos: despuesRol.movimientos.length });
+        expect(despuesRol.stock).toBe(antesRol.stock + cantidad);
+        expect(despuesRol.movimientos.length, `${rol}: un único movimiento`).toBe(antesRol.movimientos.length + 1);
+        const nuevo = despuesRol.movimientos.at(-1);
+        expect([nuevo.cantidad_agregada, nuevo.stock_anterior, nuevo.stock_nuevo]).toEqual([cantidad, antesRol.stock, antesRol.stock + cantidad]);
+        expect(nuevo.nota).toBe(`${S.data.prefix} CFG ${rol}`);
+      } finally { if (rol === 'CAJERA') await s.ctx.close(); }
+    }
+    await info.attach('qa-035-agregados-autorizados', { body: Buffer.from(JSON.stringify(registros, null, 2)), contentType: 'application/json' });
+    const fin = await estadoStock();
+    expect(fin.stock).toBe(s0 + 7);
+    expect(fin.movimientos.map((m) => m.cantidad_agregada)).toEqual([5, 2]);
+    // Historial legible solo por ADMIN (RPC); CAJERA no.
+    const cj2 = await sesion(browser, S.data, 'CAJERA');
+    try {
+      expect((await rpc(cj2.page, cj2.box, 'historial_stock_producto', { p_producto_id: S.producto })).status, 'CAJERA: historial (solo ADMIN)').toBeGreaterThanOrEqual(400);
+    } finally { await cj2.ctx.close(); }
+    expect((await rpc(S.admin.page, S.admin.box, 'historial_stock_producto', { p_producto_id: S.producto })).json).toHaveLength(2);
   });
 
   test('Columnas sensibles por rol: costo de productos solo para ADMIN; datos de fichas y comisiones según la regla existente', async ({ browser }) => {

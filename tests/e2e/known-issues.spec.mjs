@@ -244,9 +244,7 @@ test('QA-009: verificar pago Yape del pedido aislado debe crear venta', async ({
   await page.getByRole('button', { name: 'Recojo en tienda', exact: true }).click();
   await page.getByRole('button', { name: 'Elige el día', exact: true }).click();
   // Choose tomorrow; no payment is made. The upload is a generated screenshot.
-  const tomorrow = new Date(`${data.today}T12:00:00-05:00`);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(tomorrow);
+  const day = data.tomorrow; // siguiente día de atención (sin domingos), ver global-setup
   if (day.slice(0, 7) !== data.today.slice(0, 7)) await page.getByRole('button', { name: 'Mes siguiente', exact: true }).click();
   await page.getByRole('button', { name: String(Number(day.slice(-2))), exact: true }).filter({ visible: true }).first().click();
   await page.getByRole('button', { name: 'Elige la hora', exact: true }).click();
