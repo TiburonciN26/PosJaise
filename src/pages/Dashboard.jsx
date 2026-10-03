@@ -14,6 +14,7 @@ const METRICAS_VACIAS = {
   costoProductos: 0,
   comisionesPagadas: 0,
   descuentos: 0,
+  envioCobrado: 0,
   productosVendidos: 0,
   serviciosRealizados: 0,
   cantidadVentas: 0,
@@ -185,6 +186,7 @@ export default function Dashboard({ activo = true }) {
       costoProductos: redondear2(fila?.costo_productos ?? 0),
       comisionesPagadas: redondear2(fila?.comisiones_pagadas ?? 0),
       descuentos: redondear2(fila?.descuentos ?? 0),
+      envioCobrado: redondear2(fila?.envio_cobrado ?? 0),
       productosVendidos: fila?.productos_vendidos ?? 0,
       serviciosRealizados: fila?.servicios_realizados ?? 0,
       cantidadVentas: fila?.cantidad_ventas ?? 0,
@@ -209,7 +211,11 @@ export default function Dashboard({ activo = true }) {
   // del descuento de la venta). Estadísticas parte de sum(ventas.total), ya
   // descontado — la cascada debe partir del mismo ingreso neto en ambas
   // pantallas, o la ganancia final difiere para el mismo período.
-  const ingresoNeto = redondear2(ingresoBruto - metricas.descuentos)
+  //
+  // QA-031: ventas.total incluye el envío cobrado (se suma después del descuento);
+  // antes se restaba de "Descuentos". Ahora el envío es una línea propia y el
+  // neto sigue siendo sum(ventas.total): bruto − descuentos + envío cobrado.
+  const ingresoNeto = redondear2(ingresoBruto - metricas.descuentos + metricas.envioCobrado)
   const gananciaProductos = metricas.ingresoProductos - metricas.costoProductos
 
   const { gastosOperativos, utilidadNeta, montoDiezmo, gananciaFinal, metaEquilibrio } =
@@ -223,6 +229,7 @@ export default function Dashboard({ activo = true }) {
   const pasosPrevios = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto },
     { etiqueta: 'Descuentos', valor: -metricas.descuentos },
+    { etiqueta: 'Envío cobrado', valor: metricas.envioCobrado },
     { etiqueta: '10% gastos operativos (estimado)', valor: -gastosOperativos },
     { etiqueta: 'Costo de productos vendidos', valor: -metricas.costoProductos },
     { etiqueta: 'Comisión pagada a asistentes', valor: -metricas.comisionesPagadas },
@@ -235,6 +242,7 @@ export default function Dashboard({ activo = true }) {
   const filasResumen = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto, positivo: true, clase: 'text-green' },
     { etiqueta: 'Descuentos', valor: metricas.descuentos, positivo: false, clase: 'text-red' },
+    { etiqueta: 'Envío cobrado', valor: metricas.envioCobrado, positivo: true, clase: 'text-green' },
     { etiqueta: 'Ingreso productos', valor: metricas.ingresoProductos, positivo: true, clase: 'text-amber' },
     { etiqueta: 'Ingreso servicios', valor: metricas.ingresoServicios, positivo: true, clase: 'text-blue' },
     { etiqueta: 'Gastos productos', valor: metricas.costoProductos, positivo: false, clase: 'text-red' },
