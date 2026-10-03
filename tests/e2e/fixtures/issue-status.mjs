@@ -1,9 +1,10 @@
 // Estados de Notion usados SOLO para anotar los reportes (knownIssue); no controlan ninguna expectativa.
-// Actualizado el 2026-10-03 con el estado tras los re-tests independientes de Codex: Verificado en QA-001,
-// QA-003 a QA-019, QA-024 a QA-033; Re-test en QA-020 a QA-023 (rendimiento) y QA-034 (corrección de Claude
-// pendiente de re-test independiente). «Verificado» no deriva expectedFailureIDs: esa lista (abajo) es explícita.
+// Sincronizado el 2026-10-03 leyendo la vista de Notion: Verificado en QA-001 y QA-003 a QA-034 (los re-tests
+// independientes de Codex incluyen QA-020 a QA-023 y QA-034); Pendiente en QA-035 (registrado hoy, sin corregir).
+// Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente de estos estados.
 export const issueStatus = {
-  'QA-034': 'Re-test',
+  'QA-035': 'Pendiente',
+  'QA-034': 'Verificado',
   'QA-033': 'Verificado',
   'QA-032': 'Verificado',
   'QA-031': 'Verificado',
@@ -14,28 +15,28 @@ export const issueStatus = {
   'QA-026': 'Verificado',
   'QA-025': 'Verificado',
   'QA-024': 'Verificado',
-  'QA-023': 'Re-test',
-  'QA-022': 'Re-test',
-  'QA-021': 'Re-test',
-  'QA-020': 'Re-test',
+  'QA-023': 'Verificado',
+  'QA-022': 'Verificado',
+  'QA-021': 'Verificado',
+  'QA-020': 'Verificado',
   'QA-019': 'Verificado',
   'QA-018': 'Verificado',
-  'QA-016': 'Verificado',
   'QA-017': 'Verificado',
-  "QA-015": 'Verificado',
-  "QA-014": 'Verificado',
-  "QA-013": "Verificado",
-  "QA-012": 'Verificado',
-  "QA-011": 'Verificado',
-  "QA-010": "Verificado",
-  "QA-009": "Verificado",
-  "QA-008": "Verificado",
-  "QA-007": 'Verificado',
-  "QA-006": "Verificado",
-  "QA-005": "Verificado",
-  "QA-004": 'Verificado',
-  "QA-003": "Verificado",
-  "QA-001": 'Verificado'
+  'QA-016': 'Verificado',
+  'QA-015': 'Verificado',
+  'QA-014': 'Verificado',
+  'QA-013': 'Verificado',
+  'QA-012': 'Verificado',
+  'QA-011': 'Verificado',
+  'QA-010': 'Verificado',
+  'QA-009': 'Verificado',
+  'QA-008': 'Verificado',
+  'QA-007': 'Verificado',
+  'QA-006': 'Verificado',
+  'QA-005': 'Verificado',
+  'QA-004': 'Verificado',
+  'QA-003': 'Verificado',
+  'QA-001': 'Verificado'
 };
 
 // Explicitly uncorrected issues, independent of the owner's Notion labels.
@@ -56,4 +57,7 @@ export const issueStatus = {
 // migración 20261002000007; sus tres pruebas específicas (qa-033-ventas-roles.spec.mjs) pasan de verdad,
 // así que se retiró de la lista. Vacía NO significa que todo esté resuelto en Notion.
 export const expectedFailureIDs = new Set([
+  // QA-035: CAJERA/ASISTENTE insertan movimientos_stock directamente y ASISTENTE agrega stock por RPC.
+  // Pendiente de confirmar la regla de roles; las pruebas afirman el comportamiento correcto.
+  'QA-035',
 ]);
