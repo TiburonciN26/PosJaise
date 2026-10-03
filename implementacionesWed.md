@@ -6334,3 +6334,41 @@ comprobantes no los ve CAJERA/ASISTENTE; no hay límite de tamaño ni de tipo en
 conserva el privilegio TRUNCATE a nivel de tabla (PostgREST no lo expone; no se probó).
 Documentación del arnés al día: `issue-status.mjs` (estados de Notion) y `COBERTURA.md` (QA-033 corregido, sin la
 mención obsoleta de ventas insertables).
+
+
+---
+
+## 33. Autorización: controles de la auditoría, configuraciones, zonas, galería, auditoría, stock y columnas sensibles — 2026-10-03
+
+Solo Supabase Local TEST con datos ficticios; sin migraciones ni cambios de reglas, límites de archivos o permisos.
+
+**Controles añadidos a `qa-autorizacion-ampliada`:** el carrito se repuebla después de confirmar el pedido (confirmarlo lo
+vacía), y se preparan favoritos de producto y servicio, atenciones (ADMIN), reseñas de producto/servicio/general (las de B
+aprobadas, las de A pendientes), una compra de mobiliario, una cita completada y un pedido entregado; todo se comprueba
+**antes** de intentar acceder desde otro rol o desde la otra CLIENTE (carrito, favoritos y notificaciones se leen con la
+sesión de su dueña: ni ADMIN los ve). Casos nuevos: reseñas públicas aprobadas vs pendientes (RPC públicas, resumen, CAJERA/ASISTENTE,
+sin sesión), escrituras directas de cupones por ADMIN (rechazadas: no hay políticas de escritura), operaciones de líneas de cita por
+CAJERA, ASISTENTE, ADMIN, CLIENTE y sin sesión, comparación SHA-256 del comprobante antes/después de los ataques y un caso final
+de **diagnósticos sanitizados** por contexto (errores de consola sin tokens y red resumida a método + ruta sin query + estado; se
+exige 0 respuestas 5xx y 0 excepciones de página; no se archivan tokens ni URLs firmadas).
+
+**Nuevo `qa-autorizacion-configuracion.spec.mjs` (10 casos):** configuraciones (lectura de toda sesión, UPDATE solo ADMIN, sin sesión
+nada), zonas de entrega (no administradores solo ven las activas), galería (CLIENTE solo por `galeria_para_web`), auditoría (solo ADMIN
+lee; nadie, ni ADMIN, la escribe; el trigger sí registra un cambio de precio), gastos recurrentes (solo ADMIN), movimientos de stock
+(CLIENTE bloqueada; CAJERA y ADMIN agregan por la RPC con un único movimiento; el historial solo lo lee ADMIN) y columnas sensibles
+(`productos.costo` sin SELECT de columna y nulo en `productos_vista` salvo ADMIN; `usuarios` solo la propia fila).
+
+**Hallazgo QA-035 (Media, registrado en Notion, sin corregir):** `movimientos_insert` solo exige `usuario_id = auth.uid()`, de modo que
+CAJERA y ASISTENTE pueden insertar filas arbitrarias en el historial de stock por la API (201 reproducido con sesión real), y
+`agregar_stock()` solo rechaza cuando `rol_actual()` es nulo, así que una ASISTENTE puede aumentar el stock real aunque Inventario es
+ADMIN/CAJERA (reproducido por SQL: 5 → 105). Decisión necesaria: roles autorizados para agregar stock.
+
+**Reglas existentes documentadas (no defectos):** todo el personal lee las fichas de asistentes con sus datos personales y las
+atenciones ACTIVAS sin venta con `pago_asistente` y porcentaje; configuración de puntos/fidelización/referidos legible por toda sesión.
+
+**TRUNCATE (solo metadatos y código, sin ejecutar):** en Local `anon`, `authenticated` y `service_role` tienen TRUNCATE, REFERENCES y
+TRIGGER sobre las 42 tablas/vistas de `public` por `pg_default_acl` (`arwdDxtm`); ninguna función, migración ni código de la app usa
+TRUNCATE salvo el script manual `supabase/sql/RESET_DATOS_PARA_ENTREGA_CLIENTE.sql`; PostgREST no expone TRUNCATE. No se cambió nada: queda
+como decisión (revocar y verificar los privilegios por defecto de producción, que la migración 04 describe como solo TRUNCATE/REFERENCES/TRIGGER).
+**Nota de fidelidad:** `anon` tiene SELECT a nivel de tabla en las 42 relaciones de Local (RLS lo protege); si producción difiere, los
+códigos HTTP (403 vs 200 con cero filas) pueden ser distintos.
