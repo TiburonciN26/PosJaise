@@ -1,6 +1,6 @@
 # Suite QA/E2E local — rama testing
 
-Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite define 89 casos (incluye `qa-025-029.spec.mjs`, regresión de QA-025 a QA-029); el informe vigente es CAMPANA-AMPLIADA.md y la entrega para correcciones es ENTREGA-CLAUDE.md. BASELINE-20260930.md conserva los 23 casos anteriores. Los estados de incidencias se tomaron de Notion al comenzar y se contrastan con la aplicación, Verificado significa que el usuario comprobó el defecto manualmente; no significa que esté corregido.
+Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite define 91 casos (incluye `qa-025-029.spec.mjs` y `qa-031-032.spec.mjs`, regresión de QA-025 a QA-032); el informe vigente es CAMPANA-AMPLIADA.md y la entrega para correcciones es ENTREGA-CLAUDE.md. BASELINE-20260930.md conserva los 23 casos anteriores. Los estados de incidencias se tomaron de Notion al comenzar y se contrastan con la aplicación, Verificado significa que el usuario comprobó el defecto manualmente; no significa que esté corregido.
 
 ## Ejecutar
 

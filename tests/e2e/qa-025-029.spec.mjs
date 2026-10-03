@@ -260,14 +260,16 @@ test('QA-025: Estadísticas rotula Ingreso neto y coincide con Dashboard (bruto 
   const bruto = monto(await fila('Ingreso bruto').innerText());
   const descuentos = monto(await fila('Descuentos').innerText());
   expect(descuentos, 'el descuento de la venta ficticia debe verse').toBeGreaterThanOrEqual(2);
-  const neto = Math.round((bruto - descuentos) * 100) / 100;
+  // QA-031: el envío cobrado (ventas con delivery) es una línea propia; el neto sigue siendo sum(ventas.total).
+  const envio = monto(await fila('Envío cobrado').innerText());
+  const neto = Math.round((bruto - descuentos + envio) * 100) / 100;
 
   await page.goto('/estadisticas');
   const tarjeta = page.getByText('Ingreso neto', { exact: true }).first();
   await expect(tarjeta, 'la tarjeta se llama Ingreso neto').toBeVisible();
   await expect(page.getByText('Ingreso bruto', { exact: true }), 'Estadísticas no usa el nombre de Dashboard para otro importe').toHaveCount(0);
   const valor = monto(await tarjeta.locator('xpath=following-sibling::p').first().innerText());
-  expect(valor, 'ingreso neto de Estadísticas = bruto − descuentos de Dashboard (mismo período)').toBeCloseTo(neto, 2);
+  expect(valor, 'ingreso neto de Estadísticas = bruto − descuentos + envío de Dashboard (mismo período)').toBeCloseTo(neto, 2);
 });
 
 test.describe('QA-029: condiciones de adelanto y plazo sin marcadores', () => {
@@ -378,7 +380,7 @@ test('QA-026: reseña de producto pendiente se modera desde Reseñas y la public
 
     // Administración: la reseña PENDIENTE es accesible y rotulada con su producto.
     await page.goto('/resenas-web');
-    await page.getByPlaceholder('Buscar por clienta o producto...').fill(own.clientName);
+    await page.getByPlaceholder('Buscar por clienta, producto o servicio...').fill(own.clientName);
     const tarjeta = page.getByRole('button').filter({ hasText: own.clientName });
     await expect(tarjeta, 'la reseña de producto aparece para moderar').toBeVisible();
     await expect(tarjeta).toContainText(`Producto: ${product.productName}`);
@@ -388,7 +390,7 @@ test('QA-026: reseña de producto pendiente se modera desde Reseñas y la public
     await page.getByRole('button', { name: 'Aprobar', exact: true }).click();
     await expect(page.getByText('Reseña publicada.', { exact: true })).toBeVisible();
     await page.reload();
-    await page.getByPlaceholder('Buscar por clienta o producto...').fill(own.clientName);
+    await page.getByPlaceholder('Buscar por clienta, producto o servicio...').fill(own.clientName);
     await expect(page.getByRole('button').filter({ hasText: own.clientName })).toContainText('Publicada');
 
     // Pública solo tras aprobar.
@@ -400,7 +402,7 @@ test('QA-026: reseña de producto pendiente se modera desde Reseñas y la public
     await page.getByRole('button', { name: 'Quitar de la Web', exact: true }).click();
     await expect(page.getByText('Reseña rechazada.', { exact: true })).toBeVisible();
     await page.reload();
-    await page.getByPlaceholder('Buscar por clienta o producto...').fill(own.clientName);
+    await page.getByPlaceholder('Buscar por clienta, producto o servicio...').fill(own.clientName);
     await expect(page.getByRole('button').filter({ hasText: own.clientName })).toContainText('No publicada');
     await abrirProducto();
     await expect(cliente.getByText(comentario)).toHaveCount(0);
