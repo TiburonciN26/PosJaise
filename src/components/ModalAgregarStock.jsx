@@ -4,6 +4,10 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 
+// Mismo tope que el entero de la base (int4): más allá, agregar_stock fallaría por desborde.
+const MAXIMO_CANTIDAD = 2147483647
+const MENSAJE_CANTIDAD_INVALIDA = 'La cantidad debe ser un número entero mayor a 0 (sin decimales ni letras).'
+
 export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
@@ -17,9 +21,12 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
   async function guardar(evento) {
     evento.preventDefault()
 
-    const cantidadNumerica = parseInt(cantidad, 10)
-    if (Number.isNaN(cantidadNumerica) || cantidadNumerica <= 0) {
-      setError('La cantidad debe ser un número mayor a 0.')
+    // Se valida la cadena completa: parseInt('2.7') o parseInt('5abc') devolvían 2 y 5 y se guardaba
+    // en silencio solo el prefijo entero (QA-036). Solo dígitos, entero positivo y dentro del rango de int4.
+    const texto = cantidad.trim()
+    const cantidadNumerica = /^\d+$/.test(texto) ? Number(texto) : NaN
+    if (!Number.isSafeInteger(cantidadNumerica) || cantidadNumerica <= 0 || cantidadNumerica > MAXIMO_CANTIDAD) {
+      setError(MENSAJE_CANTIDAD_INVALIDA)
       return
     }
 
