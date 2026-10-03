@@ -10,6 +10,7 @@ export const accounts = {
 };
 export const issueURLs = {
   'QA-035': 'https://app.notion.com/p/3eef27109e6a8142b9add15068e4c8d9',
+  'QA-036': 'https://app.notion.com/p/3eef27109e6a816eb3faf5ec40875411',
   'QA-033': 'https://app.notion.com/p/3eef27109e6a8173a6a9e13e177cdd19',
   'QA-034': 'https://app.notion.com/p/3eef27109e6a81ea9020c1db9098e356',
   'QA-020': 'https://app.notion.com/p/3edf27109e6a81268400df6bb0d19170',

@@ -332,10 +332,10 @@ test.describe.serial('AUTORIZACIÓN: configuraciones, zonas, galería, auditorí
         const fila = () => s.page.getByRole('row').filter({ hasText: nombre });
         await fila().getByRole('button', { name: 'Agregar stock', exact: true }).click();
         const form = formWithTitle(s.page, 'Agregar stock');
-        for (const c of ['0', '-1', 'abc']) {
+        for (const c of ['0', '-1', 'abc', '2.7', '5abc', '1e3', '2147483648']) {
           await form.getByRole('searchbox').first().fill(c);
           await form.getByRole('button', { name: 'Agregar', exact: true }).click();
-          await expect(form.getByText('La cantidad debe ser un número mayor a 0.', { exact: true }), `${rol}: la UI rechaza «${c}»`).toBeVisible();
+          await expect(form.getByText('La cantidad debe ser un número entero mayor a 0 (sin decimales ni letras).', { exact: true }), `${rol}: la UI rechaza «${c}»`).toBeVisible();
         }
         expect(await estadoStock(), `${rol}: cantidades inválidas sin escrituras`).toEqual(antesRol);
         await form.getByRole('searchbox').first().fill(String(cantidad));
@@ -364,6 +364,46 @@ test.describe.serial('AUTORIZACIÓN: configuraciones, zonas, galería, auditorí
       expect((await rpc(cj2.page, cj2.box, 'historial_stock_producto', { p_producto_id: S.producto })).status, 'CAJERA: historial (solo ADMIN)').toBeGreaterThanOrEqual(400);
     } finally { await cj2.ctx.close(); }
     expect((await rpc(S.admin.page, S.admin.box, 'historial_stock_producto', { p_producto_id: S.producto })).json).toHaveLength(2);
+  });
+
+  test('QA-036: Agregar stock rechaza 2.7 y 5abc por UI (CAJERA y ADMIN) sin llamar a la RPC ni cambiar stock ni historial', async ({ browser }, info) => {
+    test.setTimeout(240_000);
+    knownIssue(info, 'QA-036');
+    const nombre = `${S.data.prefix} CFG Producto`;
+    const mensaje = 'La cantidad debe ser un número entero mayor a 0 (sin decimales ni letras).';
+    const evidencia = [];
+    for (const rol of ['CAJERA', 'ADMINISTRADOR']) {
+      const s = rol === 'CAJERA' ? await sesion(browser, S.data, 'CAJERA') : S.admin;
+      try {
+        const antes = await estadoStock();
+        const llamadas = [];
+        const vigilante = (req) => { if (req.url().includes('/rpc/agregar_stock')) llamadas.push(req.method()); };
+        s.page.on('request', vigilante);
+        await s.page.goto('/inventario');
+        await s.page.getByPlaceholder('Buscar producto...').fill(nombre);
+        const fila = () => s.page.getByRole('row').filter({ hasText: nombre });
+        await fila().getByRole('button', { name: 'Agregar stock', exact: true }).click();
+        const form = formWithTitle(s.page, 'Agregar stock');
+        const visibles = {};
+        for (const entrada of ['2.7', '5abc']) {
+          await form.getByRole('searchbox').first().fill(entrada);
+          await form.getByRole('button', { name: 'Agregar', exact: true }).click();
+          visibles[entrada] = await form.getByText(mensaje, { exact: true }).isVisible();
+        }
+        s.page.off('request', vigilante);
+        await s.page.reload();
+        await s.page.getByPlaceholder('Buscar producto...').fill(nombre);
+        const celda = await fila().getByRole('cell').nth(rol === 'CAJERA' ? 3 : 5).innerText();
+        const despues = await estadoStock();
+        evidencia.push({ rol, entradas: visibles, llamadasRpc: llamadas.length, stockAntes: antes.stock, stockDespues: despues.stock, celdaTrasRecargar: celda, movimientosAntes: antes.movimientos.length, movimientosDespues: despues.movimientos.length });
+        // La evidencia se adjunta antes de las aserciones que puedan fallar.
+        await info.attach(`qa-036-${rol.toLowerCase()}`, { body: Buffer.from(JSON.stringify(evidencia.at(-1), null, 2)), contentType: 'application/json' });
+        expect(visibles, `${rol}: mensaje claro para 2.7 y 5abc`).toEqual({ '2.7': true, '5abc': true });
+        expect(llamadas, `${rol}: no se llama a agregar_stock`).toEqual([]);
+        expect(celda, `${rol}: el stock mostrado no cambia tras recargar`).toBe(String(antes.stock));
+        expect(despues, `${rol}: stock e historial exactamente iguales`).toEqual(antes);
+      } finally { if (rol === 'CAJERA') await s.ctx.close(); }
+    }
   });
 
   test('Columnas sensibles por rol: costo de productos solo para ADMIN; datos de fichas y comisiones según la regla existente', async ({ browser }) => {

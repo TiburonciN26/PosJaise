@@ -4,6 +4,7 @@
 // Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente de estos estados.
 export const issueStatus = {
   'QA-035': 'Re-test',
+  'QA-036': 'Re-test',
   'QA-034': 'Verificado',
   'QA-033': 'Verificado',
   'QA-032': 'Verificado',

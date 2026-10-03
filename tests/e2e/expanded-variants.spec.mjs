@@ -63,7 +63,7 @@ test('STOCK: CAJERA rechaza 0/negativo y suma una unidad con persistencia', asyn
   const row=()=>page.getByRole('row').filter({hasText:replenishment.productName});await expect(row().getByRole('cell').nth(3)).toHaveText('0');
   await row().getByRole('button',{name:'Agregar stock',exact:true}).click();const form=formWithTitle(page,'Agregar stock');
   // Existing UI labels are not associated with inputs; scope observed searchboxes.
-  for(const amount of ['0','-1']){await form.getByRole('searchbox').first().fill(amount);await form.getByRole('button',{name:'Agregar',exact:true}).click();await expect(form.getByText('La cantidad debe ser un número mayor a 0.',{exact:true})).toBeVisible();}
+  for(const amount of ['0','-1','2.7','5abc']){await form.getByRole('searchbox').first().fill(amount);await form.getByRole('button',{name:'Agregar',exact:true}).click();await expect(form.getByText('La cantidad debe ser un número entero mayor a 0 (sin decimales ni letras).',{exact:true})).toBeVisible();}
   await form.getByRole('searchbox').first().fill('1');await form.getByPlaceholder('Ej: Compra proveedor X').fill(`${data.prefix} reposición`);
   await form.getByRole('button',{name:'Agregar',exact:true}).click();await expect(form).toHaveCount(0);await page.reload();await page.getByPlaceholder('Buscar producto...').fill(replenishment.productName);
   await expect(row().getByRole('cell').nth(3)).toHaveText('1');await info.attach('stock-agregado',{body:Buffer.from(JSON.stringify({productId:replenishment.productId,before:0,added:1,after:1})),contentType:'application/json'});
