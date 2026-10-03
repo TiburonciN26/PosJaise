@@ -6304,3 +6304,33 @@ solicitudes sin sesión no pueden crear ni anular ventas; CAJERA conserva «solo
 - **Cobertura:** `expectedFailureIDs` queda vacío (QA-033 retirado solo tras pasar las pruebas específicas);
   COBERTURA.md recoge además el delivery con cupón porcentual y de monto fijo comprobado por Codex por UI, con los
   límites de su informe.
+
+
+---
+
+## 32. Auditoría de autorización ampliada (clientes, deudas, mobiliario, citas, cupones y Storage) — 2026-10-03
+
+Solo Supabase Local TEST con datos ficticios; sin migraciones ni cambios de reglas de negocio. Primero se leyeron las
+políticas RLS, grants y políticas de `storage.objects` existentes y se escribieron las aserciones sobre esa regla:
+clientes (lectura de todo el personal; alta/edición/baja solo ADMIN y solo clientes sin cuenta web), deudas y
+mobiliario(+compras) solo ADMIN, citas y líneas (todo el personal las lee, crea y modifica; borrar la cita es solo
+ADMIN; la CLIENTE solo lee las suyas y escribe por RPC), cupones (lectura propia o de todo el personal; ninguna
+política de escritura), buckets `comprobantes-*` privados (carpeta = uid de la dueña, o ADMIN), `fotos-*` de lectura
+pública con escritura solo de ADMIN (salvo `fotos-clientes`/`fotos-usuarios` en la propia carpeta).
+
+`tests/e2e/qa-autorizacion-ampliada.spec.mjs` (9 casos): por rol (CAJERA, ASISTENTE, CLIENTE) lectura, alta,
+modificación y eliminación sobre un cliente, una deuda y un mueble preparados por ADMIN, con verificación posterior de
+que nada cambió (200 con cero filas se trata como bloqueo solo si además los datos siguen idénticos); ADMIN sin
+acceso a editar/borrar clientes con cuenta web; dos CLIENTE ficticias (A y B, con dirección, carrito, pedido con
+comprobante, cita, cupón y notificaciones) que, en ambas direcciones, no leen, modifican, borran ni crean registros de
+la otra, y no descargan, firman, listan, suben, sobrescriben ni borran sus archivos del bucket privado (con controles
+positivos: las mismas peticiones de la dueña sí funcionan); Storage por rol y sin sesión; citas y cupones por rol.
+Nota de método: ADMIN no lee `notificaciones` ajenas (política solo de la dueña), por eso esa instantánea se toma con
+la sesión de cada clienta.
+
+**Resultado: sin defectos nuevos** en estas áreas (9/9 aprobados a la primera; no se registraron incidencias). Se
+anotan como reglas existentes, no defectos: todo el personal lee clientes y cupones y modifica citas/líneas; los
+comprobantes no los ve CAJERA/ASISTENTE; no hay límite de tamaño ni de tipo en las subidas a Storage; `authenticated`
+conserva el privilegio TRUNCATE a nivel de tabla (PostgREST no lo expone; no se probó).
+Documentación del arnés al día: `issue-status.mjs` (estados de Notion) y `COBERTURA.md` (QA-033 corregido, sin la
+mención obsoleta de ventas insertables).
