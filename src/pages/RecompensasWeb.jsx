@@ -4,6 +4,7 @@ import { Coins, Plus, Stamp, ShieldCheck, Settings2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from '../components/Etiqueta.jsx'
 
 // Administración de Recompensas (Fase 2) — cuelga de /web, solo ADMINISTRADOR.
@@ -173,6 +174,8 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const idBase = useRef(`pr-${Math.random().toString(36).slice(2, 8)}`).current
+  const panelRef = useRef(null)
+  useModalA11y(panelRef) // QA-042: trampa de foco, retorno al disparador, aria-modal y scroll
   useCerrarConEscape(onCerrar)
 
   const set = (campo, valor) => setF((a) => ({ ...a, [campo]: valor }))
@@ -203,11 +206,9 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <form
+        ref={panelRef}
         onSubmit={guardar}
         autoComplete="off"
-        role="dialog"
-        aria-modal="true"
-        aria-label={premio ? 'Editar premio' : 'Nuevo premio'}
         className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
