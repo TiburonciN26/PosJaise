@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { leerServicios } from '../lib/buscarServicios.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -198,7 +199,11 @@ export default function Porcentajes({ activo = true }) {
   async function cargarTodo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     const [resServicios, resAsistentes, resPorcentajes] = await Promise.all([
-      supabase.from('servicios').select('id, nombre, precio').order('nombre'),
+      // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
+      leerServicios(supabase, { columnas: 'id, nombre, precio' }).then(
+        (data) => ({ data, error: null }),
+        (error) => ({ data: null, error }),
+      ),
       supabase
         .from('asistentes')
         .select('id, nombres_completos, usuario_id, usuarios(rol)')

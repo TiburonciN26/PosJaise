@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarPlus, HelpCircle, MapPin, MessageCircle, Search, X } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
@@ -78,11 +79,14 @@ export default function ServiciosCliente() {
 
     async function cargar() {
       const [serviciosRes, masPedidoRes] = await Promise.all([
-        supabase
-          .from('servicios')
-          .select('id, nombre, categoria, precio, duracion_min, foto_url, descripcion, en_tendencia')
-          .eq('activo', true)
-          .order('nombre'),
+        // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
+        leerServicios(supabase, {
+          columnas: 'id, nombre, categoria, precio, duracion_min, foto_url, descripcion, en_tendencia',
+          soloActivos: true,
+        }).then(
+          (data) => ({ data }),
+          () => ({ data: [] }),
+        ),
         supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
       ])
 

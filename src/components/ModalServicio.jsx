@@ -6,6 +6,7 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
+import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
 import {
   eliminarFoto,
   procesarImagen,
@@ -92,7 +93,6 @@ export default function ModalServicio({
   servicio,
   nombreInicial,
   categoriasExistentes,
-  serviciosExistentes,
   onCerrar,
   onGuardado,
   onEditarEnWeb,
@@ -514,23 +514,13 @@ export default function ModalServicio({
 
           <div>
             <Etiqueta htmlFor={`${idBase}-combo`}>Combo sugerido ("se suele reservar junto con")</Etiqueta>
-            <select
+            <SelectorServicioBuscable
               id={`${idBase}-combo`}
-              value={formulario.comboCon}
-              onChange={(evento) => actualizarCampo('comboCon', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
-            >
-              <option value="">
-                Sin forzar — usar el más reservado junto (si hay historial)
-              </option>
-              {(serviciosExistentes ?? [])
-                .filter((otro) => otro.id !== servicio?.id)
-                .map((otro) => (
-                  <option key={otro.id} value={otro.id}>
-                    {otro.nombre}
-                  </option>
-                ))}
-            </select>
+              valor={formulario.comboCon}
+              onCambiar={(servicioId) => actualizarCampo('comboCon', servicioId)}
+              textoVacio="Sin forzar — usar el más reservado junto (si hay historial)"
+              excluirId={servicio?.id ?? null}
+            />
           </div>
 
           <div>

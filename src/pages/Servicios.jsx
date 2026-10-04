@@ -7,6 +7,8 @@ import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { consultaListadoServicios, categoriasDeServicios, TAMANO_PAGINA_SERVICIOS } from '../lib/buscarServicios.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
@@ -26,24 +28,6 @@ const OPCIONES_ORDEN = [
   { id: 'duracion-desc', label: 'Duración (mayor a menor)' },
 ]
 
-function ordenarServicios(servicios, orden) {
-  const ordenados = [...servicios]
-  switch (orden) {
-    case 'nombre-desc':
-      return ordenados.sort((a, b) => b.nombre.localeCompare(a.nombre))
-    case 'precio-asc':
-      return ordenados.sort((a, b) => a.precio - b.precio)
-    case 'precio-desc':
-      return ordenados.sort((a, b) => b.precio - a.precio)
-    case 'duracion-asc':
-      return ordenados.sort((a, b) => (a.duracion_min ?? 0) - (b.duracion_min ?? 0))
-    case 'duracion-desc':
-      return ordenados.sort((a, b) => (b.duracion_min ?? 0) - (a.duracion_min ?? 0))
-    default:
-      return ordenados.sort((a, b) => a.nombre.localeCompare(b.nombre))
-  }
-}
-
 function formatearDuracion(minutos) {
   return minutos != null ? `${minutos} min` : '—'
 }
@@ -58,6 +42,11 @@ export default function Servicios({ activo = true }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const busquedaDebounced = useDebounce(busqueda, 300)
+  const [hayMas, setHayMas] = useState(false)
+  const [cargandoMas, setCargandoMas] = useState(false)
+  const [categoriasExistentes, setCategoriasExistentes] = useState([])
+  const vigenteRef = useRef({ actual: true })
   const [orden, setOrden] = useState('nombre-asc')
   const [modalServicio, setModalServicio] = useState(null) // null | 'nuevo' | servicio
   const [servicioAEliminar, setServicioAEliminar] = useState(null)
@@ -78,36 +67,67 @@ export default function Servicios({ activo = true }) {
   useCerrarConEscape(() => setServicioAEliminar(null), Boolean(servicioAEliminar))
   useModalA11y(panelEliminarRef, Boolean(servicioAEliminar))
 
+  // QA-046: la búsqueda, el orden y la paginación los resuelve el SERVIDOR (como Inventario). Antes se
+  // descargaba toda la tabla sin paginar y el servidor la cortaba en 1000, dejando fuera las fichas
+  // posteriores aunque se buscaran por nombre.
+  const SELECT_SERVICIOS =
+    'id, nombre, categoria, precio, duracion_min, activo, foto_url, descripcion, en_tendencia, a_domicilio, costo_domicilio, precio_variable, nota_precio, duracion_resultado, pasos, especificaciones, herramientas, materiales, cuidados_antes, cuidados_despues, combo_con'
+
   async function cargarServicios(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('servicios')
-      .select(
-        'id, nombre, categoria, precio, duracion_min, activo, foto_url, descripcion, en_tendencia, a_domicilio, costo_domicilio, precio_variable, nota_precio, duracion_resultado, pasos, especificaciones, herramientas, materiales, cuidados_antes, cuidados_despues, combo_con',
-      )
-      .order('nombre')
+    // Una recarga silenciosa (tras guardar/eliminar) conserva hasta donde el usuario había llegado.
+    const hasta = silencioso ? Math.min(Math.max(servicios.length, TAMANO_PAGINA_SERVICIOS), 1000) : TAMANO_PAGINA_SERVICIOS
+    const [res, resCategorias] = await Promise.all([
+      consultaListadoServicios(supabase, { termino: busquedaDebounced, orden, columnas: SELECT_SERVICIOS }).range(0, hasta - 1),
+      categoriasDeServicios(supabase).catch(() => null),
+    ])
 
     if (!vigente.actual) return
 
-    if (errorConsulta) {
+    if (res.error) {
       setError('No se pudo cargar el catálogo de servicios.')
+      setServicios([])
+      setHayMas(false)
     } else {
       setError(null)
-      setServicios(data ?? [])
+      setServicios(res.data ?? [])
+      setHayMas((res.data ?? []).length === hasta)
     }
+    if (resCategorias) setCategoriasExistentes(resCategorias)
     setCargando(false)
+  }
+
+  async function cargarMasServicios() {
+    if (cargandoMas || !hayMas) return
+    const vigente = vigenteRef.current
+    setCargandoMas(true)
+    const { data, error: errorMas } = await consultaListadoServicios(supabase, {
+      termino: busquedaDebounced,
+      orden,
+      columnas: SELECT_SERVICIOS,
+    }).range(servicios.length, servicios.length + TAMANO_PAGINA_SERVICIOS - 1)
+    setCargandoMas(false)
+    if (!vigente.actual) return
+    if (errorMas) {
+      mostrarToast('No se pudieron cargar más servicios.', 'error')
+      return
+    }
+    setServicios((anterior) => [...anterior, ...(data ?? [])])
+    setHayMas((data ?? []).length === TAMANO_PAGINA_SERVICIOS)
   }
 
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
+    vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
     cargarServicios(vigente, silencioso)
     return () => {
       vigente.actual = false
     }
-  }, [activo])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activo, busquedaDebounced, orden])
 
   async function confirmarEliminar() {
     if (!servicioAEliminar) return
@@ -135,17 +155,9 @@ export default function Servicios({ activo = true }) {
     cargarServicios()
   }
 
-  const filtrados = busqueda.trim()
-    ? servicios.filter((servicio) =>
-        servicio.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()),
-      )
-    : servicios
-
-  const filtradosOrdenados = ordenarServicios(filtrados, orden)
-
-  const categoriasExistentes = [...new Set(servicios.map((s) => s.categoria).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b),
-  )
+  // Búsqueda y orden ya vienen resueltos por el servidor: `servicios` es la página a mostrar.
+  const filtrados = servicios
+  const filtradosOrdenados = servicios
 
   return (
     <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl">
@@ -180,7 +192,7 @@ export default function Servicios({ activo = true }) {
 
       {cargando ? (
         <EsqueletoLista columnas={5} />
-      ) : filtrados.length === 0 ? (
+      ) : filtrados.length === 0 && error ? null : filtrados.length === 0 ? (
         <EstadoVacio
           icono={Scissors}
           mensaje="No se encontraron servicios."
@@ -326,6 +338,17 @@ export default function Servicios({ activo = true }) {
               </tbody>
             </table>
           </div>
+
+          {hayMas && (
+            <button
+              type="button"
+              onClick={cargarMasServicios}
+              disabled={cargandoMas}
+              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+            >
+              {cargandoMas ? 'Cargando...' : 'Cargar más'}
+            </button>
+          )}
         </>
       )}
 
@@ -340,7 +363,6 @@ export default function Servicios({ activo = true }) {
         <ModalServicio
           servicio={modalServicio === 'nuevo' ? null : modalServicio}
           categoriasExistentes={categoriasExistentes}
-          serviciosExistentes={servicios}
           // «Editar en Web»: lleva al MISMO servicio en Web → Recompensas (protección).
           // Esta pestaña queda montada (PestanasCacheadas), así que el modal, sus
           // cambios pendientes y el filtro siguen ahí al volver.

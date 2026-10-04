@@ -6,13 +6,15 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 
 const PAUSA_TRAS_ESCANEO_MS = 1200
 
-export default function ModalEscanerCodigoBarras({ productos, onProductoEncontrado, onCerrar }) {
+// `buscarPorCodigo(codigo)` consulta el servidor por código EXACTO y devuelve { producto, ambiguo } (QA-047):
+// el escáner ya no depende de una copia local del catálogo, que el servidor truncaba en 1000 filas.
+export default function ModalEscanerCodigoBarras({ buscarPorCodigo, onProductoEncontrado, onCerrar }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const videoRef = useRef(null)
   const controlesRef = useRef(null)
   const pausadoRef = useRef(false)
-  const productosRef = useRef(productos)
+  const buscarPorCodigoRef = useRef(buscarPorCodigo)
   const onProductoEncontradoRef = useRef(onProductoEncontrado)
   const [error, setError] = useState(null)
   const [mensaje, setMensaje] = useState(null) // { texto, tipo: 'exito' | 'error' }
@@ -20,8 +22,8 @@ export default function ModalEscanerCodigoBarras({ productos, onProductoEncontra
   useCerrarConEscape(onCerrar)
 
   useEffect(() => {
-    productosRef.current = productos
-  }, [productos])
+    buscarPorCodigoRef.current = buscarPorCodigo
+  }, [buscarPorCodigo])
 
   useEffect(() => {
     onProductoEncontradoRef.current = onProductoEncontrado
@@ -51,19 +53,29 @@ export default function ModalEscanerCodigoBarras({ productos, onProductoEncontra
         .decodeFromConstraints(
           { video: { facingMode: { ideal: 'environment' } } },
           videoRef.current,
-          (resultado) => {
+          async (resultado) => {
             if (!activo || !resultado || pausadoRef.current) return
 
-            const codigo = resultado.getText()
-            const producto = productosRef.current.find((p) => p.codigo_barras === codigo)
-
+            // Pausado ANTES de consultar: un mismo código leído varias veces seguidas no agrega varias veces.
             pausadoRef.current = true
-            if (producto) {
-              onProductoEncontradoRef.current(producto)
-              setMensaje({ texto: `Agregado: ${producto.nombre}`, tipo: 'exito' })
-            } else {
-              setMensaje({ texto: 'Producto no encontrado', tipo: 'error' })
+            const codigo = resultado.getText()
+            let mensajeNuevo
+            try {
+              const { producto, ambiguo } = await buscarPorCodigoRef.current(codigo)
+              if (!activo) return
+              if (ambiguo) {
+                mensajeNuevo = { texto: 'Código repetido en varios productos', tipo: 'error' }
+              } else if (producto) {
+                onProductoEncontradoRef.current(producto)
+                mensajeNuevo = { texto: `Agregado: ${producto.nombre}`, tipo: 'exito' }
+              } else {
+                mensajeNuevo = { texto: 'Producto no encontrado', tipo: 'error' }
+              }
+            } catch {
+              mensajeNuevo = { texto: 'No se pudo consultar el producto. Inténtalo de nuevo.', tipo: 'error' }
             }
+            if (!activo) return
+            setMensaje(mensajeNuevo)
 
             setTimeout(() => {
               pausadoRef.current = false
