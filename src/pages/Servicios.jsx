@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2, Plus, Scissors, Clock, ArrowBigDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -51,6 +52,7 @@ export default function Servicios({ activo = true }) {
   const { rol } = useAuth()
   const { mostrarToast } = useToast()
   const esAdmin = rol === 'ADMINISTRADOR'
+  const navigate = useNavigate()
 
   const [servicios, setServicios] = useState([])
   const [cargando, setCargando] = useState(true)
@@ -339,6 +341,14 @@ export default function Servicios({ activo = true }) {
           servicio={modalServicio === 'nuevo' ? null : modalServicio}
           categoriasExistentes={categoriasExistentes}
           serviciosExistentes={servicios}
+          // «Editar en Web»: lleva al MISMO servicio en Web → Recompensas (protección).
+          // Esta pestaña queda montada (PestanasCacheadas), así que el modal, sus
+          // cambios pendientes y el filtro siguen ahí al volver.
+          onEditarEnWeb={
+            esAdmin && modalServicio !== 'nuevo'
+              ? () => navigate(`/recompensas-web?tab=proteccion&servicio=${modalServicio.id}&desde=/servicios`)
+              : undefined
+          }
           onCerrar={() => setModalServicio(null)}
           onGuardado={() => {
             const esNuevo = modalServicio === 'nuevo'
