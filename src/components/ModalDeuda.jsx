@@ -3,6 +3,7 @@ import { X, User, UserRoundPlus, Scissors, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useBusquedaClientes } from '../hooks/useBusquedaClientes.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearFechaISO } from '../lib/fechas.js'
 import Etiqueta from './Etiqueta.jsx'
@@ -44,7 +45,6 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
   const { usuario } = useAuth()
   const esEdicion = Boolean(deuda)
 
-  const [clientes, setClientes] = useState([])
   const [catalogo, setCatalogo] = useState([]) // servicios + productos, con datos reales
   const [cargandoClientes, setCargandoClientes] = useState(true)
 
@@ -68,12 +68,11 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
 
   useEffect(() => {
     async function cargarListas() {
-      const [resClientes, resServicios, resProductos] = await Promise.all([
-        supabase.from('clientes').select('id, nombre').order('nombre'),
+      // Los clientes NO se descargan: se buscan en el servidor al escribir (QA-043).
+      const [resServicios, resProductos] = await Promise.all([
         supabase.from('servicios').select('id, nombre').eq('activo', true).order('nombre'),
         supabase.from('productos').select('id, nombre').eq('activo', true).order('nombre'),
       ])
-      setClientes(resClientes.data ?? [])
       setCatalogo([
         ...(resServicios.data ?? []).map((s) => ({ ...s, tipo: 'servicio' })),
         ...(resProductos.data ?? []).map((p) => ({ ...p, tipo: 'producto' })),
@@ -97,14 +96,13 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
   function manejarClienteCreado(clienteCreado) {
     setModalClienteNuevoAbierto(false)
     if (!clienteCreado) return
-    setClientes((anterior) =>
-      [...anterior, clienteCreado].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    )
     seleccionarCliente(clienteCreado)
   }
 
-  const sugerenciasCliente = clientes.filter((cliente) =>
-    cliente.nombre.toLowerCase().includes(busquedaCliente.trim().toLowerCase()),
+  const busquedaClientes = useBusquedaClientes({ termino: busquedaCliente, activo: mostrarSugerenciasCliente })
+  const sugerenciasCliente = busquedaClientes.resultados
+  const hayCoincidenciaExacta = sugerenciasCliente.some(
+    (c) => c.nombre.trim().toLowerCase() === busquedaCliente.trim().toLowerCase(),
   )
 
   const sugerenciasConcepto = formulario.concepto.trim()
@@ -208,9 +206,30 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
                   <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
                 )}
 
-                {mostrarSugerenciasCliente && (sugerenciasCliente.length > 0 || busquedaCliente.trim()) && (
+                {mostrarSugerenciasCliente && (
                   <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                    {sugerenciasCliente.map((cliente) => (
+                    {busquedaClientes.buscando && (
+                      <p role="status" className="px-3 py-2 text-xs text-ink/60">
+                        Buscando clientes…
+                      </p>
+                    )}
+                    {busquedaClientes.error && (
+                      <p role="alert" className="px-3 py-2 text-xs text-red">
+                        No se pudo buscar clientes.{' '}
+                        <button
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={busquedaClientes.reintentar}
+                          className="underline"
+                        >
+                          Reintentar
+                        </button>
+                      </p>
+                    )}
+                    {busquedaClientes.listo && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
+                      <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
+                    )}
+                    {busquedaClientes.listo && sugerenciasCliente.map((cliente) => (
                       <button
                         key={cliente.id}
                         type="button"
@@ -221,7 +240,7 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
                         <span className="truncate">{cliente.nombre}</span>
                       </button>
                     ))}
-                    {busquedaCliente.trim() && (
+                    {busquedaClientes.listo && busquedaCliente.trim() && !hayCoincidenciaExacta && (
                       <button
                         type="button"
                         onMouseDown={(evento) => evento.preventDefault()}

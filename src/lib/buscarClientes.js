@@ -11,9 +11,30 @@ export function patronIlike(termino) {
   return `%${termino.trim().replace(/[\\%_]/g, '\\$&')}%`
 }
 
-export async function buscarClientes(supabase, termino, { limite = LIMITE_SUGERENCIAS } = {}) {
-  let consulta = supabase.from('clientes').select('id, nombre').order('nombre').order('id').limit(limite)
-  if (termino.trim()) consulta = consulta.ilike('nombre', patronIlike(termino))
+// Valor entre comillas dentro de un filtro `or=(...)` de PostgREST: las comas, paréntesis y puntos del
+// texto no deben interpretarse como sintaxis. Dentro de comillas solo `\` y `"` necesitan escape.
+export function valorCitado(valor) {
+  return `"${valor.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`
+}
+
+// `conTelefono`: Caja busca por nombre O teléfono (columna extra `telefono` en el resultado).
+export async function buscarClientes(
+  supabase,
+  termino,
+  { limite = LIMITE_SUGERENCIAS, conTelefono = false } = {},
+) {
+  let consulta = supabase
+    .from('clientes')
+    .select(conTelefono ? 'id, nombre, telefono' : 'id, nombre')
+    .order('nombre')
+    .order('id')
+    .limit(limite)
+  if (termino.trim()) {
+    const patron = patronIlike(termino)
+    consulta = conTelefono
+      ? consulta.or(`nombre.ilike.${valorCitado(patron)},telefono.ilike.${valorCitado(patron)}`)
+      : consulta.ilike('nombre', patron)
+  }
   const { data, error } = await consulta
   if (error) throw error
   return data ?? []
