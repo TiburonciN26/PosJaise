@@ -167,7 +167,9 @@ test('QA-032: reseña de servicio pendiente se modera desde Reseñas y la public
     await expect(form).toHaveCount(0);
   }
 
-  const servicio = { serviceName: `${data.prefix} Q032 Servicio` };
+  // Nombre ÚNICO por ejecución: con QA_REUSE_FIXTURES el servicio de una corrida anterior seguía en la lista
+  // y first() elegía ese mientras se consultaba el ID del nuevo.
+  const servicio = { serviceName: `${data.prefix} Q032 Servicio ${Date.now().toString(36)}` };
   await createService(page, servicio);
 
   await page.goto('/citas');
@@ -176,7 +178,10 @@ test('QA-032: reseña de servicio pendiente se modera desde Reseñas y la public
   await formCita.getByPlaceholder('Buscar cliente...').fill(own.clientName);
   await formCita.getByRole('button', { name: own.clientName, exact: true }).click();
   await formCita.getByPlaceholder('Buscar servicio...').fill(servicio.serviceName);
-  await formCita.getByRole('button', { name: new RegExp(servicio.serviceName) }).first().click();
+  const sugerenciaServicio = formCita.getByRole('button', { name: new RegExp(`^${servicio.serviceName} \\d+ min$`) });
+  await expect(sugerenciaServicio).toHaveCount(1);
+  await sugerenciaServicio.click();
+  await expect(formCita.getByText(servicio.serviceName, { exact: true })).toBeVisible(); // línea agregada antes de Agendar
   await formCita.getByLabel('Asistente', { exact: true }).selectOption({ label: ficha });
   const dia = new Date(`${data.today}T12:00:00-05:00`);
   dia.setUTCDate(dia.getUTCDate() + 1);

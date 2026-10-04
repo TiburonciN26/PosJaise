@@ -14,6 +14,7 @@ import IconoBuscar from '../components/IconoBuscar.jsx'
 import InputBusqueda from '../components/InputBusqueda.jsx'
 import ModalBuscarAtencion from '../components/ModalBuscarAtencion.jsx'
 import ModalBuscarCliente from '../components/ModalBuscarCliente.jsx'
+import { contarAtenciones } from '../lib/buscarAtenciones.js'
 import ModalCliente from '../components/ModalCliente.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
@@ -397,8 +398,9 @@ export default function Ventas({ activo = true }) {
   const [catalogoProductos, setCatalogoProductos] = useState([])
   const [cargandoCatalogo, setCargandoCatalogo] = useState(true)
   const [errorCatalogo, setErrorCatalogo] = useState(null)
-  const [atencionesDisponibles, setAtencionesDisponibles] = useState([])
-  const [cargandoAtenciones, setCargandoAtenciones] = useState(false)
+  // Cuántas atenciones pendientes hay fuera del carrito (solo el conteo, para el avisito del botón). La
+  // lista la busca el modal en el servidor (QA-044); aquí ya no se descarga ni se pagina.
+  const [pendientesFuera, setPendientesFuera] = useState(0)
   const [modalAtencionesAbierto, setModalAtencionesAbierto] = useState(false)
   const [modalClienteAbierto, setModalClienteAbierto] = useState(false)
   const [modalRegistroClienteAbierto, setModalRegistroClienteAbierto] = useState(false)
@@ -449,37 +451,16 @@ export default function Ventas({ activo = true }) {
   // tiene el valor VIEJO hasta el próximo render (setCarrito no la muta al
   // toque), así que sin esto se filtraba con la lista de antes de sacar/
   // vaciar el carrito y el aviso no volvía a aparecer.
-  async function cargarAtencionesDisponibles(carritoActual = carrito) {
-    const { data, error } = await supabase
-      .from('registro_servicios')
-      .select('id, servicio_id, cliente_id, precio, fecha, servicios(nombre), clientes(nombre)')
-      .eq('estado', 'ACTIVO')
-      .is('venta_id', null)
-      .order('fecha')
-
-    if (error) return false
-
-    // El servidor solo sabe qué atenciones ya se VENDIERON (venta_id
-    // puesto al confirmar) — una que ya está en el carrito de este ticket,
-    // pero todavía sin confirmar, sigue viniendo como "disponible" en la
-    // consulta. Se descarta acá para no poder agregarla dos veces al mismo
-    // ticket antes de cobrar (y para que el avisito del botón se apague
-    // apenas ya no quede ninguna suelta).
-    const idsEnCarrito = new Set(
-      carritoActual.filter((item) => item.tipo === 'SERVICIO').map((item) => item.registroServicioId),
-    )
-    setAtencionesDisponibles((data ?? []).filter((atencion) => !idsEnCarrito.has(atencion.id)))
-    return true
+  async function actualizarPendientes(idsCarrito) {
+    try {
+      setPendientesFuera(await contarAtenciones(supabase, { excluirIds: idsCarrito }))
+    } catch {
+      // Un fallo del conteo solo deja el avisito como estaba; el modal avisa su propio error al abrirse.
+    }
   }
 
-  async function abrirBuscadorAtenciones() {
+  function abrirBuscadorAtenciones() {
     setModalAtencionesAbierto(true)
-    setCargandoAtenciones(true)
-    const huboError = !(await cargarAtencionesDisponibles())
-    setCargandoAtenciones(false)
-    if (huboError) {
-      mostrarToast('No se pudieron cargar las atenciones pendientes.', 'error')
-    }
   }
 
   useEffect(() => {
@@ -493,11 +474,17 @@ export default function Ventas({ activo = true }) {
     }
   }, [activo])
 
+  // El conteo se vuelve a pedir al entrar a la pestaña y cada vez que cambian las atenciones del carrito
+  // (se agregó una, se sacó una o se cobró y el carrito quedó vacío).
+  const idsServiciosCarrito = carrito
+    .filter((item) => item.tipo === 'SERVICIO')
+    .map((item) => item.registroServicioId)
+  const claveServiciosCarrito = [...idsServiciosCarrito].sort().join(',')
   useEffect(() => {
     if (!activo) return
-    cargarAtencionesDisponibles()
+    actualizarPendientes(claveServiciosCarrito ? claveServiciosCarrito.split(',') : [])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activo])
+  }, [activo, claveServiciosCarrito])
 
   // Si el escáner de cámara quedó abierto y el usuario cambia de pestaña
   // desde el menú (la página sigue montada, solo oculta), hay que cerrarlo:
@@ -702,10 +689,9 @@ export default function Ventas({ activo = true }) {
     (item) => item.tipo === 'PRODUCTO' && item.cantidad > obtenerStockProducto(item.productoId),
   )
   const hayServicioEnCarrito = carrito.some((item) => item.tipo === 'SERVICIO')
-  // atencionesDisponibles ya excluye lo que está en el carrito (ver
-  // cargarAtencionesDisponibles) — el avisito del botón es solo mirar si
-  // queda algo suelto.
-  const hayAtencionesPendientes = atencionesDisponibles.length > 0
+  // pendientesFuera ya excluye lo que está en el carrito (ver actualizarPendientes): el avisito del botón
+  // es solo mirar si queda algo suelto.
+  const hayAtencionesPendientes = pendientesFuera > 0
 
   const puedeCobrar =
     carrito.length > 0 &&
@@ -784,11 +770,8 @@ export default function Ventas({ activo = true }) {
     }
     // El modal se queda abierto (no se cierra acá) para poder agregar varias
     // atenciones seguidas del mismo ticket sin reabrir el buscador cada vez
-    // — la fila agregada simplemente desaparece de la lista de abajo.
-    // Se quita de la lista local (no solo del servidor al vender) para que
-    // no se pueda agregar la misma atención dos veces al mismo ticket antes
-    // de que se confirme la venta.
-    setAtencionesDisponibles((anterior) => anterior.filter((a) => a.id !== atencion.id))
+    // — la fila agregada desaparece al instante de la lista (el modal recibe los
+    // ids del carrito como exclusión), así no se puede agregar dos veces antes de cobrar.
   }
 
   function cambiarCantidad(id, delta) {
@@ -806,17 +789,6 @@ export default function Ventas({ activo = true }) {
 
   function quitarItem(id) {
     const item = carrito.find((i) => i.id === id)
-
-    // Restaurada al toque, sin ida al servidor — ya se tiene el objeto
-    // completo guardado desde que se agregó (atencionOriginal), así el
-    // avisito del botón no tiene que esperar una consulta de red.
-    if (item?.tipo === 'SERVICIO' && item.atencionOriginal) {
-      setAtencionesDisponibles((anterior) =>
-        [...anterior, item.atencionOriginal].sort(
-          (a, b) => new Date(a.fecha) - new Date(b.fecha),
-        ),
-      )
-    }
 
     setIdsSaliendo((anterior) => new Set(anterior).add(id))
     conTemporizador(() => {
@@ -931,7 +903,7 @@ export default function Ventas({ activo = true }) {
     setMetodoPago(null)
     setCliente(null)
     cargarCatalogo()
-    cargarAtencionesDisponibles([])
+    // El carrito queda vacío: el efecto de arriba vuelve a contar las pendientes.
   }
 
   function seleccionarSugerencia(producto) {
@@ -1502,8 +1474,7 @@ export default function Ventas({ activo = true }) {
 
       {modalAtencionesAbierto && (
         <ModalBuscarAtencion
-          atenciones={atencionesDisponibles}
-          cargando={cargandoAtenciones}
+          excluirIds={idsServiciosCarrito}
           onSeleccionar={agregarAtencion}
           onCerrar={() => setModalAtencionesAbierto(false)}
         />

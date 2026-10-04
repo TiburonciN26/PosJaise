@@ -9,6 +9,7 @@ Estado: **solo Supabase Local TEST**. Nada de esto se aplicó a producción ni l
 | `20261003000001_recompensas_fase2_nucleo.sql` | Libros de monedas/sellos, configuración, protección por servicio, catálogo y canjes, `confirmar_venta`/`anular_venta` con recompensas, canje atómico. **Ya aplicada en Local; no se reescribe.** |
 | `20261003000002_recompensas_fase2_correcciones.sql` | QA-033 (restaura el rechazo de roles ≠ ADMINISTRADOR/CAJERA), QA-041 (reparto de centavos por mayor resto) y la regla «sin protección ⇒ cupón hasta el 50 %». |
 | `20261003000003_recompensas_simulacion_transicion.sql` | Funciones de **solo lectura** para simular la transición ×5. No escribe nada. |
+| `20261004000001_ventas_codigo_mas_de_999.sql` | **QA-045.** `confirmar_venta()` generaba el código con `lpad(n, 3, '0')`, que trunca desde la venta 1000 (`VEN100` ya existía) y hacía fallar TODA venta nueva. Solo cambia la generación del código (idéntica hasta 999). **Defecto latente: cualquier base real fallará al llegar a la venta 1000.** Solo Local; producción pendiente de autorización. |
 | `20261003000004_recompensas_lectores_portal.sql` | `mis_puntos()` y `mi_fidelizacion()` coherentes con el libro cuando el programa está activo (idénticos a antes si está apagado); `mis_cupones()` con condiciones y vigencia; `catalogo_recompensas_publico()` (QA-037, exposición mínima). |
 
 ### Instalación limpia
@@ -19,12 +20,13 @@ Aplicar en orden de nombre (como hace `supabase db reset` / `migration up`): …
 
 ### Desfase con `supabase_migrations.schema_migrations` (Local)
 
-Las migraciones se aplicaron con `psql` dentro del contenedor (`docker exec -i supabase_db_WedJaiseReact psql …`), sin pasar por el CLI. Comparando archivos contra la tabla (solo lectura) están **sin registrar** 12 versiones (10 en la primera comparación; `20261003000003` y `20261003000004` se aplicaron después), todas con su efecto ya presente en la base:
+Las migraciones se aplicaron con `psql` dentro del contenedor (`docker exec -i supabase_db_WedJaiseReact psql …`), sin pasar por el CLI. Comparando archivos contra la tabla (solo lectura) están **sin registrar** 13 versiones (10 en la primera comparación; `20261003000003` y `20261003000004` se aplicaron después), todas con su efecto ya presente en la base:
 
 ```
 20261002000001 … 20261002000008   (8 correcciones QA anteriores a esta fase)
 20261003000001, 20261003000002    (esta fase)
 20261003000003, 20261003000004    (simulación y lectores del portal)
+20261004000001                    (QA-045, código de venta)
 ```
 
 Reconciliación segura (no ejecutada):
