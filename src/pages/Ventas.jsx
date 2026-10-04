@@ -395,7 +395,6 @@ export default function Ventas({ activo = true }) {
   }, [ventaParaImprimir])
 
   const [catalogoProductos, setCatalogoProductos] = useState([])
-  const [catalogoClientes, setCatalogoClientes] = useState([])
   const [cargandoCatalogo, setCargandoCatalogo] = useState(true)
   const [errorCatalogo, setErrorCatalogo] = useState(null)
   const [atencionesDisponibles, setAtencionesDisponibles] = useState([])
@@ -417,13 +416,13 @@ export default function Ventas({ activo = true }) {
   // el más numeroso y el menos usado en el flujo de venta en sí).
   async function cargarCatalogo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargandoCatalogo(true)
-    const [productosRes, clientesRes] = await Promise.all([
+    // Los clientes ya NO se descargan aquí: «Seleccionar cliente» los busca en el servidor (QA-043).
+    const [productosRes] = await Promise.all([
       supabase
         .from('productos_vista')
         .select('id, codigo_barras, nombre, categoria, precio, stock_actual')
         .eq('activo', true)
         .order('nombre'),
-      supabase.from('clientes').select('id, nombre, telefono').order('nombre'),
     ])
 
     if (!vigente.actual) return
@@ -433,16 +432,6 @@ export default function Ventas({ activo = true }) {
     } else {
       setErrorCatalogo(null)
       setCatalogoProductos(productosRes.data ?? [])
-      // B2 de la 3ª auditoría: antes un fallo acá quedaba en silencio (la
-      // lista de clientes simplemente quedaba vacía). No bloquea la venta
-      // como productos (cliente es opcional en el ticket), pero sí avisa —
-      // si no, "no aparece ningún cliente" parece un catálogo vacío de
-      // verdad, no un error de red.
-      if (clientesRes.error) {
-        mostrarToast('No se pudo cargar la lista de clientes.', 'error')
-      } else {
-        setCatalogoClientes(clientesRes.data ?? [])
-      }
     }
     setCargandoCatalogo(false)
   }
@@ -1522,7 +1511,6 @@ export default function Ventas({ activo = true }) {
 
       {modalClienteAbierto && (
         <ModalBuscarCliente
-          clientes={catalogoClientes}
           onSeleccionar={(clienteElegido) => {
             setCliente(clienteElegido)
             setModalClienteAbierto(false)

@@ -3,6 +3,7 @@ import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle } from 'lucide-r
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useBusquedaClientes } from '../hooks/useBusquedaClientes.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
@@ -177,7 +178,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const esEdicion = Boolean(cita)
 
   const [servicios, setServicios] = useState([])
-  const [clientes, setClientes] = useState([])
   const [asistentes, setAsistentes] = useState([])
   const [cargandoListas, setCargandoListas] = useState(true)
 
@@ -219,9 +219,9 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
 
   useEffect(() => {
     async function cargarListas() {
-      const [resServicios, resClientes, resAsistentes] = await Promise.all([
+      // Los clientes NO se descargan: se buscan en el servidor al escribir (QA-043).
+      const [resServicios, resAsistentes] = await Promise.all([
         supabase.from('servicios').select('id, nombre, precio, duracion_min, categoria').order('nombre'),
-        supabase.from('clientes').select('id, nombre').order('nombre'),
         // RPC en vez de leer la tabla directo: ya excluye a quien esté
         // vinculado a una cuenta CAJERA (no atiende), cosa que un no-admin
         // no podría filtrar por su cuenta (la RLS de usuarios no le deja
@@ -229,7 +229,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
         supabase.rpc('asistentes_para_citas'),
       ])
       setServicios(resServicios.data ?? [])
-      setClientes(resClientes.data ?? [])
       setAsistentes(resAsistentes.data ?? [])
       setCargandoListas(false)
     }
@@ -250,8 +249,11 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
 
   const categoriasExistentes = [...new Set(servicios.map((s) => s.categoria).filter(Boolean))].sort()
 
-  const sugerenciasCliente = clientes.filter((cliente) =>
-    cliente.nombre.toLowerCase().includes(busquedaCliente.trim().toLowerCase()),
+  const busquedaClientes = useBusquedaClientes({ termino: busquedaCliente, activo: mostrarSugerenciasCliente })
+  const sugerenciasCliente = busquedaClientes.resultados
+  // Hay una ficha idéntica al texto escrito: no se ofrece crear otra (QA-043).
+  const hayCoincidenciaExacta = sugerenciasCliente.some(
+    (c) => c.nombre.trim().toLowerCase() === busquedaCliente.trim().toLowerCase(),
   )
   const sugerenciasServicio = servicios.filter((servicio) =>
     servicio.nombre.toLowerCase().includes(busquedaServicio.trim().toLowerCase()),
@@ -278,9 +280,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   function manejarClienteCreado(clienteCreado) {
     setModalClienteNuevoAbierto(false)
     if (!clienteCreado) return
-    setClientes((anterior) =>
-      [...anterior, clienteCreado].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    )
     seleccionarCliente(clienteCreado)
   }
 
@@ -436,9 +435,30 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                   <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
                 )}
 
-                {mostrarSugerenciasCliente && (sugerenciasCliente.length > 0 || busquedaCliente.trim()) && (
+                {mostrarSugerenciasCliente && (
                   <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                    {sugerenciasCliente.map((cliente) => (
+                    {busquedaClientes.buscando && (
+                      <p role="status" className="px-3 py-2 text-xs text-ink/60">
+                        Buscando clientes…
+                      </p>
+                    )}
+                    {busquedaClientes.error && (
+                      <p role="alert" className="px-3 py-2 text-xs text-red">
+                        No se pudo buscar clientes.{' '}
+                        <button
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={busquedaClientes.reintentar}
+                          className="underline"
+                        >
+                          Reintentar
+                        </button>
+                      </p>
+                    )}
+                    {busquedaClientes.listo && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
+                      <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
+                    )}
+                    {busquedaClientes.listo && sugerenciasCliente.map((cliente) => (
                       <button
                         key={cliente.id}
                         type="button"
@@ -449,7 +469,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                         <span className="truncate">{cliente.nombre}</span>
                       </button>
                     ))}
-                    {busquedaCliente.trim() && (
+                    {busquedaClientes.listo && busquedaCliente.trim() && !hayCoincidenciaExacta && (
                       <>
                         <button
                           type="button"

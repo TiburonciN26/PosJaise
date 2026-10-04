@@ -1,11 +1,15 @@
 import { useRef, useState } from 'react'
 import { X, UserPlus, UserRoundPlus, Users } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useBusquedaClientes } from '../hooks/useBusquedaClientes.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import IconoBuscar from './IconoBuscar.jsx'
 import EstadoVacio from './EstadoVacio.jsx'
 
-export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistrarNuevo, onCerrar }) {
+// Caja → Seleccionar cliente. La búsqueda (nombre o teléfono) se hace en el SERVIDOR (QA-043): antes se
+// recibía la tabla completa, que el servidor corta en 1000 filas, y una ficha existente fuera de esa primera
+// página aparecía como inexistente con la oferta de venta rápida o de crearla de nuevo.
+export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, onCerrar }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const [busqueda, setBusqueda] = useState('')
@@ -13,14 +17,12 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
 
   useCerrarConEscape(onCerrar)
 
-  const filtrados = clientes.filter((cliente) => {
-    const texto = busqueda.trim().toLowerCase()
-    if (!texto) return true
-    return (
-      cliente.nombre.toLowerCase().includes(texto) ||
-      (cliente.telefono ?? '').toLowerCase().includes(texto)
-    )
-  })
+  const busquedaClientes = useBusquedaClientes({ termino: busqueda, conTelefono: true })
+  const filtrados = busquedaClientes.resultados
+  // Solo con la búsqueda de ESTE texto terminada se puede afirmar que no hay fichas ni elegir con Enter.
+  const { listo, buscando, error } = busquedaClientes
+  const textoNormal = busqueda.trim().toLowerCase()
+  const hayCoincidenciaExacta = filtrados.some((c) => c.nombre.trim().toLowerCase() === textoNormal)
 
   function manejarCambioBusqueda(valor) {
     setBusqueda(valor)
@@ -38,14 +40,14 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
     }
 
     if (evento.key === 'ArrowDown') {
-      if (filtrados.length === 0) return
+      if (!listo || filtrados.length === 0) return
       evento.preventDefault()
       setIndiceActivo((indice) => (indice + 1) % filtrados.length)
       return
     }
 
     if (evento.key === 'ArrowUp') {
-      if (filtrados.length === 0) return
+      if (!listo || filtrados.length === 0) return
       evento.preventDefault()
       setIndiceActivo((indice) => (indice - 1 + filtrados.length) % filtrados.length)
       return
@@ -53,6 +55,8 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
 
     if (evento.key !== 'Enter') return
     evento.preventDefault()
+    // Con la búsqueda pendiente o fallida, Enter no elige nada: ni una ficha vieja ni una venta rápida.
+    if (!listo) return
 
     if (indiceActivo >= 0 && filtrados[indiceActivo]) {
       onSeleccionar(filtrados[indiceActivo])
@@ -121,12 +125,27 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
         </div>
 
         <div className="min-h-0 flex-1 divide-y divide-border overflow-y-auto">
-          {filtrados.length === 0 ? (
+          {buscando ? (
+            <p role="status" className="px-3 py-6 text-center text-sm text-ink/60">
+              Buscando clientes…
+            </p>
+          ) : error ? (
+            <div role="alert" className="flex flex-col items-center gap-2 px-3 py-6 text-center">
+              <p className="text-sm text-red">No se pudo buscar clientes. Esto no significa que no exista.</p>
+              <button
+                type="button"
+                onClick={busquedaClientes.reintentar}
+                className="rounded-lg border border-border-strong px-3 py-1.5 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : filtrados.length === 0 ? (
             <EstadoVacio
               icono={Users}
               mensaje={
                 busqueda.trim()
-                  ? 'No hay clientes registrados con ese nombre.'
+                  ? 'No hay clientes registrados con ese nombre o teléfono.'
                   : 'No se encontraron clientes.'
               }
             />
@@ -152,7 +171,7 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
           )}
         </div>
 
-        {busqueda.trim() && (
+        {busqueda.trim() && (listo || error) && (
           <div className="shrink-0 divide-y divide-border border-t border-border">
             <button
               type="button"
@@ -164,6 +183,7 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
                 Usar "{busqueda.trim()}" (venta rápida, sin guardar)
               </span>
             </button>
+            {listo && !hayCoincidenciaExacta && (
             <button
               type="button"
               onClick={() => onRegistrarNuevo(busqueda.trim())}
@@ -174,6 +194,7 @@ export default function ModalBuscarCliente({ clientes, onSeleccionar, onRegistra
                 Registrar "{busqueda.trim()}" como cliente nuevo
               </span>
             </button>
+            )}
           </div>
         )}
       </div>
