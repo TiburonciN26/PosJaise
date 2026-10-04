@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
+import { sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -65,9 +65,10 @@ test('AUTORIZACIÓN BACKEND: personal sin rol ADMIN y CLIENTE no escriben datos 
   test.setTimeout(240_000);
   const key = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
-  const producto = { productName: `${data.prefix} AUTH Producto`, barcode: `${data.barcode}-AUTH`, initialStock: 10 };
+  const sufijo = sufijoUnico();
+  const producto = { productName: `${data.prefix} AUTH Producto ${sufijo}`, barcode: `${data.barcode}-AUTH-${sufijo}`, initialStock: 10 };
   await createProduct(page, producto);
-  const servicio = { serviceName: `${data.prefix} AUTH Servicio` };
+  const servicio = { serviceName: `${data.prefix} AUTH Servicio ${sufijo}` };
   await createService(page, servicio);
   const own = await isolatedClient(browser, data, 'AUTH');
   const leerAdmin = async (ruta) => (await rest(page, key, 'GET', ruta)).json;
@@ -145,7 +146,8 @@ test('QA-034: un CLIENTE no puede ejecutar por RPC las acciones solo de administ
   knownIssue(info, 'QA-034');
   const key = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
-  const producto = { productName: `${data.prefix} Q034 Producto`, barcode: `${data.barcode}-Q034`, initialStock: 10 };
+  const sufijo = sufijoUnico();
+  const producto = { productName: `${data.prefix} Q034 Producto ${sufijo}`, barcode: `${data.barcode}-Q034-${sufijo}`, initialStock: 10 };
   await createProduct(page, producto);
   const servicio = { serviceName: `${data.prefix} Q034 Servicio` };
   await createService(page, servicio);
@@ -245,8 +247,8 @@ test('REFERIDOS Y CUPONES: reglas del código, límites del cupón, uso simultá
   test.setTimeout(420_000);
   const key = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
-  const producto = `${data.prefix} REF Producto`;
-  const productoId = await createPricedProduct(page, data, producto, `${data.barcode}-REF`, 20, 10);
+  const producto = `${data.prefix} REF Producto ${sufijoUnico()}`;
+  const productoId = await createPricedProduct(page, data, producto, `${data.barcode}-REF-${sufijoUnico()}`, 20, 10);
   const A = await isolatedClient(browser, data, 'REFA');
   const B = await isolatedClient(browser, data, 'REFB');
   const sa = await abrirSesion(browser, data, 'CLIENTE', A);
@@ -387,7 +389,8 @@ test('PEDIDO ENTREGADO + ANULACIÓN: comportamiento actual documentado (decisió
   const own = await isolatedClient(browser, data, 'ENTR');
   const ctxP = await qaContext(browser);
   let productoId;
-  const producto = { productName: `${data.prefix} ENTR Producto`, barcode: `${data.barcode}-ENTR`, initialStock: 10 };
+  const sufijo = sufijoUnico();
+  const producto = { productName: `${data.prefix} ENTR Producto ${sufijo}`, barcode: `${data.barcode}-ENTR-${sufijo}`, initialStock: 10 };
   try {
     const p = await ctxP.newPage();
     await login(p, 'ADMINISTRADOR', data);

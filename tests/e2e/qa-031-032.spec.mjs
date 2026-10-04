@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { login, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
+import { sufijoUnico, login, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -35,7 +35,8 @@ async function createOwnProduct(browser, data, tag) {
   const ctx = await qaContext(browser);
   try {
     const page = await ctx.newPage();
-    const product = { productName: `${data.prefix} ${tag} Producto`, barcode: `${data.barcode}-${tag}`, initialStock: 10 };
+    const sufijo = sufijoUnico();
+    const product = { productName: `${data.prefix} ${tag} Producto ${sufijo}`, barcode: `${data.barcode}-${tag}-${sufijo}`, initialStock: 10 };
     await login(page, 'ADMINISTRADOR', data);
     await createProduct(page, product);
     return product;

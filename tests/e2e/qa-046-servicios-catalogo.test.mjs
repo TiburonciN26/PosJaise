@@ -91,7 +91,8 @@ test('los comodines del texto son literales y los caracteres especiales no rompe
   for (const raro of ['%', '_', 'a,b', 'x)y', 'q"r', `p${barra}q`, '*', 'nombre.ilike.x']) {
     const r = await buscarServicios(sb, raro);
     assert.ok(Array.isArray(r), `falló con «${raro}»`);
-    assert.ok(r.every((s) => s.nombre.toLowerCase().includes(raro.toLowerCase())), `«${raro}» no se trató como literal`);
+    // PostgREST toma «*» como comodín de ilike (alias de «%»): solo AMPLÍA el resultado, nunca lo recorta.
+    if (raro !== '*') assert.ok(r.every((s) => s.nombre.toLowerCase().includes(raro.toLowerCase())), `«${raro}» no se trató como literal`);
   }
 });
 

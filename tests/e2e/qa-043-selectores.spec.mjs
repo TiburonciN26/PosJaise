@@ -100,7 +100,8 @@ test('Nueva cita: la clienta fuera de las primeras 1000 se encuentra, se selecci
 test('Nueva cita: se agenda con el ID de la ficha existente y no se crea un duplicado', async ({ page, data }) => {
   // El servicio se prepara ANTES de abrir el modal (por SQL local, nombre único): así «Crear servicio "…"» no
   // puede confundirse con la sugerencia real.
-  const servicioId = await h.nuevoServicio(30);
+  // Con duración informada (30 min): la sugerencia real muestra «NN min» y la línea de la cita es válida.
+  const servicioId = await h.nuevoServicio(30, null, { duracion_min: 30 });
   const nombreServicio = await h.json(`select to_json(nombre) from public.servicios where id='${servicioId}'`);
   const { form, buscador } = await abrirCita(page);
   await buscador.fill(nombre);

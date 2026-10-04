@@ -41,6 +41,10 @@ export async function createProduct(page, data) {
   await expect(form).toHaveCount(0);
 }
 
+// Sufijo único por llamada (proceso + azar): los códigos de barras son UNIQUE y los nombres se buscan por
+// subcadena, así que ningún caso reutiliza el fixture de otra corrida ni se apoya en first() para elegir.
+export const sufijoUnico = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+
 export async function createService(page, data) {
   await page.goto('/servicios');
   await visibleButton(page, 'Nuevo servicio').click();
@@ -66,7 +70,9 @@ export async function createAttention(page, data, hour) {
   await form.getByPlaceholder('Buscar cliente...').fill(data.clientName);
   await form.getByRole('button', { name: data.clientName, exact: true }).click();
   await form.getByPlaceholder('Buscar servicio...').fill(data.serviceName);
-  await form.getByRole('button', { name: new RegExp(data.serviceName) }).first().click();
+  // La sugerencia real termina en el precio («<nombre> 2.00»); «Crear servicio "<nombre>"» no. Sin first().
+  const escapado = data.serviceName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await form.getByRole('button', { name: new RegExp(`^${escapado} \\d+(\\.\\d+)?$`) }).click();
   await form.getByLabel('Fecha y hora', { exact: false }).fill(`${data.today}T${hour}`);
   await form.getByLabel('Nota', { exact: true }).fill(`${data.prefix} atención ${hour}`);
   await form.getByRole('button', { name: 'Guardar', exact: true }).click();

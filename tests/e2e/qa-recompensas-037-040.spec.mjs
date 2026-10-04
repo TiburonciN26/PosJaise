@@ -4,6 +4,7 @@
 // respuesta de éxito. No se escribe nada de negocio salvo reclamar el cupón de la promoción TEST por UI.
 import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
 import { login, logout } from './helpers.mjs';
+import * as h from './recompensas-fase2-helpers.mjs';
 
 const TABS = ['Mi tarjeta', 'Canjear puntos', 'Mis sellos', 'Mis cupones', 'Movimientos', 'Cómo funciona'];
 const CLAVES = ['tarjeta', 'canje', 'sellos', 'cupones', 'movimientos', 'como'];
@@ -85,13 +86,18 @@ test('QA-039: una consulta fallida no se presenta como saldo cero ni como ausenc
   await page.goto('/inicio');
   const reclamar = page.getByRole('button', { name: 'Reclamar cupón', exact: true });
   await page.waitForLoadState('networkidle');
-  let codigo = null;
   if (await reclamar.isVisible().catch(() => false)) {
     const respuesta = page.waitForResponse((r) => r.url().includes('/rpc/reclamar_cupon_promocion'));
     await reclamar.click();
-    const reclamado = await (await respuesta).json();
-    codigo = reclamado?.[0]?.codigo ?? null;
+    await respuesta;
   }
+  // Línea base REAL (no se supone cuenta vacía): los cupones que la clienta ya tiene en la base, con el más
+  // reciente como referencia visible. Así el caso es válido tanto con cuenta nueva como con cupones previos.
+  const clientaId = await h.json(`select to_json(id) from public.clientes where telefono='${data.phone}'`);
+  const totalCupones = Number(await h.json(`select to_json(count(*)) from public.cupones where cliente_id='${clientaId}'`));
+  const codigo = totalCupones > 0
+    ? await h.json(`select to_json(codigo) from public.cupones where cliente_id='${clientaId}' order by creado_en desc, id limit 1`)
+    : null;
 
   async function interrumpir(rpc) {
     await page.route(`**/rpc/${rpc}`, (route) => route.abort('failed'));

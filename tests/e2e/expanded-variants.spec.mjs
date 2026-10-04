@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures.mjs';
-import { login, logout, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
+import { sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
 import { password } from './fixtures/accounts.mjs';
 
 for(const [path,placeholder,message] of [
@@ -57,7 +57,7 @@ test('GASTOS: cero, negativo, texto y año menor a 2000', async ({page,data})=>{
 });
 
 test('STOCK: CAJERA rechaza 0/negativo y suma una unidad con persistencia', async ({page,data},info)=>{
-  const replenishment={productName:`${data.prefix} REPOSICIÓN`,barcode:`TEST-${data.runId}-REPOSICION`,initialStock:0};
+  const sufijo=sufijoUnico();const replenishment={productName:`${data.prefix} REPOSICIÓN ${sufijo}`,barcode:`TEST-${data.runId}-REPOSICION-${sufijo}`,initialStock:0};
   await login(page,'ADMINISTRADOR',data);await createProduct(page,replenishment);await logout(page);
   await login(page,'CAJERA',data);await page.goto('/inventario');await page.getByPlaceholder('Buscar producto...').fill(replenishment.productName);
   const row=()=>page.getByRole('row').filter({hasText:replenishment.productName});await expect(row().getByRole('cell').nth(3)).toHaveText('0');

@@ -105,7 +105,8 @@ export async function nuevaClienta({ vinculada = true } = {}) {
 let contadorFixtures = 0;
 export function nombreUnico(prefijo) {
   contadorFixtures += 1;
-  return `${prefijo} ${runId}-${contadorFixtures}${Math.random().toString(36).slice(2, 5)}`;
+  // Separadores fijos: ningún nombre es prefijo de otro (los selectores buscan por subcadena).
+  return `${prefijo} ${runId}-${contadorFixtures}-${Math.random().toString(36).padEnd(5, '0').slice(2, 5)}`;
 }
 
 // `extra`: { duracion_min } cuando el caso necesita minutos en la línea de la cita (por omisión queda sin
