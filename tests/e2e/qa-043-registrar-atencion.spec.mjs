@@ -30,6 +30,9 @@ test.beforeAll(async () => {
 // Los espacios del filtro viajan como «+» o «%20»: se decodifica antes de comparar.
 const decodificada = (peticion) => decodeURIComponent(peticion.url().replace(/\+/g, ' '));
 
+// Botón «Registrar "…" como cliente nuevo»: no debe ofrecerse mientras la búsqueda esté pendiente o sea antigua.
+const crear = (form) => form.getByRole('button', { name: /como cliente nuevo/ });
+
 async function abrirRegistro(page) {
   await login(page, 'ADMINISTRADOR', {});
   await page.goto('/mi-panel');

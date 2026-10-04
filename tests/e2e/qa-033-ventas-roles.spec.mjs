@@ -1,6 +1,6 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
 import { readFile } from 'node:fs/promises';
-import { login, visibleButton, formWithTitle } from './helpers.mjs';
+import { sufijoUnico, login, visibleButton, formWithTitle } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
@@ -78,9 +78,10 @@ test.describe.serial('QA-033: ventas solo para ADMINISTRADOR y CAJERA', () => {
     await page.goto('/inventario');
     await visibleButton(page, 'Nuevo producto').first().click();
     const form = formWithTitle(page, 'Nuevo producto');
-    S.productoNombre = `${data.prefix} Q033 Producto`;
+    const sufijo = sufijoUnico();
+    S.productoNombre = `${data.prefix} Q033 Producto ${sufijo}`;
     await form.getByLabel('Nombre', { exact: false }).fill(S.productoNombre);
-    await form.getByLabel('Código de barras', { exact: true }).fill(`${data.barcode}-Q033`);
+    await form.getByLabel('Código de barras', { exact: true }).fill(`${data.barcode}-Q033-${sufijo}`);
     await form.getByLabel('Stock inicial', { exact: false }).fill('10');
     await form.getByLabel('Costo', { exact: false }).fill('0');
     await form.getByLabel('Precio de venta', { exact: false }).fill('20');

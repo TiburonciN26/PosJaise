@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { login, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
+import { sufijoUnico, login, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
 import { isolatedClient, qaContext } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -36,7 +36,8 @@ async function createOwnProduct(browser, data, tag) {
   const ctx = await qaContext(browser);
   try {
     const page = await ctx.newPage();
-    const product = { productName: `${data.prefix} ${tag} Producto`, barcode: `${data.barcode}-${tag}`, initialStock: 10 };
+    const sufijo = sufijoUnico();
+    const product = { productName: `${data.prefix} ${tag} Producto ${sufijo}`, barcode: `${data.barcode}-${tag}-${sufijo}`, initialStock: 10 };
     await login(page, 'ADMINISTRADOR', data);
     await createProduct(page, product);
     return product;
@@ -168,8 +169,9 @@ test('QA-028: costo y precio rechazan textos parcialmente numéricos y guardan s
   knownIssue(info, 'QA-028');
   const key = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
-  const nombre = `${data.prefix} Q028 Importes`;
-  const barcode = `${data.barcode}-Q028`;
+  const sufijo = sufijoUnico();
+  const nombre = `${data.prefix} Q028 Importes ${sufijo}`;
+  const barcode = `${data.barcode}-Q028-${sufijo}`;
   let escrituras = 0;
   page.on('request', (r) => {
     if (r.url().includes('/rest/v1/productos?') && ['POST', 'PATCH'].includes(r.method())) escrituras += 1;

@@ -1,6 +1,6 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
 import { readFile } from 'node:fs/promises';
-import { login, formWithTitle } from './helpers.mjs';
+import { sufijoUnico, login, formWithTitle } from './helpers.mjs';
 import { isolatedClient, qaContext } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -78,7 +78,10 @@ test.describe.serial('AUTORIZACIÓN: configuraciones, zonas, galería, auditorí
     const { page, box } = S.admin;
     S.adminId = (await rest(page, box, 'GET', 'productos?select=id&limit=1')).userId;
     S.own = await isolatedClient(browser, data, 'CFG');
-    const nombre = `${data.prefix} CFG`;
+    // Nombres ÚNICOS por corrida (zonas_delivery_nombre_key, nombres de producto): la preparación no depende de que
+    // runtime.json sea nuevo. Si una precondición no se puede crear, el expect de abajo falla ANTES de los ataques.
+    const nombre = `${data.prefix} CFG ${sufijoUnico()}`;
+    S.nombreProducto = `${nombre} Producto`;
     // Registros preparados por ADMIN (precondiciones: existen antes de intentar acceder desde otro rol)
     const zonaA = await rest(page, box, 'POST', 'zonas_delivery', { nombre: `${nombre} zona activa`, costo: 3, activo: true });
     const zonaI = await rest(page, box, 'POST', 'zonas_delivery', { nombre: `${nombre} zona inactiva`, costo: 4, activo: false });
@@ -320,7 +323,7 @@ test.describe.serial('AUTORIZACIÓN: configuraciones, zonas, galería, auditorí
   test('QA-035: CAJERA y ADMIN agregan stock desde Inventario (UI): cantidad correcta, un movimiento por agregado y persistencia tras recargar', async ({ browser }, info) => {
     test.setTimeout(240_000);
     knownIssue(info, 'QA-035');
-    const nombre = `${S.data.prefix} CFG Producto`;
+    const nombre = S.nombreProducto;
     const s0 = (await estadoStock()).stock;
     const registros = [];
     for (const [rol, cantidad] of [['CAJERA', 5], ['ADMINISTRADOR', 2]]) {
@@ -369,7 +372,7 @@ test.describe.serial('AUTORIZACIÓN: configuraciones, zonas, galería, auditorí
   test('QA-036: Agregar stock rechaza 2.7 y 5abc por UI (CAJERA y ADMIN) sin llamar a la RPC ni cambiar stock ni historial', async ({ browser }, info) => {
     test.setTimeout(240_000);
     knownIssue(info, 'QA-036');
-    const nombre = `${S.data.prefix} CFG Producto`;
+    const nombre = S.nombreProducto;
     const mensaje = 'La cantidad debe ser un número entero mayor a 0 (sin decimales ni letras).';
     const evidencia = [];
     for (const rol of ['CAJERA', 'ADMINISTRADOR']) {

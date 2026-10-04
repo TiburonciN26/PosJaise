@@ -1,6 +1,6 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
 import { readFile } from 'node:fs/promises';
-import { login, createService } from './helpers.mjs';
+import { sufijoUnico, login, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -163,7 +163,8 @@ test.describe.serial('AUTORIZACIÓN AMPLIADA: clientes, deudas, mobiliario, cita
     S.mueble = mue.json[0].id;
 
     // Producto y servicio propios (UI) para el pedido y la cita de las dos clientas.
-    S.producto = { productName: `${nombre} Producto`, barcode: `${data.barcode}-AUTZ`, initialStock: 10 };
+    const sufijo = sufijoUnico();
+    S.producto = { productName: `${nombre} Producto ${sufijo}`, barcode: `${data.barcode}-AUTZ-${sufijo}`, initialStock: 10 };
     await page.goto('/inventario');
     await page.getByRole('button', { name: 'Nuevo producto', exact: true }).filter({ visible: true }).first().click();
     const formP = page.locator('form').filter({ has: page.getByRole('heading', { name: 'Nuevo producto', exact: true }) });

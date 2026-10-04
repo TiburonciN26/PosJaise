@@ -1,12 +1,23 @@
 import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
-import { login, formWithTitle, createAttention, createService } from './helpers.mjs';
+import { sufijoUnico, login, logout, formWithTitle, createAttention, createService, createProduct } from './helpers.mjs';
+import { isolatedClient } from './phase2-helpers.mjs';
+import * as h from './recompensas-fase2-helpers.mjs';
 
 test('QA-003: stock decimal debe rechazarse, nunca truncarse', async ({ page, data }, info) => {
   knownIssue(info, 'QA-003');
   await login(page, 'ADMINISTRADOR', data);
+  // Ficha PROPIA del caso (stock 10, nombre y código únicos): no depende de ventas ni ediciones de otras corridas
+  // sobre la ficha global, y el stock inicial no se fuerza en ningún dato compartido.
+  const sufijo = sufijoUnico();
+  const propio = { productName: `${data.prefix} Q003 ${sufijo}`, barcode: `${data.barcode}-Q003-${sufijo}`, initialStock: 10 };
+  await createProduct(page, propio);
+  const escrituras = [];
+  page.on('response', (r) => {
+    if (r.url().includes('/rest/v1/productos?') && ['PATCH', 'POST'].includes(r.request().method()) && r.status() < 300) escrituras.push(r.request().method());
+  });
   await page.goto('/inventario');
-  await page.getByPlaceholder('Buscar producto...').fill(data.productName);
-  await page.getByRole('row').filter({ has: page.getByText(data.productName, { exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
+  await page.getByPlaceholder('Buscar producto...').fill(propio.productName);
+  await page.getByRole('row').filter({ has: page.getByText(propio.productName, { exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
   const form = formWithTitle(page, 'Editar producto');
   await expect(form.getByLabel('Stock actual', { exact: false })).toHaveValue('10');
   await form.getByLabel('Stock actual', { exact: false }).fill('2.7');
@@ -15,15 +26,18 @@ test('QA-003: stock decimal debe rechazarse, nunca truncarse', async ({ page, da
   const rejected = (await form.count()) > 0;
   if (rejected) await form.getByRole('button', { name: 'Cancelar', exact: true }).click();
   await page.reload();
-  await page.getByPlaceholder('Buscar producto...').fill(data.productName);
-  await page.getByRole('row').filter({ has: page.getByText(data.productName, { exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
+  await page.getByPlaceholder('Buscar producto...').fill(propio.productName);
+  await page.getByRole('row').filter({ has: page.getByText(propio.productName, { exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
   const reopened = formWithTitle(page, 'Editar producto');
   const actual = await reopened.getByLabel('Stock actual', { exact: false }).inputValue();
-  await info.attach('stock-observado', { body: Buffer.from(JSON.stringify({ entered: 2.7, before: 10, persisted: actual, rejected })), contentType: 'application/json' });
+  const enBd = await h.json(`select to_json(stock_actual) from public.productos where id='${propio.productId}'`);
+  await info.attach('stock-observado', { body: Buffer.from(JSON.stringify({ entered: 2.7, before: 10, persisted: actual, persistedDb: enBd, rejected, escriturasExitosas: escrituras })), contentType: 'application/json' });
   if (actual !== '10') expect(actual, 'La reproducción conocida trunca 2.7 a 2; otro resultado requiere investigación').toBe('2');
   // Evidence collected before marking failure. Test asserts rejection/preservation.
   expectKnownFailure('QA-003');
   expect(actual, 'El valor inválido no debe cambiar el stock anterior').toBe('10');
+  expect(Number(enBd), 'ni en la base de datos').toBe(10);
+  expect(escrituras, 'la entrada inválida no debe producir escrituras exitosas').toEqual([]);
 });
 
 test('QA-006: teléfono alfabético debe rechazarse', async ({ page, data }, info) => {
@@ -81,15 +95,27 @@ test('QA-008 seguridad: backend rechaza reseña sin compra entregada', async ({ 
   await expect(page.getByText('Solo pueden reseñar las clientas que ya compraron este producto.', { exact: true })).toHaveCount(2);
 });
 
-test('QA-010: historial de atención debe tener un día válido', async ({ page, data }, info) => {
+test('QA-010: historial de atención debe tener un día válido', async ({ page, browser, data }, info) => {
   knownIssue(info, 'QA-010');
+  // Servicio y atención PROPIOS del caso (nombre único): la ficha global puede tener otras atenciones de la misma
+  // clienta, y aquí hay que identificar LA atención de este caso, no cualquiera con ese servicio.
+  const propio = { ...data, serviceName: `${data.prefix} Q010 ${sufijoUnico()}` };
+  await login(page, 'ADMINISTRADOR', propio);
+  await createService(page, propio);
+  await createAttention(page, propio, '10:20');
+  await logout(page);
   await login(page, 'CLIENTE', data);
   await page.goto('/historial');
-  await expect(page.getByText(data.serviceName, { exact: true })).toBeVisible();
+  const registro = page.getByText(propio.serviceName, { exact: true });
+  await expect(registro).toHaveCount(1);
   await page.reload();
-  await expect(page.getByText(data.serviceName, { exact: true })).toBeVisible();
+  await expect(registro).toHaveCount(1);
+  // La fecha de ESA atención (misma tarjeta) debe ser un día válido: se acota a la tarjeta que contiene el servicio.
+  const tarjeta = page.locator('div, li, article').filter({ has: registro }).last();
+  const textoTarjeta = await tarjeta.innerText();
   const text = await page.locator('body').innerText();
   expectKnownFailure('QA-010');
+  expect(textoTarjeta, 'la fecha de la atención del caso').not.toContain('NaN');
   expect(text).not.toContain('NaN');
 });
 
@@ -215,76 +241,116 @@ test('QA-004: interrupción tras borrar líneas debe conservar servicios', async
 
 test('QA-005: reclamar promoción debe guardar un cupón sin error SQL', async ({ page, browser, data }, info) => {
   knownIssue(info, 'QA-005');
-  await login(page, 'CLIENTE', data);
-  await page.goto('/inicio');
-  await expect(page.getByText(data.promotionName, { exact: true })).toBeVisible();
-  const result = page.waitForResponse(r => r.url().includes('/rpc/reclamar_cupon_promocion'));
-  await page.getByRole('button', { name: 'Reclamar cupón', exact: true }).click();
-  const response = await result;
-  const body = await response.json();
-  await info.attach('rpc-result', { body: Buffer.from(JSON.stringify({ status: response.status(), body })), contentType: 'application/json' });
-  if (!response.ok()) {
-    expect(body.message).toContain('column reference "id" is ambiguous');
-    await expect(page.getByText('column reference "id" is ambiguous', { exact: true })).toBeVisible();
-  }
-  // Deactivate only this run's promotion through UI to avoid masking subsequent
-  // runs' promotion on Inicio. No existing promotion/config is changed.
-  const adminContext = await browser.newContext({ baseURL: 'http://localhost:5173', timezoneId: 'America/Lima' });
   const { localNetworkOnly } = await import('./local-safety.mjs');
+  // Promoción PROPIA del caso, con vigencia (hoy) y título únicos: la de la preparación global puede estar inactiva
+  // por una corrida anterior. La clienta aislada no tiene cupones previos, así que el único cupón posible es el reclamado.
+  const own = await isolatedClient(browser, data, 'Q005');
+  const titulo = `${data.prefix} Promoción Q005 ${sufijoUnico()}`;
+  const adminContext = await browser.newContext({ baseURL: 'http://localhost:5173', timezoneId: 'America/Lima' });
   await localNetworkOnly(adminContext);
+  const admin = await adminContext.newPage();
   try {
-    const admin = await adminContext.newPage();
     await login(admin, 'ADMINISTRADOR', data);
     await admin.goto('/promociones');
-    const card = admin.locator('div.rounded-lg.border').filter({ has: admin.getByText(data.promotionName, { exact: true }) }).filter({ has: admin.getByRole('button', { name: 'Editar', exact: true }) }).last();
-    await admin.getByText(data.promotionName, { exact: true }).click();
-    await card.getByRole('button', { name: 'Editar', exact: true }).click();
-    const editing = formWithTitle(admin, 'Editar promoción');
-    await editing.getByRole('button', { name: 'Inactiva', exact: true }).click();
-    await editing.getByRole('button', { name: 'Guardar cambios', exact: true }).click();
-    await expect(editing).toHaveCount(0);
+    await admin.getByRole('button', { name: 'Nueva promoción', exact: true }).filter({ visible: true }).click();
+    const promo = formWithTitle(admin, 'Nueva promoción');
+    await promo.getByLabel('Título', { exact: false }).fill(titulo);
+    await promo.getByLabel('Porcentaje', { exact: false }).fill('15');
+    await promo.getByLabel('Vigente hasta', { exact: true }).fill(data.today);
+    await promo.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await expect(promo).toHaveCount(0);
+    const promocionId = await h.json(`select to_json(id) from public.promociones where titulo='${titulo}'`);
+    expect(promocionId, 'la promoción del caso existe').toBeTruthy();
+    // Prioridad aislada: Inicio muestra la promoción de vencimiento más próximo. La promoción de la preparación
+    // global (de ESTA corrida, mismo día) la empataría: ese es el único dato que este caso ya desactivaba por UI al
+    // terminar, así que se desactiva igual antes de reclamar. Cualquier OTRA promoción vigente que anteceda
+    // invalida la preparación (se falla con mensaje claro; no se toca lo que no es de este caso).
+    const consultaAntecesoras = (excluirTitulo) => h.json(`select coalesce(json_agg(titulo), '[]'::json) from public.promociones where id <> '${promocionId}' and activo and vigente_hasta is not null and vigente_hasta <= '${data.today}' and (vigente_desde is null or vigente_desde <= '${data.today}') and titulo <> '${excluirTitulo}'`);
+    const desactivar = async (tituloPromocion) => {
+      await admin.goto('/promociones');
+      const tarjeta = admin.locator('div.rounded-lg.border').filter({ has: admin.getByText(tituloPromocion, { exact: true }) }).filter({ has: admin.getByRole('button', { name: 'Editar', exact: true }) }).last();
+      await admin.getByText(tituloPromocion, { exact: true }).click();
+      await tarjeta.getByRole('button', { name: 'Editar', exact: true }).click();
+      const edicion = formWithTitle(admin, 'Editar promoción');
+      await edicion.getByRole('button', { name: 'Inactiva', exact: true }).click();
+      await edicion.getByRole('button', { name: 'Guardar cambios', exact: true }).click();
+      await expect(edicion).toHaveCount(0);
+    };
+    if (data.promotionName && Number(await h.json(`select to_json(count(*)) from public.promociones where titulo='${data.promotionName}' and activo`)) > 0) {
+      await desactivar(data.promotionName);
+    }
+    expect(await consultaAntecesoras(titulo), 'precondición: ninguna otra promoción vigente vence antes o el mismo día').toEqual([]);
+
+    await login(page, 'CLIENTE', own);
+    await page.goto('/inicio');
+    await expect(page.getByText(titulo, { exact: true })).toBeVisible();
+    const result = page.waitForResponse(r => r.url().includes('/rpc/reclamar_cupon_promocion'));
+    await page.getByRole('button', { name: 'Reclamar cupón', exact: true }).click();
+    const response = await result;
+    const body = await response.json();
+    await info.attach('rpc-result', { body: Buffer.from(JSON.stringify({ status: response.status(), body })), contentType: 'application/json' });
+    if (!response.ok()) {
+      expect(body.message).toContain('column reference "id" is ambiguous');
+      await expect(page.getByText('column reference "id" is ambiguous', { exact: true })).toBeVisible();
+    } else {
+      // El cupón reclamado corresponde a ESTA promoción y a esta clienta (por ID, no por texto).
+      const cupones = await h.json(`select to_json(count(*)) from public.cupones where promocion_id='${promocionId}' and cliente_id=(select id from public.clientes where telefono='${own.phone}')`);
+      expect(Number(cupones), 'un cupón de la promoción del caso para la clienta del caso').toBe(1);
+    }
+    // Se desactiva SOLO la promoción de este caso (por la UI) para no tapar a la de corridas posteriores.
+    await desactivar(titulo);
+    expectKnownFailure('QA-005');
+    expect(response.ok(), 'Reclamar debe completar la transacción').toBeTruthy();
   } finally { await adminContext.close(); }
-  expectKnownFailure('QA-005');
-  expect(response.ok(), 'Reclamar debe completar la transacción').toBeTruthy();
 });
 
 test('QA-009: verificar pago Yape del pedido aislado debe crear venta', async ({ page, browser, data }, info) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   knownIssue(info, 'QA-009');
-  await login(page, 'CLIENTE', data);
-  await page.goto(`/productos/${data.productId}`);
-  await page.getByRole('button', { name: /^Agregar al carrito/ }).click();
-  await page.goto('/carrito');
-  await expect(page.getByRole('heading', { name: 'Tu carrito', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Recojo en tienda', exact: true }).click();
-  await page.getByRole('button', { name: 'Elige el día', exact: true }).click();
-  // Choose tomorrow; no payment is made. The upload is a generated screenshot.
-  const day = data.tomorrow; // siguiente día de atención (sin domingos), ver global-setup
-  if (day.slice(0, 7) !== data.today.slice(0, 7)) await page.getByRole('button', { name: 'Mes siguiente', exact: true }).click();
-  await page.getByRole('button', { name: String(Number(day.slice(-2))), exact: true }).filter({ visible: true }).first().click();
-  await page.getByRole('button', { name: 'Elige la hora', exact: true }).click();
-  await page.getByRole('button', { name: '11:00', exact: true }).click();
-  await page.getByRole('button', { name: 'Yape', exact: true }).click();
-  const proof = await page.screenshot();
-  await page.locator('input[type="file"]').setInputFiles({ name: `${data.prefix}-NO-PAGO.png`, mimeType: 'image/png', buffer: proof });
-  const submitted = page.waitForResponse(r => r.url().includes('/rpc/confirmar_pedido_productos'));
-  await page.getByRole('button', { name: /^Confirmar pedido \(/ }).click();
-  expect((await submitted).ok()).toBeTruthy();
-  await expect(page).toHaveURL(/\/inicio$/);
-  const adminContext = await browser.newContext({ baseURL: 'http://localhost:5173', timezoneId: 'America/Lima' });
   const { localNetworkOnly } = await import('./local-safety.mjs');
+  // Clienta, producto y pedido PROPIOS del caso: la clienta global puede tener otros pedidos. El pedido se
+  // identifica por el ID que devuelve confirmar_pedido_productos (no por nombre ni first()).
+  const own = await isolatedClient(browser, data, 'Q009');
+  const sufijo = sufijoUnico();
+  const propio = { productName: `${data.prefix} Q009 ${sufijo}`, barcode: `${data.barcode}-Q009-${sufijo}`, initialStock: 10 };
+  const adminContext = await browser.newContext({ baseURL: 'http://localhost:5173', timezoneId: 'America/Lima' });
   await localNetworkOnly(adminContext);
-  let status;
+  const admin = await adminContext.newPage();
   try {
-    const admin = await adminContext.newPage();
     await login(admin, 'ADMINISTRADOR', data);
+    await createProduct(admin, propio);
+    await login(page, 'CLIENTE', own);
+    await page.goto(`/productos/${propio.productId}`);
+    await page.getByRole('button', { name: /^Agregar al carrito/ }).click();
+    await page.goto('/carrito');
+    await expect(page.getByRole('heading', { name: 'Tu carrito', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Recojo en tienda', exact: true }).click();
+    await page.getByRole('button', { name: 'Elige el día', exact: true }).click();
+    // Choose tomorrow; no payment is made. The upload is a generated screenshot.
+    const day = data.tomorrow; // siguiente día de atención (sin domingos), ver global-setup
+    if (day.slice(0, 7) !== data.today.slice(0, 7)) await page.getByRole('button', { name: 'Mes siguiente', exact: true }).click();
+    await page.getByRole('button', { name: String(Number(day.slice(-2))), exact: true }).filter({ visible: true }).first().click();
+    await page.getByRole('button', { name: 'Elige la hora', exact: true }).click();
+    await page.getByRole('button', { name: '11:00', exact: true }).click();
+    await page.getByRole('button', { name: 'Yape', exact: true }).click();
+    const proof = await page.screenshot();
+    await page.locator('input[type="file"]').setInputFiles({ name: `${data.prefix}-NO-PAGO.png`, mimeType: 'image/png', buffer: proof });
+    const submitted = page.waitForResponse(r => r.url().includes('/rpc/confirmar_pedido_productos'));
+    await page.getByRole('button', { name: /^Confirmar pedido \(/ }).click();
+    const envio = await submitted;
+    expect(envio.ok()).toBeTruthy();
+    const pedidoId = await envio.json();
+    expect(typeof pedidoId, 'la RPC devuelve el ID del pedido creado').toBe('string');
+    await expect(page).toHaveURL(/\/inicio$/);
+    expect(Number(await h.json(`select to_json(count(*)) from public.pedidos_web where cliente_id=(select id from public.clientes where telefono='${own.phone}')`)), 'un único pedido de la clienta del caso').toBe(1);
+
     await admin.goto('/pedidos-web');
-    await admin.getByPlaceholder('Buscar por clienta...').fill(data.clientName);
-    await admin.getByRole('button').filter({ hasText: data.clientName }).click();
+    await admin.getByPlaceholder('Buscar por clienta...').fill(own.clientName);
+    await admin.getByRole('button').filter({ hasText: own.clientName }).click();
     const verified = admin.waitForResponse(r => r.url().includes('/rpc/verificar_pago_pedido_web'));
     await admin.getByRole('button', { name: 'Verificar pago', exact: true }).click();
     const response = await verified;
-    status = response.status();
+    const status = response.status();
     const body = await response.json();
     await info.attach('verificar-pago', { body: Buffer.from(JSON.stringify({ status, body })), contentType: 'application/json' });
     if (!response.ok()) {
@@ -293,11 +359,15 @@ test('QA-009: verificar pago Yape del pedido aislado debe crear venta', async ({
     }
     await info.attach('pedido-error', { body: await admin.screenshot({ fullPage: true }), contentType: 'image/png' });
     await admin.reload();
-    await admin.getByPlaceholder('Buscar por clienta...').fill(data.clientName);
-    await admin.getByRole('button').filter({ hasText: data.clientName }).click();
+    await admin.getByPlaceholder('Buscar por clienta...').fill(own.clientName);
+    await admin.getByRole('button').filter({ hasText: own.clientName }).click();
     if (!response.ok()) await expect(admin.getByRole('button', { name: 'Verificar pago', exact: true })).toBeVisible();
     else await expect(admin.getByRole('button', { name: 'Marcar entregado', exact: true })).toBeVisible();
+    // Por ID del pedido creado: si la verificación funcionó, ESE pedido quedó verificado y con venta.
+    if (response.ok()) {
+      expect(await h.json(`select to_json(venta_id is not null and pago_verificado) from public.pedidos_web where id='${pedidoId}'`), 'el pedido del caso quedó verificado y con venta').toBe(true);
+    }
+    expectKnownFailure('QA-009');
+    expect(status).toBe(200);
   } finally { await adminContext.close(); }
-  expectKnownFailure('QA-009');
-  expect(status).toBe(200);
 });
