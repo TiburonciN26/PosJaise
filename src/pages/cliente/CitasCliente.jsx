@@ -616,7 +616,7 @@ export default function CitasCliente() {
           />
         </div>
         <p className="mt-1.5 text-xs text-white/50">{faltanTexto}</p>
-        <Link to="/mis-puntos" className="mt-3 flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+        <Link to="/recompensas?seccion=tarjeta" className="mt-3 flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
           Ver mis puntos <ArrowRight className="h-3.5 w-3.5" />
         </Link>
         <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
@@ -642,7 +642,7 @@ export default function CitasCliente() {
             Se suma <strong className="text-white">1 sello por día</strong> que te atiendes, aunque tengas varias citas ese
             mismo día.
           </p>
-          <Link to="/fidelizacion" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+          <Link to="/recompensas?seccion=sellos" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
             Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -703,7 +703,7 @@ export default function CitasCliente() {
       <div className="mx-auto w-full max-w-[1400px]">
         {/* Encabezado */}
         <div
-          className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${reducirMovimiento ? '' : 'in-left'}`}
+          className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pt-2 ${reducirMovimiento ? '' : 'in-left'}`}
           style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.header}ms` }}
         >
           <div className="flex flex-col gap-2">
@@ -1214,7 +1214,7 @@ export default function CitasCliente() {
               </p>
               <p className="text-[13px] leading-relaxed text-white/75">
                 Al juntar <strong className="text-white">{sellosMeta} sellos</strong> puedes generar un{' '}
-                <strong className="text-white">cupón de 20%</strong> desde Fidelización y usarlo al pagar en caja.
+                <strong className="text-white">cupón de 20%</strong> desde Recompensas y usarlo al pagar en caja.
               </p>
               <p className="text-[13px] leading-relaxed text-white/75">
                 <strong className="text-white">Muy pronto:</strong> una nueva sección de{' '}

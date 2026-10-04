@@ -1,4 +1,4 @@
-import { Building2, CalendarClock, Home, Package, Scissors } from 'lucide-react'
+import { Building2, CalendarClock, Gift, Home, Package, Scissors } from 'lucide-react'
 
 // Pestañas de la barra del header (ver implementacionesWed.md). "Mi
 // Perfil" NO va acá — se entra desde el menú del avatar
@@ -13,6 +13,7 @@ export const seccionesCliente = [
   { path: '/inicio', label: 'Inicio', icono: Home },
   { path: '/servicios', label: 'Servicios', icono: Scissors },
   { path: '/productos', label: 'Productos', icono: Package },
+  { path: '/recompensas', label: 'Recompensas', icono: Gift },
   { path: '/citas', label: 'Citas', icono: CalendarClock },
   { path: '/nosotros', label: 'Nosotros', icono: Building2 },
 ]
@@ -35,12 +36,9 @@ export const seccionesCliente = [
 export const titulosSubpaginasCliente = {
   '/mi-perfil': 'Mi Perfil',
   '/historial': 'Historial',
-  '/fidelizacion': 'Fidelización',
-  '/ofertas': 'Cupones y ofertas',
   '/carrito': 'Tu carrito',
   '/citas/carrito': 'Carrito de servicios',
   '/mis-resenas': 'Tus reseñas',
-  '/mis-puntos': 'Mis puntos',
   '/mi-perfil/direcciones': 'Direcciones',
   '/mi-perfil/pedidos': 'Tus pedidos',
   '/mi-perfil/notificaciones': 'Notificaciones',

@@ -1606,6 +1606,15 @@ input[type='search']::-webkit-search-decoration {
    que Tailwind no puede expresar solo. --lw-gold ya existe en el
    scope .landing-web, se reutiliza tal cual.
    =========================================================== */
+.cupon-tarjeta,
+.cupon-oro,
+.cupon-texto-oro,
+.cupon-chispa {
+  /* Dorado propio del cupón Oro: --lw-gold pasó a azul metálico en el
+     rediseño del portal (§7.36) y teñía las tarjetas Oro de azul. */
+  --cupon-oro: #ffd700;
+}
+
 .cupon-tarjeta {
   position: relative;
   overflow: hidden;
@@ -1641,10 +1650,10 @@ input[type='search']::-webkit-search-decoration {
 .cupon-oro {
   border: 1px solid transparent;
   background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--lw-gold) 14%, transparent), transparent 55%)
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cupon-oro) 14%, transparent), transparent 55%)
       padding-box,
     linear-gradient(#100d07, #100d07) padding-box,
-    linear-gradient(120deg, var(--lw-gold), #fff1c2 38%, var(--lw-gold) 58%, #5e4818 100%) border-box;
+    linear-gradient(120deg, var(--cupon-oro), #fff1c2 38%, var(--cupon-oro) 58%, #5e4818 100%) border-box;
   animation: cupon-glow 4.5s ease-in-out infinite;
 }
 .cupon-oro::after {
@@ -1663,11 +1672,11 @@ input[type='search']::-webkit-search-decoration {
 .cupon-texto-oro {
   background: linear-gradient(
     100deg,
-    var(--lw-gold) 0%,
-    var(--lw-gold) 35%,
+    var(--cupon-oro) 0%,
+    var(--cupon-oro) 35%,
     #fff3cf 50%,
-    var(--lw-gold) 65%,
-    var(--lw-gold) 100%
+    var(--cupon-oro) 65%,
+    var(--cupon-oro) 100%
   );
   background-size: 260% 100%;
   -webkit-background-clip: text;
@@ -1678,10 +1687,10 @@ input[type='search']::-webkit-search-decoration {
 
 .cupon-chispa {
   position: absolute;
-  color: var(--lw-gold);
+  color: var(--cupon-oro);
   opacity: 0;
   animation: cupon-titilar 3.2s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px var(--lw-gold));
+  filter: drop-shadow(0 0 6px var(--cupon-oro));
   pointer-events: none;
 }
 
@@ -1935,6 +1944,40 @@ input[type='search']::-webkit-search-decoration {
   line-height: 1.6;
   color: #f5f5f4;
 }
+/* ===========================================================
+   Recompensas — tarjetas "Beneficios por nivel" (FondoNivel.jsx).
+   Heredan el acabado metálico de la tarjeta de puntos de SU nivel:
+   las mismas variables --tp-* (se asignan por inline style desde
+   lib/nivelesPuntos.js) y las mismas capas .tp-iri / .tp-glare /
+   .tp-sheen de arriba — acá solo cambia el contenedor (sin 3D ni
+   arrastre), así cualquier ajuste de esas capas se refleja también en
+   estas tarjetas.
+   =========================================================== */
+.tn-fondo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--tp-g);
+  color: var(--tp-ink);
+  box-shadow:
+    0 0 40px var(--tp-glow),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.3),
+    inset 0 -6px 22px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease;
+}
+.tn-fondo.tn-destacada {
+  box-shadow:
+    0 0 64px var(--tp-glow),
+    0 18px 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.45),
+    inset 0 -6px 22px rgba(0, 0, 0, 0.3);
+}
+.tn-contenido {
+  position: relative;
+}
+
 /*
  ---break---
  */

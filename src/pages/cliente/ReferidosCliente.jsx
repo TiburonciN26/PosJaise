@@ -197,10 +197,10 @@ export default function ReferidosCliente() {
               ))}
             </div>
             <Link
-              to="/ofertas"
+              to="/recompensas?seccion=cupones"
               className="mt-2 block text-center text-xs text-white/50 transition-colors hover:text-[var(--lw-gold)]"
             >
-              Ver todos tus cupones en Cupones y ofertas →
+              Ver todos tus cupones en Recompensas →
             </Link>
 
             {/* Historial (§7.58, pedido del usuario): cuándo se generó

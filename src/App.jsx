@@ -6,6 +6,7 @@ import { pagina, precargarPortalYRuta } from './config/paginasCliente.js'
 import RutaProtegida from './components/RutaProtegida.jsx'
 import Layout from './components/Layout.jsx'
 import PestanasCacheadas from './components/PestanasCacheadas.jsx'
+import RecompensasPublica from './pages/cliente/RecompensasPublica.jsx'
 
 // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
 // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
@@ -15,7 +16,7 @@ const Login = lazy(() => import('./pages/Login.jsx'))
 // inicial de TODOS los roles, incluido el POS que jamás lo usa. Ahora cada página
 // es un chunk precargable (ver config/paginasCliente.js por qué no React.lazy).
 const { PortalCliente } = pagina
-const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, FidelizacionCliente, OfertasCliente, NosotrosCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, MisPuntosCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente } = pagina
+const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, RecompensasCliente, NosotrosCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente } = pagina
 
 function CargandoPantalla() {
   return (
@@ -87,6 +88,13 @@ function App() {
           }
         />
 
+        {/* QA-037: /recompensas (catálogo de ejemplo y ayuda) se puede explorar
+            sin sesión. Ruta aparte y solo mientras no hay usuario: con
+            sesión manda el árbol de abajo (portal o POS); todo lo demás
+            sigue detrás de RutaProtegida, y las secciones personales de
+            Recompensas piden iniciar sesión sin consultar nada. */}
+        {!usuario && <Route path="recompensas" element={<RecompensasPublica />} />}
+
         <Route element={<RutaProtegida />}>
           {vistaCliente ? (
             // Un cliente puro nunca monta Layout/MenuLateral (eso es del
@@ -114,12 +122,15 @@ function App() {
               <Route path="citas" element={<CitasCliente />} />
               <Route path="citas/carrito" element={<CarritoServiciosCliente />} />
               <Route path="historial" element={<HistorialCliente />} />
-              <Route path="fidelizacion" element={<FidelizacionCliente />} />
-              <Route path="ofertas" element={<OfertasCliente />} />
+              <Route path="recompensas" element={<RecompensasCliente />} />
+              {/* Rutas viejas de Fidelización / Cupones y ofertas / Mis puntos: ahora
+                  son subpestañas de /recompensas (se dejan para no romper enlaces). */}
+              <Route path="fidelizacion" element={<Navigate to="/recompensas?seccion=sellos" replace />} />
+              <Route path="ofertas" element={<Navigate to="/recompensas?seccion=cupones" replace />} />
+              <Route path="mis-puntos" element={<Navigate to="/recompensas?seccion=tarjeta" replace />} />
               <Route path="nosotros" element={<NosotrosCliente />} />
               <Route path="carrito" element={<CarritoCliente />} />
               <Route path="mis-resenas" element={<MisResenasCliente />} />
-              <Route path="mis-puntos" element={<MisPuntosCliente />} />
               <Route path="mi-perfil/direcciones" element={<DireccionesCliente />} />
               <Route path="mi-perfil/pedidos" element={<PedidosCliente />} />
               <Route path="mi-perfil/notificaciones" element={<NotificacionesCliente />} />
