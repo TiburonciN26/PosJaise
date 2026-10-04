@@ -7,12 +7,14 @@ import { useModalA11y } from '../../../hooks/useModalA11y.js'
 import { ETIQUETAS_ORIGEN_CUPON, formatearValorCupon } from '../../../lib/cupones.js'
 import { formatearSoles } from '../../../lib/moneda.js'
 import { AvisoError, Encabezado, Filtro, Pildora } from './ui.jsx'
+import { REGLA_CUPONES, REGLA_SERVICIOS, fechaLima } from './lib.js'
 
 const SIN_CUPONES = []
 
 const FILTROS = [
   { clave: 'todos', label: 'Todos' },
   { clave: 'DISPONIBLE', label: 'Disponibles' },
+  { clave: 'VENCIDO', label: 'Vencidos' },
   { clave: 'CANJEADO', label: 'Utilizados' },
   { clave: 'ANULADO', label: 'Anulados' },
 ]
@@ -71,7 +73,28 @@ function ModalCaja({ cupon, onCerrar }) {
 // mis_cupones(). Los estados que el backend todavía no tiene (vencido)
 // no se muestran. Al final, las "Ofertas del salón" (tabla promociones)
 // que antes vivían en "Cupones y ofertas".
-export default function SeccionCupones({ cupones: recursoCupones, promociones: recursoPromociones, onReintentarCupones, onReintentarPromociones }) {
+// Condiciones congeladas con las que se emitió el cupón (Fase 2): vigencia, alcance,
+// mínimo, tope y nivel. Los cupones anteriores no traen esos datos y no muestran nada.
+function CondicionesCupon({ cupon }) {
+  const partes = []
+  if (cupon.nombre_premio) partes.push(cupon.nombre_premio)
+  if (cupon.tipo_descuento === 'SERVICIO') partes.push(`Servicio: ${cupon.servicio_nombre ?? 'seleccionado'}`)
+  else if (cupon.alcance === 'SERVICIOS') partes.push('Solo servicios')
+  else if (cupon.alcance === 'PRODUCTOS') partes.push('Solo productos')
+  if (cupon.minimo_compra) partes.push(`Compra mínima ${formatearSoles(cupon.minimo_compra)}`)
+  if (cupon.tope) partes.push(`Descuento máximo ${formatearSoles(cupon.tope)}`)
+  if (cupon.nivel_minimo && cupon.nivel_minimo !== 'BASICO') partes.push(`Desde ${cupon.nivel_minimo === 'VIP' ? 'VIP' : 'Premium'}`)
+  const vigencia = cupon.vigente_hasta
+    ? `${cupon.vencido ? 'Venció' : 'Vence'} el ${fechaLima(cupon.vigente_hasta)}`
+    : cupon.nombre_premio
+      ? 'Sin vencimiento'
+      : null
+  if (vigencia) partes.push(vigencia)
+  if (partes.length === 0) return null
+  return <p className="px-1 pt-1 text-[11px] leading-snug text-white/50">{partes.join(' · ')}</p>
+}
+
+export default function SeccionCupones({ cupones: recursoCupones, promociones: recursoPromociones, onReintentarCupones, onReintentarPromociones, programaActivo = false }) {
   const [filtro, setFiltro] = useState('todos')
   const [enCaja, setEnCaja] = useState(null)
   // QA-039: cupones y ofertas son recursos independientes — cada uno
@@ -81,7 +104,12 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
   const cuponesNuevos = useCuponesNuevos(cupones)
 
   const visibles = useMemo(
-    () => (filtro === 'todos' ? cupones : cupones.filter((c) => c.estado === filtro)),
+    () => {
+      if (filtro === 'todos') return cupones
+      if (filtro === 'VENCIDO') return cupones.filter((c) => c.vencido)
+      if (filtro === 'DISPONIBLE') return cupones.filter((c) => c.estado === 'DISPONIBLE' && !c.vencido)
+      return cupones.filter((c) => c.estado === filtro)
+    },
     [cupones, filtro],
   )
 
@@ -124,12 +152,14 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
           ) : (
             <div className="grid items-start justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),420px))]">
               {visibles.map((cupon) => (
-                <TarjetaCupon
-                  key={cupon.id}
-                  cupon={cupon}
-                  esNuevo={cuponesNuevos.has(cupon.id)}
-                  onMostrarEnCaja={setEnCaja}
-                />
+                <div key={cupon.id} className="min-w-0">
+                  <TarjetaCupon
+                    cupon={cupon}
+                    esNuevo={cuponesNuevos.has(cupon.id)}
+                    onMostrarEnCaja={setEnCaja}
+                  />
+                  <CondicionesCupon cupon={cupon} />
+                </div>
               ))}
             </div>
           )}
@@ -173,10 +203,18 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
           ))}
       </div>
 
-      <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center gap-x-3 gap-y-2 border border-white/10 px-5 py-4 text-[13px] leading-relaxed text-white/60">
-        <Pildora>Propuesta pendiente</Pildora>
-        Los cupones nuevos vencerían a los 60 días de emitidos. Los cupones anteriores mantienen su vigencia original.
-      </div>
+      {programaActivo ? (
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-1 border border-white/10 px-5 py-4 text-[13px] leading-relaxed text-white/60">
+          <span>{REGLA_CUPONES}</span>
+          <span>{REGLA_SERVICIOS}</span>
+          <span>Cada cupón conserva las condiciones y la vigencia con las que se emitió; algunos no vencen.</span>
+        </div>
+      ) : (
+        <div className="mx-auto flex w-full max-w-2xl flex-wrap items-center gap-x-3 gap-y-2 border border-white/10 px-5 py-4 text-[13px] leading-relaxed text-white/60">
+          <Pildora>Propuesta pendiente</Pildora>
+          Los cupones nuevos vencerían a los 60 días de emitidos. Los cupones anteriores mantienen su vigencia original.
+        </div>
+      )}
 
       {enCaja && <ModalCaja cupon={enCaja} onCerrar={() => setEnCaja(null)} />}
     </section>

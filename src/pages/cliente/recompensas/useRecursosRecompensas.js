@@ -23,6 +23,27 @@ const FUENTES = {
     const { data, error } = await supabase.rpc('mis_cupones')
     return { error, datos: data ?? [] }
   },
+  // Fase 2: libro de monedas y sellos (vacío/null mientras el programa esté apagado).
+  saldo: async () => {
+    const { data, error } = await supabase.rpc('mi_saldo_recompensas')
+    return { error, datos: data?.[0] ?? null }
+  },
+  catalogoMonedas: async () => {
+    const { data, error } = await supabase.rpc('mi_catalogo_recompensas', { p_origen: 'MONEDAS' })
+    return { error, datos: data ?? [] }
+  },
+  catalogoSellos: async () => {
+    const { data, error } = await supabase.rpc('mi_catalogo_recompensas', { p_origen: 'SELLOS' })
+    return { error, datos: data ?? [] }
+  },
+  movimientos: async () => {
+    const { data, error } = await supabase.rpc('mis_movimientos_recompensas')
+    return { error, datos: data ?? [] }
+  },
+  sellosMovs: async () => {
+    const { data, error } = await supabase.rpc('mis_sellos_recompensas')
+    return { error, datos: data ?? [] }
+  },
   promociones: async () => {
     const { data, error } = await supabase
       .from('promociones')
@@ -90,4 +111,33 @@ export function useRecursosRecompensas(userId) {
   }, [userId, cargar])
 
   return { recursos, cargar }
+}
+
+// Catálogo PÚBLICO (QA-037): sin sesión, solo lo publicado, sin datos personales ni
+// costos internos. Un error nunca se presenta como catálogo vacío.
+export function useCatalogoPublico(activo) {
+  const [estado, setEstado] = useState({ estado: 'cargando', datos: null })
+  const generacion = useRef(0)
+
+  const cargar = useCallback(async () => {
+    const gen = ++generacion.current
+    setEstado({ estado: 'cargando', datos: null })
+    let r
+    try {
+      r = await supabase.rpc('catalogo_recompensas_publico')
+    } catch (error) {
+      r = { error }
+    }
+    if (gen !== generacion.current) return
+    setEstado(r.error ? { estado: 'error', datos: null } : { estado: 'ok', datos: r.data ?? [] })
+  }, [])
+
+  useEffect(() => {
+    if (activo) cargar()
+    return () => {
+      generacion.current += 1
+    }
+  }, [activo, cargar])
+
+  return { catalogoPublico: estado, recargarCatalogoPublico: cargar }
 }

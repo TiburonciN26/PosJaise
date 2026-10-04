@@ -9,6 +9,7 @@ Estado: **solo Supabase Local TEST**. Nada de esto se aplicó a producción ni l
 | `20261003000001_recompensas_fase2_nucleo.sql` | Libros de monedas/sellos, configuración, protección por servicio, catálogo y canjes, `confirmar_venta`/`anular_venta` con recompensas, canje atómico. **Ya aplicada en Local; no se reescribe.** |
 | `20261003000002_recompensas_fase2_correcciones.sql` | QA-033 (restaura el rechazo de roles ≠ ADMINISTRADOR/CAJERA), QA-041 (reparto de centavos por mayor resto) y la regla «sin protección ⇒ cupón hasta el 50 %». |
 | `20261003000003_recompensas_simulacion_transicion.sql` | Funciones de **solo lectura** para simular la transición ×5. No escribe nada. |
+| `20261003000004_recompensas_lectores_portal.sql` | `mis_puntos()` y `mi_fidelizacion()` coherentes con el libro cuando el programa está activo (idénticos a antes si está apagado); `mis_cupones()` con condiciones y vigencia; `catalogo_recompensas_publico()` (QA-037, exposición mínima). |
 
 ### Instalación limpia
 
@@ -18,12 +19,12 @@ Aplicar en orden de nombre (como hace `supabase db reset` / `migration up`): …
 
 ### Desfase con `supabase_migrations.schema_migrations` (Local)
 
-Las migraciones se aplicaron con `psql` dentro del contenedor (`docker exec -i supabase_db_WedJaiseReact psql …`), sin pasar por el CLI. Comparando archivos contra la tabla (solo lectura) están **sin registrar** 11 versiones (10 al momento de la primera comparación; la 11.ª es `20261003000003`, aplicada después), todas con su efecto ya presente en la base:
+Las migraciones se aplicaron con `psql` dentro del contenedor (`docker exec -i supabase_db_WedJaiseReact psql …`), sin pasar por el CLI. Comparando archivos contra la tabla (solo lectura) están **sin registrar** 12 versiones (10 en la primera comparación; `20261003000003` y `20261003000004` se aplicaron después), todas con su efecto ya presente en la base:
 
 ```
 20261002000001 … 20261002000008   (8 correcciones QA anteriores a esta fase)
 20261003000001, 20261003000002    (esta fase)
-20261003000003                    (simulación)
+20261003000003, 20261003000004    (simulación y lectores del portal)
 ```
 
 Reconciliación segura (no ejecutada):
@@ -58,7 +59,12 @@ Diseño de la apertura (aún **no** implementado como escritura):
 * Idempotencia: claves únicas `apertura:<cliente>` en ambos libros y un índice único por atención en `recompensas_apertura_aportes`.
 * `confirmar_venta` ya omite el aporte de una atención presente en `recompensas_apertura_aportes` (solo ese servicio; productos y servicios nuevos de la misma venta sí acreditan, y el sello del día se evalúa aparte).
 
-### Casos que NO se pueden atribuir y requieren decisión (no se inventaron ajustes)
+### Decisiones A y B (aprobadas por el dueño)
+
+* **A.** Clientas sin cuenta web con puntos históricos: se conservan **en espera** con un saldo congelado al corte; al vincular la cuenta a la misma ficha se habilita **una sola vez** ×5 (saldo disponible y clasificación inicial separados). No se descartan, no se recalculan con actividad posterior ni se acreditan las compras hechas sin cuenta; sin doble apertura por reintento, desvinculación/revinculación u otra cuenta. **Aún no implementado** (la transición no se ejecuta).
+* **B.** Anular una venta histórica (anterior al corte) sin aporte atribuible en el libro nuevo **no** descuenta apertura. Solo se revierten los aportes nuevos realmente acreditados, una vez. Ya es el comportamiento de `anular_venta` (revierte únicamente movimientos `VENTA` de esa venta).
+
+### Casos que NO se pueden atribuir (histórico; ver A y B arriba)
 
 1. **Clientas sin cuenta web vinculada con puntos antiguos.** La regla 1 solo permite acumular con cuenta vinculada; sus puntos antiguos no son visibles hoy para ellas. ¿Se conservan «en espera» hasta vincular, se descartan o se convierten igual?
 2. **Ventas históricas con servicios anuladas después del corte.** Con la fórmula antigua anular nunca bajó los puntos (la atención sigue ACTIVO), así que no existe un «aporte de esa venta» que revertir. ¿Se mantiene así (sin reversión) o se quiere revertir el aporte de las atenciones cobradas por esa venta?

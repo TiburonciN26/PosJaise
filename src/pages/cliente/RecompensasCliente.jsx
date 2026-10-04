@@ -5,11 +5,12 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { usePerfilClienteOpcional } from '../../context/PerfilClienteContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { SECCIONES } from './recompensas/datos.js'
-import { useRecursosRecompensas } from './recompensas/useRecursosRecompensas.js'
+import { useCatalogoPublico, useRecursosRecompensas } from './recompensas/useRecursosRecompensas.js'
 import { AvisoError, Cargando } from './recompensas/ui.jsx'
 import SeccionTarjeta from './recompensas/SeccionTarjeta.jsx'
 import SeccionCanje from './recompensas/SeccionCanje.jsx'
 import SeccionSellos from './recompensas/SeccionSellos.jsx'
+import SeccionSellosReal from './recompensas/SeccionSellosReal.jsx'
 import SeccionCupones from './recompensas/SeccionCupones.jsx'
 import SeccionMovimientos from './recompensas/SeccionMovimientos.jsx'
 import SeccionComo from './recompensas/SeccionComo.jsx'
@@ -70,6 +71,8 @@ export default function RecompensasCliente({ publico = false }) {
   const userId = publico ? null : (session?.user?.id ?? null)
   const sesion = Boolean(userId)
   const { recursos, cargar } = useRecursosRecompensas(userId)
+  // Catálogo público (QA-037): solo sin sesión; nunca se consulta nada personal.
+  const { catalogoPublico, recargarCatalogoPublico } = useCatalogoPublico(!sesion)
 
   const claveParam = params.get('seccion')
   const indiceActivo = Math.max(
@@ -126,7 +129,12 @@ export default function RecompensasCliente({ publico = false }) {
   }
 
   let contenido
-  const { puntos, fidelizacion, historial, cupones, promociones } = recursos
+  const { puntos, fidelizacion, historial, cupones, promociones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs } = recursos
+  // Fase 2: con el programa activo, saldo/sellos/movimientos salen del libro del servidor.
+  const saldoReal = saldo.estado === 'ok' && saldo.datos?.activo ? saldo.datos : null
+  // Tras un canje (o una respuesta recuperada) se vuelve a leer todo lo que cambia, en silencio.
+  const alCanjear = () =>
+    Promise.all(['saldo', 'catalogoMonedas', 'catalogoSellos', 'cupones', 'movimientos', 'sellosMovs'].map((k) => cargar(k, { silencioso: true })))
   if (seccion.personal && !sesion) {
     contenido = <PuertaSesion />
   } else {
@@ -141,13 +149,48 @@ export default function RecompensasCliente({ publico = false }) {
               onReintentar={() => cargar('puntos')}
             />
           )
-        } else contenido = <SeccionTarjeta datos={puntos.datos} nombre={perfil?.nombre ?? ''} />
+        } else contenido = <SeccionTarjeta datos={puntos.datos} nombre={perfil?.nombre ?? ''} saldoReal={saldoReal} />
         break
       case 'canje':
-        contenido = <SeccionCanje sesion={sesion} puntos={puntos} onReintentarPuntos={() => cargar('puntos')} />
+        contenido = (
+          <SeccionCanje
+            sesion={sesion}
+            userId={userId}
+            puntos={puntos}
+            onReintentarPuntos={() => cargar('puntos')}
+            saldo={saldo}
+            catalogo={catalogoMonedas}
+            catalogoPublico={catalogoPublico}
+            onReintentarSaldo={() => cargar('saldo')}
+            onReintentarCatalogo={() => cargar('catalogoMonedas')}
+            onReintentarCatalogoPublico={recargarCatalogoPublico}
+            onCanjeExitoso={alCanjear}
+          />
+        )
         break
       case 'sellos':
-        if (fidelizacion.estado === 'cargando') contenido = <Cargando />
+        if (saldo.estado === 'cargando') contenido = <Cargando />
+        else if (saldo.estado === 'error') {
+          contenido = (
+            <AvisoError
+              titulo="No pudimos cargar tus sellos"
+              texto="Tus sellos no cambiaron; solo no pudimos leerlos ahora. Inténtalo de nuevo."
+              onReintentar={() => cargar('saldo')}
+            />
+          )
+        } else if (saldoReal) {
+          contenido = (
+            <SeccionSellosReal
+              saldo={saldoReal}
+              catalogo={catalogoSellos}
+              movimientos={sellosMovs}
+              userId={userId}
+              onReintentarCatalogo={() => cargar('catalogoSellos')}
+              onReintentarMovimientos={() => cargar('sellosMovs')}
+              onCanjeExitoso={alCanjear}
+            />
+          )
+        } else if (fidelizacion.estado === 'cargando') contenido = <Cargando />
         else if (fidelizacion.estado === 'error') {
           contenido = (
             <AvisoError
@@ -175,14 +218,19 @@ export default function RecompensasCliente({ publico = false }) {
             promociones={promociones}
             onReintentarCupones={() => cargar('cupones')}
             onReintentarPromociones={() => cargar('promociones')}
+            programaActivo={Boolean(saldoReal)}
           />
         )
         break
       case 'movimientos':
-        contenido = <SeccionMovimientos />
+        contenido = saldoReal ? (
+          <SeccionMovimientos real movimientos={movimientos} onReintentar={() => cargar('movimientos')} />
+        ) : (
+          <SeccionMovimientos />
+        )
         break
       default:
-        contenido = <SeccionComo />
+        contenido = <SeccionComo programaActivo={Boolean(saldoReal)} />
     }
   }
 
