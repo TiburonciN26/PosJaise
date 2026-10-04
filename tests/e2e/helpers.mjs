@@ -45,6 +45,19 @@ export async function createProduct(page, data) {
 // subcadena, así que ningún caso reutiliza el fixture de otra corrida ni se apoya en first() para elegir.
 export const sufijoUnico = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
+// Buscador de productos de Caja (/ventas). Su placeholder es animado (useTextoEscritura) y puede estar a medias o
+// pausado, así que NO sirve como identidad. Ancla estable: el único input de búsqueda del bloque que contiene el
+// botón de escaneo con cámara. Se comprueba que sea único y visible ANTES de actuar (sin first()).
+export async function buscadorCaja(page) {
+  const campo = page
+    .locator('div.relative.flex.items-center')
+    .filter({ has: page.getByRole('button', { name: 'Escanear código de barras con la cámara', exact: true }) })
+    .locator('input[type="search"]');
+  await expect(campo, 'el buscador de Caja es único y visible').toHaveCount(1);
+  await expect(campo).toBeVisible();
+  return campo;
+}
+
 export const campoNombreServicio = (form) => form.locator('input[id$="-nombre"]');
 
 export async function createService(page, data) {

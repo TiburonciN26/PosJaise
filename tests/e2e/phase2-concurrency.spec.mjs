@@ -1,8 +1,8 @@
 import {test,expect} from './fixtures.mjs';
-import {login,logout,createProduct,visibleButton} from './helpers.mjs';
+import {login,logout,createProduct,visibleButton,buscadorCaja} from './helpers.mjs';
 import {qaContext} from './phase2-helpers.mjs';
 
-async function prepare(page,p,data){await login(page,'CAJERA',data);await page.goto('/ventas');await page.getByRole('searchbox').first().fill(p.productName);await page.getByRole('button',{name:new RegExp(p.productName)}).click();await visibleButton(page,'Yape').click();await expect(visibleButton(page,'Confirmar venta')).toBeEnabled();}
+async function prepare(page,p,data){await login(page,'CAJERA',data);await page.goto('/ventas');await (await buscadorCaja(page)).fill(p.productName);await page.getByRole('button',{name:new RegExp(p.productName)}).click();await visibleButton(page,'Yape').click();await expect(visibleButton(page,'Confirmar venta')).toBeEnabled();}
 async function stock(page,name,n){await page.goto('/inventario');await page.getByPlaceholder('Buscar producto...').fill(name);await expect(page.getByRole('row').filter({hasText:name}).getByRole('cell').nth(3)).toHaveText(String(n));}
 async function annul(page,sale){await page.goto('/historial');await page.getByPlaceholder('Buscar por código o cliente...').fill(sale.codigo);await page.getByText(sale.codigo.replace(/^VEN/,'V'),{exact:true}).filter({visible:true}).click();await visibleButton(page,'Anular venta').click();await visibleButton(page,'Sí, anular').click();await expect(page.getByText('Venta anulada. Se devolvió el stock.',{exact:true})).toBeVisible();}
 

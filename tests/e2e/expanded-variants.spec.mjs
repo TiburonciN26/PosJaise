@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures.mjs';
-import { sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
+import { campoNombreServicio, sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
 import { password } from './fixtures/accounts.mjs';
 
 for(const [path,placeholder,message] of [
@@ -28,7 +28,7 @@ test('PRODUCTOS: límites inválidos de costo, precio y stock', async ({page,dat
 
 test('SERVICIOS: categoría obligatoria, precio cero y duración negativa', async ({page,data})=>{
   await login(page,'ADMINISTRADOR',data);await page.goto('/servicios');await visibleButton(page,'Nuevo servicio').first().click();const form=formWithTitle(page,'Nuevo servicio');
-  await form.getByLabel('Nombre',{exact:false}).fill(`${data.prefix} NO-GUARDAR`);
+  await campoNombreServicio(form).fill(`${data.prefix} NO-GUARDAR`);
   await form.getByRole('button',{name:'Guardar',exact:true}).click();await expect(form.getByText('La categoría es obligatoria.',{exact:true})).toBeVisible();
   await form.getByLabel('Categoría',{exact:false}).selectOption({label:'Cabello'});await form.getByLabel('Precio',{exact:false}).first().fill('0');
   await form.getByRole('button',{name:'Guardar',exact:true}).click();await expect(form.getByText('El precio debe ser un número mayor a 0.',{exact:true})).toBeVisible();

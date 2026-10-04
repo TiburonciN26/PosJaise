@@ -5,7 +5,7 @@
 // Datos: una clienta ficticia «ZZZ TEST F2 qa043 sel …» (con teléfono) y, si hace falta, relleno hasta 1100
 // filas, insertados por SQL local. No se elimina ni renombra nada ni se toca max_rows.
 import { test, expect } from './fixtures.mjs';
-import { login, visibleButton, formWithTitle } from './helpers.mjs';
+import { login, visibleButton, formWithTitle, buscadorCaja } from './helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
 
 test.describe.configure({ mode: 'serial' });
@@ -228,7 +228,7 @@ test('Caja: la venta queda registrada con el ID de la ficha existente', async ({
   const { modal, buscador } = await abrirCaja(page);
   await buscador.fill(nombre);
   await fichaCaja(modal).click();
-  await page.getByRole('searchbox').first().fill(nombreProducto);
+  await (await buscadorCaja(page)).fill(nombreProducto);
   await page.getByRole('button', { name: new RegExp(nombreProducto) }).click();
   await page.getByRole('button', { name: 'Yape', exact: true }).click();
   const vendida = page.waitForResponse((r) => r.url().includes('/rpc/confirmar_venta'));

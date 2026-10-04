@@ -4,7 +4,7 @@
 // ficticios «ZZZ …» (después del corte por nombre) y relleno hasta 1100 activos. No se elimina ni renombra nada ni
 // se toca max_rows. Requiere QA_TEST_PASSWORD solo en el proceso.
 import { test, expect } from './fixtures.mjs';
-import { login, visibleButton } from './helpers.mjs';
+import { login, visibleButton, buscadorCaja } from './helpers.mjs';
 import { qaContext } from './phase2-helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
 
@@ -34,7 +34,6 @@ async function productoCaso(stock) {
 
 // Los espacios del filtro viajan como «+» o «%20»: se decodifica antes de comparar.
 const decodificada = (peticion) => decodeURIComponent(peticion.url().replace(/\+/g, ' '));
-const buscador = (page) => page.getByPlaceholder('Buscar producto o escanear código de barras...');
 
 for (const rol of ['CAJERA', 'ADMINISTRADOR']) {
   test(`${rol}: el producto posterior al corte se busca por nombre, se vende, baja el stock y la segunda venta se rechaza`, async ({ page }) => {
@@ -42,7 +41,7 @@ for (const rol of ['CAJERA', 'ADMINISTRADOR']) {
     const p = await productoCaso(1);
     await login(page, rol, {});
     await page.goto('/ventas');
-    await buscador(page).fill(p.nombre);
+    await (await buscadorCaja(page)).fill(p.nombre);
     const sugerencia = page.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 1 S/`) });
     await expect(sugerencia).toHaveCount(1);
     await sugerencia.click();
@@ -54,7 +53,7 @@ for (const rol of ['CAJERA', 'ADMINISTRADOR']) {
     expect(Number(await h.stock(p.id))).toBe(0);
     // Persistencia: tras recargar, la sugerencia muestra stock 0 (no se oculta ni se inventa).
     await page.reload();
-    await buscador(page).fill(p.nombre);
+    await (await buscadorCaja(page)).fill(p.nombre);
     await expect(page.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 0 S/`) })).toHaveCount(1);
   });
 
@@ -62,13 +61,13 @@ for (const rol of ['CAJERA', 'ADMINISTRADOR']) {
     const p = await productoCaso(3);
     await login(page, rol, {});
     await page.goto('/ventas');
-    await buscador(page).fill(p.codigo);
-    await buscador(page).press('Enter');
+    await (await buscadorCaja(page)).fill(p.codigo);
+    await (await buscadorCaja(page)).press('Enter');
     await expect(page.getByText(p.nombre, { exact: true }).filter({ visible: true })).toHaveCount(1);
-    await expect(buscador(page)).toHaveValue('');
+    await expect((await buscadorCaja(page))).toHaveValue('');
     // Un código que no existe NO agrega nada.
-    await buscador(page).fill(`${p.codigo}-X`);
-    await buscador(page).press('Enter');
+    await (await buscadorCaja(page)).fill(`${p.codigo}-X`);
+    await (await buscadorCaja(page)).press('Enter');
     await expect(page.getByText(p.nombre, { exact: true }).filter({ visible: true })).toHaveCount(1);
   });
 }
@@ -77,11 +76,11 @@ test('búsqueda de producto: ausencia real, error con Reintentar y respuesta vie
   const p = await productoCaso(2);
   await login(page, 'CAJERA', {});
   await page.goto('/ventas');
-  await buscador(page).fill(`no-existe-${h.runId}`);
+  await (await buscadorCaja(page)).fill(`no-existe-${h.runId}`);
   await expect(page.getByText('No hay productos que coincidan.', { exact: true })).toBeVisible();
 
   await page.route('**/rest/v1/productos_vista?*ilike*', (route) => route.abort('failed'));
-  await buscador(page).fill(`falla ${h.runId}`);
+  await (await buscadorCaja(page)).fill(`falla ${h.runId}`);
   await expect(page.getByText('No se pudo buscar productos', { exact: false })).toBeVisible();
   await expect(page.getByText('No hay productos que coincidan.', { exact: true })).toHaveCount(0);
   await page.unroute('**/rest/v1/productos_vista?*ilike*');
@@ -101,9 +100,9 @@ test('búsqueda de producto: ausencia real, error con Reintentar y respuesta vie
     }
     return route.continue();
   });
-  await buscador(page).fill(prefijo);
+  await (await buscadorCaja(page)).fill(prefijo);
   await expect.poll(() => estado.interceptada, { message: 'la petición parcial se interceptó' }).toBe(true);
-  await buscador(page).fill(p.nombre);
+  await (await buscadorCaja(page)).fill(p.nombre);
   await expect(page.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 2 S/`) })).toHaveCount(1);
   await expect.poll(() => estado.liberada, { message: 'la respuesta retenida se liberó', timeout: 8000 }).toBe(true);
   await page.waitForTimeout(400);
@@ -114,10 +113,10 @@ test('stock: no se puede agregar más unidades que el stock real aunque el produ
   const p = await productoCaso(1);
   await login(page, 'CAJERA', {});
   await page.goto('/ventas');
-  await buscador(page).fill(p.nombre);
+  await (await buscadorCaja(page)).fill(p.nombre);
   const sugerencia = page.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 1 S/`) });
   await sugerencia.click();
-  await buscador(page).fill(p.nombre);
+  await (await buscadorCaja(page)).fill(p.nombre);
   await page.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 1 S/`) }).click();
   await expect(page.getByText('Stock máx: 1', { exact: false }).filter({ visible: true })).toHaveCount(1);
   await expect(page.getByText('Stock insuficiente', { exact: false })).toHaveCount(0);
@@ -129,7 +128,7 @@ test('última unidad: dos cajas confirman a la vez y exactamente UNA venta se ac
   const preparar = async (tab, rol) => {
     await login(tab, rol, {});
     await tab.goto('/ventas');
-    await buscador(tab).fill(p.nombre);
+    await (await buscadorCaja(tab)).fill(p.nombre);
     await tab.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 1 S/`) }).click();
     await visibleButton(tab, 'Yape').click();
     await expect(visibleButton(tab, 'Confirmar venta')).toBeEnabled();
@@ -168,7 +167,7 @@ test('doble clic en Confirmar venta: se crea UNA sola venta y se resta UNA unida
   const p = await productoCaso(2);
   await login(page, 'CAJERA', {});
   await page.goto('/ventas');
-  await buscador(page).fill(p.nombre);
+  await (await buscadorCaja(page)).fill(p.nombre);
   await page.getByRole('button', { name: new RegExp(`^${p.nombre} Stock: 2 S/`) }).click();
   await visibleButton(page, 'Yape').click();
   const peticiones = [];
