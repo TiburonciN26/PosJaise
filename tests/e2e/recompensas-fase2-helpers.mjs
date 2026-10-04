@@ -100,9 +100,21 @@ export async function nuevaClienta({ vinculada = true } = {}) {
   return { uid, clienteId };
 }
 
-export async function nuevoServicio(precio, proteccion) {
+// Nombre único por fixture: dentro de un mismo proceso (contador) y entre procesos (sufijo aleatorio).
+// Nunca se resuelve una ambigüedad con first(): cada ficha creada tiene un nombre que ninguna otra tiene.
+let contadorFixtures = 0;
+export function nombreUnico(prefijo) {
+  contadorFixtures += 1;
+  return `${prefijo} ${runId}-${contadorFixtures}${Math.random().toString(36).slice(2, 5)}`;
+}
+
+// `extra`: { duracion_min } cuando el caso necesita minutos en la línea de la cita (por omisión queda sin
+// duración, como antes); { activo: false } etc. pasan tal cual a las columnas indicadas.
+export async function nuevoServicio(precio, proteccion, extra = {}) {
   const id = randomUUID();
-  let sql = `insert into public.servicios (id, nombre, precio) values ('${id}', 'TEST F2 serv ${runId}', ${precio});`;
+  const nombre = nombreUnico('TEST F2 serv');
+  const duracion = extra.duracion_min == null ? 'null' : Number(extra.duracion_min);
+  let sql = `insert into public.servicios (id, nombre, precio, duracion_min) values ('${id}', '${nombre}', ${precio}, ${duracion});`;
   if (proteccion) {
     sql += `insert into public.servicios_proteccion (servicio_id, materiales, asistente, otros)
             values ('${id}', ${proteccion.materiales ?? 0}, ${proteccion.asistente ?? 0}, ${proteccion.otros ?? 0});`;
@@ -112,10 +124,12 @@ export async function nuevoServicio(precio, proteccion) {
   return id;
 }
 
-export async function nuevoProducto(precio, stock = 10) {
+export async function nuevoProducto(precio, stock = 10, extra = {}) {
   const id = randomUUID();
-  const r = await ejecutar(`insert into public.productos (id, nombre, precio, costo, stock_actual)
-    values ('${id}', 'TEST F2 prod ${runId}', ${precio}, 1, ${stock});`);
+  const nombre = nombreUnico('TEST F2 prod');
+  const codigo = extra.codigo_barras ? `'${extra.codigo_barras}'` : 'null';
+  const r = await ejecutar(`insert into public.productos (id, nombre, precio, costo, stock_actual, codigo_barras)
+    values ('${id}', '${nombre}', ${precio}, 1, ${stock}, ${codigo});`);
   if (!r.ok) throw new Error(r.err);
   return id;
 }

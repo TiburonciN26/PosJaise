@@ -15,6 +15,8 @@ import InputBusqueda from '../components/InputBusqueda.jsx'
 import ModalBuscarAtencion from '../components/ModalBuscarAtencion.jsx'
 import ModalBuscarCliente from '../components/ModalBuscarCliente.jsx'
 import { contarAtenciones } from '../lib/buscarAtenciones.js'
+import { useBusquedaProductosVenta } from '../hooks/useBusquedaProductosVenta.js'
+import { buscarProductosVenta, productoPorCodigo, productosPorIds } from '../lib/buscarProductosVenta.js'
 import ModalCliente from '../components/ModalCliente.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
@@ -395,8 +397,8 @@ export default function Ventas({ activo = true }) {
     window.print()
   }, [ventaParaImprimir])
 
-  const [catalogoProductos, setCatalogoProductos] = useState([])
-  const [cargandoCatalogo, setCargandoCatalogo] = useState(true)
+  // Stock/precio ACTUAL de los productos del carrito, por ID (QA-047): ya no hay copia del catálogo.
+  const [productosCarrito, setProductosCarrito] = useState({})
   const [errorCatalogo, setErrorCatalogo] = useState(null)
   // Cuántas atenciones pendientes hay fuera del carrito (solo el conteo, para el avisito del botón). La
   // lista la busca el modal en el servidor (QA-044); aquí ya no se descarga ni se pagina.
@@ -406,36 +408,26 @@ export default function Ventas({ activo = true }) {
   const [modalRegistroClienteAbierto, setModalRegistroClienteAbierto] = useState(false)
   const [nombreClienteNuevo, setNombreClienteNuevo] = useState('')
   const [modalEscanerAbierto, setModalEscanerAbierto] = useState(false)
-  const primeraCargaCatalogoHecha = useRef(false)
+  const buscandoCodigoRef = useRef(false)
 
-  // M5 de la 2ª auditoría: decisión explícita, no por omisión — Ventas es
-  // la única lista que NO pagina (a diferencia de Historial/Inventario/
-  // Clientes/Auditoría, M1/M2). El escáner de código de barras y el buscador
-  // de productos/servicios/clientes necesitan matchear en memoria sin ida y
-  // vuelta al servidor por cada tecla o escaneo, y hoy el catálogo es chico.
-  // Si productos + servicios + clientes llegan a varios miles de filas
-  // combinadas, esto hay que revisarlo (ej. paginar clientes aparte, que es
-  // el más numeroso y el menos usado en el flujo de venta en sí).
-  async function cargarCatalogo(vigente = { actual: true }, silencioso = false) {
-    if (!silencioso) setCargandoCatalogo(true)
-    // Los clientes ya NO se descargan aquí: «Seleccionar cliente» los busca en el servidor (QA-043).
-    const [productosRes] = await Promise.all([
-      supabase
-        .from('productos_vista')
-        .select('id, codigo_barras, nombre, categoria, precio, stock_actual')
-        .eq('activo', true)
-        .order('nombre'),
-    ])
-
-    if (!vigente.actual) return
-
-    if (productosRes.error) {
-      setErrorCatalogo('No se pudo cargar el catálogo. Revisa tu conexión.')
-    } else {
+  // QA-047: el catálogo de productos YA NO se descarga. Antes (M5 de la 2ª auditoría) se leía completo y sin
+  // paginar para buscar y escanear en memoria; con más de 1000 productos activos el servidor cortaba la
+  // respuesta y los posteriores por nombre eran invisibles al buscador y al escáner. Ahora el buscador
+  // consulta el servidor (nombre), el código de barras se resuelve por consulta exacta y el stock de lo que
+  // está en el carrito se pide por ID (refrescarProductosCarrito).
+  async function refrescarProductosCarrito(ids) {
+    if (ids.length === 0) return
+    try {
+      const filas = await productosPorIds(supabase, ids)
+      setProductosCarrito((anterior) => {
+        const siguiente = { ...anterior }
+        for (const fila of filas) siguiente[fila.id] = fila
+        return siguiente
+      })
       setErrorCatalogo(null)
-      setCatalogoProductos(productosRes.data ?? [])
+    } catch {
+      setErrorCatalogo('No se pudo comprobar el stock de los productos. Revisa tu conexión.')
     }
-    setCargandoCatalogo(false)
   }
 
   // Las atenciones pendientes (registradas en Mi Panel o al completar una
@@ -463,16 +455,14 @@ export default function Ventas({ activo = true }) {
     setModalAtencionesAbierto(true)
   }
 
+  // El stock del carrito se vuelve a pedir al entrar a la pestaña y cuando cambian los productos del carrito.
+  const idsProductosCarrito = carrito.filter((item) => item.tipo === 'PRODUCTO').map((item) => item.productoId)
+  const claveProductosCarrito = [...idsProductosCarrito].sort().join(',')
   useEffect(() => {
-    if (!activo) return undefined
-    const vigente = { actual: true }
-    const silencioso = primeraCargaCatalogoHecha.current
-    primeraCargaCatalogoHecha.current = true
-    cargarCatalogo(vigente, silencioso)
-    return () => {
-      vigente.actual = false
-    }
-  }, [activo])
+    if (!activo) return
+    refrescarProductosCarrito(claveProductosCarrito ? claveProductosCarrito.split(',') : [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activo, claveProductosCarrito])
 
   // El conteo se vuelve a pedir al entrar a la pestaña y cada vez que cambian las atenciones del carrito
   // (se agregó una, se sacó una o se cobró y el carrito quedó vacío).
@@ -493,12 +483,8 @@ export default function Ventas({ activo = true }) {
     if (!activo) setModalEscanerAbierto(false)
   }, [activo])
 
-  const sugerencias =
-    busqueda.trim().length > 0
-      ? catalogoProductos.filter((producto) =>
-          producto.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()),
-        )
-      : []
+  const busquedaProductos = useBusquedaProductosVenta({ termino: busqueda })
+  const sugerencias = busquedaProductos.resultados
 
   const subtotal = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
   const valorDescuentoNumero = parseFloat(valorDescuento) || 0
@@ -681,7 +667,7 @@ export default function Ventas({ activo = true }) {
   }
 
   function obtenerStockProducto(productoId) {
-    const producto = catalogoProductos.find((p) => p.id === productoId)
+    const producto = productosCarrito[productoId]
     return producto ? producto.stock_actual : Infinity
   }
 
@@ -707,6 +693,7 @@ export default function Ventas({ activo = true }) {
   }, [filaFlash])
 
   function agregarProducto(producto) {
+    setProductosCarrito((anterior) => ({ ...anterior, [producto.id]: producto }))
     const existente = carrito.find(
       (item) => item.tipo === 'PRODUCTO' && item.productoId === producto.id,
     )
@@ -902,7 +889,6 @@ export default function Ventas({ activo = true }) {
     setTipoDescuento('porcentaje')
     setMetodoPago(null)
     setCliente(null)
-    cargarCatalogo()
     // El carrito queda vacío: el efecto de arriba vuelve a contar las pendientes.
   }
 
@@ -944,18 +930,34 @@ export default function Ventas({ activo = true }) {
       return
     }
 
-    const porCodigo = catalogoProductos.find(
-      (producto) => producto.codigo_barras === busqueda.trim(),
-    )
-    if (porCodigo) {
-      agregarProducto(porCodigo)
-      setBusqueda('')
-      setMostrarSugerencias(false)
-      return
-    }
+    resolverEnter(busqueda.trim())
+  }
 
-    if (sugerencias.length === 1) {
-      seleccionarSugerencia(sugerencias[0])
+  // Enter sin sugerencia activa: primero el código de barras EXACTO (el escáner de pistola escribe el código y
+  // envía Enter), y si no es un código, la única coincidencia por nombre. Todo se consulta al servidor, no a
+  // la lista de sugerencias (que puede ir un paso atrás de lo escrito). `buscandoCodigoRef` evita que un
+  // doble Enter agregue dos veces el mismo producto.
+  async function resolverEnter(texto) {
+    if (!texto || buscandoCodigoRef.current) return
+    buscandoCodigoRef.current = true
+    try {
+      const { producto, ambiguo } = await productoPorCodigo(supabase, texto)
+      if (ambiguo) {
+        mostrarToast('Ese código pertenece a más de un producto. Búscalo por nombre.', 'error')
+        return
+      }
+      if (producto) {
+        agregarProducto(producto)
+        setBusqueda('')
+        setMostrarSugerencias(false)
+        return
+      }
+      const porNombre = await buscarProductosVenta(supabase, texto)
+      if (porNombre.length === 1) seleccionarSugerencia(porNombre[0])
+    } catch {
+      mostrarToast('No se pudo consultar el producto. Inténtalo de nuevo.', 'error')
+    } finally {
+      buscandoCodigoRef.current = false
     }
   }
 
@@ -974,7 +976,6 @@ export default function Ventas({ activo = true }) {
           </span>
           <InputBusqueda
             value={busqueda}
-            disabled={cargandoCatalogo}
             onChange={(evento) => {
               setBusqueda(evento.target.value)
               setMostrarSugerencias(true)
@@ -983,10 +984,8 @@ export default function Ventas({ activo = true }) {
             onKeyDown={manejarKeyDown}
             onFocus={() => busqueda && setMostrarSugerencias(true)}
             onBlur={() => conTemporizador(() => setMostrarSugerencias(false), 150)}
-            textoPlaceholder={
-              cargandoCatalogo ? 'Cargando catálogo...' : 'Buscar producto o escanear código de barras...'
-            }
-            animar={activo && !cargandoCatalogo}
+            textoPlaceholder="Buscar producto o escanear código de barras..."
+            animar={activo}
             className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-8 pr-[41px] font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber disabled:opacity-60"
           />
           {busqueda && (
@@ -1005,6 +1004,28 @@ export default function Ventas({ activo = true }) {
           )}
 
         </div>
+
+        {mostrarSugerencias && busqueda.trim() && (busquedaProductos.buscando || busquedaProductos.error || (busquedaProductos.listo && sugerencias.length === 0)) && (
+          <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm shadow-lg">
+            {busquedaProductos.buscando && <p className="text-ink/60">Buscando...</p>}
+            {busquedaProductos.error && (
+              <p className="text-red">
+                No se pudo buscar productos.{' '}
+                <button
+                  type="button"
+                  onMouseDown={(evento) => evento.preventDefault()}
+                  onClick={busquedaProductos.reintentar}
+                  className="underline"
+                >
+                  Reintentar
+                </button>
+              </p>
+            )}
+            {busquedaProductos.listo && sugerencias.length === 0 && (
+              <p className="text-ink/60">No hay productos que coincidan.</p>
+            )}
+          </div>
+        )}
 
         {mostrarSugerencias && sugerencias.length > 0 && (
           <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-lg border border-border bg-surface-2 shadow-lg">
@@ -1501,7 +1522,6 @@ export default function Ventas({ activo = true }) {
           onCerrar={() => setModalRegistroClienteAbierto(false)}
           onGuardado={(clienteCreado) => {
             setModalRegistroClienteAbierto(false)
-            cargarCatalogo()
             if (clienteCreado) setCliente(clienteCreado)
             mostrarToast('Cliente creado.', 'exito')
           }}
@@ -1517,7 +1537,7 @@ export default function Ventas({ activo = true }) {
           }
         >
           <ModalEscanerCodigoBarras
-            productos={catalogoProductos}
+            buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
             onProductoEncontrado={agregarProducto}
             onCerrar={() => setModalEscanerAbierto(false)}
           />

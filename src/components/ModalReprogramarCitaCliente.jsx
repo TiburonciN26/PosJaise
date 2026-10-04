@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { leerServicios } from '../lib/buscarServicios.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
@@ -57,7 +58,10 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
     let vigente = true
 
     Promise.all([
-      supabase.from('servicios').select('id, nombre, precio, duracion_min').eq('activo', true).order('nombre'),
+      leerServicios(supabase, { columnas: 'id, nombre, precio, duracion_min', soloActivos: true }).then(
+        (data) => ({ data }),
+        () => ({ data: [] }),
+      ),
       supabase.rpc('asistentes_para_citas'),
     ]).then(([serviciosRes, asistentesRes]) => {
       if (!vigente) return

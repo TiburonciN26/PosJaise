@@ -1,4 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { buscarServicios } from '../lib/buscarServicios.js'
+import { patronIlike } from '../lib/buscarClientes.js'
 import { X, User, UserRoundPlus, Scissors, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -45,7 +48,10 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
   const { usuario } = useAuth()
   const esEdicion = Boolean(deuda)
 
-  const [catalogo, setCatalogo] = useState([]) // servicios + productos, con datos reales
+  // Sugerencias de concepto: servicios + productos activos buscados en el servidor (QA-046/QA-047).
+  const [catalogo, setCatalogo] = useState([])
+  const [errorCatalogo, setErrorCatalogo] = useState(false)
+  const secuenciaCatalogo = useRef(0)
   const [cargandoClientes, setCargandoClientes] = useState(true)
 
   const [formulario, setFormulario] = useState(() =>
@@ -66,21 +72,40 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
 
   useCerrarConEscape(onCerrar)
 
+  // Los clientes y el catálogo NO se descargan: se buscan en el servidor al escribir (QA-043/QA-046/QA-047).
+  // Cada respuesta lleva un número de secuencia: la que llega tarde no pisa a la vigente.
+  const conceptoDebounced = useDebounce(formulario.concepto, 250)
   useEffect(() => {
-    async function cargarListas() {
-      // Los clientes NO se descargan: se buscan en el servidor al escribir (QA-043).
-      const [resServicios, resProductos] = await Promise.all([
-        supabase.from('servicios').select('id, nombre').eq('activo', true).order('nombre'),
-        supabase.from('productos').select('id, nombre').eq('activo', true).order('nombre'),
+    const numero = ++secuenciaCatalogo.current
+    const termino = conceptoDebounced
+    async function buscar() {
+      let productos = supabase.from('productos').select('id, nombre').eq('activo', true).order('nombre').order('id').limit(10)
+      if (termino.trim()) productos = productos.ilike('nombre', patronIlike(termino))
+      const [servicios, resProductos] = await Promise.all([
+        buscarServicios(supabase, termino, { soloActivos: true, limite: 10, columnas: 'id, nombre' }),
+        productos,
       ])
-      setCatalogo([
-        ...(resServicios.data ?? []).map((s) => ({ ...s, tipo: 'servicio' })),
+      if (resProductos.error) throw resProductos.error
+      return [
+        ...servicios.map((s) => ({ ...s, tipo: 'servicio' })),
         ...(resProductos.data ?? []).map((p) => ({ ...p, tipo: 'producto' })),
-      ])
-      setCargandoClientes(false)
+      ]
     }
-    cargarListas()
-  }, [])
+    buscar().then(
+      (items) => {
+        if (numero !== secuenciaCatalogo.current) return
+        setCatalogo(items)
+        setErrorCatalogo(false)
+        setCargandoClientes(false)
+      },
+      () => {
+        if (numero !== secuenciaCatalogo.current) return
+        setCatalogo([])
+        setErrorCatalogo(true)
+        setCargandoClientes(false)
+      },
+    )
+  }, [conceptoDebounced])
 
   function actualizarCampo(campo, valor) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
@@ -105,11 +130,8 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
     (c) => c.nombre.trim().toLowerCase() === busquedaCliente.trim().toLowerCase(),
   )
 
-  const sugerenciasConcepto = formulario.concepto.trim()
-    ? catalogo.filter((item) =>
-        item.nombre.toLowerCase().includes(formulario.concepto.trim().toLowerCase()),
-      )
-    : catalogo
+  // Solo se ofrece lo que corresponde al texto ya buscado (la respuesta vieja no se muestra como nueva).
+  const sugerenciasConcepto = conceptoDebounced === formulario.concepto ? catalogo : []
 
   function seleccionarConcepto(item) {
     actualizarCampo('concepto', item.nombre)
@@ -308,6 +330,11 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
                   </div>
                 )}
               </div>
+              {errorCatalogo && (
+                <p className="mt-1 text-xs text-red">
+                  No se pudieron cargar las sugerencias de servicios y productos; puedes escribir el motivo igualmente.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">

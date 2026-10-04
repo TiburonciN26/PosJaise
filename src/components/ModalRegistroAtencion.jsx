@@ -11,6 +11,9 @@ import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 import Etiqueta from './Etiqueta.jsx'
 import ModalCliente from './ModalCliente.jsx'
 import ModalServicio from './ModalServicio.jsx'
+import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
+import { categoriasDeServicios, LIMITE_SERVICIOS } from '../lib/buscarServicios.js'
+import { useBusquedaServicios } from '../hooks/useBusquedaServicios.js'
 
 // Umbrales del swipe-to-delete del carrito de servicios — mismos valores que
 // el carrito de Ventas (FilaTicket), para que el gesto se sienta idéntico.
@@ -188,7 +191,7 @@ export default function ModalRegistroAtencion({
   // porque el cálculo miraba el rol de quien editaba en vez del dueño.
   const idDueno = esEdicion ? registro.usuario_id : usuario.id
 
-  const [servicios, setServicios] = useState([])
+  const [categoriasExistentes, setCategoriasExistentes] = useState([])
   const [clientes, setClientes] = useState([])
   const [cargandoListas, setCargandoListas] = useState(true)
   // Igual que el carrito de Ventas: en táctil se elimina deslizando la fila,
@@ -271,8 +274,10 @@ export default function ModalRegistroAtencion({
       // servidor al escribir (QA-043); no se descarga la tabla completa. Solo la edición de un
       // registro usa un <select>: se carga la primera página y SIEMPRE el cliente actual del
       // registro (si no, un cliente fuera de la primera página se vería como "sin cliente").
-      const [resServicios, resClientes, resActual] = await Promise.all([
-        supabase.from('servicios').select('id, nombre, precio, categoria').order('nombre'),
+      // Los servicios tampoco se descargan (QA-046): se buscan en el servidor al escribir; solo las
+      // categorías (para «Crear servicio») se leen completas.
+      const [categorias, resClientes, resActual] = await Promise.all([
+        categoriasDeServicios(supabase).catch(() => []),
         esEdicion ? supabase.from('clientes').select('id, nombre').order('nombre') : Promise.resolve({ data: [] }),
         esEdicion && registro?.cliente_id
           ? supabase.from('clientes').select('id, nombre').eq('id', registro.cliente_id).maybeSingle()
@@ -283,7 +288,7 @@ export default function ModalRegistroAtencion({
         lista.push(resActual.data)
         lista.sort((a, b) => a.nombre.localeCompare(b.nombre))
       }
-      setServicios(resServicios.data ?? [])
+      setCategoriasExistentes(categorias)
       setClientes(lista)
       setCargandoListas(false)
     }
@@ -381,8 +386,14 @@ export default function ModalRegistroAtencion({
   // Con el buscador vacío, includes('') es siempre true — así al enfocar el
   // campo (antes de escribir nada) ya se ven todos los servicios/clientes
   // precargados.
-  const sugerenciasServicio = servicios.filter((servicio) =>
-    servicio.nombre.toLowerCase().includes(busquedaServicio.trim().toLowerCase()),
+  const busquedaServicios = useBusquedaServicios({
+    termino: busquedaServicio,
+    activo: usaCarrito && mostrarSugerenciasServicio,
+  })
+  const sugerenciasServicio = busquedaServicios.resultados
+  // Una ficha idéntica al texto escrito: no se ofrece crear otra (QA-046).
+  const hayServicioExacto = sugerenciasServicio.some(
+    (s) => s.nombre.trim().toLowerCase() === busquedaServicio.trim().toLowerCase(),
   )
   const sugerenciasCliente = resultadosCliente
   // Mientras el texto escrito aún no es el que se buscó (o la búsqueda está en vuelo) no se
@@ -402,8 +413,7 @@ export default function ModalRegistroAtencion({
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }
 
-  function seleccionarServicio(servicioId) {
-    const servicio = servicios.find((s) => s.id === servicioId)
+  function seleccionarServicio(servicioId, servicio) {
     setFormulario((anterior) => ({
       ...anterior,
       servicioId,
@@ -411,9 +421,9 @@ export default function ModalRegistroAtencion({
     }))
   }
 
-  function agregarLinea(servicioId) {
-    if (!servicioId) return
-    const servicio = servicios.find((s) => s.id === servicioId)
+  function agregarLinea(servicio) {
+    if (!servicio) return
+    const servicioId = servicio.id
     setLineas((anterior) => [
       ...anterior,
       {
@@ -451,10 +461,12 @@ export default function ModalRegistroAtencion({
   function manejarServicioCreado(servicioCreado) {
     setModalServicioNuevoAbierto(false)
     if (!servicioCreado) return
-    setServicios((anterior) =>
-      [...anterior, servicioCreado].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    )
-    agregarLinea(servicioCreado.id)
+    if (servicioCreado.categoria) {
+      setCategoriasExistentes((anterior) =>
+        anterior.includes(servicioCreado.categoria) ? anterior : [...anterior, servicioCreado.categoria].sort(),
+      )
+    }
+    agregarLinea(servicioCreado)
   }
 
   function quitarLinea(id) {
@@ -614,8 +626,6 @@ export default function ModalRegistroAtencion({
   }
 
   if (usaCarrito) {
-    const categoriasExistentes = [...new Set(servicios.map((s) => s.categoria).filter(Boolean))].sort()
-
     return (
       <>
         <div
@@ -760,14 +770,14 @@ export default function ModalRegistroAtencion({
                   )}
 
                   {mostrarSugerenciasServicio &&
-                    (sugerenciasServicio.length > 0 || busquedaServicio.trim()) && (
+                    (sugerenciasServicio.length > 0 || busquedaServicio.trim() || busquedaServicios.error) && (
                       <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
                         {sugerenciasServicio.map((servicio) => (
                           <button
                             key={servicio.id}
                             type="button"
                             onMouseDown={(evento) => evento.preventDefault()}
-                            onClick={() => agregarLinea(servicio.id)}
+                            onClick={() => agregarLinea(servicio)}
                             className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
                           >
                             <span className="truncate">{servicio.nombre}</span>
@@ -776,10 +786,31 @@ export default function ModalRegistroAtencion({
                             </span>
                           </button>
                         ))}
-                        {busquedaServicio.trim() && !puedeCrearServicio && sugerenciasServicio.length === 0 && (
+                        {sugerenciasServicio.length >= LIMITE_SERVICIOS && (
+                          <p className="border-t border-border px-3 py-2 text-xs text-ink/60">
+                            Se muestran los primeros {LIMITE_SERVICIOS}. Escribe para afinar la búsqueda.
+                          </p>
+                        )}
+                        {busquedaServicios.buscando && (
+                          <p className="px-3 py-2 text-sm text-ink/60">Buscando...</p>
+                        )}
+                        {busquedaServicios.error && (
+                          <p className="px-3 py-2 text-sm text-red">
+                            No se pudo buscar servicios.{' '}
+                            <button
+                              type="button"
+                              onMouseDown={(evento) => evento.preventDefault()}
+                              onClick={busquedaServicios.reintentar}
+                              className="underline"
+                            >
+                              Reintentar
+                            </button>
+                          </p>
+                        )}
+                        {busquedaServicio.trim() && busquedaServicios.listo && !puedeCrearServicio && sugerenciasServicio.length === 0 && (
                           <p className="px-3 py-2 text-sm text-ink/60">No hay servicios que coincidan.</p>
                         )}
-                        {busquedaServicio.trim() && puedeCrearServicio && (
+                        {busquedaServicio.trim() && busquedaServicios.listo && !hayServicioExacto && puedeCrearServicio && (
                           <button
                             type="button"
                             onMouseDown={(evento) => evento.preventDefault()}
@@ -951,19 +982,13 @@ export default function ModalRegistroAtencion({
           <div className="mt-4 space-y-3">
             <div>
               <Etiqueta obligatorio htmlFor={`${idBase}-servicio`}>Servicio</Etiqueta>
-              <select
+              <SelectorServicioBuscable
                 id={`${idBase}-servicio`}
-                value={formulario.servicioId}
-                onChange={(evento) => seleccionarServicio(evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
-              >
-                <option value="">Selecciona un servicio</option>
-                {servicios.map((servicio) => (
-                  <option key={servicio.id} value={servicio.id}>
-                    {servicio.nombre}
-                  </option>
-                ))}
-              </select>
+                valor={formulario.servicioId}
+                onCambiar={seleccionarServicio}
+                textoVacio="Selecciona un servicio"
+                claseFoco="focus:border-purple-300"
+              />
             </div>
 
             <div>

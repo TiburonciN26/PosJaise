@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Sparkles, Ticket, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
@@ -221,7 +222,10 @@ export default function InicioCliente() {
         contactoRes,
         horarioRes,
       ] = await Promise.all([
-        supabase.from('servicios').select('id, nombre, categoria, precio, duracion_min, foto_url').eq('activo', true),
+        leerServicios(supabase, { columnas: 'id, nombre, categoria, precio, duracion_min, foto_url', soloActivos: true }).then(
+          (data) => ({ data }),
+          () => ({ data: [] }),
+        ),
         supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
         miId
           ? supabase

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Coins, Plus, Stamp, ShieldCheck, Settings2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { leerServicios } from '../lib/buscarServicios.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -756,7 +757,11 @@ export default function RecompensasWeb() {
       supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, otros, total, actualizado_en'),
       supabase.from('recompensas_canjes').select('catalogo_id'),
       supabase.from('recompensas_config').select('*').eq('id', 1).single(),
-      supabase.from('servicios').select('id, nombre, precio, activo').order('nombre'),
+      // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
+      leerServicios(supabase, { columnas: 'id, nombre, precio, activo' }).then(
+        (data) => ({ data, error: null }),
+        (error) => ({ data: null, error }),
+      ),
     ])
     const falla = [cat, prot, canj, cfg, serv].find((r) => r.error)
     if (falla) {
