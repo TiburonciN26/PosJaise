@@ -77,7 +77,10 @@ function Fila({ r, estado, abierta, onToggle, onObtener }) {
       </button>
 
       <CampoColapsable abierto={abierta}>
-        <div className="relative mx-2.5 mb-2.5 flex flex-col gap-2.5 border border-white/10 bg-black/25 p-3">
+        <div
+          data-premio-id={r.real ? r.id : undefined}
+          className="relative mx-2.5 mb-2.5 flex flex-col gap-2.5 border border-white/10 bg-black/25 p-3"
+        >
           <p className="text-[13px] leading-relaxed text-white/70">{r.desc}</p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs leading-snug text-white/50">
             <dt>Beneficio</dt>

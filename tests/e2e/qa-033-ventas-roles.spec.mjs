@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { login, visibleButton, formWithTitle } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
+import * as h from './recompensas-fase2-helpers.mjs';
 
 // QA-033: solo ADMINISTRADOR y CAJERA crean y anulan ventas, también en el backend.
 // Supabase Local TEST, datos ficticios. Las ventas «válidas» las prepara ADMINISTRADOR (una simple, una con
@@ -54,12 +55,20 @@ async function snapshot() {
   const stock = (await rest(a.page, a.box, 'GET', `/rest/v1/productos_vista?id=eq.${S.productoId}&select=stock_actual`)).json[0].stock_actual;
   const cupones = (await rest(a.page, a.box, 'GET', `/rest/v1/cupones?cliente_id=in.(${S.idA},${S.idB})&select=id,origen,estado,venta_id&order=id`)).json;
   const pedido = (await rest(a.page, a.box, 'GET', `/rest/v1/pedidos_web?venta_id=eq.${S.v3}&select=id,estado,pago_verificado,venta_id`)).json;
-  return { ventas, items, totalVentas: todas.length, estadosVentas: todas.map((v) => v.estado).join(''), stock, cupones, pedido };
+  // Libros de Recompensas (Fase 2): un rechazo no debe dejar NINGÚN movimiento de monedas ni de sellos.
+  const movimientos = (await rest(a.page, a.box, 'GET', '/rest/v1/recompensas_movimientos?select=id,tipo,monedas,clasificacion,venta_id&order=id')).json;
+  const sellos = (await rest(a.page, a.box, 'GET', '/rest/v1/recompensas_sellos_movs?select=id,tipo,delta,venta_id&order=id')).json;
+  const canjes = (await rest(a.page, a.box, 'GET', '/rest/v1/recompensas_canjes?select=id&order=id')).json;
+  return { ventas, items, totalVentas: todas.length, estadosVentas: todas.map((v) => v.estado).join(''), stock, cupones, pedido, movimientos, sellos, canjes };
 }
 
 test.describe.serial('QA-033: ventas solo para ADMINISTRADOR y CAJERA', () => {
   test.beforeAll(async ({ browser }) => {
     test.setTimeout(480_000);
+    // Recompensas ACTIVO durante la prueba para que los libros tengan movimientos que comparar; se restaura en afterAll.
+    await h.verificarLocalTest();
+    S.cfg0 = await h.configActual();
+    await h.activar(true);
     const data = JSON.parse(await readFile('tests/e2e/fixtures/runtime.json', 'utf8'));
     S.data = data;
     S.admin = await sesion(browser, data, 'ADMINISTRADOR');
@@ -136,10 +145,13 @@ test.describe.serial('QA-033: ventas solo para ADMINISTRADOR y CAJERA', () => {
     S.antes = await snapshot();
     expect(S.antes.pedido[0].estado).toBe('LISTO');
     expect(S.antes.stock).toBe(7); // 10 − V1 − V2 − V3
+    // Con el programa activo, V2 y V3 acreditaron monedas a sus clientas (V1 no tiene clienta).
+    expect(S.antes.movimientos.filter((m) => m.tipo === 'VENTA').length, 'hay acreditaciones que comparar').toBeGreaterThanOrEqual(2);
   });
 
   test.afterAll(async () => {
     await S.admin?.ctx.close();
+    if (S.cfg0) await h.restaurarConfig(S.cfg0); // restauración del programa aunque la prueba falle
   });
 
   const intentoCrear = (extra = {}) => ({ p_metodo_pago: 'Yape', p_monto_recibido: null, p_items: [{ tipo: 'PRODUCTO', producto_id: S.productoId, cantidad: 1 }], ...extra });
@@ -243,5 +255,18 @@ test.describe.serial('QA-033: ventas solo para ADMINISTRADOR y CAJERA', () => {
     expect((await rpc(a.page, a.box, 'anular_venta', { p_venta_id: S.v1 })).status).toBeLessThan(300);
     const stock = (await rest(a.page, a.box, 'GET', `/rest/v1/productos_vista?id=eq.${S.productoId}&select=stock_actual`)).json[0].stock_actual;
     expect(stock, 'todo el stock vuelve').toBe(10);
+    // Libros: cada venta acreditada tiene EXACTAMENTE una reversión y su neto de monedas/clasificación queda en 0.
+    const movs = (await rest(a.page, a.box, 'GET', `/rest/v1/recompensas_movimientos?venta_id=in.(${S.v1},${S.v2},${S.v3})&select=tipo,monedas,clasificacion,venta_id`)).json;
+    for (const v of [S.v2, S.v3]) {
+      const m = movs.filter((x) => x.venta_id === v);
+      expect(m.filter((x) => x.tipo === 'VENTA').length, 'una acreditación').toBe(1);
+      expect(m.filter((x) => x.tipo === 'VENTA_REVERSION').length, 'una sola reversión').toBe(1);
+      expect(m.reduce((acc, x) => acc + Number(x.monedas), 0)).toBeCloseTo(0, 8);
+      expect(m.reduce((acc, x) => acc + Number(x.clasificacion), 0)).toBeCloseTo(0, 8);
+    }
+    // Una segunda anulación se rechaza y no añade nada a los libros.
+    const librosAntes = (await rest(a.page, a.box, 'GET', '/rest/v1/recompensas_movimientos?select=id')).json.length;
+    expect((await rpc(a.page, a.box, 'anular_venta', { p_venta_id: S.v2 })).status).toBeGreaterThanOrEqual(400);
+    expect((await rest(a.page, a.box, 'GET', '/rest/v1/recompensas_movimientos?select=id')).json.length, 'segunda anulación no repite efectos').toBe(librosAntes);
   });
 });

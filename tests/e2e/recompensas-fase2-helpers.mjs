@@ -23,10 +23,13 @@ function ejecutar(sql) {
     let out = '', err = '';
     p.stdout.on('data', d => { out += d; });
     p.stderr.on('data', d => { err += d; });
+    p.on('error', e => resolve({ ok: false, out: '', err: String(e && e.message ? e.message : e) }));
     p.on('close', code => resolve({ ok: code === 0, out: out.trim(), err: err.trim() }));
     p.stdin.end(sql);
   });
 }
+
+const primeraLinea = (t) => String(t || '').split(String.fromCharCode(10))[0].trim() || 'sin mensaje';
 
 // Verificación positiva de que la BD es el TEST local: solo cuentas @test.local
 // y la URL de la app servida por Vite es 127.0.0.1:54321.
@@ -37,8 +40,26 @@ export async function verificarLocalTest() {
   const texto = await r.text();
   const url = texto.match(/"VITE_SUPABASE_URL"\s*:\s*"([^"]+)"/)?.[1];
   if (url !== 'http://127.0.0.1:54321') throw new Error('La app no apunta a Supabase Local; se aborta.');
+  // Dos fallos DISTINTOS, ambos abortan sin escribir nada:
+  //  1) No se pudo consultar la BD (Docker/psql caído, contenedor ausente): la verificación no es posible.
+  //  2) La consulta respondió y hay cuentas no @test.local: la BD NO es el TEST local.
   const e = await ejecutar(`select count(*) from auth.users where email not like '%@test.local';`);
-  if (!e.ok || e.out !== '0') throw new Error('La BD contiene cuentas no ficticias; se aborta (no es TEST).');
+  interpretarVerificacion(e);
+}
+
+// Interpreta el resultado del conteo de cuentas no ficticias. Los dos fallos son distintos y ambos abortan.
+export function interpretarVerificacion(e) {
+  if (!e.ok) {
+    throw new Error(
+      `No se pudo verificar la base local (Docker/psql no disponible o contenedor ${CONTENEDOR} ausente); se aborta sin escribir. Detalle: ${primeraLinea(e.err)}`,
+    );
+  }
+  if (!/^\d+$/.test(e.out)) {
+    throw new Error(`Respuesta inesperada al verificar la base local («${e.out.slice(0, 40)}»); se aborta sin escribir.`);
+  }
+  if (e.out !== '0') {
+    throw new Error(`La base contiene ${e.out} cuenta(s) que no son @test.local: no es el TEST local; se aborta sin escribir.`);
+  }
 }
 
 export function como(uid, { rol = false } = {}) {

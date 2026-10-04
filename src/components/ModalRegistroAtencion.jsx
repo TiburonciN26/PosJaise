@@ -3,6 +3,8 @@ import { X, User, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { buscarClientes } from '../lib/buscarClientes.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
@@ -232,6 +234,10 @@ export default function ModalRegistroAtencion({
   const [mostrarSugerenciasCliente, setMostrarSugerenciasCliente] = useState(false)
   const inputServicioRef = useRef(null)
   const inputClienteRef = useRef(null)
+  const busquedaClienteDebounced = useDebounce(busquedaCliente, 250)
+  const [resultadosCliente, setResultadosCliente] = useState([])
+  const [estadoBusquedaCliente, setEstadoBusquedaCliente] = useState('ok') // 'buscando' | 'ok' | 'error'
+  const secuenciaBusquedaCliente = useRef(0)
   const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
   const [modalServicioNuevoAbierto, setModalServicioNuevoAbierto] = useState(false)
 
@@ -240,14 +246,45 @@ export default function ModalRegistroAtencion({
 
   useCerrarConEscape(onCerrar)
 
+  // Búsqueda de clientes en el servidor. Cada petición lleva un número de secuencia: si el texto
+  // cambia mientras una respuesta vuela, la respuesta vieja se descarta (no pisa a la nueva).
+  useEffect(() => {
+    if (!usaCarrito || !mostrarSugerenciasCliente) return
+    const numero = ++secuenciaBusquedaCliente.current
+    setEstadoBusquedaCliente('buscando')
+    buscarClientes(supabase, busquedaClienteDebounced).then(
+      (datos) => {
+        if (numero !== secuenciaBusquedaCliente.current) return
+        setResultadosCliente(datos)
+        setEstadoBusquedaCliente('ok')
+      },
+      () => {
+        if (numero !== secuenciaBusquedaCliente.current) return
+        setEstadoBusquedaCliente('error')
+      },
+    )
+  }, [busquedaClienteDebounced, mostrarSugerenciasCliente, usaCarrito])
+
   useEffect(() => {
     async function cargarListas() {
-      const [resServicios, resClientes] = await Promise.all([
+      // Modo carrito (Registrar atención / completar cita): los clientes se buscan en el
+      // servidor al escribir (QA-043); no se descarga la tabla completa. Solo la edición de un
+      // registro usa un <select>: se carga la primera página y SIEMPRE el cliente actual del
+      // registro (si no, un cliente fuera de la primera página se vería como "sin cliente").
+      const [resServicios, resClientes, resActual] = await Promise.all([
         supabase.from('servicios').select('id, nombre, precio, categoria').order('nombre'),
-        supabase.from('clientes').select('id, nombre').order('nombre'),
+        esEdicion ? supabase.from('clientes').select('id, nombre').order('nombre') : Promise.resolve({ data: [] }),
+        esEdicion && registro?.cliente_id
+          ? supabase.from('clientes').select('id, nombre').eq('id', registro.cliente_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ])
+      const lista = resClientes.data ?? []
+      if (resActual.data && !lista.some((c) => c.id === resActual.data.id)) {
+        lista.push(resActual.data)
+        lista.sort((a, b) => a.nombre.localeCompare(b.nombre))
+      }
       setServicios(resServicios.data ?? [])
-      setClientes(resClientes.data ?? [])
+      setClientes(lista)
       setCargandoListas(false)
     }
     cargarListas()
@@ -347,8 +384,12 @@ export default function ModalRegistroAtencion({
   const sugerenciasServicio = servicios.filter((servicio) =>
     servicio.nombre.toLowerCase().includes(busquedaServicio.trim().toLowerCase()),
   )
-  const sugerenciasCliente = clientes.filter((cliente) =>
-    cliente.nombre.toLowerCase().includes(busquedaCliente.trim().toLowerCase()),
+  const sugerenciasCliente = resultadosCliente
+  // Mientras el texto escrito aún no es el que se buscó (o la búsqueda está en vuelo) no se
+  // ofrece crear un cliente nuevo: podría existir y todavía no haber llegado (QA-043).
+  const buscandoCliente = estadoBusquedaCliente === 'buscando' || busquedaClienteDebounced !== busquedaCliente
+  const hayCoincidenciaExacta = resultadosCliente.some(
+    (c) => c.nombre.trim().toLowerCase() === busquedaCliente.trim().toLowerCase(),
   )
 
   const precioNumero = parseFloat(formulario.precio)
@@ -634,9 +675,22 @@ export default function ModalRegistroAtencion({
                     <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
                   )}
 
-                  {mostrarSugerenciasCliente && (sugerenciasCliente.length > 0 || busquedaCliente.trim()) && (
+                  {mostrarSugerenciasCliente && (
                     <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                      {sugerenciasCliente.map((cliente) => (
+                      {buscandoCliente && (
+                        <p role="status" className="px-3 py-2 text-xs text-ink/60">
+                          Buscando clientes…
+                        </p>
+                      )}
+                      {!buscandoCliente && estadoBusquedaCliente === 'error' && (
+                        <p role="alert" className="px-3 py-2 text-xs text-red">
+                          No se pudo buscar clientes. Revisa tu conexión e inténtalo de nuevo.
+                        </p>
+                      )}
+                      {!buscandoCliente && estadoBusquedaCliente === 'ok' && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
+                        <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
+                      )}
+                      {!buscandoCliente && estadoBusquedaCliente === 'ok' && sugerenciasCliente.map((cliente) => (
                         <button
                           key={cliente.id}
                           type="button"
@@ -647,7 +701,7 @@ export default function ModalRegistroAtencion({
                           <span className="truncate">{cliente.nombre}</span>
                         </button>
                       ))}
-                      {busquedaCliente.trim() && (
+                      {!buscandoCliente && estadoBusquedaCliente === 'ok' && busquedaCliente.trim() && !hayCoincidenciaExacta && (
                         <button
                           type="button"
                           onMouseDown={(evento) => evento.preventDefault()}
