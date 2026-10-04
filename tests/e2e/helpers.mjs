@@ -45,11 +45,15 @@ export async function createProduct(page, data) {
 // subcadena, así que ningún caso reutiliza el fixture de otra corrida ni se apoya en first() para elegir.
 export const sufijoUnico = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
+export const campoNombreServicio = (form) => form.locator('input[id$="-nombre"]');
+
 export async function createService(page, data) {
   await page.goto('/servicios');
   await visibleButton(page, 'Nuevo servicio').click();
   const form = formWithTitle(page, 'Nuevo servicio');
-  await form.getByLabel('Nombre', { exact: false }).fill(data.serviceName);
+  // El formulario de servicio tiene también «Buscar servicio por nombre» (combo): el campo Nombre se acota por su
+  // identificador semántico (id terminado en -nombre), sin first() y sin tocar la aplicación.
+  await campoNombreServicio(form).fill(data.serviceName);
   await form.getByLabel('Categoría', { exact: false }).selectOption({ label: 'Cabello' });
   await form.getByLabel('Precio', { exact: false }).first().fill('2');
   await form.getByLabel('Duración (min)', { exact: true }).fill('30');
