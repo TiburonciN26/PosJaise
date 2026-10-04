@@ -1,6 +1,6 @@
 # Suite QA/E2E local — rama testing
 
-Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite define 137 casos en 21 archivos (ver COBERTURA.md, que lista lo cubierto y las brechas; no es cobertura total).
+Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 192 casos en 29 archivos `*.spec.mjs` (corte 2026-10-04), más 11 archivos `node --test` de capa de datos/SQL (150 casos; ver «Dos capas»). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
 
 ## Ejecutar
 
@@ -11,6 +11,7 @@ Desde C:/WedJaiseReact, con la rama testing activa, Vite ya ejecutándose en htt
 
 ```powershell
 node node_modules/playwright/cli.js test --config=playwright.qa.config.mjs
+node tests/e2e/sanear-salidas.mjs
 node tests/e2e/archive-run.mjs nuevo-corte
 node tests/e2e/report-campaign.mjs
 ```
@@ -22,6 +23,20 @@ node node_modules/playwright/cli.js test --config=playwright.qa.config.mjs --lis
 ```
 
 El aprovisionamiento necesita acceso al contenedor Docker local supabase_kong_WedJaiseReact. Alternativamente puede entregarse QA_LOCAL_SERVICE_ROLE_KEY en el entorno del proceso, sin editar .env. La clave se mantiene en memoria, nunca se imprime ni se entrega al navegador. Si Docker o la clave no están disponibles, la preparación falla y no se declara que los tests hayan pasado.
+
+## Dos capas de pruebas (no se mezclan)
+
+- **Playwright (`*.spec.mjs`)**: interfaz real con sesiones iniciadas por el formulario. Requiere `QA_TEST_PASSWORD`, Vite y Supabase Local.
+- **`node --test` (`*.test.mjs`)**: capa de datos/SQL contra Supabase Local (Recompensas Fase 2, QA-043 a QA-047). Usan claims simulados
+  (`request.jwt.claims` + `set role authenticated`): **no son sesiones HTTP ni evidencia de interfaz**. Se ejecutan en serie:
+  `node --test --test-concurrency=1 tests/e2e/*.test.mjs` (con la rama `testing` y Vite activos; no necesitan la contraseña).
+
+## Higiene de salidas (secretos)
+
+Playwright escribe `error-context.md` (snapshot de accesibilidad) al fallar un caso; si ocurre con el login lleno puede incluir el valor
+del campo Contraseña. Antes de archivar o publicar evidencia se ejecuta `node tests/e2e/sanear-salidas.mjs` (redacta ese valor sin
+imprimirlo; `archive-run.mjs` también lo ejecuta). Solo cubre archivos de texto: las capturas PNG enmascaran el campo, pero una captura
+de un login fallido debe revisarse antes de publicarla. `artifacts/`, `results/` y `fixtures/runtime.json` están ignorados por Git.
 
 ## Guardas e aislamiento
 
@@ -36,11 +51,11 @@ El aprovisionamiento necesita acceso al contenedor Docker local supabase_kong_We
 
 ## Interpretar resultados
 
-La lista `expectedFailureIDs` (`fixtures/issue-status.mjs`) es **explícita** y no se deriva de los estados de Notion: contiene solo los defectos conocidos sin corrección (hoy vacía: QA-035 se corrigió en Local y está en Re-test). Esos casos usan `test.fail()` justo antes de verificar el comportamiento correcto; un fallo esperado significa **incidencia reproducida**, no funcionalidad aprobada, y Playwright lo cuenta en `expected`. `issueStatus` solo rotula los informes con el estado de Notion (actualizado el 2026-10-03: Verificado en QA-001, QA-003 a QA-019 y QA-024 a QA-032; QA-020 a QA-023 pendientes de re-test de rendimiento). «Verificado» en Notion es una marca de revisión del propietario y no controla ninguna expectativa de la suite. Un `expectedFailureIDs` vacío no significa que todas las incidencias estén resueltas.
+La lista `expectedFailureIDs` (`fixtures/issue-status.mjs`) es **explícita** y no se deriva de los estados de Notion: contiene solo los defectos conocidos sin corrección (hoy vacía; ningún caso se oculta con ella). Esos casos usan `test.fail()` justo antes de verificar el comportamiento correcto; un fallo esperado significa **incidencia reproducida**, no funcionalidad aprobada, y Playwright lo cuenta en `expected`. `issueStatus` solo rotula los informes con el estado de Notion (ver la cabecera de `fixtures/issue-status.mjs` para la fecha y el alcance de cada rótulo; no se sincronizó en bloque). «Verificado» en Notion es una marca de revisión del propietario y no controla ninguna expectativa de la suite. Un `expectedFailureIDs` vacío no significa que todas las incidencias estén resueltas.
 
 Si una aserción esperada deja de fallar, Playwright señala un unexpected pass: eso exige re-test y retirar el ID de la lista tras una pasada sana. Si falla la preparación, un selector o aparece un error distinto, se conserva como fallo inesperado. Los tests no sustituyen respuestas de backend por éxitos falsos. Un caso omitido (`skipped`) no cuenta como aprobado.
 
-Higiene de preparación: la promoción TEST de cada ejecución debe ser la primera visible en Inicio (QA-005). Las ejecuciones parciales o fallidas dejan promociones TEST activas y vigentes hasta el día del fixture que compiten con ella; antes de una regresión completa hay que desactivar esas promociones sobrantes (solo registros `TEST …` de Local).
+Preparación independiente: cada caso crea sus propios datos con nombres y códigos únicos (`sufijoUnico`, `nombreUnico`); no hay que desactivar nada a mano. QA-005 crea su propia promoción y desactiva la de la preparación global (la que ya desactivaba) y falla con un mensaje de precondición si otra promoción vigente de un tercero le antecede. Las ejecuciones parciales o fallidas pueden dejar promociones TEST activas que vencen hoy: la precondición de QA-005 lo detecta y falla con un mensaje claro (es un error de preparación, no del producto); hay que desactivar esas promociones sobrantes (solo registros `TEST …` de Local) antes de repetir.
 
 QA-004 utiliza una interrupción controlada: espera que el DELETE real de líneas de cita termine, retiene y aborta el POST de reemplazo y recarga. Comprueba la integridad tras interrumpir el guardado; no mide la frecuencia del problema en una red normal. No llama manualmente a DELETE/INSERT: los emite la propia UI.
 

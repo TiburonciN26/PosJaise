@@ -2,7 +2,14 @@
 // Sincronizado el 2026-10-03 leyendo la vista de Notion: Verificado en QA-001 y QA-003 a QA-034 (los re-tests
 // independientes de Codex incluyen QA-020 a QA-023 y QA-034); Re-test en QA-035 (corregido en Local, pendiente de verificación independiente).
 // Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente de estos estados.
+// 2026-10-04 (re-tests independientes de Codex): Verificado en QA-043, QA-044, QA-045, QA-046 y QA-047. Los demás rótulos de esta
+// tabla no se re-sincronizaron en bloque (QA-035 a QA-040 conservan el último rótulo conocido); QA-041/QA-042 no figuran aquí.
 export const issueStatus = {
+  'QA-047': 'Verificado',
+  'QA-046': 'Verificado',
+  'QA-045': 'Verificado',
+  'QA-044': 'Verificado',
+  'QA-043': 'Verificado',
   'QA-037': 'Re-test',
   'QA-038': 'Re-test',
   'QA-039': 'Re-test',

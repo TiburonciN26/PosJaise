@@ -1,4 +1,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {sanearCarpetas} from './sanear-salidas.mjs';
+// Antes de archivar: redactar cualquier valor de contraseña que Playwright haya dejado en sus salidas de texto.
+console.log('Higiene de salidas:',await sanearCarpetas(['tests/e2e/artifacts','tests/e2e/results']));
 const phase=process.argv[2],source=process.argv[3]??'tests/e2e/results/results.json';
 if(!/^[a-z0-9-]+$/.test(phase??''))throw new Error('Use a simple QA phase identifier.');
 const report=JSON.parse(await readFile(source,'utf8')),dir=`tests/e2e/results/phases/${phase}`;
