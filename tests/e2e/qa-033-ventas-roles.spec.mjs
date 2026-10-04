@@ -1,6 +1,6 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
 import { readFile } from 'node:fs/promises';
-import { sufijoUnico, login, visibleButton, formWithTitle } from './helpers.mjs';
+import { buscadorCaja, sufijoUnico, login, visibleButton, formWithTitle } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
@@ -222,7 +222,7 @@ test.describe.serial('QA-033: ventas solo para ADMINISTRADOR y CAJERA', () => {
       const { page } = caja;
       // CAJERA vende por el POS y anula la venta de hoy por Historial.
       await page.goto('/ventas');
-      await page.getByRole('searchbox').first().fill(S.productoNombre);
+      await (await buscadorCaja(page)).fill(S.productoNombre);
       await page.getByRole('button', { name: new RegExp(S.productoNombre) }).click();
       await page.getByRole('button', { name: 'Yape', exact: true }).click();
       const vendida = page.waitForResponse((r) => r.url().includes('/rpc/confirmar_venta'));

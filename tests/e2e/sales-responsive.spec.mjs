@@ -1,5 +1,5 @@
 import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
-import { login } from './helpers.mjs';
+import { login, buscadorCaja } from './helpers.mjs';
 import { readFile, writeFile } from 'node:fs/promises';
 
 test('POS: venta de 3 unidades, stock 10→7→10 y anulación persistente', async ({ page, data }, info) => {
@@ -17,7 +17,7 @@ test('POS: venta de 3 unidades, stock 10→7→10 y anulación persistente', asy
   }
   await assertStock(10);
   await page.goto('/ventas');
-  const search = page.getByRole('searchbox').first();
+  const search = (await buscadorCaja(page));
   await search.fill(data.saleProductName);
   await page.getByRole('button', { name: new RegExp(data.saleProductName) }).click();
   await expect(page.getByRole('button', { name: 'Confirmar venta', exact: true })).toBeDisabled();
@@ -78,7 +78,7 @@ test('QA-013: buscar el código visible debe encontrar la venta TEST', async ({ 
 test('POS: producto con stock cero no permite confirmar', async ({ page, data }) => {
   await login(page, 'CAJERA', data);
   await page.goto('/ventas');
-  await page.getByRole('searchbox').first().fill(data.zeroProductName);
+  await (await buscadorCaja(page)).fill(data.zeroProductName);
   await page.getByRole('button', { name: new RegExp(data.zeroProductName) }).click();
   await expect(page.getByText('Stock insuficiente', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '+', exact: true })).toBeDisabled();

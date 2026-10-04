@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { sufijoUnico, login, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
+import { buscadorCaja, sufijoUnico, login, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
 import { isolatedClient, qaContext } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -47,15 +47,33 @@ async function createOwnProduct(browser, data, tag) {
 }
 
 // Pedido de recojo con captura ficticia (no hay pago real).
-async function placeOrder(browser, data, own, product) {
+// `info`: se adjuntan diagnósticos SANITIZADOS (método, ruta sin tokens, estado y mensajes de consola recortados) del
+// contexto anidado ANTES de cerrarlo; el adjunto del contexto principal no incluye esta página.
+async function placeOrder(browser, data, own, product, info) {
   const ctx = await qaContext(browser);
+  const diag = { consola: [], red: [] };
+  const limpiar = (t) => String(t).replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, '[token]').slice(0, 200);
   try {
     const page = await ctx.newPage();
+    page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) diag.consola.push(`${m.type()}: ${limpiar(m.text())}`); });
+    page.on('pageerror', (e) => diag.consola.push(`pageerror: ${limpiar(e.message)}`));
+    page.on('response', (r) => {
+      const u = new URL(r.url());
+      if (u.pathname.startsWith('/rest/v1/') || u.pathname.startsWith('/auth/')) {
+        diag.red.push(`${r.request().method()} ${u.pathname} ${r.status()}`);
+      }
+    });
     await login(page, 'CLIENTE', own);
     await page.goto(`/productos/${product.productId}`);
+    // El agregado consulta el stock y DESPUÉS escribe el carrito: se espera la escritura real (no un sleep) y se
+    // comprueba que fue aceptada antes de navegar.
+    const escrituraCarrito = page.waitForResponse((r) => r.url().includes('/rest/v1/carrito_productos') && ['POST', 'PATCH'].includes(r.request().method()));
     await page.getByRole('button', { name: /^Agregar al carrito/ }).filter({ visible: true }).first().click();
+    const respuestaCarrito = await escrituraCarrito;
+    expect(respuestaCarrito.ok(), 'el producto propio se guardó en el carrito').toBeTruthy();
     await page.goto('/carrito');
     await expect(page.getByRole('heading', { name: 'Tu carrito', exact: true })).toBeVisible();
+    await expect(page.getByLabel(`Incluir ${product.productName} en el pedido`, { exact: true }), 'el producto propio está en el carrito').toHaveCount(1);
     await page.getByRole('button', { name: 'Recojo en tienda', exact: true }).click();
     await page.getByRole('button', { name: 'Elige el día', exact: true }).click();
     const day = data.tomorrow; // siguiente día de atención (sin domingos), ver global-setup
@@ -70,6 +88,7 @@ async function placeOrder(browser, data, own, product) {
     expect((await submitted).ok()).toBeTruthy();
     await expect(page).toHaveURL(/\/inicio$/);
   } finally {
+    if (info) await info.attach('placeorder-diagnostics', { body: Buffer.from(JSON.stringify(diag, null, 2)), contentType: 'application/json' }).catch(() => {});
     await ctx.close();
   }
 }
@@ -96,7 +115,7 @@ test('QA-027: anular la venta de un pedido web cancela el pedido y bloquea la en
   knownIssue(info, 'QA-027');
   const own = await isolatedClient(browser, data, 'Q027');
   const product = await createOwnProduct(browser, data, 'Q027');
-  await placeOrder(browser, data, own, product);
+  await placeOrder(browser, data, own, product, info);
 
   const key = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
@@ -243,7 +262,7 @@ test('QA-025: Estadísticas rotula Ingreso neto y coincide con Dashboard (bruto 
   const product = await createOwnProduct(browser, data, 'Q025');
   // Venta ficticia por la interfaz del POS: 10 u. × S/1 = 10, descuento porcentual 20 (S/2), pago Yape.
   await page.goto('/ventas');
-  await page.getByRole('searchbox').first().fill(product.productName);
+  await (await buscadorCaja(page)).fill(product.productName);
   await page.getByRole('button', { name: new RegExp(product.productName) }).click();
   for (let i = 1; i < 10; i++) await page.getByRole('button', { name: '+', exact: true }).click();
   await page.getByLabel('Porcentaje de descuento', { exact: true }).fill('20');
@@ -349,7 +368,7 @@ test('QA-026: reseña de producto pendiente se modera desde Reseñas y la public
   knownIssue(info, 'QA-026');
   const own = await isolatedClient(browser, data, 'Q026');
   const product = await createOwnProduct(browser, data, 'Q026');
-  await placeOrder(browser, data, own, product);
+  await placeOrder(browser, data, own, product, info);
 
   const key = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
