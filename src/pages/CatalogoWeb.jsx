@@ -4,6 +4,8 @@ import { Package, Pencil, Scissors } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useDebounce } from '../hooks/useDebounce.js'
+import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { patronIlike } from '../lib/buscarClientes.js'
 import { SELECT_PRODUCTOS, SELECT_SERVICIOS } from '../lib/columnasCatalogo.js'
@@ -45,6 +47,42 @@ async function fichaPorId(tipo, id) {
   const { data, error } = await consulta
   if (error) throw error
   return data
+}
+
+// QA-049: la decisión sobre un borrador pendiente vive en su PROPIO diálogo, por encima del modal de la ficha abierta
+// (z-40 > z-30): antes era un aviso en la página que quedaba detrás del overlay y no se podía pulsar ni alcanzar con
+// el teclado. Escape = conservar (la opción segura); el foco inicial está en «Seguir con la ficha abierta».
+function DialogoConflictoBorrador({ abierta, onSeguir, onDescartar }) {
+  const panelRef = useRef(null)
+  useModalA11y(panelRef)
+  useCerrarConEscape(onSeguir)
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+      <div ref={panelRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <h2 className="text-base font-semibold text-ink">Hay una ficha abierta con cambios sin guardar</h2>
+        <p className="mt-2 text-sm text-ink/70">
+          Tienes abierta «{abierta}» y pediste abrir otra ficha. No se guardó ni se descartó nada.
+        </p>
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
+            autoFocus
+            onClick={onSeguir}
+            className="rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+          >
+            Seguir con la ficha abierta
+          </button>
+          <button
+            type="button"
+            onClick={onDescartar}
+            className="rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10"
+          >
+            Abrir la solicitada (descarta los cambios sin guardar)
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function CatalogoWeb({ activo = true }) {
@@ -153,7 +191,7 @@ export default function CatalogoWeb({ activo = true }) {
     if (!activo || !idSolicitado) return undefined
     if (modal && modal.fila.id === idSolicitado && modal.tipo === tab) return undefined
     if (modal) {
-      setAviso({ tipo: 'conflicto', id: idSolicitado, texto: `Hay una ficha abierta con cambios sin guardar: «${modal.fila.nombre}».` })
+      setAviso({ tipo: 'conflicto', id: idSolicitado, tab, texto: `Hay una ficha abierta con cambios sin guardar: «${modal.fila.nombre}».` })
       return undefined
     }
     let vigente = true
@@ -168,6 +206,12 @@ export default function CatalogoWeb({ activo = true }) {
     setModal(null)
     setAviso(null)
     if (idSolicitado) cambiarParametros({ id: null })
+  }
+
+  // Conservar: la ficha abierta sigue intacta (sin abrir la solicitada ni guardar) y la URL vuelve a describirla.
+  function seguirConLaAbierta() {
+    setAviso(null)
+    if (modal) cambiarParametros({ tab: modal.tipo, id: modal.fila.id })
   }
 
   function abrirSolicitadaDescartando() {
@@ -215,19 +259,9 @@ export default function CatalogoWeb({ activo = true }) {
         })}
       </div>
 
-      {aviso && (
+      {aviso && aviso.tipo !== 'conflicto' && (
         <div role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
           <p>{aviso.texto}</p>
-          {aviso.tipo === 'conflicto' && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button type="button" onClick={() => { setAviso(null); cambiarParametros({ id: null }) }} className="rounded-lg border border-red/40 px-3 py-1 text-xs">
-                Seguir con la ficha abierta
-              </button>
-              <button type="button" onClick={abrirSolicitadaDescartando} className="rounded-lg border border-red/40 px-3 py-1 text-xs">
-                Abrir la solicitada (descarta los cambios sin guardar)
-              </button>
-            </div>
-          )}
           {aviso.tipo === 'error' && (
             <button type="button" onClick={() => abrirPorId(aviso.id)} className="mt-2 rounded-lg border border-red/40 px-3 py-1 text-xs">
               Reintentar
@@ -288,6 +322,14 @@ export default function CatalogoWeb({ activo = true }) {
             </button>
           )}
         </>
+      )}
+
+      {aviso?.tipo === 'conflicto' && modal && (
+        <DialogoConflictoBorrador
+          abierta={modal.fila.nombre}
+          onSeguir={seguirConLaAbierta}
+          onDescartar={abrirSolicitadaDescartando}
+        />
       )}
 
       {modal?.tipo === 'servicios' && (

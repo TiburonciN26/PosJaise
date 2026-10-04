@@ -77,6 +77,9 @@ test('«Editar en Web» (ADMIN): abre la MISMA ficha por ID, el borrador POS sig
   const web = formWithTitle(page, 'Contenido Web del producto');
   await expect(web).toBeVisible();
   await expect(web.getByText(p.productName, { exact: false }).first()).toBeVisible();
+  // El modal Web bloquea el fondo (correcto): se cierra con Cancelar, se espera a que desaparezca y recién entonces se pulsa el enlace.
+  await web.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(web).toHaveCount(0);
   await page.getByRole('link', { name: /Volver a Inventario/ }).click();
   await expect(page).toHaveURL(/\/inventario/);
   const formVuelta = formWithTitle(page, 'Editar producto');
@@ -157,7 +160,7 @@ test('guardado alternado POS ↔ Web sin pérdida de campos (producto y servicio
   expect(await h.json(`select row_to_json(t) from (select descripcion, duracion_min from public.servicios where id='${s.serviceId}') t`)).toEqual({ descripcion: 'Texto web del servicio', duracion_min: 55 });
 });
 
-test('servicio: «Editar en Web» abre la ficha por ID, el combo guardado se conserva y la protección sigue en Recompensas Web', async ({ page, data }) => {
+test('servicio: «Editar en Web» abre la ficha por ID, se vuelve a Servicios con el modal POS y la protección sigue en Recompensas Web', async ({ page, data }) => {
   await login(page, 'ADMINISTRADOR', data);
   const s = await servicioPropio(page, data, 'PW5');
   const form = await abrirEdicionServicio(page, s);
@@ -166,6 +169,9 @@ test('servicio: «Editar en Web» abre la ficha por ID, el combo guardado se con
   await expect(page).toHaveURL(new RegExp(`/catalogo-web\\?tab=servicios&id=${s.serviceId}&desde=/servicios`));
   const web = formWithTitle(page, 'Contenido Web del servicio');
   await expect(web).toBeVisible();
+  // Segunda forma de cerrar el modal Web: Escape. Se espera a que desaparezca antes de pulsar el enlace.
+  await page.keyboard.press('Escape');
+  await expect(web).toHaveCount(0);
   await page.getByRole('link', { name: /Volver a Servicios/ }).click();
   await expect(page).toHaveURL(/\/servicios/);
   await formWithTitle(page, 'Editar servicio').getByRole('button', { name: 'Protección económica (Recompensas Web)', exact: true }).click();
@@ -223,4 +229,172 @@ test('permisos: CAJERA y ASISTENTE no ven «Editar en Web» ni entran a Catálog
     }
     await logout(page);
   }
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// QA-049: la decisión sobre un borrador pendiente debe ser accesible (diálogo propio por encima del modal) y no perder
+// nada en silencio. Escenario del defecto: editar A → «Editar en Web» → escribir sin guardar → Atrás → cancelar el modal
+// POS de A → editar B → «Editar en Web».
+// ---------------------------------------------------------------------------------------------------------------------
+const TITULO_CONFLICTO = 'Hay una ficha abierta con cambios sin guardar';
+const dialogoConflicto = (page) => page.getByRole('dialog', { name: TITULO_CONFLICTO });
+
+function contarEscrituras(page) {
+  const escrituras = [];
+  page.on('request', (r) => {
+    if (/\/rest\/v1\/(productos|servicios)\?/.test(r.url()) && ['PATCH', 'POST', 'DELETE'].includes(r.method())) {
+      escrituras.push(`${r.method()} ${new URL(r.url()).pathname}`);
+    }
+  });
+  return escrituras;
+}
+
+async function irAWebDeProducto(page, p) {
+  const form = await abrirEdicionProducto(page, p);
+  await form.getByRole('button', { name: 'Editar en Web', exact: true }).click();
+  const web = formWithTitle(page, 'Contenido Web del producto');
+  await expect(web).toBeVisible();
+  await expect(web.getByText(p.productName, { exact: false }).first()).toBeVisible();
+  return web;
+}
+
+// Llega al conflicto con DOS productos A y B (o producto A y servicio B si `servicioB`).
+async function llegarAlConflicto(page, data, { servicioB = false } = {}) {
+  const A = await productoPropio(page, data, 'PW9a');
+  const B = servicioB ? await servicioPropio(page, data, 'PW9b') : await productoPropio(page, data, 'PW9b');
+  const escrituras = contarEscrituras(page);
+  const webA = await irAWebDeProducto(page, A);
+  await webA.getByLabel('Descripción', { exact: true }).fill('Borrador de A');
+  await page.goBack(); // Atrás del navegador: vuelve al POS con el modal POS de A todavía abierto
+  await expect(page).toHaveURL(/\/inventario/);
+  const posA = formWithTitle(page, 'Editar producto');
+  await expect(posA).toBeVisible();
+  await posA.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(posA).toHaveCount(0);
+  // Navegación DENTRO de la aplicación (sin recargar): una recarga destruiría el borrador de A y no reproduciría el defecto.
+  let formB;
+  if (servicioB) {
+    await page.getByRole('button', { name: 'Abrir menú', exact: true }).click();
+    await page.getByRole('link', { name: 'Servicios', exact: true }).click();
+    await expect(page).toHaveURL(/\/servicios/);
+    await page.getByPlaceholder('Buscar servicio...').fill(B.serviceName);
+    await page.getByRole('row').filter({ hasText: B.serviceName }).getByRole('button', { name: 'Editar', exact: true }).click();
+    formB = formWithTitle(page, 'Editar servicio');
+  } else {
+    await page.getByPlaceholder('Buscar producto...').fill(B.productName);
+    await page.getByRole('row').filter({ has: page.getByText(B.productName, { exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
+    formB = formWithTitle(page, 'Editar producto');
+  }
+  await formB.getByRole('button', { name: 'Editar en Web', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`id=${B.productId ?? B.serviceId}`));
+  await expect(dialogoConflicto(page)).toBeVisible();
+  return { A, B, escrituras };
+}
+
+test('QA-049: la decisión es accesible por ratón (está por encima del overlay) y «Seguir» conserva A sin abrir B ni guardar', async ({ page, data }) => {
+  test.setTimeout(180_000);
+  await login(page, 'ADMINISTRADOR', data);
+  const { A, B, escrituras } = await llegarAlConflicto(page, data);
+  const dialogo = dialogoConflicto(page);
+  // Foco inicial en la opción segura; el clic llega al botón (no lo intercepta el overlay del modal de A).
+  await expect(dialogo.getByRole('button', { name: 'Seguir con la ficha abierta', exact: true })).toBeFocused();
+  await dialogo.getByRole('button', { name: 'Seguir con la ficha abierta', exact: true }).click();
+  await expect(dialogo).toHaveCount(0);
+  const webA = formWithTitle(page, 'Contenido Web del producto');
+  await expect(webA).toBeVisible();
+  await expect(webA.getByText(A.productName, { exact: false }).first()).toBeVisible(); // sigue siendo A, no B
+  await expect(webA.getByLabel('Descripción', { exact: true })).toHaveValue('Borrador de A'); // borrador conservado
+  await expect(page).toHaveURL(new RegExp(`tab=productos&id=${A.productId}`)); // la URL vuelve a describir la ficha abierta
+  expect(await h.json(`select to_json(descripcion) from public.productos where id='${A.productId}'`), 'A no se guardó en silencio').toBeNull();
+  expect(await h.json(`select to_json(descripcion) from public.productos where id='${B.productId}'`), 'B no se tocó').toBeNull();
+  expect(escrituras, 'ninguna escritura involuntaria').toEqual([]);
+});
+
+test('QA-049: «Abrir la solicitada» (por teclado) descarta A solo por decisión explícita y abre exactamente B por ID', async ({ page, data }) => {
+  test.setTimeout(180_000);
+  await login(page, 'ADMINISTRADOR', data);
+  const { A, B, escrituras } = await llegarAlConflicto(page, data);
+  const dialogo = dialogoConflicto(page);
+  await page.keyboard.press('Tab'); // de «Seguir» a «Abrir la solicitada»
+  await expect(dialogo.getByRole('button', { name: /^Abrir la solicitada/ })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(dialogo).toHaveCount(0);
+  const webB = formWithTitle(page, 'Contenido Web del producto');
+  await expect(webB).toBeVisible();
+  await expect(webB.getByText(B.productName, { exact: false }).first()).toBeVisible();
+  await expect(webB.getByText(A.productName, { exact: false })).toHaveCount(0);
+  await expect(webB.getByLabel('Descripción', { exact: true })).toHaveValue(''); // el borrador de A no se arrastra a B
+  await expect(page).toHaveURL(new RegExp(`id=${B.productId}`));
+  expect(await h.json(`select to_json(descripcion) from public.productos where id='${A.productId}'`), 'el borrador descartado de A nunca se guardó').toBeNull();
+  expect(escrituras).toEqual([]);
+});
+
+test('QA-049: Escape en la decisión equivale a conservar (la ficha abierta no se pierde)', async ({ page, data }) => {
+  test.setTimeout(180_000);
+  await login(page, 'ADMINISTRADOR', data);
+  const { A, escrituras } = await llegarAlConflicto(page, data);
+  await page.keyboard.press('Escape');
+  await expect(dialogoConflicto(page)).toHaveCount(0);
+  const webA = formWithTitle(page, 'Contenido Web del producto');
+  await expect(webA).toBeVisible(); // un solo Escape cierra solo la capa de arriba
+  await expect(webA.getByText(A.productName, { exact: false }).first()).toBeVisible();
+  await expect(webA.getByLabel('Descripción', { exact: true })).toHaveValue('Borrador de A');
+  expect(escrituras).toEqual([]);
+});
+
+test('QA-049: con el mismo ID no hay conflicto: «Editar en Web» de A otra vez recupera A con su borrador', async ({ page, data }) => {
+  test.setTimeout(180_000);
+  await login(page, 'ADMINISTRADOR', data);
+  const A = await productoPropio(page, data, 'PW10');
+  const escrituras = contarEscrituras(page);
+  const webA = await irAWebDeProducto(page, A);
+  await webA.getByLabel('Descripción', { exact: true }).fill('Borrador de A');
+  await page.goBack();
+  const posA = formWithTitle(page, 'Editar producto');
+  await expect(posA).toBeVisible();
+  await posA.getByRole('button', { name: 'Editar en Web', exact: true }).click();
+  await expect(dialogoConflicto(page)).toHaveCount(0);
+  const vuelta = formWithTitle(page, 'Contenido Web del producto');
+  await expect(vuelta.getByLabel('Descripción', { exact: true })).toHaveValue('Borrador de A');
+  expect(escrituras).toEqual([]);
+});
+
+test('QA-049: producto A y servicio B — «Seguir» conserva A y su pestaña; sin guardar nada', async ({ page, data }) => {
+  test.setTimeout(240_000);
+  await login(page, 'ADMINISTRADOR', data);
+  const { A, B, escrituras } = await llegarAlConflicto(page, data, { servicioB: true });
+  await dialogoConflicto(page).getByRole('button', { name: 'Seguir con la ficha abierta', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`tab=productos&id=${A.productId}`));
+  await expect(formWithTitle(page, 'Contenido Web del producto').getByLabel('Descripción', { exact: true })).toHaveValue('Borrador de A');
+  await expect(formWithTitle(page, 'Contenido Web del servicio')).toHaveCount(0);
+  expect(await h.json(`select to_json(descripcion) from public.servicios where id='${B.serviceId}'`)).toBeNull();
+  expect(escrituras, 'ninguna escritura involuntaria').toEqual([]);
+});
+
+test('QA-049: producto A y servicio B — «Abrir la solicitada» abre exactamente el servicio B por ID y descarta A solo por decisión explícita', async ({ page, data }) => {
+  test.setTimeout(240_000);
+  await login(page, 'ADMINISTRADOR', data);
+  const { A, B, escrituras } = await llegarAlConflicto(page, data, { servicioB: true });
+  await dialogoConflicto(page).getByRole('button', { name: /^Abrir la solicitada/ }).click();
+  const webB = formWithTitle(page, 'Contenido Web del servicio');
+  await expect(webB).toBeVisible();
+  await expect(webB.getByText(B.serviceName, { exact: false }).first()).toBeVisible();
+  await expect(formWithTitle(page, 'Contenido Web del producto')).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`tab=servicios&id=${B.serviceId}`));
+  expect(await h.json(`select to_json(descripcion) from public.productos where id='${A.productId}'`)).toBeNull();
+  expect(escrituras, 'ninguna escritura involuntaria').toEqual([]);
+});
+
+test('QA-049: tras decidir, el retorno a POS es utilizable (cerrar Web con Cancelar y pulsar «Volver a Inventario»)', async ({ page, data }) => {
+  test.setTimeout(180_000);
+  await login(page, 'ADMINISTRADOR', data);
+  await llegarAlConflicto(page, data);
+  await dialogoConflicto(page).getByRole('button', { name: 'Seguir con la ficha abierta', exact: true }).click();
+  const web = formWithTitle(page, 'Contenido Web del producto');
+  await expect(web).toBeVisible();
+  await web.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  await expect(web).toHaveCount(0);
+  await page.getByRole('link', { name: /Volver a Inventario/ }).click();
+  await expect(page).toHaveURL(/\/inventario/);
+  await expect(page.getByPlaceholder('Buscar producto...')).toBeVisible();
 });
