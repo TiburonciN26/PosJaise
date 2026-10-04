@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Encabezado, Pildora } from './ui.jsx'
+import { REGLA_CUPONES, REGLA_MONEDAS, REGLA_SELLOS, REGLA_SERVICIOS } from './lib.js'
 
 const PASOS = [
   ['Compras y reservas', 'Usa tu cuenta al reservar y comprar para que todo quede vinculado a ti.'],
@@ -22,7 +23,7 @@ const CONDICIONES = [
 // PROPUESTA (5 pts por S/20 en servicios, 5 por S/40 en productos): hoy
 // el sistema usa sus propios multiplicadores (panel "Puntos Web" del
 // POS), por eso van marcadas como "Tasas propuestas".
-export default function SeccionComo() {
+export default function SeccionComo({ programaActivo = false }) {
   return (
     <section className="flex flex-col gap-6">
       <Encabezado titulo="Cómo funciona Club Jaise" texto="En cuatro pasos." />
@@ -83,6 +84,20 @@ export default function SeccionComo() {
           canjes se bloquean hasta compensarlo con nuevas compras. No es una deuda de dinero.
         </p>
       </div>
+
+      {programaActivo && (
+        <div className="liquid-glass flex flex-col gap-2.5 rounded-none p-6">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Reglas del programa</span>
+          <ul className="flex list-disc flex-col gap-1.5 pl-[18px] text-[13px] leading-snug text-white/80">
+            <li>Las monedas se ganan al confirmarse la compra: 5 por cada S/20 netos en servicios y 5 por cada S/40 netos en productos. El envío no suma.</li>
+            <li>{REGLA_MONEDAS}</li>
+            <li>{REGLA_CUPONES}</li>
+            <li>{REGLA_SERVICIOS}</li>
+            <li>{REGLA_SELLOS}</li>
+            <li>Gastar monedas o no visitarnos no baja tu nivel. Solo una compra anulada puede restar de tu clasificación.</li>
+          </ul>
+        </div>
+      )}
 
       <div>
         <Link
