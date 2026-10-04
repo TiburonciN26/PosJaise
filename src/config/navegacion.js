@@ -23,6 +23,7 @@ import {
   Gift,
   Stamp,
   Image,
+  Coins,
 } from 'lucide-react'
 
 export const secciones = [
@@ -142,6 +143,16 @@ export const secciones = [
     path: '/fidelizacion-web',
     label: 'Fidelización Web',
     icono: Stamp,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    // Administración de Recompensas Fase 2 (catálogo, sellos, protección de
+    // servicios, programa). Solo ADMINISTRADOR; el backend lo vuelve a exigir.
+    path: '/recompensas-web',
+    label: 'Recompensas Web',
+    icono: Coins,
     roles: ['ADMINISTRADOR'],
     tema: 'rojo',
     padre: '/web',

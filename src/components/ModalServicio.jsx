@@ -95,6 +95,7 @@ export default function ModalServicio({
   serviciosExistentes,
   onCerrar,
   onGuardado,
+  onEditarEnWeb,
 }) {
   const idBase = useId()
   const panelRef = useRef(null)
@@ -775,6 +776,16 @@ export default function ModalServicio({
           <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
             {error}
           </p>
+        )}
+
+        {onEditarEnWeb && (
+          <button
+            type="button"
+            onClick={onEditarEnWeb}
+            className="mt-4 w-full rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+          >
+            Editar en Web
+          </button>
         )}
 
         <div className="mt-4 flex gap-2">

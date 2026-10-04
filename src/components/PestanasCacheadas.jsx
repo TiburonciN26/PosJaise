@@ -32,6 +32,7 @@ const ContactoWeb = lazy(() => import('../pages/ContactoWeb.jsx'))
 const PuntosWeb = lazy(() => import('../pages/PuntosWeb.jsx'))
 const ReferidosWeb = lazy(() => import('../pages/ReferidosWeb.jsx'))
 const FidelizacionWeb = lazy(() => import('../pages/FidelizacionWeb.jsx'))
+const RecompensasWeb = lazy(() => import('../pages/RecompensasWeb.jsx'))
 const GaleriaWeb = lazy(() => import('../pages/GaleriaWeb.jsx'))
 
 const PAGINAS = {
@@ -58,6 +59,7 @@ const PAGINAS = {
   '/puntos-web': PuntosWeb,
   '/referidos-web': ReferidosWeb,
   '/fidelizacion-web': FidelizacionWeb,
+  '/recompensas-web': RecompensasWeb,
   '/galeria-web': GaleriaWeb,
 }
 
