@@ -124,7 +124,12 @@ test('QA-012: dos atenciones del mismo día deben contar una visita', async ({ p
   await page.getByRole('button', { name: 'Ver historial de visitas', exact: true }).click();
   await page.reload();
   await expect(page.getByText('Cargando...', { exact: true })).toHaveCount(0);
+  // Recompensas muestra un esqueleto (no el texto "Cargando..."): se espera al dato real antes de leer.
+  await expect(page.getByText('1 de 5 visitas', { exact: true })).toBeVisible();
   const loyalty = await page.locator('body').innerText();
+  // Recompensas carga mis_puntos en cualquier subpestaña: se espera a que terminen las consultas de la
+  // pantalla anterior para no capturar una respuesta cuyo cuerpo se descarta al navegar (error del arnés).
+  await page.waitForLoadState('networkidle');
   const pointsResult = page.waitForResponse(r => r.url().includes('/rpc/mis_puntos'));
   await page.goto('/mis-puntos');
   const points = await (await pointsResult).json();

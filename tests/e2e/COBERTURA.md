@@ -1,6 +1,6 @@
 # Matriz de cobertura QA (corte 2026-10-03, ampliado)
 
-Supabase Local TEST, rama `testing`, 124 casos en 20 archivos. **No es cobertura total**: lista lo que cada
+Supabase Local TEST, rama `testing`, 137 casos en 21 archivos. **No es cobertura total**: lista lo que cada
 caso comprueba y las brechas que siguen abiertas. Un caso «omitido» no cuenta como aprobado. Una fila
 «expected» en un caso de defecto conocido (`expectedFailureIDs`, hoy vacía) significa defecto
 reproducido, no funcionalidad aprobada.
@@ -18,6 +18,7 @@ reproducido, no funcionalidad aprobada.
 | Ventas, inventario, gastos, citas, clientes | CRUD y límites por UI (`expanded-*`, `phase2-*`, `known-issues`) | Compras/garantías de mobiliario, pagos completos de atención, notificaciones |
 | Reseñas | QA-008, QA-026, QA-032 (producto y servicio) | Reseñas generales (`resenas`) de punta a punta |
 | Finanzas | QA-024/025/031: Dashboard ↔ Estadísticas, descuentos, envío. Delivery con cupón **porcentual (15 %) y de monto fijo (S/3)** comprobado por Codex por UI (venta, anulación, neto y recarga, capturas de escritorio y móvil) | Límites del informe de Codex: no se probó devolución monetaria real ni todas las combinaciones de pedido; la suite automatizada solo cubre el delivery sin cupón (el cupón, por SQL y por la UI de Codex) |
+| Recompensas (Fase 1) | `qa-recompensas-037-040`: **QA-037** acceso sin sesión solo a Canjear puntos y Cómo funciona (secciones personales con puerta de login y sin consultas personales; el resto del portal y el POS siguen protegidos; cerrar sesión termina en /login); **QA-038** `tablist/tab/tabpanel` (ids, `aria-controls`, tabindex único, flechas/Inicio/Fin, recarga y atrás/adelante); **QA-039** fallos parciales por recurso (cupones, puntos, sellos, historial, ofertas) con aviso y reintento, sin saldo 0 ni «no tienes cupones» falsos; **QA-040** la píldora de sellos a 320 px y desborde horizontal de las 6 secciones a 320/390/768/1440 px; control de que los efectos y animaciones (tarjeta 3D, cupones Oro/Plata, tarjetas de nivel) siguen activos | El canje real, Movimientos y la separación de puntos no existen (Fase 2); las interrupciones de red son inyectadas por el navegador de pruebas, no fallos espontáneos del backend; no se probó con un teléfono físico ni con lector de pantalla real; el aislamiento entre dos cuentas en la misma pestaña se apoya en que el portal se desmonta al cerrar sesión (no hay una segunda CLIENTE en esta prueba) |
 | Accesibilidad | Foco de 4 diálogos, nombres accesibles de la galería (QA-016/017/018/030) | ~40 usos del hook `useModalA11y` sin prueba propia; lectores de pantalla |
 | Rendimiento | Scripts `performance-grupo7-*.mjs` (dev y build, N=5) y capturas para revisión visual; no forman parte de la suite | Teléfono físico, INP, PWA/Service Worker, GitHub Pages |
 

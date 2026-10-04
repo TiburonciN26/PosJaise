@@ -3,6 +3,10 @@
 // independientes de Codex incluyen QA-020 a QA-023 y QA-034); Re-test en QA-035 (corregido en Local, pendiente de verificación independiente).
 // Verificado NO deriva expectedFailureIDs: esa lista (abajo) es explícita e independiente de estos estados.
 export const issueStatus = {
+  'QA-037': 'Re-test',
+  'QA-038': 'Re-test',
+  'QA-039': 'Re-test',
+  'QA-040': 'Re-test',
   'QA-035': 'Re-test',
   'QA-036': 'Re-test',
   'QA-034': 'Verificado',
@@ -60,4 +64,7 @@ export const issueStatus = {
 // 2026-10-03: QA-035 (solo ADMINISTRADOR y CAJERA agregan stock; historial solo por la RPC) corregido en Local con la
 // migración 20261002000008; sus cuatro pruebas específicas (qa-autorizacion-configuracion.spec.mjs) pasan de verdad,
 // así que se retiró de la lista (la lista queda vacía; en Notion sigue en Re-test hasta que Codex lo verifique).
+// 2026-10-03: QA-037 a QA-040 (Recompensas Fase 1) se reprodujeron antes de corregir (6 de sus casos fallaban por la razón
+// esperada) y se corrigieron en Local; sus casos (qa-recompensas-037-040.spec.mjs) pasan de verdad, así que no figuran aquí
+// (en Notion: Re-test hasta que Codex los verifique).
 export const expectedFailureIDs = new Set([]);

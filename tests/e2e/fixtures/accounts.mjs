@@ -9,6 +9,10 @@ export const accounts = {
   ASISTENTE: 'asistentetest01@test.local',
 };
 export const issueURLs = {
+  'QA-037': 'https://app.notion.com/p/3eef27109e6a815db472c44f2b84573a',
+  'QA-038': 'https://app.notion.com/p/3eef27109e6a81cfa7a4eab9614be4a4',
+  'QA-039': 'https://app.notion.com/p/3eef27109e6a8169bf4ce2a0b1d86619',
+  'QA-040': 'https://app.notion.com/p/3eef27109e6a812782fdc447cb7e0d87',
   'QA-035': 'https://app.notion.com/p/3eef27109e6a8142b9add15068e4c8d9',
   'QA-036': 'https://app.notion.com/p/3eef27109e6a816eb3faf5ec40875411',
   'QA-033': 'https://app.notion.com/p/3eef27109e6a8173a6a9e13e177cdd19',
