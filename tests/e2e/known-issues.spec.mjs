@@ -1,5 +1,5 @@
 import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
-import { login, formWithTitle, createAttention } from './helpers.mjs';
+import { login, formWithTitle, createAttention, createService } from './helpers.mjs';
 
 test('QA-003: stock decimal debe rechazarse, nunca truncarse', async ({ page, data }, info) => {
   knownIssue(info, 'QA-003');
@@ -146,13 +146,21 @@ test('QA-012: dos atenciones del mismo día deben contar una visita', async ({ p
 test('QA-004: interrupción tras borrar líneas debe conservar servicios', async ({ page, data }, info) => {
   knownIssue(info, 'QA-004');
   await login(page, 'ADMINISTRADOR', data);
+  // Servicio ÚNICO por ejecución del caso: con fixtures reutilizados (QA_REUSE_FIXTURES) varias citas de la
+  // misma clienta comparten el servicio del fixture y la búsqueda por clienta devolvía dos. Se prepara ANTES
+  // de abrir el modal y la cita se identifica por este servicio.
+  const unico = { serviceName: `${data.prefix} Q004 ${Date.now().toString(36)}` };
+  await createService(page, unico);
   await page.goto('/citas');
   await page.getByRole('button', { name: 'Nueva cita', exact: true }).filter({ visible: true }).click();
   const form = formWithTitle(page, 'Nueva cita');
   await form.getByPlaceholder('Buscar cliente...').fill(data.clientName);
   await form.getByRole('button', { name: data.clientName, exact: true }).click();
-  await form.getByPlaceholder('Buscar servicio...').fill(data.serviceName);
-  await form.getByRole('button', { name: new RegExp(data.serviceName) }).first().click();
+  await form.getByPlaceholder('Buscar servicio...').fill(unico.serviceName);
+  const sugerencia = form.getByRole('button', { name: new RegExp(`^${unico.serviceName} \\d+ min$`) });
+  await expect(sugerencia).toHaveCount(1);
+  await sugerencia.click();
+  await expect(form.getByText(unico.serviceName, { exact: true })).toBeVisible();
   // Create a separate future appointment; do not reuse manual-audit records.
   const date = new Date(`${data.today}T12:00:00-05:00`);
   date.setUTCDate(date.getUTCDate() + 2);
@@ -171,13 +179,15 @@ test('QA-004: interrupción tras borrar líneas debe conservar servicios', async
       await page.getByRole('button', { name: new RegExp(`^${targetMonth}$`, 'i') }).click();
     }
     await page.getByRole('button', { name: 'Buscar citas', exact: true }).click();
-    await page.getByPlaceholder('Buscar por cliente o servicio...').fill(data.clientName);
-    await page.getByRole('button', { name: new RegExp(data.clientName) }).filter({ visible: true }).click();
+    await page.getByPlaceholder('Buscar por cliente o servicio...').fill(unico.serviceName);
+    const cita = page.getByRole('button').filter({ hasText: data.clientName }).filter({ hasText: unico.serviceName }).filter({ visible: true });
+    await expect(cita, 'una sola cita con el servicio único de este caso').toHaveCount(1);
+    await cita.click();
   }
   await findAppointment();
   await page.getByRole('button', { name: 'Editar', exact: true }).filter({ visible: true }).click();
   const editing = formWithTitle(page, 'Editar cita');
-  await expect(editing.getByText(data.serviceName, { exact: true })).toBeVisible();
+  await expect(editing.getByText(unico.serviceName, { exact: true })).toBeVisible();
   await editing.getByLabel('Fecha y hora', { exact: false }).fill(`${day}T15:15`);
   // Guardar una cita ahora es UN solo RPC atómico (guardar_cita_pos, migración
   // 20261002000001): no hay un DELETE intermedio que pueda quedar confirmado
@@ -200,7 +210,7 @@ test('QA-004: interrupción tras borrar líneas debe conservar servicios', async
   const body = await page.locator('body').innerText();
   await info.attach('interrupcion-real', { body: Buffer.from(JSON.stringify({ prefix: data.prefix, date: day, rpcResponded: true, reloaded: true, observed: body })), contentType: 'application/json' });
   expectKnownFailure('QA-004');
-  await expect(page.getByText(data.serviceName, { exact: true }).filter({ visible: true })).not.toHaveCount(0);
+  await expect(page.getByText(unico.serviceName, { exact: true }).filter({ visible: true })).not.toHaveCount(0);
 });
 
 test('QA-005: reclamar promoción debe guardar un cupón sin error SQL', async ({ page, browser, data }, info) => {

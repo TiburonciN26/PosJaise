@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { X, ClipboardCheck } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useBusquedaAtenciones } from '../hooks/useBusquedaAtenciones.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import IconoBuscar from './IconoBuscar.jsx'
@@ -31,7 +32,11 @@ function formatearFechaCorta(fechaIso) {
 // (o que quedaron listas al completar una cita) y todavía no se cobraron.
 // No se muestra de qué asistente es cada una — a la cajera solo le hace
 // falta identificar cuál pidió el cliente, no quién la atendió.
-export default function ModalBuscarAtencion({ atenciones, cargando, onSeleccionar, onCerrar }) {
+// QA-044: la lista ya NO llega completa desde Ventas (el servidor corta cada respuesta en 1000 filas y las
+// pendientes posteriores eran invisibles aun con el buscador). El modal busca en el servidor, con orden
+// (fecha, id), límite pequeño y aviso cuando hay más coincidencias de las que se muestran.
+// `excluirIds`: atenciones ya agregadas al carrito de este ticket (no se pueden agregar dos veces).
+export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, onCerrar }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const [busqueda, setBusqueda] = useState('')
@@ -39,14 +44,11 @@ export default function ModalBuscarAtencion({ atenciones, cargando, onSelecciona
 
   useCerrarConEscape(onCerrar)
 
-  const filtradas = atenciones.filter((atencion) => {
-    const texto = busqueda.trim().toLowerCase()
-    if (!texto) return true
-    return (
-      (atencion.servicios?.nombre ?? '').toLowerCase().includes(texto) ||
-      (atencion.clientes?.nombre ?? '').toLowerCase().includes(texto)
-    )
-  })
+  const busquedaAtenciones = useBusquedaAtenciones({ termino: busqueda, excluirIds })
+  const { listo, buscando, error, truncado } = busquedaAtenciones
+  // Lo que ya está en el carrito desaparece al instante (sin esperar la nueva consulta).
+  const idsExcluidos = new Set(excluirIds)
+  const filtradas = busquedaAtenciones.resultados.filter((atencion) => !idsExcluidos.has(atencion.id))
 
   // Agrupadas por cliente para que la cajera vea de un vistazo todo lo
   // pendiente de la misma persona, en vez de buscarla entre atenciones de
@@ -82,14 +84,14 @@ export default function ModalBuscarAtencion({ atenciones, cargando, onSelecciona
     }
 
     if (evento.key === 'ArrowDown') {
-      if (filtradas.length === 0) return
+      if (!listo || filtradas.length === 0) return
       evento.preventDefault()
       setIndiceActivo((indice) => (indice + 1) % filtradas.length)
       return
     }
 
     if (evento.key === 'ArrowUp') {
-      if (filtradas.length === 0) return
+      if (!listo || filtradas.length === 0) return
       evento.preventDefault()
       setIndiceActivo((indice) => (indice - 1 + filtradas.length) % filtradas.length)
       return
@@ -97,6 +99,8 @@ export default function ModalBuscarAtencion({ atenciones, cargando, onSelecciona
 
     if (evento.key !== 'Enter') return
     evento.preventDefault()
+    // Con la búsqueda pendiente o fallida Enter no elige nada (podría ser una fila desactualizada).
+    if (!listo) return
 
     if (indiceActivo >= 0 && filtradas[indiceActivo]) {
       onSeleccionar(filtradas[indiceActivo])
@@ -161,8 +165,21 @@ export default function ModalBuscarAtencion({ atenciones, cargando, onSelecciona
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {cargando ? (
-            <p className="p-6 text-center font-mono text-sm text-ink/60">Cargando...</p>
+          {buscando ? (
+            <p role="status" className="p-6 text-center font-mono text-sm text-ink/60">Cargando...</p>
+          ) : error ? (
+            <div role="alert" className="flex flex-col items-center gap-2 p-6 text-center">
+              <p className="text-sm text-red">
+                No se pudieron cargar las atenciones pendientes. Esto no significa que no haya.
+              </p>
+              <button
+                type="button"
+                onClick={busquedaAtenciones.reintentar}
+                className="rounded-lg border border-border-strong px-3 py-1.5 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+              >
+                Reintentar
+              </button>
+            </div>
           ) : filtradas.length === 0 ? (
             <EstadoVacio
               icono={ClipboardCheck}
@@ -211,6 +228,12 @@ export default function ModalBuscarAtencion({ atenciones, cargando, onSelecciona
                 </div>
               </div>
             ))
+          )}
+          {listo && truncado && (
+            <p className="border-t border-border px-3 py-2 text-center text-xs text-ink/60">
+              Hay más atenciones pendientes de las que se muestran. Escribe el nombre de la clienta o del servicio
+              para encontrar la que buscas.
+            </p>
           )}
         </div>
       </div>
