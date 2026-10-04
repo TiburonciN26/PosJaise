@@ -24,6 +24,7 @@ import {
   Stamp,
   Image,
   Coins,
+  LayoutGrid,
 } from 'lucide-react'
 
 export const secciones = [
@@ -153,6 +154,16 @@ export const secciones = [
     path: '/recompensas-web',
     label: 'Recompensas Web',
     icono: Coins,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rojo',
+    padre: '/web',
+  },
+  {
+    // Web → Catálogo → Productos / Servicios: contenido editorial y configuración Web de las MISMAS fichas del POS.
+    // Solo ADMINISTRADOR (el acceso directo por URL de otro rol redirige, como el resto de secciones de Web).
+    path: '/catalogo-web',
+    label: 'Catálogo Web',
+    icono: LayoutGrid,
     roles: ['ADMINISTRADOR'],
     tema: 'rojo',
     padre: '/web',

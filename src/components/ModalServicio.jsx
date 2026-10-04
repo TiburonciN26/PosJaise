@@ -7,6 +7,7 @@ import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
 import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
+import { datosPosServicio, datosWebServicio } from '../lib/catalogoCampos.js'
 import {
   eliminarFoto,
   procesarImagen,
@@ -58,7 +59,8 @@ function formularioDesdeServicio(servicio) {
   }
 }
 
-function validar(formulario) {
+function validar(formulario, modo) {
+  if (modo === 'web') return validarWeb(formulario)
   if (!formulario.nombre.trim()) return 'El nombre es obligatorio.'
 
   const categoriaFinal =
@@ -79,6 +81,10 @@ function validar(formulario) {
     }
   }
 
+  return null
+}
+
+function validarWeb(formulario) {
   if (formulario.aDomicilio && formulario.costoDomicilio.trim()) {
     const costo = parseFloat(formulario.costoDomicilio)
     if (Number.isNaN(costo) || costo < 0) {
@@ -89,14 +95,23 @@ function validar(formulario) {
   return null
 }
 
+// Separación POS / Web: el MISMO registro se edita desde dos lugares y cada uno guarda SOLO sus columnas.
+//  - modo 'pos' (Servicios): nombre, categoría, precio REAL, duración y estado. Una ficha nueva se crea solo con esto.
+//  - modo 'web' (Web → Catálogo → Servicios, solo ADMINISTRADOR): precio variable + nota, disponibilidad y costo a
+//    domicilio, descripción, «el resultado dura», combo, tendencia, foto, galería y contenido editorial.
+// Al guardar en un modo el UPDATE no menciona las columnas del otro, así que no se pierde nada. El precio real es
+// compartido: en modo web se muestra de solo lectura (se cambia en Servicios).
 export default function ModalServicio({
   servicio,
   nombreInicial,
-  categoriasExistentes,
+  categoriasExistentes = [],
+  modo = 'pos',
   onCerrar,
   onGuardado,
   onEditarEnWeb,
+  onProteccion,
 }) {
+  const esWeb = modo === 'web'
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
@@ -127,7 +142,7 @@ export default function ModalServicio({
   // se deriva del índice en el array al guardar.
   const [fotosGaleria, setFotosGaleria] = useState([])
   const [idsGaleriaEliminados, setIdsGaleriaEliminados] = useState([])
-  const [cargandoGaleria, setCargandoGaleria] = useState(esEdicion)
+  const [cargandoGaleria, setCargandoGaleria] = useState(esEdicion && esWeb)
   const [procesandoGaleria, setProcesandoGaleria] = useState(false)
   const [errorGaleria, setErrorGaleria] = useState(null)
 
@@ -155,7 +170,7 @@ export default function ModalServicio({
   }, [fotoNueva])
 
   useEffect(() => {
-    if (!esEdicion) return undefined
+    if (!esEdicion || !esWeb) return undefined
     let vigente = true
 
     supabase
@@ -179,7 +194,7 @@ export default function ModalServicio({
     return () => {
       vigente = false
     }
-  }, [esEdicion, servicio?.id])
+  }, [esEdicion, esWeb, servicio?.id])
 
   async function procesarNuevaFoto(archivo) {
     if (!tipoDeImagenValido(archivo)) {
@@ -281,7 +296,7 @@ export default function ModalServicio({
   async function guardar(evento) {
     evento.preventDefault()
 
-    const mensajeError = validar(formulario)
+    const mensajeError = validar(formulario, modo)
     if (mensajeError) {
       setError(mensajeError)
       return
@@ -298,7 +313,7 @@ export default function ModalServicio({
     // Si hay foto nueva, se sube primero: si el guardado en BD falla
     // después, se borra el archivo recién subido para no dejar huérfanos.
     let rutaFotoSubida = null
-    if (fotoNueva) {
+    if (esWeb && fotoNueva) {
       try {
         const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
         rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
@@ -311,40 +326,10 @@ export default function ModalServicio({
 
     const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoActual
 
-    const datos = {
-      nombre: formulario.nombre.trim(),
-      categoria: categoriaFinal,
-      precio: parseFloat(formulario.precio),
-      duracion_min: formulario.duracionMin.trim() ? parseInt(formulario.duracionMin, 10) : null,
-      descripcion: formulario.descripcion.trim() ? formulario.descripcion.trim() : null,
-      activo: formulario.activo,
-      en_tendencia: formulario.enTendencia,
-      a_domicilio: formulario.aDomicilio,
-      costo_domicilio: formulario.aDomicilio && formulario.costoDomicilio.trim() ? parseFloat(formulario.costoDomicilio) : null,
-      precio_variable: formulario.precioVariable,
-      nota_precio: formulario.precioVariable && formulario.notaPrecio.trim() ? formulario.notaPrecio.trim() : null,
-      duracion_resultado: formulario.duracionResultado.trim() ? formulario.duracionResultado.trim() : null,
-      combo_con: formulario.comboCon || null,
-      foto_url: fotoFinal,
-      pasos: pasos
-        .filter((paso) => paso.nombre?.trim())
-        .map((paso) => ({
-          nombre: paso.nombre.trim(),
-          minutos: paso.minutos ? parseInt(paso.minutos, 10) || null : null,
-          texto: paso.texto?.trim() ?? '',
-        })),
-      especificaciones: especificaciones
-        .filter((spec) => spec.clave?.trim())
-        .map((spec) => ({ clave: spec.clave.trim(), valor: spec.valor?.trim() ?? '' })),
-      herramientas: herramientas
-        .filter((item) => item.nombre?.trim())
-        .map((item) => ({ nombre: item.nombre.trim(), descripcion: item.descripcion?.trim() ?? '' })),
-      materiales: materiales
-        .filter((item) => item.nombre?.trim())
-        .map((item) => ({ nombre: item.nombre.trim(), descripcion: item.descripcion?.trim() ?? '' })),
-      cuidados_antes: cuidadosAntes.map((item) => item.texto?.trim()).filter(Boolean),
-      cuidados_despues: cuidadosDespues.map((item) => item.texto?.trim()).filter(Boolean),
-    }
+    // Cada modo guarda SOLO sus columnas (ver el comentario del componente).
+    const datosPos = datosPosServicio({ formulario, categoriaFinal })
+    const datosWeb = datosWebServicio({ formulario, fotoFinal, pasos, especificaciones, herramientas, materiales, cuidadosAntes, cuidadosDespues })
+    const datos = esWeb ? datosWeb : datosPos
 
     const { data: filaGuardada, error: errorGuardado } = esEdicion
       ? await supabase.from('servicios').update(datos).eq('id', servicio.id).select().single()
@@ -360,16 +345,16 @@ export default function ModalServicio({
 
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
-    if (fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
+    if (esWeb && fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
 
     // Galería (servicio_fotos): se procesa DESPUÉS de que el servicio ya
     // tiene id real (necesario para uno nuevo). Si una foto puntual
     // falla no se bloquea el guardado del servicio, que ya quedó bien —
     // se puede reintentar reabriendo el modal.
-    if (idsGaleriaEliminados.length > 0) {
+    if (esWeb && idsGaleriaEliminados.length > 0) {
       await supabase.from('servicio_fotos').delete().in('id', idsGaleriaEliminados)
     }
-    for (let indice = 0; indice < fotosGaleria.length; indice += 1) {
+    for (let indice = 0; esWeb && indice < fotosGaleria.length; indice += 1) {
       const item = fotosGaleria[indice]
       if (item.esNueva) {
         try {
@@ -401,10 +386,18 @@ export default function ModalServicio({
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
-          {esEdicion ? 'Editar servicio' : 'Nuevo servicio'}
+          {esWeb ? 'Contenido Web del servicio' : esEdicion ? 'Editar servicio' : 'Nuevo servicio'}
         </h2>
 
+        {esWeb && (
+          <p className="mt-1 text-sm text-ink/70">
+            {servicio.nombre} · precio real {Number(servicio.precio).toFixed(2)} (se cambia en Servicios)
+          </p>
+        )}
+
         <div className="mt-4 space-y-3">
+          {!esWeb && (
+          <>
           <div>
             <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
@@ -477,6 +470,11 @@ export default function ModalServicio({
             </div>
           </div>
 
+          </>
+          )}
+
+          {esWeb && (
+          <>
           <div>
             <label className="flex items-center gap-2 text-sm text-ink">
               <input
@@ -700,6 +698,10 @@ export default function ModalServicio({
             campos={[{ clave: 'texto', placeholder: 'Ej. Espera 48 horas antes de lavar' }]}
           />
 
+          </>
+          )}
+
+          {!esWeb && (
           <div>
             <Etiqueta>Estado</Etiqueta>
             <div className="grid grid-cols-2 gap-2">
@@ -728,6 +730,10 @@ export default function ModalServicio({
             </div>
           </div>
 
+          )}
+
+          {esWeb && (
+          <>
           <label className="flex items-center gap-2 text-sm text-ink">
             <input
               type="checkbox"
@@ -760,6 +766,8 @@ export default function ModalServicio({
               />
             )}
           </div>
+          </>
+          )}
         </div>
 
         {error && (
@@ -768,13 +776,23 @@ export default function ModalServicio({
           </p>
         )}
 
-        {onEditarEnWeb && (
+        {!esWeb && onEditarEnWeb && (
           <button
             type="button"
             onClick={onEditarEnWeb}
             className="mt-4 w-full rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
           >
             Editar en Web
+          </button>
+        )}
+
+        {!esWeb && onProteccion && (
+          <button
+            type="button"
+            onClick={onProteccion}
+            className="mt-2 w-full rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+          >
+            Protección económica (Recompensas Web)
           </button>
         )}
 

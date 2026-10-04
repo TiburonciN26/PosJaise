@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Coins, Gift, Image, MapPin, PiggyBank, ShoppingBag, Stamp, Star, Ticket } from 'lucide-react'
+import { Coins, Gift, LayoutGrid, Image, MapPin, PiggyBank, ShoppingBag, Stamp, Star, Ticket } from 'lucide-react'
 import IconoMartillo from '../components/IconoMartillo.jsx'
 
 // Panel administrativo de la pestaña Web de clientes — ya no es un
@@ -29,6 +29,14 @@ export default function Web() {
       >
         <Ticket className="h-4 w-4" />
         Ir a Promociones
+      </Link>
+
+      <Link
+        to="/catalogo-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-red/40 bg-red/10 px-4 py-3 text-sm font-medium text-red transition-colors hover:bg-red/15"
+      >
+        <LayoutGrid className="h-4 w-4" />
+        Ir a Catálogo Web
       </Link>
 
       <Link

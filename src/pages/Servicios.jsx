@@ -8,6 +8,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { useDebounce } from '../hooks/useDebounce.js'
+import { SELECT_SERVICIOS } from '../lib/columnasCatalogo.js'
 import { consultaListadoServicios, categoriasDeServicios, TAMANO_PAGINA_SERVICIOS } from '../lib/buscarServicios.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -70,9 +71,6 @@ export default function Servicios({ activo = true }) {
   // QA-046: la búsqueda, el orden y la paginación los resuelve el SERVIDOR (como Inventario). Antes se
   // descargaba toda la tabla sin paginar y el servidor la cortaba en 1000, dejando fuera las fichas
   // posteriores aunque se buscaran por nombre.
-  const SELECT_SERVICIOS =
-    'id, nombre, categoria, precio, duracion_min, activo, foto_url, descripcion, en_tendencia, a_domicilio, costo_domicilio, precio_variable, nota_precio, duracion_resultado, pasos, especificaciones, herramientas, materiales, cuidados_antes, cuidados_despues, combo_con'
-
   async function cargarServicios(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     // Una recarga silenciosa (tras guardar/eliminar) conserva hasta donde el usuario había llegado.
@@ -363,10 +361,16 @@ export default function Servicios({ activo = true }) {
         <ModalServicio
           servicio={modalServicio === 'nuevo' ? null : modalServicio}
           categoriasExistentes={categoriasExistentes}
-          // «Editar en Web»: lleva al MISMO servicio en Web → Recompensas (protección).
-          // Esta pestaña queda montada (PestanasCacheadas), así que el modal, sus
-          // cambios pendientes y el filtro siguen ahí al volver.
+          // «Editar en Web» (solo ADMINISTRADOR, ficha existente): abre el MISMO servicio, por ID, en
+          // Web → Catálogo → Servicios. Esta pestaña queda montada (PestanasCacheadas), así que el modal, sus
+          // cambios pendientes (sin guardar ni descartar) y el filtro siguen ahí al volver.
           onEditarEnWeb={
+            esAdmin && modalServicio !== 'nuevo'
+              ? () => navigate(`/catalogo-web?tab=servicios&id=${modalServicio.id}&desde=/servicios`)
+              : undefined
+          }
+          // La protección económica sigue en Recompensas Web (importes protegidos, no contenido editorial).
+          onProteccion={
             esAdmin && modalServicio !== 'nuevo'
               ? () => navigate(`/recompensas-web?tab=proteccion&servicio=${modalServicio.id}&desde=/servicios`)
               : undefined

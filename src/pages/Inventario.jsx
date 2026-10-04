@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2, Plus, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -10,6 +11,7 @@ import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import ModalProducto from '../components/ModalProducto.jsx'
+import { SELECT_PRODUCTOS } from '../lib/columnasCatalogo.js'
 import ModalAgregarStock from '../components/ModalAgregarStock.jsx'
 import ModalDetalleProducto from '../components/ModalDetalleProducto.jsx'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
@@ -37,11 +39,6 @@ const ORDEN_A_COLUMNA = {
 }
 
 const TAMANO_PAGINA = 50
-
-const SELECT_PRODUCTOS =
-  'id, codigo_barras, nombre, categoria, subcategoria, precio, precio_antes, oferta_hasta, costo, stock_actual, stock_minimo, ' +
-  'proveedor, foto_url, activo, descripcion, contenido, rinde, frecuencia, combo_con, destacado, nuevo, en_inicio, ' +
-  'especificaciones, modo_uso, ideal_para, tips, ingredientes, libre_de'
 
 const RESUMEN_VACIO = {
   total: 0,
@@ -89,6 +86,7 @@ export default function Inventario({ activo = true }) {
   const { rol } = useAuth()
   const { mostrarToast } = useToast()
   const esAdmin = rol === 'ADMINISTRADOR'
+  const navigate = useNavigate()
 
   const [productos, setProductos] = useState([])
   const [resumen, setResumen] = useState(RESUMEN_VACIO)
@@ -502,7 +500,13 @@ export default function Inventario({ activo = true }) {
         <ModalProducto
           producto={modalProducto === 'nuevo' ? null : modalProducto}
           categoriasExistentes={categoriasExistentes}
-          productosExistentes={productos}
+          // «Editar en Web» (solo ADMINISTRADOR, ficha existente): abre el MISMO producto, por ID, en Web → Catálogo →
+          // Productos. Esta pestaña sigue montada: el modal y sus cambios pendientes siguen ahí al volver.
+          onEditarEnWeb={
+            esAdmin && modalProducto !== 'nuevo'
+              ? () => navigate(`/catalogo-web?tab=productos&id=${modalProducto.id}&desde=/inventario`)
+              : undefined
+          }
           onCerrar={() => setModalProducto(null)}
           onGuardado={(productoActualizado) => {
             const esNuevo = modalProducto === 'nuevo'
