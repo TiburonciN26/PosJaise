@@ -67,12 +67,11 @@ test('Servicios: una búsqueda sin coincidencias dice que no hay servicios; si l
   await expect(page.getByText('No se encontraron servicios.', { exact: true })).toHaveCount(0);
 });
 
-test('Servicios → Editar: el combo guardado (fuera de la página de resultados) se conserva y se guarda sin cambiarlo', async ({ page }) => {
+test('Web → Catálogo → Servicios: el combo guardado (fuera de la página de resultados) se conserva y se guarda sin cambiarlo', async ({ page }) => {
+  // El combo es contenido Web (separación POS/Web): se edita en Catálogo Web, abierto por ID.
   await login(page, 'ADMINISTRADOR', {});
-  await page.goto('/servicios');
-  await page.getByPlaceholder('Buscar servicio...').fill(combinado.nombre);
-  await page.getByRole('row').filter({ hasText: combinado.nombre }).getByRole('button', { name: 'Editar', exact: true }).click();
-  const form = formWithTitle(page, 'Editar servicio');
+  await page.goto(`/catalogo-web?tab=servicios&id=${combinado.id}`);
+  const form = formWithTitle(page, 'Contenido Web del servicio');
   await expect(form).toBeVisible();
   const combo = form.getByLabel('Combo sugerido', { exact: false });
   await expect(combo).toHaveValue(objetivo.id); // la selección guardada se recupera por ID

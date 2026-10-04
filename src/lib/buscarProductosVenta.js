@@ -50,3 +50,20 @@ export async function productosPorIds(supabase, ids) {
   if (error) throw error
   return data ?? []
 }
+
+// Combo sugerido de la ficha Web de un producto (QA-047 / separación POS-Web): mismas reglas que Caja (solo activos,
+// acotado, orden determinista) pero también devuelve la ficha elegida por ID para conservar la selección guardada.
+export async function buscarProductosCombo(supabase, termino, { limite = LIMITE_PRODUCTOS_VENTA, excluirId = null } = {}) {
+  let consulta = supabase.from('productos_vista').select('id, nombre').eq('activo', true).order('nombre').order('id').limit(limite)
+  if (excluirId) consulta = consulta.neq('id', excluirId)
+  if (termino.trim()) consulta = consulta.ilike('nombre', patronIlike(termino))
+  const { data, error } = await consulta
+  if (error) throw error
+  return data ?? []
+}
+
+export async function productoNombrePorId(supabase, id) {
+  const { data, error } = await supabase.from('productos_vista').select('id, nombre').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data
+}

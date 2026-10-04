@@ -7,6 +7,8 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
+import SelectorProductoBuscable from './SelectorProductoBuscable.jsx'
+import { datosPosProducto, datosWebProducto } from '../lib/catalogoCampos.js'
 import {
   eliminarFoto,
   procesarImagen,
@@ -74,7 +76,8 @@ function mensajeImporte(texto, mensajeBase, nombre) {
   return `${nombre} debe ser un importe completo: solo números y hasta 2 decimales, sin letras ni símbolos.`
 }
 
-function validar(formulario) {
+function validar(formulario, modo) {
+  if (modo === 'web') return validarWeb(formulario)
   if (!formulario.nombre.trim()) return 'El nombre es obligatorio.'
 
   const costo = leerImporte(formulario.costo)
@@ -87,17 +90,6 @@ function validar(formulario) {
     return mensajeImporte(formulario.precio, 'El precio de venta debe ser un número mayor a 0.', 'El precio de venta')
   }
   if (precio <= 0) return 'El precio de venta debe ser un número mayor a 0.'
-
-  if (formulario.precioAntes.trim()) {
-    const precioAntes = leerImporte(formulario.precioAntes)
-    if (Number.isNaN(precioAntes)) {
-      return mensajeImporte(formulario.precioAntes, 'El precio antes debe ser un número mayor a 0.', 'El precio antes')
-    }
-    if (precioAntes <= 0) return 'El precio antes debe ser un número mayor a 0.'
-    if (precioAntes <= precio) {
-      return 'El precio antes debe ser mayor al precio de venta actual.'
-    }
-  }
 
   // parseInt a secas trunca en silencio ("5.7" -> 5, "5abc" -> 5) sin
   // avisar — QA-003: comparar contra Number() del mismo texto detecta
@@ -113,7 +105,32 @@ function validar(formulario) {
   return null
 }
 
-export default function ModalProducto({ producto, categoriasExistentes, productosExistentes, onCerrar, onGuardado }) {
+// Modo web: solo se valida lo editorial. El precio REAL viene de la ficha (solo lectura aquí) y «precio antes» debe
+// ser mayor que él. La fecha de oferta es informativa: no hay vencimiento automático en este lote.
+function validarWeb(formulario) {
+  const precio = leerImporte(formulario.precio)
+  if (formulario.precioAntes.trim()) {
+    const precioAntes = leerImporte(formulario.precioAntes)
+    if (Number.isNaN(precioAntes)) {
+      return mensajeImporte(formulario.precioAntes, 'El precio antes debe ser un número mayor a 0.', 'El precio antes')
+    }
+    if (precioAntes <= 0) return 'El precio antes debe ser un número mayor a 0.'
+    if (precioAntes <= precio) {
+      return 'El precio antes debe ser mayor al precio de venta actual.'
+    }
+  }
+
+  return null
+}
+
+// Separación POS / Web: el MISMO registro se edita desde dos lugares y cada uno guarda SOLO sus columnas.
+//  - modo 'pos' (Inventario): código, nombre, categoría, subcategoría, costo, precio REAL, stock y proveedor. Una ficha
+//    nueva se crea solo con esto.
+//  - modo 'web' (Web → Catálogo → Productos, solo ADMINISTRADOR): precio anterior y fecha de oferta, descripción,
+//    contenido, rinde, frecuencia, foto, galería, combo, destacados y contenido editorial.
+// El UPDATE de un modo no menciona las columnas del otro, así que no se pierde nada. El precio real es compartido.
+export default function ModalProducto({ producto, categoriasExistentes = [], modo = 'pos', onCerrar, onGuardado, onEditarEnWeb }) {
+  const esWeb = modo === 'web'
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
@@ -143,7 +160,7 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
   // ya usa ModalServicio.jsx para servicio_fotos.
   const [fotosGaleria, setFotosGaleria] = useState([])
   const [idsGaleriaEliminados, setIdsGaleriaEliminados] = useState([])
-  const [cargandoGaleria, setCargandoGaleria] = useState(esEdicion)
+  const [cargandoGaleria, setCargandoGaleria] = useState(esEdicion && esWeb)
   const [procesandoGaleria, setProcesandoGaleria] = useState(false)
   const [errorGaleria, setErrorGaleria] = useState(null)
 
@@ -172,7 +189,7 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
   }, [fotoNueva])
 
   useEffect(() => {
-    if (!esEdicion) return undefined
+    if (!esEdicion || !esWeb) return undefined
     let vigente = true
 
     supabase
@@ -196,7 +213,7 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
     return () => {
       vigente = false
     }
-  }, [esEdicion, producto?.id])
+  }, [esEdicion, esWeb, producto?.id])
 
   async function procesarNuevaFoto(archivo) {
     if (!tipoDeImagenValido(archivo)) {
@@ -305,7 +322,7 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
   async function guardar(evento) {
     evento.preventDefault()
 
-    const mensajeError = validar(formulario)
+    const mensajeError = validar(formulario, modo)
     if (mensajeError) {
       setError(mensajeError)
       return
@@ -322,7 +339,7 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
     // Si hay foto nueva, se sube primero: si el guardado en BD falla
     // después, borramos el archivo recién subido para no dejar huérfanos.
     let rutaFotoSubida = null
-    if (fotoNueva) {
+    if (esWeb && fotoNueva) {
       try {
         const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
         rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
@@ -338,39 +355,10 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
     // Sin .select(): si pidiéramos de vuelta la fila afectada, Postgres
     // rechazaría la columna "costo" para el rol authenticated (ver 03_rls.sql).
     // La lista se refresca aparte, leyendo de productos_vista.
-    const datos = {
-      codigo_barras: formulario.codigoBarras.trim() || null,
-      nombre: formulario.nombre.trim(),
-      categoria: categoriaFinal || null,
-      subcategoria: formulario.subcategoria.trim() || null,
-      precio: precioNumerico,
-      precio_antes: formulario.precioAntes.trim() ? leerImporte(formulario.precioAntes) : null,
-      oferta_hasta: formulario.ofertaHasta || null,
-      costo: costoNumerico,
-      stock_actual: parseInt(formulario.stockInicial, 10),
-      proveedor: formulario.proveedor.trim() || null,
-      foto_url: fotoFinal,
-      descripcion: formulario.descripcion.trim() || null,
-      contenido: formulario.contenido.trim() || null,
-      rinde: formulario.rinde.trim() || null,
-      frecuencia: formulario.frecuencia.trim() || null,
-      combo_con: formulario.comboCon || null,
-      destacado: formulario.destacado,
-      nuevo: formulario.nuevo,
-      en_inicio: formulario.enInicio,
-      especificaciones: especificaciones
-        .filter((spec) => spec.clave?.trim())
-        .map((spec) => ({ clave: spec.clave.trim(), valor: spec.valor?.trim() ?? '' })),
-      modo_uso: modoUso
-        .filter((paso) => paso.nombre?.trim())
-        .map((paso) => ({ nombre: paso.nombre.trim(), texto: paso.texto?.trim() ?? '' })),
-      ideal_para: idealPara.map((item) => item.texto?.trim()).filter(Boolean),
-      tips: tips.map((item) => item.texto?.trim()).filter(Boolean),
-      ingredientes: ingredientes
-        .filter((item) => item.nombre?.trim())
-        .map((item) => ({ nombre: item.nombre.trim(), texto: item.texto?.trim() ?? '' })),
-      libre_de: libreDe.map((item) => item.texto?.trim()).filter(Boolean),
-    }
+    // Cada modo guarda SOLO sus columnas (ver el comentario del componente).
+    const datosPos = datosPosProducto({ formulario, categoriaFinal, precio: precioNumerico, costo: costoNumerico })
+    const datosWeb = datosWebProducto({ formulario, fotoFinal, especificaciones, modoUso, idealPara, tips, ingredientes, libreDe })
+    const datos = esWeb ? datosWeb : datosPos
 
     const { error: errorGuardado, data: filaGuardada } = esEdicion
       ? await supabase.from('productos').update(datos).eq('id', producto.id).select('id').single()
@@ -393,17 +381,17 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
 
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
-    if (fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
+    if (esWeb && fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
 
     // Galería (producto_fotos): se procesa DESPUÉS de que el producto ya
     // tiene id real (necesario para uno nuevo). Si una foto puntual falla
     // no se bloquea el guardado del producto, que ya quedó bien — se
     // puede reintentar reabriendo el modal.
     const productoId = esEdicion ? producto.id : filaGuardada.id
-    if (idsGaleriaEliminados.length > 0) {
+    if (esWeb && idsGaleriaEliminados.length > 0) {
       await supabase.from('producto_fotos').delete().in('id', idsGaleriaEliminados)
     }
-    for (let indice = 0; indice < fotosGaleria.length; indice += 1) {
+    for (let indice = 0; esWeb && indice < fotosGaleria.length; indice += 1) {
       const item = fotosGaleria[indice]
       if (item.esNueva) {
         try {
@@ -441,10 +429,18 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
         className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
       >
         <h2 className="text-base font-semibold text-ink">
-          {esEdicion ? 'Editar producto' : 'Nuevo producto'}
+          {esWeb ? 'Contenido Web del producto' : esEdicion ? 'Editar producto' : 'Nuevo producto'}
         </h2>
 
+        {esWeb && (
+          <p className="mt-1 text-sm text-ink/70">
+            {producto.nombre} · precio real {Number(producto.precio).toFixed(2)} (se cambia en Inventario)
+          </p>
+        )}
+
         <div className="mt-4 space-y-3">
+          {!esWeb && (
+          <>
           <div>
             <Etiqueta obligatorio htmlFor={`${idBase}-nombre`}>Nombre</Etiqueta>
             <input
@@ -569,6 +565,11 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
             </div>
           </div>
 
+          </>
+          )}
+
+          {esWeb && (
+          <>
           <div>
             <Etiqueta htmlFor={`${idBase}-precio-antes`}>Precio antes de la oferta</Etiqueta>
             {/* Aclaración pedida por el usuario: el campo de arriba
@@ -606,6 +607,10 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
             )}
           </div>
 
+          </>
+          )}
+
+          {!esWeb && (
           <div>
             <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
             <input
@@ -618,23 +623,19 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
             />
           </div>
 
+          )}
+
+          {esWeb && (
+          <>
           <div>
             <Etiqueta htmlFor={`${idBase}-combo`}>Combo sugerido ("se suele comprar junto con")</Etiqueta>
-            <select
+            <SelectorProductoBuscable
               id={`${idBase}-combo`}
-              value={formulario.comboCon}
-              onChange={(evento) => actualizarCampo('comboCon', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
-            >
-              <option value="">Sin forzar — usar el más comprado junto (si hay historial de pedidos web)</option>
-              {(productosExistentes ?? [])
-                .filter((otro) => otro.id !== producto?.id)
-                .map((otro) => (
-                  <option key={otro.id} value={otro.id}>
-                    {otro.nombre}
-                  </option>
-                ))}
-            </select>
+              valor={formulario.comboCon}
+              onCambiar={(productoId) => actualizarCampo('comboCon', productoId)}
+              textoVacio="Sin forzar — usar el más comprado junto (si hay historial de pedidos web)"
+              excluirId={producto?.id ?? null}
+            />
           </div>
 
           <div>
@@ -880,12 +881,24 @@ export default function ModalProducto({ producto, categoriasExistentes, producto
             />
             Mostrar en "Novedades y lo más vendido" (inicio de Productos, Web)
           </label>
+          </>
+          )}
         </div>
 
         {error && (
           <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
             {error}
           </p>
+        )}
+
+        {!esWeb && onEditarEnWeb && (
+          <button
+            type="button"
+            onClick={onEditarEnWeb}
+            className="mt-4 w-full rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+          >
+            Editar en Web
+          </button>
         )}
 
         <div className="mt-4 flex gap-2">

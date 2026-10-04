@@ -208,13 +208,8 @@ test('QA-028: costo y precio rechazan textos parcialmente numéricos y guardan s
     await form.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(form.getByText(/^(El costo|El precio de venta) debe ser/), `costo=${JSON.stringify(costo)} precio=${JSON.stringify(precio)}`).toBeVisible();
   }
-  // Precio antes con texto parcial
-  await form.getByLabel('Costo', { exact: false }).fill('5');
-  await form.getByLabel('Precio de venta', { exact: false }).fill('12');
-  await form.getByLabel('Precio antes de la oferta', { exact: false }).fill('15abc');
-  await form.getByRole('button', { name: 'Guardar', exact: true }).click();
-  await expect(form.getByText(/^El precio antes debe ser/)).toBeVisible();
-  await form.getByLabel('Precio antes de la oferta', { exact: false }).fill('');
+  // «Precio antes de la oferta» ya NO está en el formulario POS (separación POS/Web aprobada): su validación con texto
+  // parcial se comprueba en Web → Catálogo → Productos (qa-catalogo-web.spec.mjs).
   expect(escrituras, 'ningún valor inválido llegó al servidor').toBe(0);
 
   // Valores válidos: costo decimal, precio con dos decimales

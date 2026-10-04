@@ -547,7 +547,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
       {abierto && (
         <div className="border-t border-border p-3">
           <div className="grid grid-cols-3 gap-2">
-            <Campo id={`${idBase}-m`} etiqueta="Materiales (S/)">
+            <Campo id={`${idBase}-m`} etiqueta="Materiales protegidos (S/)">
               <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => setV((a) => ({ ...a, materiales: e.target.value }))} />
             </Campo>
             <Campo id={`${idBase}-a`} etiqueta="Pago protegido a asistente (S/)">
