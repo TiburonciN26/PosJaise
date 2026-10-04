@@ -44,7 +44,8 @@ function IconoChanchito() {
 }
 
 // Ícono de puntos (header) — ya no es un placeholder inerte: lleva a
-// '/mis-puntos' (ver implementacionesWed.md §7.15), la tarjeta con el
+// '/recompensas' (sección Mi tarjeta; antes '/mis-puntos', ver
+// implementacionesWed.md §7.15), la tarjeta con el
 // nivel real del cliente (Básico/Premium/VIP, calculado en el servidor
 // por mis_puntos()). Las animaciones de la referencia del usuario
 // (rebote al sumar, brillo pulsante al llenarse, moneda cayendo,
@@ -52,7 +53,7 @@ function IconoChanchito() {
 // (`.chanchito-*`) para cuando el ícono del header también reaccione en
 // vivo a sumar puntos — hoy solo usa `.icono-chanchito` en reposo.
 // §7.54: mismo "volver" que BotonCarrito (§7.53) — parado en
-// /mis-puntos, el ícono pasa a ser navigate(-1) en vez de un Link que
+// /recompensas, el ícono pasa a ser navigate(-1) en vez de un Link que
 // no haría nada ahí.
 function BotonChanchito({ estaEnPuntos }) {
   const navigate = useNavigate()
@@ -72,7 +73,7 @@ function BotonChanchito({ estaEnPuntos }) {
 
   return (
     <Link
-      to="/mis-puntos"
+      to="/recompensas?seccion=tarjeta"
       aria-label="Tus puntos"
       className="-mr-2 flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
     >
@@ -436,7 +437,7 @@ export default function PortalCliente() {
                 <div className="flex-1" />
   
                 <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-                  <BotonChanchito estaEnPuntos={location.pathname === '/mis-puntos'} />
+                  <BotonChanchito estaEnPuntos={location.pathname === '/recompensas'} />
   
                   <BotonCarrito estaEnCarrito={location.pathname === '/carrito'} />
 

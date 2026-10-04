@@ -565,7 +565,7 @@ export default function InicioCliente() {
                   Guardado en Mis cupones
                 </span>
                 <span className="flex justify-between gap-4 text-[13px] sm:justify-end">
-                  <Link to="/ofertas" className="text-[#e8e8ea] hover:text-white">
+                  <Link to="/recompensas?seccion=cupones" className="text-[#e8e8ea] hover:text-white">
                     Ver mis cupones
                   </Link>
                   <Link to={destinoReservar} className="text-[var(--lw-gold)]">

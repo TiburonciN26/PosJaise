@@ -39,3 +39,9 @@ export function usePerfilCliente() {
   }
   return context
 }
+
+// Variante que no lanza fuera del proveedor: la vista pública de
+// Recompensas (sin sesión, fuera de PortalCliente) no tiene perfil.
+export function usePerfilClienteOpcional() {
+  return useContext(PerfilClienteContext)
+}

@@ -611,7 +611,7 @@ function PanelCupones({ disponibles, usados, subtotal, cuponAplicadoCodigo, codi
           <Link to="/mi-perfil/referidos" className="flex items-center justify-between text-white hover:text-[var(--lw-gold)]">
             Invita a una amiga con tu código <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link to="/fidelizacion" className="flex items-center justify-between text-white hover:text-[var(--lw-gold)]">
+          <Link to="/recompensas?seccion=sellos" className="flex items-center justify-between text-white hover:text-[var(--lw-gold)]">
             Canjea tu fidelización <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

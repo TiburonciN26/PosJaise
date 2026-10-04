@@ -10,9 +10,7 @@ import {
   ShoppingBag,
   Star,
   Store,
-  Ticket,
   UserCircle,
-  Wallet,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePerfilCliente } from '../context/PerfilClienteContext.jsx'
@@ -34,8 +32,6 @@ const BUCKET_FOTOS = 'fotos-clientes'
 const OPCIONES = [
   { icono: UserCircle, label: 'Tu perfil', ruta: '/mi-perfil' },
   { icono: History, label: 'Historial', ruta: '/historial' },
-  { icono: Wallet, label: 'Fidelización', ruta: '/fidelizacion' },
-  { icono: Ticket, label: 'Cupones y ofertas', ruta: '/ofertas' },
   { icono: Star, label: 'Tus reseñas', ruta: '/mis-resenas' },
   { icono: ShoppingBag, label: 'Tus pedidos', ruta: '/mi-perfil/pedidos' },
   { icono: MapPin, label: 'Direcciones', ruta: '/mi-perfil/direcciones' },
@@ -69,6 +65,14 @@ export default function MenuUsuarioCliente() {
   const [confirmandoSalir, setConfirmandoSalir] = useState(false)
   const [errorFoto, setErrorFoto] = useState(false)
   const menuRef = useRef(null)
+
+  // Cerrar sesión siempre termina en /login (QA-037): desde que /recompensas
+  // tiene una vista pública sin sesión, quedarse en esa ruta ya no rebota
+  // solo al login como cualquier otra pantalla del portal.
+  async function salir() {
+    await cerrarSesion()
+    navigate('/login', { replace: true })
+  }
 
   useCerrarConEscape(() => setAbierto(false), abierto)
   useCerrarConEscape(() => setConfirmandoSalir(false), confirmandoSalir)
@@ -187,7 +191,7 @@ export default function MenuUsuarioCliente() {
               </button>
               <button
                 type="button"
-                onClick={cerrarSesion}
+                onClick={salir}
                 className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white"
               >
                 Sí, cerrar sesión

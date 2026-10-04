@@ -1,47 +1,5 @@
 import { useEffect, useRef } from 'react'
-
-// Colores/variables por nivel — recreación de la referencia animada que
-// trajo el usuario ("Niveles de Tarjeta Rewards"), un nivel por cada uno
-// de sus 3 estados de demo (silver/diamond/gold), renombrados a los
-// nombres reales del programa (ver mis_puntos(), 88_puntos.sql).
-const NIVELES = {
-  BASICO: {
-    etiqueta: 'BÁSICO',
-    vars: {
-      '--tp-g': 'linear-gradient(135deg,#6f757b 0%,#b9bec4 18%,#f4f6f8 34%,#8e949a 50%,#dde1e5 66%,#747a80 84%,#c8cdd2 100%)',
-      '--tp-gb': 'linear-gradient(225deg,#6f757b 0%,#b9bec4 18%,#f4f6f8 34%,#8e949a 50%,#dde1e5 66%,#747a80 84%,#c8cdd2 100%)',
-      '--tp-ink': '#25292d',
-      '--tp-inkhi': 'rgba(255,255,255,.6)',
-      '--tp-glow': 'rgba(210,216,222,.16)',
-      '--tp-franja': 'linear-gradient(180deg,#1c1f22,#3a3f44 50%,#1c1f22)',
-      '--tp-iri': 0,
-    },
-  },
-  PREMIUM: {
-    etiqueta: 'PREMIUM',
-    vars: {
-      '--tp-g': 'linear-gradient(135deg,#8ea6bd 0%,#cfe2f3 18%,#ffffff 34%,#a9c3da 50%,#eaf4ff 66%,#93adc6 84%,#d8e8f7 100%)',
-      '--tp-gb': 'linear-gradient(225deg,#8ea6bd 0%,#cfe2f3 18%,#ffffff 34%,#a9c3da 50%,#eaf4ff 66%,#93adc6 84%,#d8e8f7 100%)',
-      '--tp-ink': '#1b2a3b',
-      '--tp-inkhi': 'rgba(255,255,255,.7)',
-      '--tp-glow': 'rgba(190,225,255,.22)',
-      '--tp-franja': 'linear-gradient(180deg,#132030,#2c4560 50%,#132030)',
-      '--tp-iri': 0.55,
-    },
-  },
-  VIP: {
-    etiqueta: 'VIP',
-    vars: {
-      '--tp-g': 'linear-gradient(135deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%)',
-      '--tp-gb': 'linear-gradient(225deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%)',
-      '--tp-ink': '#3b2a06',
-      '--tp-inkhi': 'rgba(255,240,195,.55)',
-      '--tp-glow': 'rgba(233,200,116,.18)',
-      '--tp-franja': 'linear-gradient(180deg,#2a1d04,#4a3509 50%,#2a1d04)',
-      '--tp-iri': 0,
-    },
-  },
-}
+import { NIVELES_PUNTOS as NIVELES } from '../lib/nivelesPuntos.js'
 
 // Tarjeta 3D de "Mis puntos" — recreación de la referencia animada que
 // trajo el usuario, con dos diferencias a propósito frente a la demo
@@ -53,7 +11,16 @@ const NIVELES = {
 // una subpágina, no a pantalla completa. El resto — arrastrar para
 // girar en 3D, flotación idle, brillo/destello que siguen la rotación,
 // el "pop" de flash al cambiar de tarjeta — se porta tal cual.
-export default function TarjetaPuntos({ nivel, puntos, progresoPct, siguienteEtiqueta, nombre }) {
+// `etiqueta` cambia solo el rótulo sobre el número (Recompensas usa
+// "PUNTOS DISPONIBLES"); el resto de la tarjeta no se toca.
+export default function TarjetaPuntos({
+  nivel,
+  puntos,
+  progresoPct,
+  siguienteEtiqueta,
+  nombre,
+  etiqueta = 'PUNTOS ACUMULADOS',
+}) {
   const stageRef = useRef(null)
   const lienzoRef = useRef(null)
   const cardRef = useRef(null)
@@ -247,7 +214,7 @@ export default function TarjetaPuntos({ nivel, puntos, progresoPct, siguienteEti
                     <rect x="36" y="22" width="38" height="40" rx="6" />
                   </g>
                 </svg>
-                <div className="tp-tinta tp-etiqueta">PUNTOS ACUMULADOS</div>
+                <div className="tp-tinta tp-etiqueta">{etiqueta}</div>
                 <div className="tp-tinta tp-puntos">
                   <b ref={numRef}>0</b>
                   <span>PTS</span>

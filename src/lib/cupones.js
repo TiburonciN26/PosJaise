@@ -46,31 +46,40 @@ export function formatearFechaCupon(fechaIso) {
 const UMBRALES_SOLES = { oro: 20, plata: 10 }
 const UMBRALES_PORCENTAJE = { oro: 20, plata: 10 }
 
-export function nivelCupon(valor, tipoDescuento = 'MONTO_FIJO') {
-  const umbrales = tipoDescuento === 'PORCENTAJE' ? UMBRALES_PORCENTAJE : UMBRALES_SOLES
-
-  if (valor >= umbrales.oro) {
-    return {
-      nombre: 'Oro',
-      claseTarjeta: 'cupon-tarjeta cupon-oro',
-      claseTexto: 'cupon-texto-oro',
-      claseIcono: 'text-[var(--lw-gold)]',
-    }
-  }
-  if (valor >= umbrales.plata) {
-    return {
-      nombre: 'Plata',
-      claseTarjeta: 'cupon-tarjeta cupon-plata',
-      claseTexto: 'text-[#e3e6ea]',
-      claseIcono: 'text-[#cfd4da]',
-    }
-  }
-  return {
+const NIVELES_CUPON = {
+  Oro: {
+    nombre: 'Oro',
+    claseTarjeta: 'cupon-tarjeta cupon-oro',
+    claseTexto: 'cupon-texto-oro',
+    claseIcono: 'text-[var(--cupon-oro)]',
+  },
+  Plata: {
+    nombre: 'Plata',
+    claseTarjeta: 'cupon-tarjeta cupon-plata',
+    claseTexto: 'text-[#e3e6ea]',
+    claseIcono: 'text-[#cfd4da]',
+  },
+  Bronce: {
     nombre: 'Bronce',
     claseTarjeta: 'cupon-tarjeta border border-[#c8935a]/50 bg-[#c8935a]/10',
     claseTexto: 'text-[#c8935a]',
     claseIcono: 'text-[#c8935a]',
-  }
+  },
+}
+
+// Estilo de un nivel por su nombre — lo usan las filas de "Canjear
+// puntos" (Recompensas), que tienen el mismo acabado por nivel pero lo
+// eligen por el precio en puntos, no por el valor de un cupón.
+export function estiloNivelCupon(nombre) {
+  return NIVELES_CUPON[nombre] ?? NIVELES_CUPON.Bronce
+}
+
+export function nivelCupon(valor, tipoDescuento = 'MONTO_FIJO') {
+  const umbrales = tipoDescuento === 'PORCENTAJE' ? UMBRALES_PORCENTAJE : UMBRALES_SOLES
+
+  if (valor >= umbrales.oro) return NIVELES_CUPON.Oro
+  if (valor >= umbrales.plata) return NIVELES_CUPON.Plata
+  return NIVELES_CUPON.Bronce
 }
 
 // Cómo se lee el valor de un cupón — nunca "formatearSoles" a secas,

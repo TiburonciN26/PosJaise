@@ -51,13 +51,11 @@ export const importadores = {
   DetalleProductoCliente: () => import('../pages/cliente/DetalleProductoCliente.jsx'),
   CitasCliente: () => import('../pages/cliente/CitasCliente.jsx'),
   HistorialCliente: () => import('../pages/cliente/HistorialCliente.jsx'),
-  FidelizacionCliente: () => import('../pages/cliente/FidelizacionCliente.jsx'),
-  OfertasCliente: () => import('../pages/cliente/OfertasCliente.jsx'),
+  RecompensasCliente: () => import('../pages/cliente/RecompensasCliente.jsx'),
   NosotrosCliente: () => import('../pages/cliente/NosotrosCliente.jsx'),
   CarritoCliente: () => import('../pages/cliente/CarritoCliente.jsx'),
   CarritoServiciosCliente: () => import('../pages/cliente/CarritoServiciosCliente.jsx'),
   MisResenasCliente: () => import('../pages/cliente/MisResenasCliente.jsx'),
-  MisPuntosCliente: () => import('../pages/cliente/MisPuntosCliente.jsx'),
   DireccionesCliente: () => import('../pages/cliente/DireccionesCliente.jsx'),
   PedidosCliente: () => import('../pages/cliente/PedidosCliente.jsx'),
   NotificacionesCliente: () => import('../pages/cliente/NotificacionesCliente.jsx'),
@@ -81,12 +79,10 @@ const RUTAS = [
   [/^\/citas\/?$/, 'CitasCliente'],
   [/^\/citas\/carrito\/?$/, 'CarritoServiciosCliente'],
   [/^\/historial\/?$/, 'HistorialCliente'],
-  [/^\/fidelizacion\/?$/, 'FidelizacionCliente'],
-  [/^\/ofertas\/?$/, 'OfertasCliente'],
+  [/^\/recompensas\/?$/, 'RecompensasCliente'],
   [/^\/nosotros\/?$/, 'NosotrosCliente'],
   [/^\/carrito\/?$/, 'CarritoCliente'],
   [/^\/mis-resenas\/?$/, 'MisResenasCliente'],
-  [/^\/mis-puntos\/?$/, 'MisPuntosCliente'],
   [/^\/mi-perfil\/direcciones\/?$/, 'DireccionesCliente'],
   [/^\/mi-perfil\/pedidos\/?$/, 'PedidosCliente'],
   [/^\/mi-perfil\/notificaciones\/?$/, 'NotificacionesCliente'],
@@ -121,7 +117,7 @@ export function precargarPortalEnReposo() {
 // navegar entre ellas no suspende (ni muestra el fallback).
 const PRINCIPALES = [
   'ServiciosCliente', 'ProductosCliente', 'CitasCliente', 'NosotrosCliente',
-  'DetalleServicioCliente', 'DetalleProductoCliente', 'OfertasCliente', 'CarritoCliente',
+  'DetalleServicioCliente', 'DetalleProductoCliente', 'RecompensasCliente', 'CarritoCliente',
 ]
 export function precargarPestanasPrincipales() {
   const lanzar = () => PRINCIPALES.forEach((nombre) => precargar(nombre).catch(() => {}))

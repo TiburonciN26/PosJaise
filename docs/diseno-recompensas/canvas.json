@@ -1,0 +1,19 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-03T12:00:00Z" },
+  "title": "Recompensas — Club Jaise",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "designSystems": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 2600, "title": "Recompensas · escritorio", "expand": "fill", "is_interactive": true },
+    "Movil.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 5200, "title": "Recompensas · móvil", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Movil.dc.html"],
+  "notes": {
+    "titulo": { "kind": "title1", "text": "Recompensas (Club Jaise) — propuesta y prototipo", "x": 0, "y": -300, "maxW": 1910, "w": 240 },
+    "ubicacion": { "x": 1960, "y": 0, "w": 420, "fill": "blue", "size": 24, "text": "UBICACIÓN\n\n• Nueva pestaña «Recompensas» en el menú, justo después de Productos.\n• El ícono actual «Mis puntos» del header lleva a esta misma pestaña (sección Mi tarjeta): no queda información duplicada.\n• Sin sesión: se puede explorar «Canjear puntos» y «Cómo funciona»; saldos y canje piden iniciar sesión.\n• Sin datos de otras clientas." },
+    "como": { "x": 1960, "y": 560, "w": 420, "fill": "green", "size": 24, "text": "CÓMO PROBARLO\n\nPulsa Play (o abre en pantalla completa). Usa la barra «Solo prototipo» de arriba para saltar entre escenarios.\n\nEn «Canje exitoso» pulsa Confirmar canje: baja el saldo de 150 a 100 y sigue siendo VIP.\n\nEn los escenarios de error el canje falla sin descontar puntos ni crear cupón.\n\nLos umbrales de nivel (50 / 150) se cambian en Tweaks." },
+    "pendiente": { "x": 1960, "y": 1180, "w": 420, "fill": "orange", "size": 24, "text": "DECISIONES PENDIENTES\n\n1. Umbrales de clasificación (50 y 150): ¿se aprueban?\n2. Ventana de 12 meses y conservación 12 meses tras ascender.\n3. Precios en puntos y premios exclusivos: revisión económica.\n4. Lista de servicios/productos elegibles y márgenes.\n5. Recompensa de la nueva tarjeta de sellos (¿20 %, máx. S/5?).\n6. Vigencia de 60 días para cupones nuevos.\n7. ¿Los bonos cuentan para clasificación? (propuesta: no).\n8. Mantener nombres Básico / Premium / VIP." }
+  }
+}

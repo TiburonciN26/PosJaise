@@ -21,7 +21,7 @@ function guardarVistos(set) {
 
 // La etiqueta "Nuevo" de un cupón se muestra UNA sola vez: la primera
 // vez que el cliente entra a una pantalla que lo lista (Referidos o
-// Cupones y ofertas — ambas comparten la misma lista de "vistos", así
+// Recompensas › Mis cupones — ambas comparten la misma lista de "vistos", así
 // que un cupón visto en una ya no aparece como nuevo en la otra). Se
 // guarda en localStorage (por dispositivo — no hace falta que viaje al
 // servidor) qué códigos ya se mostraron; apenas se calcula qué es
