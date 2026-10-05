@@ -271,7 +271,7 @@ async function comprobarFocoEstableEn(page, formulario) {
 }
 
 // Llega al conflicto con DOS productos A y B (o producto A y servicio B si `servicioB`).
-async function llegarAlConflicto(page, data, { servicioB = false } = {}) {
+async function llegarAlConflicto(page, data, { servicioB = false, borradorPosB = false } = {}) {
   const A = await productoPropio(page, data, 'PW9a');
   const B = servicioB ? await servicioPropio(page, data, 'PW9b') : await productoPropio(page, data, 'PW9b');
   const escrituras = contarEscrituras(page);
@@ -296,6 +296,11 @@ async function llegarAlConflicto(page, data, { servicioB = false } = {}) {
     await page.getByPlaceholder('Buscar producto...').filter({ visible: true }).fill(B.productName);
     await page.getByRole('row').filter({ has: page.getByText(B.productName, { exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
     formB = formWithTitle(page, 'Editar producto');
+  }
+  if (borradorPosB) {
+    // Borrador POS de B: la pestaña queda oculta con su modal abierto cuando se pide «Editar en Web».
+    if (servicioB) await formB.getByLabel('Duración (min)', { exact: true }).fill('77');
+    else await formB.getByLabel('Proveedor', { exact: true }).fill('Borrador POS de B');
   }
   await formB.getByRole('button', { name: 'Editar en Web', exact: true }).click();
   const idPedido = servicioB ? B.serviceId : B.productId;
@@ -436,3 +441,41 @@ test('QA-049: producto A y servicio B — un Escape cierra solo la decisión; A,
   await comprobarFocoEstableEn(page, webA);
   expect(escrituras, 'ninguna escritura involuntaria').toEqual([]);
 });
+
+// QA-049 (capas ocultas): el modal POS de B queda montado pero OCULTO (su pestaña está en display:none). El Escape del
+// diálogo visible nunca debe llegar a él: cada Escape cierra una sola capa VISIBLE, en orden (decisión → modal Web), y el
+// borrador POS de B sobrevive al retorno.
+for (const [titulo, servicioB] of [['producto → producto', false], ['producto → servicio', true]]) {
+  test(`QA-049: ${titulo} — el modal POS oculto de B no recibe Escape y su borrador sobrevive al retorno`, async ({ page, data }) => {
+    test.setTimeout(240_000);
+    await login(page, 'ADMINISTRADOR', data);
+    const { A, B, escrituras } = await llegarAlConflicto(page, data, { servicioB, borradorPosB: true });
+    const webA = formWithTitle(page, 'Contenido Web del producto');
+    // Escape 1: solo la decisión.
+    await page.keyboard.press('Escape');
+    await expect(dialogoConflicto(page)).toHaveCount(0);
+    await expect(webA).toBeVisible();
+    await expect(webA.getByLabel('Descripción', { exact: true })).toHaveValue('Borrador de A');
+    // Escape 2: el modal Web VISIBLE (y no el POS oculto de B): con un solo Escape desaparece.
+    await page.keyboard.press('Escape');
+    await expect(webA).toHaveCount(0);
+    // El modal POS de B sigue ahí, con su borrador, al volver a su pestaña.
+    await page.getByRole('link', { name: servicioB ? /Volver a Servicios/ : /Volver a Inventario/ }).click();
+    if (servicioB) {
+      const posB = formWithTitle(page, 'Editar servicio');
+      await expect(posB).toBeVisible();
+      await expect(posB.getByLabel('Duración (min)', { exact: true })).toHaveValue('77');
+      await expect(posB.getByLabel('Nombre', { exact: true })).toHaveValue(B.serviceName);
+    } else {
+      const posB = formWithTitle(page, 'Editar producto');
+      await expect(posB).toBeVisible();
+      await expect(posB.getByLabel('Proveedor', { exact: true })).toHaveValue('Borrador POS de B');
+      await expect(posB.getByLabel('Nombre', { exact: true })).toHaveValue(B.productName);
+    }
+    // Nada se guardó en silencio.
+    expect(await h.json(`select to_json(descripcion) from public.productos where id='${A.productId}'`)).toBeNull();
+    expect(escrituras, 'ninguna escritura involuntaria').toEqual([]);
+    if (servicioB) expect(await h.json(`select to_json(duracion_min) from public.servicios where id='${B.serviceId}'`)).toBe(30);
+    else expect(await h.json(`select to_json(proveedor) from public.productos where id='${B.productId}'`)).toBeNull();
+  });
+}

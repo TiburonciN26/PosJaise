@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
 
 // B5 de la 4ª auditoría: con modales apilados (ej. Gastos -> Plantillas ->
 // confirmación), cada capa registraba su propio listener de Escape — un
@@ -12,7 +13,10 @@ const pila = []
 // Convención del proyecto: todo modal se puede cerrar con Esc.
 // `activo` permite usar el hook también en diálogos condicionales
 // (que no siempre están montados) sin romper las reglas de hooks.
-export function useCerrarConEscape(onCerrar, activo = true) {
+export function useCerrarConEscape(onCerrar, activoSolicitado = true) {
+  // Un diálogo de una pestaña cacheada y OCULTA no participa en la pila (QA-049); vuelve al ser visible, con su estado intacto.
+  const paginaActiva = usePaginaActiva()
+  const activo = activoSolicitado && paginaActiva
   const idRef = useRef(null)
   if (idRef.current === null) idRef.current = Symbol('capa-escape')
 
@@ -25,7 +29,9 @@ export function useCerrarConEscape(onCerrar, activo = true) {
     alCerrarRef.current = onCerrar
   })
 
-  useEffect(() => {
+  // Layout effect: el listener queda registrado en el mismo commit en que aparece el diálogo, antes de que el usuario (o una
+  // prueba) pueda ver y pulsar Escape (se descarta un registro tardío como posible causa de una intermitencia observada).
+  useLayoutEffect(() => {
     if (!activo) return undefined
 
     const id = idRef.current
