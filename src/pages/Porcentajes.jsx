@@ -331,6 +331,10 @@ export default function Porcentajes({ activo = true }) {
   // La ventana vuelve a 50 al cambiar búsqueda u orden (cada vista nueva empieza arriba).
   const claveVista = `${busqueda.trim().toLowerCase()}|${orden}`
   const cuantas = ventana.clave === claveVista ? ventana.n : TAMANO_VENTANA
+  // QA-051: cada CAMBIO real de búsqueda u orden reinicia a 50, también al volver a una vista anterior. Antes el estado
+  // conservaba la clave y el n de la vista anterior, y al recuperar esa clave («A-Z», o la búsqueda vacía) reaparecía el n
+  // viejo (100). Se reemplaza el estado en cuanto la clave cambia (ajuste durante el render, sin efecto ni parpadeo).
+  if (ventana.clave !== claveVista) setVentana({ clave: claveVista, n: TAMANO_VENTANA })
   const visibles = filtradosOrdenados.slice(0, cuantas)
 
   return (
