@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
+import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
 
 const SELECTOR_ENFOCABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -17,7 +18,10 @@ let contadorId = 0
 // `ref={panelRef}` en el panel, y una línea useModalA11y(panelRef).
 // etiquetaFallback: para los pocos modales sin h1/h2/h3 visible (ej.
 // ModalCamara) — sin esto quedarían como diálogo sin nombre accesible.
-export function useModalA11y(panelRef, activo = true, etiquetaFallback) {
+export function useModalA11y(panelRef, activoSolicitado = true, etiquetaFallback) {
+  // Un diálogo de una pestaña cacheada y OCULTA no atrapa foco ni bloquea el scroll (QA-049); vuelve al ser visible.
+  const paginaActiva = usePaginaActiva()
+  const activo = activoSolicitado && paginaActiva
   const disparadorRef = useRef(null)
   const capturadoRef = useRef(false)
 

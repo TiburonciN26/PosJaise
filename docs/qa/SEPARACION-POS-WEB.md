@@ -158,3 +158,18 @@ cierran antes el modal (Cancelar en el caso de producto, Escape en el de servici
 - **Pruebas añadidas:** foco estable (esperando a que la decisión se cierre y luego Tab/Shift+Tab), Escape de dos capas (primero la decisión, luego el
   modal) y Escape con producto A → servicio B. **Sin ejecutar** en la sesión en que se escribieron (sin `QA_TEST_PASSWORD`).
 
+### QA-049 — tercera ronda (capas ocultas), re-test de Codex sobre 24b7cfa
+
+- **Defecto persistente:** el segundo Escape cerraba el modal POS de B, que quedaba montado pero OCULTO (su pestaña está en `display:none` porque
+  `PestanasCacheadas` mantiene las pestañas visitadas), y hacía falta un tercer Escape para cerrar el modal Web visible. Un diálogo de una pestaña
+  oculta seguía en la pila de Escape (y en la trampa de foco): el orden de apertura no basta cuando una ruta se oculta.
+- **Corrección:** `PaginaActivaContext` (nuevo): `PestanasCacheadas` envuelve cada página con su visibilidad real; `useCerrarConEscape` y `useModalA11y`
+  tratan un diálogo de una página oculta como inactivo (sin Escape, sin trampa de foco, sin bloqueo de scroll) y lo reactivan al volver a ser visible.
+  No se desmonta nada ni se descarta ningún borrador. Fuera de `PestanasCacheadas` el valor por defecto es «visible» (sin cambio para el portal, etc.).
+- **Intermitencia del primer Escape (producto → servicio):** causa **no demostrada** (no la reproduje). Como endurecimiento del único candidato
+  plausible que pude razonar, la capa de Escape se registra con `useLayoutEffect` (listener listo en el mismo commit en que aparece el diálogo). No se
+  afirma que sea la causa.
+- **Pruebas añadidas:** `qa-catalogo-web.spec.mjs` (2): el modal POS oculto de B (producto y servicio) no recibe el Escape del diálogo visible, cada
+  Escape cierra una sola capa visible y el borrador POS de B sobrevive al retorno. El caso de segundo Escape ya existente (línea 362) es el que falló.
+  **Sin ejecutar** en esta sesión (sin `QA_TEST_PASSWORD`), por lo que «falla antes / pasa después» sigue pendiente de la corrida.
+

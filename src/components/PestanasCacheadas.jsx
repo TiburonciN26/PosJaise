@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { secciones, rutaInicialPara } from '../config/navegacion.js'
 import Ventas from '../pages/Ventas.jsx'
+import { PaginaActivaContext } from '../context/PaginaActivaContext.jsx'
 
 // Ventas queda con import normal (no lazy): es la pestaña de aterrizaje de
 // TODOS los usuarios (index redirige ahí), así que no vale la pena pagar una
@@ -111,9 +112,11 @@ export default function PestanasCacheadas() {
         const activa = ruta === pathname
         return (
           <div key={ruta} className={activa ? 'contents' : 'hidden'}>
-            <Suspense fallback={<CargandoPagina />}>
-              <Pagina activo={activa} />
-            </Suspense>
+            <PaginaActivaContext.Provider value={activa}>
+              <Suspense fallback={<CargandoPagina />}>
+                <Pagina activo={activa} />
+              </Suspense>
+            </PaginaActivaContext.Provider>
           </div>
         )
       })}
