@@ -142,3 +142,19 @@ Casos: `qa-catalogo-web.spec.mjs` (7 de QA-049, **sin ejecutar** por falta de `Q
 por la evidencia de Codex, no por una corrida mía antes de la corrección). Los dos pasos del arnés que pulsaban «Volver» con el modal Web abierto ahora
 cierran antes el modal (Cancelar en el caso de producto, Escape en el de servicio) y esperan su desaparición.
 
+### QA-049 — segunda ronda (Escape y foco), re-test de Codex sobre 480fe5a
+
+- **Escape (defecto real):** `useCerrarConEscape` registraba la capa en la pila en un efecto que dependía de la identidad de `onCerrar`. Como
+  `CatalogoWeb` pasa funciones nuevas en cada render, cada render volvía a registrar el modal Web AL TOPE de la pila (los hijos se re-registran en
+  el orden del JSX: la decisión primero, el modal después). Un Escape cerraba entonces el modal (`cerrarModal` también borra la decisión) y se perdía
+  el borrador; el z-index no ordena los listeners. **Corrección:** el hook se registra una sola vez por apertura (depende solo de `activo`) y lee
+  `onCerrar` por ref (siempre la versión más reciente). Efecto sobre sus 46 consumidores: ninguno cambia de contrato; las capas apiladas pasan a
+  responder en el orden real de apertura, que era la intención declarada del hook.
+- **Foco:** `useModalA11y` devuelve el foco al elemento que lo tenía al abrir la decisión; en este flujo ese elemento está en una pestaña POS oculta,
+  así que el foco caía en `body` y el siguiente Tab salía del formulario hacia «Contenido Web» del fondo. **Corrección:** al cerrarse la decisión,
+  `CatalogoWeb` lleva el foco al primer control del modal que sigue abierto (si el foco no está ya dentro).
+- **Arnés:** el ID pedido se elige por tipo de B (antes `B.productId ?? B.serviceId` tomaba el `productId` heredado del fixture global); los buscadores
+  del POS se acotan al visible (con las pestañas montadas hay dos «Buscar producto...»).
+- **Pruebas añadidas:** foco estable (esperando a que la decisión se cierre y luego Tab/Shift+Tab), Escape de dos capas (primero la decisión, luego el
+  modal) y Escape con producto A → servicio B. **Sin ejecutar** en la sesión en que se escribieron (sin `QA_TEST_PASSWORD`).
+
