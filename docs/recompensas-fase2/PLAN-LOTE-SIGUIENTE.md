@@ -1,6 +1,8 @@
-# Fase 2 — plan del siguiente lote (para revisión; nada de esto se ejecutó)
+# Fase 2 — plan del siguiente lote
 
-Estado: **plan, sin ejecución**. Solo Supabase Local TEST y una instancia desechable separada. Nada en producción.
+> **Actualización 2026-10-05:** el ensayo en instancia desechable ya se hizo; resultados separados (instalación, restauración, reconciliación, transición) en [`RESULTADOS-ENSAYO.md`](RESULTADOS-ENSAYO.md). Siguen **sin ejecutarse en QA** el registro de las 13 versiones y la apertura, y producción sigue fuera. Cambios respecto del plan original: las cifras de 955 clientas y 8 390 monedas son **referencia histórica** (los totales y las versiones pendientes se recalculan sobre el estado capturado); el corte es la hora exacta de la copia (`2026-10-05T04:32:53Z`, `2026-10-04 23:32:53` en Perú) y las ventas de QA **no** se congelan.
+
+Estado: **ensayado solo en la instancia desechable**; sin ejecución en QA ni producción.
 La suite verde (213/214 en `testing` 02a9f17) **no declara terminada la Fase 2**: cubre la interfaz y las reglas ya
 implementadas, no las brechas de abajo (ver `tests/e2e/COBERTURA.md`, «Brechas de Fase 2»).
 
@@ -78,6 +80,7 @@ Requisitos de diseño derivados de `MIGRACIONES-Y-TRANSICION.md` (a revisar ante
 
 - Apertura = puntos antiguos × 5 como saldo gastable **y** clasificación inicial; umbrales × 5; sellos pendientes íntegros aunque superen 20.
 - Idempotencia con claves únicas `apertura:<cliente>` en ambos libros e índice único por atención en `recompensas_apertura_aportes`; un reintento no duplica.
+- (Cifras de referencia **histórica**, no vigentes; recalcular siempre sobre la copia que se vaya a usar.)
 - **A:** clientas sin cuenta web: saldo congelado al corte, en espera; al vincular la cuenta a la misma ficha se habilita una sola vez. Sin doble apertura por reintento, desvinculación/revinculación u otra cuenta; no se acreditan compras hechas sin cuenta.
 - **B:** anular una venta anterior al corte sin aporte atribuible no descuenta apertura; solo se revierten aportes nuevos realmente acreditados.
 

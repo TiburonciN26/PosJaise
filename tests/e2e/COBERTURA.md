@@ -1,6 +1,6 @@
 # Matriz de cobertura QA (corte 2026-10-04)
 
-Supabase Local TEST, rama `testing`, 214 casos Playwright en 31 archivos + 170 casos `node --test` (datos/SQL, claims simulados: no son interfaz ni HTTP). **Última ejecución completa independiente (Codex, `testing` 02a9f17, fixture nuevo, retries=0, 24,1 min): 213 aprobados de 214, 1 omisión conocida (crear servicio como ASISTENTE, no cuenta como aprobado), 0 fallos, 0 intermitentes.** Los 5 casos específicos de QA-050/051 pertenecen a esos 214 y no se suman. La capa `node --test` no se repitió en esa corrida (su último resultado es el propio de Claude, 170/170). **No es cobertura total ni Fase 2 completa**: lista lo que cada
+Supabase Local TEST, rama `testing`, 214 casos Playwright en 31 archivos + 170 casos `node --test` (datos/SQL, claims simulados: no son interfaz ni HTTP). **Última ejecución completa independiente (Codex, `testing` 02a9f17, fixture nuevo, retries=0, 24,1 min): 213 aprobados de 214, 1 omisión conocida (crear servicio como ASISTENTE, no cuenta como aprobado), 0 fallos, 0 intermitentes.** Los 5 casos específicos de QA-050/051 pertenecen a esos 214 y no se suman. La capa `node --test` no se repitió en esa corrida (su último resultado es el propio de Claude, 170/170). Aparte, 21 casos de **ensayo** (`*.ensayo.mjs`: guarda de destino y transición histórica) que solo corren contra la instancia desechable y no forman parte de esta regresión (ver `docs/recompensas-fase2/RESULTADOS-ENSAYO.md`). **No es cobertura total ni Fase 2 completa**: lista lo que cada
 caso comprueba y las brechas que siguen abiertas. Un caso «omitido» no cuenta como aprobado. Una fila
 «expected» en un caso de defecto conocido (`expectedFailureIDs`, hoy vacía) significa defecto
 reproducido, no funcionalidad aprobada.
@@ -33,8 +33,8 @@ cámara física, otros navegadores/dispositivos.
 
 ## Brechas de Fase 2 (listado separado; ver `docs/recompensas-fase2/`)
 
-1. **Transición histórica** con las decisiones A/B aprobadas: no implementada ni ejecutada.
-2. **Instalación limpia** en una base desechable y **registro de migraciones** (13 versiones aplicadas sin registrar en `schema_migrations`).
+1. **Transición histórica** con las decisiones A/B aprobadas: borrador ensayado en una instancia desechable (15/15, ver RESULTADOS-ENSAYO.md); **no** aplicado ni ejecutado en QA ni producción.
+2. **Instalación limpia**: verificada en instancia desechable (137/137; `public` y `auth` idénticos a QA, diferencias solo en `realtime`/`storage` por versión de imágenes). **Registro de migraciones**: ensayado solo en una copia (13 versiones); en QA sigue sin registrar.
 3. **Elegibilidad específica** de premios o cupones por producto/servicio: solo si se confirma su alcance.
 4. **Auditoría del catálogo** de premios (quién cambió qué) y **revisión económica** del catálogo (exposición).
 5. **Textos antiguos** («puntos» frente a «monedas») en pantallas anteriores.
