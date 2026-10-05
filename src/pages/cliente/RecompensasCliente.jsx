@@ -109,14 +109,25 @@ export default function RecompensasCliente({ publico = false }) {
     }
   }
 
+  // QA-038: la sección «actual» para decidir una navegación sale de la URL REAL, no del último render. El router escribe la
+  // URL de inmediato, pero React renderiza la nueva sección después: con pulsaciones consecutivas (End → Home) la segunda se
+  // comparaba contra la sección del render viejo («tarjeta»), parecía «ya estoy ahí» y se IGNORABA, dejando la URL en la
+  // sección de la primera. (BrowserRouter: window.location se actualiza de forma síncrona al navegar.)
+  function claveVigente() {
+    const clave = new URLSearchParams(window.location.search).get('seccion')
+    return SECCIONES.some((s) => s.clave === clave) ? clave : SECCIONES[0].clave
+  }
+
   function irA(clave) {
-    if (clave !== seccion.clave) setParams({ seccion: clave })
+    if (clave !== claveVigente()) setParams({ seccion: clave })
   }
 
   // Patrón WAI-ARIA de pestañas (QA-038): flechas izquierda/derecha
   // (circular) e Inicio/Fin; la pestaña se activa al recibir el foco.
-  function alTeclear(evento, indice) {
+  function alTeclear(evento) {
     const total = SECCIONES.length
+    // Posición vigente según la URL real (no el índice del render), para que flechas seguidas avancen una por una.
+    const indice = SECCIONES.findIndex((s) => s.clave === claveVigente())
     let destino = null
     if (evento.key === 'ArrowRight') destino = (indice + 1) % total
     else if (evento.key === 'ArrowLeft') destino = (indice - 1 + total) % total
@@ -269,7 +280,7 @@ export default function RecompensasCliente({ publico = false }) {
                 aria-controls={activa ? idPanel(s.clave) : undefined}
                 tabIndex={activa ? 0 : -1}
                 onClick={() => irA(s.clave)}
-                onKeyDown={(evento) => alTeclear(evento, indice)}
+                onKeyDown={alTeclear}
                 className={`min-h-11 whitespace-nowrap rounded-full border px-[18px] text-sm font-semibold transition-colors ${
                   activa
                     ? 'border-white bg-white text-[#0b0b0c]'
