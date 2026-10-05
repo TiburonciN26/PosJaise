@@ -198,7 +198,7 @@ Límites: no hay límites de tamaño/tipo en los buckets (no existen); no se pro
 
 ## Estado de QA al terminar
 
-Tras el registro, **88 tablas con conteo y huella iguales** a las de justo después del registro (verificado de nuevo al terminar la sesión); `schema_migrations`: 137 filas; ninguna función ni tabla de apertura; Recompensas apagado (`activo = false`); los 17 aportes intactos; 0 movimientos `APERTURA`. Producción: no consultada.
+Tras el registro, **88 tablas con conteo y huella iguales** a las de justo después del registro (verificado de nuevo al terminar el segundo lote); `schema_migrations`: 137 filas; ninguna función ni tabla de apertura; Recompensas apagado (`activo = false`); 0 movimientos `APERTURA`. **Tercer lote (autorizado):** se retiraron los 17 aportes TEST (solo cambió `recompensas_apertura_aportes`: 17 → 0; ver `APORTES-PREEXISTENTES-QA.md`). Producción: no consultada.
 
 ## Total del ensayo y pendientes
 
@@ -206,7 +206,18 @@ Aprobados en la pasada limpia final: 6 (guarda) + 15 (transición) + 5 (concurre
 
 - Sigue **sin autorizar**: ejecutar la apertura en QA, activar Recompensas, borrar los 17 aportes, convertir el borrador en migración y cualquier cosa en producción. Fase 2 **no** está completa.
 - La copia es casi toda de pruebas; las cifras reales de producción no se conocen: hay que repetir dry-run y conciliación sobre su copia.
-- Decisiones pendientes: texto de la interfaz para sellos negativos (ver hallazgo), texto para clientas en espera, momento de activar, y qué hacer con los 17 aportes.
+- Decisiones pendientes: texto para clientas en espera y momento de activar. (El texto de sellos negativos se resolvió como QA-052 y los 17 aportes se retiraron: ver abajo.)
 - Revisión económica del saldo inicial y del catálogo: pendiente.
-- Pendiente de código: que el caso de `recompensas-fase2.test.mjs` limpie su aporte; fijar las imágenes del ensayo a las versiones de QA.
+- Pendiente de código: fijar las imágenes del ensayo a las versiones de QA. (El caso de `recompensas-fase2.test.mjs` ya limpia su aporte.)
 - La instancia desechable sigue levantada. Se destruye con `supabase stop --no-backup --workdir C:/JaiseQA-Ensayo`; los respaldos en `C:/JaiseQA-Backups` no se tocan.
+
+## QA-052 — aviso neutral de sellos negativos (tercer lote)
+
+**Problema:** el aviso decía «Se descontó un sello por una venta anulada» para cualquier saldo negativo, aunque el −7 de una clienta viniera de la apertura (reclamadas > visitas), no de una anulación.
+**Corrección** (`src/pages/cliente/recompensas/SeccionSellosReal.jsx`, solo el texto del aviso): «Tienes {cantidad} sellos por recuperar. Cada día con una venta de servicios válida recuperas un sello, hasta volver a 0. Después puedes seguir acumulando. Los premios que ya reclamaste se conservan.», con el **valor absoluto** del saldo y singular/plural («1 sello»). No se tocaron fórmulas, límites, estilos, efectos ni animaciones; el contador («-7 sellos») y el resto de textos quedan igual. El historial de sellos sigue describiendo cada movimiento por su tipo: la fila de una anulación dice «Se descontó un sello por una venta anulada», que es correcto para ese movimiento.
+**Pruebas** (`ensayo-ui/sellos-negativos.ensayo.spec.mjs`, instancia desechable, sesiones reales):
+1. negativo de la **apertura** (−7): aviso en plural, sin mencionar ventas anuladas;
+2. negativo de una **anulación** llevado por el camino real (4 sellos de apertura +1 venta con servicio −5 canje de sellos −1 anulación = **−1**): aviso en singular («1 sello por recuperar»);
+3. control: sin saldo negativo no aparece el aviso.
+Primero **en rojo** contra el texto antiguo (los casos 1 y 2 fallan) y luego **en verde**: pasa el conjunto completo del ensayo (21 casos Playwright), y `npm run build` y el lint pasan. Evidencia en `C:/JaiseQA-Backups/evidencia/qa-aportes/` (`qa052_rojo.txt`, `qa052_verde_*`).
+Límites: probado en la instancia desechable, no en QA ni con la suite completa de QA (sin contraseña de QA); un solo navegador.

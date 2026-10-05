@@ -41,7 +41,7 @@ test('CLIENTE con apertura, sellos > 20 y nivel VIP: tarjeta, sellos, cupones y 
   expect([...new Set(llamadas)]).toEqual(['http://127.0.0.1:56321']);
 });
 
-test('CLIENTE con sellos negativos (apertura con reclamadas > visitas): la interfaz muestra −7 sin romperse', async ({ page }, info) => {
+test('CLIENTE con sellos negativos (apertura con reclamadas > visitas): la interfaz muestra −7 sin romperse', async ({ page }) => {
   await loginUI(page, R.clientas.h2.email);
   await irA(page, 'tarjeta');
   await expect(panel(page)).toContainText('Saldo de monedas: 30');
@@ -51,11 +51,9 @@ test('CLIENTE con sellos negativos (apertura con reclamadas > visitas): la inter
   await expect(panel(page)).toContainText('-7 sellos');
   await expect(panel(page)).toContainText('Tu saldo de sellos es negativo');
   await sinRotos(page);
-  // Hallazgo (no se cambia la interfaz): el texto explica el negativo como «una venta anulada», pero aquí viene de la apertura.
-  const texto = await panel(page).innerText();
-  if (/venta anulada/.test(texto)) {
-    info.annotations.push({ type: 'hallazgo', description: 'El aviso de sellos negativos dice «Se descontó un sello por una venta anulada», pero este saldo viene de la apertura (reclamadas > visitas), no de una anulación.' });
-  }
+  // QA-052: el aviso ya no atribuye este negativo a una venta anulada (el detalle del texto se prueba en sellos-negativos).
+  await expect(panel(page).getByRole('status').filter({ hasText: 'por recuperar' })).toContainText('Tienes 7 sellos por recuperar');
+  await expect(panel(page).getByRole('status').filter({ hasText: /venta anulada|Se descontó un sello/ })).toHaveCount(0);
 });
 
 test('CLIENTE con canje: el cupón emitido por HTTP aparece en pantalla y el saldo refleja el canje', async ({ page }) => {

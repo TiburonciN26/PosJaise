@@ -96,10 +96,16 @@ F.h4 = await clienta('en-espera', { vinculada: false }); await atenciones(F.h4.i
 F.h5 = await clienta('para-canje', {}); await atenciones(F.h5.id, sv, 6, 20); // 6 visitas·1 + 120·0,05 = 12 → 60 monedas
 F.h7 = await clienta('en-espera-ui', { vinculada: false }); await atenciones(F.h7.id, sv, 3, 33.34); // igual que h4, para la vinculación por la interfaz
 F.h6 = await clienta('venta-historica', {}); const sv50 = await servicio(50); F.h6.atencion = await unaAtencion(F.h6.id, sv50, 50, 3);
+// QA-052: sellos negativos que vendrán de una ANULACIÓN (4 sellos de apertura + 1 de la venta − 5 del canje − 1 de la anulación = −1).
+F.h8 = await clienta('sellos-anulacion', {}); await atenciones(F.h8.id, sv, 3, 20);
+F.h8.atencion = await unaAtencion(F.h8.id, sv40, 40, 4);
+const premioSellos = randomUUID();
 const premio = randomUUID();
 const producto = randomUUID();
 await sql(`insert into public.recompensas_catalogo (id, nombre, activo, origen, tipo, valor, alcance, nivel_minimo, costo_basico)
   values ('${premio}', 'TEST ENS premio ${nonce}', true, 'MONEDAS', 'MONTO', 5, 'TODO', 'BASICO', 25);
+  insert into public.recompensas_catalogo (id, nombre, activo, origen, tipo, valor, alcance, nivel_minimo)
+  values ('${premioSellos}', 'TEST ENS premio sellos ${nonce}', true, 'SELLOS', 'MONTO', 5, 'TODO', 'BASICO');
   insert into public.productos (id, nombre, precio, costo, stock_actual) values ('${producto}', 'TEST ENS prod ${nonce}', 80, 1, 200);`);
 // Venta anterior a la apertura, con el programa APAGADO (reglas antiguas).
 const vh = await como(CAJERA, `select row_to_json(t) from public.confirmar_venta('Yape', null,
@@ -128,7 +134,7 @@ const config = await json(`select row_to_json(c) from (select activo, corte from
 mkdirSync(new URL('./fixtures/', import.meta.url), { recursive: true });
 writeFileSync(SALIDA, JSON.stringify({
   nonce, preparadoEn: new Date().toISOString(), api: supabaseURL, puertoApi: PUERTO_API, mismaBase,
-  cuentas: CUENTAS, clientas: F, premio, producto, servicio: sv,
+  cuentas: CUENTAS, clientas: F, premio, premioSellos, producto, servicio: sv,
   canario: { email: canarioEmail, uid: canarioUid, ficha: canarioFicha, nombre: `TEST ENS CANARIO ${nonce}` },
   apertura, verdad, config,
 }, null, 2));

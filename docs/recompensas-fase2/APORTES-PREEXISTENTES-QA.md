@@ -1,6 +1,6 @@
 # Los 17 aportes de apertura preexistentes en Supabase Local QA
 
-Estado: **solo documentación; en QA no se borró ni se modificó nada**. Lectura de solo lectura hecha el 2026-10-05 (UTC) sobre QA.
+Estado: **RESUELTO el 2026-10-05 (autorizado)**: las 17 filas se retiraron de QA (sección «Borrado en QA» al final). La lectura original se hizo en solo lectura el mismo día.
 
 ## Qué son
 
@@ -39,7 +39,7 @@ Con la apertura ejecutable (`recompensas_ejecutar_apertura`) estas filas **bloqu
 
 (Lista completa con día, puntos, estado de la atención y venta en `C:/JaiseQA-Backups/evidencia/qa-registro/aportes_17_qa.txt`; no se sube al repositorio.)
 
-## Tratamiento propuesto para QA (requiere autorización; no ejecutado)
+## Tratamiento propuesto para QA (ejecutado con autorización; ver «Borrado en QA»)
 
 1. Nuevo respaldo completo (base + archivos) inmediatamente antes.
 2. Verificar de nuevo que siguen siendo exactamente estas 17 filas, todas de clientas `TEST F2 %`, y que ninguna de esas clientas tiene movimiento `APERTURA`.
@@ -48,3 +48,13 @@ Con la apertura ejecutable (`recompensas_ejecutar_apertura`) estas filas **bloqu
 5. Para que no reaparezcan: que el caso de `recompensas-fase2.test.mjs` borre su propio aporte al terminar (cambio solo de pruebas, permitido por la excepción de la suite; **no hecho aquí** porque ese archivo escribe en QA y no se ejecutó).
 
 Producción: no se consultó; sus datos se evaluarán aparte antes de cualquier apertura.
+
+## Borrado en QA (2026-10-05, autorizado)
+
+Procedimiento: respaldo nuevo (`qa3_20261005T055530Z.dump`, SHA-256 en `SHA256-qa3-…`), verificación y borrado en **una sola transacción** con un bloque que **aborta** (sin escribir) si no coincide algo.
+
+Verificación previa (todas cumplidas antes de borrar): la tabla tenía exactamente 17 filas; los 17 identificadores eran los de este documento (comparados con la lectura original); las 17 clientas son `TEST F2 %`; las 17 filas son de origen `ATENCION`; 0 movimientos `APERTURA` y ningún `apertura:%`; Recompensas apagado. El borrado fue por la lista explícita de los 17 identificadores (sin filtros amplios) y exigía `row_count = 17` y tabla vacía al final.
+
+Qué cambió (huellas y contadores de las 88 tablas, antes/después): **solo** `recompensas_apertura_aportes` (17 → 0; contadores de tuplas: 17 borrados, 0 inserciones, 0 actualizaciones). `clientes`, `registro_servicios`, `ventas` y los libros de monedas y sellos tienen la misma huella; `schema_migrations` sigue en 137; Recompensas sigue apagado y sin aperturas. Evidencia en `C:/JaiseQA-Backups/evidencia/qa-aportes/` (no se sube).
+
+Para que no reaparezcan: el caso de `tests/e2e/recompensas-fase2.test.mjs` que insertaba el aporte ahora lo retira siempre al terminar (bloque `finally`) y solo el suyo (por clienta y atención). Ejecutado en QA después del cambio: pasa y la tabla sigue en 0.

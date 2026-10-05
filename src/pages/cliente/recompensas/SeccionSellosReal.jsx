@@ -8,7 +8,7 @@ import ConfirmarCanje from './ConfirmarCanje.jsx'
 // un sello por clienta y día de Perú cuando una compra confirmada incluye servicios
 // (con o sin cita web); los productos solos no dan sello. Cada premio cuesta 5; se
 // acumulan hasta 20 (los saldos heredados mayores a 20 se conservan íntegros y se
-// bajan canjeando de a 5). Una anulación puede dejar sellos negativos: nunca se
+// bajan canjeando de a 5). Una anulación o la apertura (reclamadas > visitas) pueden dejar sellos negativos: nunca se
 // trunca a cero ni se borra un premio ya reclamado.
 export default function SeccionSellosReal({
   saldo,
@@ -83,8 +83,9 @@ export default function SeccionSellosReal({
 
           {negativo && (
             <p role="status" className="border border-white/20 px-4 py-3 text-[13px] leading-relaxed text-white/80">
-              Se descontó un sello por una venta anulada. Tus próximos sellos compensarán este ajuste. Los premios que
-              ya reclamaste se conservan.
+              Tienes {Math.abs(sellos)} {Math.abs(sellos) === 1 ? 'sello' : 'sellos'} por recuperar. Cada día con una
+              venta de servicios válida recuperas un sello, hasta volver a 0. Después puedes seguir acumulando. Los
+              premios que ya reclamaste se conservan.
             </p>
           )}
         </div>
