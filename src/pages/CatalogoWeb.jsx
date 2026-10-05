@@ -103,6 +103,8 @@ export default function CatalogoWeb({ activo = true }) {
   const [modal, setModal] = useState(null) // { tipo, fila }
   const [aviso, setAviso] = useState(null) // { texto, tipo: 'noEncontrada' | 'error' | 'conflicto', id? }
   const vigenteRef = useRef({ actual: true })
+  const raizRef = useRef(null)
+  const habiaDialogoRef = useRef(false)
   const tamano = tab === 'servicios' ? TAMANO_PAGINA_SERVICIOS : TAMANO_PAGINA
 
   const consulta = useCallback(
@@ -222,10 +224,24 @@ export default function CatalogoWeb({ activo = true }) {
     if (id) abrirPorId(id)
   }
 
+  // QA-049: al cerrarse la decisión (Seguir, Escape o Abrir la solicitada) el foco debe quedar en el modal que sigue abierto.
+  // useModalA11y devuelve el foco al elemento que lo tenía al abrir la decisión, que puede estar oculto (otra pestaña POS
+  // montada con display:none) y entonces el foco caía en <body> y el siguiente Tab salía del formulario hacia el fondo.
+  const hayDialogo = aviso?.tipo === 'conflicto' && Boolean(modal)
+  useEffect(() => {
+    const habia = habiaDialogoRef.current
+    habiaDialogoRef.current = hayDialogo
+    if (!habia || hayDialogo || !modal) return
+    const paneles = raizRef.current?.querySelectorAll('form[role="dialog"]')
+    const panel = paneles?.[paneles.length - 1]
+    if (!panel || panel.contains(document.activeElement)) return
+    panel.querySelector('textarea, input:not([type="hidden"]):not([type="file"]), select, button:not([disabled])')?.focus()
+  }, [hayDialogo, modal])
+
   const etiquetaTab = tab === 'servicios' ? 'servicios' : 'productos'
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl" style={{ '--color-foco': 'var(--color-red)' }}>
+    <div ref={raizRef} className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl" style={{ '--color-foco': 'var(--color-red)' }}>
       <h1 className="mt-3 text-base font-semibold text-red">Catálogo Web</h1>
       {desde && (
         <Link to={desde} className="mt-1 inline-block text-sm text-ink/70 underline hover:text-red">

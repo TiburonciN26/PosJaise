@@ -16,6 +16,15 @@ export function useCerrarConEscape(onCerrar, activo = true) {
   const idRef = useRef(null)
   if (idRef.current === null) idRef.current = Symbol('capa-escape')
 
+  // QA-049: la capa se registra UNA vez por apertura (depende solo de `activo`). Antes el efecto dependía de la
+  // identidad de `onCerrar`: un modal cuyo padre pasa una función nueva en cada render se volvía a registrar al
+  // TOPE de la pila en cada render, y un Escape cerraba esa capa (y lo que colgaba de ella) en vez de la que
+  // realmente está encima. `onCerrar` se lee por ref, así que siempre se llama la versión más reciente.
+  const alCerrarRef = useRef(onCerrar)
+  useEffect(() => {
+    alCerrarRef.current = onCerrar
+  })
+
   useEffect(() => {
     if (!activo) return undefined
 
@@ -25,7 +34,7 @@ export function useCerrarConEscape(onCerrar, activo = true) {
     function manejarTecla(evento) {
       if (evento.key !== 'Escape') return
       if (pila[pila.length - 1] !== id) return
-      onCerrar()
+      alCerrarRef.current()
     }
 
     document.addEventListener('keydown', manejarTecla)
@@ -34,5 +43,5 @@ export function useCerrarConEscape(onCerrar, activo = true) {
       const indice = pila.lastIndexOf(id)
       if (indice !== -1) pila.splice(indice, 1)
     }
-  }, [onCerrar, activo])
+  }, [activo])
 }
