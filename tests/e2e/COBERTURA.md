@@ -1,6 +1,6 @@
 # Matriz de cobertura QA (corte 2026-10-04)
 
-Supabase Local TEST, rama `testing`, 199 casos Playwright en 30 archivos (los 7 de `qa-catalogo-web` sin ejecutar) + 170 casos `node --test` (datos/SQL, claims simulados: no son interfaz ni HTTP). **No es cobertura total ni Fase 2 completa**: lista lo que cada
+Supabase Local TEST, rama `testing`, 214 casos Playwright en 31 archivos + 170 casos `node --test` (datos/SQL, claims simulados: no son interfaz ni HTTP). **Última ejecución completa independiente (Codex, `testing` 02a9f17, fixture nuevo, retries=0, 24,1 min): 213 aprobados de 214, 1 omisión conocida (crear servicio como ASISTENTE, no cuenta como aprobado), 0 fallos, 0 intermitentes.** Los 5 casos específicos de QA-050/051 pertenecen a esos 214 y no se suman. La capa `node --test` no se repitió en esa corrida (su último resultado es el propio de Claude, 170/170). **No es cobertura total ni Fase 2 completa**: lista lo que cada
 caso comprueba y las brechas que siguen abiertas. Un caso «omitido» no cuenta como aprobado. Una fila
 «expected» en un caso de defecto conocido (`expectedFailureIDs`, hoy vacía) significa defecto
 reproducido, no funcionalidad aprobada.
@@ -38,5 +38,5 @@ cámara física, otros navegadores/dispositivos.
 3. **Elegibilidad específica** de premios o cupones por producto/servicio: solo si se confirma su alcance.
 4. **Auditoría del catálogo** de premios (quién cambió qué) y **revisión económica** del catálogo (exposición).
 5. **Textos antiguos** («puntos» frente a «monedas») en pantallas anteriores.
-6. **Separación POS/Web** de Servicios y Productos: implementada en Local (ver `docs/qa/SEPARACION-POS-WEB.md`); falta ejecutar sus casos de interfaz y el re-test independiente.
+6. **Separación POS/Web** de Servicios y Productos: implementada en Local (ver `docs/qa/SEPARACION-POS-WEB.md`); sus casos de interfaz quedaron dentro de la corrida completa independiente de 02a9f17 (213/214, sin fallos).
 7. Nada de esto se aplica a producción sin autorización separada; QA-045 (código de venta ≥ 1000) tampoco se ha aplicado allí.

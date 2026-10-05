@@ -1,6 +1,6 @@
 # Suite QA/E2E local — rama testing
 
-Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 214 casos en 31 archivos `*.spec.mjs` (corte 2026-10-04; QA-049 y los casos nuevos de `qa-catalogo-web` aún no se ejecutaron), más 14 archivos `node --test` de capa de datos/SQL, saneador y catálogo POS/Web (170 casos; ver «Dos capas»). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
+Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 214 casos en 31 archivos `*.spec.mjs` (corte 2026-10-04; última ejecución completa independiente sobre 02a9f17: 213 aprobados, 1 omitido —crear servicio ASISTENTE, no cuenta como aprobado—, 0 fallos, retries=0, fixture nuevo), más 14 archivos `node --test` de capa de datos/SQL, saneador y catálogo POS/Web (170 casos; ver «Dos capas»). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
 
 ## Ejecutar
 
