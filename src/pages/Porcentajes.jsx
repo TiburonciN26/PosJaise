@@ -9,6 +9,10 @@ import SelectorOrden from '../components/SelectorOrden.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 
+// QA-050: cuántas tarjetas se pintan a la vez. Los datos siguen COMPLETOS en memoria (lectura por bloques, QA-046) y la
+// búsqueda y el orden recorren todo el catálogo; solo el DOM se acota.
+const TAMANO_VENTANA = 50
+
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
   { id: 'nombre-desc', label: 'Nombre (Z-A)' },
@@ -35,27 +39,27 @@ function calcularParteOculta(nombre, elemento) {
   return nombre.slice(corte).trim()
 }
 
-function contarAsignados(servicioId, asistentesActivos, porcentajesMap) {
-  return asistentesActivos.filter((a) => porcentajesMap.has(`${servicioId}_${a.id}`)).length
+// Cantidad de asistentes con % asignado por servicio, calculada UNA vez por cambio de datos (antes el comparador del orden
+// recalculaba el conteo en cada comparación y cada tarjeta lo repetía).
+function calcularConteos(servicios, asistentesActivos, porcentajesMap) {
+  const conteos = new Map()
+  for (const servicio of servicios) {
+    let n = 0
+    for (const a of asistentesActivos) if (porcentajesMap.has(`${servicio.id}_${a.id}`)) n += 1
+    conteos.set(servicio.id, n)
+  }
+  return conteos
 }
 
-function ordenarServicios(servicios, orden, asistentesActivos, porcentajesMap) {
+function ordenarServicios(servicios, orden, conteos) {
   const ordenados = [...servicios]
   switch (orden) {
     case 'nombre-desc':
       return ordenados.sort((a, b) => b.nombre.localeCompare(a.nombre))
     case 'asignados-asc':
-      return ordenados.sort(
-        (a, b) =>
-          contarAsignados(a.id, asistentesActivos, porcentajesMap) -
-          contarAsignados(b.id, asistentesActivos, porcentajesMap),
-      )
+      return ordenados.sort((a, b) => conteos.get(a.id) - conteos.get(b.id))
     case 'asignados-desc':
-      return ordenados.sort(
-        (a, b) =>
-          contarAsignados(b.id, asistentesActivos, porcentajesMap) -
-          contarAsignados(a.id, asistentesActivos, porcentajesMap),
-      )
+      return ordenados.sort((a, b) => conteos.get(b.id) - conteos.get(a.id))
     default:
       return ordenados.sort((a, b) => a.nombre.localeCompare(b.nombre))
   }
@@ -120,8 +124,12 @@ function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGu
   )
 }
 
-function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap, onGuardar }) {
+function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap, asignados, onGuardar }) {
   const [abierto, setAbierto] = useState(false)
+  // QA-050: las filas de asistentes (un input por asistente) se montan la PRIMERA vez que la tarjeta se abre y se conservan
+  // después (para no cortar la animación de cierre ni perder lo escrito). Con cientos de servicios colapsados ya no hay
+  // decenas de miles de nodos que nadie ve.
+  const [montado, setMontado] = useState(false)
   const nombreRef = useRef(null)
   const [parteOculta, setParteOculta] = useState('')
 
@@ -135,9 +143,6 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
     return () => observador.disconnect()
   }, [servicio.nombre])
 
-  const asignados = asistentesActivos.filter((a) =>
-    porcentajesMap.has(`${servicio.id}_${a.id}`),
-  ).length
   const total = asistentesActivos.length
   const colores = coloresIndicador(asignados, total)
 
@@ -145,7 +150,10 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
     <div className="rounded-lg border border-border bg-surface">
       <button
         type="button"
-        onClick={() => setAbierto((valor) => !valor)}
+        onClick={() => {
+          setMontado(true)
+          setAbierto((valor) => !valor)
+        }}
         className="flex w-full items-center gap-2 p-3 text-left"
       >
         <p ref={nombreRef} className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
@@ -163,22 +171,24 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
       </button>
 
       <CampoColapsable abierto={abierto}>
-        <div className="space-y-2 border-t border-border p-3">
-          {parteOculta && <p className="-mt-1 text-xs text-ink/50">…{parteOculta}</p>}
-          {total === 0 ? (
-            <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
-          ) : (
-            asistentesActivos.map((asistente) => (
-              <FilaAsistentePorcentaje
-                key={asistente.id}
-                servicioId={servicio.id}
-                asistente={asistente}
-                porcentajeActual={porcentajesMap.get(`${servicio.id}_${asistente.id}`) ?? null}
-                onGuardar={(asistenteId, valor) => onGuardar(servicio.id, asistenteId, valor)}
-              />
-            ))
-          )}
-        </div>
+        {montado && (
+          <div className="space-y-2 border-t border-border p-3">
+            {parteOculta && <p className="-mt-1 text-xs text-ink/50">…{parteOculta}</p>}
+            {total === 0 ? (
+              <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
+            ) : (
+              asistentesActivos.map((asistente) => (
+                <FilaAsistentePorcentaje
+                  key={asistente.id}
+                  servicioId={servicio.id}
+                  asistente={asistente}
+                  porcentajeActual={porcentajesMap.get(`${servicio.id}_${asistente.id}`) ?? null}
+                  onGuardar={(asistenteId, valor) => onGuardar(servicio.id, asistenteId, valor)}
+                />
+              ))
+            )}
+          </div>
+        )}
       </CampoColapsable>
     </div>
   )
@@ -194,6 +204,7 @@ export default function Porcentajes({ activo = true }) {
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('nombre-asc')
+  const [ventana, setVentana] = useState({ clave: '', n: TAMANO_VENTANA })
   const primeraCargaHecha = useRef(false)
 
   async function cargarTodo(vigente = { actual: true }, silencioso = false) {
@@ -308,7 +319,19 @@ export default function Porcentajes({ activo = true }) {
       )
     : servicios
 
-  const filtradosOrdenados = ordenarServicios(filtrados, orden, asistentes, porcentajesMap)
+  const conteos = useMemo(
+    () => calcularConteos(servicios, asistentes, porcentajesMap),
+    [servicios, asistentes, porcentajesMap],
+  )
+  const filtradosOrdenados = useMemo(
+    () => ordenarServicios(filtrados, orden, conteos),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [servicios, busqueda, orden, conteos],
+  )
+  // La ventana vuelve a 50 al cambiar búsqueda u orden (cada vista nueva empieza arriba).
+  const claveVista = `${busqueda.trim().toLowerCase()}|${orden}`
+  const cuantas = ventana.clave === claveVista ? ventana.n : TAMANO_VENTANA
+  const visibles = filtradosOrdenados.slice(0, cuantas)
 
   return (
     <div
@@ -339,15 +362,31 @@ export default function Porcentajes({ activo = true }) {
         <EstadoVacio icono={Percent} mensaje="No se encontraron servicios." tema="purple-300" />
       ) : (
         <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
-          {filtradosOrdenados.map((servicio) => (
+          {visibles.map((servicio) => (
             <TarjetaServicioPorcentaje
               key={servicio.id}
               servicio={servicio}
               asistentesActivos={asistentes}
               porcentajesMap={porcentajesMap}
+              asignados={conteos.get(servicio.id) ?? 0}
               onGuardar={guardarPorcentaje}
             />
           ))}
+        </div>
+      )}
+
+      {!cargando && filtrados.length > visibles.length && (
+        <div className="mt-4 text-center">
+          <p className="mb-2 font-mono text-xs text-ink/60">
+            Mostrando {visibles.length} de {filtrados.length} servicios. Busca por nombre para encontrar uno concreto.
+          </p>
+          <button
+            type="button"
+            onClick={() => setVentana({ clave: claveVista, n: cuantas + TAMANO_VENTANA })}
+            className="w-full max-w-xs rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300"
+          >
+            Mostrar más
+          </button>
         </div>
       )}
     </div>
