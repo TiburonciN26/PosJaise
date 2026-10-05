@@ -37,3 +37,35 @@ export function colectorRespuestas(page, coincide) {
     },
   };
 }
+
+// QA-060 — Cuerpo de la respuesta que pertenece a UNA carga concreta de la página. Debe crearse JUSTO ANTES de navegar.
+//  * Solo acepta peticiones emitidas DESPUÉS de que el marco principal se comprometió con el documento nuevo
+//    ('framenavigated'): una respuesta tardía de la página anterior no se toma por la de esta carga.
+//  * Empieza a leer el cuerpo en el mismo evento 'response' (no después de esperar la navegación), cuando aún está disponible.
+//  * Si el cuerpo no se puede leer, o no llega respuesta en `timeout`, RECHAZA con un error saneado (no se silencia).
+export function cuerpoDeLaCarga(page, coincide, { timeout = 15_000 } = {}) {
+  let cargaNueva = false;
+  const propias = new Set();
+  let resolver;
+  let rechazar;
+  const resultado = new Promise((res, rej) => { resolver = res; rechazar = rej; });
+  const alNavegar = (marco) => { if (marco === page.mainFrame()) cargaNueva = true; };
+  const alPedir = (peticion) => { if (cargaNueva && coincide(peticion)) propias.add(peticion); };
+  const alResponder = (respuesta) => {
+    if (!propias.has(respuesta.request())) return;
+    terminar();
+    respuesta.json().then(resolver, (error) => rechazar(new Error(`El cuerpo de la respuesta de esta carga no está disponible: ${sanearMotivo(error)}`)));
+  };
+  const limite = setTimeout(() => { terminar(); rechazar(new Error('No llegó la respuesta esperada de esta carga.')); }, timeout);
+  function terminar() {
+    clearTimeout(limite);
+    page.off('framenavigated', alNavegar);
+    page.off('request', alPedir);
+    page.off('response', alResponder);
+  }
+  page.on('framenavigated', alNavegar);
+  page.on('request', alPedir);
+  page.on('response', alResponder);
+  resultado.catch(() => {}); // el llamador hace await del MISMO resultado: aquí solo se evita el aviso si la navegación lanza antes
+  return resultado;
+}

@@ -13,4 +13,9 @@ export default async function globalTeardown() {
   await h.verificarLocalTest();
   const r = await h.admin(`update public.promociones set activo = false where titulo = '${titulo}' and activo;`);
   if (!r.ok) throw new Error(`No se pudo desactivar la promoción de la preparación global: ${String(r.err).split('\n')[0]}`);
+  // Verificación (también si algún caso falló): ninguna promoción de ESTA corrida (título con su prefijo único) queda activa.
+  // Solo se comprueba; la propia de QA-005 se desactiva en el finally del caso.
+  if (/['%_\\]/.test(data.prefix)) throw new Error('Prefijo de corrida inesperado; no se verifica con LIKE.');
+  const activas = await h.json(`select coalesce(json_agg(titulo), '[]'::json) from public.promociones where activo and titulo like '${data.prefix} %'`);
+  if (activas.length) throw new Error(`Quedaron promociones activas de esta corrida: ${activas.join(' | ')}`);
 }
