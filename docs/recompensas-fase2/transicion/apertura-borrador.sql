@@ -20,6 +20,15 @@
 --   · Reversibilidad: recompensas_apertura_reversible() dice, por clienta, si borrar su apertura es seguro. NO lo es si ya hay
 --     ventas, canjes o movimientos posteriores; entonces la única vía es restaurar la copia previa.
 --
+-- Concurrencia y ventana corte→apertura→activación (v2, tras el ensayo de concurrencia):
+--   · MODO DEFINITIVO (p_corte nulo, p_ejecutar = true): bajo bloqueo de las tablas ventas, registro_servicios y clientes
+--     (SHARE ROW EXCLUSIVE; las escrituras de otras sesiones ESPERAN, con lock_timeout de 15 s) el corte se toma del reloj
+--     DENTRO del bloqueo, y con p_activar = true Recompensas se activa en la MISMA transacción. No hay hueco entre el corte,
+--     la apertura y la activación. El corte del ensayo NO se reutiliza: el modo definitivo nunca recibe un corte de fuera.
+--   · p_corte explícito solo sirve para dry-run y ensayos (no bloquea tablas).
+--   · Revertir una apertura exige Recompensas APAGADO y bloquea la fila de la clienta y la de configuración; así ni una venta
+--     ni un canje ni una activación pueden intercalarse. Con el programa activo la única recuperación es restaurar la copia.
+--
 -- Precondiciones que la función verifica (si falla una, no escribe): administrador; corte no futuro; Recompensas APAGADO;
 -- corte de configuración nulo o igual al pedido; umbrales de recompensas_config = antiguos ×5; sellos_por_premio = 5; ninguna
 -- clienta por procesar con aportes preexistentes (bloqueo).
@@ -98,7 +107,8 @@ end;
 $$;
 revoke execute on function public._recompensas_apertura_escribir(uuid, timestamptz, int, int, jsonb) from public, anon, authenticated;
 
-create or replace function public.recompensas_ejecutar_apertura(p_corte timestamptz, p_ejecutar boolean default false)
+create or replace function public.recompensas_ejecutar_apertura(
+  p_corte timestamptz, p_ejecutar boolean default false, p_activar boolean default false)
 returns jsonb
 language plpgsql security definer
 set search_path = public, pg_temp
@@ -113,18 +123,35 @@ declare
   v_puntos_vinc bigint;
   v_sellos_vinc bigint;
   v_puntos_esp bigint;
+  v_definitivo boolean := (p_corte is null);
   r jsonb;
 begin
   if not public.es_admin() then
     raise exception 'Solo el administrador puede ejecutar la apertura.';
   end if;
-  if p_corte is null or p_corte > now() then
-    raise exception 'El corte debe indicarse y no puede estar en el futuro.';
+  if v_definitivo and not p_ejecutar then
+    raise exception 'El modo definitivo (corte nulo) exige p_ejecutar = true; para un dry-run indique un corte.';
+  end if;
+  if p_activar and not p_ejecutar then
+    raise exception 'p_activar solo se admite junto con p_ejecutar = true.';
+  end if;
+  if not v_definitivo and p_corte > now() then
+    raise exception 'El corte no puede estar en el futuro.';
   end if;
   perform pg_advisory_xact_lock(hashtext('recompensas_apertura'));
 
+  if v_definitivo then
+    -- Las escrituras de otras sesiones esperan hasta nuestro COMMIT; el corte se toma con el bloqueo ya tomado.
+    set local lock_timeout = '15s';
+    -- ORDEN DE BLOQUEO = el de una venta (insert en ventas → update de registro_servicios). Con otro orden, una venta en vuelo
+    -- y esta apertura se bloquean mutuamente (deadlock) y Postgres cancelaría la VENTA; con este orden la apertura espera.
+    lock table public.ventas, public.registro_servicios, public.clientes in share row exclusive mode;
+    p_corte := clock_timestamp();
+  end if;
+
   select * into v_cfg from public.config_puntos where id = 1;
-  select * into v_rc from public.recompensas_config where id = 1;
+  -- Bloquea la configuración: nadie puede activar ni cambiar el corte mientras se escribe la apertura.
+  select * into v_rc from public.recompensas_config where id = 1 for update;
   if v_rc.activo then
     raise exception 'Recompensas ya está activo: la apertura se ejecuta antes de activarlo.';
   end if;
@@ -154,7 +181,7 @@ begin
   from public.recompensas_apertura_aportes a join _ap_pend p on p.cliente_id = a.cliente_id;
 
   r := jsonb_build_object(
-    'corte', p_corte, 'ejecutado', false,
+    'corte', p_corte, 'ejecutado', false, 'modo', case when v_definitivo then 'definitivo' else 'ensayo' end,
     'clientas_por_procesar', v_pend, 'vinculadas', v_vinc, 'en_espera', v_esp,
     'puntos_antiguos_vinculadas', v_puntos_vinc, 'monedas_apertura_vinculadas', v_puntos_vinc * 5,
     'sellos_netos_vinculadas', v_sellos_vinc, 'puntos_congelados_en_espera', v_puntos_esp,
@@ -203,9 +230,13 @@ begin
 
   update public.recompensas_config set corte = p_corte, actualizado_en = now() where id = 1 and corte is distinct from p_corte;
 
+  if p_activar then
+    perform public.recompensas_establecer_activo(true); -- misma transacción: sin hueco entre apertura y activación
+  end if;
+
   -- Reconciliación sobre lo ESCRITO (no sobre lo calculado).
   r := r || jsonb_build_object(
-    'ejecutado', true,
+    'ejecutado', true, 'activado', p_activar,
     'conciliacion', jsonb_build_object(
       'monedas_escritas_vinculadas', (select coalesce(sum(m.monedas), 0) from public.recompensas_movimientos m
                                         join _ap_pend p on p.cliente_id = m.cliente_id and p.vinculada
@@ -217,8 +248,8 @@ begin
   return r;
 end;
 $$;
-revoke execute on function public.recompensas_ejecutar_apertura(timestamptz, boolean) from public, anon;
-grant execute on function public.recompensas_ejecutar_apertura(timestamptz, boolean) to authenticated;
+revoke execute on function public.recompensas_ejecutar_apertura(timestamptz, boolean, boolean) from public, anon;
+grant execute on function public.recompensas_ejecutar_apertura(timestamptz, boolean, boolean) to authenticated;
 
 -- Decisión A: habilitación única al vincular la cuenta a la misma ficha.
 create or replace function public.recompensas_habilitar_apertura(p_cliente_id uuid)
@@ -301,10 +332,21 @@ set search_path = public, pg_temp
 as $$
 declare
   v_ok boolean;
+  v_rc public.recompensas_config;
   v_mov int; v_sel int; v_apo int; v_esp int;
 begin
   if not public.es_admin() then
     raise exception 'Solo el administrador puede revertir una apertura.';
+  end if;
+  -- Con FOR SHARE la activación (UPDATE de la configuración) espera a que esta transacción termine.
+  select * into v_rc from public.recompensas_config where id = 1 for share;
+  if v_rc.activo then
+    raise exception 'Recompensas está activo: la apertura solo se revierte antes de activarlo; restaure la copia previa.';
+  end if;
+  -- Bloquea la fila de la clienta: ninguna escritura que la referencie se intercala entre la comprobación y el borrado.
+  perform 1 from public.clientes where id = p_cliente_id for update;
+  if not found then
+    raise exception 'La clienta no existe.';
   end if;
   select rv.reversible into v_ok from public.recompensas_apertura_reversible() rv where rv.cliente_id = p_cliente_id;
   if v_ok is null then

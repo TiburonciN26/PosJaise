@@ -1,6 +1,6 @@
 # Fase 2 — resultados del ensayo en instancia desechable
 
-**Alcance:** solo la instancia desechable `JaiseEnsayo`. **No se modificó** Supabase Local QA (ver «Estado de QA»), no se tocó producción y no se registró ninguna versión en el `schema_migrations` de QA. La transición histórica **no se ejecutó en QA**.
+**Alcance:** el ensayo se hizo en la instancia desechable `JaiseEnsayo`. En Supabase Local QA se hizo **una sola escritura, autorizada el 2026-10-05: registrar en `schema_migrations` las 13 versiones ya aplicadas** (sección «Registro en QA»); nada más cambió en QA. No se ejecutó la apertura ni se activó Recompensas, no se borraron los 17 aportes y no se tocó producción.
 La evidencia cruda (volcados, huellas, diferencias) está en `C:\JaiseQA-Backups` (fuera del repositorio, bajo custodia del propietario). No contiene credenciales en este documento; los volcados incluyen cuentas ficticias `@test.local` y hashes de roles locales, por eso no se suben.
 
 ## Corte de la copia
@@ -59,7 +59,7 @@ Versiones pendientes **recalculadas sobre el estado capturado**: 137 archivos, 1
 - Después: `db push --dry-run` → «Local database is up to date»; historial = archivos (137).
 - **No reaplicó nada:** contadores de tuplas de la copia (reiniciados antes): solo `supabase_migrations.schema_migrations` con 13 inserciones y ninguna otra tabla con inserciones, actualizaciones o borrados; huellas de las 88 tablas iguales salvo `schema_migrations`; esquema antes/después sin diferencias.
 
-Esto **no** se hizo en QA (no autorizado). El procedimiento queda ensayado y reversible (borrar las 13 filas por `version`, o restaurar la copia).
+En QA este mismo registro se hizo después, con autorización expresa (sección «Registro en QA»). Es reversible: borrar las 13 filas por `version`, o restaurar el respaldo.
 
 ## 4. Transición histórica ×5 (decisiones A y B)
 
@@ -110,17 +110,103 @@ La suite actual tiene destinos **fijos** de QA y no basta cambiar un puerto:
 | `fixtures/runtime.json` | compartido entre ejecuciones |
 
 Vía separada (`tests/e2e/ensayo-destino.mjs`, 6 pruebas en `ensayo-destino.ensayo.mjs`): no modifica ninguna guarda existente y solo puede escribir en la instancia desechable. Exige: contenedor fijo del ensayo (no tomado del entorno), etiqueta `JaiseEnsayo` y puerto 56322 confirmados con Docker, marca `ensayo_marker.destino` en la base y base dentro de una lista cerrada. Rechaza el contenedor, puertos y orígenes de QA, y orígenes de red fuera del ensayo; QA no lleva la marca. Los archivos `*.ensayo.mjs` **no** coinciden con `*.test.mjs`, así que la regresión de QA no los ejecuta por accidente.
-**Pendiente:** la vía de interfaz (Playwright contra una app y Auth/REST del ensayo) está preparada en destinos y guarda pero **no se ejecutó**: este lote probó solo capa SQL. Faltaría un Vite de ensayo con su propio `.env.local`, una configuración de Playwright propia y parametrizar las constantes anteriores sin debilitar las de QA.
+**Vía de interfaz y HTTP:** ejecutada en el segundo lote (secciones «HTTP e interfaz con sesiones reales», «Concurrencia» y «Storage»), con `playwright.ensayo.config.mjs`, un Vite de ensayo en el puerto 5273 y claves y URL solo en el entorno del proceso. El `.env` del proyecto apunta a producción y no se usa ni se lee.
+
+## Registro en QA de las 13 versiones (autorizado el 2026-10-05)
+
+Lo único que se escribió en QA. Procedimiento y evidencia (`C:/JaiseQA-Backups/evidencia/qa-registro/`):
+
+| Paso | Resultado |
+|---|---|
+| Verificación previa | 137 archivos, 124 registradas, **13 faltan** (las mismas que en la copia); ninguna registrada sin archivo; migraciones del repo idénticas a las usadas por el CLI |
+| Efecto presente | esquema de QA = esquema de la instalación limpia en `public` y `auth` (sección 1); `confirmar_venta` contiene la guarda de roles |
+| Respaldo nuevo | volcado `qa2_20261005T051243Z.dump` (+ esquema, huellas SHA-256) **y copia de los 380 archivos de Storage de QA** (solo lectura; las 380 huellas coinciden con las de QA) |
+| Antes del registro | `db push --dry-run` en QA: listaba las 13 como pendientes (**las habría reaplicado**) |
+| Registro | `migration repair --status applied` con la URL de QA fijada al puerto 54322; sin reaplicar SQL |
+| Después | `db push --dry-run`: «up to date»; registro = 137 filas = archivos |
+| Solo cambió el registro | huellas de 88 tablas: la **única** distinta es `schema_migrations` (124 → 137 filas); contadores de tuplas: el único cambio es `schema_migrations` con +13 inserciones y 0 actualizaciones/borrados en cualquier otra tabla; esquema antes/después sin diferencias |
+
+Notas honestas: entre mi captura de la sesión anterior y la de esta hubo cambios en tablas de `auth` (inicios de sesión de cuentas de prueba, no hechos por mí); las tablas de negocio no cambiaron y la línea base «antes» es la captura inmediatamente previa al registro. Mi primer cálculo de contadores salió mal por un error de columnas al pegar los archivos y lo rehice bien; el resultado de arriba es el correcto.
+
+## HTTP e interfaz con sesiones reales (instancia desechable)
+
+**Misma base en todas las capas.** Los servicios de la instancia (GoTrue y PostgREST) sirven siempre la base `postgres`; las pruebas SQL del ensayo de transición habían usado la base `transicion`, que **ningún servicio sirve**. Para que HTTP e interfaz probaran la misma base donde se ejecutó la apertura, la base preparada (copia de QA + borrador v2 + apertura) se intercambia a `postgres` (`ensayo-preparar-http.mjs`), y se verifica antes de cada prueba:
+
+- la configuración de los contenedores de Auth y REST nombra la base `postgres` (solo se lee el nombre; nunca una clave ni una URL completa);
+- la app (Vite 5273) sirve `http://127.0.0.1:56321` y no referencia ningún proyecto remoto;
+- un **canario** (cuenta y ficha con un identificador único) existe en Auth (se inicia sesión con él), en REST (lo lee el ADMIN), en SQL de `postgres` y en pantalla, y **no existe** en `transicion`;
+- toda la red del navegador queda restringida al ensayo; lo único bloqueado son los tipos de letra de Google Fonts.
+
+La apertura se ejecutó aquí en **modo definitivo** (`recompensas_ejecutar_apertura(null, true, true)`: corte tomado dentro del bloqueo, posterior al del ensayo, y activación en la misma transacción).
+
+**18 casos aprobados** (`playwright.ensayo.config.mjs`, 38 s; sesiones reales de ADMINISTRADOR, CAJERA, ASISTENTE y varias CLIENTE; la contraseña de estas cuentas ficticias del ensayo solo existió en el entorno del proceso):
+
+| Qué se comprueba | Cómo |
+|---|---|
+| Saldos, clasificación, nivel y sellos | por HTTP (RPC) y en pantalla, contra SQL: 250 monedas/VIP/**25 sellos** (> 20, íntegros); 30 monedas/BÁSICO/**−7 sellos**; los sellos negativos no generan «sellos actuales» negativos ni premios; movimientos con «Saldo inicial convertido a monedas» |
+| Interfaz | tarjeta, sellos, cupones y movimientos sin NaN/undefined; los −7 se muestran sin romper la pantalla |
+| Vinculación posterior | por la función real (`vincular_o_crear_cliente_web`) y por la pantalla («¿Es tu registro?» → «Sí, es mi registro»): 40 monedas y 3 sellos habilitados **una sola vez**; el reintento no abre de nuevo y otra cuenta es rechazada |
+| Cupones y canje | canje (con reintento idempotente) → cupón en `mis_cupones` y en pantalla → venta con cupón → anulación: el cupón vuelve a DISPONIBLE y el saldo regresa; la apertura queda intacta |
+| Venta y anulación | por HTTP y **por la pantalla de Caja** (CAJERA vende a la clienta con apertura: +10 monedas; anulación desde Historial: vuelve a 250); atención pendiente: el servicio anterior a la apertura no acredita otra vez; anular una venta anterior a la apertura no descuenta nada |
+| Restricciones de apertura y reversión | `ejecutar`, `reversible` y `revertir`: **CLIENTE** (cuatro cuentas, una sin ficha), **ASISTENTE** y **CAJERA** rechazadas («Solo el administrador…»); sin sesión rechazada por permisos; las funciones internas no las alcanza ni el ADMIN por HTTP; el ADMIN consulta, pero con el programa activo ni revierte ni vuelve a ejecutar. RLS/GRANT: la CLIENTE no lee las tablas de apertura; nadie escribe los libros ni `activo/corte` por REST; **huella de los libros idéntica antes y después de todos los intentos** |
+| Aislamiento | cada CLIENTE solo ve sus movimientos, sellos y cupones |
+| Pantallas de personal | la CLIENTE es redirigida desde `/ventas`, `/clientes`, `/porcentajes` e `/inventario` |
+
+Hallazgos y límites:
+- **Texto de la interfaz (no se tocó):** el aviso de sellos negativos dice «Se descontó un sello por una venta anulada», pero el −7 de esa clienta viene de la apertura (reclamadas > visitas), no de una anulación. Es una decisión de texto pendiente; no se modificó la interfaz.
+- PostgREST corta las listas a 1 000 filas (`max_rows`); la lista de reversibilidad devuelve 1 000 de más de 2 000 aperturas.
+- No existe una pantalla de administración de la apertura (es solo SQL/RPC), así que las restricciones de apertura y reversión se prueban por HTTP; en pantalla se prueba que la CLIENTE no llega a las pantallas de personal.
+- Un solo navegador (Chromium) y una sola pasada limpia de las 18; no se probó teléfono físico ni lector de pantalla. No se tocó ningún diseño, efecto ni animación de monedas, cupones o niveles: solo se observó la interfaz existente.
+
+## Concurrencia: reversión de apertura frente a venta, canje, activación y otra ejecución
+
+Un rechazo comprobado en secuencia no demuestra seguridad concurrente. `recompensas-concurrencia.ensayo.mjs` lanza **sesiones simultáneas reales** (un `psql` por sesión) y fuerza el entrelazado con un disparador de pausa (solo en la base de ensayo) que detiene una venta o un canje justo antes de escribir en el libro. Invariante: ninguna clienta puede quedar con actividad que dependía de su apertura y **sin** apertura.
+
+| Carrera | Borrador v1 (`e850a36`) | Borrador v2 |
+|---|---|---|
+| S1 reversión vs **venta** en vuelo (programa activo) | **FALLA**: la reversión borra la apertura y la venta queda sin ella | rechazada («Recompensas está activo»); la venta termina; saldo 15 + 10 |
+| S1b reversión vs **canje** en vuelo | **FALLA** igual | rechazada; el canje termina; 60 − 25 |
+| S2 reversión en curso vs **activación** | **FALLA**: la activación no espera (95 ms) y entra en medio | la activación espera a la reversión (1 921 ms) y entonces activa |
+| S4 **dos reversiones** simultáneas de la misma clienta | **FALLA**: las dos «tienen éxito» (la segunda borra 0 filas) | exactamente una; la otra «La clienta no tiene apertura» |
+| S3 apertura **definitiva** + atención nueva + venta en vuelo + segunda ejecución | no existe en v1 | pasa (abajo) |
+
+Cambios de la v2: la reversión exige el programa **apagado**, bloquea la fila de la clienta y toma la configuración `FOR SHARE`; la apertura bloquea la configuración `FOR UPDATE`; modo definitivo con bloqueo de tablas y activación atómica.
+
+**S3 en v2** (apertura 4 839 ms; venta en vuelo 3 116 ms; atención tardía esperó 1 124 ms): la apertura espera a la venta en vuelo y retiene el bloqueo 2 s; la venta termina bien y su atención queda **dentro** de la apertura sin doble cómputo (15 monedas, 0 movimientos `VENTA`); una atención que llega con el bloqueo tomado espera al COMMIT y queda **posterior al corte** y fuera del mapa; una atención anterior que entró mientras la apertura aún esperaba queda dentro; la segunda ejecución simultánea se rechaza; 0 claves repetidas; la atención tardía, cobrada después, acredita normalmente (+5).
+
+**Defecto real encontrado en mi propio borrador v2:** la primera versión del modo definitivo bloqueaba `clientes`, `registro_servicios` y `ventas` en ese orden; una venta en vuelo (que toma primero `ventas`) y la apertura se bloquearon mutuamente y **Postgres canceló la venta** (`deadlock detected`). Se corrigió tomando los bloqueos en el mismo orden que la venta (`ventas`, `registro_servicios`, `clientes`) y se repitió. La salida del fallo está conservada en `evidencia/concurrencia_v2_deadlock_salida.txt`.
+Otro error mío, sin consecuencia en el borrador: en la prueba, una subconsulta con `id` sin calificar daba siempre «no está en el mapa»; la corregí (y con ello una aserción anterior que pasaba por la razón equivocada).
+
+Límites: las carreras son entrelazados forzados y repetibles, no una prueba exhaustiva ni de carga; no se probaron muchas ventas simultáneas con la apertura ni cortes de conexión a mitad de la transacción.
+
+## Storage con archivos ficticios
+
+El respaldo de la base solo contiene **metadatos** (`storage.objects`); los archivos viven aparte. Evidencia con datos reales: la copia de QA restaurada trae 380 filas de metadatos y **0 archivos**, y la descarga de uno de esos objetos falla.
+`storage.ensayo.spec.mjs` (4 casos, sesiones reales, archivos ficticios: un PNG, un PDF y 200 KB aleatorios):
+- Subida por CLIENTE (comprobantes y avatar) y ADMIN (galería, QR): 200; descarga por el dueño y por el ADMIN con la **misma huella SHA-256**; buckets públicos sin sesión; tamaño y tipo en `storage.objects` coinciden.
+- Permisos: descarga privada ajena y sin sesión rechazadas; CLIENTE→galería, CAJERA→galería, ASISTENTE→QR, otra CLIENTE→carpeta ajena y sin sesión→comprobantes, todos rechazados y sin dejar objetos.
+- **Respaldo base+archivos:** copia de `/mnt/stub` → borrado de los archivos (los metadatos quedan y la descarga falla) → restauración de la copia → los archivos vuelven con la misma huella.
+- **Copia de Storage de QA:** restaurada en el ensayo, los 380 archivos quedan presentes y una muestra de 12 se descarga con la huella del manifiesto (aunque la versión de storage-api del ensayo es más nueva).
+
+Error mío, ya corregido: restauré una vez dentro de `/mnt/stub/stub/` (ruta duplicada) y la descarga dio 500.
+Límites: no hay límites de tamaño/tipo en los buckets (no existen); no se probaron enlaces firmados ni su expiración; el respaldo de archivos de **producción** no se evaluó.
+
+## Los 17 aportes de QA y la ventana de la transición
+
+- Identificadores, procedencia y tratamiento propuesto (sin borrarlos): [`APORTES-PREEXISTENTES-QA.md`](APORTES-PREEXISTENTES-QA.md).
+- Cómo evitar actividad entre el corte, la apertura y la activación (corte nuevo, bloqueo, activación atómica, qué no cubre): [`transicion/PROCEDIMIENTO-VENTANA.md`](transicion/PROCEDIMIENTO-VENTANA.md).
 
 ## Estado de QA al terminar
 
-88 tablas con conteo y huella iguales a las del inicio; `schema_migrations` sigue en 124 filas (13 sin registrar); ninguna función ni tabla de apertura creada; configuración sin cambios. Producción: no consultada.
+Tras el registro, **88 tablas con conteo y huella iguales** a las de justo después del registro (verificado de nuevo al terminar la sesión); `schema_migrations`: 137 filas; ninguna función ni tabla de apertura; Recompensas apagado (`activo = false`); los 17 aportes intactos; 0 movimientos `APERTURA`. Producción: no consultada.
 
-## Pendientes y limitaciones
+## Total del ensayo y pendientes
 
-- Nada de esto autoriza actuar sobre QA ni producción: registrar las 13 versiones, ejecutar la apertura y convertir el borrador en migración requieren autorización separada.
-- La copia es casi toda de pruebas; las cifras reales de producción no se conocen y habría que repetir dry-run y conciliación sobre su copia.
-- Falta decidir/confirmar con el propietario: la regla de sellos negativos (se conservan tal cual; la clienta debe «repagar» con nuevos sellos), el texto para clientas en espera y el momento de activar el programa (la apertura exige Recompensas apagado y se activa después con el mismo corte).
-- No se ejecutó la suite completa ni se repitió la capa SQL de QA (cambios solo documentales y de pruebas de ensayo).
-- Exposición económica del saldo inicial y del catálogo: sigue pendiente.
-- La instancia desechable sigue levantada para revisión. Se destruye con `supabase stop --no-backup --workdir C:\JaiseQA-Ensayo` (elimina contenedores y volúmenes del ensayo; los respaldos en `C:\JaiseQA-Backups` no se tocan). Para repetir el ensayo hace falta `/tmp/qa.dump` dentro del contenedor (se vuelve a copiar desde `C:\JaiseQA-Backups`).
+Aprobados en la pasada limpia final: 6 (guarda) + 15 (transición) + 5 (concurrencia v2) + 18 (HTTP, interfaz y Storage con sesiones reales) = **44**. Además, la v1 con las mismas invariantes de concurrencia: 4 fallan (evidencia del defecto). **No** se repitió la suite de QA ni su capa SQL (no hubo cambios de aplicación).
+
+- Sigue **sin autorizar**: ejecutar la apertura en QA, activar Recompensas, borrar los 17 aportes, convertir el borrador en migración y cualquier cosa en producción. Fase 2 **no** está completa.
+- La copia es casi toda de pruebas; las cifras reales de producción no se conocen: hay que repetir dry-run y conciliación sobre su copia.
+- Decisiones pendientes: texto de la interfaz para sellos negativos (ver hallazgo), texto para clientas en espera, momento de activar, y qué hacer con los 17 aportes.
+- Revisión económica del saldo inicial y del catálogo: pendiente.
+- Pendiente de código: que el caso de `recompensas-fase2.test.mjs` limpie su aporte; fijar las imágenes del ensayo a las versiones de QA.
+- La instancia desechable sigue levantada. Se destruye con `supabase stop --no-backup --workdir C:/JaiseQA-Ensayo`; los respaldos en `C:/JaiseQA-Backups` no se tocan.

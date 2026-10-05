@@ -237,7 +237,14 @@ describe('Ensayo de transición histórica ×5 en la instancia desechable', () =
     const r = await jsonAdmin(`select public.recompensas_ejecutar_apertura('${corte}'::timestamptz, true);`);
     assert.equal(r.clientas_por_procesar, 1);
     assert.deepEqual(await saldos(F.f3.id), antes, 'la reapertura reproduce exactamente el saldo y los sellos');
-    resultados.reversion_sin_actividad = { revertido: rv, reabierta_igual: true };
+    // Con el programa APAGADO, la actividad posterior (aquí un movimiento) también bloquea la reversión y no borra nada.
+    await sql(`insert into public.recompensas_movimientos (cliente_id, tipo, monedas, clasificacion, clave) values ('${F.f8.id}', 'AJUSTE', 1, 1, 'ens-ajuste-f8');`);
+    const huellaAntes = await huellas();
+    const rechazo = await intentar(ADMIN, `select public.recompensas_revertir_apertura('${F.f8.id}');`);
+    assert.equal(rechazo.ok, false); assert.match(rechazo.err, /ya tiene ventas, canjes o movimientos posteriores/);
+    assert.deepEqual(await huellas(), huellaAntes);
+    await sql(`delete from public.recompensas_movimientos where clave = 'ens-ajuste-f8';`);
+    resultados.reversion_sin_actividad = { revertido: rv, reabierta_igual: true, rechazada_con_actividad_programa_apagado: true };
   });
 
   test('8. activación del programa con el corte de la apertura', async () => {
@@ -320,7 +327,7 @@ describe('Ensayo de transición histórica ×5 en la instancia desechable', () =
     const antes = await huellas();
     for (const cid of [F.f1.id, F.f4.id]) {
       const r = await intentar(ADMIN, `select public.recompensas_revertir_apertura('${cid}');`);
-      assert.equal(r.ok, false); assert.match(r.err, /ya tiene ventas, canjes o movimientos posteriores/);
+      assert.equal(r.ok, false); assert.match(r.err, /Recompensas está activo/);
     }
     assert.deepEqual(await huellas(), antes, 'los intentos rechazados no borraron nada');
     // Un canje posterior también bloquea.
@@ -334,7 +341,7 @@ describe('Ensayo de transición histórica ×5 en la instancia desechable', () =
     const conCanje = await jsonAdmin(`select to_json(reversible) from public.recompensas_apertura_reversible() where cliente_id = '${F.f8.id}'`);
     assert.equal(conCanje, false, 'un canje posterior bloquea la reversión aunque no haya otros movimientos');
     const r8 = await intentar(ADMIN, `select public.recompensas_revertir_apertura('${F.f8.id}');`);
-    assert.equal(r8.ok, false); assert.match(r8.err, /ya tiene ventas, canjes o movimientos posteriores/);
+    assert.equal(r8.ok, false); assert.match(r8.err, /Recompensas está activo/);
     resultados.reversibilidad = { f1: lista[F.f1.id], f4: lista[F.f4.id], f8: lista[F.f8.id] };
   });
 

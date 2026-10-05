@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 import { restaurarBase, ejecutarEnsayo } from './ensayo-destino.mjs';
 
 await restaurarBase('/tmp/qa.dump', 'transicion', { marcar: true });
-const borrador = readFileSync(new URL('../../docs/recompensas-fase2/transicion/apertura-borrador.sql', import.meta.url), 'utf8');
+// ENSAYO_BORRADOR permite cargar otra versión del borrador (p. ej. la v1 guardada en C:/JaiseQA-Backups/borradores) para comparar.
+const borrador = readFileSync(process.env.ENSAYO_BORRADOR ?? new URL('../../docs/recompensas-fase2/transicion/apertura-borrador.sql', import.meta.url), 'utf8');
 const r = await ejecutarEnsayo('transicion', borrador);
 if (!r.ok) { console.error(r.err); process.exit(1); }
 console.log('transicion lista (copia + marca + borrador)');

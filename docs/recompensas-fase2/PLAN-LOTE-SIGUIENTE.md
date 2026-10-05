@@ -1,5 +1,7 @@
 # Fase 2 — plan del siguiente lote
 
+> **Actualización 2026-10-05 (segundo lote):** autorizado y hecho en QA únicamente el registro de las 13 versiones en `schema_migrations`. En la instancia desechable se añadieron HTTP, interfaz y Storage con sesiones reales, concurrencia (la v1 del borrador falló y la v2 corrige), los 17 aportes de QA documentados (`APORTES-PREEXISTENTES-QA.md`) y el procedimiento de la ventana (`transicion/PROCEDIMIENTO-VENTANA.md`). Siguen sin autorizar: ejecutar la apertura en QA, activar Recompensas, borrar los 17 aportes y producción.
+>
 > **Actualización 2026-10-05:** el ensayo en instancia desechable ya se hizo; resultados separados (instalación, restauración, reconciliación, transición) en [`RESULTADOS-ENSAYO.md`](RESULTADOS-ENSAYO.md). Siguen **sin ejecutarse en QA** el registro de las 13 versiones y la apertura, y producción sigue fuera. Cambios respecto del plan original: las cifras de 955 clientas y 8 390 monedas son **referencia histórica** (los totales y las versiones pendientes se recalculan sobre el estado capturado); el corte es la hora exacta de la copia (`2026-10-05T04:32:53Z`, `2026-10-04 23:32:53` en Perú) y las ventas de QA **no** se congelan.
 
 Estado: **ensayado solo en la instancia desechable**; sin ejecución en QA ni producción.

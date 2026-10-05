@@ -18,7 +18,9 @@ export const PUERTO_DB = 56322;
 export const PUERTO_API = 56321;
 export const appURL = 'http://localhost:5273'; // Vite de ensayo (aún no usado: la UI no se ejecuta en este lote)
 export const supabaseURL = `http://127.0.0.1:${PUERTO_API}`;
-export const BASES_PERMITIDAS = ['postgres', 'restauracion', 'transicion', 'recuperacion'];
+export const BASES_PERMITIDAS = ['postgres', 'restauracion', 'transicion', 'recuperacion', 'listo', 'instalacion_limpia'];
+export const CLI = 'C:/JaiseQA-Tools/supabase.exe';
+export const DIRECTORIO_CLI = 'C:/JaiseQA-Ensayo';
 
 // Destinos de QA que este módulo debe rechazar siempre (aunque alguien los pase por error).
 const DESTINOS_QA = {
@@ -126,3 +128,81 @@ export async function restaurarBase(archivo, baseNueva, { marcar = false } = {})
   verificadas.delete(baseNueva);
   verificarDestinoEnsayo(baseNueva);
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Ruta HTTP/interfaz: Auth, REST y la aplicación deben apuntar a LA MISMA base donde se ejecutó la apertura.
+// Los servicios de la instancia (GoTrue, PostgREST) sirven siempre la base «postgres» del ensayo; por eso la base preparada
+// se intercambia a ese nombre (hacerPrincipal) y se comprueba, leyendo la configuración de los contenedores, que ambos usan
+// esa base y no otra. Solo se extrae el NOMBRE de la base de las URL de conexión; nunca se imprime una URL ni una clave.
+export const SERVICIOS = ['auth', 'rest', 'storage', 'realtime', 'pg_meta', 'studio'];
+const contenedorDe = (servicio) => `supabase_${servicio}_${PROYECTO}`;
+
+function nombreDeBaseEn(servicio, variables) {
+  const env = JSON.parse(docker(['inspect', contenedorDe(servicio)]))[0].Config.Env;
+  for (const v of variables) {
+    const fila = env.find((e) => e.startsWith(`${v}=`));
+    if (!fila) continue;
+    const valor = fila.slice(v.length + 1);
+    try { return new URL(valor).pathname.replace(/^\//, ''); } catch { return valor; }
+  }
+  return null;
+}
+
+// Devuelve { auth, rest } con la base que usa cada servicio.
+export function basesDeLosServicios() {
+  return {
+    auth: nombreDeBaseEn('auth', ['GOTRUE_DB_DATABASE_URL', 'DATABASE_URL']),
+    rest: nombreDeBaseEn('rest', ['PGRST_DB_URI']),
+  };
+}
+
+export function verificarMismaBase(baseDeLaApertura) {
+  verificarDestinoEnsayo(baseDeLaApertura);
+  const { auth, rest } = basesDeLosServicios();
+  const m = [];
+  if (auth !== baseDeLaApertura) m.push(`Auth usa «${auth}», no «${baseDeLaApertura}»`);
+  if (rest !== baseDeLaApertura) m.push(`REST usa «${rest}», no «${baseDeLaApertura}»`);
+  if (m.length) throw new Error(`Auth/REST/SQL no apuntan a la misma base: ${m.join('; ')}`);
+  return { auth, rest, sql: baseDeLaApertura };
+}
+
+// Claves del ensayo (no son las de QA ni las de producción). Se leen del CLI en memoria; nunca se imprimen ni se guardan.
+export function clavesDelEnsayo() {
+  const salida = JSON.parse(execFileSync(CLI, ['status', '-o', 'json', '--workdir', DIRECTORIO_CLI], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }));
+  if (!salida.API_URL?.includes(`:${PUERTO_API}`)) throw new Error('El CLI no apunta a la API del ensayo; se aborta.');
+  return { anon: salida.ANON_KEY, servicio: salida.SERVICE_ROLE_KEY };
+}
+
+// Deja `origen` como la base «postgres» de la instancia (la que sirven Auth y REST). La base «postgres» anterior se conserva
+// como «instalacion_limpia». Se detienen los servicios mientras se renombra y se vuelven a levantar después.
+export async function hacerPrincipal(origen) {
+  if (origen === 'postgres' || !BASES_PERMITIDAS.includes(origen)) throw new Error(`Base no permitida: ${origen}`);
+  verificarDestinoEnsayo(origen);
+  for (const s of SERVICIOS) { try { docker(['stop', contenedorDe(s)]); } catch { /* ya detenido */ } }
+  const psqlMant = (...cmds) => docker(['exec', CONTENEDOR, 'psql', '-U', 'supabase_admin', '-d', 'restauracion', '-v', 'ON_ERROR_STOP=1', '-q',
+    ...cmds.flatMap((c) => ['-c', c])]);
+  psqlMant(`drop database if exists instalacion_limpia with (force)`,
+    `select pg_terminate_backend(pid) from pg_stat_activity where datname in ('postgres', '${origen}') and pid <> pg_backend_pid()`,
+    `alter database postgres rename to instalacion_limpia`,
+    `alter database ${origen} rename to postgres`);
+  for (const s of SERVICIOS) { try { docker(['start', contenedorDe(s)]); } catch { /* sin contenedor */ } }
+  verificadas.clear();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Archivos de Storage del ensayo (backend de archivos del contenedor de storage-api). Solo el contenedor del ensayo y solo
+// rutas bajo /mnt/stub: ninguna operación puede alcanzar el Storage de QA.
+export const CONTENEDOR_STORAGE = `supabase_storage_${PROYECTO}`;
+const rutaStorageValida = (r) => /^\/mnt\/stub(\/[\w.@%+=,~ -]+)*\/?$/.test(r) && !r.includes('..');
+export function shStorage(comando) {
+  return docker(['exec', CONTENEDOR_STORAGE, 'sh', '-c', comando]);
+}
+export function copiarDesdeStorage(rutaContenedor, destinoLocal) {
+  if (!rutaStorageValida(rutaContenedor)) throw new Error(`Ruta de Storage no permitida: ${rutaContenedor}`);
+  docker(['cp', `${CONTENEDOR_STORAGE}:${rutaContenedor}`, destinoLocal]);
+}
+export function copiarHaciaStorage(origenLocal, rutaContenedor) {
+  if (!rutaStorageValida(rutaContenedor)) throw new Error(`Ruta de Storage no permitida: ${rutaContenedor}`);
+  docker(['cp', origenLocal, `${CONTENEDOR_STORAGE}:${rutaContenedor}`]);
+}
+export const archivosDeStorage = () => Number(shStorage('find /mnt/stub -type f | wc -l'));

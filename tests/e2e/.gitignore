@@ -7,3 +7,6 @@ BASELINE-*.md
 CAMPANA-AMPLIADA.md
 RENDIMIENTO-*.md
 RESULTADOS.md
+fixtures/ensayo-runtime.json
+artifacts-ensayo/
+results-ensayo/
