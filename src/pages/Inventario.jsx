@@ -507,6 +507,12 @@ export default function Inventario({ activo = true }) {
               ? () => navigate(`/catalogo-web?tab=productos&id=${modalProducto.id}&desde=/inventario`)
               : undefined
           }
+          // La protección económica (transporte, otros importes, confirmación del costo) vive en Recompensas Web.
+          onProteccion={
+            esAdmin && modalProducto !== 'nuevo'
+              ? () => navigate(`/recompensas-web?tab=proteccion-productos&producto=${modalProducto.id}&desde=/inventario`)
+              : undefined
+          }
           onCerrar={() => setModalProducto(null)}
           onGuardado={(productoActualizado) => {
             const esNuevo = modalProducto === 'nuevo'

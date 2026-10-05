@@ -155,7 +155,8 @@ test('QA-041: servicio protegido — manda el piso (S/30, piso S/10: S/20 sí, S
   const sobra = await h.nuevoCupon(c.clienteId, { valor: 20.01 });
   const r1 = await vender(page, [serv(at)], sobra.codigo);
   expect(r1.status).toBeGreaterThanOrEqual(400);
-  expect(JSON.stringify(r1.json)).toContain('importe mínimo protegido');
+  // Mensaje de la regla global del carrito (protección económica de cupones); el resultado (rechazo con S/20,01) no cambia.
+  expect(JSON.stringify(r1.json)).toContain('supera el descuento permitido para esta compra');
   expect((await h.estadoCupon(sobra.id)).estado).toBe('DISPONIBLE');
   const justo = await h.nuevoCupon(c.clienteId, { valor: 20 });
   const r2 = await vender(page, [serv(at)], justo.codigo);

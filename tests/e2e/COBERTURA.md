@@ -40,3 +40,7 @@ cámara física, otros navegadores/dispositivos.
 5. **Textos antiguos** («puntos» frente a «monedas») en pantallas anteriores.
 6. **Separación POS/Web** de Servicios y Productos: implementada en Local (ver `docs/qa/SEPARACION-POS-WEB.md`); sus casos de interfaz quedaron dentro de la corrida completa independiente de 02a9f17 (213/214, sin fallos).
 7. Nada de esto se aplica a producción sin autorización separada; QA-045 (código de venta ≥ 1000) tampoco se ha aplicado allí.
+
+## Protección económica de cupones (regla global del carrito)
+
+`recompensas-proteccion-global.test.mjs` (28 casos, capa SQL en Supabase Local TEST) cubre la regla aprobada; detalle, expectativas cambiadas y límites en `docs/recompensas-fase2/PROTECCION-CUPONES.md`. Las pruebas HTTP/UI (pestaña «Protección de productos», botón del modal de producto, rechazo desde Caja) quedan pendientes: requieren `QA_TEST_PASSWORD`.

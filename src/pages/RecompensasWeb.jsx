@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Coins, Plus, Stamp, ShieldCheck, Settings2 } from 'lucide-react'
+import { Coins, Plus, Stamp, ShieldCheck, ShoppingBag, Settings2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
+import { patronIlike } from '../lib/buscarClientes.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -22,6 +23,7 @@ const PESTANAS = [
   { id: 'monedas', label: 'Catálogo de monedas', icono: Coins },
   { id: 'sellos', label: 'Premios de sellos', icono: Stamp },
   { id: 'proteccion', label: 'Protección de servicios', icono: ShieldCheck },
+  { id: 'proteccion-productos', label: 'Protección de productos', icono: ShoppingBag },
   { id: 'programa', label: 'Programa', icono: Settings2 },
 ]
 
@@ -481,9 +483,12 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
 function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
   const { mostrarToast } = useToast()
   const [abierto, setAbierto] = useState(Boolean(destacado))
+  // Porcentaje protegido de asistente (estimación). Una protección ANTIGUA (importe fijo en S/) tiene asistente_pct nulo:
+  // conserva su importe y se muestra como pendiente de actualización; nunca se convierte sola en porcentaje.
+  const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
   const [v, setV] = useState({
     materiales: prot ? String(prot.materiales) : '',
-    asistente: prot ? String(prot.asistente) : '',
+    pct: prot && !pendiente ? String(prot.asistente_pct) : '',
     otros: prot ? String(prot.otros) : '',
   })
   const [guardando, setGuardando] = useState(false)
@@ -498,16 +503,22 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
   }, [destacado])
 
   const n = (x) => (x === '' ? 0 : Number(x))
-  const total = n(v.materiales) + n(v.asistente) + n(v.otros)
-  const invalido = [v.materiales, v.asistente, v.otros].some((x) => x !== '' && !(Number(x) >= 0))
+  const precio = Number(servicio.precio)
+  // Con el porcentaje vacío en una fila antigua se sigue usando su importe fijo; en una fila nueva vacío = 0 %.
+  const usaImporteAntiguo = pendiente && v.pct === ''
+  const asistenteImporte = usaImporteAntiguo ? Number(prot.asistente) : Math.ceil(precio * n(v.pct) - 1e-9) / 100
+  const total = n(v.materiales) + asistenteImporte + n(v.otros)
+  const pctInvalido = v.pct !== '' && !(Number(v.pct) >= 0 && Number(v.pct) <= 100)
+  const invalido = pctInvalido || [v.materiales, v.otros].some((x) => x !== '' && !(Number(x) >= 0))
 
   async function guardar() {
     if (invalido) return
     setGuardando(true)
+    // No se escribe `asistente` (S/): el importe antiguo se conserva intacto para el histórico.
     const { error } = await supabase.from('servicios_proteccion').upsert({
       servicio_id: servicio.id,
       materiales: n(v.materiales),
-      asistente: n(v.asistente),
+      asistente_pct: v.pct === '' ? (pendiente ? null : 0) : Number(v.pct),
       otros: n(v.otros),
       actualizado_en: new Date().toISOString(),
     })
@@ -528,7 +539,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
       mostrarToast('No se pudo quitar la configuración.', 'error')
       return
     }
-    setV({ materiales: '', asistente: '', otros: '' })
+    setV({ materiales: '', pct: '', otros: '' })
     mostrarToast('Servicio sin configurar.', 'exito')
     onGuardado()
   }
@@ -541,7 +552,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
           <span className="block font-mono text-xs text-ink/60">Precio {soles(servicio.precio)}</span>
         </span>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${prot ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'}`}>
-          {prot ? `Piso ${soles(prot.total)}` : 'Sin configurar'}
+          {prot ? (pendiente ? `Pendiente de actualizar · ${soles(prot.total)}` : 'Protegido') : 'Sin configurar'}
         </span>
       </button>
       {abierto && (
@@ -550,19 +561,28 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
             <Campo id={`${idBase}-m`} etiqueta="Materiales protegidos (S/)">
               <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => setV((a) => ({ ...a, materiales: e.target.value }))} />
             </Campo>
-            <Campo id={`${idBase}-a`} etiqueta="Pago protegido a asistente (S/)">
-              <input id={`${idBase}-a`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.asistente} onChange={(e) => setV((a) => ({ ...a, asistente: e.target.value }))} />
+            <Campo id={`${idBase}-a`} etiqueta="Porcentaje protegido de asistente (%)">
+              <input id={`${idBase}-a`} type="number" min="0" max="100" step="0.01" className={CLASE_INPUT} value={v.pct} placeholder={pendiente ? 'Sin actualizar' : ''} onChange={(e) => setV((a) => ({ ...a, pct: e.target.value }))} />
             </Campo>
             <Campo id={`${idBase}-o`} etiqueta="Otros costos directos (S/)">
               <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => setV((a) => ({ ...a, otros: e.target.value }))} />
             </Campo>
           </div>
+          {pendiente && (
+            <p className="mt-2 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-ink/80">
+              Esta protección todavía usa el importe fijo antiguo de {soles(prot.asistente)} para la asistente. Escribe un
+              porcentaje y guarda para actualizarla; mientras tanto se conserva ese importe.
+            </p>
+          )}
           <p className="mt-2 font-mono text-xs text-ink/70">
-            Total protegido (piso): {soles(total)} · descuento máximo de un cupón: {soles(Math.max(Number(servicio.precio) - total, 0))}
+            Protección del servicio: {soles(total)} (precio {soles(precio)}; asistente {soles(asistenteImporte)}) · si fuera el único artículo del carrito, descuento máximo de un cupón: {soles(Math.max(precio - total, 0))}
           </p>
           <p className="mt-1 text-xs text-ink/50">
-            Guardar con todo en 0 es una decisión explícita (el servicio admite neto 0). «Sin configurar»
-            no es cero: los cupones descuentan hasta el 50 % del precio. Esto no cambia comisiones ni pagos reales.
+            El porcentaje de asistente es una ESTIMACIÓN que tú defines sobre el precio realmente cobrado en la atención:
+            no consulta las comisiones reales y puede no cubrir una comisión real mayor. La protección total de un cupón es la
+            suma de todo el carrito. Guardar con todo en 0 es una decisión explícita (el servicio admite neto 0).
+            «Sin configurar» no es cero: los cupones descuentan hasta el 50 % del precio. Esto no cambia Porcentajes,
+            comisiones ni pagos reales.
           </p>
           <div className="mt-3 flex gap-2">
             <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40">
@@ -577,6 +597,195 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
         </div>
       )}
     </li>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Protección por producto (por unidad: costo de compra registrado + transporte de abastecimiento + otros)
+// ---------------------------------------------------------------------------
+// El costo de compra NO se copia ni se edita aquí: se lee de Inventario (productos.costo, visible solo para el
+// administrador mediante productos_vista). El transporte de abastecimiento es distinto del envío cobrado a la clienta.
+// Un costo 0 sin confirmar es DESCONOCIDO: bloquea el uso de cupones hasta que el administrador lo confirme.
+function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
+  const { mostrarToast } = useToast()
+  const [abierto, setAbierto] = useState(Boolean(destacado))
+  const [v, setV] = useState({
+    transporte: prot ? String(prot.transporte) : '',
+    otros: prot ? String(prot.otros) : '',
+    confirmado: Boolean(prot?.costo_confirmado),
+  })
+  const [guardando, setGuardando] = useState(false)
+  const ref = useRef(null)
+  const idBase = useRef(`pp-${producto.id.slice(0, 8)}`).current
+
+  useEffect(() => {
+    if (destacado) {
+      setAbierto(true)
+      ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+  }, [destacado])
+
+  const n = (x) => (x === '' ? 0 : Number(x))
+  const costo = Number(producto.costo ?? 0)
+  const conocido = costo > 0 || v.confirmado
+  const unitaria = costo + n(v.transporte) + n(v.otros)
+  const invalido = [v.transporte, v.otros].some((x) => x !== '' && !(Number(x) >= 0))
+  const guardadoConocido = costo > 0 || Boolean(prot?.costo_confirmado)
+
+  async function guardar() {
+    if (invalido) return
+    setGuardando(true)
+    const { error } = await supabase.from('productos_proteccion').upsert({
+      producto_id: producto.id,
+      transporte: n(v.transporte),
+      otros: n(v.otros),
+      costo_confirmado: v.confirmado,
+      actualizado_en: new Date().toISOString(),
+    })
+    setGuardando(false)
+    if (error) {
+      mostrarToast('No se pudo guardar la protección del producto.', 'error')
+      return
+    }
+    mostrarToast('Protección del producto guardada.', 'exito')
+    onGuardado()
+  }
+
+  async function quitar() {
+    setGuardando(true)
+    const { error } = await supabase.from('productos_proteccion').delete().eq('producto_id', producto.id)
+    setGuardando(false)
+    if (error) {
+      mostrarToast('No se pudo quitar la configuración.', 'error')
+      return
+    }
+    setV({ transporte: '', otros: '', confirmado: false })
+    mostrarToast('Producto sin importes adicionales.', 'exito')
+    onGuardado()
+  }
+
+  return (
+    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-red' : 'border-border'}`}>
+      <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium text-ink">{producto.nombre}</span>
+          <span className="block font-mono text-xs text-ink/60">Precio {soles(producto.precio)} · Costo registrado {soles(costo)}</span>
+        </span>
+        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${guardadoConocido ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
+          {guardadoConocido ? 'Protegido' : 'Costo por revisar'}
+        </span>
+      </button>
+      {abierto && (
+        <div className="border-t border-border p-3">
+          <p className="font-mono text-xs text-ink/70">
+            Costo de compra registrado: {soles(costo)} (se edita en Inventario; aquí no se copia).
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Campo id={`${idBase}-t`} etiqueta="Transporte de abastecimiento por unidad (S/)">
+              <input id={`${idBase}-t`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.transporte} onChange={(e) => setV((a) => ({ ...a, transporte: e.target.value }))} />
+            </Campo>
+            <Campo id={`${idBase}-o`} etiqueta="Otros importes protegidos por unidad (S/)">
+              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => setV((a) => ({ ...a, otros: e.target.value }))} />
+            </Campo>
+          </div>
+          {costo === 0 && (
+            <label className="mt-3 flex items-start gap-2 text-sm text-ink">
+              <input type="checkbox" className="mt-1" checked={v.confirmado} onChange={(e) => setV((a) => ({ ...a, confirmado: e.target.checked }))} />
+              <span>Confirmo que el costo de compra de este producto es realmente S/ 0,00. Sin esta confirmación el costo se considera desconocido y los cupones no se podrán usar en compras que lo incluyan.</span>
+            </label>
+          )}
+          <p className="mt-2 font-mono text-xs text-ink/70">
+            {conocido
+              ? `Protección por unidad: ${soles(unitaria)} · descuento máximo de un cupón si fuera el único artículo (1 unidad): ${soles(Math.max(Number(producto.precio) - unitaria, 0))}`
+              : 'Costo desconocido: los cupones quedan bloqueados para compras con este producto.'}
+          </p>
+          <p className="mt-1 text-xs text-ink/50">
+            El transporte de abastecimiento no es el envío que paga la clienta. No se suman reserva, diezmo ni gastos generales
+            salvo que los escribas en «otros». Esto limita cupones: las ventas sin cupón no cambian.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40">
+              {guardando ? 'Guardando...' : 'Guardar protección'}
+            </button>
+            {prot && (
+              <button type="button" onClick={quitar} disabled={guardando} className="rounded-lg border border-border-strong px-3 py-2 text-sm text-ink disabled:opacity-40">
+                Quitar importes adicionales
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
+  )
+}
+
+function ProteccionProductos({ productoFoco }) {
+  const [filtro, setFiltro] = useState('')
+  const [estado, setEstado] = useState({ cargando: true, error: false, productos: [], prot: {} })
+  const [version, setVersion] = useState(0)
+
+  useEffect(() => {
+    let vigente = true
+    const t = setTimeout(async () => {
+      // Búsqueda y límite en el SERVIDOR (el catálogo puede superar las 1000 filas de max_rows).
+      const base = supabase.from('productos_vista').select('id, nombre, precio, costo')
+      const consulta =
+        productoFoco && !filtro.trim()
+          ? base.eq('id', productoFoco)
+          : filtro.trim()
+            ? base.ilike('nombre', patronIlike(filtro)).order('nombre').order('id').limit(40)
+            : base.order('nombre').order('id').limit(40)
+      const res = await consulta
+      if (!vigente) return
+      if (res.error) {
+        setEstado({ cargando: false, error: true, productos: [], prot: {} })
+        return
+      }
+      const ids = res.data.map((p) => p.id)
+      const pr = ids.length
+        ? await supabase.from('productos_proteccion').select('producto_id, transporte, otros, costo_confirmado, actualizado_en').in('producto_id', ids)
+        : { data: [], error: null }
+      if (!vigente) return
+      if (pr.error) {
+        setEstado({ cargando: false, error: true, productos: [], prot: {} })
+        return
+      }
+      const prot = {}
+      for (const p of pr.data) prot[p.producto_id] = p
+      setEstado({ cargando: false, error: false, productos: res.data, prot })
+    }, 250)
+    return () => {
+      vigente = false
+      clearTimeout(t)
+    }
+  }, [filtro, productoFoco, version])
+
+  return (
+    <div>
+      <p className="mt-3 text-sm text-ink/60">
+        Protege el costo de cada producto frente a los cupones: costo de compra registrado en Inventario + transporte de
+        abastecimiento + otros importes que tú definas, por unidad. Solo el administrador ve y edita estos importes; caja solo
+        aplica las reglas y la clienta nunca ve los costos internos.
+      </p>
+      <input
+        aria-label="Buscar producto"
+        placeholder="Buscar producto…"
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        className={`${CLASE_INPUT} mt-3`}
+      />
+      {estado.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
+      {estado.error && <AvisoError mensaje="No se pudo cargar la protección de productos." onReintentar={() => setVersion((x) => x + 1)} />}
+      {!estado.cargando && !estado.error && (
+        <ul className="mt-3 space-y-2">
+          {estado.productos.map((p) => (
+            <FilaProteccionProducto key={`${p.id}-${estado.prot[p.id]?.actualizado_en ?? 'x'}`} producto={p} prot={estado.prot[p.id]} destacado={productoFoco === p.id} onGuardado={() => setVersion((x) => x + 1)} />
+          ))}
+          {estado.productos.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
+          {estado.productos.length === 40 && <li className="text-center text-xs text-ink/50">Se muestran los primeros 40: usa el buscador para acotar.</li>}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -742,6 +951,7 @@ export default function RecompensasWeb() {
   const [params, setParams] = useSearchParams()
   const pestana = PESTANAS.some((p) => p.id === params.get('tab')) ? params.get('tab') : 'monedas'
   const servicioFoco = params.get('servicio')
+  const productoFoco = params.get('producto')
   // Solo rutas internas del POS (nunca un destino arbitrario).
   const desdeParam = params.get('desde')
   const desde = desdeParam && /^\/[a-z-]+$/.test(desdeParam) ? desdeParam : null
@@ -754,7 +964,7 @@ export default function RecompensasWeb() {
   const cargar = useCallback(async () => {
     const [cat, prot, canj, cfg, serv] = await Promise.all([
       supabase.from('recompensas_catalogo').select('*').order('creado_en', { ascending: false }),
-      supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, otros, total, actualizado_en'),
+      supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en'),
       supabase.from('recompensas_canjes').select('catalogo_id'),
       supabase.from('recompensas_config').select('*').eq('id', 1).single(),
       // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
@@ -788,6 +998,7 @@ export default function RecompensasWeb() {
     const siguiente = new URLSearchParams(params)
     siguiente.set('tab', id)
     if (id !== 'proteccion') siguiente.delete('servicio')
+    if (id !== 'proteccion-productos') siguiente.delete('producto')
     setParams(siguiente, { replace: true })
   }
 
@@ -796,7 +1007,7 @@ export default function RecompensasWeb() {
       <h1 className="mt-3 text-base font-semibold text-red">Recompensas Web</h1>
       {desde && (
         <Link to={desde} className="mt-1 inline-block text-sm text-ink/70 underline hover:text-red">
-          ← Volver a {desde === '/servicios' ? 'Servicios' : 'la pantalla anterior'}
+          ← Volver a {desde === '/servicios' ? 'Servicios' : desde === '/inventario' ? 'Inventario' : 'la pantalla anterior'}
         </Link>
       )}
 
@@ -837,6 +1048,7 @@ export default function RecompensasWeb() {
           {pestana === 'proteccion' && (
             <Proteccion estado={estado} servicios={servicios} servicioFoco={servicioFoco} recargar={cargar} />
           )}
+          {pestana === 'proteccion-productos' && <ProteccionProductos productoFoco={productoFoco} />}
           {pestana === 'programa' && <Programa key={estado.config.actualizado_en} estado={estado} recargar={cargar} />}
         </div>
       )}

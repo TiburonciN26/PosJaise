@@ -148,20 +148,32 @@ export async function nuevoServicio(precio, proteccion, extra = {}) {
   const duracion = extra.duracion_min == null ? 'null' : Number(extra.duracion_min);
   let sql = `insert into public.servicios (id, nombre, precio, duracion_min) values ('${id}', '${nombre}', ${precio}, ${duracion});`;
   if (proteccion) {
-    sql += `insert into public.servicios_proteccion (servicio_id, materiales, asistente, otros)
-            values ('${id}', ${proteccion.materiales ?? 0}, ${proteccion.asistente ?? 0}, ${proteccion.otros ?? 0});`;
+    // `asistentePct` = porcentaje protegido (nuevo); `asistente` = importe fijo antiguo (S/). Sin ninguno, queda como antes.
+    sql += `insert into public.servicios_proteccion (servicio_id, materiales, asistente, otros, asistente_pct)
+            values ('${id}', ${proteccion.materiales ?? 0}, ${proteccion.asistente ?? 0}, ${proteccion.otros ?? 0},
+                    ${proteccion.asistentePct ?? 'null'});`;
   }
   const r = await ejecutar(sql);
   if (!r.ok) throw new Error(r.err);
   return id;
 }
 
+// Costo de compra del fixture: `extra.costo` o, por omisión, S1 (10 % del precio si el precio es menor a S10, para que la
+// protección de productos baratos no iguale su precio). Con la protección económica, un costo 0 sin confirmar es DESCONOCIDO
+// y bloquea cupones; por eso, si el costo resultante es 0, se confirma explícitamente (productos_proteccion.costo_confirmado).
+// `extra.transporte` / `extra.otros` / `extra.confirmado` configuran el resto de la protección del producto.
 export async function nuevoProducto(precio, stock = 10, extra = {}) {
   const id = randomUUID();
   const nombre = nombreUnico('TEST F2 prod');
   const codigo = extra.codigo_barras ? `'${extra.codigo_barras}'` : 'null';
-  const r = await ejecutar(`insert into public.productos (id, nombre, precio, costo, stock_actual, codigo_barras)
-    values ('${id}', '${nombre}', ${precio}, 1, ${stock}, ${codigo});`);
+  const costo = extra.costo ?? Math.min(1, Math.round(Number(precio) * 10) / 100);
+  let sql = `insert into public.productos (id, nombre, precio, costo, stock_actual, codigo_barras)
+    values ('${id}', '${nombre}', ${precio}, ${costo}, ${stock}, ${codigo});`;
+  if (extra.transporte != null || extra.otros != null || extra.confirmado || Number(costo) === 0) {
+    sql += `insert into public.productos_proteccion (producto_id, transporte, otros, costo_confirmado)
+      values ('${id}', ${extra.transporte ?? 0}, ${extra.otros ?? 0}, ${extra.confirmado ?? Number(costo) === 0});`;
+  }
+  const r = await ejecutar(sql);
   if (!r.ok) throw new Error(r.err);
   return id;
 }

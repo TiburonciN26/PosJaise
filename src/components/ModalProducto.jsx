@@ -129,7 +129,7 @@ function validarWeb(formulario) {
 //  - modo 'web' (Web → Catálogo → Productos, solo ADMINISTRADOR): precio anterior y fecha de oferta, descripción,
 //    contenido, rinde, frecuencia, foto, galería, combo, destacados y contenido editorial.
 // El UPDATE de un modo no menciona las columnas del otro, así que no se pierde nada. El precio real es compartido.
-export default function ModalProducto({ producto, categoriasExistentes = [], modo = 'pos', onCerrar, onGuardado, onEditarEnWeb }) {
+export default function ModalProducto({ producto, categoriasExistentes = [], modo = 'pos', onCerrar, onGuardado, onEditarEnWeb, onProteccion }) {
   const esWeb = modo === 'web'
   const idBase = useId()
   const panelRef = useRef(null)
@@ -898,6 +898,16 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             className="mt-4 w-full rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
           >
             Editar en Web
+          </button>
+        )}
+
+        {!esWeb && onProteccion && (
+          <button
+            type="button"
+            onClick={onProteccion}
+            className="mt-2 w-full rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+          >
+            Protección económica (Recompensas Web)
           </button>
         )}
 

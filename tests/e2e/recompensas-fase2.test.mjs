@@ -211,7 +211,8 @@ describe('Protección del costo del servicio (regla 4)', () => {
     const cup = await h.nuevoCupon(c.clienteId, { valor: 21 });
     const r = await ventaServicio({ c, precio: 30, prot, cupon: cup.codigo });
     assert.equal(r.ok, false);
-    assert.match(r.err, /importe mínimo protegido/);
+    // Regla global del carrito (lote de protección): el rechazo de un cupón usa el mensaje de descuento permitido.
+    assert.match(r.err, /supera el descuento permitido para esta compra/);
     assert.equal((await h.estadoCupon(cup.id)).estado, 'DISPONIBLE');
 
     const pct = await h.nuevoCupon(c.clienteId, { valor: 100, tipo: 'PORCENTAJE' });
@@ -261,7 +262,7 @@ describe('Protección del costo del servicio (regla 4)', () => {
     const sobra = await h.nuevoCupon(c.clienteId, { valor: 20.01 });
     const r = await ventaServicio({ c, precio: 30, prot, cupon: sobra.codigo });
     assert.equal(r.ok, false);
-    assert.match(r.err, /importe mínimo protegido/);
+    assert.match(r.err, /supera el descuento permitido para esta compra/);
     assert.equal((await h.estadoCupon(sobra.id)).estado, 'DISPONIBLE');
   });
 
@@ -295,20 +296,31 @@ describe('Protección del costo del servicio (regla 4)', () => {
     casi(ok.venta.total, 12);
   });
 
-  test('ventas mixtas y varios servicios: se valida por partida', async () => {
+  test('varios servicios: la protección es GLOBAL del carrito (regla aprobada), no por partida', async () => {
     const c = await h.nuevaClienta();
-    // A: S30 piso 10 (margen 20); B: S12 piso 10 (margen 2). Cupón S20 reparte 12 / 8 -> B queda bajo piso.
+    // A: S30 piso 10; B: S12 piso 10. Subtotal 42, protección total 20, descuento máximo 22.
+    // EXPECTATIVA CAMBIADA a propósito (regla aprobada del lote de protección global): antes un cupón de S20 se rechazaba
+    // porque el reparto 12 / 8 dejaba a B (S12 piso 10) por debajo de su piso individual; ahora una partida puede quedar
+    // por debajo de su protección individual si el carrito completo cubre la suma (42 - 20 = 22 >= 20).
     const a = await h.nuevoServicio(30, prot);
     const b = await h.nuevoServicio(12, { materiales: 10 });
     const ra = await h.nuevaAtencion(c.clienteId, a, 30);
     const rb = await h.nuevaAtencion(c.clienteId, b, 12);
     const cup = await h.nuevoCupon(c.clienteId, { valor: 20 });
     const r = await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(ra), h.itemServicio(rb)], cupon: cup.codigo });
-    assert.equal(r.ok, false, 'el margen de la suma no basta: cada partida debe cumplir su piso');
-    assert.equal((await h.estadoCupon(cup.id)).estado, 'DISPONIBLE');
-    const chico = await h.nuevoCupon(c.clienteId, { valor: 2 });
-    const r2 = await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(ra), h.itemServicio(rb)], cupon: chico.codigo });
-    assert.ok(r2.ok, r2.err);
+    assert.ok(r.ok, r.err);
+    casi(r.venta.total, 22);
+    // lo que sigue siendo rechazado: pasar del máximo global (S22).
+    const rc = await h.nuevaAtencion(c.clienteId, a, 30);
+    const rd = await h.nuevaAtencion(c.clienteId, b, 12);
+    const mucho = await h.nuevoCupon(c.clienteId, { valor: 22.01 });
+    const r2 = await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(rc), h.itemServicio(rd)], cupon: mucho.codigo });
+    assert.equal(r2.ok, false);
+    assert.match(r2.err, /supera el descuento permitido para esta compra/);
+    assert.equal((await h.estadoCupon(mucho.id)).estado, 'DISPONIBLE');
+    const justo = await h.nuevoCupon(c.clienteId, { valor: 22 });
+    const r3 = await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(rc), h.itemServicio(rd)], cupon: justo.codigo });
+    assert.ok(r3.ok, r3.err);
   });
 
   test('precio variable: el piso se compara con el precio efectivo de la atención', async () => {
