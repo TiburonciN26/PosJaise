@@ -14,6 +14,15 @@ const RPC_PERSONALES = /\/rpc\/(mis_puntos|mis_cupones|mi_fidelizacion|mi_histor
 const tab = (page, nombre) => page.getByRole('tab', { name: nombre, exact: true });
 const seccionDe = (page) => new URL(page.url()).searchParams.get('seccion');
 
+// Espera SEMÁNTICA: la URL y el ARIA (selección y tabindex) de la sección, no solo el foco ni una lectura inmediata del DOM.
+async function esperarSeccion(page, clave) {
+  const nombre = TABS[CLAVES.indexOf(clave)];
+  await expect.poll(() => seccionDe(page), { message: `la URL llega a ?seccion=${clave}` }).toBe(clave);
+  await expect(tab(page, nombre)).toHaveAttribute('aria-selected', 'true');
+  await expect(tab(page, nombre)).toHaveAttribute('tabindex', '0');
+  await expect(page.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', await tab(page, nombre).getAttribute('id'));
+}
+
 async function irA(page, clave) {
   await page.goto(`/recompensas?seccion=${clave}`);
   await expect(tab(page, TABS[CLAVES.indexOf(clave)])).toHaveAttribute('aria-selected', 'true');
@@ -195,13 +204,13 @@ test('QA-038: subpestañas con patrón tablist/tab/tabpanel completo y navegaci�
   await expect.poll(() => seccionDe(page)).toBe('como');
   await page.keyboard.press('ArrowRight');
   await expect(tab(page, 'Mi tarjeta')).toBeFocused();
+  await esperarSeccion(page, 'tarjeta');
   await page.keyboard.press('End');
   await expect(tab(page, 'Cómo funciona')).toBeFocused();
+  await esperarSeccion(page, 'como'); // asentada (URL y ARIA) antes de la siguiente pulsación
   await page.keyboard.press('Home');
   await expect(tab(page, 'Mi tarjeta')).toBeFocused();
-  // Esperar a que la selección (y el tabindex) se actualicen antes de seguir con Tab.
-  await expect(tab(page, 'Mi tarjeta')).toHaveAttribute('aria-selected', 'true');
-  await expect(tab(page, 'Mi tarjeta')).toHaveAttribute('tabindex', '0');
+  await esperarSeccion(page, 'tarjeta');
 
   // Tab sale de la lista (no recorre las demás pestañas).
   await page.keyboard.press('Tab');
@@ -218,6 +227,58 @@ test('QA-038: subpestañas con patrón tablist/tab/tabpanel completo y navegaci�
   await expect(tab(page, 'Mi tarjeta')).toHaveAttribute('aria-selected', 'true');
   await page.goForward();
   await expect(tab(page, 'Mis cupones')).toHaveAttribute('aria-selected', 'true');
+});
+
+// QA-038 (entrada rápida): las pulsaciones consecutivas NO esperan a que React termine de renderizar la anterior. Cada una debe
+// registrarse (comparando contra la URL real, no contra el último render) y la selección final es la ÚLTIMA solicitada. Se
+// registra por pulsación (solo URL de sección, selección y foco; nada sensible) para distinguir una tecla ignorada de una espera
+// insuficiente. NO se ralentiza la secuencia para esconder una entrada perdida.
+async function registrar(page, tecla, bitacora) {
+  await page.keyboard.press(tecla);
+  bitacora.push(await page.evaluate((t) => ({
+    tecla: t,
+    seccionUrl: new URL(window.location.href).searchParams.get('seccion'),
+    seleccionada: [...document.querySelectorAll('[role="tab"][aria-selected="true"]')].map((e) => e.textContent.trim()),
+    enfocada: document.activeElement?.getAttribute('role') === 'tab' ? document.activeElement.textContent.trim() : null,
+  }), tecla));
+}
+
+test('QA-038: pulsaciones rápidas (End → Home y flechas seguidas) afirman la ÚLTIMA selección solicitada y el historial es coherente', async ({ page, data }, info) => {
+  knownIssue(info, 'QA-038');
+  await login(page, 'CLIENTE', data);
+  await irA(page, 'tarjeta');
+  expectKnownFailure('QA-038');
+  const bitacora = [];
+
+  // End y Home sin esperar entre ellas: la última solicitada (Home) gana.
+  await tab(page, 'Mi tarjeta').focus();
+  await registrar(page, 'End', bitacora);
+  await registrar(page, 'Home', bitacora);
+  await info.attach('qa038-bitacora-end-home', { body: Buffer.from(JSON.stringify(bitacora, null, 2)), contentType: 'application/json' });
+  await esperarSeccion(page, 'tarjeta');
+  await expect(tab(page, 'Mi tarjeta')).toBeFocused();
+  for (const otra of TABS.filter((t) => t !== 'Mi tarjeta')) await expect(tab(page, otra)).toHaveAttribute('aria-selected', 'false');
+
+  // Tres flechas seguidas: la selección final es la tercera (tarjeta → canje → sellos → cupones).
+  for (const t of ['ArrowRight', 'ArrowRight', 'ArrowRight']) await registrar(page, t, bitacora);
+  await info.attach('qa038-bitacora-flechas', { body: Buffer.from(JSON.stringify(bitacora, null, 2)), contentType: 'application/json' });
+  await esperarSeccion(page, 'cupones');
+  await expect(tab(page, 'Mis cupones')).toBeFocused();
+
+  // End → Home → End → Home: termina en la primera, sin quedarse en una intermedia.
+  for (const t of ['End', 'Home', 'End', 'Home']) await registrar(page, t, bitacora);
+  await esperarSeccion(page, 'tarjeta');
+  await expect(tab(page, 'Mi tarjeta')).toBeFocused();
+
+  // Historial: tras la secuencia rápida, clic y recarga, Atrás recupera la entrada previa REAL y Adelante la vuelve a dejar.
+  await tab(page, 'Mis cupones').click();
+  await esperarSeccion(page, 'cupones');
+  await page.reload();
+  await esperarSeccion(page, 'cupones');
+  await page.goBack();
+  await esperarSeccion(page, 'tarjeta');
+  await page.goForward();
+  await esperarSeccion(page, 'cupones');
 });
 
 test('QA-040: la condición del tope de la recompensa de sellos se lee completa a 320 px', async ({ page, data }, info) => {
