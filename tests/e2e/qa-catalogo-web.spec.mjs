@@ -4,7 +4,7 @@
 // propia interfaz POS (createProduct / createService); la base solo se LEE para comprobar lo persistido.
 // Requiere QA_TEST_PASSWORD solo en el proceso. NO ejecutado en la sesión en que se escribió (sin contraseña).
 import { test, expect } from './fixtures.mjs';
-import { sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
+import { campoNombreServicio, sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
 
 test.describe.configure({ mode: 'serial' });
@@ -465,12 +465,15 @@ for (const [titulo, servicioB] of [['producto → producto', false], ['producto 
       const posB = formWithTitle(page, 'Editar servicio');
       await expect(posB).toBeVisible();
       await expect(posB.getByLabel('Duración (min)', { exact: true })).toHaveValue('77');
-      await expect(posB.getByLabel('Nombre', { exact: true })).toHaveValue(B.serviceName);
+      // El nombre accesible real es «Nombre *»: se usa el id semántico del campo y se comprueba que es único.
+      await expect(campoNombreServicio(posB)).toHaveCount(1);
+      await expect(campoNombreServicio(posB)).toHaveValue(B.serviceName);
     } else {
       const posB = formWithTitle(page, 'Editar producto');
       await expect(posB).toBeVisible();
       await expect(posB.getByLabel('Proveedor', { exact: true })).toHaveValue('Borrador POS de B');
-      await expect(posB.getByLabel('Nombre', { exact: true })).toHaveValue(B.productName);
+      await expect(campoNombreServicio(posB)).toHaveCount(1); // mismo id semántico `-nombre` en el formulario de producto
+      await expect(campoNombreServicio(posB)).toHaveValue(B.productName);
     }
     // Nada se guardó en silencio.
     expect(await h.json(`select to_json(descripcion) from public.productos where id='${A.productId}'`)).toBeNull();
