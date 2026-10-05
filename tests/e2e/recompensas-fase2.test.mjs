@@ -659,9 +659,9 @@ describe('Atenciones previas al corte (regla 12, revisión punto 5)', () => {
     const c = await h.nuevaClienta();
     const serv = await h.nuevoServicio(40);
     const at = await h.nuevaAtencion(c.clienteId, serv, 40);
-    // El aporte es un artificio de la prueba: se retira SIEMPRE al terminar (también si falla) y SOLO el propio (por su atención),
+    // El aporte es un artificio de la prueba: se retira SIEMPRE al terminar (también si falla) y SOLO el propio (clienta + atención), con verificación (QA-053),
     // para no dejar filas en recompensas_apertura_aportes que bloqueen la apertura real (ver docs/recompensas-fase2/APORTES-PREEXISTENTES-QA.md).
-    try {
+    await h.conAporteLimpiado({ clienteId: c.clienteId, atencionId: at }, async () => {
       await h.admin(`insert into public.recompensas_apertura_aportes (cliente_id, origen, registro_servicio_id, puntos_antiguos, monedas)
                      values ('${c.clienteId}', 'ATENCION', '${at}', 2, 10);`);
       const p = await h.nuevoProducto(40);
@@ -670,10 +670,7 @@ describe('Atenciones previas al corte (regla 12, revisión punto 5)', () => {
       const s = await h.saldos(c.clienteId);
       casi(s.monedas, 5, 'solo el producto (S40 → 5); el servicio ya estaba en la apertura');
       assert.equal(s.sellos, 1, 'el sello del día nuevo se evalúa aparte');
-    } finally {
-      await h.admin(`delete from public.recompensas_apertura_aportes
-                     where cliente_id = '${c.clienteId}' and registro_servicio_id = '${at}';`);
-    }
+    });
   });
 });
 

@@ -74,6 +74,37 @@ export async function paso(uid, sql, opciones) {
 }
 export async function admin(sql) { return ejecutar(sql); }
 
+// Limpieza de un aporte artificial de la apertura creado por UNA prueba. Solo toca la fila identificada por su clienta y su
+// atención (uuid validados: nada de filtros amplios), comprueba que el DELETE funcionó y que no queda residuo, y conserva TODAS
+// las causas: si la prueba falla y la limpieza también, el error final lleva ambas (AggregateError, con ambos mensajes).
+// `ejecutor` es el que ejecuta SQL (por defecto `admin`); se inyecta en las pruebas en memoria.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export async function limpiarAporteAtencion({ clienteId, atencionId }, ejecutor = admin) {
+  if (!UUID.test(String(clienteId)) || !UUID.test(String(atencionId))) {
+    throw new Error(`Limpieza del aporte rechazada: identificadores no válidos (clienta «${clienteId}», atención «${atencionId}»).`);
+  }
+  const filtro = `cliente_id = '${clienteId}' and registro_servicio_id = '${atencionId}'`;
+  const d = await ejecutor(`delete from public.recompensas_apertura_aportes where ${filtro};`);
+  if (!d || d.ok !== true) throw new Error(`Falló el DELETE de limpieza del aporte: ${primeraLinea(d && d.err)}`);
+  const v = await ejecutor(`select count(*) from public.recompensas_apertura_aportes where ${filtro};`);
+  if (!v || v.ok !== true) throw new Error(`No se pudo verificar la limpieza del aporte: ${primeraLinea(v && v.err)}`);
+  if (v.out !== '0') throw new Error(`Quedó ${v.out === '' ? 'un resultado vacío' : `${v.out} aporte(s) residual(es)`} de la clienta ${clienteId} y la atención ${atencionId} tras la limpieza.`);
+}
+
+// Ejecuta `cuerpo` y SIEMPRE limpia el aporte propio después. Relanza el error de la prueba, el de la limpieza o ambos.
+export async function conAporteLimpiado(ids, cuerpo, ejecutor = admin) {
+  let fallo = null;
+  try { await cuerpo(); } catch (e) { fallo = e; }
+  let falloLimpieza = null;
+  try { await limpiarAporteAtencion(ids, ejecutor); } catch (e) { falloLimpieza = e; }
+  if (fallo && falloLimpieza) {
+    throw new AggregateError([fallo, falloLimpieza],
+      `Fallaron la prueba Y la limpieza del aporte. Prueba: ${fallo.message} | Limpieza: ${falloLimpieza.message}`);
+  }
+  if (fallo) throw fallo;
+  if (falloLimpieza) throw falloLimpieza;
+}
+
 export async function json(sql) {
   const r = await ejecutar(sql);
   if (!r.ok) throw new Error(r.err);
