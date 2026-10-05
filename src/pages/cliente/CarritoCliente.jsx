@@ -227,14 +227,11 @@ const METODOS_PAGO = [
   { id: 'TRANSFERENCIA', nombre: 'Transferencia', conQR: false, icono: 'icons/transferencia.svg' },
 ]
 
-// Mismo cálculo que ya usa el resto del proyecto para cupones (Ventas.jsx,
-// FidelizacionWeb): % sobre el subtotal, monto fijo topado al subtotal
-// para nunca dar un total negativo.
-function calcularDescuentoCupon(cupon, subtotal) {
-  if (!cupon) return 0
-  if (cupon.tipo_descuento === 'PORCENTAJE') return subtotal * (cupon.valor / 100)
-  return Math.min(cupon.valor, subtotal)
-}
+// QA-054: el descuento de un cupón NUNCA se calcula aquí. Lo valida el servidor (vista_previa_cupon_pedido) con la misma
+// lógica que usan el pedido y la venta (alcance, compra mínima, nivel, vigencia, tope, costo conocido y protección
+// global). Mientras se valida, o si se rechaza o falla la consulta, no se muestra ningún descuento ni se puede confirmar.
+const VALIDACION_NINGUNA = { estado: 'ninguno', descuento: 0, motivo: '' }
+const TIEMPO_MAX_VALIDACION_MS = 15000
 
 function TarjetaDireccion({ direccion, seleccionada, mostrarRadio, onElegir }) {
   // El borde azulado (".on") solo tiene sentido cuando hay varias
@@ -510,7 +507,7 @@ function SeccionProductos({ productos, onAlternar, onCantidad, onQuitar }) {
   )
 }
 
-function PanelCupones({ disponibles, usados, subtotal, cuponAplicadoCodigo, codigoManual, onCodigoManual, errorCodigo, onAplicarCodigo, onElegir, onCerrar }) {
+function PanelCupones({ disponibles, usados, cuponAplicadoCodigo, codigoManual, onCodigoManual, errorCodigo, onAplicarCodigo, onElegir, onCerrar }) {
   const panelRef = useRef(null)
   useCerrarConEscape(onCerrar)
 
@@ -580,9 +577,7 @@ function PanelCupones({ disponibles, usados, subtotal, cuponAplicadoCodigo, codi
               <div key={cupon.codigo} className="flex flex-col gap-1.5">
                 <TarjetaCupon cupon={cupon} />
                 <div className="flex items-center justify-end gap-3 px-0.5 text-xs text-white/60">
-                  <span>
-                    Ahorras <strong className="text-white">{formatearSoles(calcularDescuentoCupon(cupon, subtotal))}</strong>
-                  </span>
+                  <span>Se valida al usarlo</span>
                   <button
                     type="button"
                     onClick={() => onElegir(cupon.codigo)}
@@ -653,6 +648,10 @@ export default function CarritoCliente() {
   const [codigoManual, setCodigoManual] = useState('')
   const [errorCodigo, setErrorCodigo] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // Validación del cupón por el servidor: 'ninguno' | 'validando' | 'ok' | 'rechazado' | 'error'.
+  const [validacion, setValidacion] = useState(VALIDACION_NINGUNA)
+  // Sube cuando el carrito del servidor cambió (cantidades, quitar) o cuando hay que volver a validar.
+  const [versionCarrito, setVersionCarrito] = useState(0)
 
   useEffect(() => {
     async function cargar() {
@@ -697,13 +696,20 @@ export default function CarritoCliente() {
     cargar()
   }, [])
 
+  // Al cambiar algo que afecta al cupón, el descuento anterior deja de valer hasta que el servidor lo confirme.
+  function invalidarValidacion() {
+    setValidacion((v) => (v.estado === 'ninguno' ? v : { ...VALIDACION_NINGUNA, estado: 'validando' }))
+  }
+
   function alternarProducto(id) {
+    invalidarValidacion()
     setProductos((anterior) => anterior.map((p) => (p.id === id ? { ...p, marcado: !p.marcado } : p)))
   }
 
   async function cambiarCantidad(id, cantidad) {
     const producto = productos.find((p) => p.id === id)
     const cantidadFinal = Math.min(producto.stock, Math.max(1, cantidad))
+    invalidarValidacion()
     setProductos((anterior) => anterior.map((p) => (p.id === id ? { ...p, cantidad: cantidadFinal } : p)))
     await supabase
       .from('carrito_productos')
@@ -711,13 +717,16 @@ export default function CarritoCliente() {
       .eq('cliente_web_id', usuario.id)
       .eq('producto_id', id)
     recargarCarrito()
+    setVersionCarrito((v) => v + 1) // el servidor ya tiene la cantidad nueva: se revalida el cupón
   }
 
   async function quitarProducto(id) {
     const producto = productos.find((p) => p.id === id)
+    invalidarValidacion()
     setProductos((anterior) => anterior.filter((p) => p.id !== id))
     await supabase.from('carrito_productos').delete().eq('cliente_web_id', usuario.id).eq('producto_id', id)
     recargarCarrito()
+    setVersionCarrito((v) => v + 1)
     if (producto) mostrarToast(`${producto.nombre} quitado del carrito`, 'info')
   }
 
@@ -791,6 +800,7 @@ export default function CarritoCliente() {
       navigate('/inicio')
     } catch (error) {
       mostrarToast(error.message || 'No se pudo confirmar el pedido.', 'error')
+      if (cuponAplicado) setVersionCarrito((v) => v + 1)
     } finally {
       setEnviando(false)
     }
@@ -803,8 +813,13 @@ export default function CarritoCliente() {
   const zona = zonas.find((z) => z.id === zonaId)
   const costoDelivery = entrega === 'DELIVERY' ? (zona?.costo ?? 0) : 0
   const cupon = cuponAplicado ? cupones.find((c) => c.codigo === cuponAplicado) : null
-  const descuentoCupon = calcularDescuentoCupon(cupon, subtotal)
+  // Solo un descuento CONFIRMADO por el servidor entra en el total.
+  const cuponValidado = Boolean(cupon) && validacion.estado === 'ok'
+  const descuentoCupon = cuponValidado ? validacion.descuento : 0
   const total = Math.max(0, subtotal + costoDelivery - descuentoCupon)
+  // Con un cupón aplicado, el total solo es el que se paga cuando el servidor lo confirmó.
+  const totalConfirmado = !cupon || cuponValidado
+  const clavesMarcadas = productosMarcados.map((p) => p.id).sort().join(',')
   const totalSinDescuentos = subtotalSinDescuento + costoDelivery
   const hayAhorroTotal = totalSinDescuentos > total
   const cuponesDisponibles = cupones.filter((c) => c.estado === 'DISPONIBLE')
@@ -814,7 +829,7 @@ export default function CarritoCliente() {
   const direccionLista = entrega !== 'DELIVERY' || Boolean(direccionId)
   const faltaPago = !capturaArchivo
   const ctaDeshabilitado =
-    productosMarcados.length === 0 || !dia || !hora || !facturaCompleta || !direccionLista || faltaPago
+    productosMarcados.length === 0 || !dia || !hora || !facturaCompleta || !direccionLista || faltaPago || !totalConfirmado
 
   const metodoActual = METODOS_PAGO.find((m) => m.id === metodoPago)
   // Número/titular/QR reales del negocio (ContactoWeb.jsx los edita,
@@ -831,8 +846,47 @@ export default function CarritoCliente() {
   const instruccionPago = !datosMetodoActual.numero
     ? `El negocio todavía no configuró ${metodoActual.nombre} — escríbenos por WhatsApp antes de pagar.`
     : metodoPago === 'TRANSFERENCIA'
-      ? `Transfiere el total exacto (${formatearSoles(total)}) a: ${datosMetodoActual.numero}.`
-      : `${metodoActual.nombre === 'Yape' ? 'Yapea' : 'Plinea'} el total exacto (${formatearSoles(total)}) al ${datosMetodoActual.numero}${datosMetodoActual.titular ? ` — ${datosMetodoActual.titular}` : ''}.`
+      ? `Transfiere el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : ' (se mostrará cuando se confirme tu cupón)'} a: ${datosMetodoActual.numero}.`
+      : `${metodoActual.nombre === 'Yape' ? 'Yapea' : 'Plinea'} el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : ' (se mostrará cuando se confirme tu cupón)'} al ${datosMetodoActual.numero}${datosMetodoActual.titular ? ` — ${datosMetodoActual.titular}` : ''}.`
+
+  useEffect(() => {
+    if (!cuponAplicado) {
+      setValidacion(VALIDACION_NINGUNA)
+      return undefined
+    }
+    if (!clavesMarcadas) {
+      setValidacion({ ...VALIDACION_NINGUNA, estado: 'rechazado', motivo: 'Selecciona al menos un producto para usar el cupón.' })
+      return undefined
+    }
+    let vigente = true
+    setValidacion({ ...VALIDACION_NINGUNA, estado: 'validando' })
+    const fallo = { ...VALIDACION_NINGUNA, estado: 'error', motivo: 'No pudimos validar el cupón. Revisa tu conexión e inténtalo de nuevo.' }
+    const limite = setTimeout(() => {
+      if (vigente) {
+        vigente = false
+        setValidacion(fallo)
+      }
+    }, TIEMPO_MAX_VALIDACION_MS)
+    supabase
+      .rpc('vista_previa_cupon_pedido', { p_codigo: cuponAplicado, p_producto_ids: clavesMarcadas.split(',') })
+      .then(({ data, error }) => {
+        if (!vigente) return
+        clearTimeout(limite)
+        const fila = Array.isArray(data) ? data[0] : null
+        if (error || !fila) setValidacion(fallo)
+        else if (fila.valido) setValidacion({ estado: 'ok', descuento: Number(fila.descuento), motivo: '' })
+        else setValidacion({ estado: 'rechazado', descuento: 0, motivo: fila.motivo || 'Este cupón no se puede aplicar a esta compra.' })
+      })
+      .catch(() => {
+        if (!vigente) return
+        clearTimeout(limite)
+        setValidacion(fallo)
+      })
+    return () => {
+      vigente = false
+      clearTimeout(limite)
+    }
+  }, [cuponAplicado, clavesMarcadas, versionCarrito])
 
   if (cargando) {
     return (
@@ -1013,6 +1067,22 @@ export default function CarritoCliente() {
                   <>
                     <span className="text-xs uppercase tracking-wider text-white/60">Cupón aplicado</span>
                     <TarjetaCupon cupon={cupon} />
+                    {validacion.estado === 'validando' && (
+                      <p role="status" className="text-[13px] text-white/70">
+                        Validando tu cupón…
+                      </p>
+                    )}
+                    {(validacion.estado === 'rechazado' || validacion.estado === 'error') && (
+                      <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
+                        <span>{validacion.motivo}</span>
+                        {validacion.estado === 'error' && (
+                          <button type="button" onClick={() => setVersionCarrito((v) => v + 1)} className="w-fit font-semibold text-[var(--lw-gold)]">
+                            Reintentar
+                          </button>
+                        )}
+                        <span className="text-white/60">Quita el cupón o elige otro para continuar. No se consumió.</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-end gap-4 pt-0.5 text-[13px]">
                       <button type="button" onClick={() => setDrawerAbierto(true)} className="font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]">
                         Cambiar
@@ -1050,7 +1120,7 @@ export default function CarritoCliente() {
                     </span>
                   </div>
                 )}
-                {cupon && (
+                {cuponValidado && (
                   <div className="flex justify-between text-[var(--lw-gold)]">
                     <span>Cupón {cupon.codigo}</span>
                     <span>
@@ -1063,10 +1133,16 @@ export default function CarritoCliente() {
               <div className="flex items-baseline justify-between border-t border-[#232326] pt-4">
                 <span className="text-base font-semibold text-white">Total</span>
                 <span className="flex items-baseline gap-2.5">
-                  {hayAhorroTotal && <s className="lw-precio-antes text-base">{formatearSoles(totalSinDescuentos)}</s>}
-                  <span className="text-[26px] font-bold text-white">
-                    S/ <Contador valor={total} decimales={2} tamano={26} />
-                  </span>
+                  {hayAhorroTotal && totalConfirmado && <s className="lw-precio-antes text-base">{formatearSoles(totalSinDescuentos)}</s>}
+                  {totalConfirmado ? (
+                    <span className="text-[26px] font-bold text-white">
+                      S/ <Contador valor={total} decimales={2} tamano={26} />
+                    </span>
+                  ) : (
+                    <span className="text-[16px] font-semibold text-white/60">
+                      {validacion.estado === 'validando' ? 'Validando cupón…' : 'Total pendiente del cupón'}
+                    </span>
+                  )}
                 </span>
               </div>
 
@@ -1173,7 +1249,6 @@ export default function CarritoCliente() {
         <PanelCupones
           disponibles={cuponesDisponibles}
           usados={cuponesUsados}
-          subtotal={subtotal}
           cuponAplicadoCodigo={cuponAplicado}
           codigoManual={codigoManual}
           onCodigoManual={setCodigoManual}

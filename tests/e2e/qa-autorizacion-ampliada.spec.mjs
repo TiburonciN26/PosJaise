@@ -171,7 +171,8 @@ test.describe.serial('AUTORIZACIÓN AMPLIADA: clientes, deudas, mobiliario, cita
     await formP.getByLabel('Nombre', { exact: false }).fill(S.producto.productName);
     await formP.getByLabel('Código de barras', { exact: true }).fill(S.producto.barcode);
     await formP.getByLabel('Stock inicial', { exact: false }).fill('20');
-    await formP.getByLabel('Costo', { exact: false }).fill('0');
+    // QA-055: costo ficticio CONOCIDO (S/5): el producto se vende con el cupón de bienvenida de referido; con costo 0 sin confirmar el cupón se bloquea.
+    await formP.getByLabel('Costo', { exact: false }).fill('5');
     await formP.getByLabel('Precio de venta', { exact: false }).fill('20');
     const guardadoP = page.waitForResponse((r) => r.url().includes('/rest/v1/productos?') && r.request().method() === 'POST');
     await formP.getByRole('button', { name: 'Guardar', exact: true }).click();

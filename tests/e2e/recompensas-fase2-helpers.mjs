@@ -270,3 +270,31 @@ export async function restaurarConfig(c) {
     umbral_premium=${c.umbral_premium}, umbral_vip=${c.umbral_vip} where id=1;`);
   if (!r.ok) throw new Error(r.err);
 }
+
+// --------------------------- Pedido web (carrito de la clienta) ---------------------------
+// Las llamadas SQL simulan la identidad con request.jwt.claims (capa SQL, NO E2E con sesión real).
+export async function ponerEnCarrito(uid, productoId, cantidad) {
+  const r = await ejecutar(`insert into public.carrito_productos (cliente_web_id, producto_id, cantidad)
+    values ('${uid}', '${productoId}', ${cantidad})
+    on conflict (cliente_web_id, producto_id) do update set cantidad = excluded.cantidad;`);
+  if (!r.ok) throw new Error(r.err);
+}
+export async function diaEntregaValido() {
+  return json(`select to_json(d::text) from (select ((now() at time zone 'America/Lima')::date + g) d from generate_series(1,7) g
+    where (select dias_atencion from public.estado_negocio where id=1) @> array[extract(isodow from ((now() at time zone 'America/Lima')::date + g))::int]
+    order by g limit 1) x;`);
+}
+export async function vistaPreviaCupon(uid, codigo, productoIds) {
+  const r = await paso(uid, `select row_to_json(t) from public.vista_previa_cupon_pedido(${codigo ? `'${codigo}'` : 'null'}, array[${productoIds.map(i => `'${i}'`).join(',')}]::uuid[]) t;`, { rol: true });
+  if (!r.ok) return { ok: false, err: r.err };
+  return { ok: true, fila: JSON.parse(r.out.split('\n').filter(Boolean).pop()) };
+}
+export async function crearPedido(uid, productoIds, codigo, { entrega = 'RECOJO_TIENDA' } = {}) {
+  const dia = await diaEntregaValido();
+  const r = await paso(uid, `select public.confirmar_pedido_productos(array[${productoIds.map(i => `'${i}'`).join(',')}]::uuid[], '${entrega}',
+    '${dia}', '10:00', 'YAPE', 'ficticio/comprobante.jpg', null, null, null, ${codigo ? `'${codigo}'` : 'null'});`, { rol: true });
+  if (!r.ok) return { ok: false, err: r.err };
+  return { ok: true, pedidoId: r.out.split('\n').filter(Boolean).pop() };
+}
+export const verificarPagoPedido = (pedidoId, uid = ADMIN) =>
+  paso(uid, `select public.verificar_pago_pedido_web('${pedidoId}');`, { rol: true });

@@ -58,6 +58,23 @@ Expectativas existentes cambiadas por la regla aprobada (no se debilitó ninguna
 
 ## Observaciones y límites
 
-- `confirmar_pedido_productos` (checkout de la clienta) calcula el descuento del cupón como vista previa sin alcance ni protección; la validación autoritativa ocurre al verificar el pago (`verificar_pago_pedido_web`). Un cupón que supere el límite se rechaza ahí, el pedido queda sin verificar y la clienta ya habría visto el total con descuento. No se modificó (fuera del alcance pedido); conviene decidirlo aparte.
+- (Resuelto en QA-054, ver abajo) el checkout y `confirmar_pedido_productos` ya validan el cupón con la misma lógica que la venta.
 - El descuento manual sobre filas de servicio **ya actualizadas a porcentaje** usa la protección efectiva (porcentaje); sobre filas antiguas, el importe fijo como siempre.
 - Pendiente (sin `QA_TEST_PASSWORD`): pruebas HTTP/UI con sesiones reales de la nueva pestaña, del botón del modal de producto y del rechazo visto desde Caja; y una suite completa de Playwright al cerrar el lote.
+
+## QA-054 — el cupón se valida antes de pedir el pago (migración `20261005000002_cupones_validacion_pedido.sql`)
+
+**Problema (Codex, con sesiones reales):** producto S/50, protección S/48 (costo 20 + transporte 3 + otros 25), cupón S/10: el checkout anunciaba S/40, `confirmar_pedido_productos` aceptaba el pedido y solo «Verificar pago» lo rechazaba. Reproducido también en rojo por `tests/e2e/qa-054-rojo.mjs` (SQL, en una transacción con ROLLBACK que instala las definiciones anteriores): `pedido_creado`, `total_anunciado_a_la_clienta = 40.00`, `verificar_pago = RECHAZADO`.
+
+**Corrección:**
+- Una sola función interna, `recompensas_evaluar_cupon(cupón, carrito)`, evalúa nivel, alcance, compra mínima, tipo, tope, límite del 50 % en servicios sin configurar, costo conocido y protección global. La usan `confirmar_venta` (POS y pedido verificado), `confirmar_pedido_productos` (valida dentro de su transacción: un cupón fuera de límite rechaza el pedido completo) y la vista previa. `recompensas_validar_cupon_pedido` resuelve el cupón de la clienta (disponible, vigente, suyo) y lo evalúa.
+- `vista_previa_cupon_pedido(código, productos)`: **solo lectura** (`stable`; no consume el cupón, no reserva stock, no crea pedidos, no acredita). Devuelve únicamente `valido, motivo, subtotal, descuento`. Solo para sesión autenticada; solo cupones propios. El costo desconocido se muestra con un motivo neutro («por ahora no se puede aplicar»): la clienta no recibe costos, componentes, porcentajes ni datos de otras clientas.
+- Checkout (`CarritoCliente.jsx`): el descuento ya no se calcula en el navegador. Al aplicar un cupón, o al cambiar productos o cantidades, se valida en el servidor; mientras valida, si se rechaza o si la consulta falla (o tarda más de 15 s) **no se muestra descuento, no se muestra un total pagable ni se puede confirmar**; el motivo se muestra con «Quitar»/«Cambiar» y «Reintentar». El panel de cupones ya no promete «Ahorras S/ X». Sin cambios de diseño, efectos ni animaciones.
+- `verificar_pago_pedido_web` conserva la revalidación y, si entre el pedido y la verificación cambiaron precios, costos o protección, falla con **CONFLICTO** explícito (el pedido sigue pendiente; no se cambia el total en silencio ni se cobra ninguna diferencia). Además exige que el total vigente coincida con el que la clienta pagó.
+- **Límite documentado:** el pedido congela solo lo que la clienta vio (subtotal, descuento, total); el servidor no «recuerda» los costos de ese momento. Si cambian después, no se intenta cobrar otro importe: el administrador ve el conflicto y decide (corregir la protección, recrear el pedido o reembolsar). La protección global no se debilita para hacer pasar un pedido.
+
+**Pruebas (resultado en el informe de entrega):** `recompensas-pedido-cupon.test.mjs` (14 casos SQL; la identidad se simula con claims, NO es E2E), `ensayo-ui/qa-054-cupon-pedido.ensayo.spec.mjs` (8 casos HTTP/UI con inicio de sesión normal en la instancia desechable), `qa-054-rojo.mjs` (reproducción en rojo).
+
+## QA-055 — fixtures con costo cero sin confirmar
+
+`qa-033-ventas-roles.spec.mjs` creaba por la interfaz un producto de S/20 con costo 0 sin confirmar y la venta con cupón de `beforeAll` fallaba antes de probar permisos. Ahora registra un costo ficticio conocido (S/5). Revisados los demás fixtures de cupones creados por interfaz: `qa-autorizacion-ampliada.spec.mjs` (producto de S/20, costo 0 → S/5) y `qa-cobertura-adicional.spec.mjs` (`createPricedProduct`, costo 0 → 25 % del precio). `helpers.mjs createProduct` (precio S/1, costo 0) **no** se tocó: sus productos no se venden con cupón y el costo 0 se conserva para los casos de finanzas. No se confirmó nada en bloque ni se desactivó la validación; aserciones de permisos y negocio intactas. **No ejecutado** (sin `QA_TEST_PASSWORD`).

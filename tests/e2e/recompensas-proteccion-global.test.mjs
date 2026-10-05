@@ -445,39 +445,30 @@ describe('Rechazo atómico, anulación y combinaciones', () => {
   });
 });
 
-describe('Pedido web (verificar_pago_pedido_web → confirmar_venta)', () => {
-  async function pedido(c, p, cantidad, codigo) {
-    const r = await h.json(`with pw as (
-        insert into public.pedidos_web (cliente_id, tipo_entrega, subtotal, total, fecha_entrega, hora_entrega, metodo_pago, comprobante_url, cupon_codigo, costo_delivery)
-        values ('${c.clienteId}', 'RECOJO_TIENDA', 1, 1, (now() at time zone 'America/Lima')::date + 1, '10:00', 'YAPE', 'x', '${codigo}', 0) returning id),
-      it as (insert into public.pedidos_web_items (pedido_id, producto_id, nombre_producto, cantidad, precio_unitario, subtotal)
-        select id, '${p}', 'TEST F2', ${cantidad}, 1, ${cantidad} from pw returning 1)
-      select to_json(id) from pw`);
-    return r;
-  }
-  const verificar = (id) => h.paso(h.ADMIN, `select public.verificar_pago_pedido_web('${id}');`, { rol: true });
-
-  test('pedido con cupón dentro del límite: se vende, monedas por neto; fuera del límite: se rechaza sin cambios', async () => {
+describe('Pedido web (confirmar_pedido_productos → verificar_pago_pedido_web → confirmar_venta)', () => {
+  test('pedido con cupón dentro del límite: se vende, monedas por neto; fuera del límite: se rechaza al CREAR el pedido (QA-054), sin cambios', async () => {
     const c = await h.nuevaClienta();
     const p = await h.nuevoProducto(50, 10, { costo: 20 });
     const bueno = await cupon(c, { valor: 30 }); // producto S50, costo S20 → máximo S30
-    const pid = await pedido(c, p, 1, bueno.codigo);
-    const ok = await verificar(pid);
+    await h.ponerEnCarrito(c.uid, p, 1);
+    const ped = await h.crearPedido(c.uid, [p], bueno.codigo);
+    assert.ok(ped.ok, ped.err);
+    const ok = await h.verificarPagoPedido(ped.pedidoId);
     assert.ok(ok.ok, ok.err);
-    const v = await h.json(`select to_json(v) from (select ventas.total, ventas.cupon_id is not null as con_cupon from public.pedidos_web pw join public.ventas on ventas.id = pw.venta_id where pw.id='${pid}') v`);
+    const v = await h.json(`select to_json(v) from (select ventas.total from public.pedidos_web pw join public.ventas on ventas.id = pw.venta_id where pw.id='${ped.pedidoId}') v`);
     casi(v.total, 20);
     casi((await h.saldos(c.clienteId)).monedas, 20 * 5 / 40, 'monedas sobre el neto');
 
     const c2 = await h.nuevaClienta();
     const p2 = await h.nuevoProducto(50, 10, { costo: 20 });
     const malo = await cupon(c2, { valor: 30.01 });
-    const pid2 = await pedido(c2, p2, 1, malo.codigo);
+    await h.ponerEnCarrito(c2.uid, p2, 1);
     const antes = await huella(c2, { productos: [p2], cupones: [malo.id] });
-    const no = await verificar(pid2);
+    const no = await h.crearPedido(c2.uid, [p2], malo.codigo);
     assert.equal(no.ok, false);
     assert.match(no.err, MSG_GLOBAL);
     assert.deepEqual(await huella(c2, { productos: [p2], cupones: [malo.id] }), antes);
-    assert.equal(await h.json(`select to_json(pago_verificado or venta_id is not null) from public.pedidos_web where id='${pid2}'`), false, 'el pedido sigue sin verificar');
+    assert.equal(await h.json(`select to_json(count(*)) from public.pedidos_web where cliente_id='${c2.clienteId}'`), 0, 'no se creó el pedido');
   });
 });
 

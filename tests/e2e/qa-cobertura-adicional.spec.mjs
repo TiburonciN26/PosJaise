@@ -50,7 +50,8 @@ async function createPricedProduct(page, data, nombre, barcode, precio, stock = 
   await form.getByLabel('Nombre', { exact: false }).fill(nombre);
   await form.getByLabel('Código de barras', { exact: true }).fill(barcode);
   await form.getByLabel('Stock inicial', { exact: false }).fill(String(stock));
-  await form.getByLabel('Costo', { exact: false }).fill('0');
+  // QA-055: costo ficticio CONOCIDO (25 % del precio) para que el producto admita cupones (un costo 0 sin confirmar los bloquea).
+  await form.getByLabel('Costo', { exact: false }).fill(String(Math.round(precio * 25) / 100));
   await form.getByLabel('Precio de venta', { exact: false }).fill(String(precio));
   const saved = page.waitForResponse((r) => r.url().includes('/rest/v1/productos?') && r.request().method() === 'POST');
   await form.getByRole('button', { name: 'Guardar', exact: true }).click();

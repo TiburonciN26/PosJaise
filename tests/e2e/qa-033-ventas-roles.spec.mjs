@@ -83,7 +83,9 @@ test.describe.serial('QA-033: ventas solo para ADMINISTRADOR y CAJERA', () => {
     await form.getByLabel('Nombre', { exact: false }).fill(S.productoNombre);
     await form.getByLabel('Código de barras', { exact: true }).fill(`${data.barcode}-Q033-${sufijo}`);
     await form.getByLabel('Stock inicial', { exact: false }).fill('10');
-    await form.getByLabel('Costo', { exact: false }).fill('0');
+    // QA-055: con la protección económica de cupones, un costo 0 sin confirmar es DESCONOCIDO y bloquea el cupón de V2. Se registra
+    // un costo ficticio conocido (S/5 sobre un precio de S/20: el cupón de bienvenida cabe en el descuento máximo de S/15).
+    await form.getByLabel('Costo', { exact: false }).fill('5');
     await form.getByLabel('Precio de venta', { exact: false }).fill('20');
     const guardado = page.waitForResponse((r) => r.url().includes('/rest/v1/productos?') && r.request().method() === 'POST');
     await form.getByRole('button', { name: 'Guardar', exact: true }).click();
