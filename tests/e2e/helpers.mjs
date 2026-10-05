@@ -58,6 +58,17 @@ export async function buscadorCaja(page) {
   return campo;
 }
 
+// Buscador de las pantallas con lista (barra pegajosa superior) de la página VISIBLE. Su placeholder es animado
+// (useTextoEscritura: se escribe letra a letra y se pausa) y con la página ocupada puede no estar completo, así que NO sirve
+// como identidad. Ancla estable: el único input de búsqueda dentro de la barra `sticky top-0` visible. Se comprueba que es
+// único y visible antes de actuar (sin first()).
+export async function buscadorSticky(page) {
+  const campo = page.locator('div.sticky.top-0:visible').locator('input[type="search"]');
+  await expect(campo, 'el buscador de la página visible es único').toHaveCount(1);
+  await expect(campo).toBeVisible();
+  return campo;
+}
+
 export const campoNombreServicio = (form) => form.locator('input[id$="-nombre"]');
 
 export async function createService(page, data) {

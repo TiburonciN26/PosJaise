@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
+import { buscadorSticky, sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -325,9 +325,15 @@ test('COMISIÓN: ASISTENTE con % asignado a una ficha guarda la comisión y cons
   await createService(page, servicio); // precio S/2
   const asignarPorcentaje = async (valor) => {
     await page.goto('/porcentajes');
-    await page.getByPlaceholder('Buscar servicio...').fill(servicio.serviceName);
-    await page.getByRole('button').filter({ hasText: servicio.serviceName }).first().click();
-    const fila = page.locator('div.bg-surface-2').filter({ hasText: 'asistenteTest01' }).first();
+    // El buscador se ubica por la barra pegajosa de la página visible (su placeholder es animado y no sirve de identidad)
+    // y se exige unicidad; la tarjeta y la fila se eligen por nombre único, sin first().
+    const buscador = await buscadorSticky(page);
+    await buscador.fill(servicio.serviceName);
+    const tarjeta = page.locator('div.grid.items-start.gap-3:visible > div > button').filter({ hasText: servicio.serviceName });
+    await expect(tarjeta).toHaveCount(1);
+    await tarjeta.click();
+    const fila = page.locator('div.bg-surface-2').filter({ hasText: 'asistenteTest01' });
+    await expect(fila).toHaveCount(1);
     await fila.getByRole('button', { name: 'Desbloquear' }).click();
     await fila.locator('input').fill(String(valor));
     const guardado = page.waitForResponse((r) => r.url().includes('/rest/v1/porcentajes') && ['POST', 'PATCH'].includes(r.request().method()));
