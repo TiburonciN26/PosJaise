@@ -3,7 +3,11 @@ import { defineConfig } from 'playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.spec.mjs',
+  // QA-056: la vía de ENSAYO (instancia desechable, :5273/:56321, playwright.ensayo.config.mjs) NO se recoge aquí; sus specs
+  // cargan ayudas y credenciales propias (ENSAYO_PASSWORD) y abortarían la suite de QA.
+  testIgnore: ['**/ensayo-ui/**', '**/*.ensayo.spec.mjs', '**/*.ensayo.mjs'],
   globalSetup: './tests/e2e/global-setup.mjs',
+  globalTeardown: './tests/e2e/global-teardown.mjs',
   fullyParallel: false,
   workers: 1,
   retries: 0,

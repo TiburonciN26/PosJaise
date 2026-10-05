@@ -23,6 +23,7 @@ const claves = clavesDelEnsayo();
 for (const [funcion, archivo] of [
   ['public.recompensas_proteccion_servicio(uuid,numeric)', '20261005000001_cupones_proteccion_global.sql'],
   ['public.recompensas_evaluar_cupon(uuid,jsonb)', '20261005000002_cupones_validacion_pedido.sql'],
+  ['public.vista_previa_cupon_pedido(text,uuid[],jsonb)', '20261005000003_pedido_cantidades_total_anunciado.sql'],
 ]) {
   const hay = await json(`select to_json(to_regprocedure('${funcion}') is not null)`);
   if (!hay) await sql(readFileSync(new URL(`../../supabase/migrations/${archivo}`, import.meta.url), 'utf8'));
@@ -84,6 +85,11 @@ E.preview = await escena('preview', { precio: 50, costo: 10, transporte: 0, otro
 E.desconocido = await escena('desconocido', { precio: 40, costo: 0, transporte: 0, otros: 0, cupones: [{ valor: 5 }] });
 await sql(`delete from public.productos_proteccion where producto_id = '${E.desconocido.productoId}';`);
 E.cero = await escena('cero', { precio: 40, costo: 0, transporte: 0, otros: 0, cupones: [{ valor: 5 }] });
+
+// QA-057: producto S50, protección S25 (costo 25), cupón propio S10, carrito de UNA unidad (una escena por variante).
+for (const v of ['q57carrera', 'q57rapido', 'q57patch', 'q57tarde', 'q57precio']) {
+  E[v] = await escena(v, { precio: 50, costo: 25, transporte: 0, otros: 0, cantidad: 1, stock: 20, cupones: [{ valor: 10 }] });
+}
 
 mkdirSync(new URL('./fixtures/', import.meta.url), { recursive: true });
 writeFileSync(SALIDA, JSON.stringify({ nonce, preparadoEn: new Date().toISOString(), api: supabaseURL, mismaBase, cuentas: CUENTAS, escenas: E }, null, 2));

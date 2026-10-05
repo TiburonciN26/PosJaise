@@ -27,6 +27,7 @@ const dia = await h.diaEntregaValido();
 
 const claims = (uid) => h.como(uid, { rol: true }).replace('set role authenticated;\n', '');
 const sql = `begin;
+drop function if exists public.confirmar_pedido_productos(uuid[], text, date, time without time zone, text, text, uuid, text, text, text, text, text, text, jsonb, numeric);
 ${viejoPedido}
 ${viejoVerificar}
 ${claims(c.uid)}set role authenticated;

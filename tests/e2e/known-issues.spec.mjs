@@ -249,6 +249,7 @@ test('QA-005: reclamar promoción debe guardar un cupón sin error SQL', async (
   const adminContext = await browser.newContext({ baseURL: 'http://localhost:5173', timezoneId: 'America/Lima' });
   await localNetworkOnly(adminContext);
   const admin = await adminContext.newPage();
+  let promocionId = null;
   try {
     await login(admin, 'ADMINISTRADOR', data);
     await admin.goto('/promociones');
@@ -259,13 +260,15 @@ test('QA-005: reclamar promoción debe guardar un cupón sin error SQL', async (
     await promo.getByLabel('Vigente hasta', { exact: true }).fill(data.today);
     await promo.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(promo).toHaveCount(0);
-    const promocionId = await h.json(`select to_json(id) from public.promociones where titulo='${titulo}'`);
+    promocionId = await h.json(`select to_json(id) from public.promociones where titulo='${titulo}'`);
     expect(promocionId, 'la promoción del caso existe').toBeTruthy();
     // Prioridad aislada: Inicio muestra la promoción de vencimiento más próximo. La promoción de la preparación
     // global (de ESTA corrida, mismo día) la empataría: ese es el único dato que este caso ya desactivaba por UI al
     // terminar, así que se desactiva igual antes de reclamar. Cualquier OTRA promoción vigente que anteceda
     // invalida la preparación (se falla con mensaje claro; no se toca lo que no es de este caso).
-    const consultaAntecesoras = (excluirTitulo) => h.json(`select coalesce(json_agg(titulo), '[]'::json) from public.promociones where id <> '${promocionId}' and activo and vigente_hasta is not null and vigente_hasta <= '${data.today}' and (vigente_desde is null or vigente_desde <= '${data.today}') and titulo <> '${excluirTitulo}'`);
+    // Solo compiten las promociones VIGENTES hoy (misma regla que la política promociones_select_web): una vencida
+    // (vigente_hasta < hoy) no se muestra en Inicio y no debe invalidar la preparación.
+    const consultaAntecesoras = (excluirTitulo) => h.json(`select coalesce(json_agg(titulo), '[]'::json) from public.promociones where id <> '${promocionId}' and activo and vigente_hasta is not null and vigente_hasta >= '${data.today}' and vigente_hasta <= '${data.today}' and (vigente_desde is null or vigente_desde <= '${data.today}') and titulo <> '${excluirTitulo}'`);
     const desactivar = async (tituloPromocion) => {
       await admin.goto('/promociones');
       const tarjeta = admin.locator('div.rounded-lg.border').filter({ has: admin.getByText(tituloPromocion, { exact: true }) }).filter({ has: admin.getByRole('button', { name: 'Editar', exact: true }) }).last();
@@ -301,7 +304,16 @@ test('QA-005: reclamar promoción debe guardar un cupón sin error SQL', async (
     await desactivar(titulo);
     expectKnownFailure('QA-005');
     expect(response.ok(), 'Reclamar debe completar la transacción').toBeTruthy();
-  } finally { await adminContext.close(); }
+  } finally {
+    // Limpieza GARANTIZADA y acotada: solo la promoción de ESTE caso, por su ID (aunque el caso falle antes de la UI).
+    await adminContext.close();
+    if (promocionId) {
+      const r = await h.admin(`update public.promociones set activo = false where id = '${promocionId}' and activo;`);
+      const sigue = await h.json(`select to_json(activo) from public.promociones where id = '${promocionId}'`);
+      // Si la limpieza falla, el caso falla (no se silencia); si el caso ya había fallado, Playwright conserva ambos errores.
+      expect.soft(r.ok && sigue === false, `limpieza de la promoción propia ${promocionId}: ${r.ok ? 'sigue activa' : String(r.err).split(String.fromCharCode(10))[0]}`).toBeTruthy();
+    }
+  }
 });
 
 test('QA-009: verificar pago Yape del pedido aislado debe crear venta', async ({ page, browser, data }, info) => {

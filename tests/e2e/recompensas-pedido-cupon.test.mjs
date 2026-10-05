@@ -167,7 +167,8 @@ describe('QA-054 · privacidad de la respuesta', () => {
     for (const valor of [10, 1]) {
       const cupon = valor === 10 ? cup : await h.nuevoCupon(c.clienteId, { valor });
       const vp = await h.vistaPreviaCupon(c.uid, cupon.codigo, [p]);
-      assert.deepEqual(Object.keys(vp.fila).sort(), ['descuento', 'motivo', 'subtotal', 'valido']);
+      // QA-057 añadió cantidades_coinciden (booleano, sin datos internos).
+      assert.deepEqual(Object.keys(vp.fila).sort(), ['cantidades_coinciden', 'descuento', 'motivo', 'subtotal', 'valido']);
       assert.doesNotMatch(JSON.stringify(vp.fila), /21\.37|3\.11|25\.13|49\.61|costo|transporte|proteccion|protección \d/i);
     }
   });
@@ -239,5 +240,66 @@ describe('QA-054 · cambios entre la vista previa, el pedido y la verificación'
     const v = await h.verificarPagoPedido(ped.pedidoId);
     assert.ok(v.ok, v.err);
     casi(await h.json(`select to_json(total) from public.ventas where id=(select venta_id from public.pedidos_web where id='${ped.pedidoId}')`), w.total);
+  });
+});
+
+describe('QA-057 · el servidor solo acepta el pedido que la clienta vio (cantidades y total)', () => {
+  // Producto S50, protección S25, cupón S10 (escenario de Codex).
+  const armar = async (cantidad = 1) => {
+    const c = await h.nuevaClienta();
+    const p = await h.nuevoProducto(50, 20, { costo: 25 });
+    const cup = await h.nuevoCupon(c.clienteId, { valor: 10 });
+    await h.ponerEnCarrito(c.uid, p, cantidad);
+    return { c, p, cup };
+  };
+
+  test('lo anunciado (2 u., S90) pero guardado 1 u.: rechazo sin pedido, sin consumir el cupón, sin tocar stock ni carrito', async () => {
+    const { c, p, cup } = await armar(1);
+    const antes = await huella(c, p, cup.id);
+    const r = await h.crearPedido(c.uid, [p], cup.codigo, { cantidades: [{ producto_id: p, cantidad: 2 }], total: 90 });
+    assert.equal(r.ok, false);
+    assert.match(r.err, /Tu carrito cambió mientras confirmabas/);
+    assert.match(r.err, /No se creó ningún pedido/);
+    assert.deepEqual(await huella(c, p, cup.id), antes);
+  });
+
+  test('cantidades correctas pero total anunciado distinto (precio cambiado): rechazo explícito, nunca se corrige en silencio', async () => {
+    const { c, p, cup } = await armar(1);
+    await h.admin(`update public.productos set precio = 60 where id='${p}';`);
+    const antes = await huella(c, p, cup.id);
+    const r = await h.crearPedido(c.uid, [p], cup.codigo, { cantidades: [{ producto_id: p, cantidad: 1 }], total: 40 });
+    assert.equal(r.ok, false);
+    assert.match(r.err, /El total cambió: ahora es S\/ 50\.00 y no S\/ 40\.00/);
+    assert.deepEqual(await huella(c, p, cup.id), antes);
+  });
+
+  test('producto de más o de menos respecto a lo confirmado: rechazo', async () => {
+    const { c, p, cup } = await armar(1);
+    const otro = await h.nuevoProducto(30, 10, { costo: 5 });
+    await h.ponerEnCarrito(c.uid, otro, 1);
+    const sinOtro = await h.crearPedido(c.uid, [p, otro], cup.codigo, { cantidades: [{ producto_id: p, cantidad: 1 }], total: 70 });
+    assert.equal(sinOtro.ok, false);
+    assert.match(sinOtro.err, /Tu carrito cambió/);
+  });
+
+  test('flujo válido: lo confirmado coincide (1 u., S40) → pedido aceptado por S40 y verificado por el mismo importe', async () => {
+    const { c, p, cup } = await armar(1);
+    const r = await h.crearPedido(c.uid, [p], cup.codigo, { cantidades: [{ producto_id: p, cantidad: 1 }], total: 40 });
+    assert.ok(r.ok, r.err);
+    casi(await h.json(`select to_json(total) from public.pedidos_web where id='${r.pedidoId}'`), 40);
+    const v = await h.verificarPagoPedido(r.pedidoId);
+    assert.ok(v.ok, v.err);
+  });
+
+  test('vista previa con cantidades distintas de las guardadas: no es válida (cantidades_coinciden=false) y sigue siendo de solo lectura', async () => {
+    const { c, p, cup } = await armar(1);
+    const antes = await huella(c, p, cup.id);
+    const vp = await h.vistaPreviaCupon(c.uid, cup.codigo, [p], [{ producto_id: p, cantidad: 2 }]);
+    assert.equal(vp.fila.valido, false);
+    assert.equal(vp.fila.cantidades_coinciden, false);
+    const ok = await h.vistaPreviaCupon(c.uid, cup.codigo, [p], [{ producto_id: p, cantidad: 1 }]);
+    assert.equal(ok.fila.valido, true);
+    assert.equal(ok.fila.cantidades_coinciden, true);
+    assert.deepEqual(await huella(c, p, cup.id), antes);
   });
 });

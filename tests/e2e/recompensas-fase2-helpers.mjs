@@ -284,15 +284,17 @@ export async function diaEntregaValido() {
     where (select dias_atencion from public.estado_negocio where id=1) @> array[extract(isodow from ((now() at time zone 'America/Lima')::date + g))::int]
     order by g limit 1) x;`);
 }
-export async function vistaPreviaCupon(uid, codigo, productoIds) {
-  const r = await paso(uid, `select row_to_json(t) from public.vista_previa_cupon_pedido(${codigo ? `'${codigo}'` : 'null'}, array[${productoIds.map(i => `'${i}'`).join(',')}]::uuid[]) t;`, { rol: true });
+export async function vistaPreviaCupon(uid, codigo, productoIds, cantidades = null) {
+  const r = await paso(uid, `select row_to_json(t) from public.vista_previa_cupon_pedido(${codigo ? `'${codigo}'` : 'null'}, array[${productoIds.map(i => `'${i}'`).join(',')}]::uuid[], ${cantidades ? `$j$${JSON.stringify(cantidades)}$j$::jsonb` : 'null'}) t;`, { rol: true });
   if (!r.ok) return { ok: false, err: r.err };
   return { ok: true, fila: JSON.parse(r.out.split('\n').filter(Boolean).pop()) };
 }
-export async function crearPedido(uid, productoIds, codigo, { entrega = 'RECOJO_TIENDA' } = {}) {
+// `cantidades` ([{producto_id, cantidad}]) y `total` son lo que la clienta confirmó (QA-057); omitidos = sin comprobación.
+export async function crearPedido(uid, productoIds, codigo, { entrega = 'RECOJO_TIENDA', cantidades = null, total = null } = {}) {
   const dia = await diaEntregaValido();
   const r = await paso(uid, `select public.confirmar_pedido_productos(array[${productoIds.map(i => `'${i}'`).join(',')}]::uuid[], '${entrega}',
-    '${dia}', '10:00', 'YAPE', 'ficticio/comprobante.jpg', null, null, null, ${codigo ? `'${codigo}'` : 'null'});`, { rol: true });
+    '${dia}', '10:00', 'YAPE', 'ficticio/comprobante.jpg', null, null, null, ${codigo ? `'${codigo}'` : 'null'}, 'BOLETA', null, null,
+    ${cantidades ? `$j$${JSON.stringify(cantidades)}$j$::jsonb` : 'null'}, ${total == null ? 'null' : total});`, { rol: true });
   if (!r.ok) return { ok: false, err: r.err };
   return { ok: true, pedidoId: r.out.split('\n').filter(Boolean).pop() };
 }

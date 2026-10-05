@@ -1,6 +1,7 @@
 import {test,expect,knownIssue,expectKnownFailure} from './fixtures.mjs';
 import {login,logout,visibleButton,createService,createAttention,formWithTitle} from './helpers.mjs';
 import {isolatedClient,testImage,qaContext} from './phase2-helpers.mjs';
+import {colectorRespuestas} from './colector-respuestas.mjs';
 
 test('AMPLIACIÓN RESERVA: CLIENTE agenda, reprograma, cancela y libera horario',async({page,browser,data},info)=>{
   test.setTimeout(120_000);const own=await isolatedClient(browser,data,'RESERVA');await login(page,'ADMINISTRADOR',data);
@@ -30,13 +31,13 @@ test('AMPLIACIÓN RESERVA: CLIENTE agenda, reprograma, cancela y libera horario'
 
 test('AMPLIACIÓN COMISIÓN: ASISTENTE sin porcentaje guarda pendiente y no puede confirmar',async({page,data},info)=>{
   await login(page,'ADMINISTRADOR',data);const service={serviceName:`${data.prefix} SIN PORCENTAJE ${Date.now().toString(36)}`};await createService(page,service);await logout(page);await login(page,'ASISTENTE',data);
-  await page.goto('/mi-panel');const summaries=[];page.on('response',async r=>{if(r.url().includes('/rpc/resumen_mi_panel')&&r.ok())summaries.push(await r.json());});
+  await page.goto('/mi-panel');/* QA-058: colector con vida útil explícita (sin promesas rechazadas sin manejar al navegar) */const colector=colectorRespuestas(page,r=>r.url().includes('/rpc/resumen_mi_panel')&&r.ok());
   await visibleButton(page,'Registrar atención').click();const form=formWithTitle(page,'Registrar atención');await form.getByPlaceholder('Buscar cliente...').fill(data.clientName);await form.getByRole('button',{name:data.clientName,exact:true}).click();await form.getByPlaceholder('Buscar servicio...').fill(service.serviceName);await form.getByRole('button',{name:new RegExp('^'+service.serviceName)}).first().click();
   await expect(form.getByRole('button',{name:'Guardar',exact:true})).toBeDisabled();const pending=form.getByRole('button',{name:'Anotar como pendiente (sin comisión por ahora)',exact:true});await expect(pending).toBeVisible();
   const insert=page.waitForResponse(r=>r.url().includes('/rest/v1/registro_servicios')&&r.request().method()==='POST');await pending.click();const saved=await insert;await info.attach('pending-insert',{body:Buffer.from(JSON.stringify({status:saved.status(),body:await saved.text(),service:service.serviceName})),contentType:'application/json'});expect(saved.ok()).toBeTruthy();await expect(form).toHaveCount(0);await page.reload();
   await page.getByPlaceholder('Buscar por servicio o cliente...').fill(service.serviceName);await page.getByRole('button',{name:/0 servicios/}).filter({visible:true}).first().click();await visibleButton(page,'Expandir').first().click();await expect(page.getByText(/Pendiente de comisión —/)).toBeVisible();
   const confirm=page.waitForResponse(r=>r.url().includes('/rest/v1/registro_servicios')&&r.request().method()==='PATCH');await visibleButton(page,'Confirmar').click();const rejected=await confirm;const error=await rejected.json();expect(rejected.ok()).toBeFalsy();expect(error.message).toContain('Sin % asignado');await page.reload();await page.getByPlaceholder('Buscar por servicio o cliente...').fill(service.serviceName);await page.getByRole('button',{name:/0 servicios/}).filter({visible:true}).first().click();await expect(page.getByText('Pendiente',{exact:true}).filter({visible:true})).toBeVisible();
-  await info.attach('commission-pending',{body:Buffer.from(JSON.stringify({serviceId:service.serviceId,rejection:error.message,configurationUnchanged:true,summaries})),contentType:'application/json'});
+  await info.attach('commission-pending',{body:Buffer.from(JSON.stringify({serviceId:service.serviceId,rejection:error.message,configurationUnchanged:true,summaries:await colector.detener()})),contentType:'application/json'});
 });
 
 for(const redeem of [false,true])test(redeem?'AMPLIACIÓN CANJE: cupón fidelización descuenta 20% y revierte al anular':'AMPLIACIÓN RECOMPENSA: cinco fechas distintas generan un único cupón persistente',async({page,browser,data},info)=>{

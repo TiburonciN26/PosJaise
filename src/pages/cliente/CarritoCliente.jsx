@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowBigDown,
@@ -230,7 +230,33 @@ const METODOS_PAGO = [
 // QA-054: el descuento de un cupón NUNCA se calcula aquí. Lo valida el servidor (vista_previa_cupon_pedido) con la misma
 // lógica que usan el pedido y la venta (alcance, compra mínima, nivel, vigencia, tope, costo conocido y protección
 // global). Mientras se valida, o si se rechaza o falla la consulta, no se muestra ningún descuento ni se puede confirmar.
-const VALIDACION_NINGUNA = { estado: 'ninguno', descuento: 0, motivo: '' }
+const VALIDACION_NINGUNA = { estado: 'ninguno', descuento: 0, motivo: '', firma: '' }
+
+// QA-057: identidad de una validación = productos marcados + CANTIDADES + precios. Una respuesta del servidor solo vale para la
+// firma con la que se pidió; cualquier cambio (cantidad, selección, precio recargado) la deja sin efecto.
+const firmaDe = (productos) => productos.map((p) => `${p.id}:${p.cantidad}:${p.precio}`).sort().join(',')
+const centavos = (n) => Math.round(Number(n) * 100)
+
+// Carrito tal como está GUARDADO en el servidor (cantidades y precios vigentes).
+async function leerCarritoGuardado() {
+  const { data, error } = await supabase
+    .from('carrito_productos')
+    .select('producto_id, cantidad, productos(nombre, precio, precio_antes, stock_actual, categoria, foto_url)')
+  if (error) throw error
+  return (data ?? [])
+    .filter((fila) => fila.productos)
+    .map((fila) => ({
+      id: fila.producto_id,
+      nombre: fila.productos.nombre,
+      detalle: fila.productos.categoria ?? '',
+      precio: fila.productos.precio,
+      precioAntes: fila.productos.precio_antes,
+      stock: fila.productos.stock_actual,
+      fotoUrl: urlPublicaFoto(BUCKET_FOTOS_PRODUCTOS, fila.productos.foto_url),
+      cantidad: fila.cantidad,
+      marcado: true, // Por defecto todo marcado — el cliente desmarca lo que no quiere pedir todavía.
+    }))
+}
 const TIEMPO_MAX_VALIDACION_MS = 15000
 
 function TarjetaDireccion({ direccion, seleccionada, mostrarRadio, onElegir }) {
@@ -652,13 +678,15 @@ export default function CarritoCliente() {
   const [validacion, setValidacion] = useState(VALIDACION_NINGUNA)
   // Sube cuando el carrito del servidor cambió (cantidades, quitar) o cuando hay que volver a validar.
   const [versionCarrito, setVersionCarrito] = useState(0)
+  // QA-057: guardados del carrito aún en curso (mientras haya alguno no se valida ni se puede confirmar) y su error visible.
+  const [pendientes, setPendientes] = useState(0)
+  const [errorGuardado, setErrorGuardado] = useState('')
+  const colaGuardado = useRef(Promise.resolve())
 
   useEffect(() => {
     async function cargar() {
-      const [productosRes, direccionesRes, zonasRes, cuponesRes] = await Promise.all([
-        supabase
-          .from('carrito_productos')
-          .select('producto_id, cantidad, productos(nombre, precio, precio_antes, stock_actual, categoria, foto_url)'),
+      const [productosCargados, direccionesRes, zonasRes, cuponesRes] = await Promise.all([
+        leerCarritoGuardado().catch(() => []),
         supabase
           .from('direcciones_cliente')
           .select('id, etiqueta, direccion, celular, referencia, predeterminada')
@@ -668,19 +696,6 @@ export default function CarritoCliente() {
         supabase.rpc('mis_cupones'),
       ])
 
-      const productosCargados = (productosRes.data ?? [])
-        .filter((fila) => fila.productos)
-        .map((fila) => ({
-          id: fila.producto_id,
-          nombre: fila.productos.nombre,
-          detalle: fila.productos.categoria ?? '',
-          precio: fila.productos.precio,
-          precioAntes: fila.productos.precio_antes,
-          stock: fila.productos.stock_actual,
-          fotoUrl: urlPublicaFoto(BUCKET_FOTOS_PRODUCTOS, fila.productos.foto_url),
-          cantidad: fila.cantidad,
-          marcado: true, // Por defecto todo marcado — el cliente desmarca lo que no quiere pedir todavía.
-        }))
       const direccionesCargadas = direccionesRes.data ?? []
       const zonasCargadas = zonasRes.data ?? []
 
@@ -694,6 +709,18 @@ export default function CarritoCliente() {
     }
 
     cargar()
+  }, [])
+
+  // Vuelve a mostrar el carrito GUARDADO (cantidades y precios del servidor), conservando qué productos estaban marcados.
+  const recargarDesdeServidor = useCallback(async () => {
+    try {
+      const guardados = await leerCarritoGuardado()
+      setProductos((anterior) =>
+        guardados.map((g) => ({ ...g, marcado: anterior.find((p) => p.id === g.id)?.marcado ?? true })),
+      )
+    } catch {
+      setErrorGuardado('No pudimos leer tu carrito guardado. Recarga la página antes de confirmar.')
+    }
   }, [])
 
   // Al cambiar algo que afecta al cupón, el descuento anterior deja de valer hasta que el servidor lo confirme.
@@ -710,24 +737,57 @@ export default function CarritoCliente() {
     const producto = productos.find((p) => p.id === id)
     const cantidadFinal = Math.min(producto.stock, Math.max(1, cantidad))
     invalidarValidacion()
+    setErrorGuardado('')
     setProductos((anterior) => anterior.map((p) => (p.id === id ? { ...p, cantidad: cantidadFinal } : p)))
-    await supabase
-      .from('carrito_productos')
-      .update({ cantidad: cantidadFinal })
-      .eq('cliente_web_id', usuario.id)
-      .eq('producto_id', id)
-    recargarCarrito()
-    setVersionCarrito((v) => v + 1) // el servidor ya tiene la cantidad nueva: se revalida el cupón
+    setPendientes((n) => n + 1)
+    // QA-057: los guardados van en cola (el último gana en el servidor igual que en pantalla) y cada resultado se COMPRUEBA:
+    // si el PATCH falla o no devuelve la cantidad pedida, no se valida como si se hubiese guardado.
+    const guardar = async () => {
+      const { data, error } = await supabase
+        .from('carrito_productos')
+        .update({ cantidad: cantidadFinal })
+        .eq('cliente_web_id', usuario.id)
+        .eq('producto_id', id)
+        .select('cantidad')
+      if (error || !Array.isArray(data) || data.length !== 1 || data[0].cantidad !== cantidadFinal) {
+        throw new Error('cantidad no guardada')
+      }
+    }
+    const paso = colaGuardado.current.then(guardar)
+    colaGuardado.current = paso.catch(() => {})
+    try {
+      await paso
+    } catch {
+      setErrorGuardado('No pudimos guardar el cambio de cantidad. Te mostramos lo que quedó guardado; inténtalo de nuevo.')
+      await recargarDesdeServidor()
+    } finally {
+      setPendientes((n) => n - 1)
+      recargarCarrito()
+    }
   }
 
   async function quitarProducto(id) {
     const producto = productos.find((p) => p.id === id)
     invalidarValidacion()
+    setErrorGuardado('')
     setProductos((anterior) => anterior.filter((p) => p.id !== id))
-    await supabase.from('carrito_productos').delete().eq('cliente_web_id', usuario.id).eq('producto_id', id)
-    recargarCarrito()
-    setVersionCarrito((v) => v + 1)
-    if (producto) mostrarToast(`${producto.nombre} quitado del carrito`, 'info')
+    setPendientes((n) => n + 1)
+    const quitar = async () => {
+      const { error } = await supabase.from('carrito_productos').delete().eq('cliente_web_id', usuario.id).eq('producto_id', id)
+      if (error) throw error
+    }
+    const paso = colaGuardado.current.then(quitar)
+    colaGuardado.current = paso.catch(() => {})
+    try {
+      await paso
+      if (producto) mostrarToast(`${producto.nombre} quitado del carrito`, 'info')
+    } catch {
+      setErrorGuardado('No pudimos quitar el producto. Te mostramos lo que quedó guardado; inténtalo de nuevo.')
+      await recargarDesdeServidor()
+    } finally {
+      setPendientes((n) => n - 1)
+      recargarCarrito()
+    }
   }
 
   function alSubirCaptura(archivo) {
@@ -791,6 +851,10 @@ export default function CarritoCliente() {
         p_tipo_comprobante: comprobante,
         p_ruc: comprobante === 'FACTURA' ? ruc : null,
         p_razon_social: comprobante === 'FACTURA' ? razonSocial : null,
+        // QA-057: lo que la clienta ve y confirma. El servidor recalcula precios, descuento y protección y RECHAZA si no
+        // coinciden (sin pedido); nunca se envían precios del navegador para cobrar.
+        p_cantidades: productosMarcados.map((p) => ({ producto_id: p.id, cantidad: p.cantidad })),
+        p_total_esperado: centavos(total) / 100,
       })
 
       if (error) throw error
@@ -800,7 +864,9 @@ export default function CarritoCliente() {
       navigate('/inicio')
     } catch (error) {
       mostrarToast(error.message || 'No se pudo confirmar el pedido.', 'error')
-      if (cuponAplicado) setVersionCarrito((v) => v + 1)
+      // Se vuelve a mostrar lo GUARDADO (precios y cantidades vigentes) y, si hay cupón, se revalida.
+      await recargarDesdeServidor()
+      setVersionCarrito((v) => v + 1)
     } finally {
       setEnviando(false)
     }
@@ -814,12 +880,14 @@ export default function CarritoCliente() {
   const costoDelivery = entrega === 'DELIVERY' ? (zona?.costo ?? 0) : 0
   const cupon = cuponAplicado ? cupones.find((c) => c.codigo === cuponAplicado) : null
   // Solo un descuento CONFIRMADO por el servidor entra en el total.
-  const cuponValidado = Boolean(cupon) && validacion.estado === 'ok'
+  const firmaCarrito = firmaDe(productosMarcados)
+  const hayPendientes = pendientes > 0
+  // La validación vale solo para la firma con la que se pidió y sin guardados en curso.
+  const cuponValidado = Boolean(cupon) && validacion.estado === 'ok' && validacion.firma === firmaCarrito && !hayPendientes
   const descuentoCupon = cuponValidado ? validacion.descuento : 0
   const total = Math.max(0, subtotal + costoDelivery - descuentoCupon)
-  // Con un cupón aplicado, el total solo es el que se paga cuando el servidor lo confirmó.
-  const totalConfirmado = !cupon || cuponValidado
-  const clavesMarcadas = productosMarcados.map((p) => p.id).sort().join(',')
+  // Con un cupón aplicado, el total solo es el que se paga cuando el servidor lo confirmó; con guardados en curso, nunca.
+  const totalConfirmado = !hayPendientes && (!cupon || cuponValidado)
   const totalSinDescuentos = subtotalSinDescuento + costoDelivery
   const hayAhorroTotal = totalSinDescuentos > total
   const cuponesDisponibles = cupones.filter((c) => c.estado === 'DISPONIBLE')
@@ -829,7 +897,7 @@ export default function CarritoCliente() {
   const direccionLista = entrega !== 'DELIVERY' || Boolean(direccionId)
   const faltaPago = !capturaArchivo
   const ctaDeshabilitado =
-    productosMarcados.length === 0 || !dia || !hora || !facturaCompleta || !direccionLista || faltaPago || !totalConfirmado
+    productosMarcados.length === 0 || !dia || !hora || !facturaCompleta || !direccionLista || faltaPago || !totalConfirmado || hayPendientes
 
   const metodoActual = METODOS_PAGO.find((m) => m.id === metodoPago)
   // Número/titular/QR reales del negocio (ContactoWeb.jsx los edita,
@@ -846,19 +914,30 @@ export default function CarritoCliente() {
   const instruccionPago = !datosMetodoActual.numero
     ? `El negocio todavía no configuró ${metodoActual.nombre} — escríbenos por WhatsApp antes de pagar.`
     : metodoPago === 'TRANSFERENCIA'
-      ? `Transfiere el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : ' (se mostrará cuando se confirme tu cupón)'} a: ${datosMetodoActual.numero}.`
-      : `${metodoActual.nombre === 'Yape' ? 'Yapea' : 'Plinea'} el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : ' (se mostrará cuando se confirme tu cupón)'} al ${datosMetodoActual.numero}${datosMetodoActual.titular ? ` — ${datosMetodoActual.titular}` : ''}.`
+      ? `Transfiere el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : hayPendientes ? ' (se mostrará cuando se guarde tu carrito)' : ' (se mostrará cuando se confirme tu cupón)'} a: ${datosMetodoActual.numero}.`
+      : `${metodoActual.nombre === 'Yape' ? 'Yapea' : 'Plinea'} el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : hayPendientes ? ' (se mostrará cuando se guarde tu carrito)' : ' (se mostrará cuando se confirme tu cupón)'} al ${datosMetodoActual.numero}${datosMetodoActual.titular ? ` — ${datosMetodoActual.titular}` : ''}.`
 
   useEffect(() => {
     if (!cuponAplicado) {
       setValidacion(VALIDACION_NINGUNA)
       return undefined
     }
-    if (!clavesMarcadas) {
+    if (!firmaCarrito) {
       setValidacion({ ...VALIDACION_NINGUNA, estado: 'rechazado', motivo: 'Selecciona al menos un producto para usar el cupón.' })
       return undefined
     }
+    // QA-057: con guardados en curso no se valida (el servidor aún no tiene lo que se ve); se revalida al terminar.
+    if (hayPendientes) {
+      setValidacion({ ...VALIDACION_NINGUNA, estado: 'validando' })
+      return undefined
+    }
     let vigente = true
+    const firma = firmaCarrito
+    const lineas = firma.split(',').map((t) => {
+      const [id, cantidad, precio] = t.split(':')
+      return { producto_id: id, cantidad: Number(cantidad), precio: Number(precio) }
+    })
+    const subtotalEsperado = lineas.reduce((suma, l) => suma + centavos(l.precio * l.cantidad), 0)
     setValidacion({ ...VALIDACION_NINGUNA, estado: 'validando' })
     const fallo = { ...VALIDACION_NINGUNA, estado: 'error', motivo: 'No pudimos validar el cupón. Revisa tu conexión e inténtalo de nuevo.' }
     const limite = setTimeout(() => {
@@ -868,14 +947,22 @@ export default function CarritoCliente() {
       }
     }, TIEMPO_MAX_VALIDACION_MS)
     supabase
-      .rpc('vista_previa_cupon_pedido', { p_codigo: cuponAplicado, p_producto_ids: clavesMarcadas.split(',') })
+      .rpc('vista_previa_cupon_pedido', {
+        p_codigo: cuponAplicado,
+        p_producto_ids: lineas.map((l) => l.producto_id),
+        p_cantidades: lineas.map(({ producto_id, cantidad }) => ({ producto_id, cantidad })),
+      })
       .then(({ data, error }) => {
-        if (!vigente) return
+        if (!vigente) return // respuesta de otra firma (vieja o tardía): nunca reactiva el importe ni el CTA
         clearTimeout(limite)
         const fila = Array.isArray(data) ? data[0] : null
         if (error || !fila) setValidacion(fallo)
-        else if (fila.valido) setValidacion({ estado: 'ok', descuento: Number(fila.descuento), motivo: '' })
-        else setValidacion({ estado: 'rechazado', descuento: 0, motivo: fila.motivo || 'Este cupón no se puede aplicar a esta compra.' })
+        else if (fila.cantidades_coinciden === false || centavos(fila.subtotal) !== subtotalEsperado) {
+          // Lo guardado no es lo que se ve (cantidad o precio): se muestra lo guardado y se vuelve a validar.
+          setValidacion({ ...fallo, motivo: 'Tu carrito cambió. Te mostramos lo que está guardado; vuelve a intentarlo.' })
+          recargarDesdeServidor()
+        } else if (fila.valido) setValidacion({ estado: 'ok', descuento: Number(fila.descuento), motivo: '', firma })
+        else setValidacion({ estado: 'rechazado', descuento: 0, motivo: fila.motivo || 'Este cupón no se puede aplicar a esta compra.', firma })
       })
       .catch(() => {
         if (!vigente) return
@@ -886,7 +973,7 @@ export default function CarritoCliente() {
       vigente = false
       clearTimeout(limite)
     }
-  }, [cuponAplicado, clavesMarcadas, versionCarrito])
+  }, [cuponAplicado, firmaCarrito, versionCarrito, hayPendientes, recargarDesdeServidor])
 
   if (cargando) {
     return (
@@ -1146,6 +1233,16 @@ export default function CarritoCliente() {
                 </span>
               </div>
 
+              {errorGuardado && (
+                <div role="alert" className="flex flex-col gap-1 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
+                  <span>{errorGuardado}</span>
+                </div>
+              )}
+              {hayPendientes && (
+                <p role="status" className="text-[13px] text-white/70">
+                  Guardando los cambios de tu carrito…
+                </p>
+              )}
               <button
                 type="button"
                 onClick={confirmar}

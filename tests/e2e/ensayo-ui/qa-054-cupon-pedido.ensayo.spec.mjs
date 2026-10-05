@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from 'playwright/test';
 import { verificarEntorno, soloRedDelEnsayo, loginUI, sesion, rpc, tabla, mensaje, sqlJson, sql } from './ayuda.mjs';
+import { abrirCarrito, completarEntregaYPago, CTA, usarCupon, quitarCupon, totalMostrado, instruccionPago, pagarExacto, sinImporte, estadoBD } from './carrito.mjs';
 
 const CC = JSON.parse(readFileSync(new URL('../fixtures/ensayo-cupon-runtime.json', import.meta.url), 'utf8'));
 const E = CC.escenas;
@@ -16,65 +17,6 @@ const GLOBAL = /supera el descuento permitido para esta compra/;
 
 test.beforeAll(async ({ request }) => { await verificarEntorno(request); });
 test.beforeEach(async ({ context }) => { await soloRedDelEnsayo(context); });
-
-// ---------- ayudas de interfaz ----------
-function diaDeEntrega() {
-  const lima = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Lima' }));
-  const hoy = lima.getDate();
-  const d = new Date(lima); d.setDate(d.getDate() + 1);
-  if (d.getDay() === 0) d.setDate(d.getDate() + 1); // domingo cerrado
-  return { dia: d.getDate(), mesSiguiente: d.getMonth() !== lima.getMonth() && d.getDate() < hoy };
-}
-async function imagenFicticia(page) {
-  const png = await page.evaluate(() => {
-    const c = document.createElement('canvas'); c.width = 160; c.height = 80;
-    const x = c.getContext('2d'); x.fillStyle = '#ffccd9'; x.fillRect(0, 0, 160, 80); x.fillStyle = '#222'; x.font = '16px sans-serif';
-    x.fillText('TEST ENSAYO', 12, 35); x.fillText('NO PAGO / FICTICIO', 12, 60);
-    return c.toDataURL('image/png').split(',')[1];
-  });
-  return { name: 'TEST-ENSAYO-NO-PAGO.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') };
-}
-async function abrirCarrito(page, escena) {
-  await loginUI(page, escena.email);
-  await page.goto('/carrito');
-  await expect(page.getByRole('heading', { name: 'Tu carrito', exact: true })).toBeVisible();
-  await expect(page.getByText(escena.nombre, { exact: false }).first()).toBeVisible();
-}
-async function completarEntregaYPago(page) {
-  const { dia, mesSiguiente } = diaDeEntrega();
-  await page.getByRole('button', { name: 'Recojo en tienda', exact: true }).click();
-  await page.getByRole('button', { name: 'Elige el día', exact: true }).click();
-  if (mesSiguiente) await page.getByRole('button', { name: 'Mes siguiente', exact: true }).click();
-  await page.getByRole('button', { name: String(dia), exact: true }).filter({ visible: true }).first().click();
-  await page.getByRole('button', { name: 'Elige la hora', exact: true }).click();
-  await page.getByRole('button', { name: '11:00', exact: true }).click();
-  await page.getByRole('button', { name: 'Yape', exact: true }).click();
-  await page.locator('input[type="file"]').setInputFiles(await imagenFicticia(page));
-}
-const CTA = (page) => page.getByRole('button', { name: /^Confirmar pedido/ });
-async function usarCupon(page, codigo) {
-  await page.getByText('Agregar cupón', { exact: true }).click();
-  const panel = page.getByRole('dialog', { name: 'Tus cupones' });
-  await expect(panel).toBeVisible();
-  // El panel lista las tarjetas; «Usar» es el botón de la tarjeta cuyo código coincide.
-  const tarjeta = panel.locator('div.flex.flex-col.gap-1\\.5').filter({ hasText: codigo });
-  await tarjeta.getByRole('button', { name: 'Usar', exact: true }).click();
-}
-// El total del resumen es un contador animado (dígitos apilados, no legible como texto); el importe EXACTO que la clienta debe pagar
-// también está escrito en las instrucciones del método de pago, y eso es lo que se comprueba. Con un cupón sin confirmar no hay importe.
-const instruccionPago = (page) => page.getByText(/el total exacto/);
-const quitarCupon = (page) => page.getByText('Cupón aplicado', { exact: true }).locator('xpath=..').getByRole('button', { name: 'Quitar', exact: true }).click();
-const totalMostrado = (page) => page.getByText('Total', { exact: true }).locator('xpath=..');
-const pagarExacto = (page, importe) => expect(instruccionPago(page)).toContainText(`(S/ ${importe}`);
-const sinImporte = (page) => expect(instruccionPago(page)).toContainText('se mostrará cuando se confirme tu cupón');
-const estadoBD = (e) => sqlJson(`select json_build_object(
-  'pedidos', (select count(*) from public.pedidos_web where cliente_id='${e.clienteId}'),
-  'ventas', (select count(*) from public.ventas where cliente_id='${e.clienteId}'),
-  'stock', (select stock_actual from public.productos where id='${e.productoId}'),
-  'carrito', (select coalesce(sum(cantidad),0) from public.carrito_productos where cliente_web_id='${e.uid}'),
-  'cupones', (select coalesce(string_agg(estado||coalesce(venta_id::text,''), ',' order by codigo),'') from public.cupones where cliente_id='${e.clienteId}'),
-  'mov', (select count(*) from public.recompensas_movimientos where cliente_id='${e.clienteId}'),
-  'sellos', (select count(*) from public.recompensas_sellos_movs where cliente_id='${e.clienteId}'))`);
 
 // ---------- 1. reproducción de Codex ----------
 test('QA-054 · UI: S50, protección S48, cupón S10 → se rechaza ANTES de pedir el pago; sin descuento prometido ni pedido', async ({ page }) => {
@@ -202,7 +144,8 @@ test('QA-054 · HTTP: confirmar_pedido_productos directo con sesión real y cup�
   // la vista previa por HTTP es de solo lectura y devuelve únicamente 4 campos
   const vp = await rpc(request, c.token, 'vista_previa_cupon_pedido', { p_codigo: e.cupones[0].codigo, p_producto_ids: [e.productoId] });
   expect(vp.status).toBe(200);
-  expect(Object.keys(vp.cuerpo[0]).sort()).toEqual(['descuento', 'motivo', 'subtotal', 'valido']);
+  // QA-057 añadió cantidades_coinciden (booleano, sin datos internos).
+  expect(Object.keys(vp.cuerpo[0]).sort()).toEqual(['cantidades_coinciden', 'descuento', 'motivo', 'subtotal', 'valido']);
   expect(vp.cuerpo[0].valido).toBe(false);
   expect(await estadoBD(e)).toEqual(antes);
   // otra clienta no puede consultar este cupón

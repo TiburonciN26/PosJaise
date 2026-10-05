@@ -219,7 +219,11 @@ test('Saldos negativos: se muestran, se explican y bloquean SOLO el premio elegi
   await expect(boton).toBeDisabled();
   await expect(detalleDe(page, premioMonId).getByText('No tienes monedas suficientes.')).toBeVisible();
   await page.goto('/recompensas?seccion=sellos');
-  await expect(page.getByText('Se descontó un sello por una venta anulada. Tus próximos sellos compensarán este ajuste.', { exact: false }).first()).toBeVisible();
+  // QA-059: aviso NEUTRAL aprobado en QA-052 (el saldo −1 puede venir de una anulación o de la apertura), acotado al role=status;
+  // −1 → singular («1 sello»).
+  await expect(page.getByRole('status').filter({ hasText: 'por recuperar' })).toHaveText(
+    'Tienes 1 sello por recuperar. Cada día con una venta de servicios válida recuperas un sello, hasta volver a 0. Después puedes seguir acumulando. Los premios que ya reclamaste se conservan.',
+  );
   await expect(reclamarSellos(page)).toBeDisabled();
 });
 
