@@ -12,7 +12,8 @@ import { NIVELES_PUNTOS as NIVELES } from '../lib/nivelesPuntos.js'
 // girar en 3D, flotación idle, brillo/destello que siguen la rotación,
 // el "pop" de flash al cambiar de tarjeta — se porta tal cual.
 // `etiqueta` cambia solo el rótulo sobre el número (Recompensas usa
-// "PUNTOS DISPONIBLES"); el resto de la tarjeta no se toca.
+// "PUNTOS DISPONIBLES"); `unidad` y `textoDorso` cambian solo esos dos textos (Recompensas con el programa activo usa «MONEDAS»
+// y un dorso que no mezcla monedas con clasificación); el resto de la tarjeta no se toca.
 export default function TarjetaPuntos({
   nivel,
   puntos,
@@ -20,6 +21,8 @@ export default function TarjetaPuntos({
   siguienteEtiqueta,
   nombre,
   etiqueta = 'PUNTOS ACUMULADOS',
+  unidad = 'PTS',
+  textoDorso = 'Suma puntos con cada visita y cada compra para subir de nivel y desbloquear más beneficios.',
 }) {
   const stageRef = useRef(null)
   const lienzoRef = useRef(null)
@@ -217,7 +220,7 @@ export default function TarjetaPuntos({
                 <div className="tp-tinta tp-etiqueta">{etiqueta}</div>
                 <div className="tp-tinta tp-puntos">
                   <b ref={numRef}>0</b>
-                  <span>PTS</span>
+                  <span>{unidad}</span>
                 </div>
                 <div className="tp-barra">
                   <i ref={barraRef} />
@@ -232,7 +235,7 @@ export default function TarjetaPuntos({
                 <div className="tp-franja" />
                 <div className="tp-firma" />
                 <div className="tp-tinta tp-info">
-                  Suma puntos con cada visita y cada compra para subir de nivel y desbloquear más beneficios.
+                  {textoDorso}
                 </div>
                 <svg className="tp-estrella-dorso" viewBox="0 0 100 100" aria-hidden="true">
                   <g fill="none" style={{ stroke: 'var(--tp-ink)' }} strokeWidth="1.4">

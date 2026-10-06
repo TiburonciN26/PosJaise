@@ -14,11 +14,12 @@ export const fechaHoraLima = (iso) => (iso ? new Date(iso).toLocaleString('es-PE
 
 export const REGLA_CUPONES =
   'Solo puedes usar un cupón por compra, y su valor no puede superar el importe de los productos o servicios a los que se aplica.'
-export const REGLA_SERVICIOS =
-  'En servicios sin protección configurada, los cupones pueden descontar hasta el 50 % del precio. En los servicios con protección, el descuento debe respetar el importe mínimo protegido.'
+// Mínimo de cobro por compra (regla global del carrito, ver docs/recompensas-fase2/PROTECCION-CUPONES.md). No se anuncia ningún costo ni
+// importe interno: solo que el cupón se rechaza completo —sin consumirse— si dejaría el total por debajo del mínimo de la compra.
+export const REGLA_PROTECCION =
+  'Los cupones respetan un mínimo de cobro por compra: si el descuento dejara tu total por debajo de lo que el salón necesita para ofrecerla, el cupón se rechaza completo, no se consume y puedes usarlo en otra compra. En servicios sin mínimo configurado, además, un cupón no descuenta más del 50 % del precio.'
 export const REGLA_MONEDAS = 'Las monedas no vencen. El canje es definitivo.'
-export const REGLA_SELLOS =
-  'Un sello por día de Perú cuando tu compra confirmada incluye servicios, venga o no de una cita web. Los productos solos no dan sello. Acumulas hasta 20 sellos y cada premio cuesta 5.'
+// Con las cifras vigentes (tope y sellos por premio salen de la configuración): ver reglaSellos() en lib/programaRecompensas.js.
 
 export function describirBeneficio(p) {
   if (p.tipo === 'MONTO') return `${formatearSoles(p.valor)} de descuento en una compra posterior`

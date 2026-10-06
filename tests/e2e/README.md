@@ -1,6 +1,6 @@
 # Suite QA/E2E local — rama testing
 
-Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 214 casos en 31 archivos `*.spec.mjs` (corte 2026-10-04; última ejecución completa independiente sobre 02a9f17: 213 aprobados, 1 omitido —crear servicio ASISTENTE, no cuenta como aprobado—, 0 fallos, retries=0, fixture nuevo), más 14 archivos `node --test` de capa de datos/SQL, saneador y catálogo POS/Web (170 casos; ver «Dos capas»). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
+Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 214 casos en 31 archivos `*.spec.mjs` (conteos verificados el 2026-10-05; referencia independiente vigente: suite completa sobre 58842f7, 213 aprobados, 1 omitido —crear servicio ASISTENTE, no cuenta como aprobado—, 0 fallos, retries=0, fixture nuevo; QA-061 se verificó después con pruebas específicas sobre 10c4f42, sin suite completa), más 22 archivos `node --test` de capa de datos/SQL, lógica pura, arnés y saneador (272 casos, aprobados el 2026-10-05; ver «Dos capas»). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
 
 ## Ejecutar
 
@@ -27,7 +27,7 @@ El aprovisionamiento necesita acceso al contenedor Docker local supabase_kong_We
 ## Dos capas de pruebas (no se mezclan)
 
 - **Playwright (`*.spec.mjs`)**: interfaz real con sesiones iniciadas por el formulario. Requiere `QA_TEST_PASSWORD`, Vite y Supabase Local.
-- **`node --test` (`*.test.mjs`)**: capa de datos/SQL contra Supabase Local (Recompensas Fase 2, QA-043 a QA-047). Usan claims simulados
+- **`node --test` (`*.test.mjs`)**: capa de datos/SQL contra Supabase Local (Recompensas Fase 2, QA-043 a QA-047, protección de cupones, lectura pública de reglas) y lógica pura/arnés sin base de datos (`programa-recompensas`, `colector-respuestas*`, `promociones-admin*`; los `*-navegador.test.mjs` abren un Chromium con un origen ficticio, sin la app ni sesiones). Usan claims simulados
   (`request.jwt.claims` + `set role authenticated`): **no son sesiones HTTP ni evidencia de interfaz**. Se ejecutan en serie:
   `node --test --test-concurrency=1 tests/e2e/*.test.mjs` (con la rama `testing` y Vite activos; no necesitan la contraseña).
 
@@ -90,4 +90,5 @@ Separada de la regresión de QA, que sigue fija a Supabase Local QA (`localhost:
 - Requisitos: Docker, el Supabase CLI instalado **fuera** del proyecto (`C:\JaiseQA-Tools`), la instancia levantada desde `C:\JaiseQA-Ensayo` y el volcado de QA en `/tmp/qa.dump` del contenedor del ensayo. Los respaldos viven en `C:\JaiseQA-Backups` (no se versionan).
 - Capa SQL (base `transicion`; cada ejecución consume la base, hay que preparar antes): `node tests/e2e/ensayo-preparar-transicion.mjs` y luego `node --test --test-concurrency=1 tests/e2e/recompensas-transicion.ensayo.mjs` o `…/recompensas-concurrencia.ensayo.mjs`.
 - HTTP, interfaz y Storage con sesiones reales (base `postgres`, la que sirven Auth y REST): definir `ENSAYO_PASSWORD` (solo en el entorno del proceso; es la de las cuentas ficticias del ensayo, no la de QA), `node tests/e2e/ensayo-preparar-http.mjs`, levantar un Vite en el puerto 5273 con `VITE_SUPABASE_URL=http://127.0.0.1:56321` y la clave anónima **del ensayo** solo en el entorno del proceso (el `.env` del proyecto apunta a producción: no se usa) y `node node_modules/playwright/cli.js test --config=playwright.ensayo.config.mjs`.
+- **Coherencia de Recompensas en el portal** (Citas, detalle, carrito de servicios, Inicio, Recompensas): `node tests/e2e/ensayo-preparar-coherencia.mjs` (con `ENSAYO_PASSWORD`; aplica la migración `20261005000004` en el ensayo si falta, crea clientas con saldo sembrado, un servicio y un producto de precio redondo y dos premios apagados) y luego `node node_modules/playwright/cli.js test --config=playwright.ensayo.config.mjs coherencia-recompensas`. La especificación cambia y **restaura siempre** la configuración del ensayo (programa, tasas, umbrales, sellos, porcentaje de fidelización) y el catálogo de sellos. Detalle: `docs/recompensas-fase2/COHERENCIA-PORTAL.md`.
 - Para repetir cualquier ensayo hay que volver a preparar: las ventas, canjes y vinculaciones cambian los saldos.

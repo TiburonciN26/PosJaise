@@ -4,12 +4,15 @@ import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Sparkles, Ticket, Us
 import { supabase } from '../../lib/supabase.js'
 import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
 import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
 import { useSecuenciaScroll } from '../../hooks/useSecuenciaScroll.js'
+import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
+import { formatearCantidad } from '../../lib/programaRecompensas.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import { resolverUrlGaleria } from '../../lib/imagenes.js'
@@ -196,6 +199,10 @@ export default function InicioCliente() {
   const [topServicios, setTopServicios] = useState([])
   const [proximaCita, setProximaCita] = useState(null)
   const [puntosCliente, setPuntosCliente] = useState(null)
+  const { session } = useAuth()
+  // Con el programa activo mis_puntos().puntos es el saldo GASTABLE: aquí se muestra como monedas, con su propio nombre.
+  const programa = useProgramaRecompensas(session?.user?.id ?? null)
+  const saldoProg = programa.saldo.estado === 'ok' ? programa.saldo.datos : null
   const [promocion, setPromocion] = useState(null)
   const [cuponPromocion, setCuponPromocion] = useState(null)
   const [reclamando, setReclamando] = useState(false)
@@ -506,10 +513,16 @@ export default function InicioCliente() {
               <span className="text-[13.5px] text-[#a6a6a6]">No tienes citas pendientes. ¿Agendamos la próxima?</span>
             )}
           </div>
-          {puntosCliente && (
+          {programa.activo === false && puntosCliente && (
             <div className="flex items-center gap-1.5 border-white/10 sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
               <span className="text-xl font-bold text-white">{puntosCliente.puntos}</span>
               <span className="text-[11px] uppercase tracking-widest text-[#a6a6a6]">Mis puntos</span>
+            </div>
+          )}
+          {programa.activo === true && saldoProg && (
+            <div className="flex items-center gap-1.5 border-white/10 sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
+              <span className="text-xl font-bold text-white">{formatearCantidad(saldoProg.monedas)}</span>
+              <span className="text-[11px] uppercase tracking-widest text-[#a6a6a6]">Mis monedas</span>
             </div>
           )}
           {proximaCita ? (

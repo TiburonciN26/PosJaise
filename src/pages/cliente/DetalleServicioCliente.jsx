@@ -23,6 +23,8 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
+import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
+import { resumenEstimado } from '../../lib/programaRecompensas.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
 import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
@@ -32,13 +34,9 @@ import BarraTuCitaFlotante from '../../components/BarraTuCitaFlotante.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-servicios'
-// config_puntos.puntos_por_sol_gastado (88_puntos.sql) — se vuelve a
-// pedir acá porque mis_puntos() no acepta un monto hipotético, solo
-// calcula sobre historial real; este valor SÍ es el real de la tabla de
-// configuración, no un supuesto (ver README, "regla de puntos por
-// servicio" seguía pendiente de decidir — la fórmula ya existe, lo que
-// falta es decidir si un servicio puntual puede valer distinto).
-const PUNTOS_POR_SOL_DEFECTO = 0.05
+// Programa APAGADO (heredado): config_puntos.puntos_por_sol_gastado (88_puntos.sql) — se vuelve a pedir acá porque mis_puntos() no
+// acepta un monto hipotético. Si la lectura falla NO hay un valor por omisión: el recuadro no muestra cifra. Con el programa ACTIVO
+// el estimado sale de las reglas vigentes (useProgramaRecompensas) y se presenta como estimado en monedas.
 // Colores de la barra de "Cómo es el servicio" — cíclicos si hay más
 // pasos que colores (mismo criterio que la referencia del lienzo).
 const COLORES_PASOS = ['#dbe7f7', '#a9c6ec', '#6f8fbd', '#3d5680']
@@ -74,7 +72,8 @@ export default function DetalleServicioCliente() {
   const [relacionados, setRelacionados] = useState([])
   const [favorito, setFavorito] = useState(false)
   const [contacto, setContacto] = useState(null)
-  const [puntosPorSol, setPuntosPorSol] = useState(PUNTOS_POR_SOL_DEFECTO)
+  const [puntosPorSol, setPuntosPorSol] = useState(null)
+  const programa = useProgramaRecompensas(null)
   const [cargando, setCargando] = useState(true)
   const [noEncontrado, setNoEncontrado] = useState(false)
   const [fotoIdx, setFotoIdx] = useState(0)
@@ -135,7 +134,7 @@ export default function DetalleServicioCliente() {
       setCalificacionForm(propia?.calificacion ?? 0)
       setComentarioForm(propia?.comentario ?? '')
       setFavorito(Boolean(favoritoRes.data))
-      if (configRes.data) setPuntosPorSol(Number(configRes.data.puntos_por_sol_gastado))
+      setPuntosPorSol(configRes.data ? Number(configRes.data.puntos_por_sol_gastado) : null)
       setContacto(contactoRes.data?.[0] ?? null)
 
       const { data: rel } = await supabase
@@ -205,7 +204,9 @@ export default function DetalleServicioCliente() {
 
   const enCita = servicio ? serviciosCarrito.has(servicio.id) : false
   const duracion = servicio ? formatearDuracion(servicio.duracion_min) : null
-  const puntosEstimados = servicio ? Math.max(0, Math.round(Number(servicio.precio) * puntosPorSol)) : 0
+  const estimado = servicio
+    ? resumenEstimado({ programa, tipo: 'SERVICIO', precio: Number(servicio.precio), legacy: { puntosPorSol } })
+    : null
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
 
   async function alternarCita() {
@@ -515,9 +516,9 @@ export default function DetalleServicioCliente() {
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <Award className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
-                +{puntosEstimados} puntos
+                {estimado?.cifra}
                 <br />
-                <span className="font-normal text-white/60">aprox. por esta visita</span>
+                <span className="font-normal text-white/60">{estimado?.detalle}</span>
               </span>
             </div>
             <a href="#resenas" className="flex flex-col items-center gap-2.5 text-center text-white">
@@ -533,9 +534,9 @@ export default function DetalleServicioCliente() {
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <ShieldCheck className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
-                Suma sello
+                {estimado?.sello.cifra}
                 <br />
-                <span className="font-normal text-white/60">de fidelidad</span>
+                <span className="font-normal text-white/60">{estimado?.sello.detalle}</span>
               </span>
             </div>
           </div>

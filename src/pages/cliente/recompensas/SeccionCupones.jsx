@@ -7,7 +7,7 @@ import { useModalA11y } from '../../../hooks/useModalA11y.js'
 import { ETIQUETAS_ORIGEN_CUPON, formatearValorCupon } from '../../../lib/cupones.js'
 import { formatearSoles } from '../../../lib/moneda.js'
 import { AvisoError, Encabezado, Filtro, Pildora } from './ui.jsx'
-import { REGLA_CUPONES, REGLA_SERVICIOS, fechaLima } from './lib.js'
+import { REGLA_CUPONES, REGLA_PROTECCION, fechaLima } from './lib.js'
 
 const SIN_CUPONES = []
 
@@ -206,7 +206,7 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
       {programaActivo ? (
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-1 border border-white/10 px-5 py-4 text-[13px] leading-relaxed text-white/60">
           <span>{REGLA_CUPONES}</span>
-          <span>{REGLA_SERVICIOS}</span>
+          <span>{REGLA_PROTECCION}</span>
           <span>Cada cupón conserva las condiciones y la vigencia con las que se emitió; algunos no vencen.</span>
         </div>
       ) : (

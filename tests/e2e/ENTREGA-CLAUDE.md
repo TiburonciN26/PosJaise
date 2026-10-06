@@ -1,12 +1,16 @@
-# Entrega QA para Claude Code (actualizado 2026-10-04)
+# Entrega QA para Claude Code (actualizado 2026-10-05)
 
 Codex audita y Claude corrige. Esta rama `testing` contiene la suite, sus fixtures y la documentación; la aplicación se corrige en `fix/qa-correcciones` y se fusiona aquí para ejecutar. Referencia vigente: COBERTURA.md (matriz y brechas) y README.md (cómo ejecutar e interpretar). Los informes CAMPANA-AMPLIADA, RESULTADOS y BASELINE son históricos.
 
-## Último resultado independiente (Codex, 2026-10-04)
+## Referencia independiente vigente (Codex, 2026-10-05)
+
+Suite completa de `testing` **58842f7**, solo Supabase Local TEST, retries=0: **213 aprobadas, 1 omisión conocida (crear servicio como ASISTENTE; no cuenta como aprobada) y 0 fallos.** QA-060 quedó Verificado con esa corrida. **QA-061** (espera de carga de `/promociones` en `qa-005-promociones-antiguas.mjs`) se verificó **después**, mediante pruebas específicas sobre `10c4f42`; esa suite completa no se atribuye a ningún commit posterior. Lo hecho desde entonces (coherencia de Recompensas en el portal, ver `docs/recompensas-fase2/COHERENCIA-PORTAL.md`) **no** se ha ejecutado en una suite completa de QA: sus casos con sesión corrieron en la instancia desechable y quedan en **Re-test**; las 4 promociones TEST antiguas de QA-005 ya fueron desactivadas por Codex.
+
+## Resultado independiente anterior que se conserva (Codex, 2026-10-04)
 
 `testing` 02a9f17, solo Supabase Local TEST, una única suite completa con fixture nuevo (sin `QA_REUSE_FIXTURES`), retries=0, 24,1 min: **213 aprobados de 214, 1 omisión conocida (crear servicio como ASISTENTE; no cuenta como aprobado), 0 fallos, 0 intermitentes**. Cinco casos específicos previos (QA-050 y QA-051) aprobados; son parte de los 214, no escenarios adicionales. QA-051 quedó Verificado en Notion y QA-050 incluye sus mediciones; programa y parámetros restaurados (`actualizado_en` avanzó normalmente). No queda corrección pendiente en este lote.
 
-Historial que se conserva: la corrida anterior (208 aprobados, 1 fallo de selector del arnés en COMISIÓN, 1 omisión) y los fallos de QA-049/QA-050/QA-051 detectados en rondas previas están en los informes de Codex y en Notion; no se borran. Limitaciones: la capa `node --test` (SQL, claims simulados) no se repitió en la corrida de Codex; la suite verde no cierra Fase 2 (ver COBERTURA.md, «Brechas de Fase 2», y `docs/recompensas-fase2/PLAN-LOTE-SIGUIENTE.md`). Este cierre no leyó el INFORME.md de Codex directamente (ruta fuera del directorio de trabajo): las cifras vienen del resumen entregado por el usuario.
+Historial que se conserva: la corrida anterior (208 aprobados, 1 fallo de selector del arnés en COMISIÓN, 1 omisión) y los fallos de QA-049/QA-050/QA-051 detectados en rondas previas están en los informes de Codex y en Notion; no se borran. Limitaciones: la capa `node --test` (SQL, claims simulados) no se repitió en las corridas de Codex (su resultado vigente es el propio de Claude: 272 aprobados el 2026-10-05); la suite verde no cierra Fase 2 (ver COBERTURA.md, «Brechas de Fase 2», y `docs/recompensas-fase2/PLAN-LOTE-SIGUIENTE.md`). Este cierre no leyó el INFORME.md de Codex directamente (ruta fuera del directorio de trabajo): las cifras vienen del resumen entregado por el usuario.
 
 ## Entorno
 
@@ -18,7 +22,7 @@ node node_modules/playwright/cli.js test --config=playwright.qa.config.mjs
 node tests/e2e/archive-run.mjs nuevo-corte
 ```
 
-Cada ejecución completa prepara un CLIENTE y productos/servicio/promoción aislados. Antes de una regresión completa, desactivar las promociones `TEST …` sobrantes de ejecuciones parciales (ver README, «Higiene de preparación»).
+Cada ejecución completa prepara un CLIENTE y productos/servicio/promoción aislados. Antes de una regresión completa, desactivar las promociones `TEST …` sobrantes de ejecuciones parciales (ver README, «Higiene de preparación»); el cierre global verifica además que no queda activa ninguna promoción de la propia corrida.
 
 ## Cómo interpretar
 

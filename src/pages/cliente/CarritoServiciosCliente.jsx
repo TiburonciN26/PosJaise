@@ -20,6 +20,8 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
+import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
+import { avanceNivel, estimarMonedas, formatearCantidad, textoMonedasEstimadas } from '../../lib/programaRecompensas.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { procesarImagen, subirFoto, urlPublicaFoto } from '../../lib/imagenes.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
@@ -109,13 +111,13 @@ function FilaServicio({ servicio, onAlternar, onQuitar }) {
 // que recorta cualquier `fixed` de adentro aunque su containing block
 // sea el viewport (mismo bug de CSS que BarraTuCitaFlotante.jsx ya
 // resolvió con el mismo patrón).
-function BarraConfirmarMovil({ monto, puntos, deshabilitado, enviando, onConfirmar }) {
+function BarraConfirmarMovil({ monto, recompensa, deshabilitado, enviando, onConfirmar }) {
   const contenido = (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center p-4 lg:hidden">
       <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
         <span className="min-w-0 flex-1 truncate text-sm text-white">
           <b className="font-semibold">{formatearSoles(monto)}</b>{' '}
-          <span className="text-white/60">· +{puntos} pts</span>
+          {recompensa && <span className="text-white/60">· {recompensa}</span>}
         </span>
         <button
           type="button"
@@ -153,7 +155,8 @@ function BarraConfirmarMovil({ monto, puntos, deshabilitado, enviando, onConfirm
 // - Sin "cualquier asistente disponible" — se elige uno específico,
 //   igual que en Agendar/Reprogramar.
 export default function CarritoServiciosCliente() {
-  const { usuario } = useAuth()
+  const { usuario, session } = useAuth()
+  const programa = useProgramaRecompensas(session?.user?.id ?? null)
   const { mostrarToast } = useToast()
   const { quitarServicio, vaciarServiciosReservados } = useCarritoCliente()
   const { cuentaTransferencia, pagos, adelantoMinimo, cancelacionPlazoHoras } = useEstadoNegocio()
@@ -364,16 +367,32 @@ export default function CarritoServiciosCliente() {
   const montoAdelanto = puedeElegirPagoTotal && tipoPago === 'TOTAL' ? precioTotal : adelantoMinimoMonto
   const saldoEnLocal = Math.max(0, precioTotal - montoAdelanto)
 
+  // Programa APAGADO (heredado): fórmula de config_puntos; sin la configuración no hay cifra (null), nunca un 0 inventado.
   const puntosEstimados = cfgPuntos
     ? Math.floor(
         (yaTieneCitaEseDia ? 0 : Number(cfgPuntos.puntos_por_visita)) + precioTotal * Number(cfgPuntos.puntos_por_sol_gastado),
       )
-    : 0
+    : null
 
-  const puntosActuales = misPuntos?.puntos ?? 0
+  // Programa ACTIVO: el nivel se mide por CLASIFICACIÓN (no por monedas gastables) y lo que se anuncia es un ESTIMADO en monedas,
+  // que el servidor acredita al confirmarse la venta sobre el importe neto. Reservar no suma por sí solo.
+  const saldoProg = programa.saldo.estado === 'ok' ? programa.saldo.datos : null
+  const avanceProg = saldoProg
+    ? avanceNivel({
+        nivel: saldoProg.nivel,
+        clasificacion: saldoProg.clasificacion,
+        umbralPremium: saldoProg.umbral_premium,
+        umbralVip: saldoProg.umbral_vip,
+      })
+    : null
+  const monedasEstimadas = programa.activo === true ? textoMonedasEstimadas(estimarMonedas(programa.reglas, { servicios: precioTotal })) : null
+  const recompensaBarra =
+    programa.activo === true ? (monedasEstimadas ? `Estimado ${monedasEstimadas}` : null) : programa.activo === false && puntosEstimados !== null ? `+${puntosEstimados} pts` : null
+
+  const puntosActuales = misPuntos?.puntos ?? null
   const nivelRaw = misPuntos?.nivel ?? 'BASICO'
-  const umbralPremium = misPuntos?.umbral_premium ?? 10
-  const umbralVip = misPuntos?.umbral_vip ?? 30
+  const umbralPremium = misPuntos?.umbral_premium ?? null
+  const umbralVip = misPuntos?.umbral_vip ?? null
   let piso = 0
   let techo = umbralPremium
   if (nivelRaw === 'PREMIUM') {
@@ -383,7 +402,7 @@ export default function CarritoServiciosCliente() {
     piso = umbralVip
     techo = umbralVip
   }
-  const progresoPct = techo > piso ? Math.min(100, Math.max(0, ((puntosActuales - piso) / (techo - piso)) * 100)) : 100
+  const progresoPct = !misPuntos ? 0 : techo > piso ? Math.min(100, Math.max(0, ((puntosActuales - piso) / (techo - piso)) * 100)) : 100
   const nivelTexto = nivelRaw === 'BASICO' ? 'Básico' : nivelRaw === 'PREMIUM' ? 'Premium' : 'VIP'
 
   function mensajeFaltante() {
@@ -692,32 +711,87 @@ export default function CarritoServiciosCliente() {
               </div>
 
               <div className="flex flex-col gap-3 border-t border-[#232326] pt-4">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <Sparkles className="h-4 w-4 text-[var(--lw-gold)]" />
-                    Nivel {nivelTexto}
-                  </span>
-                  <span className="font-mono text-sm text-white/60">{puntosActuales} pts</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <span
-                    className="block h-full rounded-full"
-                    style={{ width: `${progresoPct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
-                  />
-                </div>
-                <p className="flex items-center gap-1.5 text-[13px] text-white/70">
-                  <span className="font-semibold text-[var(--lw-gold)]">Ganarás +{puntosEstimados} pts</span>
-                  {yaTieneCitaEseDia ? (
-                    <span className="inline-flex items-center gap-1 text-white/45">
-                      · <Stamp className="h-3 w-3" /> sello ya contado ese día
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1">
-                      · <Stamp className="h-3 w-3 text-[var(--lw-gold)]" /> +1 sello
-                    </span>
-                  )}
-                  {' '}con esta cita.
-                </p>
+                {programa.estado === 'cargando' && (
+                  <p aria-busy="true" className="text-[13px] text-white/50">Calculando tu avance…</p>
+                )}
+                {(programa.estado === 'error' || (programa.activo === true && programa.saldo.estado === 'error')) && (
+                  <p role="alert" className="text-[13px] leading-relaxed text-white/60">
+                    No pudimos cargar tus monedas y sellos ahora, así que no mostramos un estimado. Tu reserva no se ve afectada.
+                  </p>
+                )}
+                {programa.activo === true && saldoProg && (
+                  <>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <Sparkles className="h-4 w-4 text-[var(--lw-gold)]" />
+                        Nivel {saldoProg.nivel === 'BASICO' ? 'Básico' : saldoProg.nivel === 'PREMIUM' ? 'Premium' : 'VIP'}
+                      </span>
+                      <span className="font-mono text-sm text-white/60">{formatearCantidad(saldoProg.monedas)} monedas</span>
+                    </div>
+                    <div
+                      role="progressbar"
+                      aria-label="Progreso de clasificación"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(avanceProg.pct)}
+                      className="h-1.5 overflow-hidden rounded-full bg-white/10"
+                    >
+                      <span
+                        className="block h-full rounded-full"
+                        style={{ width: `${avanceProg.pct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
+                      />
+                    </div>
+                    <p className="text-[13px] leading-relaxed text-white/70">
+                      {monedasEstimadas && (
+                        <>
+                          <span className="font-semibold text-[var(--lw-gold)]">Estimado {monedasEstimadas}</span> cuando se confirme tu
+                          venta.{' '}
+                        </>
+                      )}
+                      Puede dar <Stamp className="inline h-3 w-3 text-[var(--lw-gold)]" /> 1 sello (máx. 1 por día). Reservar no suma por
+                      sí solo.
+                    </p>
+                  </>
+                )}
+                {programa.activo === false && (
+                  <>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                        <Sparkles className="h-4 w-4 text-[var(--lw-gold)]" />
+                        Nivel {nivelTexto}
+                      </span>
+                      <span className="font-mono text-sm text-white/60">{puntosActuales === null ? '—' : `${puntosActuales} pts`}</span>
+                    </div>
+                    <div
+                      role="progressbar"
+                      aria-label="Progreso de nivel"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(progresoPct)}
+                      className="h-1.5 overflow-hidden rounded-full bg-white/10"
+                    >
+                      <span
+                        className="block h-full rounded-full"
+                        style={{ width: `${progresoPct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
+                      />
+                    </div>
+                    {puntosEstimados !== null && (
+                      <p className="flex items-center gap-1.5 text-[13px] text-white/70">
+                        <span className="font-semibold text-[var(--lw-gold)]">Ganarás +{puntosEstimados} pts</span>
+                        {yaTieneCitaEseDia ? (
+                          <span className="inline-flex items-center gap-1 text-white/45">
+                            · <Stamp className="h-3 w-3" /> sello ya contado ese día
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1">
+                            · <Stamp className="h-3 w-3 text-[var(--lw-gold)]" /> +1 sello
+                          </span>
+                        )}
+                        {' '}con esta cita.
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="flex flex-col gap-3 border-t border-[#232326] pt-4">
@@ -866,7 +940,7 @@ export default function CarritoServiciosCliente() {
 
       <BarraConfirmarMovil
         monto={montoAdelanto}
-        puntos={puntosEstimados}
+        recompensa={recompensaBarra}
         deshabilitado={ctaDeshabilitado || enviando}
         enviando={enviando}
         onConfirmar={confirmar}

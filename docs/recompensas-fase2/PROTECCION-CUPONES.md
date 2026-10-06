@@ -38,6 +38,10 @@ Ejemplo aprobado (subtotal S/100, servicios 25 + productos 15 = 40): cupón S/20
 
 `Recompensas Web`: pestaña «Protección de servicios» (porcentaje, aviso de estimación, estado «Pendiente de actualizar») y nueva pestaña «Protección de productos» (búsqueda en servidor, costo registrado de solo lectura, transporte, otros, confirmación de costo cero). `ModalProducto` (Inventario, solo ADMIN) añade «Protección económica (Recompensas Web)» junto a «Editar en Web». No se añadieron campos a los formularios operativos. No se tocaron animaciones, efectos ni el diseño de monedas, cupones, sellos y niveles.
 
+## Texto mostrado a la clienta
+
+`REGLA_PROTECCION` (`src/pages/cliente/recompensas/lib.js`, antes `REGLA_SERVICIOS`): «Los cupones respetan un mínimo de cobro por compra: si el descuento dejara tu total por debajo de lo que el salón necesita para ofrecerla, el cupón se rechaza completo, no se consume y puedes usarlo en otra compra. En servicios sin mínimo configurado, además, un cupón no descuenta más del 50 % del precio.» Sin costos, materiales, transporte ni porcentajes de asistentes. Ver `COHERENCIA-PORTAL.md`.
+
 ## Backend y trazabilidad
 
 - Validación **autoritativa en `confirmar_venta`**, que también usa `verificar_pago_pedido_web` (pedidos web). Caja solo recibe el rechazo, sin importes protegidos.

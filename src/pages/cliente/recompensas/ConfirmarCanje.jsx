@@ -6,7 +6,7 @@ import { useCerrarConEscape } from '../../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../../hooks/useModalA11y.js'
 import {
   REGLA_CUPONES,
-  REGLA_SERVICIOS,
+  REGLA_PROTECCION,
   describirBeneficio,
   formatearMonedas,
   textoAlcance,
@@ -195,7 +195,7 @@ export default function ConfirmarCanje({ premio, origen, saldo, userId, onCerrar
             )}
 
             <p className="text-xs leading-relaxed text-white/60">{REGLA_CUPONES}</p>
-            <p className="text-xs leading-relaxed text-white/60">{REGLA_SERVICIOS}</p>
+            <p className="text-xs leading-relaxed text-white/60">{REGLA_PROTECCION}</p>
             <p className="text-[13px] font-semibold leading-relaxed text-white">
               Este canje es definitivo. Una vez confirmado, no podrás recuperar {esSellos ? 'los sellos' : 'las monedas'}{' '}
               utilizados{esSellos ? '' : ', aunque el cupón siga sin usar'}.

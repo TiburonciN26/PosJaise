@@ -5,7 +5,7 @@ import CampoColapsable from '../../../components/CampoColapsable.jsx'
 import { estiloNivelCupon } from '../../../lib/cupones.js'
 import { CATEGORIAS, NOMBRES_NIVEL, ORDEN_NIVEL, RECOMPENSAS, nivelColorRecompensa } from './datos.js'
 import { AvisoError, AvisoProximamente, Cargando, Encabezado, Filtro, Pildora } from './ui.jsx'
-import { REGLA_CUPONES, REGLA_MONEDAS, REGLA_SERVICIOS, formatearMonedas, premioAItem } from './lib.js'
+import { REGLA_CUPONES, REGLA_MONEDAS, REGLA_PROTECCION, formatearMonedas, premioAItem } from './lib.js'
 import ConfirmarCanje from './ConfirmarCanje.jsx'
 
 // Estado visible de una recompensa para ESTA clienta. Mientras no exista
@@ -268,7 +268,7 @@ export default function SeccionCanje({
         <div className="flex flex-col gap-1 border border-white/10 bg-white/[0.02] px-5 py-4 text-[13px] leading-relaxed text-white/60">
           <span>{REGLA_MONEDAS}</span>
           <span>{REGLA_CUPONES}</span>
-          <span>{REGLA_SERVICIOS}</span>
+          <span>{REGLA_PROTECCION}</span>
         </div>
       ) : (
         !cargandoModo && (

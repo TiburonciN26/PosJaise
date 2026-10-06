@@ -44,6 +44,11 @@ const FUENTES = {
     const { data, error } = await supabase.rpc('mis_sellos_recompensas')
     return { error, datos: data ?? [] }
   },
+  // Programa APAGADO (heredado): porcentaje del cupón de la tarjeta de sellos (config_fidelizacion, editable por administración).
+  cuponSellos: async () => {
+    const { data, error } = await supabase.from('config_fidelizacion').select('porcentaje_recompensa').eq('id', 1).maybeSingle()
+    return { error, datos: data ?? null }
+  },
   promociones: async () => {
     const { data, error } = await supabase
       .from('promociones')

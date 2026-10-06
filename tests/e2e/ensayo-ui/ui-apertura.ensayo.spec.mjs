@@ -3,6 +3,7 @@
 // o niveles. Corren después de http-apertura (mismo estado preparado); para repetirlas hay que volver a preparar.
 import { test, expect } from 'playwright/test';
 import { R, verificarEntorno, soloRedDelEnsayo, loginUI, sqlJson } from './ayuda.mjs';
+import { cuerpoDeLaCarga } from '../colector-respuestas.mjs';
 
 test.beforeAll(async ({ request }) => { await verificarEntorno(request); });
 test.beforeEach(async ({ context }) => { await soloRedDelEnsayo(context); });
@@ -21,9 +22,11 @@ test('CLIENTE con apertura, sellos > 20 y nivel VIP: tarjeta, sellos, cupones y 
   const llamadas = [];
   page.on('response', (r) => { if (/\/rpc\/(mi_saldo_recompensas|mis_cupones|mis_movimientos_recompensas)/.test(r.url())) llamadas.push(new URL(r.url()).origin); });
   await loginUI(page, R.clientas.h1.email);
-  const saldo = page.waitForResponse((r) => r.url().includes('/rpc/mi_saldo_recompensas'));
+  // El cuerpo se lee de la respuesta de ESTA carga (QA-060): tras iniciar sesión, la página de Inicio ya pide mi_saldo_recompensas y su
+  // respuesta tardía no debe confundirse con la de «Mi tarjeta».
+  const saldo = cuerpoDeLaCarga(page, (q) => q.url().includes('/rpc/mi_saldo_recompensas'));
   await irA(page, 'tarjeta');
-  const cuerpo = (await (await saldo).json())[0];
+  const cuerpo = (await saldo)[0];
   expect(Number(cuerpo.monedas)).toBe(250);
   await expect(panel(page)).toContainText('VIP');
   await expect(panel(page)).toContainText('MONEDAS DISPONIBLES');

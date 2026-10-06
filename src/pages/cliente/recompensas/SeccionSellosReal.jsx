@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Gift, Stamp } from 'lucide-react'
 import { AvisoError, Cargando, Encabezado } from './ui.jsx'
-import { REGLA_SELLOS, fechaHoraLima, premioAItem, textoPagoMinimo } from './lib.js'
+import { reglaSellos } from '../../../lib/programaRecompensas.js'
+import { fechaHoraLima, premioAItem, textoPagoMinimo } from './lib.js'
 import ConfirmarCanje from './ConfirmarCanje.jsx'
 
 // Mis sellos (Fase 2, programa activo). Los sellos salen del libro del servidor:
@@ -99,7 +100,7 @@ export default function SeccionSellosReal({
             <li>Acumulas hasta {cfg.max} sellos. Con {cfg.max} no se suman más hasta que reclames un premio; no se acreditan visitas anteriores omitidas.</li>
             <li>Cada premio cuesta {cfg.costo} sellos. Si anulan una compra, el sello de ese día se retira solo si no queda otra compra con servicios ese día.</li>
           </ul>
-          <p className="border-t border-white/10 pt-3 text-[13px] leading-relaxed text-white/50">{REGLA_SELLOS}</p>
+          <p className="border-t border-white/10 pt-3 text-[13px] leading-relaxed text-white/50">{reglaSellos({ sellosMax: cfg.max, sellosPorPremio: cfg.costo })}</p>
         </div>
       </div>
 

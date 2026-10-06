@@ -4,11 +4,9 @@ import {
   ArrowBigDown,
   ArrowRight,
   CalendarClock,
-  Check,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Info,
   MapPin,
   MessageCircle,
   Pencil,
@@ -23,12 +21,15 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
 import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../hooks/useModalA11y.js'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
+import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
+import { avanceNivel, estimarMonedas, formatearCantidad, tarjetaDeSellos, textoMonedasEstimadas } from '../../lib/programaRecompensas.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import PieClienteWeb from './PieClienteWeb.jsx'
@@ -42,6 +43,7 @@ import {
   sumarDias,
 } from '../../lib/fechas.js'
 import ModalReprogramarCitaCliente from '../../components/ModalReprogramarCitaCliente.jsx'
+import ComoGanasPuntosYSellos from './citas/ComoGanasPuntosYSellos.jsx'
 
 const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -171,10 +173,10 @@ function calcularChipsSello(cita, tieneSello, { historial = false } = {}) {
   }
 }
 
-// Estimado con la misma fórmula que mis_puntos() (config_puntos): no es
-// la fuente de verdad, solo el número que se muestra por adelantado.
+// Estimado con la misma fórmula que mis_puntos() (config_puntos) con el programa APAGADO: no es la fuente de verdad, solo el número que
+// se muestra por adelantado. Sin la configuración no hay estimado (null): nunca un 0 inventado.
 function puntosEstimados(cita, tieneSello, cfg) {
-  if (!cfg) return 0
+  if (!cfg) return null
   return Math.floor((tieneSello ? Number(cfg.puntos_por_visita) : 0) + totalCita(cita) * Number(cfg.puntos_por_sol_gastado))
 }
 
@@ -217,11 +219,26 @@ function ChipPuntos({ puntos }) {
   )
 }
 
-function ChipSello({ sello, selloRepetido }) {
+// Con el programa nuevo el sello lo da una VENTA confirmada con servicios (máx. uno por día de Perú), no la cita en sí: el chip no lo
+// promete, dice que puede sumarlo. `activo` solo cambia el texto.
+function ChipMonedas({ texto }) {
+  return (
+    <span
+      title="Estimado: las monedas se acreditan al confirmarse la venta, sobre el importe neto (después de descuentos y cupones)."
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]"
+    >
+      <Sparkles className="h-3 w-3 text-[var(--lw-gold)]" />
+      Estimado {texto}
+    </span>
+  )
+}
+
+function ChipSello({ sello, selloRepetido, activo = false }) {
   if (sello) {
     return (
       <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]">
-        <Stamp className="h-3 w-3 text-[var(--lw-gold)]" />+1 sello
+        <Stamp className="h-3 w-3 text-[var(--lw-gold)]" />
+        {activo ? 'Puede sumar 1 sello' : '+1 sello'}
       </span>
     )
   }
@@ -231,7 +248,7 @@ function ChipSello({ sello, selloRepetido }) {
         title="Solo se suma 1 sello por día, aunque tengas varias citas ese día"
         className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-white/20 px-2.5 py-1 text-[11px] text-white/40"
       >
-        Sello ya contado ese día
+        {activo ? 'Máx. 1 sello por día' : 'Sello ya contado ese día'}
       </span>
     )
   }
@@ -272,6 +289,9 @@ export default function CitasCliente() {
   const { cancelacionPlazoHoras } = useEstadoNegocio()
   const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
   const navigate = useNavigate()
+  const { session } = useAuth()
+  // Programa de Recompensas: reglas vigentes y, con el programa activo, el saldo propio (monedas y clasificación SEPARADAS).
+  const programa = useProgramaRecompensas(session?.user?.id ?? null)
 
   const [mesActual, setMesActual] = useState(() => iniciarDia(new Date()))
   const [citasMes, setCitasMes] = useState([])
@@ -499,10 +519,12 @@ export default function CitasCliente() {
     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
     : null
 
-  const puntos = misPuntos?.puntos ?? 0
+  // Programa APAGADO (heredado): puntos y sellos de mis_puntos() / mi_fidelizacion() y la fórmula de config_puntos. Cada dato puede
+  // faltar (consulta fallida): entonces no se muestra ni se sustituye por un valor por omisión.
+  const puntos = misPuntos?.puntos ?? null
   const nivelRaw = misPuntos?.nivel ?? 'BASICO'
-  const umbralPremium = misPuntos?.umbral_premium ?? 10
-  const umbralVip = misPuntos?.umbral_vip ?? 30
+  const umbralPremium = misPuntos?.umbral_premium ?? null
+  const umbralVip = misPuntos?.umbral_vip ?? null
   const faltanPts = misPuntos?.puntos_para_siguiente ?? 0
   let piso = 0
   let techo = umbralPremium
@@ -516,17 +538,39 @@ export default function CitasCliente() {
     techo = umbralVip
     siguienteNivel = null
   }
-  const progresoPct = techo > piso ? Math.min(100, Math.max(0, ((puntos - piso) / (techo - piso)) * 100)) : 100
-  const nivelTexto = nivelRaw === 'BASICO' ? 'Básico' : nivelRaw === 'PREMIUM' ? 'Premium' : 'VIP'
+  const progresoPct = misPuntos && techo > piso ? Math.min(100, Math.max(0, ((puntos - piso) / (techo - piso)) * 100)) : misPuntos ? 100 : 0
   const faltanTexto = siguienteNivel ? `${faltanPts} pts para ${siguienteNivel}` : 'Nivel máximo alcanzado'
 
-  const sellosMeta = fidelizacion?.visitas_por_recompensa ?? 5
+  const sellosMeta = fidelizacion?.visitas_por_recompensa ?? null
   const sellosActuales = fidelizacion?.sellos_actuales ?? 0
-  const sellosFaltan = Math.max(0, sellosMeta - sellosActuales)
+  const sellosFaltan = sellosMeta ? Math.max(0, sellosMeta - sellosActuales) : null
 
-  const puntosPorVisita = cfgPuntos ? Number(cfgPuntos.puntos_por_visita) : 1
-  const solesPorPunto =
-    cfgPuntos && Number(cfgPuntos.puntos_por_sol_gastado) > 0 ? Math.round(1 / Number(cfgPuntos.puntos_por_sol_gastado)) : 20
+  // Programa ACTIVO: el saldo gastable (monedas) y la clasificación (nivel) son cosas distintas. La barra y «faltan N» salen de la
+  // CLASIFICACIÓN: gastar monedas nunca las mueve.
+  const saldoProg = programa.saldo.estado === 'ok' ? programa.saldo.datos : null
+  const avanceProg = saldoProg
+    ? avanceNivel({
+        nivel: saldoProg.nivel,
+        clasificacion: saldoProg.clasificacion,
+        umbralPremium: saldoProg.umbral_premium,
+        umbralVip: saldoProg.umbral_vip,
+      })
+    : null
+  const sellosProg = saldoProg ? tarjetaDeSellos(saldoProg.sellos, saldoProg.sellos_por_premio) : null
+
+  // Estimado que se muestra en cada cita (solo citas vigentes con el programa activo; nada en el historial).
+  function chipRecompensa(cita, tieneSello, { historial = false } = {}) {
+    if (programa.activo === true) {
+      if (historial || !esVigente(cita)) return null
+      const texto = textoMonedasEstimadas(estimarMonedas(programa.reglas, { servicios: totalCita(cita) }))
+      return texto ? <ChipMonedas texto={texto} /> : null
+    }
+    if (programa.activo === false) {
+      const estimado = puntosEstimados(cita, tieneSello, cfgPuntos)
+      return estimado === null ? null : <ChipPuntos puntos={estimado} />
+    }
+    return null // reglas cargando o con error: sin cifra
+  }
 
   const ENTRADA = esDesktop
     ? { header: 100, proxima: 250, calendario: 450, listaTitulo: 600, listaBase: 700, listaPaso: 110, historial: 950, comoGanas: 1050 }
@@ -595,56 +639,150 @@ export default function CitasCliente() {
   }
 
   function bloquePuntos() {
-    return (
-      <div className={`${CLASE_BLOQUE} p-5`}>
-        <div className="flex items-center justify-between gap-2.5">
+    // Reglas leyéndose o con error: sin cifras (no se muestra un saldo que no se leyó).
+    if (programa.estado === 'cargando') {
+      return (
+        <div role="region" aria-label="Tu saldo y nivel" className={`${CLASE_BLOQUE} p-5`}>
           <h2 className="lw-titulo-heavitas text-[15px] uppercase">Puntos</h2>
+          <p aria-busy="true" className="mt-3 text-[13px] text-white/50">Cargando tu saldo…</p>
+        </div>
+      )
+    }
+    if (programa.estado === 'error' || (programa.activo === true && programa.saldo.estado === 'error')) {
+      return (
+        <div role="region" aria-label="Tu saldo y nivel" className={`${CLASE_BLOQUE} p-5`}>
+          <h2 className="lw-titulo-heavitas text-[15px] uppercase">Puntos</h2>
+          <p role="alert" className="mt-3 text-[13px] leading-relaxed text-white/60">
+            No pudimos cargar tu saldo ahora. No cambió; solo no pudimos leerlo.
+          </p>
+          <button
+            type="button"
+            onClick={programa.recargar}
+            className="mt-3 min-h-11 rounded-full bg-white px-6 text-sm font-semibold text-[#0b0b0c] transition-colors hover:bg-[var(--lw-gold)]"
+          >
+            Reintentar
+          </button>
+        </div>
+      )
+    }
+    if (programa.activo === true && !saldoProg) {
+      return (
+        <div role="region" aria-label="Tu saldo y nivel" className={`${CLASE_BLOQUE} p-5`}>
+          <h2 className="lw-titulo-heavitas text-[15px] uppercase">Monedas</h2>
+          <p aria-busy="true" className="mt-3 text-[13px] text-white/50">Cargando tu saldo…</p>
+        </div>
+      )
+    }
+
+    const activo = programa.activo === true
+    const nivelMostrado = activo ? saldoProg.nivel : nivelRaw
+    const nivelEtiqueta = nivelMostrado === 'BASICO' ? 'Básico' : nivelMostrado === 'PREMIUM' ? 'Premium' : 'VIP'
+    const pct = activo ? avanceProg.pct : progresoPct
+    return (
+      <div role="region" aria-label="Tu saldo y nivel" className={`${CLASE_BLOQUE} p-5`}>
+        <div className="flex items-center justify-between gap-2.5">
+          <h2 className="lw-titulo-heavitas text-[15px] uppercase">{activo ? 'Monedas' : 'Puntos'}</h2>
           <span className="rounded-full bg-[var(--lw-gold)]/15 px-2.5 py-1 text-[11px] font-semibold text-[var(--lw-gold)]">
-            Nivel {nivelTexto}
+            Nivel {nivelEtiqueta}
           </span>
         </div>
         <div className="mt-3 flex items-baseline gap-2">
           <span className="font-mono text-3xl font-bold" style={{ color: 'var(--lw-gold)' }}>
-            {puntos}
+            {activo ? formatearCantidad(saldoProg.monedas) : (puntos ?? '—')}
           </span>
-          <span className="text-[13px] text-white/50">pts</span>
+          <span className="text-[13px] text-white/50">{activo ? 'monedas disponibles' : 'pts'}</span>
         </div>
-        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div
+          role="progressbar"
+          aria-label={activo ? 'Progreso de clasificación' : 'Progreso de nivel'}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(pct)}
+          className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10"
+        >
           <span
             className="block h-full rounded-full"
-            style={{ width: `${progresoPct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
+            style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
           />
         </div>
-        <p className="mt-1.5 text-xs text-white/50">{faltanTexto}</p>
+        <p className="mt-1.5 text-xs text-white/50">
+          {activo
+            ? avanceProg.siguiente
+              ? `${formatearCantidad(avanceProg.faltan)} puntos de clasificación para ${avanceProg.siguiente}`
+              : 'Nivel máximo alcanzado'
+            : faltanTexto}
+        </p>
+        {activo && (
+          <p className="mt-1 text-xs leading-relaxed text-white/50">Gastar monedas no baja tu nivel ni este avance.</p>
+        )}
         <Link to="/recompensas?seccion=tarjeta" className="mt-3 flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
-          Ver mis puntos <ArrowRight className="h-3.5 w-3.5" />
+          {activo ? 'Ver mis monedas' : 'Ver mis puntos'} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
         <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
-          <div className="flex items-baseline justify-between">
-            <span className="text-[13px] font-semibold text-white">Sellos de fidelidad</span>
-            <span className="text-xs text-white/50">
-              {sellosActuales} de {sellosMeta} · {sellosFaltan} para tu 20%
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {Array.from({ length: sellosMeta }, (_, i) => (
-              <span
-                key={i}
-                className={`flex h-6 w-6 items-center justify-center rounded-full ${
-                  i < sellosActuales ? 'bg-[var(--lw-gold)] text-black' : 'border border-dashed border-white/25 text-transparent'
-                }`}
-              >
-                <Stamp className="h-3 w-3" />
-              </span>
-            ))}
-          </div>
-          <p className="text-xs leading-relaxed text-white/50">
-            Se suma <strong className="text-white">1 sello por día</strong> que te atiendes, aunque tengas varias citas ese
-            mismo día.
-          </p>
-          <Link to="/recompensas?seccion=sellos" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
-            Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          {activo ? (
+            <>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-semibold text-white">Sellos</span>
+                <span className="text-xs text-white/50">
+                  {sellosProg.negativo
+                    ? `${sellosProg.porRecuperar} por recuperar`
+                    : `${sellosProg.enTarjeta} de ${saldoProg.sellos_por_premio} · faltan ${sellosProg.faltan} para tu próximo premio`}
+                </span>
+              </div>
+              {!sellosProg.negativo && (
+                <div className="flex gap-2">
+                  {Array.from({ length: saldoProg.sellos_por_premio }, (_, i) => (
+                    <span
+                      key={i}
+                      className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                        sellosProg.completa || i < sellosProg.enTarjeta
+                          ? 'bg-[var(--lw-gold)] text-black'
+                          : 'border border-dashed border-white/25 text-transparent'
+                      }`}
+                    >
+                      <Stamp className="h-3 w-3" />
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs leading-relaxed text-white/50">
+                Se suma <strong className="text-white">1 sello por día</strong> en que se confirma una venta con servicios.
+              </p>
+              <Link to="/recompensas?seccion=sellos" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+                Ver mis sellos <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between">
+                <span className="text-[13px] font-semibold text-white">Sellos de fidelidad</span>
+                <span className="text-xs text-white/50">
+                  {sellosMeta ? `${sellosActuales} de ${sellosMeta} · ${sellosFaltan} para tu cupón` : 'No disponible ahora'}
+                </span>
+              </div>
+              {sellosMeta && (
+                <div className="flex gap-2">
+                  {Array.from({ length: sellosMeta }, (_, i) => (
+                    <span
+                      key={i}
+                      className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                        i < sellosActuales ? 'bg-[var(--lw-gold)] text-black' : 'border border-dashed border-white/25 text-transparent'
+                      }`}
+                    >
+                      <Stamp className="h-3 w-3" />
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs leading-relaxed text-white/50">
+                Se suma <strong className="text-white">1 sello por día</strong> que te atiendes, aunque tengas varias citas ese
+                mismo día.
+              </p>
+              <Link to="/recompensas?seccion=sellos" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+                Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </>
+          )}
         </div>
       </div>
     )
@@ -779,8 +917,8 @@ export default function CitasCliente() {
                     {duracionCita(proxima)} min
                   </span>
                   <ChipEstado estado={proxima.estado} />
-                  <ChipPuntos puntos={puntosEstimados(proxima, sellosSet.has(proxima.id), cfgPuntos)} />
-                  <ChipSello {...calcularChipsSello(proxima, sellosSet.has(proxima.id))} />
+                  {chipRecompensa(proxima, sellosSet.has(proxima.id))}
+                  <ChipSello {...calcularChipsSello(proxima, sellosSet.has(proxima.id))} activo={programa.activo === true} />
                 </div>
                 <div className="flex items-baseline justify-between">
                   <span className="text-xs text-white/60">
@@ -1018,8 +1156,8 @@ export default function CitasCliente() {
                                   <Clock className="h-3.5 w-3.5" />
                                   {duracionCita(cita)} min
                                 </span>
-                                <ChipPuntos puntos={puntosEstimados(cita, tieneSello, cfgPuntos)} />
-                                <ChipSello {...chipsSello} />
+                                {chipRecompensa(cita, tieneSello)}
+                                <ChipSello {...chipsSello} activo={programa.activo === true} />
                               </div>
                               <span className="font-mono text-sm font-bold text-white">{formatearSoles(totalCita(cita))}</span>
                             </div>
@@ -1126,8 +1264,8 @@ export default function CitasCliente() {
                         </div>
                         <div className="flex flex-wrap items-start gap-1.5">
                           <ChipEstado estado={cita.estado} />
-                          {cita.estado === 'COMPLETADA' && <ChipPuntos puntos={puntosEstimados(cita, tieneSello, cfgPuntos)} />}
-                          {chips.sello && <ChipSello sello />}
+                          {cita.estado === 'COMPLETADA' && chipRecompensa(cita, tieneSello, { historial: true })}
+                          {chips.sello && programa.activo === false && <ChipSello sello />}
                         </div>
                         <span className="font-mono text-sm font-bold sm:text-right">{formatearSoles(totalCita(cita))}</span>
                         <div className="flex items-center gap-4 sm:justify-end">
@@ -1158,121 +1296,17 @@ export default function CitasCliente() {
           </div>
         </div>
 
-        {/* Cómo ganas puntos y sellos */}
-        <section
-          aria-labelledby="citas-como-ganas-titulo"
-          className={`mt-8 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-8 ${
-            reducirMovimiento ? '' : 'in-up'
-          }`}
-          style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.comoGanas}ms` }}
-        >
-          <h2 id="citas-como-ganas-titulo" className="lw-titulo-heavitas text-xl uppercase">
-            Cómo ganas puntos y sellos
-          </h2>
-          <p className="mt-1.5 text-[13px] text-white/50">Así funciona tu tarjeta de fidelización en Jaise.</p>
-          <div className="mt-6 grid grid-cols-1 gap-8 divide-y divide-white/10 lg:grid-cols-3 lg:gap-10 lg:divide-y-0">
-            <div className="flex flex-col gap-3.5 pt-8 first:pt-0 lg:pt-0">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
-                  <Sparkles className="h-[18px] w-[18px]" />
-                </span>
-                <h3 className="lw-titulo-heavitas text-[15px] uppercase">Puntos</h3>
-              </div>
-              <p className="text-[13px] leading-relaxed text-white/75">
-                <strong className="text-white">
-                  {puntosPorVisita} {puntosPorVisita === 1 ? 'punto' : 'puntos'}
-                </strong>{' '}
-                por cada día que te atiendes.
-              </p>
-              <p className="text-[13px] leading-relaxed text-white/75">
-                1 punto por cada <strong className="text-white">S/ {solesPorPunto}</strong> que pagas en servicios.
-              </p>
-              <p className="text-[13px] leading-relaxed text-white/75">Con más puntos sube tu tarjeta de nivel:</p>
-              <div className="flex flex-wrap gap-2">
-                <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
-                  <strong className="text-[13px] text-white">Básico</strong>desde 0 pts
-                </div>
-                <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
-                  <strong className="text-[13px] text-white">Premium</strong>desde {umbralPremium} pts
-                </div>
-                <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
-                  <strong className="text-[13px] text-white">VIP</strong>desde {umbralVip} pts
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3.5 pt-8 lg:pt-0">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
-                  <Stamp className="h-[18px] w-[18px]" />
-                </span>
-                <h3 className="lw-titulo-heavitas text-[15px] uppercase">Sellos</h3>
-              </div>
-              <p className="text-[13px] leading-relaxed text-white/75">
-                <strong className="text-white">1 sello por día</strong> que te atiendes, aunque ese día tengas varias citas a
-                distintas horas.
-              </p>
-              <p className="text-[13px] leading-relaxed text-white/75">
-                Al juntar <strong className="text-white">{sellosMeta} sellos</strong> puedes generar un{' '}
-                <strong className="text-white">cupón de 20%</strong> desde Recompensas y usarlo al pagar en caja.
-              </p>
-              <p className="text-[13px] leading-relaxed text-white/75">
-                <strong className="text-white">Muy pronto:</strong> una nueva sección de{' '}
-                <strong className="text-white">Recompensas</strong> donde podrás canjear tus puntos y sellos por{' '}
-                <strong className="text-white">cupones de todo tipo</strong>, o directamente por{' '}
-                <strong className="text-white">servicios y productos</strong>.{' '}
-                <span className="ml-1 inline-block rounded-full border border-dashed border-[var(--lw-gold)]/60 px-2 py-0.5 text-[11px] font-semibold text-[var(--lw-gold)]">
-                  Próximamente
-                </span>
-              </p>
-              <p className="text-[13px] leading-relaxed text-white/75">
-                Cada {sellosMeta} sellos se llena una tarjeta y empieza otra. Los cupones que aún no generaste te siguen
-                esperando.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3.5 pt-8 lg:pt-0">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
-                  <Check className="h-[18px] w-[18px]" />
-                </span>
-                <h3 className="lw-titulo-heavitas text-[15px] uppercase">Cuándo se suman</h3>
-              </div>
-              <div className="flex flex-col">
-                <div className="relative flex gap-3">
-                  <span className="absolute left-[11px] top-[22px] h-[calc(100%+8px)] w-px bg-white/15" />
-                  <span className="z-[1] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#0b0b0c]" />
-                  <span className="flex flex-col gap-0.5 pb-4 text-xs text-white/50">
-                    <strong className="text-[13px] text-white/80">Pendiente</strong>Reservaste tu cita. Aún no suma.
-                  </span>
-                </div>
-                <div className="relative flex gap-3">
-                  <span className="absolute left-[11px] top-[22px] h-[calc(100%+8px)] w-px bg-white/15" />
-                  <span className="z-[1] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#0b0b0c]" />
-                  <span className="flex flex-col gap-0.5 pb-4 text-xs text-white/50">
-                    <strong className="text-[13px] text-white/80">Confirmada</strong>El salón aceptó tu cita. Aún no suma.
-                  </span>
-                </div>
-                <div className="flex gap-3">
-                  <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-green text-black">
-                    <Check className="h-3 w-3" />
-                  </span>
-                  <span className="flex flex-col gap-0.5 text-xs">
-                    <strong className="text-[13px] text-green">Completada</strong>
-                    <span className="text-white/60">Te atendimos y se registró en caja: aquí se suman tus puntos y tu sello.</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 flex gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-[13px] leading-relaxed text-white/60">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
-            <span>
-              <strong className="text-white">No suman</strong> las citas canceladas, las citas a las que no asististe ni las
-              compras de productos. Si un servicio se anula en caja, se descuentan sus puntos y su sello.
-            </span>
-          </div>
-        </section>
+        {/* Cómo ganas puntos y sellos (programa apagado: heredado · activo: monedas, clasificación y sellos vigentes) */}
+        <ComoGanasPuntosYSellos
+          programa={programa}
+          heredado={{
+            cfg: cfgPuntos,
+            umbrales: misPuntos ? { premium: umbralPremium, vip: umbralVip } : null,
+            sellosMeta,
+          }}
+          reducirMovimiento={reducirMovimiento}
+          retrasoMs={ENTRADA.comoGanas}
+        />
       </div>
 
       <PieClienteWeb />

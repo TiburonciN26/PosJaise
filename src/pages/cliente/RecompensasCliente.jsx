@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePerfilClienteOpcional } from '../../context/PerfilClienteContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
 import { SECCIONES } from './recompensas/datos.js'
 import { useCatalogoPublico, useRecursosRecompensas } from './recompensas/useRecursosRecompensas.js'
 import { AvisoError, Cargando } from './recompensas/ui.jsx'
@@ -73,6 +74,9 @@ export default function RecompensasCliente({ publico = false }) {
   const { recursos, cargar } = useRecursosRecompensas(userId)
   // Catálogo público (QA-037): solo sin sesión; nunca se consulta nada personal.
   const { catalogoPublico, recargarCatalogoPublico } = useCatalogoPublico(!sesion)
+  // Reglas vigentes (pública y mínima): «Cómo funciona» y los textos que dependen del programa. Con sesión se lee además el saldo
+  // propio, pero esta pantalla ya lo carga con sus recursos (saldo), así que aquí solo importan las reglas.
+  const programa = useProgramaRecompensas(null)
 
   const claveParam = params.get('seccion')
   const indiceActivo = Math.max(
@@ -140,9 +144,11 @@ export default function RecompensasCliente({ publico = false }) {
   }
 
   let contenido
-  const { puntos, fidelizacion, historial, cupones, promociones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs } = recursos
+  const { puntos, fidelizacion, historial, cupones, promociones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs, cuponSellos } = recursos
   // Fase 2: con el programa activo, saldo/sellos/movimientos salen del libro del servidor.
   const saldoReal = saldo.estado === 'ok' && saldo.datos?.activo ? saldo.datos : null
+  // Programa activo según lo que se haya podido leer (saldo propio o reglas públicas); null mientras no se sepa.
+  const programaActivo = saldoReal ? true : programa.activo
   // Tras un canje (o una respuesta recuperada) se vuelve a leer todo lo que cambia, en silencio.
   const alCanjear = () =>
     Promise.all(['saldo', 'catalogoMonedas', 'catalogoSellos', 'cupones', 'movimientos', 'sellosMovs'].map((k) => cargar(k, { silencioso: true })))
@@ -214,6 +220,7 @@ export default function RecompensasCliente({ publico = false }) {
           contenido = (
             <SeccionSellos
               datos={fidelizacion.datos}
+              cuponSellos={cuponSellos}
               historial={historial}
               generando={generando}
               onGenerarCupon={generarCupon}
@@ -241,7 +248,7 @@ export default function RecompensasCliente({ publico = false }) {
         )
         break
       default:
-        contenido = <SeccionComo programaActivo={Boolean(saldoReal)} />
+        contenido = <SeccionComo programa={programa} />
     }
   }
 
@@ -253,7 +260,9 @@ export default function RecompensasCliente({ publico = false }) {
             <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Club Jaise</span>
             <h1 className="lw-titulo-heavitas text-4xl uppercase md:text-5xl">Recompensas</h1>
             <p className="max-w-[560px] text-[15px] leading-relaxed text-white/60">
-              Tus visitas y compras suman puntos y sellos. Cámbialos por cupones y beneficios.
+              {programaActivo
+                ? 'Tus compras confirmadas suman monedas y clasificación; las ventas con servicios dan sellos. Cámbialos por cupones y beneficios.'
+                : 'Tus visitas y compras suman puntos y sellos. Cámbialos por cupones y beneficios.'}
             </p>
           </div>
           {sesion && perfil?.nombre && (
@@ -287,7 +296,7 @@ export default function RecompensasCliente({ publico = false }) {
                     : 'border-[#3a3a3f] bg-transparent text-white hover:border-[var(--lw-gold)]'
                 }`}
               >
-                {s.label}
+                {programaActivo && s.clave === 'canje' ? 'Canjear monedas' : s.label}
               </button>
             )
           })}

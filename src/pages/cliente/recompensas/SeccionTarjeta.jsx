@@ -61,6 +61,12 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
           siguienteEtiqueta={siguienteEtiqueta}
           nombre={nombre}
           etiqueta={real ? 'MONEDAS DISPONIBLES' : 'PUNTOS DISPONIBLES'}
+          {...(real
+            ? {
+                unidad: 'MONEDAS',
+                textoDorso: 'Suma monedas con tus compras confirmadas. Tu nivel depende de tu clasificación, que no baja al gastarlas.',
+              }
+            : {})}
         />
 
         <div className="liquid-glass flex items-start gap-3 rounded-none p-4">
@@ -184,7 +190,7 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
         </div>
         <p className="text-center text-xs leading-relaxed text-white/50">
           No hay descuentos permanentes ni regalos automáticos por nivel: los beneficios son acceso a recompensas
-          que se canjean con puntos.
+          que se canjean con {real ? 'monedas' : 'puntos'}.
         </p>
       </div>
     </section>

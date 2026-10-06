@@ -1,5 +1,7 @@
 # Fase 2 — resultados del ensayo en instancia desechable
 
+> **Nota posterior (2026-10-05):** este informe describe el ensayo tal como fue. Después, con autorización, se retiraron de QA los 17 aportes TEST (`APORTES-PREEXISTENTES-QA.md`) y se añadieron a QA las migraciones `20261005000001`–`04` (cupones y lectura pública de reglas); la apertura **sigue sin ejecutarse** y Recompensas **apagado**. Coherencia del portal: `COHERENCIA-PORTAL.md`.
+
 **Alcance:** el ensayo se hizo en la instancia desechable `JaiseEnsayo`. En Supabase Local QA se hizo **una sola escritura, autorizada el 2026-10-05: registrar en `schema_migrations` las 13 versiones ya aplicadas** (sección «Registro en QA»); nada más cambió en QA. No se ejecutó la apertura ni se activó Recompensas, no se borraron los 17 aportes y no se tocó producción.
 La evidencia cruda (volcados, huellas, diferencias) está en `C:\JaiseQA-Backups` (fuera del repositorio, bajo custodia del propietario). No contiene credenciales en este documento; los volcados incluyen cuentas ficticias `@test.local` y hashes de roles locales, por eso no se suben.
 

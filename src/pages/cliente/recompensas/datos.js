@@ -20,8 +20,8 @@ export const BENEFICIOS_NIVEL = [
   {
     clave: 'BASICO',
     nombre: 'Básico',
-    descripcion: 'Para empezar: el catálogo principal de recompensas y el programa de sellos por visitas.',
-    beneficios: ['Acceso al catálogo principal de recompensas', 'Programa de sellos por visitas'],
+    descripcion: 'Para empezar: el catálogo principal de recompensas y el programa de sellos.',
+    beneficios: ['Acceso al catálogo principal de recompensas', 'Programa de sellos'],
   },
   {
     clave: 'PREMIUM',

@@ -33,11 +33,12 @@ import { degradadoServicio } from '../../lib/serviciosVisual.js'
 import TarjetaProductoCliente from '../../components/TarjetaProductoCliente.jsx'
 import BarraTuCarritoFlotante from '../../components/BarraTuCarritoFlotante.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
+import { resumenEstimado } from '../../lib/programaRecompensas.js'
 
 const BUCKET_FOTOS = 'fotos-productos'
-// config_puntos.puntos_por_sol_gastado (88_puntos.sql) — mismo criterio
-// que DetalleServicioCliente.jsx.
-const PUNTOS_POR_SOL_DEFECTO = 0.05
+// Mismo criterio que DetalleServicioCliente.jsx: con el programa ACTIVO, estimado en monedas con las reglas vigentes; con el programa
+// APAGADO los productos no dan puntos (mis_puntos() solo cuenta servicios), así que no se promete una cifra.
 
 function formatearFechaCorta(fechaIso) {
   if (!fechaIso) return null
@@ -65,7 +66,7 @@ export default function DetalleProductoCliente() {
   const [favorito, setFavorito] = useState(false)
   const [contacto, setContacto] = useState(null)
   const [costoEnvioDesde, setCostoEnvioDesde] = useState(null)
-  const [puntosPorSol, setPuntosPorSol] = useState(PUNTOS_POR_SOL_DEFECTO)
+  const programa = useProgramaRecompensas(null)
   const [cargando, setCargando] = useState(true)
   const [noEncontrado, setNoEncontrado] = useState(false)
   const [fotoIdx, setFotoIdx] = useState(0)
@@ -96,7 +97,7 @@ export default function DetalleProductoCliente() {
     setFotoIdx(0)
 
     async function cargar() {
-      const [productoRes, galeriaRes, favoritoRes, configRes, contactoRes, resumenRes, publicasRes, miResenaRes] =
+      const [productoRes, galeriaRes, favoritoRes, contactoRes, resumenRes, publicasRes, miResenaRes] =
         await Promise.all([
           supabase
             .from('productos')
@@ -110,7 +111,6 @@ export default function DetalleProductoCliente() {
             .maybeSingle(),
           supabase.from('producto_fotos').select('id, foto_url, etiqueta').eq('producto_id', id).order('orden'),
           supabase.from('favoritos_productos').select('producto_id').eq('producto_id', id).maybeSingle(),
-          supabase.from('config_puntos').select('puntos_por_sol_gastado').eq('id', 1).maybeSingle(),
           supabase.rpc('datos_contacto'),
           supabase.rpc('resenas_producto_resumen', { p_producto_id: id }),
           supabase.rpc('resenas_producto_publicas', { p_producto_id: id }),
@@ -136,7 +136,6 @@ export default function DetalleProductoCliente() {
       setCalificacionForm(propia?.id ? (propia.calificacion ?? 0) : 0)
       setComentarioForm(propia?.id ? (propia.comentario ?? '') : '')
       setFavorito(Boolean(favoritoRes.data))
-      if (configRes.data) setPuntosPorSol(Number(configRes.data.puntos_por_sol_gastado))
       setContacto(contactoRes.data?.[0] ?? null)
 
       const { data: rel } = await supabase
@@ -215,7 +214,7 @@ export default function DetalleProductoCliente() {
     : null
   const ahorro = producto?.precio_antes ? Number(producto.precio_antes) - Number(producto.precio) : null
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
-  const puntosEstimados = producto ? Math.max(0, Math.round(Number(producto.precio) * puntosPorSol)) : 0
+  const estimado = producto ? resumenEstimado({ programa, tipo: 'PRODUCTO', precio: Number(producto.precio) }) : null
 
   async function confirmarAgregar() {
     if (!producto || agotado || sinMasParaAgregar) return
@@ -591,9 +590,9 @@ export default function DetalleProductoCliente() {
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <Award className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
-                +{puntosEstimados} puntos
+                {estimado?.cifra}
                 <br />
-                <span className="font-normal text-white/60">con esta compra</span>
+                <span className="font-normal text-white/60">{estimado?.detalle}</span>
               </span>
             </div>
             <a href="#resenas" className="flex flex-col items-center gap-2.5 text-center text-white">

@@ -3,6 +3,7 @@ import { ArrowBigDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
 import { formatearFechaSoloDia } from '../../../lib/fechas.js'
 import { AvisoError, Pildora } from './ui.jsx'
+import { formatearCantidad } from '../../../lib/programaRecompensas.js'
 
 const VISITAS_POR_RECOMPENSA = 5
 
@@ -13,13 +14,17 @@ const VISITAS_POR_RECOMPENSA = 5
 // (generar_cupon_fidelizacion()); el botón solo aparece mientras haya una
 // tarjeta completa sin reclamar. La fecha bajo cada sello sale del
 // historial de visitas (1 visita = 1 sello, mismo criterio del servidor).
-export default function SeccionSellos({ datos, historial: recursoHistorial, generando, onGenerarCupon, onReintentarHistorial }) {
+export default function SeccionSellos({ datos, cuponSellos, historial: recursoHistorial, generando, onGenerarCupon, onReintentarHistorial }) {
   const [historialAbierto, setHistorialAbierto] = useState(false)
 
   // QA-039: si el historial no llegó (error o aún cargando) no se inventa
   // uno vacío: se avisa y se omiten solo las fechas y la lista de visitas.
   const historialOk = recursoHistorial.estado === 'ok'
   const historial = historialOk ? recursoHistorial.datos : []
+
+  // El porcentaje del cupón sale de la configuración vigente (config_fidelizacion), no del código: sin leerla no se promete una cifra.
+  const porcentajeCupon =
+    cuponSellos?.estado === 'ok' && cuponSellos.datos ? Number(cuponSellos.datos.porcentaje_recompensa) : null
 
   const sellos = datos?.sellos_actuales ?? 0
   const visitasTotales = datos?.visitas_totales ?? 0
@@ -53,7 +58,10 @@ export default function SeccionSellos({ datos, historial: recursoHistorial, gene
           <div className="liquid-glass rounded-none p-5 text-center">
             <p className="text-sm text-white/60">
               Cada {VISITAS_POR_RECOMPENSA} visitas completadas ganas{' '}
-              <span className="font-semibold text-[var(--lw-gold)]">20% de descuento</span> en tu próximo servicio.
+              <span className="font-semibold text-[var(--lw-gold)]">
+                {Number.isFinite(porcentajeCupon) ? `${formatearCantidad(porcentajeCupon)}% de descuento` : 'un cupón de descuento'}
+              </span>{' '}
+              en tu próximo servicio.
             </p>
             <p className="mt-2">
               <Pildora envolver>Recompensa de la nueva tarjeta: propuesta (20 %, máx. S/5)</Pildora>
@@ -168,7 +176,7 @@ export default function SeccionSellos({ datos, historial: recursoHistorial, gene
         <div className="liquid-glass flex flex-col gap-3 self-start rounded-none p-5">
           <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Cómo se ganan los sellos</span>
           <ul className="flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed text-white/80">
-            <li>Una cita que reservaste en la web genera un sello cuando se completa.</li>
+            <li>Cada día en que te atendemos y se registra tu servicio genera un sello, hayas reservado en la web o no.</li>
             <li>Máximo un sello por día (fecha de Perú), aunque tengas varios servicios en la misma visita.</li>
             <li>Las reservas canceladas o no atendidas no dan sello.</li>
             <li>Una compra de productos no da sello.</li>

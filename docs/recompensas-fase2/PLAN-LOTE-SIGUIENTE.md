@@ -1,11 +1,13 @@
 # Fase 2 — plan del siguiente lote
 
+> **Estado vigente (2026-10-05, tercer lote): este documento es el PLAN original; no describe el estado actual.** *Hechos comprobados:* instalación limpia verificada en la instancia desechable (137/137), 13 versiones registradas en `schema_migrations` de QA con autorización, borrador v2 de la apertura ensayado (SQL 15/15, concurrencia 5/5, HTTP/interfaz/Storage), 17 aportes TEST retirados, protección de cupones y validación previa del pedido en Local (migraciones `20261005000001`–`03`), lectura pública de reglas (`20261005000004`) y coherencia de textos del portal (Re-test). *Implementación pendiente:* elegibilidad específica de premios, auditoría y revisión económica del catálogo. *Ejecución todavía no autorizada:* la apertura en QA y producción, activar Recompensas y cualquier cambio en producción. Referencia independiente: suite completa 58842f7, 213 aprobadas, 1 omisión, 0 fallos; QA-061 verificado después con pruebas específicas (10c4f42). Los pasos de abajo se conservan como historial.
+
 > **Actualización 2026-10-05 (segundo lote):** autorizado y hecho en QA únicamente el registro de las 13 versiones en `schema_migrations`. En la instancia desechable se añadieron HTTP, interfaz y Storage con sesiones reales, concurrencia (la v1 del borrador falló y la v2 corrige), los 17 aportes de QA documentados (`APORTES-PREEXISTENTES-QA.md`) y el procedimiento de la ventana (`transicion/PROCEDIMIENTO-VENTANA.md`). Siguen sin autorizar: ejecutar la apertura en QA, activar Recompensas, borrar los 17 aportes y producción.
 >
 > **Actualización 2026-10-05:** el ensayo en instancia desechable ya se hizo; resultados separados (instalación, restauración, reconciliación, transición) en [`RESULTADOS-ENSAYO.md`](RESULTADOS-ENSAYO.md). Siguen **sin ejecutarse en QA** el registro de las 13 versiones y la apertura, y producción sigue fuera. Cambios respecto del plan original: las cifras de 955 clientas y 8 390 monedas son **referencia histórica** (los totales y las versiones pendientes se recalculan sobre el estado capturado); el corte es la hora exacta de la copia (`2026-10-05T04:32:53Z`, `2026-10-04 23:32:53` en Perú) y las ventas de QA **no** se congelan.
 
 Estado: **ensayado solo en la instancia desechable**; sin ejecución en QA ni producción.
-La suite verde (213/214 en `testing` 02a9f17) **no declara terminada la Fase 2**: cubre la interfaz y las reglas ya
+La suite verde (213/214; referencia vigente 58842f7, antes 02a9f17) **no declara terminada la Fase 2**: cubre la interfaz y las reglas ya
 implementadas, no las brechas de abajo (ver `tests/e2e/COBERTURA.md`, «Brechas de Fase 2»).
 
 Alcance del lote: tres frentes que dependen unos de otros.
@@ -54,7 +56,7 @@ Pasos propuestos:
 
 ## Frente 2 — Reconciliación segura de `schema_migrations`
 
-**Estado:** 13 versiones sin registrar en Local (`20261002000001…08`, `20261003000001…04`, `20261004000001`), con su efecto ya presente.
+**Estado (histórico, ya resuelto el 2026-10-05):** 13 versiones sin registrar en Local (`20261002000001…08`, `20261003000001…04`, `20261004000001`), con su efecto ya presente; se registraron con autorización.
 
 **Precondiciones:** frente 1 aprobado (así se sabe que los archivos reproducen el efecto) y copia de la base QA hecha antes de tocar la tabla.
 
