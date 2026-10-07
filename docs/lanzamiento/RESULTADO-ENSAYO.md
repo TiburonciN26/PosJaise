@@ -1,0 +1,67 @@
+# Resultado del ensayo de lanzamiento (instancia desechable «JaiseEnsayo»)
+
+Fecha: 2026-10-07. Solo la instancia desechable (API `127.0.0.1:56321`, base `56322`) y dos Vite del ensayo (`5273` frontend de `main`, `5274` frontend de `testing`). **QA Local (54321/5173/5174) no se tocó; producción solo se consultó en lectura (catálogo y agregados); no se aplicó SQL remoto.** Cuentas y datos ficticios; contraseña solo por entorno del proceso; ningún dato personal de producción.
+
+## 1. Cómo se construyó el ensayo
+
+1. `supabase db reset` en la instancia desechable con **solo las 124 migraciones ≤ 20261001** (equivalentes al esquema de producción; ver el manifiesto).
+2. Privilegios de producción reproducidos (`ensayo-privilegios-produccion.sql`): privilegios por omisión del rol `postgres` (anon sin datos), ACL de cada tabla/vista/función, SELECT por columna en `productos`, `ventas.monto_pos_tarjeta numeric`.
+3. **Comprobación de equivalencia con producción** (huella por categoría, ambos lados solo lectura): columnas, restricciones, políticas, índices, tablas, triggers, vistas, privilegios de tabla/columna/función **idénticos**; funciones: 70 de 72 idénticas y 2 con diferencias de comentarios (`anular_venta`, `confirmar_venta`).
+4. Datos ficticios con la **forma** de producción (270 productos con 5 de costo 0, 33 servicios S/10–S/350, 69 clientes, 127 ventas hasta `VEN129`, 47 citas, 3 cupones, 1 promoción inactiva, config de producción). 5 cuentas Auth ficticias (ADMINISTRADOR, CAJERA, ASISTENTE, 2 clientas).
+5. Respaldo previo (`pg_dump -Fc`, sha256 `c82eb0c1…`) fuera del repositorio (`C:\JaiseQA-Backups\lanzamiento\`).
+6. Las 21 migraciones se aplicaron **una por una con el rol `postgres`** (el de `apply_migration` en producción).
+
+Herramientas (en el repositorio, solo apuntan al ensayo y rechazan cualquier otro destino): `tests/e2e/ensayo-preparar-lanzamiento.mjs`, `ensayo-aplicar-migraciones.mjs`, `ensayo-lanzamiento-instantanea.mjs`, `ensayo-servir-front.mjs`, `ensayo-ui/lanzamiento*.ensayo.spec.mjs`, `playwright.lanzamiento.config.mjs`. Evidencia JSON (ignorada por Git): `tests/e2e/results-ensayo/` y copia en `C:\JaiseQA-Backups\lanzamiento\evidencia\`.
+
+## 2. Aplicación de las migraciones
+
+**21/21 aplicadas sin error** (≈ 110 ms cada una; `lanzamiento-aplicar.json`; **cada archivo se confirma por separado**, no hay una transacción común de las 21). El aplicador del ensayo ahora se detiene ante el primer error, **incluido** un fallo al registrar la versión en `schema_migrations` o que la versión no aparezca registrada tras el INSERT (prueba específica sin base de datos: `tests/e2e/ensayo-aplicar-migraciones.test.mjs`, 4 casos). Las corridas de este informe se hicieron con la versión anterior del aplicador, que no comprobaba ese INSERT, y **otra vez 21/21 tras restaurar el respaldo** (la re-aplicación es repetible). El primer intento falló con «permission denied for schema public» por la configuración del ensayo (la base restaurada pertenecía a `supabase_admin`, no a `postgres`), **no por una migración**; se corrigió el propietario de la base del ensayo y se repitió desde cero. Esquema resultante ≡ el de QA Local en funciones (100), políticas (134), restricciones (244), índices (108), tablas (51), triggers (20), vistas; única diferencia de columnas: `monto_pos_tarjeta` (deriva de producción, reproducida a propósito). Los **privilegios** de los objetos nuevos son los pedidos por las migraciones (p. ej. `recompensas_config`: `authenticated=r`, sin `anon`): con los privilegios por omisión de producción **ninguna tabla o función nueva queda inaccesible** para lo que usa el frontend.
+
+## 3. Impacto en datos (con el programa apagado)
+
+**Alcance exacto de la huella de datos** (`huellaNegocio()` en `tests/e2e/ensayo-ui/lanzamiento-ayuda.mjs`): para cada una de 17 tablas compara **conteo de filas + md5 de un subconjunto fijo de columnas** (las que existían antes de la actualización y se consideran de negocio), ordenadas por fila. Verifica que esas columnas no cambiaron. **No verifica** el contenido completo de las tablas: quedan fuera las demás columnas (p. ej. fechas de creación/actualización, notas, URL de fotos y las columnas añadidas por las migraciones), las tablas no listadas (p. ej. `movimientos`, reseñas, `auth.*`, `storage.*`) y cualquier objeto que no sea una tabla. Por eso «huella idéntica» significa «las columnas comparadas de esas 17 tablas no cambiaron», no «los datos son idénticos».
+
+Resultado: huella (conteo + md5 de las columnas comparadas) de **17 tablas de negocio sin cambios antes y después** (productos 270, servicios 33, clientes 69, ventas 127, venta_items 127, citas 47, cita_servicios 47, registro_servicios 0, cupones 3, promociones 1, pedidos_web 0, config_puntos/referidos/fidelización, usuarios 3, asistentes 2, porcentajes 3). Lecturas del portal y de los paneles: mismos valores; solo cambian columnas **añadidas** (`mis_cupones` +10, `resumen_dashboard` +`envio_cobrado`). Tablas nuevas: todas vacías salvo `recompensas_config` (1 fila: `activo=false`, `corte=null`). La restauración del respaldo (de datos ficticios) devolvió una instantánea con la **misma huella** (mismo alcance) que la original.
+
+## 4. Compatibilidad en cuatro momentos (suite `lanzamiento*.ensayo.spec.mjs`, sesiones reales por el login normal, `retries=0`)
+
+La suite recorre, por UI, las pantallas de cada rol (ADMINISTRADOR, CAJERA, ASISTENTE: 25 rutas; CLIENTA: 15), vende y anula desde Caja, y por la API real (con la forma exacta de llamada del frontend de `main`) cupones en Caja, stock, roles, citas (guardado en 3 pasos + completar), pedido web con la firma de 13 parámetros + verificación de pago + anulación, finanzas y portal con el programa apagado.
+
+| Escenario | Resultado | Notas |
+|---|---|---|
+| **main + backend actual** (línea base de producción) | 13 pasan, 1 omitida (`guardar_cita_pos` no existe) | humo limpio en los 4 roles; **defectos existentes de producción medidos** (§5) |
+| **testing + backend actual** (orden equivocado) | 13 pasan, hallazgos registrados | ADMIN: `asistentes` 400 (columnas nuevas), `recompensas_catalogo/canjes/config` y `servicios_proteccion` 404; CLIENTA: 404 en `recompensas_reglas_publicas`, `resenas_inicio`, `mi_catalogo_recompensas`, `mi_saldo_recompensas`, `mis_movimientos_recompensas`, `mis_sellos_recompensas`. **CAJERA y ASISTENTE sin errores.** ⇒ el frontend nuevo **no** debe publicarse antes del backend |
+| **main + backend actualizado** (bundle/PWA antiguo abierto) | **14/14** | humo limpio (0 http ≥ 400, 0 pageerror, 0 consola); venta y anulación por UI; cupones, pedido de 13 parámetros y verificación de pago funcionan |
+| **testing + backend actualizado** | **14/14** | humo limpio (25 rutas × 3 roles + 15 de la clienta) |
+| **testing + backend actualizado + correctivas de privilegios** | **14/14** + cupones **6/6** | tras `propuesta-correctivas-privilegios.sql` |
+| Recuperación (respaldo previo restaurado, frontend de `main`) | humo y venta/anulación por UI **pasan**; el caso de cupón repite el defecto previo (esperado) | la huella de datos (alcance de §3) coincide con la original |
+
+**Llamadas del frontend de main:** las 55 RPC que usa existen todas tras la actualización; solo difiere una firma (`confirmar_pedido_productos`, 13 → 15 parámetros con defaults), probada con la llamada antigua. El frontend nuevo usa 11 RPC más (`catalogo_recompensas_publico`, `guardar_cita_pos`, `mi_catalogo_recompensas`, `mi_cliente_id`, `mi_saldo_recompensas`, `mis_movimientos_recompensas`, `mis_sellos_recompensas`, `recompensas_establecer_activo`, `recompensas_reglas_publicas`, `resenas_inicio`, `vista_previa_cupon_pedido`).
+
+## 5. Defectos que **hoy existen en producción** y corrige la actualización (medidos en el ensayo con la base equivalente)
+
+1. **Un cupón en Caja falla:** «column reference "codigo" is ambiguous» (QA-019) — con los dos cupones DISPONIBLES de producción (bienvenida S/10 y fidelización 20 %).
+2. **«Verificar pago» de un pedido web falla:** «violates check constraint ventas_metodo_pago_check» (QA-009: el pedido guarda `YAPE`, la venta exige `Yape`). Hoy no hay pedidos web activos en producción (2 cancelados); el primer pedido real no se podría verificar.
+3. La ASISTENTE puede vender y agregar stock por la API (QA-033/035).
+
+Después: cupones en Caja 200 (S/30 − S/10 = S/20; S/30 − 20 % = S/24), verificar pago 200 y anular conciliando el pedido (CANCELADO), asistente rechazada.
+
+## 6. Cupones y protecciones (6/6; detalle en `REVISION-CUPONES-PROTECCION.md`)
+
+Producto de costo 0 sin confirmar + cupón → **bloqueado** (mensaje neutro); el mismo producto sin cupón o con descuento manual → sin cambio. Servicio de S/10 + cupón de S/10 → rechazado (supera el 50 %); S/28 + S/10 → permitido; S/350 + 20 % → permitido. Los cupones vuelven a DISPONIBLE tras anular y no se creó ningún movimiento de monedas.
+
+## 7. Hallazgos de privilegios (acción propuesta, ensayada en la desechable)
+
+* `confirmar_pedido_productos` queda ejecutable por `anon`/`service_role` (la migración 16 lo concede; hoy solo `authenticated`): sin sesión llega a la función y recibe «Completa tu perfil antes de confirmar un pedido.», sin crear pedidos.
+* `recompensas_establecer_activo` permite a un administrador encender el programa desde la interfaz (fija `corte = now()` sin apertura).
+* Ambos se corrigen con `propuesta-correctivas-privilegios.sql` (retirar `anon/service_role` del primero; retirar `authenticated` del segundo hasta la apertura): tras aplicarla en el ensayo, **20/20 casos** (14 de compatibilidad + 6 de cupones, frontend nuevo) siguen pasando y el humo de ADMIN en `/recompensas-web` carga sin errores.
+
+## 8. Qué NO se probó (límites)
+
+* **No es producción:** datos ficticios con la forma de los reales; el volumen es el mismo orden de magnitud, no los mismos registros. Auth, Storage (buckets/objetos) y Realtime del ensayo no son los de producción; Storage no se modificó ni se probó la subida de comprobantes.
+* **Pedido web con el bundle antiguo por la interfaz:** se probó con la llamada RPC exacta de 13 parámetros y la carga de todas las pantallas de la clienta con el frontend de `main`, no el checkout completo con clics.
+* Frontend de `main` probado con selectores genéricos de Caja/Historial; no se ejecutó la suite QA completa contra el ensayo (la suite QA está fija a QA Local por sus guardas y la regresión completa 212/1/1 anterior sigue siendo la referencia, sin repetirla).
+* Una sola instancia, un solo navegador (Chromium), sin dispositivos físicos, sin PWA instalada, sin carga concurrente real de clientes.
+* `servicios_mas_pedidos` es inestable por empates (no es efecto de la actualización).
+* Los **cambios de frontend** (merge a `main`, build y publicación) no se ejecutaron: solo se ensayó su comportamiento servido por Vite.
+* La **activación, la apertura/conversión ×5** y el catálogo de premios quedan fuera.

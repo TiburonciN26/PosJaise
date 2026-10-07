@@ -179,7 +179,7 @@ export async function hacerPrincipal(origen) {
   if (origen === 'postgres' || !BASES_PERMITIDAS.includes(origen)) throw new Error(`Base no permitida: ${origen}`);
   verificarDestinoEnsayo(origen);
   for (const s of SERVICIOS) { try { docker(['stop', contenedorDe(s)]); } catch { /* ya detenido */ } }
-  const psqlMant = (...cmds) => docker(['exec', CONTENEDOR, 'psql', '-U', 'supabase_admin', '-d', 'restauracion', '-v', 'ON_ERROR_STOP=1', '-q',
+  const psqlMant = (...cmds) => docker(['exec', CONTENEDOR, 'psql', '-U', 'supabase_admin', '-d', 'template1', '-v', 'ON_ERROR_STOP=1', '-q', // template1: base de mantenimiento que siempre existe (antes «restauracion», que un db reset elimina)
     ...cmds.flatMap((c) => ['-c', c])]);
   psqlMant(`drop database if exists instalacion_limpia with (force)`,
     `select pg_terminate_backend(pid) from pg_stat_activity where datname in ('postgres', '${origen}') and pid <> pg_backend_pid()`,
