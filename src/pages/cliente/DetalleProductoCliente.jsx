@@ -4,7 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowUpRight,
-  Award,
+  PiggyBank,
   Check,
   CreditCard,
   Droplet,
@@ -14,7 +14,7 @@ import {
   Package,
   PenLine,
   Plus,
-  ShieldCheck,
+  Stamp,
   ShoppingBag,
   Sparkles,
   Star,
@@ -332,7 +332,7 @@ export default function DetalleProductoCliente() {
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-28 lg:pb-8">
       {/* Migas + volver */}
-      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4 px-4 pt-6 sm:px-8">
+      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle pt-6">
         <nav aria-label="Ruta" className="flex min-w-0 items-center gap-2 truncate text-[11px] font-medium uppercase tracking-wider text-white/50">
           <Link to="/productos" className="shrink-0 hover:text-white">
             Productos
@@ -351,7 +351,7 @@ export default function DetalleProductoCliente() {
       </div>
 
       {/* 1. Galería + información */}
-      <section className="mx-auto grid w-full max-w-[1200px] gap-8 px-4 pt-6 sm:px-8 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-16">
+      <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter-detalle pt-6 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-10">
         <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[84px_1fr] lg:items-start lg:gap-4">
           {fotos.length > 1 && (
             <div className="order-2 flex gap-2 overflow-x-auto lg:order-1 lg:flex-col lg:overflow-visible" style={{ scrollbarWidth: 'none' }}>
@@ -588,7 +588,7 @@ export default function DetalleProductoCliente() {
           {/* Sellos: puntos · reseñas · "lo usamos en el salón" */}
           <div className="grid grid-cols-3 gap-4 py-2">
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
-              <Award className="h-8 w-8" strokeWidth={1.5} />
+              <PiggyBank className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
                 {estimado?.cifra}
                 <br />
@@ -606,7 +606,7 @@ export default function DetalleProductoCliente() {
               </span>
             </a>
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
-              <ShieldCheck className="h-8 w-8" strokeWidth={1.5} />
+              <Stamp className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
                 Lo usamos
                 <br />
@@ -618,7 +618,7 @@ export default function DetalleProductoCliente() {
       </section>
 
       {/* 2. Pago · entrega · cambios */}
-      <section className="mx-auto mt-14 w-full max-w-[1200px] px-4 sm:px-8">
+      <section className="mx-auto mt-14 w-full max-w-[1400px] lw-gutter-detalle">
         <div className="grid grid-cols-1 divide-y divide-white/10 rounded-[10px] border border-white/10 bg-[#111113] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] md:grid-cols-3 md:divide-x md:divide-y-0">
           <div className="flex gap-3.5 px-6 py-5">
             <CreditCard className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
@@ -651,7 +651,7 @@ export default function DetalleProductoCliente() {
 
       {/* 3. Cómo se usa */}
       {producto.modo_uso?.length > 0 && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="lw-titulo-heavitas text-2xl uppercase">Cómo se usa</h2>
             {producto.frecuencia && (
@@ -678,7 +678,7 @@ export default function DetalleProductoCliente() {
 
       {/* 4. ¿Es para ti? */}
       {(producto.ideal_para?.length > 0 || producto.tips?.length > 0) && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <h2 className="lw-titulo-heavitas text-2xl uppercase">¿Es para ti?</h2>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {producto.ideal_para?.length > 0 && (
@@ -723,7 +723,7 @@ export default function DetalleProductoCliente() {
 
       {/* 5. Especificaciones · Ingredientes clave · Libre de */}
       {(producto.especificaciones?.length > 0 || producto.ingredientes?.length > 0 || producto.libre_de?.length > 0) && (
-        <section className="mx-auto mt-16 grid w-full max-w-[1200px] gap-4 px-4 sm:px-8 sm:grid-cols-3">
+        <section className="mx-auto mt-16 grid w-full max-w-[1400px] gap-4 lw-gutter-detalle sm:grid-cols-3">
           {producto.especificaciones?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
               <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Especificaciones</h3>
@@ -774,7 +774,7 @@ export default function DetalleProductoCliente() {
       )}
 
       {/* 6. Reseñas */}
-      <section id="resenas" className="mx-auto mt-16 w-full max-w-[1200px] border-t border-white/10 px-4 pt-12 sm:px-8">
+      <section id="resenas" className="mx-auto mt-16 w-full max-w-[1400px] border-t border-white/10 lw-gutter-detalle pt-12">
         <h2 className="lw-titulo-heavitas text-2xl uppercase">Lo que dicen nuestras clientas</h2>
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="flex w-full flex-col gap-3.5 lg:w-[280px] lg:shrink-0">
@@ -905,7 +905,7 @@ export default function DetalleProductoCliente() {
 
       {/* 7. Se suele comprar junto con (combo sugerido) */}
       {combo && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <h2 className="lw-titulo-heavitas text-2xl uppercase">Se suele comprar junto con</h2>
           <div className="mt-6 flex flex-col gap-6 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:p-7">
             <div className="flex flex-1 flex-wrap items-center gap-4">
@@ -966,7 +966,7 @@ export default function DetalleProductoCliente() {
 
       {/* También te puede interesar */}
       {relacionados.length > 0 && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex items-baseline gap-3">
               <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">También te puede interesar</h2>

@@ -12,8 +12,11 @@ const COLORES = {
   oscuro: { fondo: '#232833', thumb: '#f6f1e8', iconoThumb: '#3d4a63', texto: '#f6f1e8' },
 }
 
-export default function SwitchTema() {
-  const { tema, alternarTema } = useTheme()
+// Sin props usa el tema del POS; el portal cliente pasa el suyo (TemaWebContext).
+export default function SwitchTema({ tema: temaProp, alternarTema: alternarProp }) {
+  const temaPos = useTheme()
+  const tema = temaProp ?? temaPos.tema
+  const alternarTema = alternarProp ?? temaPos.alternarTema
   const esOscuro = tema === 'oscuro'
   const colores = COLORES[tema]
 

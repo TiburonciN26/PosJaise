@@ -25,6 +25,7 @@ import {
   Trash2,
   Wallet,
   X,
+  ArrowUpRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
@@ -1281,6 +1282,7 @@ export default function CarritoCliente() {
               >
                 <Check className="h-[18px] w-[18px]" />
                 {enviando ? 'Enviando...' : `Confirmar pedido (${productosMarcados.length})`}
+                <ArrowUpRight className="lw-flecha-claro h-[18px] w-[18px]" />
               </button>
 
               <section aria-labelledby="carrito-pago-titulo" className="flex flex-col gap-4 border-t border-[#232326] pt-4">

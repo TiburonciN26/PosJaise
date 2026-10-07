@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { ArrowUpRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase.js'
 import { useCerrarConEscape } from '../../../hooks/useCerrarConEscape.js'
@@ -228,6 +229,7 @@ export default function ConfirmarCanje({ premio, origen, saldo, userId, onCerrar
                 className="min-h-11 flex-1 rounded-full bg-[#3ECF6A] px-5 text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 {fase === 'enviando' ? 'Confirmando…' : fase === 'incierto' ? 'Reintentar canje' : 'Confirmar canje'}
+                <ArrowUpRight className="lw-flecha-claro ml-2 h-4 w-4 align-[-3px]" />
               </button>
             </div>
           </>

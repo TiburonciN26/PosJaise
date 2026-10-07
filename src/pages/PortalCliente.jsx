@@ -1,6 +1,7 @@
 import { Menu, ShoppingCart, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Suspense, useEffect, useState } from 'react'
+import { TemaWebProvider, useTemaWeb } from '../context/TemaWebContext.jsx'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
 import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
@@ -111,8 +112,8 @@ function BotonCarrito({ estaEnCarrito }) {
       <ShoppingCart className="h-5 w-5 sm:h-7 sm:w-7" />
       {totalItemsProductos > 0 && (
         <span
-          className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-black"
-          style={{ background: 'var(--lw-metal-azul)' }}
+          className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold"
+          style={{ background: 'var(--lw-metal-azul)', color: 'var(--lw-badge-text)' }}
         >
           {totalItemsProductos}
         </span>
@@ -161,7 +162,7 @@ function BotonNotificaciones({ estaEnNotificaciones }) {
   // Insignia en --lw-metal-azul (texto negro), igual que la del carrito —
   // §7.57: el azul metálico es el acento único de todo el portal cliente,
   // no solo de Inicio.
-  const estiloBadge = { background: 'var(--lw-metal-azul)', color: '#000' }
+  const estiloBadge = { background: 'var(--lw-metal-azul)', color: 'var(--lw-badge-text)' }
 
   if (estaEnNotificaciones) {
     return (
@@ -263,7 +264,16 @@ function migajasDeRuta(pathname) {
 // esta pestaña de ahora en más, así que cualquier página nueva que se
 // agregue después la hereda automáticamente sin tocar este archivo.
 export default function PortalCliente() {
+  return (
+    <TemaWebProvider>
+      <PortalClienteContenido />
+    </TemaWebProvider>
+  )
+}
+
+function PortalClienteContenido() {
   const location = useLocation()
+  const { tema } = useTemaWeb()
   const [menuAbierto, setMenuAbierto] = useState(false)
 
   // QA-021: con el portal ya visible, se descargan en reposo las pestañas más usadas.
@@ -278,7 +288,7 @@ export default function PortalCliente() {
     <PerfilClienteProvider>
       <CarritoClienteProvider>
         <NotificacionesClienteProvider>
-          <div className="landing-web flex h-svh flex-col">
+          <div className={`landing-web flex h-svh flex-col ${tema === 'claro' ? 'lw-claro' : ''}`}>
             {/* Fondo sólido (§7.51, antes transparente/flotante desde
                 §7.36): a pedido del usuario, para que el header no se
                 "mezcle" con lo que pasa por detrás al hacer scroll. Esto
@@ -290,7 +300,7 @@ export default function PortalCliente() {
                 no se salta en /inicio) — toda la estructura, hero
                 incluido, arranca debajo del header otra vez, como en
                 el resto de la Web. */}
-            <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center bg-[#0b0b0c] px-4 pt-2 sm:h-[72px] sm:px-6 md:px-8">
+            <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center bg-[#0b0b0c] lw-gutter pt-2 sm:h-[90px]">
               <div className="mx-auto flex w-full max-w-[1700px] items-center gap-1">
                 <button
                   type="button"
@@ -405,7 +415,7 @@ export default function PortalCliente() {
                     derecho retrocede primero, así que "se achica de
                     derecha a izquierda"), sin cambiar el origen entre una
                     animación y otra. */}
-                <nav className="hidden items-center gap-6 lg:ml-2 lg:flex">
+                <nav className="hidden items-center gap-6 lg:ml-12 lg:flex">
                   {seccionesCliente.map((seccion) => (
                     <NavLink key={seccion.path} to={seccion.path} className="relative py-1">
                       {({ isActive }) => (

@@ -21,7 +21,7 @@ export default function BarraTuCitaFlotante({ servicios }) {
 
   const contenido = (
     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
-      <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
+      <div className="lw-barra-flotante pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
         <span className="text-sm text-white">
           <b className="font-semibold">{seleccionados.length}</b>{' '}
           <span className="text-white/60">{plural} en tu cita ·</span>{' '}

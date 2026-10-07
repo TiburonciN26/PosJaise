@@ -120,6 +120,11 @@ function fechaCortaTexto(fecha) {
   return `${DIAS_CORTOS[enLima.getUTCDay()]} ${enLima.getUTCDate()} ${NOMBRES_MES_CORTOS[enLima.getUTCMonth()].toLowerCase()}`
 }
 
+function fechaConDiaLargaTexto(fecha) {
+  const enLima = aLima(fecha)
+  return `${DIAS_LARGOS[enLima.getUTCDay()]} ${enLima.getUTCDate()} de ${NOMBRES_MES[enLima.getUTCMonth()].toLowerCase()}`
+}
+
 function diaSemanaLargoTexto(fecha) {
   return DIAS_LARGOS[diaSemanaLima(fecha)]
 }
@@ -489,11 +494,13 @@ export default function CitasCliente() {
   const listaTitulo = diaSeleccionado
     ? `Citas del ${fechaCortaTexto(diaSeleccionadoFecha).toLowerCase()}`
     : 'Próximas citas'
+  const listaTituloLargo = diaSeleccionado
+    ? `Citas del ${fechaConDiaLargaTexto(diaSeleccionadoFecha).toLowerCase()}`
+    : listaTitulo
   const listaOrdenada = useMemo(() => {
     const base = diaSeleccionado ? (citasPorDiaMes.get(diaSeleccionado) ?? []) : proximas
     return [...base].sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora))
   }, [diaSeleccionado, citasPorDiaMes, proximas])
-  const listaConteo = `${proximas.length} ${proximas.length === 1 ? 'cita' : 'citas'}`
   const grupos = useMemo(() => {
     const mapa = new Map()
     listaOrdenada.forEach((cita) => {
@@ -502,6 +509,7 @@ export default function CitasCliente() {
         mapa.set(clave, {
           clave,
           fecha: fechaCortaTexto(new Date(cita.fecha_hora)),
+          fechaLarga: fechaConDiaLargaTexto(new Date(cita.fecha_hora)),
           rel: diaSeleccionado ? '' : relativoTexto(new Date(cita.fecha_hora)),
           items: [],
         })
@@ -525,25 +533,19 @@ export default function CitasCliente() {
   const nivelRaw = misPuntos?.nivel ?? 'BASICO'
   const umbralPremium = misPuntos?.umbral_premium ?? null
   const umbralVip = misPuntos?.umbral_vip ?? null
-  const faltanPts = misPuntos?.puntos_para_siguiente ?? 0
   let piso = 0
   let techo = umbralPremium
-  let siguienteNivel = 'Premium'
   if (nivelRaw === 'PREMIUM') {
     piso = umbralPremium
     techo = umbralVip
-    siguienteNivel = 'VIP'
   } else if (nivelRaw === 'VIP') {
     piso = umbralVip
     techo = umbralVip
-    siguienteNivel = null
   }
   const progresoPct = misPuntos && techo > piso ? Math.min(100, Math.max(0, ((puntos - piso) / (techo - piso)) * 100)) : misPuntos ? 100 : 0
-  const faltanTexto = siguienteNivel ? `${faltanPts} pts para ${siguienteNivel}` : 'Nivel máximo alcanzado'
 
   const sellosMeta = fidelizacion?.visitas_por_recompensa ?? null
   const sellosActuales = fidelizacion?.sellos_actuales ?? 0
-  const sellosFaltan = sellosMeta ? Math.max(0, sellosMeta - sellosActuales) : null
 
   // Programa ACTIVO: el saldo gastable (monedas) y la clasificación (nivel) son cosas distintas. La barra y «faltan N» salen de la
   // CLASIFICACIÓN: gastar monedas nunca las mueve.
@@ -692,44 +694,36 @@ export default function CitasCliente() {
           </span>
           <span className="text-[13px] text-white/50">{activo ? 'monedas disponibles' : 'pts'}</span>
         </div>
-        <div
-          role="progressbar"
-          aria-label={activo ? 'Progreso de clasificación' : 'Progreso de nivel'}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(pct)}
-          className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10"
-        >
-          <span
-            className="block h-full rounded-full"
-            style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
-          />
+        <div className="mt-2.5 flex items-center gap-3">
+          <div
+            role="progressbar"
+            aria-label={activo ? 'Progreso de clasificación' : 'Progreso de nivel'}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(pct)}
+            className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"
+          >
+            <span
+              className="block h-full rounded-full"
+              style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
+            />
+          </div>
+          <Link to="/recompensas?seccion=tarjeta" className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+            {activo ? 'Ver mis monedas' : 'Ver mis puntos'} <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
-        <p className="mt-1.5 text-xs text-white/50">
-          {activo
-            ? avanceProg.siguiente
-              ? `${formatearCantidad(avanceProg.faltan)} puntos de clasificación para ${avanceProg.siguiente}`
-              : 'Nivel máximo alcanzado'
-            : faltanTexto}
-        </p>
         {activo && (
           <p className="mt-1 text-xs leading-relaxed text-white/50">Gastar monedas no baja tu nivel ni este avance.</p>
         )}
-        <Link to="/recompensas?seccion=tarjeta" className="mt-3 flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
-          {activo ? 'Ver mis monedas' : 'Ver mis puntos'} <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
         <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
           {activo ? (
             <>
               <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-semibold text-white">Sellos</span>
-                <span className="text-xs text-white/50">
-                  {sellosProg.negativo
-                    ? `${sellosProg.porRecuperar} por recuperar`
-                    : `${sellosProg.enTarjeta} de ${saldoProg.sellos_por_premio} · faltan ${sellosProg.faltan} para tu próximo premio`}
-                </span>
+                <h2 className="lw-titulo-heavitas text-[15px] uppercase">Sellos</h2>
+                {sellosProg.negativo && <span className="text-xs text-white/50">{sellosProg.porRecuperar} por recuperar</span>}
               </div>
               {!sellosProg.negativo && (
+                <div className="flex items-center justify-between gap-3">
                 <div className="flex gap-2">
                   {Array.from({ length: saldoProg.sellos_por_premio }, (_, i) => (
                     <span
@@ -744,23 +738,20 @@ export default function CitasCliente() {
                     </span>
                   ))}
                 </div>
+                <Link to="/recompensas?seccion=sellos" className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+                  Ver mis sellos <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                </div>
               )}
-              <p className="text-xs leading-relaxed text-white/50">
-                Se suma <strong className="text-white">1 sello por día</strong> en que se confirma una venta con servicios.
-              </p>
-              <Link to="/recompensas?seccion=sellos" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
-                Ver mis sellos <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
             </>
           ) : (
             <>
               <div className="flex items-baseline justify-between">
-                <span className="text-[13px] font-semibold text-white">Sellos de fidelidad</span>
-                <span className="text-xs text-white/50">
-                  {sellosMeta ? `${sellosActuales} de ${sellosMeta} · ${sellosFaltan} para tu cupón` : 'No disponible ahora'}
-                </span>
+                <h2 className="lw-titulo-heavitas text-[15px] uppercase">Sellos de fidelidad</h2>
+                {!sellosMeta && <span className="text-xs text-white/50">No disponible ahora</span>}
               </div>
               {sellosMeta && (
+                <div className="flex items-center justify-between gap-3">
                 <div className="flex gap-2">
                   {Array.from({ length: sellosMeta }, (_, i) => (
                     <span
@@ -773,14 +764,11 @@ export default function CitasCliente() {
                     </span>
                   ))}
                 </div>
+                <Link to="/recompensas?seccion=sellos" className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+                  Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                </div>
               )}
-              <p className="text-xs leading-relaxed text-white/50">
-                Se suma <strong className="text-white">1 sello por día</strong> que te atiendes, aunque tengas varias citas ese
-                mismo día.
-              </p>
-              <Link to="/recompensas?seccion=sellos" className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
-                Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
             </>
           )}
         </div>
@@ -790,40 +778,48 @@ export default function CitasCliente() {
 
   function bloqueAntes() {
     return (
-      <div className={`${CLASE_BLOQUE} p-5`}>
-        <h2 className="lw-titulo-heavitas text-[15px] uppercase">Antes de tu cita</h2>
-        <div className="mt-3 flex flex-col gap-3">
-          <p className="flex gap-2.5 text-[13px] leading-relaxed text-white/70">
-            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
-            Reprograma o cancela desde aquí hasta <strong className="text-white">{plazoHoras} horas antes</strong>. Después,
-            escríbenos por WhatsApp.
-          </p>
-          {horarioTexto && (
-            <p className="flex gap-2.5 text-[13px] leading-relaxed text-white/70">
-              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
-              Atendemos {horarioTexto}.
-            </p>
+      <div className={`${CLASE_BLOQUE} p-5 sm:px-6`}>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="lw-titulo-heavitas text-[15px] uppercase">Antes de tu cita</h2>
+          {whatsapp ? (
+            <a
+              href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre mi cita.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex shrink-0 items-center gap-2 text-sm font-semibold text-green transition-opacity hover:opacity-80"
+            >
+              <MessageCircle className="h-4 w-4" />
+              ¿Dudas con tu cita?
+            </a>
+          ) : (
+            <span className="shrink-0 text-sm text-white/40">WhatsApp aún no configurado</span>
           )}
-          <p className="flex gap-2.5 text-[13px] leading-relaxed text-white/70">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
-            {contacto?.direccion || 'Dirección aún no configurada'}
-          </p>
         </div>
-        {whatsapp ? (
-          <a
-            href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre mi cita.')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 flex min-h-[44px] items-center justify-center gap-2.5 rounded-[10px] border border-green/30 bg-green/[0.07] text-sm font-semibold text-green transition-colors hover:bg-green/[0.12]"
-          >
-            <MessageCircle className="h-4 w-4" />
-            ¿Dudas con tu cita?
-          </a>
-        ) : (
-          <span className="mt-4 flex min-h-[44px] items-center justify-center rounded-[10px] border border-dashed border-white/15 text-sm text-white/40">
-            WhatsApp aún no configurado
-          </span>
-        )}
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="flex flex-col gap-1.5 rounded-[10px] border border-white/10 bg-[#111113] p-4">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/50">
+              <Clock className="h-4 w-4 text-[var(--lw-gold)]" />
+              Reprogramar o cancelar
+            </span>
+            <p className="text-[13px] leading-relaxed text-white/70">
+              Desde aquí hasta <strong className="text-white">{plazoHoras} horas antes</strong>. Después, escríbenos por WhatsApp.
+            </p>
+          </div>
+          <div className="flex flex-col gap-1.5 rounded-[10px] border border-white/10 bg-[#111113] p-4">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/50">
+              <CalendarClock className="h-4 w-4 text-[var(--lw-gold)]" />
+              Horario
+            </span>
+            <p className="text-[13px] leading-relaxed text-white/70">{horarioTexto ? `Atendemos ${horarioTexto}.` : 'Horario aún no configurado'}</p>
+          </div>
+          <div className="flex flex-col gap-1.5 rounded-[10px] border border-white/10 bg-[#111113] p-4">
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/50">
+              <MapPin className="h-4 w-4 text-[var(--lw-gold)]" />
+              Dirección
+            </span>
+            <p className="text-[13px] leading-relaxed text-white/70">{contacto?.direccion || 'Dirección aún no configurada'}</p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -837,8 +833,8 @@ export default function CitasCliente() {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
-      <div className="mx-auto w-full max-w-[1400px]">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto py-4 md:py-8">
+      <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         {/* Encabezado */}
         <div
           className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pt-2 ${reducirMovimiento ? '' : 'in-left'}`}
@@ -846,7 +842,6 @@ export default function CitasCliente() {
         >
           <div className="flex flex-col gap-2">
             <h1 className="lw-titulo-heavitas text-3xl uppercase">Mis citas</h1>
-            <p className="text-sm text-white/60">Revisa tus reservas, reprograma o agenda una nueva.</p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -854,14 +849,17 @@ export default function CitasCliente() {
               aria-label={
                 serviciosCarrito.size > 0 ? `Carrito de servicios, ${serviciosCarrito.size} por reservar` : 'Carrito de servicios, vacío'
               }
-              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-[var(--lw-gold)]/[0.06] text-[var(--lw-gold)] transition-colors hover:border-[var(--lw-gold)] hover:text-[#d3e4f8] lg:h-12 lg:w-12"
+              className="flex shrink-0 items-center gap-2.5 text-[var(--lw-gold)] transition-colors hover:text-[#d3e4f8]"
             >
-              <ShoppingCart className="h-5 w-5" />
-              {serviciosCarrito.size > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-[#0b0b0c] bg-[var(--lw-gold)] px-1 text-[11px] font-bold text-black">
-                  {serviciosCarrito.size}
-                </span>
-              )}
+              <span className="text-sm font-medium">Carrito de servicios</span>
+              <span className="relative flex">
+                <ShoppingCart className="h-5 w-5" />
+                {serviciosCarrito.size > 0 && (
+                  <span className="absolute -right-2.5 -top-2.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-[#0b0b0c] bg-[var(--lw-gold)] px-1 text-[11px] font-bold text-black">
+                    {serviciosCarrito.size}
+                  </span>
+                )}
+              </span>
             </Link>
             <BotonAgendar destino={destinoAgendar} />
           </div>
@@ -1086,7 +1084,8 @@ export default function CitasCliente() {
           >
             <div className="flex min-h-[32px] items-center justify-between gap-3">
               <h2 id="citas-lista-titulo" className="lw-titulo-heavitas text-base uppercase">
-                {listaTitulo}
+                <span className="md:hidden">{listaTitulo}</span>
+                <span className="hidden md:inline">{listaTituloLargo}</span>
               </h2>
               {diaSeleccionado ? (
                 <button
@@ -1096,9 +1095,7 @@ export default function CitasCliente() {
                 >
                   Ver todas las próximas <X className="h-3.5 w-3.5" />
                 </button>
-              ) : (
-                <span className="shrink-0 text-[13px] text-white/50">{listaConteo}</span>
-              )}
+              ) : null}
             </div>
 
             {diaSeleccionado && cargandoMes ? (
@@ -1120,7 +1117,10 @@ export default function CitasCliente() {
                       style={animarGrupo ? { animationDelay: `${delayGrupo}ms` } : undefined}
                     >
                       <div className="flex items-baseline gap-2.5 text-[13px]">
-                        <span className="font-semibold text-white/85">{grupo.fecha}</span>
+                        <span className="font-semibold text-white/85">
+                          <span className="md:hidden">{grupo.fecha}</span>
+                          <span className="hidden md:inline">{grupo.fechaLarga}</span>
+                        </span>
                         {grupo.rel && <span className="text-[var(--lw-gold)]">{grupo.rel}</span>}
                       </div>
                       {grupo.items.map((cita) => {
@@ -1134,6 +1134,8 @@ export default function CitasCliente() {
                           <article
                             key={cita.id}
                             className={`flex flex-col gap-2.5 rounded-[10px] border bg-[#111113] p-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] ${
+                              cita.estado === 'CANCELADA' ? 'opacity-45' : ''
+                            } ${
                               esLaProxima ? 'border-[var(--lw-gold)]/45' : 'border-white/10'
                             }`}
                           >
@@ -1144,7 +1146,10 @@ export default function CitasCliente() {
                                 </span>
                                 <span className="text-[15px] font-medium">{nombresServicios(cita) || 'Servicio'}</span>
                               </div>
-                              <ChipEstado estado={cita.estado} />
+                              <div className="flex shrink-0 flex-col items-end gap-1 sm:self-stretch sm:justify-between">
+                                <ChipEstado estado={cita.estado} />
+                                <span className="hidden font-mono text-sm font-bold text-white sm:block">{formatearSoles(totalCita(cita))}</span>
+                              </div>
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <div className="flex flex-wrap gap-4">
@@ -1159,15 +1164,15 @@ export default function CitasCliente() {
                                 {chipRecompensa(cita, tieneSello)}
                                 <ChipSello {...chipsSello} activo={programa.activo === true} />
                               </div>
-                              <span className="font-mono text-sm font-bold text-white">{formatearSoles(totalCita(cita))}</span>
+                              <span className="font-mono text-sm font-bold text-white sm:hidden">{formatearSoles(totalCita(cita))}</span>
                             </div>
                             {modificable && (
-                              <div className="flex gap-2 border-t border-white/10 pt-2.5">
-                                <button type="button" onClick={() => setCitaAReprogramar(cita)} className={`flex-1 ${CLASE_BOTON_SECUNDARIO}`}>
+                              <div className="flex gap-2 border-t border-white/10 pt-2.5 sm:justify-end">
+                                <button type="button" onClick={() => setCitaAReprogramar(cita)} className={`flex-1 sm:flex-none sm:px-4 ${CLASE_BOTON_SECUNDARIO}`}>
                                   <Pencil className="h-3.5 w-3.5" />
                                   Reprogramar
                                 </button>
-                                <button type="button" onClick={() => setCitaACancelar(cita)} className={`flex-1 ${CLASE_BOTON_SECUNDARIO_ROJO}`}>
+                                <button type="button" onClick={() => setCitaACancelar(cita)} className={`flex-1 sm:flex-none sm:px-4 ${CLASE_BOTON_SECUNDARIO_ROJO}`}>
                                   <X className="h-3.5 w-3.5" />
                                   Cancelar
                                 </button>
@@ -1203,28 +1208,25 @@ export default function CitasCliente() {
             )}
           </section>
 
-          {/* Puntos + Antes de tu cita */}
-          <div className="order-4 flex flex-col gap-5 lg:order-none">
-            <div
-              className={`hidden flex-col gap-5 lg:flex ${reducirMovimiento ? '' : 'in-right'}`}
-              style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_ASIDE_DESKTOP}ms` }}
-            >
-              {bloquePuntos()}
-              {bloqueAntes()}
-            </div>
-            <div className="flex flex-col gap-5 lg:hidden">
-              <div className={reducirMovimiento ? '' : 'in-up'} style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_PUNTOS_MOBILE}ms` }}>
-                {bloquePuntos()}
-              </div>
-              <div className={reducirMovimiento ? '' : 'in-up'} style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_ANTES_MOBILE}ms` }}>
-                {bloqueAntes()}
-              </div>
-            </div>
+          {/* Puntos */}
+          <div
+            className={`order-5 lg:order-none ${reducirMovimiento ? '' : 'in-right'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${esDesktop ? DELAY_ASIDE_DESKTOP : DELAY_PUNTOS_MOBILE}ms` }}
+          >
+            {bloquePuntos()}
+          </div>
+
+          {/* Antes de tu cita — a todo el ancho, encima del Historial */}
+          <div
+            className={`order-3 lg:order-none lg:col-span-3 ${reducirMovimiento ? '' : 'in-up'}`}
+            style={reducirMovimiento ? undefined : { animationDelay: `${DELAY_ANTES_MOBILE}ms` }}
+          >
+            {bloqueAntes()}
           </div>
 
           {/* Historial */}
           <div
-            className={`order-3 lg:order-none lg:col-span-3 ${CLASE_BLOQUE} ${reducirMovimiento ? '' : 'in-up'}`}
+            className={`order-4 lg:order-none lg:col-span-3 ${CLASE_BLOQUE} ${reducirMovimiento ? '' : 'in-up'}`}
             style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.historial}ms` }}
           >
             <button
@@ -1234,9 +1236,6 @@ export default function CitasCliente() {
               className="flex w-full items-center gap-3 px-5 py-4 text-left text-white sm:px-6"
             >
               <h2 className="lw-titulo-heavitas text-base uppercase">Historial</h2>
-              <span className="text-[13px] text-white/50">
-                {historial.length} {historial.length === 1 ? 'cita pasada' : 'citas pasadas'}
-              </span>
               <span className="flex-1" />
               <ArrowBigDown className={`h-5 w-5 text-white/50 transition-transform ${histAbierto ? 'rotate-180' : ''}`} />
             </button>

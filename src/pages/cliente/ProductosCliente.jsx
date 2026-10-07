@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, Search, ShoppingBag, Sparkles, X } from 'lucide-react'
+import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, ShoppingBag, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
@@ -14,6 +14,7 @@ import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
 import { useCintaContinua } from '../../hooks/useCintaContinua.js'
 import TarjetaProductoCliente, { porcentajeDescuento } from '../../components/TarjetaProductoCliente.jsx'
 import BarraTuCarritoFlotante from '../../components/BarraTuCarritoFlotante.jsx'
+import BarraCatalogo from '../../components/BarraCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-productos'
@@ -113,6 +114,21 @@ export default function ProductosCliente() {
     }
   }, [])
 
+  const conteosCategoria = useMemo(() => {
+    const conteos = {}
+    for (const item of productos) {
+      if (item.categoria) conteos[item.categoria] = (conteos[item.categoria] ?? 0) + 1
+    }
+    return conteos
+  }, [productos])
+
+  const listaRef = useRef(null)
+  function elegirCategoria(categoria) {
+    setCategoriaActiva(categoria)
+    // La barra quedó arriba del hero: al elegir, se baja al inicio de la lista.
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+  }
+
   const categorias = useMemo(
     () => ['todos', ...new Set(productos.map((p) => p.categoria).filter(Boolean))],
     [productos],
@@ -196,9 +212,23 @@ export default function ProductosCliente() {
 
   return (
     <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+      {/* 0. BARRA DEL CATÁLOGO (fija) — arriba de todo, justo bajo el header. */}
+      <BarraCatalogo
+        categorias={categorias}
+        conteos={conteosCategoria}
+        categoriaActiva={categoriaActiva}
+        onElegirCategoria={elegirCategoria}
+        busqueda={busqueda}
+        onBusqueda={setBusqueda}
+        placeholder="Buscar producto…"
+        etiquetaTotal={plural(agrupado ? productos.length : listaFiltrada.length)}
+        className={reducirMovimiento ? '' : 'in-up'}
+        style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
+      />
+
       {/* 0. INICIO: "Novedades y lo más vendido" */}
       {heroActual && (
-        <section className="mx-auto grid w-full max-w-[1400px] gap-8 px-4 pb-6 pt-6 sm:px-8 lg:grid-cols-[1fr_1.12fr] lg:gap-16 lg:pt-10">
+        <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter pb-6 pt-6 lg:grid-cols-[1fr_1.12fr] lg:gap-16 lg:pt-10">
           <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
             <span
               className={`text-[11px] font-semibold uppercase tracking-widest text-white/60 ${reducirMovimiento ? '' : 'in-left'}`}
@@ -398,7 +428,7 @@ export default function ProductosCliente() {
       {(ofertas.length > 0 || destacados.length > 0) && (
         <section className="flex flex-col gap-9 py-10">
           <p
-            className={`mx-auto w-full max-w-[1700px] px-4 text-[15px] leading-relaxed text-[#d9d9dc] sm:px-8 ${reducirMovimiento ? '' : 'in-left'}`}
+            className={`mx-auto w-full max-w-[1700px] lw-gutter text-[15px] leading-relaxed text-[#d9d9dc] ${reducirMovimiento ? '' : 'in-left'}`}
             style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.fraseOfertas}ms` }}
           >
             Los mismos productos que usamos en el salón, para que tu resultado dure en casa.
@@ -434,53 +464,7 @@ export default function ProductosCliente() {
         </section>
       )}
 
-      {/* 2. FILTROS (sticky) */}
-      <div
-        id="catalogo"
-        className={`sticky top-0 z-10 border-y border-white/10 bg-[#0b0b0c]/90 px-4 py-3 backdrop-blur sm:px-8 ${reducirMovimiento ? '' : 'in-up'}`}
-        style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
-      >
-        <div className="mx-auto flex w-full max-w-[1700px] flex-wrap items-center gap-3">
-          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            {categorias.map((categoria) => {
-              const activa = categoriaActiva === categoria
-              return (
-                <button
-                  key={categoria}
-                  type="button"
-                  onClick={() => setCategoriaActiva(categoria)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                    activa ? 'bg-white text-black' : 'bg-[#18181b] text-[#d6d6da] hover:text-white'
-                  }`}
-                >
-                  {categoria === 'todos' ? 'Todos' : categoria}
-                </button>
-              )
-            })}
-          </div>
-          <label className="flex h-[38px] w-full items-center gap-2 rounded-full bg-[#18181b] px-3.5 text-white/50 sm:w-[230px]">
-            <Search className="h-[15px] w-[15px] shrink-0" />
-            <input
-              type="text"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Buscar producto…"
-              aria-label="Buscar producto"
-              className="w-full min-w-0 bg-transparent text-[13px] text-white outline-none placeholder:text-white/40"
-            />
-            {busqueda && (
-              <button type="button" onClick={() => setBusqueda('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </label>
-          <span className="hidden shrink-0 text-[11px] uppercase tracking-wider text-white/50 sm:inline">
-            {plural(agrupado ? productos.length : listaFiltrada.length)}
-          </span>
-        </div>
-      </div>
-
-      <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-8">
+      <div ref={listaRef} className="mx-auto w-full max-w-[1700px] scroll-mt-16 lw-gutter">
         {/* 3a. "Todos": una fila por categoría */}
         {agrupado && (
           <div className="flex flex-col gap-10 pt-8">
@@ -690,7 +674,7 @@ function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medi
 
   return (
     <div className={`flex flex-col ${claseEntrada}`} style={claseEntrada ? { animationDelay: `${delayEntrada}ms` } : undefined}>
-      <div className={`mx-auto flex w-full max-w-[1700px] items-baseline gap-3 px-4 sm:px-8 ${derecha ? 'justify-start' : 'justify-end'}`}>
+      <div className={`mx-auto flex w-full max-w-[1700px] items-baseline gap-3 lw-gutter ${derecha ? 'justify-start' : 'justify-end'}`}>
         <h2 className="lw-titulo-heavitas text-xl uppercase sm:text-[30px]">{titulo}</h2>
         <span className="text-xs text-white/50">{plural(n)}</span>
       </div>

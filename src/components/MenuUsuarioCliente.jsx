@@ -16,6 +16,8 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { usePerfilCliente } from '../context/PerfilClienteContext.jsx'
 import { useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { useTemaWeb } from '../context/TemaWebContext.jsx'
+import SwitchTema from './SwitchTema.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { urlPublicaFoto } from '../lib/imagenes.js'
 
@@ -59,6 +61,7 @@ export default function MenuUsuarioCliente() {
   // cliente puro tiene rol 'CLIENTE', nunca ve este botón.
   const esPersonalEnModoCliente = Boolean(rol) && rol !== 'CLIENTE'
   const { noLeidas } = useNotificacionesCliente()
+  const { tema, alternarTema } = useTemaWeb()
   const navigate = useNavigate()
 
   const [abierto, setAbierto] = useState(false)
@@ -102,13 +105,13 @@ export default function MenuUsuarioCliente() {
   const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS, perfil?.foto_url) : null
 
   return (
-    <div ref={menuRef} className="relative flex h-11 w-11 shrink-0 items-center justify-center">
+    <div ref={menuRef} className="relative flex h-11 min-w-11 shrink-0 flex-row-reverse items-center justify-center">
       <button
         type="button"
         onClick={() => setAbierto((valorAnterior) => !valorAnterior)}
         aria-expanded={abierto}
         aria-label="Menú de cuenta"
-        className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--lw-gold)]/30 bg-[var(--lw-gold)]/15 text-sm font-semibold text-[var(--lw-gold)] sm:h-10 sm:w-10"
+        className="peer relative z-10 flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--lw-gold)]/30 bg-[var(--lw-gold)]/15 text-sm font-semibold text-[var(--lw-gold)] sm:h-10 sm:w-10"
       >
         {urlFoto ? (
           <img
@@ -124,6 +127,22 @@ export default function MenuUsuarioCliente() {
           <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border border-black bg-[var(--lw-gold)]" />
         )}
       </button>
+
+      {/* Saludo: ocupa espacio real (grid 0fr→1fr), así empuja al vecino de
+          la izquierda al hover y lo devuelve al salir. flex-row-reverse +
+          peer: sigue al botón en el DOM pero se pinta a su izquierda. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none grid grid-cols-[0fr] opacity-0 transition-[grid-template-columns,opacity] duration-500 ease-out ${
+          abierto ? '' : 'peer-hover:grid-cols-[1fr] peer-hover:opacity-100'
+        }`}
+      >
+        <span className="block min-w-0 overflow-hidden">
+          <span className="lw-bar mr-2 block max-w-56 truncate whitespace-nowrap rounded-full border border-white/10 px-3 py-1 text-xs text-white">
+            Hola! {perfil?.nombre}
+          </span>
+        </span>
+      </div>
 
       {abierto && (
         <div className="lw-bar animate-entrada-dropdown absolute right-0 top-full z-30 mt-2 w-64 rounded-lg border border-white/10 p-2 shadow-lg">
@@ -144,6 +163,10 @@ export default function MenuUsuarioCliente() {
                 )}
               </button>
             ))}
+          </div>
+
+          <div className="mt-2 flex justify-center border-t border-white/10 pt-3">
+            <SwitchTema tema={tema} alternarTema={alternarTema} />
           </div>
 
           {esPersonalEnModoCliente && (

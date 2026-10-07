@@ -253,8 +253,8 @@ export default function RecompensasCliente({ publico = false }) {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
-      <div className="mx-auto w-full max-w-[1200px]">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto py-4 md:py-8">
+      <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-6 pt-2 md:pt-6">
           <div className="flex flex-col gap-3.5">
             <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Club Jaise</span>

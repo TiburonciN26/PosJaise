@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowUpRight,
-  Award,
+  PiggyBank,
   Calendar,
   Check,
   Clock,
@@ -12,7 +12,7 @@ import {
   MessageCircle,
   PenLine,
   Plus,
-  ShieldCheck,
+  Stamp,
   Sparkles,
   Star,
   Truck,
@@ -300,7 +300,7 @@ export default function DetalleServicioCliente() {
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-24 lg:pb-8">
       {/* Migas + volver */}
-      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between gap-4 px-4 pt-6 sm:px-8">
+      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle pt-6">
         <nav aria-label="Ruta" className="flex min-w-0 items-center gap-2 truncate text-[11px] font-medium uppercase tracking-wider text-white/50">
           <Link to="/servicios" className="shrink-0 hover:text-white">
             Servicios
@@ -319,7 +319,7 @@ export default function DetalleServicioCliente() {
       </div>
 
       {/* 1. Galería + información */}
-      <section className="mx-auto grid w-full max-w-[1200px] gap-8 px-4 pt-6 sm:px-8 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-16">
+      <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter-detalle pt-6 lg:grid-cols-[1fr_1fr] lg:items-start lg:gap-10">
         <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[84px_1fr] lg:items-start lg:gap-4">
           {fotos.length > 1 && (
             <div className="order-2 flex gap-2 overflow-x-auto lg:order-1 lg:flex-col lg:overflow-visible" style={{ scrollbarWidth: 'none' }}>
@@ -514,7 +514,7 @@ export default function DetalleServicioCliente() {
           {/* Sellos: puntos · reseñas · fidelidad */}
           <div className="grid grid-cols-3 gap-4 py-2">
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
-              <Award className="h-8 w-8" strokeWidth={1.5} />
+              <PiggyBank className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
                 {estimado?.cifra}
                 <br />
@@ -532,7 +532,7 @@ export default function DetalleServicioCliente() {
               </span>
             </a>
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
-              <ShieldCheck className="h-8 w-8" strokeWidth={1.5} />
+              <Stamp className="h-8 w-8" strokeWidth={1.5} />
               <span className="text-[13.5px] font-semibold leading-tight">
                 {estimado?.sello.cifra}
                 <br />
@@ -544,7 +544,7 @@ export default function DetalleServicioCliente() {
       </section>
 
       {/* Adelanto y pago */}
-      <section className="mx-auto mt-14 w-full max-w-[1200px] px-4 sm:px-8">
+      <section className="mx-auto mt-14 w-full max-w-[1400px] lw-gutter-detalle">
         <div className="grid grid-cols-1 divide-y divide-white/10 rounded-[10px] border border-white/10 bg-[#111113] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] md:grid-cols-3 md:divide-x md:divide-y-0">
           <div className="flex gap-3.5 px-6 py-5">
             <CreditCard className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
@@ -593,7 +593,7 @@ export default function DetalleServicioCliente() {
 
       {/* Cómo es el servicio */}
       {servicio.pasos?.length > 0 ? (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="lw-titulo-heavitas text-2xl uppercase">Cómo es el servicio</h2>
             {totalPasosMin > 0 && (
@@ -633,7 +633,7 @@ export default function DetalleServicioCliente() {
         </section>
       ) : (
         duracion && (
-          <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+          <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="lw-titulo-heavitas text-2xl uppercase">Cómo es el servicio</h2>
               <span className="text-sm text-white/60">
@@ -650,7 +650,7 @@ export default function DetalleServicioCliente() {
 
       {/* Cuidados antes y después */}
       {(servicio.cuidados_antes?.length > 0 || servicio.cuidados_despues?.length > 0) && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <h2 className="lw-titulo-heavitas text-2xl uppercase">Cuidados antes y después</h2>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {servicio.cuidados_antes?.length > 0 && (
@@ -685,7 +685,7 @@ export default function DetalleServicioCliente() {
 
       {/* Especificaciones · Herramientas · Materiales */}
       {(servicio.especificaciones?.length > 0 || servicio.herramientas?.length > 0 || servicio.materiales?.length > 0) && (
-        <section className="mx-auto mt-16 grid w-full max-w-[1200px] gap-4 px-4 sm:px-8 sm:grid-cols-3">
+        <section className="mx-auto mt-16 grid w-full max-w-[1400px] gap-4 lw-gutter-detalle sm:grid-cols-3">
           {servicio.especificaciones?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
               <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">
@@ -731,7 +731,7 @@ export default function DetalleServicioCliente() {
       )}
 
       {/* Reseñas */}
-      <section id="resenas" className="mx-auto mt-16 w-full max-w-[1200px] border-t border-white/10 px-4 pt-12 sm:px-8">
+      <section id="resenas" className="mx-auto mt-16 w-full max-w-[1400px] border-t border-white/10 lw-gutter-detalle pt-12">
         <h2 className="lw-titulo-heavitas text-2xl uppercase">Lo que dicen nuestras clientas</h2>
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="flex w-full flex-col gap-3.5 lg:w-[280px] lg:shrink-0">
@@ -882,7 +882,7 @@ export default function DetalleServicioCliente() {
 
       {/* Se suele reservar junto con (combo sugerido) */}
       {combo && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <h2 className="lw-titulo-heavitas text-2xl uppercase">Se suele reservar junto con</h2>
           <div className="mt-6 flex flex-col gap-6 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:p-7">
             <div className="flex flex-1 flex-wrap items-center gap-4">
@@ -957,7 +957,7 @@ export default function DetalleServicioCliente() {
 
       {/* También te puede interesar */}
       {relacionados.length > 0 && (
-        <section className="mx-auto mt-16 w-full max-w-[1200px] px-4 sm:px-8">
+        <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex items-baseline gap-3">
               <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">También te puede interesar</h2>

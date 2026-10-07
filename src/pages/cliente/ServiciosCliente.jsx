@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowRight, CalendarPlus, HelpCircle, MapPin, MessageCircle, Search, X } from 'lucide-react'
+import { ArrowRight, CalendarPlus, HelpCircle, MapPin, MessageCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
@@ -13,6 +13,7 @@ import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
 import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
 import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
 import BarraTuCitaFlotante from '../../components/BarraTuCitaFlotante.jsx'
+import BarraCatalogo from '../../components/BarraCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-servicios'
@@ -111,6 +112,21 @@ export default function ServiciosCliente() {
       vigente = false
     }
   }, [])
+
+  const conteosCategoria = useMemo(() => {
+    const conteos = {}
+    for (const item of servicios) {
+      if (item.categoria) conteos[item.categoria] = (conteos[item.categoria] ?? 0) + 1
+    }
+    return conteos
+  }, [servicios])
+
+  const listaRef = useRef(null)
+  function elegirCategoria(categoria) {
+    setCategoriaActiva(categoria)
+    // La barra quedó arriba del hero: al elegir, se baja al inicio de la lista.
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+  }
 
   const categorias = useMemo(
     () => ['todos', ...new Set(servicios.map((s) => s.categoria).filter(Boolean))],
@@ -230,9 +246,23 @@ export default function ServiciosCliente() {
 
   return (
     <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+      {/* 0. BARRA DEL CATÁLOGO (fija) — arriba de todo, justo bajo el header. */}
+      <BarraCatalogo
+        categorias={categorias}
+        conteos={conteosCategoria}
+        categoriaActiva={categoriaActiva}
+        onElegirCategoria={elegirCategoria}
+        busqueda={busqueda}
+        onBusqueda={setBusqueda}
+        placeholder="Buscar servicio…"
+        etiquetaTotal={plural(agrupado ? servicios.length : listaFiltrada.length)}
+        className={reducirMovimiento ? '' : 'in-up'}
+        style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
+      />
+
       {/* 1. HERO "Tendencias y lo más pedido" */}
       {heroActual && (
-        <section className="mx-auto grid w-full max-w-[1400px] gap-8 px-4 pb-6 pt-6 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:pt-10">
+        <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter pb-6 pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:pt-10">
           <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
             <span
               className={`text-[11px] font-semibold uppercase tracking-widest text-white/60 ${reducirMovimiento ? '' : 'in-left'}`}
@@ -425,54 +455,7 @@ export default function ServiciosCliente() {
         </section>
       )}
 
-      {/* 2. FILTROS (sticky) — la franja (fondo/borde) va a todo el ancho,
-          pero su contenido se centra a 1700px, igual que el header. */}
-      <div
-        id="catalogo"
-        className={`sticky top-0 z-10 border-y border-white/10 bg-[#0b0b0c]/90 px-4 py-3 backdrop-blur sm:px-8 ${reducirMovimiento ? '' : 'in-up'}`}
-        style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
-      >
-        <div className="mx-auto flex w-full max-w-[1700px] flex-wrap items-center gap-3">
-          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            {categorias.map((categoria) => {
-              const activa = categoriaActiva === categoria
-              return (
-                <button
-                  key={categoria}
-                  type="button"
-                  onClick={() => setCategoriaActiva(categoria)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                    activa ? 'bg-white text-black' : 'bg-[#18181b] text-[#d6d6da] hover:text-white'
-                  }`}
-                >
-                  {categoria === 'todos' ? 'Todos' : categoria}
-                </button>
-              )
-            })}
-          </div>
-          <label className="flex h-[38px] w-full items-center gap-2 rounded-full bg-[#18181b] px-3.5 text-white/50 sm:w-[230px]">
-            <Search className="h-[15px] w-[15px] shrink-0" />
-            <input
-              type="text"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              placeholder="Buscar servicio…"
-              aria-label="Buscar servicio"
-              className="w-full min-w-0 bg-transparent text-[13px] text-white outline-none placeholder:text-white/40"
-            />
-            {busqueda && (
-              <button type="button" onClick={() => setBusqueda('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </label>
-          <span className="hidden shrink-0 text-[11px] uppercase tracking-wider text-white/50 sm:inline">
-            {plural(agrupado ? servicios.length : listaFiltrada.length)}
-          </span>
-        </div>
-      </div>
-
-      <div className="mx-auto w-full max-w-[1700px] px-4 sm:px-8">
+      <div ref={listaRef} className="mx-auto w-full max-w-[1700px] scroll-mt-16 lw-gutter">
         {/* 3a. "Todos": una fila por categoría */}
         {agrupado && (
           <div className="flex flex-col gap-10 pt-8">

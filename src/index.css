@@ -1031,9 +1031,23 @@ input[type='search']::-webkit-search-decoration {
      comentarios puntuales en PortalCliente.jsx. */
   --lw-gold: #a9c6ec;
   --lw-rose: #ff85a1;
+  /* Margen lateral ÚNICO del portal cliente: lo usan el header y todos
+     los bloques de contenido vía la clase `.lw-gutter`. Para separar o
+     acercar todo de los bordes, se cambia SOLO este valor. Fluido:
+     16px en móvil, crece con el ancho hasta 72px. */
+  --lw-gutter: clamp(1rem, 4vw, 4.5rem);
   background: var(--lw-bg);
   color: var(--lw-fg);
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-web .lw-gutter {
+  padding-inline: var(--lw-gutter);
+}
+
+/* Detalle de servicio/producto: margen lateral más corto que el resto del portal. */
+.landing-web .lw-gutter-detalle {
+  padding-inline: clamp(1rem, 2.5vw, 3rem);
 }
 
 .landing-web .lw-serif {
@@ -1615,8 +1629,6 @@ input[type='search']::-webkit-search-decoration {
    scope .landing-web, se reutiliza tal cual.
    =========================================================== */
 .cupon-tarjeta,
-.cupon-oro,
-.cupon-texto-oro,
 .cupon-chispa {
   /* Dorado propio del cupón Oro: --lw-gold pasó a azul metálico en el
      rediseño del portal (§7.36) y teñía las tarjetas Oro de azul. */
@@ -1626,71 +1638,71 @@ input[type='search']::-webkit-search-decoration {
 .cupon-tarjeta {
   position: relative;
   overflow: hidden;
+  /* Muescas semicirculares a media altura de cada lado: aspecto de ticket.
+     Dos máscaras de media tarjeta (51% para que se solapen sin costura). */
+  -webkit-mask:
+    radial-gradient(ellipse 5px 9px at 0 50%, #0000 97%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(ellipse 5px 9px at 100% 50%, #0000 97%, #000) 100% 0 / 51% 100% no-repeat;
+  mask:
+    radial-gradient(ellipse 5px 9px at 0 50%, #0000 97%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(ellipse 5px 9px at 100% 50%, #0000 97%, #000) 100% 0 / 51% 100% no-repeat;
 }
 
-.cupon-plata {
+/* Cupón rojo (promoción activa de Inicio): mismo lenguaje que .cupon-oro
+   (borde degradado + glow que respira + destello que cruza), en rojo. El
+   glow tiene keyframes propios: cupon-glow usa --lw-gold, que es azul. */
+.cupon-rojo {
+  --cupon-rojo: #ff2d3f;
   border: 1px solid transparent;
   background:
-    linear-gradient(#0e0e0f, #0e0e0f) padding-box,
-    linear-gradient(120deg, #4a4e54, #d9dde2 45%, #4a4e54 70%, #2a2c30) border-box;
-  box-shadow: 0 0 30px -6px rgba(220, 226, 234, 0.14);
-}
-.cupon-plata::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 45%);
-  pointer-events: none;
-}
-.cupon-plata::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -45%;
-  width: 30%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transform: skewX(-20deg);
-  animation: cupon-sheen 7s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.cupon-oro {
-  border: 1px solid transparent;
-  background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cupon-oro) 14%, transparent), transparent 55%)
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cupon-rojo) 16%, transparent), transparent 55%)
       padding-box,
-    linear-gradient(#100d07, #100d07) padding-box,
-    linear-gradient(120deg, var(--cupon-oro), #fff1c2 38%, var(--cupon-oro) 58%, #5e4818 100%) border-box;
-  animation: cupon-glow 4.5s ease-in-out infinite;
+    linear-gradient(#120708, #120708) padding-box,
+    linear-gradient(120deg, var(--cupon-rojo), #ffb3ba 38%, var(--cupon-rojo) 58%, #5a1219 100%) border-box;
+  animation: cupon-glow-rojo 4.5s ease-in-out infinite;
 }
-.cupon-oro::after {
+.cupon-rojo::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
   left: -45%;
   width: 34%;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, #fff6d8 22%, transparent), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 218, 0.2), transparent);
   transform: skewX(-20deg);
   animation: cupon-sheen 4.5s ease-in-out infinite;
   pointer-events: none;
 }
 
-.cupon-texto-oro {
-  background: linear-gradient(
-    100deg,
-    var(--cupon-oro) 0%,
-    var(--cupon-oro) 35%,
-    #fff3cf 50%,
-    var(--cupon-oro) 65%,
-    var(--cupon-oro) 100%
-  );
+.cupon-rojo-canjeado {
+  /* Cupón ya reclamado: borde opaco y sin luz (ni glow ni destello). */
+  background:
+    linear-gradient(#120708, #120708) padding-box,
+    linear-gradient(#3a1a1d, #3a1a1d) border-box;
+  animation: none;
+  box-shadow: none;
+}
+.cupon-rojo-canjeado::after {
+  display: none;
+}
+
+.cupon-texto-rojo {
+  background: linear-gradient(100deg, #ff2d3f 0%, #ff2d3f 35%, #ffd0d4 50%, #ff2d3f 65%, #ff2d3f 100%);
   background-size: 260% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: cupon-brillo-texto 4.5s linear infinite;
+}
+
+@keyframes cupon-glow-rojo {
+  0%,
+  100% {
+    box-shadow: 0 0 26px -6px rgba(255, 45, 63, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 52px 0 rgba(255, 45, 63, 0.5);
+  }
 }
 
 .cupon-chispa {
@@ -1782,6 +1794,9 @@ input[type='search']::-webkit-search-decoration {
   .cupon-oro,
   .cupon-oro::after,
   .cupon-texto-oro,
+  .cupon-rojo,
+  .cupon-rojo::after,
+  .cupon-texto-rojo,
   .cupon-chispa {
     animation: none;
   }
@@ -1839,6 +1854,8 @@ input[type='search']::-webkit-search-decoration {
    esInicio, no solo el título. */
 .landing-web {
   --lw-metal-azul: linear-gradient(90deg, #86a9d8 0%, #a9c6ec 40%, #d3e4f8 50%, #a9c6ec 60%, #86a9d8 100%);
+  /* Texto sobre insignias con --lw-metal-azul (carrito, notificaciones). */
+  --lw-badge-text: #000;
 }
 
 .lw-titulo-kunaroh {
@@ -2722,6 +2739,381 @@ input[type='search']::-webkit-search-decoration {
   .landing-web .sacB {
     animation: none;
   }
+}
+
+/* ===========================================================
+   Tema claro del portal cliente — paleta "Jaise Page 1".
+   Se activa con .lw-claro sobre .landing-web (PortalCliente.jsx, switch
+   en el menú del avatar; preferencia propia en TemaWebContext, sin
+   relación con data-tema del POS). Solo reemplaza COLORES: ningún
+   tamaño, espaciado, fuente ni posición se toca acá.
+   Las clases de Tailwind con color fijo (text-white, bg-[#111113],
+   border-white/10…) se reasignan por selector de atributo: `^=`/`*=' '`
+   con el espacio previo evitan atrapar variantes (hover:, sm:…), que
+   se tratan aparte. Esta hoja va sin @layer, así que gana a las
+   utilidades de Tailwind sin !important.
+   =========================================================== */
+.landing-web.lw-claro,
+.lw-claro .landing-web {
+  --bg: #ebebed;
+  --bg-gradient: radial-gradient(99% 99% at 52.9% 61.8%, #f0f0f2 0%, #ebebed 60%, #ccccce 100%);
+  --bg-subtle: #f3f4f6;
+  --bg-muted: #e7e5e4;
+  --surface-glass: rgba(255, 255, 255, 0.85);
+  --surface-glass-2: rgba(255, 255, 255, 0.7);
+  --overlay: rgba(0, 0, 0, 0.2);
+  --text: #000000;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-body: #374151;
+  --border: #e5e7eb;
+  --border-strong: #9ca3af;
+  --border-input: #d1d5db;
+  --avatar-ring: #e4e4e7;
+  --grid-line: #64748b;
+  --btn-hover-bg: #000000;
+  --btn-hover-text: #ffffff;
+  --btn-dark-hover: #1f2937;
+  --metal: linear-gradient(90deg, #2f578c 0%, #4a78b0 40%, #6f98cb 50%, #4a78b0 60%, #2f578c 100%);
+  --badge-text: #ffffff;
+
+  /* Variables propias del portal, apuntadas a la paleta. --lw-gold se usa
+     como color plano (color/border-color no aceptan degradado): toma el
+     tono medio del acero, #4a78b0. */
+  --lw-bg: var(--bg);
+  --lw-fg: var(--text);
+  --lw-muted: var(--text-secondary);
+  --lw-card: var(--bg-subtle);
+  --lw-border: var(--border);
+  --lw-subtitle: var(--text-body);
+  --lw-gold: #4a78b0;
+  --lw-metal-azul: var(--metal);
+  --lw-badge-text: var(--badge-text);
+  color-scheme: light;
+}
+
+/* Fondo del tema claro: un solo degradado para todas las pestañas. El
+   contenedor del portal ocupa exactamente la pantalla (h-svh) y el
+   contenido hace scroll dentro, así que el degradado queda fijo. Los
+   wrappers de página (.landing-web anidados y sus bg-[#0b0b0c]) son
+   transparentes para dejarlo ver; tarjetas, inputs y menús conservan su
+   superficie. */
+.landing-web.lw-claro {
+  background: var(--bg-gradient);
+  background-color: var(--bg);
+}
+.lw-claro .landing-web {
+  background: transparent;
+}
+.lw-claro .landing-web[class~='bg-[#0b0b0c]'] {
+  background-color: transparent;
+}
+/* Header sin fondo propio: deja ver el mismo degradado de la página. */
+.lw-claro header[class~='bg-[#0b0b0c]'] {
+  background-color: transparent;
+}
+.lw-claro [class~='bg-[#0b0b0c]/90'] {
+  background-color: rgba(235, 235, 237, 0.9);
+}
+
+/* Texto */
+.lw-claro .text-white,
+.lw-claro .lw-titulo-heavitas,
+.lw-claro [class~='text-[#f1f3f5]'] {
+  color: var(--text);
+}
+.lw-claro :is([class^='text-white/'], [class*=' text-white/']) {
+  color: var(--text-secondary);
+}
+.lw-claro :is([class~='text-[#a6a6a6]'], [class~='text-[#8a8a8f]'], [class~='text-[#9a9a9f]']) {
+  color: var(--text-muted);
+}
+.lw-claro :is([class~='text-[#e8e8ea]'], [class~='text-[#d9d9dc]'], [class~='text-[#f5f5f4]']) {
+  color: var(--text-body);
+}
+.lw-claro [class~='text-[#a9c6ec]'] {
+  color: var(--lw-gold);
+}
+.lw-claro :is(.hover\:text-white:hover, [class~='hover:text-white/80']:hover) {
+  color: var(--text);
+}
+.lw-claro .hover\:text-black:hover {
+  color: var(--btn-hover-text);
+}
+/* Botones principales (relleno de acento): fondo blanco, borde gris claro
+   y texto negro. El borde es un anillo inset (box-shadow) para no
+   cambiar el tamaño. Los de estilo inline (background: var(--lw-gold))
+   necesitan !important; el estado "ya agregado" (transparente) no entra. */
+.lw-claro :is(button, a)[class~='bg-[var(--lw-gold)]'].text-black,
+.lw-claro :is(button, a)[style*='background: var(--lw-gold)'] {
+  background: #ffffff !important;
+  color: var(--text) !important;
+  box-shadow: inset 0 0 0 1px var(--border-input);
+}
+/* Círculos de ícono dentro de esos botones y de los bloques de ayuda:
+   fondo negro, ícono blanco. */
+.lw-claro [class~='rounded-full'][class~='bg-[#0b0b0c]'][class*=' h-'],
+.lw-claro [class~='bg-[#18181b]'] {
+  background-color: #0b0b0c;
+  color: #ffffff;
+}
+.lw-claro [class~='bg-[#18181b]'].text-white {
+  color: #ffffff;
+}
+/* Chips de categorías (BarraCatalogo): contorno oscuro y letra negra sobre
+   el fondo; el elegido va en blanco liso. */
+.lw-claro .lw-chip-cat:not(.lw-chip-cat-on) {
+  background-color: transparent;
+  border-color: #3a3a3e;
+  color: var(--text);
+}
+.lw-claro .lw-chip-cat-on {
+  background-color: #ffffff;
+  border-color: transparent;
+  color: var(--text);
+}
+/* Buscadores: en claro eran negros con texto negro (no se leía lo escrito). */
+.lw-claro .lw-buscador {
+  background-color: #ffffff;
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px var(--border-input);
+}
+.lw-claro .lw-buscador input {
+  color: var(--text);
+}
+.lw-claro .lw-buscador input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Barras flotantes "Tu cita" / "Tu carrito": píldora de vidrio claro
+   (en oscuro es #141417 con texto blanco, que en claro quedaba ilegible). */
+.lw-claro .lw-barra-flotante {
+  background-color: var(--surface-glass);
+  border-color: var(--border-input);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.25);
+}
+/* Flechita de los botones verdes de confirmación: solo en tema claro. */
+.landing-web .lw-flecha-claro {
+  display: none;
+}
+.lw-claro .lw-flecha-claro {
+  display: inline-block;
+}
+
+/* Fondos */
+.lw-claro [class~='bg-[#0b0b0c]'] {
+  background-color: var(--bg);
+}
+.lw-claro :is([class~='bg-[#111113]'], [class~='bg-[#0d0d0d]'], [class~='bg-[#151517]']) {
+  background-color: var(--bg-subtle);
+}
+.lw-claro :is([class~='bg-[#1c1c20]'], [class~='bg-[#222228]'], [class~='bg-[#1f1f22]'], [class~='bg-[#1b2230]']) {
+  background-color: var(--bg-muted);
+}
+.lw-claro :is([class^='bg-white/'], [class*=' bg-white/']) {
+  background-color: var(--bg-subtle);
+}
+.lw-claro :is(.hover\:bg-white\/5:hover, .hover\:bg-white\/10:hover) {
+  background-color: var(--bg-subtle);
+}
+/* Velos a pantalla completa (modales) → --overlay. Las etiquetas negras
+   sobre fotos (bg-black/70) se quedan oscuras con su texto blanco. */
+.lw-claro .fixed:is([class^='bg-black/'], [class*=' bg-black/']) {
+  background-color: var(--overlay);
+}
+.lw-claro :is([class^='bg-black/'], [class*=' bg-black/']):not(.fixed),
+.lw-claro :is([class^='bg-black/'], [class*=' bg-black/']):not(.fixed) .text-white {
+  color: #ffffff;
+}
+.lw-claro [role='status'][class*='bg-black/'] {
+  /* "Cupón canjeado": velo apenas visible, el contenido se lee. */
+  background-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Carrito, Citas y demás pantallas con paneles .lw-*: en oscuro llevan
+   fondos y bordes casi negros fijos; en claro pasan a superficies y
+   bordes de la paleta. */
+.lw-claro .lw-panel {
+  background: var(--bg-subtle);
+  border-color: var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.lw-claro :is(.lw-seg, .lw-stepper, .lw-pago-opcion, .lw-comprobante-opcion) {
+  border-color: var(--border-input);
+  color: var(--text-secondary);
+}
+.lw-claro :is(.lw-pago-opcion, .lw-comprobante-opcion) {
+  color: var(--text);
+}
+.lw-claro :is(.lw-pago-opcion, .lw-comprobante-opcion):hover,
+.lw-claro .lw-seg:hover {
+  border-color: var(--border-strong);
+}
+.lw-claro .lw-seg.on,
+.lw-claro .lw-pago-opcion.on,
+.lw-claro .lw-comprobante-opcion.on {
+  border-color: var(--lw-gold);
+  color: var(--lw-gold);
+}
+.lw-claro .lw-campo {
+  background: #ffffff;
+  border-color: var(--border-input);
+  color: var(--text);
+}
+.lw-claro .lw-stepper button {
+  color: var(--text-secondary);
+}
+.lw-claro .lw-stepper button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text);
+}
+.lw-claro .lw-stepper button:disabled {
+  color: var(--border-strong);
+}
+.lw-claro .lw-tarjeta-direccion {
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.lw-claro .lw-cuponrow {
+  border-color: var(--border);
+  color: var(--text);
+}
+.lw-claro .lw-cuponrow:hover .lw-plus {
+  background: rgba(0, 0, 0, 0.06);
+}
+.lw-claro .lw-plus {
+  border-color: var(--border-input);
+  color: var(--text);
+}
+.lw-claro .lw-etq-stock {
+  background: #ffffff;
+  border-color: var(--border-input);
+  color: var(--text-body);
+}
+.lw-claro .lw-wa-ayuda {
+  color: #15803d;
+}
+.lw-claro .lw-wa-ayuda:hover {
+  color: #166534;
+}
+.lw-claro :is([class~='border-[#232326]'], [class~='border-[#1f1f22]'], [class~='border-[#2e2e2e]']) {
+  border-color: var(--border);
+}
+.lw-claro [class~='border-[#4a4a4f]'] {
+  border-color: var(--border-strong);
+}
+.lw-claro :is([class~='bg-[#141416]'], [class~='bg-[#0d0d0f]'], [class~='bg-[#0f0f11]']) {
+  background-color: #ffffff;
+}
+.lw-claro [class~='text-[#4a4a4f]'] {
+  color: var(--text-muted);
+}
+.lw-claro [class~='text-[#d3e4f8]'] {
+  color: #2f578c;
+}
+
+/* Cupón rojo de Inicio (promoción activa) en tema claro: relleno rosado. */
+.lw-claro .cupon-rojo {
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(255, 255, 255, 0.45), transparent 55%) padding-box,
+    linear-gradient(135deg, #ffdde0 0%, #ffc4ca 55%, #ffe0e3 100%) padding-box,
+    linear-gradient(120deg, var(--cupon-rojo), #ffb3ba 38%, var(--cupon-rojo) 58%, #8e1522 100%) border-box;
+}
+.lw-claro .cupon-rojo-canjeado {
+  background:
+    linear-gradient(#fbd3d7, #fbd3d7) padding-box,
+    linear-gradient(#e7a5ac, #e7a5ac) border-box;
+}
+.lw-claro .cupon-texto-rojo {
+  background-image: linear-gradient(100deg, #c4101f 0%, #c4101f 35%, #ff5a68 50%, #c4101f 65%, #c4101f 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.lw-claro [class~='text-[#ff4d5e]'] {
+  color: #c4101f;
+}
+.lw-claro [class~='border-[#ff2d3f]'].hover\:bg-\[\#ff2d3f\]\/10:hover {
+  background-color: rgba(196, 16, 31, 0.1);
+}
+.lw-claro .lw-bar {
+  background: #ffffff;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.18);
+}
+
+/* Bordes */
+.lw-claro :is([class^='border-white/'], [class*=' border-white/']) {
+  border-color: var(--border);
+}
+.lw-claro :is(.hover\:border-white\/30:hover, .hover\:border-white:hover) {
+  border-color: var(--border-strong);
+}
+.lw-claro .hover\:bg-white:hover {
+  background-color: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+
+/* Acento: pestaña activa, rayita, insignias, aro del avatar */
+.lw-claro .lw-metal-azul-texto {
+  background: var(--metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lw-claro [class~='border-[var(--lw-gold)]/30'] {
+  border-color: var(--avatar-ring);
+}
+
+/* Hero de Inicio: la foto es un bloque oscuro propio (fondo negro del
+   retrato), así que el texto que va SOBRE la foto conserva sus colores
+   claros; solo el botón y el recuadro de ayuda usan el vidrio de la
+   paleta. */
+.lw-claro .lw-sobre-foto {
+  background-color: #0b0b0c;
+}
+.lw-claro .lw-sobre-foto .text-white {
+  color: #ffffff;
+}
+.lw-claro .lw-sobre-foto [class~='text-[#a6a6a6]'] {
+  color: #a6a6a6;
+}
+.lw-claro .lw-sobre-foto [class~='text-[#e8e8ea]'] {
+  color: #e8e8ea;
+}
+.lw-claro .lw-sobre-foto [class*=' border-white/'] {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.lw-claro .lw-sobre-foto .hover\:bg-white:hover {
+  background-color: #ffffff;
+  color: #000000;
+}
+.lw-claro .lw-cta-hero {
+  background: var(--surface-glass);
+}
+.lw-claro .lw-cta-hero::before {
+  background: var(--border-strong);
+}
+.lw-claro .lw-cta-hero:hover {
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+.lw-claro .shiny-text.lw-cta-shiny {
+  color: rgba(47, 87, 140, 0.85);
+  background-image: linear-gradient(120deg, rgba(111, 152, 203, 0) 40%, rgba(111, 152, 203, 1) 50%, rgba(111, 152, 203, 0) 60%);
+}
+.lw-claro .lw-cta-hero:hover .shiny-text.lw-cta-shiny {
+  color: var(--btn-hover-text);
+}
+.lw-claro .lw-hint-cursor {
+  background: var(--surface-glass-2);
+  color: var(--text);
+}
+.lw-claro .lw-hint-cursor svg {
+  stroke: var(--text);
 }
 
 /* ===========================================================

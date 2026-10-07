@@ -12,6 +12,7 @@ import {
   Trash2,
   User,
   Wallet,
+  ArrowUpRight,
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase.js'
@@ -127,6 +128,7 @@ function BarraConfirmarMovil({ monto, recompensa, deshabilitado, enviando, onCon
         >
           <Check className="h-4 w-4" />
           {enviando ? 'Enviando...' : 'Confirmar'}
+          <ArrowUpRight className="lw-flecha-claro h-4 w-4" />
         </button>
       </div>
     </div>
@@ -838,6 +840,7 @@ export default function CarritoServiciosCliente() {
               >
                 <Check className="h-[18px] w-[18px]" />
                 {enviando ? 'Enviando...' : 'Confirmar reserva'}
+                <ArrowUpRight className="lw-flecha-claro h-[18px] w-[18px]" />
               </button>
               {faltante && <p className="hidden text-center text-xs text-white/50 lg:block">{faltante}</p>}
 

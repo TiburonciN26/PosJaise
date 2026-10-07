@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Sparkles, Ticket, Users } from 'lucide-react'
+import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Ticket, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useTemaWeb } from '../../context/TemaWebContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
 import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
@@ -28,6 +28,9 @@ import PieClienteWeb from './PieClienteWeb.jsx'
 // reales del salón (mismo pendiente que la Galería de "Resultados reales").
 const FOTO_DESPUES = `${import.meta.env.BASE_URL}inicio-web/hero-despues-referencia.jpg`
 const FOTO_ANTES = `${import.meta.env.BASE_URL}inicio-web/hero-antes-referencia.jpg`
+// Tema claro del portal: mismas tomas con fondo blanco.
+const FOTO_DESPUES_CLARA = `${import.meta.env.BASE_URL}inicio-web/despues-claro.webp`
+const FOTO_ANTES_CLARA = `${import.meta.env.BASE_URL}inicio-web/antes-claro.webp`
 const RADIO_REVELADO = 340
 
 // Revela la foto "antes" bajo el cursor sin re-renderizar React en cada
@@ -125,10 +128,10 @@ function EsquinaBracket({ voltear = false }) {
     <svg
       viewBox="0 0 12 12"
       fill="none"
-      stroke="#f5f5f4"
+      stroke="currentColor"
       strokeWidth="1.5"
       aria-hidden="true"
-      className="h-[14px] w-[14px] shrink-0 max-[640px]:h-[6px] max-[640px]:w-[6px]"
+      className="text-white h-[14px] w-[14px] shrink-0 max-[640px]:h-[6px] max-[640px]:w-[6px]"
     >
       <path d={voltear ? 'M0 0.5V11.5H11.5' : 'M0 11.5V0.5H11.5'} />
     </svg>
@@ -145,6 +148,12 @@ const formatoFechaCitaCorta = new Intl.DateTimeFormat('es-PE', {
   weekday: 'short',
   day: 'numeric',
   month: 'short',
+  timeZone: 'America/Lima',
+})
+const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
   timeZone: 'America/Lima',
 })
 const formatoHoraCita = new Intl.DateTimeFormat('es-PE', {
@@ -185,12 +194,24 @@ function PuntosAvance({ puntos }) {
 // puede faltar (reseñas, próxima cita, promoción, fotos de resultados,
 // contacto) oculta su línea o su sección entera en vez de mostrar un
 // placeholder falso.
+// Posiciones de las chispas del cupón de promoción (mismo patrón que
+// CHISPAS_ORO en EnvolturaCupon.jsx, un poco más repartidas por ser una
+// tarjeta ancha).
+const CHISPAS_PROMO = [
+  { top: '-8px', left: '40px', size: 13 },
+  { top: '-6px', right: '28%', size: 9, delay: '-1.4s' },
+  { top: '12px', right: '-10px', size: 10, delay: '-0.9s' },
+  { bottom: '-8px', right: '90px', size: 12, delay: '-1.8s' },
+  { bottom: '-7px', left: '30%', size: 9, delay: '-2.4s' },
+]
+
 export default function InicioCliente() {
   const { mostrarToast } = useToast()
-  const { abierto } = useEstadoNegocio()
   const { perfil } = usePerfilCliente()
   const { serviciosCarrito } = useCarritoCliente()
   const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
+  const { tema } = useTemaWeb()
+  const esClaro = tema === 'claro'
 
   const contenedorRef = useRef(null)
   const { contenedorHeroRef, imagenAntesRef } = useRevelarAntes()
@@ -207,6 +228,8 @@ export default function InicioCliente() {
   const [cuponPromocion, setCuponPromocion] = useState(null)
   const [reclamando, setReclamando] = useState(false)
   const [resenas, setResenas] = useState([])
+  // Tarjetas de "Lo que dicen nuestras clientas": reseñas con fecha y servicio.
+  const [resenasTarjetas, setResenasTarjetas] = useState([])
   const [galeria, setGaleria] = useState([])
   const [contacto, setContacto] = useState(null)
   const [horario, setHorario] = useState(null)
@@ -225,6 +248,7 @@ export default function InicioCliente() {
         promocionesRes,
         cuponesRes,
         resenasRes,
+        resenasInicioRes,
         galeriaRes,
         contactoRes,
         horarioRes,
@@ -251,6 +275,7 @@ export default function InicioCliente() {
           .order('vigente_hasta', { ascending: true, nullsFirst: false }),
         supabase.rpc('mis_cupones'),
         supabase.rpc('resenas_publicas'),
+        supabase.rpc('resenas_inicio'),
         supabase.rpc('galeria_para_web'),
         supabase.rpc('datos_contacto'),
         supabase.rpc('horario_atencion'),
@@ -281,6 +306,9 @@ export default function InicioCliente() {
       }
 
       setResenas(resenasRes.data ?? [])
+      // Si resenas_inicio() aún no está aplicada en la base, se cae a las
+      // reseñas generales (sin servicio) en vez de dejar la sección vacía.
+      setResenasTarjetas(resenasInicioRes.error ? (resenasRes.data ?? []) : (resenasInicioRes.data ?? []))
       // El diseño aprobado son 3 parejas (tope acá), pero el negocio las
       // está cargando de a poco en Galería Web — se muestran las que ya
       // existan (mínimo 1) en vez de exigir las 3 completas.
@@ -360,7 +388,7 @@ export default function InicioCliente() {
       }`
     : null
 
-  const hayLineaConfianza = Boolean(promedioResenas || horarioTexto || abierto)
+  const hayLineaConfianza = Boolean(horarioTexto)
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
   const hayVisitanos = Boolean(contacto?.direccion || horarioTexto || contacto?.telefono)
 
@@ -374,17 +402,17 @@ export default function InicioCliente() {
           "Ver servicios" y la línea de confianza al bloque de texto). */}
       <section
         ref={contenedorHeroRef}
-        className="relative mx-auto flex aspect-[1680/944] w-full max-w-[1800px] cursor-crosshair flex-col bg-[#0b0b0c] px-4 sm:px-8"
+        className={`${esClaro ? '' : 'lw-sobre-foto '}relative mx-auto flex aspect-[1680/944] w-full max-w-[1800px] cursor-crosshair flex-col lw-gutter ${esClaro ? 'bg-transparent' : 'bg-[#0b0b0c]'}`}
       >
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <img
-            src={FOTO_DESPUES}
+            src={esClaro ? FOTO_DESPUES_CLARA : FOTO_DESPUES}
             alt="Resultado después del servicio"
             className="absolute inset-0 h-full w-full object-cover object-[right_center]"
           />
           <img
             ref={imagenAntesRef}
-            src={FOTO_ANTES}
+            src={esClaro ? FOTO_ANTES_CLARA : FOTO_ANTES}
             alt=""
             aria-hidden="true"
             style={{ filter: 'grayscale(0.35) brightness(0.97)' }}
@@ -393,39 +421,19 @@ export default function InicioCliente() {
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-[1700px] flex-1 flex-col justify-center gap-[clamp(10px,1.8vw,20px)] py-[clamp(16px,3vw,40px)]">
-          <div className="flex flex-col items-start gap-[clamp(10px,1.8vw,20px)] md:max-w-xl">
-            <span
-              className={`inline-flex w-fit items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/60 ${
-                reducirMovimiento ? '' : 'in-left'
-              }`}
-              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
-              Uñas · Pestañas · Cejas · <span className="hidden sm:inline">Micropigmentación</span>
-              <span className="sm:hidden">Micro</span>
-            </span>
-
+          <div className="flex flex-col items-start gap-[clamp(10px,1.8vw,20px)] md:max-w-3xl">
             <div
               className={`flex flex-col items-start gap-2 ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.titulo}ms` }}
             >
               <EsquinaBracket />
-              <h1 className="lw-titulo-kunaroh text-[clamp(34px,5.2vw,74px)] leading-[1.03] text-white">
+              <h1 className="lw-titulo-kunaroh text-[clamp(38px,6vw,90px)] leading-[1.03] text-white">
                 <span className="block">Belleza</span>
                 <span className="block">que</span>
                 <span className="block">transforma</span>
               </h1>
               <EsquinaBracket voltear />
             </div>
-
-            <p
-              className={`max-w-[42ch] text-[15px] leading-relaxed text-[#d9d9dc] sm:text-base ${
-                reducirMovimiento ? '' : 'in-left'
-              }`}
-              style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.subtitulo}ms` }}
-            >
-              Tu salón de belleza en Av. Argentina. Reserva en línea en un minuto y paga el saldo en el local.
-            </p>
 
             <div
               className={`flex flex-col gap-2.5 sm:flex-row sm:items-center ${reducirMovimiento ? '' : 'in-left'}`}
@@ -437,7 +445,7 @@ export default function InicioCliente() {
               </Link>
               <Link
                 to="/servicios"
-                className="rounded-full border border-white/15 px-6 py-3.5 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+                className="rounded-full border border-white/15 px-6 py-3.5 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white hover:bg-white hover:text-black"
               >
                 Ver servicios
               </Link>
@@ -450,20 +458,7 @@ export default function InicioCliente() {
                 }`}
                 style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.confianza}ms` }}
               >
-                {promedioResenas && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-[var(--lw-gold)]" />
-                    <b className="font-semibold text-white">{promedioResenas.toFixed(1)}</b> ·{' '}
-                    {resenas.length} {resenas.length === 1 ? 'reseña' : 'reseñas'}
-                  </span>
-                )}
                 {horarioTexto && <span>{horarioTexto}</span>}
-                {abierto && (
-                  <span className="inline-flex items-center gap-1.5 text-[#e8e8ea]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-gold)]" />
-                    Abierto ahora
-                  </span>
-                )}
               </div>
             )}
           </div>
@@ -487,7 +482,7 @@ export default function InicioCliente() {
           mismo padding lateral) que el resto de secciones de la página;
           el padding de la propia <section> es el respiro INTERNO de la
           caja, no el margen contra el borde de pantalla. */}
-      <div className="mx-auto mt-8 w-full max-w-[1700px] px-4 sm:px-8">
+      <div className="mx-auto mt-8 w-full max-w-[1700px] lw-gutter">
         <section
           className={`flex flex-col gap-4 rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:gap-7 sm:p-[22px_28px] ${
             reducirMovimiento ? '' : 'in-up'
@@ -546,15 +541,35 @@ export default function InicioCliente() {
       {/* 2b. PROMOCIÓN ACTIVA — solo si hay una vigente (RLS de
           promociones ya filtra activo/vigente_desde/vigente_hasta). */}
       {promocion && (
-        <div className="mx-auto mt-4 w-full max-w-[1700px] px-4 sm:px-8">
-        <section
-          className={`grid overflow-hidden rounded-[10px] border border-white/10 bg-[#111113] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] lg:grid-cols-[220px_minmax(0,1fr)_auto] ${
-            reducirMovimiento ? '' : 'in-up'
-          }`}
+        <div className="mx-auto mt-4 w-full max-w-[1700px] lw-gutter">
+        {/* La entrada (in-up) va en este contenedor y NO en la <section>:
+            .cupon-rojo define su propio `animation` infinito (glow) y, si
+            compartiera elemento con .in-up, heredaba su iteration-count
+            infinito → la entrada se repetía cada ~1 s (el parpadeo). Las
+            chispas van fuera de la <section> (tiene overflow:hidden). */}
+        <div
+          className={`relative ${reducirMovimiento ? '' : 'in-up'}`}
           style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.promo}ms` }}
         >
-          <div className="flex items-center gap-4 border-b border-dashed border-[#2e3a4d] bg-[#141b26] px-5 py-4 lg:flex-col lg:justify-center lg:gap-1 lg:border-b-0 lg:border-r lg:py-6">
-            <span className="lw-titulo-heavitas text-[34px] leading-none text-[var(--lw-gold)] lg:text-[44px]">
+        {!cuponPromocion && CHISPAS_PROMO.map((c, indice) => (
+          <svg
+            key={indice}
+            className="cupon-chispa cupon-chispa-roja"
+            style={{ position: 'absolute', top: c.top, left: c.left, right: c.right, bottom: c.bottom, width: c.size, height: c.size, animationDelay: c.delay }}
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z" />
+          </svg>
+        ))}
+        <section className={`cupon-tarjeta cupon-rojo grid rounded-[10px] lg:grid-cols-[220px_minmax(0,1fr)_auto] ${cuponPromocion ? 'cupon-rojo-canjeado' : ''}`}>
+          <div className="flex items-center gap-4 border-b border-dashed border-[#ff2d3f]/40 bg-[#ff2d3f]/[0.07] px-5 py-4 lg:flex-col lg:justify-center lg:gap-1 lg:border-b-0 lg:border-r lg:py-6">
+            <span
+              className={`lw-titulo-heavitas cupon-texto-rojo whitespace-nowrap leading-none ${
+                promocion.tipo_descuento === 'PORCENTAJE' ? 'text-[34px] lg:text-[44px]' : 'text-[26px] lg:text-[32px]'
+              }`}
+            >
               {formatearValorPromocion(promocion)}
             </span>
             <span className="text-[11px] uppercase tracking-[0.2em] text-[#a6a6a6]">de descuento</span>
@@ -568,35 +583,16 @@ export default function InicioCliente() {
             </span>
             <h2 className="lw-titulo-heavitas text-xl text-white lg:text-2xl">{promocion.titulo}</h2>
             {promocion.descripcion && <p className="text-sm leading-relaxed text-[#d9d9dc]">{promocion.descripcion}</p>}
-            <span className="text-xs text-[#a6a6a6]">Un uso por clienta.</span>
           </div>
 
           <div className="flex flex-col justify-center gap-2.5 px-5 pb-5 lg:items-end lg:px-7 lg:pb-0">
-            {cuponPromocion ? (
-              <>
-                <span
-                  role="status"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#2e3a4d] bg-[#141b26] px-[18px] py-3 text-sm font-semibold text-[var(--lw-gold)]"
-                >
-                  <Ticket className="h-4 w-4" />
-                  Guardado en Mis cupones
-                </span>
-                <span className="flex justify-between gap-4 text-[13px] sm:justify-end">
-                  <Link to="/recompensas?seccion=cupones" className="text-[#e8e8ea] hover:text-white">
-                    Ver mis cupones
-                  </Link>
-                  <Link to={destinoReservar} className="text-[var(--lw-gold)]">
-                    Reservar y usarlo →
-                  </Link>
-                </span>
-              </>
-            ) : (
+            {cuponPromocion ? null : (
               <>
                 <button
                   type="button"
                   onClick={reclamarCupon}
                   disabled={reclamando}
-                  className="flex items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-[var(--lw-gold)] px-6 py-3.5 text-sm font-semibold text-black disabled:opacity-60"
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-[#ff2d3f] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_18px_-2px_rgba(255,45,63,0.6)] transition-[filter] hover:brightness-110 disabled:opacity-60"
                 >
                   <Ticket className="h-[17px] w-[17px]" />
                   {reclamando ? 'Reclamando...' : 'Reclamar cupón'}
@@ -605,16 +601,28 @@ export default function InicioCliente() {
               </>
             )}
           </div>
+
+          {cuponPromocion && (
+            <div
+              role="status"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-black/65 backdrop-blur-[1px]"
+            >
+              <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#ff2d3f] bg-[#0b0b0c] px-5 py-2.5 text-sm font-semibold text-[#ff2d3f] shadow-[0_0_16px_-2px_rgba(255,45,63,0.55)]">
+                <Ticket className="h-4 w-4" />
+                Cupón canjeado
+              </span>
+            </div>
+          )}
         </section>
+        </div>
         </div>
       )}
 
       {/* 3. LO MÁS PEDIDO */}
       {topServicios.length > 0 && (
-        <section className="mx-auto mt-24 w-full max-w-[1700px] px-4 sm:px-8">
+        <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
           <div className="mb-7 flex items-end justify-between gap-3">
             <div className="flex flex-col gap-2.5">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Lo que más reservan este mes</span>
               <h2 className="lw-titulo-heavitas text-2xl text-white sm:text-[40px]">Lo más pedido</h2>
             </div>
             <Link to="/servicios" className="shrink-0 text-sm text-[#e8e8ea] hover:text-white">
@@ -638,7 +646,7 @@ export default function InicioCliente() {
           contenido esa animación se siente como una foto rota, no como
           un efecto. */}
       {galeria.length > 0 && (
-        <section className="mx-auto mt-24 w-full max-w-[1700px] px-4 sm:px-8">
+        <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
           <div className="mb-7 flex items-end justify-between gap-3">
             <div className="flex flex-col gap-2.5">
               <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Trabajos hechos en el salón</span>
@@ -702,10 +710,9 @@ export default function InicioCliente() {
 
       {/* 6. RESEÑAS — oculta con menos de 3 aprobadas. */}
       {resenas.length >= 3 && (
-        <section className="mx-auto mt-24 w-full max-w-[1700px] px-4 sm:px-8">
+        <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
           <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
             <div className="flex flex-col gap-3.5">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Opiniones verificadas</span>
               <h2 className="lw-titulo-heavitas text-[26px] leading-[1.1] text-white sm:text-[34px]">
                 Lo que dicen nuestras clientas
               </h2>
@@ -725,12 +732,20 @@ export default function InicioCliente() {
               </Link>
             </div>
             <div className="-mx-4 flex gap-3.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0">
-              {resenas.slice(0, 3).map((resena) => (
+              {resenasTarjetas.slice(0, 3).map((resena) => (
                 <figure
                   key={resena.id}
                   className="flex w-[280px] shrink-0 flex-col gap-4 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:w-auto"
                 >
-                  <Estrellas calificacion={resena.calificacion} className="h-[13px] w-[13px]" />
+                  <div className="flex items-center justify-between gap-3">
+                    <Estrellas calificacion={resena.calificacion} className="h-[13px] w-[13px]" />
+                    <span className="text-xs text-[#a6a6a6]">{formatoFechaResena.format(new Date(resena.creado_en))}</span>
+                  </div>
+                  {resena.servicio_nombre && (
+                    <span className="-mt-2 w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-[#e8e8ea]">
+                      {resena.servicio_nombre}
+                    </span>
+                  )}
                   <blockquote className="flex-1 text-[14.5px] leading-relaxed text-[#d9d9dc]">
                     {resena.comentario}
                   </blockquote>
@@ -749,7 +764,7 @@ export default function InicioCliente() {
 
       {/* 7. SOBRE NOSOTROS — un solo bloque (reemplaza las 3 secciones de
           video/filosofía anteriores). */}
-      <section className="mx-auto mt-24 grid w-full max-w-[1700px] items-center gap-10 px-4 sm:px-8 lg:grid-cols-2 lg:gap-14">
+      <section className="mx-auto mt-24 grid w-full max-w-[1700px] items-center gap-10 lw-gutter lg:grid-cols-2 lg:gap-14">
         <div className="flex h-[260px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#151517] text-white/25 lg:h-[480px]">
           <Users className="h-10 w-10" />
         </div>
@@ -783,7 +798,7 @@ export default function InicioCliente() {
 
       {/* 8. VISÍTANOS */}
       {hayVisitanos && (
-        <section className="mx-auto mt-24 grid w-full max-w-[1700px] gap-5 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <section className="mx-auto mt-24 grid w-full max-w-[1700px] gap-5 lw-gutter lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div className="flex flex-col gap-5 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-9">
             <h2 className="lw-titulo-heavitas text-[26px] text-white sm:text-[34px]">Visítanos</h2>
             <div className="flex flex-col gap-3.5 text-[14.5px] text-[#d9d9dc]">
