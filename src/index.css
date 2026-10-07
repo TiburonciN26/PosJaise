@@ -637,6 +637,14 @@
   }
 }
 
+/* Cambio de tema con View Transitions (ThemeContext.alternarTema): mismo
+ * fundido de 350 ms que el de arriba, pero sobre la captura de la página. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 350ms;
+  animation-timing-function: ease;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);

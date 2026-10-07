@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 
 const ThemeContext = createContext(null)
 
@@ -25,8 +26,16 @@ function temaInicial() {
 export function ThemeProvider({ children }) {
   const [tema, setTema] = useState(temaInicial)
   const temporizadorTransicionRef = useRef(null)
+  // Tema DESEADO: se actualiza en el mismo instante de cada activación (no
+  // cuando React termina de pintar), para que dos activaciones seguidas partan
+  // cada una del resultado de la anterior (QA-086). `pendientesRef` cuenta las
+  // View Transitions aún sin terminar; mientras haya alguna, el efecto no pisa
+  // el valor deseado con un estado intermedio.
+  const temaRef = useRef(tema)
+  const pendientesRef = useRef(0)
 
   useEffect(() => {
+    if (pendientesRef.current === 0) temaRef.current = tema
     document.documentElement.dataset.tema = tema
     document
       .querySelector('meta[name="theme-color"]')
@@ -38,6 +47,39 @@ export function ThemeProvider({ children }) {
   }, [])
 
   const alternarTema = useCallback(() => {
+    // Preferido: View Transitions (fundido de la página completa). Con el
+    // fundido por elemento de abajo, Chrome anima background-color en el
+    // compositor pero border-color/color en el hilo principal, que se atasca
+    // al recalcular estilos de toda la pantalla: durante ~100 ms los fondos ya
+    // van a medio camino y los bordes/textos siguen en el color viejo
+    // (bordes negros o blancos). Con View Transitions no hay animación por
+    // elemento: se cruza una captura del tema viejo con el nuevo ya aplicado.
+    if (
+      typeof document.startViewTransition === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+    ) {
+      const siguiente = temaRef.current === 'oscuro' ? 'claro' : 'oscuro'
+      temaRef.current = siguiente
+      pendientesRef.current += 1
+      const transicion = document.startViewTransition(() => {
+        localStorage.setItem(CLAVE_STORAGE, siguiente)
+        document.documentElement.dataset.tema = siguiente
+        flushSync(() => setTema(siguiente))
+      })
+      // Una activación rápida salta la transición anterior (el navegador la
+      // rechaza con «Transition was skipped»): el callback igual corre y el
+      // tema final es el último pedido. Los rechazos se absorben para no
+      // dejar promesas sin manejar.
+      transicion.ready.catch(() => {})
+      transicion.updateCallbackDone.catch(() => {})
+      transicion.finished
+        .catch(() => {})
+        .finally(() => {
+          pendientesRef.current -= 1
+        })
+      return
+    }
+
     // Fundido suave al cambiar de tema: se agrega .cambiando-tema al
     // <html> AHORA, de forma síncrona en el handler, para que ya esté
     // pintada (con los colores viejos + la transición activa) cuando el
@@ -57,6 +99,7 @@ export function ThemeProvider({ children }) {
       }, 500)
     }
 
+    temaRef.current = temaRef.current === 'oscuro' ? 'claro' : 'oscuro'
     setTema((anterior) => {
       const siguiente = anterior === 'oscuro' ? 'claro' : 'oscuro'
       localStorage.setItem(CLAVE_STORAGE, siguiente)
