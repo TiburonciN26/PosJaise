@@ -39,9 +39,16 @@ describe('QA-064 · nivel visual = nivel de negocio', () => {
     assert.equal(nivelDeCupon({ origen: 'PROMOCION', nivel_minimo: 'BASICO', valor: 5 }).chispas, 'roja');
   });
 
-  test('un cupón sin nivel (filas anteriores o lectura incompleta) cae en Plata: el mismo nivel que no restringe el canje', () => {
-    assert.equal(nivelDeCupon({ origen: 'FIDELIZACION', valor: 20, tipo_descuento: 'PORCENTAJE' }).nombre, 'Plata');
-    assert.equal(nivelDeCupon({ origen: 'REFERIDO_BIENVENIDA', nivel_minimo: 'XYZ', valor: 50 }).nombre, 'Plata');
+  test('bienvenida, referido y fidelización son «Verde» (fuera de la escala), con cualquier valor', () => {
+    for (const origen of ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION']) {
+      for (const valor of [1, 50]) assert.equal(nivelDeCupon({ origen, nivel_minimo: 'BASICO', valor, tipo_descuento: 'PORCENTAJE' }).nombre, 'Verde');
+    }
+    assert.equal(nivelDeCupon({ origen: 'FIDELIZACION', valor: 20 }).chispas, 'verde');
+  });
+
+  test('un premio de recompensa sin nivel legible cae en Plata: el mismo nivel que no restringe el canje', () => {
+    assert.equal(nivelDeCupon({ origen: 'RECOMPENSA_MONEDAS', nivel_minimo: 'XYZ', valor: 50 }).nombre, 'Plata');
+    assert.equal(nivelDeCupon({ origen: 'RECOMPENSA_SELLOS', valor: 5 }).nombre, 'Plata');
   });
 
   test('el premio del catálogo conserva su nivel aunque cueste mucho o poco, o cambie el costo por nivel de la clienta', () => {

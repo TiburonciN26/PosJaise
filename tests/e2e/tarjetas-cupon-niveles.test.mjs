@@ -30,7 +30,7 @@ const cupon = (extra) => ({
   codigo: 'TEST01', origen: 'RECOMPENSA_MONEDAS', nivel_minimo: 'BASICO', valor: 5, tipo_descuento: 'MONTO_FIJO',
   estado: 'DISPONIBLE', creado_en: '2026-10-01T12:00:00Z', ...extra,
 });
-const nivelesEn = (c) => renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: c })).match(/cupon-n-(plata|oro|diamante|rubi)\b/g);
+const nivelesEn = (c) => renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: c })).match(/cupon-n-(plata|oro|diamante|rubi|verde)\b/g);
 
 describe('QA-064 · la tarjeta de cupón usa el nivel de negocio, no el valor del descuento', () => {
   const ESPERADO = { BASICO: 'cupon-n-plata', PREMIUM: 'cupon-n-oro', VIP: 'cupon-n-diamante' };
@@ -53,10 +53,10 @@ describe('QA-064 · la tarjeta de cupón usa el nivel de negocio, no el valor de
     }
   });
 
-  test('bienvenida, referido y fidelización: sin nivel propio (BASICO) se ven Plata aunque su valor sea alto', () => {
+  test('bienvenida, referido y fidelización: acabado VERDE propio, con cualquier valor y nivel', () => {
     for (const origen of ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION']) {
-      assert.deepEqual(nivelesEn(cupon({ origen, valor: 50, tipo_descuento: 'PORCENTAJE' })), ['cupon-n-plata'], origen);
-      assert.deepEqual(nivelesEn(cupon({ origen, valor: 100 })), ['cupon-n-plata'], origen);
+      assert.deepEqual(nivelesEn(cupon({ origen, valor: 50, tipo_descuento: 'PORCENTAJE' })), ['cupon-n-verde'], origen);
+      assert.deepEqual(nivelesEn(cupon({ origen, valor: 1 })), ['cupon-n-verde'], origen);
     }
   });
 
@@ -72,3 +72,59 @@ describe('QA-064 · la tarjeta de cupón usa el nivel de negocio, no el valor de
     }
   });
 });
+
+// QA-078 — la tarjeta presenta la disponibilidad EFECTIVA (incluye el vencimiento) y no ofrece acciones de uso a un cupón vencido.
+describe('QA-078 · la tarjeta de cupón y el vencimiento', () => {
+  const html = (c, acciones = true) =>
+    renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: c, onMostrarEnCaja: acciones ? () => {} : undefined }));
+  const VENCIDO = '2020-01-01T05:00:00Z';
+  const FUTURO = '2099-01-01T05:00:00Z';
+
+  test('vigente: «Muéstralo en caja» y la acción «Mostrar en caja»', () => {
+    const h = html(cupon({ vigente_hasta: FUTURO, vencido: false }));
+    assert.match(h, /Muéstralo en caja/);
+    assert.match(h, /Mostrar en caja/);
+    assert.doesNotMatch(h, /Vencido/);
+  });
+
+  test('vencido sin usar: dice «Vencido», conserva nivel y se atenúa, y NO ofrece «Mostrar en caja»', () => {
+    for (const [nivel, clase] of [['BASICO', 'cupon-n-plata'], ['PREMIUM', 'cupon-n-oro'], ['VIP', 'cupon-n-diamante']]) {
+      const h = html(cupon({ nivel_minimo: nivel, vigente_hasta: VENCIDO, vencido: true }));
+      assert.match(h, />Vencido</);
+      assert.match(h, new RegExp(clase));
+      assert.match(h, /opacity-50/);
+      assert.doesNotMatch(h, /Mostrar en caja|Muéstralo en caja/);
+    }
+    for (const origen of ['PROMOCION', 'REFERIDO_BIENVENIDA', 'FIDELIZACION']) {
+      const h = html(cupon({ origen, vigente_hasta: VENCIDO, vencido: true }));
+      assert.match(h, /cupon-n-(rubi|verde)/);
+      assert.doesNotMatch(h, /Mostrar en caja/);
+    }
+  });
+
+  test('vencido solo por fecha (sin el indicador del servidor): también se bloquea', () => {
+    const h = html(cupon({ vigente_hasta: VENCIDO }));
+    assert.match(h, />Vencido</);
+    assert.doesNotMatch(h, /Mostrar en caja/);
+  });
+
+  test('sin vencimiento legítimo (null): sigue utilizable', () => {
+    const h = html(cupon({ vigente_hasta: null, vencido: false }));
+    assert.match(h, /Mostrar en caja/);
+    assert.doesNotMatch(h, /Vencido/);
+  });
+
+  test('vigencia no consultada: no se ofrece como utilizable ni se llama «vencido»', () => {
+    const h = html(cupon({}));
+    assert.doesNotMatch(h, /Mostrar en caja/);
+    assert.match(h, /No disponible ahora/);
+    assert.doesNotMatch(h, />Vencido</);
+  });
+
+  test('utilizado y anulado conservan sus estados, aunque tengan fecha vencida', () => {
+    assert.match(html(cupon({ estado: 'CANJEADO', vigente_hasta: VENCIDO, vencido: false })), /Ya canjeado/);
+    assert.match(html(cupon({ estado: 'ANULADO', vigente_hasta: VENCIDO, vencido: false })), /Anulado/);
+    assert.doesNotMatch(html(cupon({ estado: 'CANJEADO', vigente_hasta: VENCIDO })), />Vencido</);
+  });
+});
+
