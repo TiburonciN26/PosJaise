@@ -9,6 +9,7 @@ import { test, expect } from './fixtures.mjs';
 import { login, logout } from './helpers.mjs';
 import { isolatedClient, qaContext } from './phase2-helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
+import { comprobarCanjeBloqueadoSinSesion } from './catalogo-publico-botones.mjs';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -250,15 +251,17 @@ test('Catálogo público: sin sesión se ve lo publicado, canje bloqueado y sin 
     const u = new URL(r.url());
     if (u.origin === 'http://127.0.0.1:54321') consultas.push(u.pathname);
   });
+  const respuestaCatalogo = page.waitForResponse((r) => r.url().endsWith('/rpc/catalogo_recompensas_publico') && r.ok());
   await page.goto('/recompensas?seccion=canje');
+  const catalogo = await respuestaCatalogo;
   await expect(page.getByText(premioMon)).toBeVisible();
   await expect(page.getByText(/Tienes .* disponibles/)).toHaveCount(0);
   const boton = await abrirPremio(page, premioMon, premioMonId);
   await expect(boton).toBeDisabled();
   await expect(detalleDe(page, premioMonId).getByText('Inicia sesión para canjear')).toBeVisible();
-  // También el distractor (otro premio) está bloqueado: ningún botón de la página permite canjear sin sesión.
-  const todos = page.getByRole('button', { name: 'Obtener cupón', exact: true });
-  for (const b of await todos.all()) await expect(b).toBeDisabled();
+  // QA-077: ningún botón de la página permite canjear sin sesión. Se comprueba CONJUNTAMENTE (una lectura del DOM, no una aserción por
+  // botón) y solo con la carga completa: el número de botones debe igualar los premios de MONEDAS de la consulta pública.
+  await comprobarCanjeBloqueadoSinSesion(page, expect, catalogo);
   expect(consultas.filter((p) => /\/rpc\/(mis_|mi_|canjear)/.test(p))).toEqual([]);
   expect(consultas.some((p) => p.endsWith('/rpc/catalogo_recompensas_publico'))).toBe(true);
 });
