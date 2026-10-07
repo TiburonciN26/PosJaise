@@ -4,7 +4,7 @@ import TarjetaCupon from '../../../components/TarjetaCupon.jsx'
 import { useCuponesNuevos } from '../../../hooks/useCuponesNuevos.js'
 import { useCerrarConEscape } from '../../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../../hooks/useModalA11y.js'
-import { ETIQUETAS_ORIGEN_CUPON, formatearValorCupon } from '../../../lib/cupones.js'
+import { ETIQUETAS_ORIGEN_CUPON, estadoEfectivoCupon, formatearValorCupon } from '../../../lib/cupones.js'
 import { formatearSoles } from '../../../lib/moneda.js'
 import { AvisoError, Encabezado, Filtro, Pildora } from './ui.jsx'
 import { REGLA_CUPONES, REGLA_PROTECCION, fechaLima } from './lib.js'
@@ -106,8 +106,9 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
   const visibles = useMemo(
     () => {
       if (filtro === 'todos') return cupones
-      if (filtro === 'VENCIDO') return cupones.filter((c) => c.vencido)
-      if (filtro === 'DISPONIBLE') return cupones.filter((c) => c.estado === 'DISPONIBLE' && !c.vencido)
+      // QA-078: la misma disponibilidad efectiva que muestra la tarjeta (incluye el vencimiento).
+      if (filtro === 'VENCIDO') return cupones.filter((c) => estadoEfectivoCupon(c).estado === 'VENCIDO')
+      if (filtro === 'DISPONIBLE') return cupones.filter((c) => estadoEfectivoCupon(c).utilizable)
       return cupones.filter((c) => c.estado === filtro)
     },
     [cupones, filtro],

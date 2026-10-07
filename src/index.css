@@ -1702,6 +1702,10 @@ input[type='search']::-webkit-search-decoration {
   pointer-events: none;
 }
 
+.cupon-chispa.cupon-chispa-roja {
+  --cupon-oro: #ff4d5e;
+}
+
 /* La etiqueta "Nuevo" se calcula en JS (useCuponesNuevos.js) — se
    muestra una sola vez, la primera vez que el cliente ve ese cupón. */
 .cupon-etiqueta-nueva {
@@ -2717,6 +2721,128 @@ input[type='search']::-webkit-search-decoration {
   .landing-web .sacA,
   .landing-web .sacB {
     animation: none;
+  }
+}
+
+/* ===========================================================
+   Cupones por nivel — mismo acabado metálico que las tarjetas de puntos
+   (lib/nivelesPuntos.js, referencia "Niveles de Tarjeta Rewards"):
+   Plata (el más básico) < Oro < Diamante, más "Especial" (rubí) para los
+   cupones de ofertas. Igual en tema claro y oscuro: es una pieza
+   metálica con su propia tinta, no depende del fondo de la página.
+   =========================================================== */
+.cupon-metal {
+  background: var(--cm-g);
+  color: var(--cm-ink);
+  box-shadow:
+    0 0 26px -6px var(--cm-glow),
+    inset 0 0 0 1px var(--cm-borde),
+    inset 0 -6px 18px rgba(0, 0, 0, 0.16);
+}
+/* Rayado fino (sin puntos: cubrían todo el cupón) */
+.cupon-metal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 4px);
+  -webkit-mask-image: linear-gradient(115deg, transparent 30%, #000 80%);
+  mask-image: linear-gradient(115deg, transparent 30%, #000 80%);
+  pointer-events: none;
+}
+/* Iridiscencia (solo Diamante y Rubí) */
+.cupon-metal::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: -45%;
+  width: 30%;
+  background: linear-gradient(100deg, rgba(255, 250, 225, 0), rgba(255, 252, 235, 0.75) 50%, rgba(255, 250, 225, 0));
+  mix-blend-mode: overlay;
+  transform: rotate(18deg);
+  animation: cupon-sheen 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.cupon-metal.cupon-iri {
+  background-image:
+    linear-gradient(120deg, rgba(255, 179, 217, 0.22), rgba(179, 229, 255, 0.22) 25%, rgba(212, 255, 179, 0.18) 45%, rgba(255, 240, 179, 0.2) 60%, rgba(217, 179, 255, 0.22) 80%, rgba(179, 255, 246, 0.22)),
+    var(--cm-g);
+}
+.cupon-n-plata {
+  --cm-g: linear-gradient(135deg, #6f757b 0%, #b9bec4 18%, #f4f6f8 34%, #8e949a 50%, #dde1e5 66%, #747a80 84%, #c8cdd2 100%);
+  --cm-ink: #25292d;
+  --cm-inkhi: rgba(255, 255, 255, 0.6);
+  --cm-glow: rgba(210, 216, 222, 0.5);
+  --cm-borde: rgba(255, 255, 255, 0.5);
+}
+.cupon-n-oro {
+  --cm-g: linear-gradient(135deg, #6e5214 0%, #c9a24a 18%, #f6e1a1 34%, #b48a2e 50%, #e9c874 66%, #8c6a1c 84%, #d9b660 100%);
+  --cm-ink: #3b2a06;
+  --cm-inkhi: rgba(255, 240, 195, 0.55);
+  --cm-glow: rgba(233, 200, 116, 0.55);
+  --cm-borde: rgba(255, 240, 200, 0.5);
+}
+.cupon-n-diamante {
+  --cm-g: linear-gradient(135deg, #8ea6bd 0%, #cfe2f3 18%, #ffffff 34%, #a9c3da 50%, #eaf4ff 66%, #93adc6 84%, #d8e8f7 100%);
+  --cm-ink: #1b2a3b;
+  --cm-inkhi: rgba(255, 255, 255, 0.7);
+  --cm-glow: rgba(190, 225, 255, 0.7);
+  --cm-borde: rgba(255, 255, 255, 0.6);
+}
+.cupon-n-rubi {
+  --cm-g: linear-gradient(135deg, #3f0510 0%, #9a1226 18%, #ef6a7c 34%, #7a0b1c 50%, #cf2c44 66%, #4f0713 84%, #b51d35 100%);
+  --cm-ink: #ffe4e8;
+  --cm-inkhi: rgba(40, 0, 8, 0.55);
+  --cm-glow: rgba(230, 50, 80, 0.6);
+  --cm-borde: rgba(255, 190, 200, 0.4);
+}
+/* Verde (diamante verde de «Niveles de Tarjeta Rewards»): cupones de bienvenida, referido y fidelización. Fuera de la escala. */
+.cupon-n-verde {
+  --cm-g: linear-gradient(135deg, #03321f 0%, #0b7a4c 18%, #7ff0bd 34%, #06573a 50%, #22b77a 66%, #044029 84%, #16996a 100%);
+  --cm-ink: #e8fff4;
+  --cm-inkhi: rgba(0, 30, 18, 0.55);
+  --cm-glow: rgba(40, 220, 140, 0.45);
+  --cm-borde: rgba(180, 255, 215, 0.4);
+}
+
+/* Tinta: texto principal, subtextos e íconos toman el color del nivel.
+   Selectores con .landing-web para ganar a los overrides del tema claro. */
+.landing-web .cupon-metal .cupon-metal-texto,
+.landing-web .cupon-metal .cupon-metal-icono {
+  color: var(--cm-ink);
+  text-shadow: 0 1px 0 var(--cm-inkhi);
+}
+.landing-web .cupon-metal :is(.text-white, [class*='text-white/']) {
+  color: color-mix(in srgb, var(--cm-ink) 78%, transparent);
+  text-shadow: 0 1px 0 var(--cm-inkhi);
+}
+.landing-web .cupon-metal [class*='border-white/'] {
+  border-color: color-mix(in srgb, var(--cm-ink) 30%, transparent);
+}
+.landing-web .cupon-metal [class*='bg-black/'] {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+.landing-web :is(.cupon-n-rubi, .cupon-n-verde) [class*='bg-black/'] {
+  background-color: rgba(0, 0, 0, 0.22);
+}
+.landing-web .cupon-metal .cupon-metal-boton {
+  border-color: var(--cm-ink);
+  color: var(--cm-ink);
+}
+.landing-web .cupon-metal .cupon-metal-boton:hover {
+  background-color: color-mix(in srgb, var(--cm-ink) 14%, transparent);
+}
+.cupon-chispa.cupon-chispa-verde {
+  --cupon-oro: #7ff0bd;
+}
+.cupon-chispa.cupon-chispa-diamante {
+  --cupon-oro: #bfe3ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cupon-metal::after {
+    animation: none;
+    display: none;
   }
 }
 

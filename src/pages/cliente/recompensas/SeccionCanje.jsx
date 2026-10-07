@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { ArrowBigDown, Search } from 'lucide-react'
 import EnvolturaCupon from '../../../components/EnvolturaCupon.jsx'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
-import { estiloNivelCupon } from '../../../lib/cupones.js'
-import { CATEGORIAS, NOMBRES_NIVEL, ORDEN_NIVEL, RECOMPENSAS, nivelColorRecompensa } from './datos.js'
+import { estiloNivelDeNegocio } from '../../../lib/cupones.js'
+import { CATEGORIAS, NOMBRES_NIVEL, ORDEN_NIVEL, RECOMPENSAS } from './datos.js'
 import { AvisoError, AvisoProximamente, Cargando, Encabezado, Filtro, Pildora } from './ui.jsx'
 import { REGLA_CUPONES, REGLA_MONEDAS, REGLA_PROTECCION, formatearMonedas, premioAItem } from './lib.js'
 import ConfirmarCanje from './ConfirmarCanje.jsx'
@@ -37,7 +37,8 @@ function estadoRecompensa(r, { saldo, nivelIdx }) {
 }
 
 function Fila({ r, estado, abierta, onToggle, onObtener }) {
-  const nivel = estiloNivelCupon(nivelColorRecompensa(r.precio))
+  // QA-064: el color es el nivel de negocio del premio (el que decide quién lo canjea), no su costo.
+  const nivel = estiloNivelDeNegocio(ORDEN_NIVEL[r.nivelMin])
   const Icono = r.icono
   const apagada = r.estado === 'vencida' || r.estado === 'agotada'
   const etiqueta = r.real

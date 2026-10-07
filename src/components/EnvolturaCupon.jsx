@@ -8,10 +8,10 @@ const CHISPAS_ORO = [
   { bottom: '-8px', right: '70px', size: 10, delay: '-1.8s' },
 ]
 
-function Chispa({ estilo, size, delay }) {
+function Chispa({ estilo, size, delay, variante }) {
   return (
     <svg
-      className="cupon-chispa"
+      className={`cupon-chispa ${variante === 'roja' ? 'cupon-chispa-roja' : ''} ${variante === 'diamante' ? 'cupon-chispa-diamante' : ''} ${variante === 'verde' ? 'cupon-chispa-verde' : ''}`}
       style={{ ...estilo, width: size, height: size, animationDelay: delay }}
       viewBox="0 0 24 24"
       fill="currentColor"
@@ -22,7 +22,7 @@ function Chispa({ estilo, size, delay }) {
   )
 }
 
-// Envoltura visual de una tarjeta de cupón por nivel (Bronce/Plata/Oro,
+// Envoltura visual de una tarjeta de cupón por nivel (Plata/Oro/Diamante + Especial,
 // §7.35): la tarjeta con su acabado (`nivel.claseTarjeta`, ver
 // lib/cupones.js), la etiqueta "Nuevo" y las chispas de Oro. Se extrajo
 // de TarjetaCupon para que las filas de "Canjear puntos" (Recompensas)
@@ -35,7 +35,6 @@ function Chispa({ estilo, size, delay }) {
 // la tarjeta) las cortaría, igual que en la referencia HTML (ahí viven
 // como hermanas de `.card`, no adentro).
 export default function EnvolturaCupon({ nivel, apagada = false, esNuevo = false, children }) {
-  const esOro = nivel.nombre === 'Oro'
 
   return (
     <div className={`relative ${apagada ? 'opacity-50' : ''}`}>
@@ -45,17 +44,18 @@ export default function EnvolturaCupon({ nivel, apagada = false, esNuevo = false
         </span>
       )}
 
-      {esOro &&
+      {nivel.chispas &&
         CHISPAS_ORO.map((c, indice) => (
           <Chispa
             key={indice}
             estilo={{ position: 'absolute', top: c.top, left: c.left, right: c.right, bottom: c.bottom }}
             size={c.size}
             delay={c.delay}
+            variante={nivel.chispas}
           />
         ))}
 
-      <div className={`${nivel.claseTarjeta} rounded-none ${nivel.nombre === 'Bronce' ? 'bg-[#0d0c0b]' : ''}`}>
+      <div className={`${nivel.claseTarjeta} rounded-none`}>
         {children}
       </div>
     </div>

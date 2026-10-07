@@ -14,10 +14,6 @@ export const ETIQUETAS_ORIGEN_CUPON = {
   PROMOCION: 'Cupón de promoción',
 }
 
-// "Peso"/color del cupón según su valor — mismo espíritu que los niveles
-// de la tarjeta de puntos (§7.15): a más valor, un tratamiento más
-// "premium". Se calcula del valor real, no del origen, así que sigue
-// funcionando si el negocio cambia los montos desde un panel admin.
 const formatoFechaCupon = new Intl.DateTimeFormat('es-PE', {
   day: 'numeric',
   month: 'short',
@@ -30,56 +26,132 @@ export function formatearFechaCupon(fechaIso) {
   return formatoFechaCupon.format(new Date(fechaIso))
 }
 
-// `claseTarjeta`/`claseTexto`/`claseIcono` reemplazan las clases sueltas
-// que había antes (borde/fondo con Tailwind) — Plata y Oro ahora llevan
-// gradiente + brillo animado que Tailwind solo no puede armar, así que
-// esas dos viven en index.css (.cupon-plata/.cupon-oro/.cupon-texto-oro,
-// ver §7.35 en implementacionesWed.md) — Bronce se queda con Tailwind
-// puro (color plano, sin efectos) porque no lo necesita.
+// `claseTarjeta`/`claseTexto`/`claseIcono` apuntan al acabado metálico
+// de index.css (.cupon-metal + .cupon-n-<nivel>), el mismo de las
+// tarjetas de puntos. Los niveles se renombraron: lo que era Bronce es
+// ahora Plata, Plata pasó a Oro y Oro a Diamante (los umbrales no cambian).
 //
-// `tipoDescuento` (§7.58, cupones de Fidelización): un cupón de 20% y
-// uno de S/20 no son comparables en la misma escala — 20% de una
-// cuenta cara puede valer mucho más que S/20 fijos, y viceversa. Por
-// pedido del usuario, un cupón PORCENTAJE usa su propia escala de
-// umbrales (en puntos de %), no la de soles — mismos 3 escalones
-// (Bronce/Plata/Oro), mismo espíritu, números distintos.
-const UMBRALES_SOLES = { oro: 20, plata: 10 }
-const UMBRALES_PORCENTAJE = { oro: 20, plata: 10 }
-
+// El nivel visual NO se calcula por costo en monedas ni por valor del
+// descuento (QA-064): es el nivel de negocio del premio —`nivel_minimo`,
+// el mismo que decide quién puede canjearlo y que el cupón emitido
+// congela—, así catálogo, permiso y cupón siempre coinciden.
+// BASICO = Plata, PREMIUM = Oro, VIP = Diamante; los cupones de
+// promociones por fechas (origen PROMOCION) son «Especial», fuera de la
+// escala. Cada clienta puede canjear su nivel y los inferiores.
 const NIVELES_CUPON = {
+  // Acabado metálico igual al de las tarjetas de puntos (.cupon-metal en
+  // index.css, colores en .cupon-n-*): Plata es el más básico, luego Oro
+  // y Diamante el de mayor valor. `chispas` solo en los de arriba.
+  Diamante: {
+    nombre: 'Diamante',
+    claseTarjeta: 'cupon-tarjeta cupon-metal cupon-iri cupon-n-diamante',
+    claseTexto: 'cupon-metal-texto',
+    claseIcono: 'cupon-metal-icono',
+    claseBoton: 'cupon-metal-boton',
+    chispas: 'diamante',
+  },
   Oro: {
     nombre: 'Oro',
-    claseTarjeta: 'cupon-tarjeta cupon-oro',
-    claseTexto: 'cupon-texto-oro',
-    claseIcono: 'text-[var(--cupon-oro)]',
+    claseTarjeta: 'cupon-tarjeta cupon-metal cupon-n-oro',
+    claseTexto: 'cupon-metal-texto',
+    claseIcono: 'cupon-metal-icono',
+    claseBoton: 'cupon-metal-boton',
   },
   Plata: {
     nombre: 'Plata',
-    claseTarjeta: 'cupon-tarjeta cupon-plata',
-    claseTexto: 'text-[#e3e6ea]',
-    claseIcono: 'text-[#cfd4da]',
+    claseTarjeta: 'cupon-tarjeta cupon-metal cupon-n-plata',
+    claseTexto: 'cupon-metal-texto',
+    claseIcono: 'cupon-metal-icono',
+    claseBoton: 'cupon-metal-boton',
   },
-  Bronce: {
-    nombre: 'Bronce',
-    claseTarjeta: 'cupon-tarjeta border border-[#c8935a]/50 bg-[#c8935a]/10',
-    claseTexto: 'text-[#c8935a]',
-    claseIcono: 'text-[#c8935a]',
+  // Cupones de bienvenida, referido y fidelización: acabado verde (diamante verde de
+  // public/diseñosPropios), fuera de la escala Plata/Oro/Diamante.
+  Verde: {
+    nombre: 'Verde',
+    claseTarjeta: 'cupon-tarjeta cupon-metal cupon-iri cupon-n-verde',
+    claseTexto: 'cupon-metal-texto',
+    claseIcono: 'cupon-metal-icono',
+    claseBoton: 'cupon-metal-boton',
+    chispas: 'verde',
+  },
+  // Categoría ESPECIAL, fuera de la escala Plata/Oro/Diamante: la reciben
+  // los cupones de ofertas (origen PROMOCION) sin importar su valor — ver
+  // nivelDeCupon(). Acabado rubí (la tarjeta "Rubí élite" de la referencia).
+  Especial: {
+    nombre: 'Especial',
+    claseTarjeta: 'cupon-tarjeta cupon-metal cupon-iri cupon-n-rubi',
+    claseTexto: 'cupon-metal-texto',
+    claseIcono: 'cupon-metal-icono',
+    claseBoton: 'cupon-metal-boton',
+    chispas: 'roja',
   },
 }
 
-// Estilo de un nivel por su nombre — lo usan las filas de "Canjear
-// puntos" (Recompensas), que tienen el mismo acabado por nivel pero lo
-// eligen por el precio en puntos, no por el valor de un cupón.
-export function estiloNivelCupon(nombre) {
-  return NIVELES_CUPON[nombre] ?? NIVELES_CUPON.Bronce
+// Nombre visual de cada nivel de negocio (el mismo `nivel_minimo` del
+// catálogo, del cupón emitido y del permiso de canje).
+const ORIGENES_VERDES = new Set(['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION'])
+
+export const NOMBRE_VISUAL_NIVEL = { BASICO: 'Plata', PREMIUM: 'Oro', VIP: 'Diamante' }
+
+// Estilo visual del nivel de negocio `nivelMinimo` (BASICO | PREMIUM | VIP)
+// — lo usan las filas de «Canjear» (Recompensas) y las tarjetas de cupón.
+// Un valor desconocido o ausente cae en el nivel base: coincide con el
+// permiso (BASICO = sin restricción de nivel).
+export function estiloNivelDeNegocio(nivelMinimo) {
+  return NIVELES_CUPON[NOMBRE_VISUAL_NIVEL[nivelMinimo] ?? 'Plata']
 }
 
-export function nivelCupon(valor, tipoDescuento = 'MONTO_FIJO') {
-  const umbrales = tipoDescuento === 'PORCENTAJE' ? UMBRALES_PORCENTAJE : UMBRALES_SOLES
+// Nivel de un cupón concreto: los de oferta (PROMOCION) son siempre
+// «Especial»; el resto sigue el nivel mínimo congelado en el cupón.
+export function nivelDeCupon(cupon) {
+  if (cupon.origen === 'PROMOCION') return NIVELES_CUPON.Especial
+  if (ORIGENES_VERDES.has(cupon.origen)) return NIVELES_CUPON.Verde
+  return estiloNivelDeNegocio(cupon.nivel_minimo)
+}
 
-  if (valor >= umbrales.oro) return NIVELES_CUPON.Oro
-  if (valor >= umbrales.plata) return NIVELES_CUPON.Plata
-  return NIVELES_CUPON.Bronce
+// QA-078: disponibilidad EFECTIVA de un cupón, que incluye su vencimiento. El backend ya rechaza un cupón vencido; esto evita que la
+// interfaz lo presente como utilizable. `estado` solo dice DISPONIBLE/CANJEADO/ANULADO: un cupón DISPONIBLE con `vigente_hasta`
+// pasado (o con `vencido = true` de mis_cupones(), calculado con la hora del servidor) está VENCIDO. No es un estado persistido.
+//   · `vigente_hasta === null`  → sin vencimiento legítimo (cupones antiguos, bienvenida, etc.): se puede usar.
+//   · `vigente_hasta === undefined` y sin `vencido` → el campo NO se consultó: estado DESCONOCIDO, nunca utilizable.
+//   · fecha ilegible → DESCONOCIDO.
+// Devuelve { estado: 'DISPONIBLE' | 'VENCIDO' | 'CANJEADO' | 'ANULADO' | 'DESCONOCIDO', utilizable }.
+export function estadoEfectivoCupon(cupon, ahora = Date.now()) {
+  const estado = cupon?.estado
+  if (estado === 'CANJEADO' || estado === 'ANULADO') return { estado, utilizable: false }
+  if (estado !== 'DISPONIBLE') return { estado: 'DESCONOCIDO', utilizable: false }
+  if (cupon.vencido === true) return { estado: 'VENCIDO', utilizable: false }
+  if (cupon.vigente_hasta === null) return { estado: 'DISPONIBLE', utilizable: true }
+  if (cupon.vigente_hasta === undefined) {
+    // mis_cupones() informa `vencido` (false = vigente según el servidor); sin ninguno de los dos campos no se sabe.
+    return cupon.vencido === false ? { estado: 'DISPONIBLE', utilizable: true } : { estado: 'DESCONOCIDO', utilizable: false }
+  }
+  const limite = new Date(cupon.vigente_hasta).getTime()
+  if (Number.isNaN(limite)) return { estado: 'DESCONOCIDO', utilizable: false }
+  return limite <= ahora ? { estado: 'VENCIDO', utilizable: false } : { estado: 'DISPONIBLE', utilizable: true }
+}
+
+// QA-078 — Caja: interpreta la lectura de UN cupón por código (`select valor, tipo_descuento, estado, vigente_hasta, clientes!cliente_id(nombre)`)
+// y decide si se puede anunciar un descuento. Devuelve { preview, error }: o hay vista previa utilizable o hay un mensaje, nunca ambos.
+// Una lectura fallida o sin el campo de vigencia jamás produce vista previa (no se anuncia descuento ni se habilita el cobro). El
+// servidor (confirmar_venta) sigue siendo la autoridad: esto solo evita cobrar a ciegas.
+export function interpretarCuponCaja({ data, error }, ahora = Date.now()) {
+  if (error) return { preview: null, error: 'No se pudo verificar el cupón' }
+  if (!data) return { preview: null, error: 'Código no encontrado' }
+  if (data.estado !== 'DISPONIBLE') return { preview: null, error: 'Ese cupón ya fue usado' }
+  const efectivo = estadoEfectivoCupon(data, ahora)
+  if (!efectivo.utilizable) {
+    return {
+      preview: null,
+      error: efectivo.estado === 'VENCIDO'
+        ? `Este cupón venció el ${formatearFechaCupon(data.vigente_hasta)}`
+        : 'No se pudo comprobar la vigencia del cupón',
+    }
+  }
+  return {
+    preview: { valor: parseFloat(data.valor), tipoDescuento: data.tipo_descuento, clienteNombre: data.clientes?.nombre },
+    error: '',
+  }
 }
 
 // Cómo se lee el valor de un cupón — nunca "formatearSoles" a secas,

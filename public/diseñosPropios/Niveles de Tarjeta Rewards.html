@@ -1,0 +1,128 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Niveles de Tarjeta Rewards</title>
+<style>
+html,body{height:100%}
+html{color-scheme:dark;background:#050505}
+body{margin:0;background:#050505;
+--g:linear-gradient(135deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%);--gb:linear-gradient(225deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%);--ink:#3b2a06;--inkhi:rgba(255,240,195,.55);--glow:rgba(233,200,116,.18);--c1:#f7e2a4;--c2:#b8903a;--c3:#ecd08a;--cs:#5a410c;--stripe:linear-gradient(180deg,#2a1d04,#4a3509 50%,#2a1d04);--ui:233,200,116;--iri:0;overflow:hidden;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
+body.drag{cursor:grabbing}
+#stage{position:absolute;left:0;top:0;width:1160px;height:800px;transform-origin:0 0;font-family:"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{position:absolute;left:80px;top:85px;width:1000px;height:630px;perspective:2200px}
+.card{position:relative;width:1000px;height:630px;transform-style:preserve-3d}
+.face{position:absolute;inset:0;border-radius:44px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+background:var(--g);
+box-shadow:0 0 80px var(--glow),inset 0 0 0 2px rgba(255,240,200,.45),inset 0 -8px 30px rgba(60,40,5,.45)}
+.back{transform:rotateY(180deg);background:var(--gb)}
+.iri{position:absolute;inset:0;opacity:var(--iri);mix-blend-mode:soft-light;background:linear-gradient(120deg,#ffb3d9,#b3e5ff 25%,#d4ffb3 45%,#fff0b3 60%,#d9b3ff 80%,#b3fff6)}
+.star g,.bstar g{stroke:var(--ink)}
+.edge{position:absolute;inset:0;border-radius:44px;background:#8c6a1c}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(70,48,8,.22) 1.6px,transparent 2px);background-size:22px 22px;mask-image:linear-gradient(115deg,transparent 30%,#000 75%);-webkit-mask-image:linear-gradient(115deg,transparent 30%,#000 75%)}
+.lines{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,245,210,.05) 0 1px,transparent 1px 4px)}
+.sheen{position:absolute;top:-40%;left:-60%;width:60%;height:180%;background:linear-gradient(100deg,rgba(255,250,225,0) 0%,rgba(255,252,235,.95) 50%,rgba(255,250,225,0) 100%);transform:rotate(18deg);mix-blend-mode:overlay}
+.glare{position:absolute;inset:0;mix-blend-mode:soft-light}
+.ink{color:var(--ink);text-shadow:0 1px 0 var(--inkhi),0 -1px 0 rgba(60,40,5,.35)}
+.brand{position:absolute;left:64px;top:56px;font-size:40px;font-weight:800;letter-spacing:10px}
+.tier{position:absolute;right:64px;top:60px;font-size:24px;font-weight:700;letter-spacing:6px;padding:10px 22px;border:2px solid currentColor;opacity:.8;border-radius:999px}
+.chip{position:absolute;left:64px;top:170px}
+.lbl{position:absolute;left:64px;top:300px;font-size:24px;letter-spacing:6px;font-weight:600;opacity:.85}
+.pts{position:absolute;left:60px;top:334px;font-size:132px;font-weight:800;letter-spacing:2px;line-height:1;font-variant-numeric:tabular-nums}
+.pts span{font-size:40px;letter-spacing:6px;margin-left:14px}
+.bar{position:absolute;left:64px;top:492px;width:560px;height:10px;border-radius:10px;background:rgba(59,42,6,.25);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:10px;background:var(--ink)}
+.num{position:absolute;left:64px;bottom:40px;font-size:28px;letter-spacing:6px;font-weight:600}
+.name{position:absolute;right:64px;bottom:40px;font-size:26px;letter-spacing:4px;font-weight:700;text-align:right}
+.star{position:absolute;right:70px;top:220px;width:200px;height:200px;opacity:.55}
+.stripe{position:absolute;left:0;right:0;top:70px;height:110px;background:var(--stripe)}
+.sig{position:absolute;left:64px;top:220px;width:560px;height:80px;border-radius:10px;background:repeating-linear-gradient(135deg,rgba(255,244,210,.55) 0 8px,rgba(255,244,210,.35) 8px 16px);border:2px solid rgba(59,42,6,.4)}
+.cvv{position:absolute;left:650px;top:232px;font-size:28px;font-weight:700;letter-spacing:4px}
+.info{position:absolute;left:64px;top:340px;width:600px;font-size:24px;line-height:1.45;font-weight:600}
+.bstar{position:absolute;right:64px;bottom:56px;width:170px;height:170px;opacity:.6}
+.bbrand{position:absolute;left:64px;bottom:48px;font-size:30px;font-weight:800;letter-spacing:8px}
+.hint{position:fixed;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom,0px));text-align:center;font:600 13px/1.4 "Segoe UI",Helvetica,Arial,sans-serif;letter-spacing:.3em;color:rgba(var(--ui),.55);transition:opacity .6s;pointer-events:none}
+.tabs{position:fixed;top:calc(20px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;gap:6px;padding:6px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(var(--ui),.25);z-index:5;font:600 13px/1 "Segoe UI",Helvetica,Arial,sans-serif}
+.tabs button{all:unset;cursor:pointer;padding:10px 16px;border-radius:999px;letter-spacing:.18em;color:rgba(255,255,255,.55);white-space:nowrap}
+.tabs button[aria-pressed=true]{background:rgba(var(--ui),.18);color:rgb(var(--ui))}
+.tabs button:focus-visible{outline:2px solid rgb(var(--ui));outline-offset:2px}
+.card.pop{animation:pop .7s ease}@keyframes pop{0%{filter:brightness(1)}30%{filter:brightness(1.6)}100%{filter:brightness(1)}}
+</style></head>
+<body>
+<nav class="tabs" aria-label="Nivel de tarjeta"><button type="button" data-t="bronze" aria-pressed="false">BRONCE</button><button type="button" data-t="silver" aria-pressed="false">PLATA</button><button type="button" data-t="diamond" aria-pressed="false">DIAMANTE</button><button type="button" data-t="gold" aria-pressed="true">ORO VIP</button><button type="button" data-t="ruby" aria-pressed="false">RUB&Iacute; &Eacute;LITE</button><button type="button" data-t="green" aria-pressed="false">DIAMANTE VERDE</button></nav>
+<div id="stage">
+<div class="wrap"><div class="card" id="card">
+<div class="face front">
+<div class="lines"></div><div class="dots"></div>
+<svg class="star" viewBox="0 0 100 100"><g fill="none" stroke="#3b2a06" stroke-width="1.4"><circle cx="50" cy="50" r="46"/><circle cx="50" cy="50" r="36"/><path d="M50 14 L58 42 L86 50 L58 58 L50 86 L42 58 L14 50 L42 42 Z" fill="rgba(59,42,6,.18)"/></g></svg>
+<div class="ink brand" id="brand">GOLD&nbsp;REWARDS</div>
+<div class="ink tier" id="tier">VIP</div>
+<svg class="chip" width="110" height="84" viewBox="0 0 110 84"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--c1)"/><stop offset=".5" style="stop-color:var(--c2)"/><stop offset="1" style="stop-color:var(--c3)"/></linearGradient></defs><rect x="1" y="1" width="108" height="82" rx="14" fill="url(#g)" style="stroke:var(--cs)" stroke-width="2"/><g style="stroke:var(--cs)" stroke-width="2" fill="none"><path d="M1 30 H36 M1 54 H36 M74 30 H109 M74 54 H109 M36 1 V83 M74 1 V83"/><rect x="36" y="22" width="38" height="40" rx="6"/></g></svg>
+<div class="ink lbl">PUNTOS ACUMULADOS</div>
+<div class="ink pts"><b id="n">0</b><span>PTS</span></div>
+<div class="bar"><i id="bar"></i></div>
+<div class="ink num">&#8226;&#8226;&#8226;&#8226;&nbsp;&nbsp;&#8226;&#8226;&#8226;&#8226;&nbsp;&nbsp;2026</div>
+<div class="ink name">NOMBRE APELLIDO</div>
+<div class="iri"></div><div class="glare"></div><div class="sheen"></div>
+</div>
+<div class="face back">
+<div class="lines"></div><div class="dots"></div>
+<div class="stripe"></div>
+<div class="sig"></div>
+<div class="ink cvv">&#8226;&#8226;&#8226;</div>
+<div class="ink info">Presenta esta tarjeta en cada compra para sumar puntos y canjearlos por beneficios exclusivos.</div>
+<svg class="bstar" viewBox="0 0 100 100"><g fill="none" stroke="#3b2a06" stroke-width="1.4"><circle cx="50" cy="50" r="46"/><path d="M50 14 L58 42 L86 50 L58 58 L50 86 L42 58 L14 50 L42 42 Z" fill="rgba(59,42,6,.18)"/></g></svg>
+<div class="ink bbrand" id="bbrand">GOLD&nbsp;REWARDS</div>
+<div class="iri"></div><div class="glare"></div><div class="sheen"></div>
+</div>
+</div></div>
+</div>
+<div class="hint" id="hint">ARRASTRA PARA GIRAR 360&#176;</div>
+<script>
+var st=document.getElementById('stage'),S=1;
+function fit(){var W=document.documentElement.clientWidth,H=document.documentElement.clientHeight;S=Math.min(W/1160,H/800);st.style.transform='translate('+((W-1160*S)/2)+'px,'+((H-800*S)/2)+'px) scale('+S+')';}
+addEventListener('resize',fit);fit();
+var card=document.getElementById('card'),hint=document.getElementById('hint'),nEl=document.getElementById('n'),bar=document.getElementById('bar');
+var sheens=document.querySelectorAll('.sheen'),glares=document.querySelectorAll('.glare');
+var TARGET=12480,t0=performance.now(),c0=t0,last=t0;
+var yaw=0,pitch=0,ty=0,tp=0,drag=false,px=0,py=0,w=1;
+var SENS=.16,FOLLOW=.07,RETURN=.018;
+function fmt(n){return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+addEventListener('pointerdown',function(e){if(e.target.closest('.tabs'))return;drag=true;px=e.clientX;py=e.clientY;document.body.classList.add('drag');hint.style.opacity=0;});
+addEventListener('pointermove',function(e){if(!drag)return;var dx=(e.clientX-px)/S,dy=(e.clientY-py)/S;px=e.clientX;py=e.clientY;ty+=dx*SENS;tp-=dy*SENS;});
+function up(){if(!drag)return;drag=false;document.body.classList.remove('drag');
+ var sy=360*Math.round(ty/360),sp=360*Math.round(tp/360);ty-=sy;yaw-=sy;tp-=sp;pitch-=sp;}
+addEventListener('pointerup',up);addEventListener('pointercancel',up);addEventListener('pointerleave',up);addEventListener('blur',up);
+
+var T={
+bronze:{name:'BRONZE',tier:'INICIAL',pts:350,vars:{'--g':'linear-gradient(135deg,#4f2a10 0%,#9c5f32 18%,#e9b48a 34%,#76441f 50%,#cd9064 66%,#58300f 84%,#b47548 100%)','--gb':'linear-gradient(225deg,#4f2a10 0%,#9c5f32 18%,#e9b48a 34%,#76441f 50%,#cd9064 66%,#58300f 84%,#b47548 100%)','--ink':'#2a1405','--inkhi':'rgba(255,220,190,.5)','--glow':'rgba(205,140,90,.18)','--c1':'#f2c7a3','--c2':'#8f5529','--c3':'#dca47a','--cs':'#3d1f08','--stripe':'linear-gradient(180deg,#1e0f04,#43240c 50%,#1e0f04)','--ui':'214,150,102','--iri':'0'}},
+silver:{name:'SILVER',tier:'B&Aacute;SICO',pts:1250,vars:{'--g':'linear-gradient(135deg,#6f757b 0%,#b9bec4 18%,#f4f6f8 34%,#8e949a 50%,#dde1e5 66%,#747a80 84%,#c8cdd2 100%)','--gb':'linear-gradient(225deg,#6f757b 0%,#b9bec4 18%,#f4f6f8 34%,#8e949a 50%,#dde1e5 66%,#747a80 84%,#c8cdd2 100%)','--ink':'#25292d','--inkhi':'rgba(255,255,255,.6)','--glow':'rgba(210,216,222,.16)','--c1':'#f2f4f6','--c2':'#8f959b','--c3':'#dce0e4','--cs':'#41464b','--stripe':'linear-gradient(180deg,#1c1f22,#3a3f44 50%,#1c1f22)','--ui':'205,210,216','--iri':'0'}},
+diamond:{name:'DIAMOND',tier:'PREMIUM',pts:5480,vars:{'--g':'linear-gradient(135deg,#8ea6bd 0%,#cfe2f3 18%,#ffffff 34%,#a9c3da 50%,#eaf4ff 66%,#93adc6 84%,#d8e8f7 100%)','--gb':'linear-gradient(225deg,#8ea6bd 0%,#cfe2f3 18%,#ffffff 34%,#a9c3da 50%,#eaf4ff 66%,#93adc6 84%,#d8e8f7 100%)','--ink':'#1b2a3b','--inkhi':'rgba(255,255,255,.7)','--glow':'rgba(190,225,255,.22)','--c1':'#ffffff','--c2':'#a3bed6','--c3':'#e3f0fc','--cs':'#3b5570','--stripe':'linear-gradient(180deg,#132030,#2c4560 50%,#132030)','--ui':'190,222,250','--iri':'.55'}},
+gold:{name:'GOLD',tier:'VIP',pts:12480,vars:{'--g':'linear-gradient(135deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%)','--gb':'linear-gradient(225deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%)','--ink':'#3b2a06','--inkhi':'rgba(255,240,195,.55)','--glow':'rgba(233,200,116,.18)','--c1':'#f7e2a4','--c2':'#b8903a','--c3':'#ecd08a','--cs':'#5a410c','--stripe':'linear-gradient(180deg,#2a1d04,#4a3509 50%,#2a1d04)','--ui':'233,200,116','--iri':'0'}},
+ruby:{name:'RUBY',tier:'&Eacute;LITE',pts:25800,vars:{'--g':'linear-gradient(135deg,#3f0510 0%,#9a1226 18%,#ef6a7c 34%,#7a0b1c 50%,#cf2c44 66%,#4f0713 84%,#b51d35 100%)','--gb':'linear-gradient(225deg,#3f0510 0%,#9a1226 18%,#ef6a7c 34%,#7a0b1c 50%,#cf2c44 66%,#4f0713 84%,#b51d35 100%)','--ink':'#ffe4e8','--inkhi':'rgba(40,0,8,.55)','--glow':'rgba(230,50,80,.28)','--c1':'#ffd6dc','--c2':'#a3283a','--c3':'#f3a5b0','--cs':'#2e030a','--stripe':'linear-gradient(180deg,#140104,#3a0610 50%,#140104)','--ui':'240,96,118','--iri':'.18'}},
+green:{name:'GREEN&nbsp;DIAMOND',brand:'GREEN&nbsp;DIAMOND',tier:'EXCLUSIVO',pts:50000,vars:{'--g':'linear-gradient(135deg,#03321f 0%,#0b7a4c 18%,#7ff0bd 34%,#06573a 50%,#22b77a 66%,#044029 84%,#16996a 100%)','--gb':'linear-gradient(225deg,#03321f 0%,#0b7a4c 18%,#7ff0bd 34%,#06573a 50%,#22b77a 66%,#044029 84%,#16996a 100%)','--ink':'#e8fff4','--inkhi':'rgba(0,30,18,.55)','--glow':'rgba(40,220,140,.26)','--c1':'#d4ffe9','--c2':'#1c8a5c','--c3':'#9cefc6','--cs':'#022316','--stripe':'linear-gradient(180deg,#011209,#05341f 50%,#011209)','--ui':'90,230,165','--iri':'.4'}}};
+var btns=document.querySelectorAll('.tabs button');
+function setTier(k,anim){var d=T[k];for(var v in d.vars)document.body.style.setProperty(v,d.vars[v]);
+var bn=d.brand||d.name+'&nbsp;REWARDS';document.getElementById('brand').innerHTML=bn;document.getElementById('bbrand').innerHTML=bn;document.getElementById('tier').innerHTML=d.tier;
+TARGET=d.pts;c0=performance.now();
+for(var i=0;i<btns.length;i++)btns[i].setAttribute('aria-pressed',btns[i].dataset.t===k);
+if(anim){card.classList.remove('pop');void card.offsetWidth;card.classList.add('pop');}
+try{localStorage.setItem('tier',k)}catch(e){}}
+for(var i=0;i<btns.length;i++)btns[i].addEventListener('click',function(){setTier(this.dataset.t,true)});
+var saved='bronze';try{saved=localStorage.getItem('tier')||'bronze'}catch(e){}
+setTier(T[saved]?saved:'bronze',false);
+function loop(now){
+var t=(now-t0)/1000;
+if(!drag){ty+=(0-ty)*RETURN;tp+=(0-tp)*RETURN;w+=(1-w)*.02;}else{w+=(0-w)*.08;}
+yaw+=(ty-yaw)*FOLLOW;pitch+=(tp-pitch)*FOLLOW;
+var fy=Math.sin(t*1.1)*22,frx=Math.sin(t*.8)*6+4,fry=Math.cos(t*.6)*11,frz=Math.sin(t*.5)*1.5;
+var rx=pitch+frx*w,ry=yaw+fry*w;
+card.style.transform='translateY('+fy+'px) rotateX('+rx+'deg) rotateY('+ry+'deg) rotateZ('+(frz*w)+'deg)';
+var k=Math.sin(ry*Math.PI/180);
+var g='radial-gradient(circle at '+(50+k*40)+'% '+(40+rx*2)+'%,rgba(255,248,220,.7),rgba(255,248,220,0) 45%)';
+for(var i=0;i<glares.length;i++)glares[i].style.background=g;
+var sp=((t*.28)%1.6)-0.3+k*.15;for(i=0;i<sheens.length;i++)sheens[i].style.left=(sp*160-60)+'%';
+var p=Math.min(1,(now-c0)/2600),e=1-Math.pow(1-p,3);
+nEl.textContent=fmt(Math.round(TARGET*e));bar.style.width=(e*83)+'%';
+requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+</script>
+
+</body></html>

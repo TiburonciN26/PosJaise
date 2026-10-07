@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { NIVELES_PUNTOS } from '../lib/nivelesPuntos.js'
 
-// Superficie metálica de un nivel (Básico plata / Premium azul hielo /
-// VIP dorado) — la misma paleta (--tp-*) y las mismas capas (.tp-iri,
+// Superficie metálica de un nivel (Básico plata / Premium dorado /
+// VIP diamante azul hielo) — la misma paleta (--tp-*) y las mismas capas (.tp-iri,
 // .tp-glare, .tp-sheen) que la tarjeta de puntos (TarjetaPuntos.jsx), sin
 // su física 3D: acá el brillo y el destello se desplazan solos con el
 // mismo ritmo que el idle de la tarjeta (`despl` es la misma fórmula).

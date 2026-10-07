@@ -187,12 +187,3 @@ export const RECOMPENSAS = [
     comb: '1 cupón por compra',
   },
 ]
-
-// Nivel de color (Bronce/Plata/Oro) de una fila de "Canjear puntos",
-// según su precio en puntos — mismo criterio de "a más valor, más
-// premium" que nivelCupon() usa con el valor de un cupón.
-export function nivelColorRecompensa(precio) {
-  if (precio >= 200) return 'Oro'
-  if (precio >= 100) return 'Plata'
-  return 'Bronce'
-}

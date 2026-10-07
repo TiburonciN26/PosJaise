@@ -36,6 +36,7 @@ import { formatearSoles } from '../../lib/moneda.js'
 import { procesarImagen, subirFoto, urlPublicaFoto } from '../../lib/imagenes.js'
 import { aLima, anioMesEnLima, claveDiaLima, diaSemanaLima, iniciarDia, iniciarMesLima, sumarDias } from '../../lib/fechas.js'
 import TarjetaCupon from '../../components/TarjetaCupon.jsx'
+import { estadoEfectivoCupon } from '../../lib/cupones.js'
 import CampoSubirArchivo from '../../components/CampoSubirArchivo.jsx'
 import Contador from '../../components/Contador.jsx'
 
@@ -533,7 +534,7 @@ function SeccionProductos({ productos, onAlternar, onCantidad, onQuitar }) {
   )
 }
 
-function PanelCupones({ disponibles, usados, cuponAplicadoCodigo, codigoManual, onCodigoManual, errorCodigo, onAplicarCodigo, onElegir, onCerrar }) {
+function PanelCupones({ errorLectura, disponibles, usados, cuponAplicadoCodigo, codigoManual, onCodigoManual, errorCodigo, onAplicarCodigo, onElegir, onCerrar }) {
   const panelRef = useRef(null)
   useCerrarConEscape(onCerrar)
 
@@ -596,7 +597,11 @@ function PanelCupones({ disponibles, usados, cuponAplicadoCodigo, codigoManual, 
 
         <div className="flex flex-col gap-3">
           <span className="text-xs uppercase tracking-wider text-white/60">Disponibles ({disponibles.length})</span>
-          {disponibles.length === 0 ? (
+          {errorLectura ? (
+            <p role="alert" className="text-sm text-white/70">
+              No pudimos cargar tus cupones. Esto no significa que no tengas: solo no pudimos leerlos ahora.
+            </p>
+          ) : disponibles.length === 0 ? (
             <p className="text-sm text-white/50">No tienes cupones disponibles todavía.</p>
           ) : (
             disponibles.map((cupon) => (
@@ -653,6 +658,7 @@ export default function CarritoCliente() {
   const [direcciones, setDirecciones] = useState([])
   const [zonas, setZonas] = useState([])
   const [cupones, setCupones] = useState([])
+  const [errorCupones, setErrorCupones] = useState(false)
 
   const [entrega, setEntrega] = useState('DELIVERY')
   const [zonaId, setZonaId] = useState('')
@@ -704,7 +710,9 @@ export default function CarritoCliente() {
       setDireccionId(direccionesCargadas[0]?.id ?? '')
       setZonas(zonasCargadas)
       setZonaId(zonasCargadas[0]?.id ?? '')
-      setCupones(cuponesRes.data ?? [])
+      // Una lectura fallida NO es «sin cupones» ni un cupón válido: se avisa y la lista queda vacía.
+      setErrorCupones(Boolean(cuponesRes.error))
+      setCupones(cuponesRes.error ? [] : (cuponesRes.data ?? []))
       setCargando(false)
     }
 
@@ -812,8 +820,16 @@ export default function CarritoCliente() {
       setErrorCodigo('Ese código no existe o ya venció.')
       return
     }
-    if (encontrado.estado !== 'DISPONIBLE') {
-      setErrorCodigo('Ese cupón ya fue usado.')
+    // QA-078: disponibilidad efectiva (incluye el vencimiento); el servidor igualmente vuelve a validar.
+    const efectivo = estadoEfectivoCupon(encontrado)
+    if (!efectivo.utilizable) {
+      setErrorCodigo(
+        efectivo.estado === 'VENCIDO'
+          ? 'Ese cupón ya venció.'
+          : efectivo.estado === 'DESCONOCIDO'
+            ? 'No pudimos comprobar la vigencia de ese cupón. Inténtalo de nuevo.'
+            : 'Ese cupón ya fue usado.',
+      )
       return
     }
     setCuponAplicado(codigo)
@@ -823,6 +839,8 @@ export default function CarritoCliente() {
   }
 
   function elegirCupon(codigo) {
+    const elegido = cupones.find((c) => c.codigo === codigo)
+    if (!elegido || !estadoEfectivoCupon(elegido).utilizable) return
     setCuponAplicado(codigo)
     setDrawerAbierto(false)
   }
@@ -883,15 +901,17 @@ export default function CarritoCliente() {
   const firmaCarrito = firmaDe(productosMarcados)
   const hayPendientes = pendientes > 0
   // La validación vale solo para la firma con la que se pidió y sin guardados en curso.
-  const cuponValidado = Boolean(cupon) && validacion.estado === 'ok' && validacion.firma === firmaCarrito && !hayPendientes
+  // QA-078: un cupón vencido (o de vigencia desconocida) nunca llega a ser «validado»: no se anuncia descuento ni total pagable.
+  const cuponUtilizable = !cupon || estadoEfectivoCupon(cupon).utilizable
+  const cuponValidado = Boolean(cupon) && cuponUtilizable && validacion.estado === 'ok' && validacion.firma === firmaCarrito && !hayPendientes
   const descuentoCupon = cuponValidado ? validacion.descuento : 0
   const total = Math.max(0, subtotal + costoDelivery - descuentoCupon)
   // Con un cupón aplicado, el total solo es el que se paga cuando el servidor lo confirmó; con guardados en curso, nunca.
-  const totalConfirmado = !hayPendientes && (!cupon || cuponValidado)
+  const totalConfirmado = !hayPendientes && cuponUtilizable && (!cupon || cuponValidado)
   const totalSinDescuentos = subtotalSinDescuento + costoDelivery
   const hayAhorroTotal = totalSinDescuentos > total
-  const cuponesDisponibles = cupones.filter((c) => c.estado === 'DISPONIBLE')
-  const cuponesUsados = cupones.filter((c) => c.estado !== 'DISPONIBLE')
+  const cuponesDisponibles = cupones.filter((c) => estadoEfectivoCupon(c).utilizable)
+  const cuponesUsados = cupones.filter((c) => !estadoEfectivoCupon(c).utilizable)
 
   const facturaCompleta = comprobante !== 'FACTURA' || (ruc.length === 11 && razonSocial.trim().length > 0)
   const direccionLista = entrega !== 'DELIVERY' || Boolean(direccionId)
@@ -1154,12 +1174,22 @@ export default function CarritoCliente() {
                   <>
                     <span className="text-xs uppercase tracking-wider text-white/60">Cupón aplicado</span>
                     <TarjetaCupon cupon={cupon} />
-                    {validacion.estado === 'validando' && (
+                    {!cuponUtilizable && (
+                      <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
+                        <span>
+                          {estadoEfectivoCupon(cupon).estado === 'VENCIDO'
+                            ? 'Este cupón ya venció y no se puede usar.'
+                            : 'No pudimos comprobar que este cupón siga vigente.'}
+                        </span>
+                        <span className="text-white/60">Quita el cupón o elige otro para continuar. No se consumió.</span>
+                      </div>
+                    )}
+                    {cuponUtilizable && validacion.estado === 'validando' && (
                       <p role="status" className="text-[13px] text-white/70">
                         Validando tu cupón…
                       </p>
                     )}
-                    {(validacion.estado === 'rechazado' || validacion.estado === 'error') && (
+                    {cuponUtilizable && (validacion.estado === 'rechazado' || validacion.estado === 'error') && (
                       <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
                         <span>{validacion.motivo}</span>
                         {validacion.estado === 'error' && (
@@ -1344,6 +1374,7 @@ export default function CarritoCliente() {
 
       {drawerAbierto && (
         <PanelCupones
+          errorLectura={errorCupones}
           disponibles={cuponesDisponibles}
           usados={cuponesUsados}
           cuponAplicadoCodigo={cuponAplicado}

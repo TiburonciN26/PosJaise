@@ -9,6 +9,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
+import { interpretarCuponCaja } from '../lib/cupones.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
 import InputBusqueda from '../components/InputBusqueda.jsx'
@@ -553,6 +554,9 @@ export default function Ventas({ activo = true }) {
     }
 
     let vigente = true
+    // Una vista previa anterior (otro código) no puede seguir habilitando el cobro mientras se verifica este.
+    setCuponPreview(null)
+    setCuponError('')
     setBuscandoCupon(true)
     const temporizador = setTimeout(() => {
       supabase
@@ -561,29 +565,15 @@ export default function Ventas({ activo = true }) {
         // clientes (cliente_id y referido_id) — sin el hint, PostgREST
         // no sabe cuál usar y el select entero falla (se veía como
         // "código no encontrado" aunque el cupón sí existiera).
-        .select('valor, tipo_descuento, estado, clientes!cliente_id(nombre)')
+        .select('valor, tipo_descuento, estado, vigente_hasta, clientes!cliente_id(nombre)')
         .eq('codigo', codigoCupon.toUpperCase())
         .maybeSingle()
         .then(({ data, error }) => {
           if (!vigente) return
           setBuscandoCupon(false)
-          if (error) {
-            setCuponPreview(null)
-            setCuponError('No se pudo verificar el cupón')
-          } else if (!data) {
-            setCuponPreview(null)
-            setCuponError('Código no encontrado')
-          } else if (data.estado !== 'DISPONIBLE') {
-            setCuponPreview(null)
-            setCuponError('Ese cupón ya fue usado')
-          } else {
-            setCuponError('')
-            setCuponPreview({
-              valor: parseFloat(data.valor),
-              tipoDescuento: data.tipo_descuento,
-              clienteNombre: data.clientes?.nombre,
-            })
-          }
+          const resultado = interpretarCuponCaja({ data, error })
+          setCuponPreview(resultado.preview)
+          setCuponError(resultado.error)
         })
     }, 400)
 
@@ -679,7 +669,7 @@ export default function Ventas({ activo = true }) {
     metodoPago !== null &&
     !haySobreStock &&
     (metodoPago !== 'Efectivo' || recibidoNumerico >= total) &&
-    (!esCupon || Boolean(cuponPreview))
+    (!esCupon || codigoCupon === '' || Boolean(cuponPreview))
 
   useEffect(() => {
     if (!filaFlash) return undefined
@@ -840,7 +830,7 @@ export default function Ventas({ activo = true }) {
       p_descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
       p_descuento_monto: esDescuentoPorcentaje || esCupon ? 0 : montoDescuento,
       p_monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
-      p_codigo_cupon: esCupon ? codigoCupon : null,
+      p_codigo_cupon: esCupon && codigoCupon ? codigoCupon : null,
     })
 
     setCobrando(false)

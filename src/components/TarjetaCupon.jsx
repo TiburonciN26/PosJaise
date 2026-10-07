@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { ArrowBigDown, Ticket } from 'lucide-react'
-import { ETIQUETAS_ORIGEN_CUPON, formatearFechaCupon, formatearValorCupon, nivelCupon } from '../lib/cupones.js'
+import { ETIQUETAS_ORIGEN_CUPON, formatearFechaCupon, estadoEfectivoCupon, formatearValorCupon, nivelDeCupon } from '../lib/cupones.js'
 import CampoColapsable from './CampoColapsable.jsx'
 import EnvolturaCupon from './EnvolturaCupon.jsx'
 
@@ -34,8 +34,12 @@ import EnvolturaCupon from './EnvolturaCupon.jsx'
 // una fila chica con las fechas, en vez de mostrarlas siempre.
 export default function TarjetaCupon({ cupon, esNuevo = false, onMostrarEnCaja }) {
   const [abierto, setAbierto] = useState(false)
-  const nivel = nivelCupon(cupon.valor, cupon.tipo_descuento)
-  const disponible = cupon.estado === 'DISPONIBLE'
+  const nivel = nivelDeCupon(cupon)
+  const efectivo = estadoEfectivoCupon(cupon)
+  const disponible = efectivo.utilizable
+  const etiquetaEstado = disponible
+    ? 'Muéstralo en caja'
+    : { VENCIDO: 'Vencido', ANULADO: 'Anulado', CANJEADO: 'Ya canjeado' }[efectivo.estado] ?? 'No disponible ahora'
 
   return (
     <EnvolturaCupon nivel={nivel} apagada={!disponible} esNuevo={esNuevo}>
@@ -57,7 +61,7 @@ export default function TarjetaCupon({ cupon, esNuevo = false, onMostrarEnCaja }
         <div className="shrink-0 text-right">
           <p className={`font-semibold ${nivel.claseTexto}`}>{formatearValorCupon(cupon)}</p>
           <p className="text-[11px] text-white/50">
-            {disponible ? 'Muéstralo en caja' : cupon.estado === 'ANULADO' ? 'Anulado' : 'Ya canjeado'}
+            {etiquetaEstado}
           </p>
         </div>
         <ArrowBigDown
@@ -74,12 +78,15 @@ export default function TarjetaCupon({ cupon, esNuevo = false, onMostrarEnCaja }
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span>Creado: {formatearFechaCupon(cupon.creado_en)}</span>
             {cupon.canjeado_en && <span>Canjeado: {formatearFechaCupon(cupon.canjeado_en)}</span>}
+            {efectivo.estado === 'VENCIDO' && cupon.vigente_hasta && <span>Venció: {formatearFechaCupon(cupon.vigente_hasta)}</span>}
           </div>
           {disponible && onMostrarEnCaja && (
             <button
               type="button"
               onClick={() => onMostrarEnCaja(cupon)}
-              className="flex w-fit items-center gap-1.5 rounded-lg border border-[var(--lw-gold)] bg-transparent px-3 py-1.5 text-xs font-semibold text-[var(--lw-gold)] transition-colors hover:bg-[var(--lw-gold)]/10"
+              className={`flex w-fit items-center gap-1.5 rounded-lg border bg-transparent px-3 py-1.5 text-xs font-semibold transition-colors ${
+                nivel.claseBoton ?? 'border-[var(--lw-gold)] text-[var(--lw-gold)] hover:bg-[var(--lw-gold)]/10'
+              }`}
             >
               Mostrar en caja
             </button>
