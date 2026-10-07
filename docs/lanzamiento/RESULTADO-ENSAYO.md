@@ -82,3 +82,22 @@ Fecha: 2026-10-08. Misma instancia desechable (solo ella); producción solo en l
 5. **Qué no cambió respecto a la primera ronda:** los defectos existentes de producción (cupón en Caja, verificar pago, asistente que vende) se corrigen igual; la instancia queda en el estado posterior a las 23.
 
 **Límites de esta ronda:** una sola instancia y un solo navegador; datos ficticios; la prueba de la pantalla cubre el estado «apertura no ejecutada» (el único alcanzable hoy); el estado «apertura ejecutada» en pantalla (botón «Activar programa» habilitado) solo se comprobó por la API, no por la interfaz; no se ejercitó la función de apertura real (sigue siendo un borrador fuera de `supabase/migrations/`). Las suites de QA de Recompensas que activan el programa necesitan la apertura marcada antes (se actualizó su ayudante `activar()`), y **no se ejecutaron en esta ronda** porque QA Local no recibe estas migraciones todavía.
+
+## 10. Ensayo del procedimiento de respaldo y restauración (datos ficticios)
+
+Fecha: 2026-10-08. Script repetible: `tests/e2e/ensayo-respaldo-procedimiento.mjs` (solo el contenedor del ensayo; archivos en `/tmp` del contenedor, borrados al terminar; evidencia en `tests/e2e/results-ensayo/respaldo-procedimiento.json`, ignorada por Git). Origen: la base del ensayo con las 23 migraciones y datos ficticios. Producción solo en lectura (versión, extensiones y atributos de roles, sin contraseñas ni datos personales).
+
+| Paso | Resultado |
+|---|---|
+| Versiones | `pg_dump` 17.11 contra servidor 17.11 (producción: 17.6); el script exige el mismo mayor |
+| Exportación | `pg_dump --format=custom` de `public`, `auth`, `storage`, `supabase_migrations` como **`postgres` (no superusuario)**: código 0, ≈ 855 KB, ≈ 0,3 s, sha256 registrado. **Sin** `--no-owner`/`--no-acl` |
+| Lectura | `pg_restore --list`: 1 219 entradas, cabecera con versiones, **230 entradas ACL y 230 `OWNER TO`**, 448 GRANT/REVOKE |
+| Roles | el `.dump` **no contiene roles**; `pg_dumpall --roles-only --no-role-passwords`: 16 `CREATE ROLE`, 22 pertenencias, 32 `ALTER ROLE`, **sin contraseñas** |
+| Restauración A (destino con los roles) | `pg_restore --exit-on-error` como superusuario: código 0; **9 huellas iguales** (esquemas, relaciones, ACL de columnas, funciones, tipos, privilegios por omisión, políticas, triggers y datos: propietarios y privilegios incluidos) |
+| Restauración B1 (clúster vacío **sin** roles) | **455 errores «role … does not exist»** (el primero `supabase_admin`): sin los roles el archivo no se restaura |
+| Restauración B2 (clúster vacío con `roles.sql` y extensiones, base con el mismo encoding y proveedor de collation) | código 0; **9 huellas iguales** |
+| Contraste `--no-owner --no-acl` | restaura sin error pero **difieren 6 huellas** (esquemas, relaciones, ACL de columnas, funciones, tipos, privilegios por omisión): se pierden propietarios y privilegios |
+
+**Hallazgos que cambiaron el procedimiento:** (1) el comando anterior con `--no-owner=false` no existe; (2) `pg_dump -n public` emite `CREATE SCHEMA public`, que choca con el `public` de una base nueva: se omite esa entrada con `pg_restore --use-list` (borrar `public` antes hace perder la concesión por omisión a `PUBLIC`); (3) el origen usa collation **ICU `en-US`** y un clúster nuevo usa `libc`: con otro proveedor cambia el orden de las cadenas (una huella de `storage.migrations` difería) hasta crear la base con el mismo proveedor; (4) los privilegios por omisión de esquemas que no se respaldan (`extensions`, `graphql`, `realtime`…) no viajan: la huella los excluye a propósito; (5) el texto de las políticas (`auth.uid()`) depende del `search_path` de la sesión que lo lee: la huella usa un `search_path` neutro.
+
+**Límites.** Datos ficticios y un volumen pequeño; no se conectó a producción (IPv6/pooler, permisos reales de `postgres`, `pg_dumpall --roles-only` en Supabase alojado y descarga de Storage quedan sin probar); el destino fue la misma imagen de Supabase, y el clúster vacío (PostgreSQL 17.11 sin `supabase_vault`) restauró los cuatro esquemas sin errores pero no equivale a un Supabase completo; la restauración del respaldo **real** sigue sin validarse (entorno de recuperación sin crear).
