@@ -1,6 +1,6 @@
 # Suite QA/E2E local — rama testing
 
-Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 214 casos en 31 archivos `*.spec.mjs` (conteos verificados el 2026-10-05; referencia independiente vigente: suite completa sobre 58842f7, 213 aprobados, 1 omitido —crear servicio ASISTENTE, no cuenta como aprobado—, 0 fallos, retries=0, fixture nuevo; QA-061 se verificó después con pruebas específicas sobre 10c4f42, sin suite completa), más 22 archivos `node --test` de capa de datos/SQL, lógica pura, arnés y saneador (272 casos, aprobados el 2026-10-05; ver «Dos capas»). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
+Esta suite usa la excepción explícita del usuario a AGENTS.md: permite únicamente archivos de tests, fixtures, configuración de Playwright y documentación. No modifica la aplicación, dependencias, archivos .env ni esquema. La suite Playwright define 214 casos en 31 archivos `*.spec.mjs` (conteos verificados el 2026-10-05; referencia independiente vigente: suite completa sobre 58842f7, 213 aprobados, 1 omitido —crear servicio ASISTENTE, no cuenta como aprobado—, 0 fallos, retries=0, fixture nuevo; QA-061 se verificó después con pruebas específicas sobre 10c4f42, sin suite completa), más 26 archivos `node --test` de capa de datos/SQL, lógica pura, arnés y saneador (320 casos, aprobados el 2026-10-07 —los 48 nuevos son de QA-064/075/076—; ver «Dos capas» y `docs/recompensas-fase2/COHERENCIA-NIVELES-Y-VIGENCIA.md`). COBERTURA.md lista lo cubierto y las brechas; no es cobertura total ni Fase 2 completa.
 
 ## Ejecutar
 
@@ -30,6 +30,10 @@ El aprovisionamiento necesita acceso al contenedor Docker local supabase_kong_We
 - **`node --test` (`*.test.mjs`)**: capa de datos/SQL contra Supabase Local (Recompensas Fase 2, QA-043 a QA-047, protección de cupones, lectura pública de reglas) y lógica pura/arnés sin base de datos (`programa-recompensas`, `colector-respuestas*`, `promociones-admin*`; los `*-navegador.test.mjs` abren un Chromium con un origen ficticio, sin la app ni sesiones). Usan claims simulados
   (`request.jwt.claims` + `set role authenticated`): **no son sesiones HTTP ni evidencia de interfaz**. Se ejecutan en serie:
   `node --test --test-concurrency=1 tests/e2e/*.test.mjs` (con la rama `testing` y Vite activos; no necesitan la contraseña).
+
+## Migrar la base QA local (QA-076)
+
+Aplicar migraciones a la base QA local pasa por `node tests/e2e/migrar-local-con-respaldo.mjs <etiqueta>`: toma un respaldo nuevo, lo verifica (código de salida, `pg_restore --list`, firma PGDMP, SHA-256 contenedor/equipo, fecha de esta ejecución) y solo entonces ejecuta `supabase migration up --local`; si cualquier paso falla, no migra. No se acepta un respaldo ya existente ni uno posterior. Los respaldos quedan en `C:\JaiseQA-Backups`, fuera del repositorio. Pruebas del control, con dobles: `migrar-local-con-respaldo.test.mjs`.
 
 ## Higiene de salidas (secretos)
 
