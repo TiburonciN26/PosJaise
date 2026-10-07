@@ -22,6 +22,35 @@ export const formWithTitle = (page, title) => page.locator('form').filter({ has:
 export const visibleText = (page, text) => page.getByText(text, { exact: true }).filter({ visible: true });
 export const visibleButton = (page, text) => page.getByRole('button', { name: text, exact: true }).filter({ visible: true });
 
+// QA-079: en Citas el buscador está siempre desplegado en escritorio (lg+) y el botón
+// «Buscar citas» (lg:hidden) solo existe en móvil/tablet, donde hay que abrirlo antes de
+// escribir. Se pulsa solo si está visible y se devuelve el campo, exigiendo que sea único.
+export async function abrirBuscadorCitas(page) {
+  const boton = visibleButton(page, 'Buscar citas');
+  if (await boton.count()) await boton.click();
+  const campo = page.getByPlaceholder('Buscar por cliente o servicio...').filter({ visible: true });
+  await expect(campo).toHaveCount(1);
+  return campo;
+}
+
+// QA-082: Porcentajes reparte las tarjetas en columnas flex independientes
+// (contenedor flex items-start > columna flex-col > tarjeta > cabecera-botón), ya no en una
+// grilla. Devuelve la cabecera de cada tarjeta de la lista VISIBLE (hay pestañas cacheadas).
+export const tarjetasPorcentaje = (page) => page.locator('div.flex.items-start.gap-3:visible > div.flex-col > div.rounded-lg > button');
+
+// QA-080: importe monetario de una fila de «Resumen del período» / cascada del Dashboard.
+// Cada fila es [etiqueta][separador punteado vacío][importe]; el importe es el único span
+// con texto. Una lectura vacía o no numérica falla en vez de convertirse en 0.
+export async function importeFilaDashboard(page, etiqueta) {
+  const fila = page.getByText(etiqueta, { exact: true }).first().locator('xpath=..');
+  const importe = fila.locator('span.font-mono').filter({ hasText: /\d/ });
+  await expect(importe, `importe único de «${etiqueta}»`).toHaveCount(1);
+  const texto = (await importe.innerText()).trim();
+  const valor = Number(texto.replace(/[^\d.]/g, ''));
+  if (!texto || !Number.isFinite(valor)) throw new Error(`Lectura monetaria inválida en «${etiqueta}»: «${texto}»`);
+  return valor;
+}
+
 export async function createProduct(page, data) {
   await page.goto('/inventario');
   await visibleButton(page, 'Nuevo producto').click();

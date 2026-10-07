@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { sufijoUnico, login, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
+import { sufijoUnico, login, visibleButton, importeFilaDashboard, abrirBuscadorCitas, formWithTitle, createProduct, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -54,7 +54,7 @@ async function leerFinanzas(page) {
   await page.goto('/dashboard');
   const fila = (await (await rpc).json())[0];
   await expect(page.getByText('Resumen del período', { exact: true })).toBeVisible();
-  const ui = async (etiqueta) => monto(await page.getByText(etiqueta, { exact: true }).first().locator('xpath=following-sibling::span').first().innerText());
+  const ui = (etiqueta) => importeFilaDashboard(page, etiqueta);
   const filas = { descuentos: await ui('Descuentos') };
   if (fila.envio_cobrado !== undefined) filas.envio = await ui('Envío cobrado');
   await page.goto('/estadisticas');
@@ -201,8 +201,7 @@ test('QA-032: reseña de servicio pendiente se modera desde Reseñas y la public
     await page.getByRole('button', { name: new RegExp(`^${meses[Number(data.today.slice(5, 7)) - 1]} ${data.today.slice(0, 4)}$`, 'i') }).click();
     await page.getByRole('button', { name: new RegExp(`^${meses[Number(fecha.slice(5, 7)) - 1]}$`, 'i') }).click();
   }
-  await visibleButton(page, 'Buscar citas').click();
-  await page.getByPlaceholder('Buscar por cliente o servicio...').fill(servicio.serviceName);
+  await (await abrirBuscadorCitas(page)).fill(servicio.serviceName);
   await page.getByRole('button').filter({ hasText: own.clientName }).filter({ hasText: servicio.serviceName }).filter({ visible: true }).click();
   await visibleButton(page, 'Completar').click();
   const completada = page.waitForResponse((r) => r.request().method() !== 'GET' && /rpc\/completar|registro_servicios|citas\?/.test(r.url()));

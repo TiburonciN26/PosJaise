@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { buscadorSticky, sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
+import { buscadorSticky, tarjetasPorcentaje, sufijoUnico, login, logout, visibleButton, formWithTitle, createProduct, createService } from './helpers.mjs';
 import { isolatedClient, qaContext, testImage } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -321,6 +321,7 @@ test('REFERIDOS Y CUPONES: reglas del código, límites del cupón, uso simultá
 
 test('COMISIÓN: ASISTENTE con % asignado a una ficha guarda la comisión y conserva el % aplicado al cambiarlo', async ({ page, browser, data }) => {
   test.setTimeout(240_000);
+  const claveAdmin = watchApiKey(page);
   await login(page, 'ADMINISTRADOR', data);
   const servicio = { serviceName: `${data.prefix} COMISION ${Date.now().toString(36)}` };
   await createService(page, servicio); // precio S/2
@@ -330,10 +331,12 @@ test('COMISIÓN: ASISTENTE con % asignado a una ficha guarda la comisión y cons
     // y se exige unicidad; la tarjeta y la fila se eligen por nombre único, sin first().
     const buscador = await buscadorSticky(page);
     await buscador.fill(servicio.serviceName);
-    const tarjeta = page.locator('div.grid.items-start.gap-3:visible > div > button').filter({ hasText: servicio.serviceName });
+    const tarjeta = tarjetasPorcentaje(page).filter({ hasText: servicio.serviceName });
     await expect(tarjeta).toHaveCount(1);
     await tarjeta.click();
-    const fila = page.locator('div.bg-surface-2').filter({ hasText: 'asistenteTest01' });
+    // QA-085: la fila muestra nombres_completos de la ficha vinculada a la cuenta, no el nombre de usuario;
+    // se identifica por la ficha (usuario_id → asistentes) de la misma cuenta ASISTENTE, sin renombrar nada.
+    const fila = page.locator('div.bg-surface-2').filter({ hasText: ficha.nombres_completos });
     await expect(fila).toHaveCount(1);
     await fila.getByRole('button', { name: 'Desbloquear' }).click();
     await fila.locator('input').fill(String(valor));
@@ -357,9 +360,17 @@ test('COMISIÓN: ASISTENTE con % asignado a una ficha guarda la comisión y cons
     await expect(form).toHaveCount(0);
   };
 
-  await asignarPorcentaje('33.33');
   const a = await abrirSesion(browser, data, 'ASISTENTE');
+  let ficha;
   try {
+    const yo = await rest(a.page, a.box, 'GET', '/rest/v1/registro_servicios?select=id&limit=1');
+    expect(yo.userId, 'sesión ASISTENTE con usuario').toBeTruthy();
+    const fichas = await rest(page, claveAdmin, 'GET', `/rest/v1/asistentes?usuario_id=eq.${yo.userId}&select=id,nombres_completos,activo`);
+    expect(fichas.json, 'una sola ficha vinculada a la cuenta ASISTENTE').toHaveLength(1);
+    ficha = fichas.json[0];
+    expect(ficha.activo).toBeTruthy();
+    expect(ficha.nombres_completos?.trim()).toBeTruthy();
+    await asignarPorcentaje('33.33');
     await registrar(a.page, '09:10');
     const leer = async () => (await rest(a.page, a.box, 'GET', `/rest/v1/registro_servicios?servicio_id=eq.${servicio.serviceId}&select=precio,porcentaje_aplicado,pago_asistente,estado&order=fecha`)).json;
     let filas = await leer();

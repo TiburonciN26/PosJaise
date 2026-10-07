@@ -1,7 +1,7 @@
 import {test,expect,knownIssue,expectKnownFailure} from './fixtures.mjs';
 import {login,visibleButton,formWithTitle} from './helpers.mjs';
 import {testImage} from './phase2-helpers.mjs';
-import {ensureAnnulledSale} from './sale-fixture.mjs';
+import {ensureAnnulledSale,crearVentaActiva} from './sale-fixture.mjs';
 import {readFile} from 'node:fs/promises';
 
 test('AMPLIACIÓN GALERÍA: validar archivos, crear, editar y eliminar par TEST',async({page,data},info)=>{
@@ -43,14 +43,22 @@ test('AMPLIACIÓN CSV: exportar historial y comprobar venta TEST anulada',async(
   await info.attach('csv-own-row',{body:Buffer.from(JSON.stringify({filename:file.suggestedFilename(),ownRow:own,header:text.split('\n')[0]})),contentType:'application/json'});
 });
 
-test('AMPLIACIÓN TICKET: reimpresión muestra anulación e importes en contenido imprimible',async({page,browser,data},info)=>{
-  test.setTimeout(120_000);const {sale,code,productName}=await ensureAnnulledSale(browser,data);
-  await login(page,'CAJERA',data);await page.goto('/historial');await page.getByPlaceholder('Buscar por código o cliente...').fill(sale.codigo);await page.getByText(code,{exact:true}).filter({visible:true}).click();await expect(page.getByText(productName,{exact:true}).filter({visible:true})).toBeVisible();
-  await visibleButton(page,'Reimprimir ticket').click();const ticket=page.locator('#ticket-impresion');await expect(ticket).toHaveCount(1);const text=await ticket.textContent();expect(text).toContain(sale.codigo);expect(text).toContain('VENTA ANULADA');expect(text).toContain(productName);expect(text).toContain('3 x S/ 1.00');expect(text).toContain('S/ 3.00');
+test('AMPLIACIÓN TICKET: reimpresión de venta activa; tras anular no se ofrece Reimprimir',async({page,browser,data},info)=>{
+  // QA-081: ocultar «Reimprimir ticket» en ventas anuladas es intencional (Historial.jsx).
+  // La reimpresión y el PDF se prueban con una venta ACTIVA propia; después se anula y se
+  // comprueba la ausencia del botón y que persiste tras recargar.
+  test.setTimeout(180_000);const {sale,code,productName}=await crearVentaActiva(browser,data);
+  const abrir=async()=>{await page.goto('/historial');await page.getByPlaceholder('Buscar por código o cliente...').fill(sale.codigo);await page.getByText(code,{exact:true}).filter({visible:true}).click();await expect(page.getByText(productName,{exact:true}).filter({visible:true})).toBeVisible();};
+  await login(page,'CAJERA',data);await abrir();
+  await visibleButton(page,'Reimprimir ticket').click();const ticket=page.locator('#ticket-impresion');await expect(ticket).toHaveCount(1);const text=await ticket.textContent();expect(text).toContain(sale.codigo);expect(text).not.toContain('VENTA ANULADA');expect(text).toContain(productName);expect(text).toContain('3 x S/ 1.00');expect(text).toContain('S/ 3.00');
   await page.emulateMedia({media:'print'});await expect(ticket).toBeVisible();await expect(page.locator('#root')).toBeHidden();
   const pdf=await page.pdf({path:`tests/e2e/results/fixtures/${data.runId}-ticket.pdf`,width:'58mm',height:'200mm',printBackground:true,margin:{top:0,right:0,bottom:0,left:0}});expect(pdf.length).toBeGreaterThan(1000);
   await info.attach('ticket-pdf',{body:pdf,contentType:'application/pdf'});
   await info.attach('ticket-content',{body:Buffer.from(JSON.stringify({text,pdfGeneratedByChromium:true,systemDialogNotValidated:true})),contentType:'application/json'});await page.emulateMedia({media:'screen'});await page.reload();await expect(page.getByPlaceholder('Buscar por código o cliente...')).toBeVisible();
+  // Anular la venta activa: el botón deja de existir y la ausencia persiste tras recargar.
+  await abrir();await visibleButton(page,'Anular venta').click();await visibleButton(page,'Sí, anular').click();await expect(page.getByText('Venta anulada. Se devolvió el stock.',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Reimprimir ticket',exact:true}).filter({visible:true})).toHaveCount(0);
+  await page.reload();await abrir();await expect(page.getByRole('button',{name:'Anular venta',exact:true}).filter({visible:true})).toHaveCount(0);await expect(page.getByRole('button',{name:'Reimprimir ticket',exact:true}).filter({visible:true})).toHaveCount(0);
 });
 
 test('AMPLIACIÓN CSV PERMISOS: CAJERA no ve exportación administrativa',async({page,data})=>{

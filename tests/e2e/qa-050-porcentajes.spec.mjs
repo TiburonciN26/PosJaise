@@ -9,7 +9,7 @@
 // medición solo vale cuando el estado POSITIVO real se cumple (catálogo cargado, exactamente 50 tarjetas y el contador con el
 // total esperado): nunca se da por válido un DOM transitorio. Requiere QA_TEST_PASSWORD solo en el proceso.
 import { test, expect } from './fixtures.mjs';
-import { login, createService, buscadorSticky } from './helpers.mjs';
+import { login, createService, buscadorSticky, tarjetasPorcentaje } from './helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
 
 test.describe.configure({ mode: 'serial' });
@@ -19,7 +19,7 @@ test.beforeAll(async () => {
 });
 
 // Cabecera (botón) de cada tarjeta de servicio de la lista VISIBLE de Porcentajes.
-const tarjetasVisibles = (page) => page.locator('div.grid.items-start.gap-3:visible > div > button');
+const tarjetasVisibles = tarjetasPorcentaje;
 const totalServicios = async () => Number(await h.json(`select to_json(count(*)) from public.servicios`));
 
 // Selector de orden de la página visible: botón «Ordenar por» (aria-label) y opciones por su texto exacto.

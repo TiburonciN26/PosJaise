@@ -1,5 +1,5 @@
 import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
-import { sufijoUnico, login, logout, formWithTitle, createAttention, createService, createProduct } from './helpers.mjs';
+import { sufijoUnico, login, logout, formWithTitle, createAttention, createService, createProduct, abrirBuscadorCitas } from './helpers.mjs';
 import { isolatedClient } from './phase2-helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
 
@@ -204,8 +204,7 @@ test('QA-004: interrupción tras borrar líneas debe conservar servicios', async
       await page.getByRole('button', { name: new RegExp(`^${currentName}$`, 'i') }).click();
       await page.getByRole('button', { name: new RegExp(`^${targetMonth}$`, 'i') }).click();
     }
-    await page.getByRole('button', { name: 'Buscar citas', exact: true }).click();
-    await page.getByPlaceholder('Buscar por cliente o servicio...').fill(unico.serviceName);
+    await (await abrirBuscadorCitas(page)).fill(unico.serviceName);
     const cita = page.getByRole('button').filter({ hasText: data.clientName }).filter({ hasText: unico.serviceName }).filter({ visible: true });
     await expect(cita, 'una sola cita con el servicio único de este caso').toHaveCount(1);
     await cita.click();

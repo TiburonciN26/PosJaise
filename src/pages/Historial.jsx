@@ -886,7 +886,9 @@ export default function Historial({ activo = true }) {
                             anulada ? 'text-red line-through' : 'text-amber'
                           }`}
                         >
-                          {codigoCorto(venta.codigo)}
+                          <span>{codigoCorto(venta.codigo)}</span>
+                          {/* El tachado/rojo no lo anuncia un lector de pantalla; en móvil hay una píldora «Anulada» visible. */}
+                          {anulada && <span className="sr-only">Anulada</span>}
                         </td>
                         <td
                           className={`px-3 py-2.5 font-mono ${

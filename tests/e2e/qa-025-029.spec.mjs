@@ -1,5 +1,5 @@
 import { test, expect, knownIssue } from './fixtures.mjs';
-import { buscadorCaja, sufijoUnico, login, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
+import { buscadorCaja, importeFilaDashboard, sufijoUnico, login, visibleButton, formWithTitle, createProduct } from './helpers.mjs';
 import { isolatedClient, qaContext } from './phase2-helpers.mjs';
 import { supabaseURL } from './local-safety.mjs';
 
@@ -269,13 +269,12 @@ test('QA-025: Estadísticas rotula Ingreso neto y coincide con Dashboard (bruto 
   const monto = (texto) => Number(texto.replace(/[^\d.]/g, ''));
 
   await page.goto('/dashboard');
-  const fila = (etiqueta) => page.getByText(etiqueta, { exact: true }).first().locator('xpath=following-sibling::span').first();
-  await expect(fila('Ingreso bruto')).toBeVisible();
-  const bruto = monto(await fila('Ingreso bruto').innerText());
-  const descuentos = monto(await fila('Descuentos').innerText());
+  await expect(page.getByText('Ingreso bruto', { exact: true }).first()).toBeVisible();
+  const bruto = await importeFilaDashboard(page, 'Ingreso bruto');
+  const descuentos = await importeFilaDashboard(page, 'Descuentos');
   expect(descuentos, 'el descuento de la venta ficticia debe verse').toBeGreaterThanOrEqual(2);
   // QA-031: el envío cobrado (ventas con delivery) es una línea propia; el neto sigue siendo sum(ventas.total).
-  const envio = monto(await fila('Envío cobrado').innerText());
+  const envio = await importeFilaDashboard(page, 'Envío cobrado');
   const neto = Math.round((bruto - descuentos + envio) * 100) / 100;
 
   await page.goto('/estadisticas');

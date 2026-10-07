@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures.mjs';
-import {login,visibleButton,formWithTitle,createService} from './helpers.mjs';
+import {login,visibleButton,formWithTitle,createService,abrirBuscadorCitas} from './helpers.mjs';
 
 test('CITAS: crear, reprogramar, cancelar y persistir servicios por flujo normal',async({page,data},info)=>{
   test.setTimeout(90_000);await login(page,'ADMINISTRADOR',data);
@@ -23,7 +23,7 @@ test('CITAS: crear, reprogramar, cancelar y persistir servicios por flujo normal
       await page.getByRole('button',{name:new RegExp(`^${months[Number(data.today.slice(5,7))-1]} ${data.today.slice(0,4)}$`,'i')}).click();
       await page.getByRole('button',{name:new RegExp(`^${months[Number(day.slice(5,7))-1]}$`,'i')}).click();
     }
-    await visibleButton(page,'Buscar citas').click();await page.getByPlaceholder('Buscar por cliente o servicio...').fill(service.serviceName);
+    await (await abrirBuscadorCitas(page)).fill(service.serviceName);
     await page.getByRole('button').filter({hasText:data.clientName}).filter({hasText:service.serviceName}).filter({visible:true}).click();
     await expect(page.getByText(service.serviceName,{exact:true}).filter({visible:true})).toBeVisible();
   }
@@ -31,7 +31,7 @@ test('CITAS: crear, reprogramar, cancelar y persistir servicios por flujo normal
   await form.getByRole('button',{name:'Guardar cambios',exact:true}).click();await expect(form).toHaveCount(0);await page.reload();await open();
   await visibleButton(page,'Editar').click();form=formWithTitle(page,'Editar cita');await expect(form.getByLabel('Fecha y hora',{exact:false})).toHaveValue(`${day}T15:15`);
   await expect(form.getByText(service.serviceName,{exact:true})).toBeVisible();await form.getByRole('button',{name:'Cancelar',exact:true}).click();
-  await visibleButton(page,'Cancelar').click();await expect(page.getByText('Cita cancelada.',{exact:true})).toBeVisible();await page.reload();await open();
+  await visibleButton(page,'Cancelar').click();await visibleButton(page,'Sí, cancelar').click();await expect(page.getByText('Cita cancelada.',{exact:true})).toBeVisible();await page.reload();await open();
   await expect(page.getByRole('dialog').getByText('Cancelada',{exact:true})).toBeVisible();await expect(visibleButton(page,'Editar')).toHaveCount(0);
   await info.attach('cita-normal',{body:Buffer.from(JSON.stringify({id:typeof record==='string'?record:record.id,serviceId:service.serviceId,date:day,initialTime:'14:15',savedTime:'15:15',finalState:'CANCELADA'})),contentType:'application/json'});
 });
