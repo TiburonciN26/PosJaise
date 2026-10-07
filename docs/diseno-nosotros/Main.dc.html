@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nosotros · Equipo · Escritorio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+@font-face{font-family:'Heavitas';src:url('/_blob/789f7a1722f31dd56712871d26086e7f') format('truetype');font-display:swap}
+body{margin:0;background:#0b0b0c;font-family:'Inter',system-ui,sans-serif}
+button{font:inherit;cursor:pointer}
+a{color:#ffffff}a:hover{color:#a9c6ec}
+:focus-visible{outline:2px solid #a9c6ec;outline-offset:2px}
+.pad{padding-left:48px;padding-right:48px}
+.hero-body{display:grid;grid-template-columns:300px minmax(0,1fr);gap:56px}
+.fila{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;align-items:baseline}
+.grilla{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:36px 24px}
+.card{display:flex;flex-direction:column;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);overflow:hidden}
+.card .foto{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.card:hover .foto{transform:scale(1.04)}
+.cta-band{display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.slide{position:absolute;inset:0;display:grid;place-items:center;transition:opacity 1.8s ease-in-out,transform 7s ease-out}
+.proto{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* Entrada de la página: mismas clases que el patrón de docs/patrones/animacion-entrada.md */
+.in-left,.in-up,.in-photo{animation-duration:.9s;animation-timing-function:cubic-bezier(.2,.7,.2,1);animation-fill-mode:both}
+.in-left{animation-name:inLeft}
+.in-up{animation-name:inUp;animation-duration:.8s}
+.in-photo{animation-name:inPhoto;animation-duration:1.3s}
+@keyframes inLeft{from{opacity:0;transform:translateX(-40px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes inUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@keyframes inPhoto{from{opacity:0;transform:translateX(48px) scale(1.03);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+@media (prefers-reduced-motion:reduce){.slide{transition:opacity 1.8s ease-in-out}.in-left,.in-up,.in-photo{animation:none}.card .foto{transition:none}}
+@media (max-width:760px){
+  .pad{padding-left:20px;padding-right:20px}
+  .hero-body{grid-template-columns:minmax(0,1fr);gap:28px}
+  .hero-foto{aspect-ratio:5/4 !important;width:100% !important;height:auto !important}
+  .fila{grid-template-columns:96px minmax(0,1fr);gap:12px}
+  .grilla{grid-template-columns:minmax(0,1fr);gap:16px}
+  .card{flex-direction:row}
+  .card .fotobox{width:112px;flex-shrink:0;aspect-ratio:auto !important;min-height:150px}
+  .titulo{font-size:40px !important}
+  .cta-band{flex-direction:column;align-items:flex-start;gap:20px}
+  .subnav{max-width:100%;overflow-x:auto}
+}
+</style>
+</helmet>
+<div id="dc-root" style="position: relative; min-height: 2400px; box-sizing: border-box; background: #0b0b0c; color: #ffffff; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; overflow: hidden">
+
+  <!-- Barra "solo prototipo": no forma parte de la web -->
+  
+
+  <!-- Header del portal (referencia, no cambia) -->
+
+  <div class="pad" style="max-width: 1344px; margin: 0 auto; box-sizing: content-box">
+
+    <!-- Sub-navegación de Nosotros (igual que hoy) -->
+    
+
+    <!-- 1. HERO: título + texto, y debajo retrato del salón + fichas -->
+    <section style="padding: 56px 0 64px">
+      
+      <h1 class="titulo in-left" style="animation-delay: 300ms; margin: 18px 0 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 72px; line-height: 1.02; color: #ffffff; text-transform: uppercase">Nuestro equipo</h1>
+      <p class="in-left" style="animation-delay: 450ms; margin: 22px 0 0; max-width: 52ch; font-size: 16px; line-height: 1.65; color: #b8b8bc">Conoce al salón por dentro: quién te atiende, en qué se especializa cada profesional y cómo encontrar a la persona indicada para tu próxima cita.</p>
+
+      <div class="hero-body" style="margin-top: 48px">
+        <div class="in-photo" style="animation-delay: 300ms; display: flex; flex-direction: column; gap: 12px">
+          <!-- Retrato de la dueña: las fotos se cruzan cada pocos segundos con un difuminado suave -->
+          <div class="hero-foto" style="position: relative; width: 300px; height: 400px; background: #0c0f14; overflow: hidden">
+            <sc-for list="{{slides}}" as="sl" hint-placeholder-count="3">
+              <div class="slide" aria-hidden="{{sl.hidden}}" style="opacity: {{sl.op}}; transform: scale({{sl.scale}}); background: {{sl.bg}}">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; color: rgba(255,255,255,0.28)">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase">{{sl.label}}</span>
+                </div>
+              </div>
+            </sc-for>
+            <div style="position: absolute; left: 16px; right: 16px; bottom: 14px; display: flex; gap: 6px; z-index: 2">
+              <sc-for list="{{slides}}" as="sl" hint-placeholder-count="3">
+                <button type="button" onClick="{{sl.go}}" aria-label="{{sl.ariaLabel}}" style="flex-grow: 1; height: 3px; border: 0; padding: 0; border-radius: 3px; background: {{sl.barBg}}; transition: background 1.2s ease"></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 15px; font-weight: 600; color: #ffffff">Jaise Ramírez</span>
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #a9c6ec">Fundadora y directora</span>
+          </div>
+        </div>
+
+        <!-- Fichas: el perfil de la dueña (mismos campos que cualquier perfil, más datos propios de ella) -->
+        <div style="display: flex; flex-direction: column; justify-content: flex-start; gap: 32px; padding-top: 6px">
+          <div style="display: flex; flex-direction: column; gap: 22px">
+            <div class="fila in-up" style="animation-delay: 500ms">
+              <span style="font-size: 12px; color: #8a8a90">Especialidad</span>
+              <span style="font-size: 14px; font-weight: 600; color: #ffffff; line-height: 1.5">Colorimetría y cortes de autor</span>
+            </div>
+            <div class="fila in-up" style="animation-delay: 580ms">
+              <span style="font-size: 12px; color: #8a8a90">Experiencia</span>
+              <span style="font-size: 14px; font-weight: 600; color: #ffffff; line-height: 1.5">12 años en peluquería y color</span>
+            </div>
+            <div class="fila in-up" style="animation-delay: 660ms">
+              <span style="font-size: 12px; color: #8a8a90">Atiende</span>
+              <span style="font-size: 14px; font-weight: 600; color: #ffffff; line-height: 1.5">Color · Corte · Tratamientos capilares</span>
+            </div>
+            <div class="fila in-up" style="animation-delay: 740ms">
+              <span style="font-size: 12px; color: #8a8a90">Sobre ella</span>
+              <span style="font-size: 14px; font-weight: 600; color: #ffffff; line-height: 1.5">Fundó el salón para que cada visita termine con un cabello sano y un resultado que se sostiene en casa. Atiende personalmente los cambios de color y las primeras citas.</span>
+            </div>
+            <div class="fila in-up" style="animation-delay: 820ms">
+              <span style="font-size: 12px; color: #8a8a90">Horario</span>
+              <span style="font-size: 14px; font-weight: 600; color: #ffffff; line-height: 1.5">Lun–Sáb · 9:00 – 20:00</span>
+            </div>
+            <div class="fila in-up" style="animation-delay: 900ms">
+              <span style="font-size: 12px; color: #8a8a90">Síguenos</span>
+              <span style="display: flex; gap: 8px; flex-wrap: wrap">
+                <a href="#redes" style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); font-size: 13px; color: #ffffff; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><defs><linearGradient id="igg" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FEDA75"/><stop offset=".3" stop-color="#FA7E1E"/><stop offset=".55" stop-color="#D62976"/><stop offset=".8" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="url(#igg)" stroke-width="2.2"/><circle cx="12" cy="12" r="4.3" stroke="url(#igg)" stroke-width="2.2"/><circle cx="17.6" cy="6.4" r="1.3" fill="url(#igg)"/></svg>Instagram</a>
+                <a href="#redes" style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); font-size: 13px; color: #ffffff; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="fbc"><circle cx="12" cy="12" r="12"/></clipPath></defs><circle cx="12" cy="12" r="12" fill="#1877F2"/><path clip-path="url(#fbc)" fill="#ffffff" d="M16.67 15.47l.53-3.47h-3.33V9.75c0-.95.47-1.88 1.96-1.88h1.51V4.92s-1.37-.23-2.68-.23c-2.74 0-4.53 1.66-4.53 4.67V12H7.08v3.47h3.05V24h3.74v-8.53z"/></svg>Facebook</a>
+                <a href="#redes" style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); font-size: 13px; color: #ffffff; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path transform="translate(-0.9 -0.7)" fill="#25F4EE" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/><path transform="translate(0.9 0.7)" fill="#FE2C55" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/><path fill="#ffffff" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>TikTok</a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EQUIPO -->
+    <section style="border-top: 1px solid #1f1f22; padding: 40px 0 72px">
+      
+
+      <sc-if value="{{cargando}}" hint-placeholder-val="{{false}}">
+        <p style="margin: 48px 0; text-align: center; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 14px; color: rgba(255,255,255,0.5)">Cargando...</p>
+      </sc-if>
+
+      <sc-if value="{{vacio}}" hint-placeholder-val="{{false}}">
+        <div style="margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 20px; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1)">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.5)">Todavía no hay perfiles publicados.</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{hayEquipo}}" hint-placeholder-val="{{true}}">
+        <div class="grilla" style="margin-top: 32px; --cols: {{cols}}">
+          <sc-for list="{{miembros}}" as="m" hint-placeholder-count="6">
+            <article class="card in-up" style="animation-delay: {{m.delay}}ms">
+              <div class="fotobox" style="position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: #000000">
+                <div class="foto" style="position: absolute; inset: 0; background: {{m.bg}}; display: grid; place-items: center">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </div>
+                <span style="position: absolute; top: 14px; left: 16px; font-size: 11px; letter-spacing: 0.2em; color: rgba(255,255,255,0.7)">{{m.num}}</span>
+              </div>
+              <div style="padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #ffffff">{{m.nombre}}</h3>
+                <p style="margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #a9c6ec">{{m.esp}}</p>
+                <p style="margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.62)">{{m.bio}}</p>
+              </div>
+            </article>
+          </sc-for>
+        </div>
+        <sc-if value="{{sinResultados}}" hint-placeholder-val="{{false}}">
+          <p style="margin: 40px 0 0; text-align: center; font-size: 14px; color: rgba(255,255,255,0.5)">Ninguna profesional con esa especialidad por ahora.</p>
+        </sc-if>
+      </sc-if>
+    </section>
+
+    <!-- 3. CIERRE -->
+    <section id="reservar" style="border-top: 1px solid #1f1f22; padding: 56px 0 80px">
+      <div class="cta-band">
+        <div style="display: flex; flex-direction: column; gap: 10px; max-width: 46ch">
+          <h2 style="margin: 0; font-family: 'Heavitas', 'Inter', sans-serif; font-weight: 400; font-size: 28px; line-height: 1.15; color: #ffffff; text-transform: uppercase">¿Lista para tu cita?</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #b8b8bc">Escríbenos y te ayudamos a elegir con quién atenderte.</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+          <a href="#reservar" style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #a9c6ec; border-radius: 999px; padding: 13px 22px; font-size: 14px; font-weight: 600; color: #a9c6ec; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>Escríbenos por WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pie del portal (referencia, no cambia) -->
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"columnas":{"editor":"int","default":3,"min":2,"max":4,"section":"Diseño"},"$preview":{"width":1440,"height":2450}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { esc: 'fotos', filtro: 'Todas', slide: 0 };
+  }
+
+  componentDidMount() {
+    this.arrancar();
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._t);
+  }
+
+  arrancar() {
+    clearInterval(this._t);
+    this._t = setInterval(() => { this.setState({ slide: (this.state.slide + 1) % 3 }); }, 4500);
+  }
+
+  /* Datos ficticios: en la web salen de equipo_para_web() */
+  equipo() {
+    return [
+      { nombre: 'Camila Rojas', esp: 'Colorimetría', bio: 'Balayage, correcciones de color y rubios luminosos. Diez años cuidando la salud del cabello mientras cambia de tono.' },
+      { nombre: 'Valeria Quispe', esp: 'Corte y estilo', bio: 'Cortes que se peinan solos y se mantienen bien entre cita y cita. Le gusta partir de tu rutina real.' },
+      { nombre: 'Daniela Paredes', esp: 'Peinados', bio: 'Recogidos, ondas y peinados para novias y eventos. Siempre con prueba previa.' },
+      { nombre: 'Lucía Mendoza', esp: 'Uñas', bio: 'Manicure, esmaltado semipermanente y diseños sencillos que duran.' },
+      { nombre: 'Andrea Salas', esp: 'Corte y estilo', bio: 'Cortes de transición y cabello rizado. Escucha primero, corta después.' },
+      { nombre: 'Mariana Cruz', esp: 'Maquillaje', bio: 'Maquillaje de día y de noche, pensado para que te veas como tú, solo que descansada.' }
+    ];
+  }
+
+  renderVals() {
+    const self = this;
+    const esc = this.state.esc;
+    const filtro = this.state.filtro;
+    const cargando = esc === 'cargando';
+    const vacio = esc === 'vacio';
+    const todos = (cargando || vacio) ? [] : this.equipo();
+    const unicas = [];
+    todos.forEach(function (p) { if (unicas.indexOf(p.esp) < 0) unicas.push(p.esp); });
+    const sel = (filtro !== 'Todas' && unicas.indexOf(filtro) < 0) ? 'Todas' : filtro;
+    const lista = todos.filter(function (p) { return sel === 'Todas' || p.esp === sel; });
+    const fondos = [
+      'linear-gradient(160deg, #1d2634, #0a0d12)', 'linear-gradient(160deg, #24202e, #0b0a10)', 'linear-gradient(160deg, #1b2a2c, #080d0e)',
+      'linear-gradient(160deg, #2a2420, #0e0b09)', 'linear-gradient(160deg, #1c2236, #090b12)', 'linear-gradient(160deg, #2a1f27, #0e0a0d)'
+    ];
+    const cols = Math.max(2, Math.min(4, this.props.columnas ?? 3));
+
+    const escenarios = [
+      { id: 'fotos', label: 'Con fotos' }, { id: 'sinFotos', label: 'Sin fotos' },
+      { id: 'vacio', label: 'Sin perfiles' }, { id: 'cargando', label: 'Cargando' }
+    ].map(function (e) {
+      const on = esc === e.id;
+      return { label: e.label, pressed: on, bg: on ? '#ffffff' : '#27272a', fg: on ? '#0b0b0c' : '#e8e8ea', pick: function () { self.setState({ esc: e.id, filtro: 'Todas' }); } };
+    });
+
+    const chips = ['Todas'].concat(unicas).map(function (c) {
+      const on = sel === c;
+      return { label: c, pressed: on, bg: on ? '#a9c6ec' : '#18181b', fg: on ? '#0b0b0c' : '#e8e8ea', pick: function () { self.setState({ filtro: c }); } };
+    });
+
+    const miembros = lista.map(function (p, i) {
+      const n = todos.indexOf(p);
+      return {
+        num: String(n + 1).padStart(2, '0'), nombre: p.nombre, esp: p.esp, bio: p.bio,
+        bg: esc === 'sinFotos' ? '#000000' : fondos[n % fondos.length],
+        delay: (i % 6) * 80
+      };
+    });
+
+    const slideBg = ['linear-gradient(165deg, #1d2634, #0a0d12)', 'linear-gradient(165deg, #2a2230, #0c0a10)', 'linear-gradient(165deg, #1e2b2d, #090d0e)'];
+    const slides = slideBg.map(function (bg, i) {
+      const on = self.state.slide === i;
+      return {
+        bg: bg, op: on ? 1 : 0, scale: on ? 1 : 1.05, hidden: !on, label: 'Foto ' + (i + 1) + ' de 3 · dueña',
+        barBg: on ? '#ffffff' : 'rgba(255,255,255,0.3)', ariaLabel: 'Ver foto ' + (i + 1),
+        go: function () { self.setState({ slide: i }); self.arrancar(); }
+      };
+    });
+
+    return {
+      slides: slides, escenarios: escenarios, chips: chips, miembros: miembros, cols: cols,
+      cargando: cargando, vacio: vacio, hayEquipo: todos.length > 0,
+      sinResultados: todos.length > 0 && lista.length === 0,
+      contador: cargando ? '' : (todos.length === 0 ? '' : (sel === 'Todas' ? todos.length + ' perfiles' : lista.length + ' de ' + todos.length)),
+      resumenEquipo: todos.length + ' profesionales',
+      especialidadesTxt: unicas.join(' · ')
+    };
+  }
+}
+</script>
+</body>
+</html>

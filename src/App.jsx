@@ -16,7 +16,7 @@ const Login = lazy(() => import('./pages/Login.jsx'))
 // inicial de TODOS los roles, incluido el POS que jamás lo usa. Ahora cada página
 // es un chunk precargable (ver config/paginasCliente.js por qué no React.lazy).
 const { PortalCliente } = pagina
-const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, RecompensasCliente, NosotrosCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente } = pagina
+const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, RecompensasCliente, NosotrosCliente, PerfilEquipoCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente } = pagina
 
 function CargandoPantalla() {
   return (
@@ -129,6 +129,7 @@ function App() {
               <Route path="ofertas" element={<Navigate to="/recompensas?seccion=cupones" replace />} />
               <Route path="mis-puntos" element={<Navigate to="/recompensas?seccion=tarjeta" replace />} />
               <Route path="nosotros" element={<NosotrosCliente />} />
+              <Route path="nosotros/equipo/:id" element={<PerfilEquipoCliente />} />
               <Route path="carrito" element={<CarritoCliente />} />
               <Route path="mis-resenas" element={<MisResenasCliente />} />
               <Route path="mi-perfil/direcciones" element={<DireccionesCliente />} />

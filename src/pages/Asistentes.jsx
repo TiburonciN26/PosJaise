@@ -13,6 +13,7 @@ import {
   MessageCircle,
   ArrowBigDown,
   UserCog,
+  Crown,
   Globe,
   Sparkles,
 } from 'lucide-react'
@@ -142,7 +143,7 @@ export default function Asistentes({ activo = true }) {
     const { data, error: errorConsulta } = await supabase
       .from('asistentes')
       .select(
-        'id, usuario_id, nombres_completos, telefono, email, direccion, contacto_emergencia, cumpleanos, fecha_ingreso, activo, foto_url, especialidad, bio, mostrar_en_web',
+        'id, usuario_id, nombres_completos, telefono, email, direccion, contacto_emergencia, cumpleanos, fecha_ingreso, activo, foto_url, especialidad, bio, mostrar_en_web, es_duena, instagram_url, facebook_url, tiktok_url, horario_web',
       )
       .order('nombres_completos')
 
@@ -164,7 +165,7 @@ export default function Asistentes({ activo = true }) {
     // su nombre) — nunca CAJERA, que no atiende.
     const { data } = await supabase
       .from('usuarios')
-      .select('id, nombre_completo')
+      .select('id, nombre_completo, rol')
       .in('rol', ['ADMINISTRADOR', 'ASISTENTE'])
       .order('nombre_completo')
     setUsuariosAsistente(data ?? [])
@@ -307,12 +308,18 @@ export default function Asistentes({ activo = true }) {
                           {asistente.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
-                      {(asistente.usuario_id || asistente.mostrar_en_web) && (
+                      {(asistente.usuario_id || asistente.mostrar_en_web || asistente.es_duena) && (
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-ink/60">
                           {asistente.usuario_id && (
                             <span className="flex items-center gap-1">
                               <KeyRound className="h-3 w-3 shrink-0" />
                               Vinculada a una cuenta
+                            </span>
+                          )}
+                          {asistente.es_duena && (
+                            <span className="flex items-center gap-1 font-semibold text-purple-300">
+                              <Crown className="h-3 w-3 shrink-0" />
+                              Fundadora
                             </span>
                           )}
                           {asistente.mostrar_en_web && (

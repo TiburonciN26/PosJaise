@@ -1,0 +1,19 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-03T15:00:00Z" },
+  "title": "Nosotros / Equipo — portal cliente",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "designSystems": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 2450, "title": "Nosotros · Equipo · escritorio", "expand": "fill", "is_interactive": true },
+    "Movil.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 3300, "title": "Nosotros · Equipo · móvil", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Movil.dc.html"],
+  "notes": {
+    "titulo": { "kind": "title1", "text": "Nosotros · Equipo — propuesta de diseño", "x": 0, "y": -300, "maxW": 1910, "w": 240 },
+    "ubicacion": { "x": 1960, "y": 0, "w": 420, "fill": "blue", "size": 24, "text": "QUÉ CAMBIA\n\n• Solo la sección «Equipo» de la pestaña Nosotros. Galería, Reseñas y Contacto no se tocan.\n• Se mantiene la sub-navegación en píldora y el pie del portal.\n• Estructura editorial: título + texto, retrato del salón y fichas (Equipo, Especialidades, Horario, Redes), y debajo la grilla de perfiles.\n• Los perfiles salen de equipo_para_web() (nombre, especialidad, bio, foto). Nada nuevo en el backend." },
+    "como": { "x": 1960, "y": 560, "w": 420, "fill": "green", "size": 24, "text": "CÓMO PROBARLO\n\nPulsa Play. Con la barra «Solo prototipo» cambias entre: con fotos, sin fotos (el fondo negro con ícono que ya existe), sin perfiles publicados y cargando.\n\nLos chips de especialidad filtran la grilla (salen de las especialidades que haya en los perfiles).\n\nTodos los nombres y textos son ficticios." },
+    "pendiente": { "x": 1960, "y": 1180, "w": 420, "fill": "orange", "size": 24, "text": "PARA DECIDIR\n\n1. Foto del salón del hero: ¿usar una foto de la galería o dejar el bloque sin foto?\n2. Filtro por especialidad: ¿se queda o se quita?\n3. ¿Tarjeta con 3 o 4 columnas en escritorio? (hoy la web tiene hasta 4; se cambia en Tweaks)." }
+  }
+}

@@ -6414,6 +6414,25 @@ Implementa `docs/diseno-recompensas/README.md` (Main/Movil `.dc.html` solo como 
 
 **Verificación:** `npm run build` pasa; `npm run lint` no reporta nada en los archivos tocados (los errores/avisos restantes son previos, en `tests/e2e` y otras pantallas). **No se pudo verificar visualmente** (sin navegador en este entorno): pendiente revisar en `npm run dev` — tarjeta 3D, destello de las tarjetas de nivel, tarjetas Oro/Plata en Canjear y Mis cupones, redirecciones de las rutas viejas y el modal «Mostrar en caja».
 
+## 37. Nosotros · Equipo — rediseño (Fase 1, solo frontend) — 2026-10-03
+
+Implementa `docs/diseno-nosotros/README.md` (los `.dc.html` solo como referencia). **Sin migraciones ni cambios en la base de datos.** Alcance: `SeccionEquipo`/`TarjetaEquipo` y su encabezado en `src/pages/cliente/NosotrosCliente.jsx`; Galería, Reseñas, Contacto, la píldora (`SUBSECCIONES`/`seccionActiva`) y `PieClienteWeb` no se tocaron.
+
+**Qué quedó.**
+- Hero propio de Equipo (dentro de `SeccionEquipo`): título Heavitas «NUESTRO EQUIPO» (`.lw-titulo-heavitas`) + párrafo; debajo 2 columnas (300 px | resto) con el retrato de la dueña y su ficha (Especialidad, Experiencia, Atiende, Sobre ella, Horario con `horario_atencion()` en el mismo formato que Contacto, y Síguenos). El texto «Conoce al salón por dentro.» de arriba de la píldora ahora se muestra solo en Galería/Reseñas/Contacto, porque el hero de Equipo trae el suyo.
+- Síguenos: píldoras con los logotipos originales (nuevo `components/IconosRedes.jsx`: Instagram degradado, Facebook #1877F2, TikTok blanco con desplazamiento cian/rojo), solo las redes con URL en `datos_contacto()`.
+- Carrusel del retrato (`RetratoCarrusel`): cambia cada 4,5 s con fundido de `opacity` 1,8 s y zoom 1,05→1 (7 s); 3 barras clicables que reinician el temporizador; `aria-hidden` en las inactivas; `setInterval` limpiado al desmontar; con `prefers-reduced-motion` solo fundido; 1 foto sin rotación ni barras; 0 fotos = fondo negro + ícono `User`.
+- Grilla de perfiles directa (sin encabezado ni chips) tras una línea fina: 1 columna en móvil con tarjeta en fila (foto 112 px), 2 en tablet, 3 en escritorio. Tarjeta `liquid-glass rounded-none` con foto 4:5, número 01…, nombre, especialidad en `--lw-gold` y bio; zoom suave de la foto en hover (sin movimiento con reduced-motion).
+- Cierre «¿Lista para tu cita?» con solo el botón de WhatsApp (solo si hay teléfono). **Sin botón «Reservar cita»** en ningún lado.
+- Estados: cargando («Cargando...»), sin perfiles («Todavía no hay perfiles publicados.», el hero se mantiene) y foto faltante (fallback actual).
+- Animación de entrada según `docs/patrones/animacion-entrada.md`: `useEntornoAnimacion` + clases existentes `.in-left`/`.in-up`/`.in-photo` (sin clases nuevas) con los retrasos propuestos del README; las tarjetas usan `useRevelarEnPantalla` (`.in-up`, `(índice % 6) × 80 ms`). Como ese hook necesita el contenedor con scroll, que vive en el padre, el contenedor lleva `data-scroll-nosotros` y `SeccionEquipo` se lo enlaza con `closest()`.
+
+**Fase 1 y la dueña.** `PERFIL_DUENA` (constante al inicio del bloque) acepta `nombre`, `cargo`, `fotos[]` (rutas del bucket `fotos-asistentes` o URLs completas) y `ficha`; hoy está **vacía a propósito** (no se inventaron datos): muestra el fallback del retrato y solo las filas de ficha con valor (hoy Horario y Síguenos, que salen de datos reales).
+
+**Pendiente — Fase 2 (backend, NO hecha, requiere confirmación antes de crear la migración):** `equipo_para_web()` devuelve una sola `foto_url` y no distingue a la dueña. Propuesta a discutir: marcar a la dueña (`es_duena` en `asistentes`, con índice único parcial para que haya una sola), tabla `asistentes_fotos` (varias fotos con orden) y columnas de ficha (`cargo`, `experiencia`, `atiende`); un RPC nuevo `duena_para_web()` security definer, con GRANT explícito además de RLS; migración en `supabase/migrations/`, QA primero en Local y confirmación antes de tocar producción por MCP.
+
+**Verificación:** `npm run build` pasa; `npm run lint` sin hallazgos en los archivos tocados. **No se pudo verificar visualmente** (sin navegador): pendiente revisar en `npm run dev` — retrasos y secuencia de entrada, el carrusel (hoy no se puede ver sin fotos: probar poniendo 2–3 URLs en `PERFIL_DUENA.fotos`), la tarjeta en fila en móvil, el zoom en hover y la animación de las tarjetas que quedan bajo el pliegue.
+
 ## 38. Corrección QA-037 a QA-040 — Recompensas (Fase 1) — 2026-10-03
 
 Solo frontend y solo Supabase Local TEST (sin migraciones, RLS, `.env`, dependencias ni producción). Cada defecto se reprodujo antes de corregirlo: 6 casos de `qa-recompensas-037-040.spec.mjs` fallaban por la razón esperada. **No se tocaron `TarjetaPuntos`, `EnvolturaCupon`, `FondoNivel` ni el CSS de efectos**; una prueba nueva comprueba que siguen animándose.

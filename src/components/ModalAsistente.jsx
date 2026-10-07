@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Camera, Globe, ImagePlus, X } from 'lucide-react'
+import { Camera, Crown, Globe, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -29,6 +29,11 @@ const formularioVacio = {
   especialidad: '',
   bio: '',
   mostrarEnWeb: false,
+  esDuena: false,
+  instagramUrl: '',
+  facebookUrl: '',
+  tiktokUrl: '',
+  horarioWeb: '',
 }
 
 function formularioDesdeAsistente(asistente) {
@@ -45,6 +50,11 @@ function formularioDesdeAsistente(asistente) {
     especialidad: asistente.especialidad ?? '',
     bio: asistente.bio ?? '',
     mostrarEnWeb: asistente.mostrar_en_web ?? false,
+    esDuena: asistente.es_duena ?? false,
+    instagramUrl: asistente.instagram_url ?? '',
+    facebookUrl: asistente.facebook_url ?? '',
+    tiktokUrl: asistente.tiktok_url ?? '',
+    horarioWeb: asistente.horario_web ?? '',
   }
 }
 
@@ -127,6 +137,12 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
       ? urlPublicaFoto(BUCKET_FOTOS, fotoActual)
       : null
 
+  // "Fundadora" solo para fichas vinculadas a una cuenta ADMINISTRADOR (el
+  // trigger asistentes_validar_duena lo exige también en la base).
+  const puedeSerDuena = usuariosDisponibles.some(
+    (usuario) => usuario.id === formulario.usuarioId && usuario.rol === 'ADMINISTRADOR',
+  )
+
   function actualizarCampo(campo, valor) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }
@@ -170,6 +186,11 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
       especialidad: formulario.especialidad.trim() || null,
       bio: formulario.bio.trim() || null,
       mostrar_en_web: formulario.mostrarEnWeb,
+      es_duena: puedeSerDuena && formulario.mostrarEnWeb && formulario.esDuena,
+      instagram_url: formulario.instagramUrl.trim() || null,
+      facebook_url: formulario.facebookUrl.trim() || null,
+      tiktok_url: formulario.tiktokUrl.trim() || null,
+      horario_web: formulario.horarioWeb.trim() || null,
       foto_url: fotoFinal,
     }
 
@@ -370,6 +391,58 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           </div>
 
           <div>
+            <Etiqueta htmlFor={`${idBase}-horarioWeb`}>Horario (para la Web)</Etiqueta>
+            <input
+              id={`${idBase}-horarioWeb`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.horarioWeb}
+              onChange={(evento) => actualizarCampo('horarioWeb', evento.target.value)}
+              placeholder="Ej. Lunes a sábado, 10:00 a. m. - 8:30 p. m."
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+            />
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-instagramUrl`}>Instagram (para la Web)</Etiqueta>
+            <input
+              id={`${idBase}-instagramUrl`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.instagramUrl}
+              onChange={(evento) => actualizarCampo('instagramUrl', evento.target.value)}
+              placeholder="https://instagram.com/..."
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+            />
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-facebookUrl`}>Facebook (para la Web)</Etiqueta>
+            <input
+              id={`${idBase}-facebookUrl`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.facebookUrl}
+              onChange={(evento) => actualizarCampo('facebookUrl', evento.target.value)}
+              placeholder="https://facebook.com/..."
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+            />
+          </div>
+
+          <div>
+            <Etiqueta htmlFor={`${idBase}-tiktokUrl`}>TikTok (para la Web)</Etiqueta>
+            <input
+              id={`${idBase}-tiktokUrl`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.tiktokUrl}
+              onChange={(evento) => actualizarCampo('tiktokUrl', evento.target.value)}
+              placeholder="https://tiktok.com/@..."
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+            />
+          </div>
+
+          <div>
             <Etiqueta>Foto (para la Web)</Etiqueta>
             <div className="flex items-center gap-3">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
@@ -426,6 +499,25 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             </span>
             <Interruptor activado={formulario.mostrarEnWeb} colorActivado="bg-purple-300" />
           </button>
+
+          {puedeSerDuena && formulario.mostrarEnWeb && (
+            <div>
+              <button
+                type="button"
+                onClick={() => actualizarCampo('esDuena', !formulario.esDuena)}
+                className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-purple-300"
+              >
+                <span className="flex min-w-0 items-center gap-2 text-sm text-ink">
+                  <Crown className="h-4 w-4 shrink-0 text-ink/60" />
+                  Fundadora
+                </span>
+                <Interruptor activado={formulario.esDuena} colorActivado="bg-purple-300" />
+              </button>
+              <p className="mt-1 text-xs text-ink/60">
+                Aparece al inicio de Nuestro equipo con su foto, horario y redes. Solo una a la vez.
+              </p>
+            </div>
+          )}
         </div>
 
         {error && (
