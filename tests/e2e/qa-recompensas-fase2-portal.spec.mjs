@@ -113,7 +113,12 @@ test('Canjear: condiciones, cancelar sin débito y doble clic con un único cup�
   await expect(d.getByText(/40 monedas/).first()).toBeVisible();
   await expect(d.getByText(/Saldo después/)).toBeVisible();
   await expect(d.getByText('Solo puedes usar un cupón por compra', { exact: false })).toBeVisible();
-  await expect(d.getByText('sin protección configurada', { exact: false })).toBeVisible();
+  // QA-063: el texto aprobado explica la regla GLOBAL de protección (mínimo de cobro por compra, rechazo completo sin consumir el cupón)
+  // y, aparte, el límite del 50 % en servicios «sin mínimo configurado». Se verifican ambas partes; no se anuncian importes internos.
+  await expect(d.getByText('Los cupones respetan un mínimo de cobro por compra', { exact: false })).toBeVisible();
+  await expect(d.getByText('el cupón se rechaza completo, no se consume y puedes usarlo en otra compra', { exact: false })).toBeVisible();
+  await expect(d.getByText('En servicios sin mínimo configurado, además, un cupón no descuenta más del 50 % del precio', { exact: false })).toBeVisible();
+  await expect(d.getByText('sin protección configurada', { exact: false })).toHaveCount(0);
 
   await d.getByRole('button', { name: 'Cancelar', exact: true }).click();
   await expect(dialogo(page)).toHaveCount(0);

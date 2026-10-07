@@ -5,6 +5,7 @@
 import { test, expect, knownIssue, expectKnownFailure } from './fixtures.mjs';
 import { login, logout } from './helpers.mjs';
 import * as h from './recompensas-fase2-helpers.mjs';
+import { comprobarNivelYEfectosEnCanje } from './niveles-visuales-helpers.mjs';
 
 const TABS = ['Mi tarjeta', 'Canjear puntos', 'Mis sellos', 'Mis cupones', 'Movimientos', 'Cómo funciona'];
 const CLAVES = ['tarjeta', 'canje', 'sellos', 'cupones', 'movimientos', 'como'];
@@ -358,12 +359,8 @@ test('Efectos y animaciones de Recompensas intactos (tarjeta de puntos, cupones 
   expect(await sheen.evaluate((el) => el.style.left), 'destello .tp-sheen en movimiento').not.toBe(leftA);
   await expect(page.locator('.tn-fondo .tp-glare')).toHaveCount(3);
 
-  // Cupones por nivel en Canjear puntos: Oro (glow, chispas) y Plata (destello).
-  await irA(page, 'canje');
-  const oro = page.locator('.cupon-oro').first();
-  await expect(oro).toBeVisible();
-  expect(await oro.evaluate((el) => getComputedStyle(el).animationName)).toContain('cupon-glow');
-  expect(await page.locator('.cupon-chispa').count(), 'chispas del nivel Oro').toBeGreaterThanOrEqual(3);
-  expect(await page.locator('.cupon-texto-oro').first().evaluate((el) => getComputedStyle(el).animationName)).toContain('cupon-brillo-texto');
-  expect(await page.locator('.cupon-plata').first().evaluate((el) => getComputedStyle(el, '::after').animationName)).toContain('cupon-sheen');
+  // QA-062: cupones por nivel del diseño vigente (Plata / Oro / Diamante): nivel de negocio de cada fila, destello, resplandor,
+  // iridiscencia y chispas. Las anclas antiguas (.cupon-oro, .cupon-plata, .cupon-texto-oro, cupon-glow) ya no existen: ver
+  // niveles-visuales-helpers.mjs para el mapa antiguo → vigente.
+  await comprobarNivelYEfectosEnCanje(page, expect);
 });
