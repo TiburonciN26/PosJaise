@@ -228,7 +228,8 @@ begin
                             'bono', p.bono, 'redondeo', p.redondeo, 'reclamadas', p.reclamadas, 'sellos', p.sellos)
   from _ap_pend p where not p.vinculada;
 
-  update public.recompensas_config set corte = p_corte, actualizado_en = now() where id = 1 and corte is distinct from p_corte;
+  -- apertura_ejecutada_en (migración 20261008000002) desbloquea recompensas_establecer_activo(true): solo esta función la fija.
+  update public.recompensas_config set corte = p_corte, apertura_ejecutada_en = coalesce(apertura_ejecutada_en, now()), actualizado_en = now() where id = 1;
 
   if p_activar then
     perform public.recompensas_establecer_activo(true); -- misma transacción: sin hueco entre apertura y activación

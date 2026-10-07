@@ -33,9 +33,9 @@ Proyecto `WedJaiseReact` (`cmkelllerzjqjbsqsylc`). Solo se consultó el **catál
 
 En producción `postgres` crea las tablas con privilegios por omisión mínimos (`anon=Dxtm`, `authenticated=Dxtm`, `service_role=Dxtm`: **sin SELECT/INSERT/UPDATE/DELETE**) y las funciones solo con `postgres` (sin PUBLIC). `anon` no tiene acceso de datos a ninguna tabla; `productos` concede SELECT por columna (26 columnas, **sin `costo`**) y `authenticated` solo `awd` sobre la tabla. En Local (CLI) todo se concede a `anon/authenticated/service_role`. Consecuencia: **un objeto nuevo funciona en producción solo si su migración lo concede explícitamente**. El ensayo aplica las migraciones con **estos privilegios de producción** (`ensayo-privilegios-produccion.sql`).
 
-## 2. Migraciones realmente necesarias: exactamente 21, en este orden
+## 2. Migraciones realmente necesarias: 21 de la actualización + 2 nuevas de privilegios/bloqueo (23), en este orden
 
-Son los archivos fechados `20261002…`–`20261007…`. **Ninguno anterior** hace falta (el esquema previo de producción equivale a ≤ `20261001`). **No se ejecutan «todas las del repositorio».** Cada archivo ya trae su `begin; … commit;` (transaccional). En producción se aplica con `apply_migration` usando como `name` el nombre del archivo (la `version` la asigna Supabase; seguirá sin coincidir con la del archivo, como ya ocurre hoy).
+Son los archivos fechados `20261002…`–`20261008…` (las 21 primeras son la actualización; las 2 últimas, `20261008000001` y `20261008000002`, son nuevas, ver «Migraciones 22 y 23» abajo). **Ninguno anterior** hace falta (el esquema previo de producción equivale a ≤ `20261001`). **No se ejecutan «todas las del repositorio».** Cada archivo ya trae su `begin; … commit;` (transaccional). En producción se aplica con `apply_migration` usando como `name` el nombre del archivo (la `version` la asigna Supabase; seguirá sin coincidir con la del archivo, como ya ocurre hoy).
 
 | # | Archivo | Qué hace | Funciones (firma) | Datos / privilegios |
 |---|---|---|---|---|
@@ -106,3 +106,14 @@ Son los archivos fechados `20261002…`–`20261007…`. **Ninguno anterior** ha
 ## 6. Lo que NO incluye esta actualización
 
 La apertura/conversión histórica ×5, la activación del programa, el catálogo real de premios, la revisión económica de monedas, la elegibilidad específica de premios y cualquier cambio de datos en producción. Siguen siendo lotes separados y requieren autorización propia.
+
+## Migraciones 22 y 23 (nuevas, de privilegios y bloqueo; ensayadas solo en la instancia desechable)
+
+| # | Archivo | Qué hace | Función / firma | Datos / privilegios |
+|---|---|---|---|---|
+| 22 | `20261008000001_confirmar_pedido_productos_sin_anon` | La migración 16 concedió EXECUTE de la función a `anon` y `service_role`; en producción hoy solo la ejecutan `postgres` y `authenticated`. Se retira lo ampliado y se conserva `authenticated` | `confirmar_pedido_productos(uuid[], text, date, time, text, text, uuid, text, text, text, text, text, text, jsonb, numeric)`: **mismo cuerpo y firma**; solo privilegios | `revoke … from public, anon, service_role`; `grant … to authenticated`. Sin cambio de datos |
+| 23 | `20261008000002_recompensas_activacion_bloqueada_hasta_apertura` | Hoy un ADMINISTRADOR podría encender Recompensas desde la pantalla (fija `corte = now()` sin apertura). Se bloquea hasta que se autorice y ejecute la apertura | **reemplaza** `recompensas_establecer_activo(boolean)` (misma firma): activar (`true`) exige `recompensas_config.apertura_ejecutada_en` no nulo; apagar (`false`) siempre se permite | **columna nueva** `recompensas_config.apertura_ejecutada_en timestamptz` (nace nula; ningún rol de la aplicación puede escribirla: no tiene UPDATE para `authenticated`). `activo` y `corte` no se tocan |
+
+Quién fija `apertura_ejecutada_en`: la función de apertura (hoy un borrador fuera de `supabase/migrations/`, `docs/recompensas-fase2/transicion/apertura-borrador.sql`, actualizado para fijarla). **Hasta que exista una migración de apertura autorizada, el programa no se puede activar por ningún camino de la aplicación.** Consecuencias a recordar: (a) activar Recompensas será parte del paso de apertura, no un botón suelto; (b) los scripts de QA/ensayo que llamaban a `recompensas_establecer_activo(true)` directamente deben marcar antes la apertura (el ayudante `activar()` de la suite de Recompensas de QA ya lo hace si la columna existe).
+
+Recuento actualizado de objetos: las 23 migraciones añaden 28 funciones nuevas, reemplazan 14 con la misma firma (13 + `recompensas_establecer_activo`), cambian 1 firma (`confirmar_pedido_productos` 13→15 parámetros), 10 tablas nuevas y +1 columna en `recompensas_config`.

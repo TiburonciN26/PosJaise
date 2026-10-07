@@ -6,7 +6,7 @@ Estado: **plan; no se ejecutó nada**. Cada paso marcado **[AUTORIZACIÓN]** req
 
 1. **El revertir el frontend NO revierte la base** ni al revés. Son dos publicaciones independientes con su propia recuperación (§6).
 2. **Orden obligatorio: backend → verificación → frontend.** El frontend nuevo contra el backend actual produce 404/400 (medido en el ensayo); el frontend actual contra el backend nuevo funciona (14/14).
-3. Las 21 migraciones se aplican **todas y en orden**. **Cada archivo se confirma individualmente: las 21 juntas NO forman una única transacción**, así que un fallo en la n-ésima deja confirmadas las n−1 anteriores. Ante cualquier fallo: **detenerse, no seguir con las siguientes y documentar el estado parcial** (cuál falló, cuáles quedaron aplicadas y registradas en `supabase_migrations.schema_migrations`, salida del error). La decisión posterior (migración correctiva nueva o recuperación) es del propietario.
+3. Las **23** migraciones (21 de la actualización + 2 de privilegios/bloqueo) se aplican **todas y en orden**. **Cada archivo se confirma individualmente: las 23 juntas NO forman una única transacción**, así que un fallo en la n-ésima deja confirmadas las n−1 anteriores. Ante cualquier fallo: **detenerse, no seguir con las siguientes y documentar el estado parcial** (cuál falló, cuáles quedaron aplicadas y registradas en `supabase_migrations.schema_migrations`, salida del error). La decisión posterior (migración correctiva nueva o recuperación) es del propietario.
 4. No se ejecuta la apertura/conversión ×5 ni se activa Recompensas. `activo=false`, `corte=null` antes, durante y después.
 5. Ventana de bajo movimiento (el negocio es pequeño: 127 ventas históricas; elegir un momento sin Caja abierta y sin pedidos pendientes; hoy hay 0 pedidos web activos y 13 citas pendientes que **no** se tocan).
 
@@ -36,15 +36,15 @@ Se hace justo antes de aplicar, con el negocio sin movimiento. Todo se guarda fu
 
 Con `apply_migration` del MCP de Supabase (o el editor SQL) **una por una**, en el orden del manifiesto, usando el SQL **idéntico** al archivo de `supabase/migrations/` (sin ediciones). Después de **cada** migración: sin error. Orden:
 
-`20261002000001` → `…0002` → … → `20261002000008` → `20261003000001` → `…0004` → `20261004000001` → `20261005000001` → `…0004` → `20261006000001` → `…0002` → `20261007000001` → `…0002` (21 en total).
+`20261002000001` → `…0002` → … → `20261002000008` → `20261003000001` → `…0004` → `20261004000001` → `20261005000001` → `…0004` → `20261006000001` → `…0002` → `20261007000001` → `…0002` → `20261008000001` → `…0002` (23 en total).
 
-**Correctivas de privilegios: PROPUESTA pendiente de aprobación.** `propuesta-correctivas-privilegios.sql` **no es una migración y no se ejecuta como SQL suelto en producción**. Si el propietario las aprueba, primero deben convertirse en **migraciones nuevas** en `supabase/migrations/`, ensayarse en la instancia desechable (y en QA Local) y solo entonces —con autorización explícita— aplicarse en producción como una migración más, después de las 21 y de su verificación.
+**Privilegios y bloqueo de la activación: ya son migraciones** (`20261008000001` y `20261008000002`, ensayadas en la desechable: `RESULTADO-ENSAYO.md` §9). Se aplican como las demás, una por una, con autorización explícita; `propuesta-correctivas-privilegios.sql` está superado y no se ejecuta.
 
 **Verificaciones del backend (solo lectura salvo donde se indica), antes de tocar el frontend:**
 
-1. Huella de negocio igual que la previa (17 tablas); `recompensas_config`: `activo=false`, `corte is null`; 0 filas en `recompensas_movimientos`, `recompensas_canjes`, `recompensas_apertura_aportes`.
-2. Comparación de esquema (huella por categoría) contra el ensayo POST: funciones 100, tablas 51, políticas 134, triggers 20, índices 108.
-3. Privilegios (lectura de catálogo): `anon` sin acceso a las tablas nuevas; `authenticated` con los grants esperados; las correctivas solo si ya se aprobaron, se convirtieron en migraciones nuevas y se ensayaron (ver arriba).
+1. Huella de negocio igual que la previa (17 tablas); `recompensas_config`: `activo=false`, `corte is null`, `apertura_ejecutada_en is null`; 0 filas en `recompensas_movimientos`, `recompensas_canjes`, `recompensas_apertura_aportes`.
+2. Comparación de esquema (huella por categoría) contra el ensayo POST: funciones 100, tablas 51, políticas 134, triggers 20, índices 108 (las migraciones 22 y 23 no añaden funciones, tablas ni índices; solo 1 columna).
+3. Privilegios (lectura de catálogo): `anon` sin acceso a las tablas nuevas; `authenticated` con los grants esperados; las migraciones 22 y 23 aplicadas: `confirmar_pedido_productos` sin `anon`/`service_role` y `recompensas_establecer_activo(true)` rechazado para un ADMINISTRADOR con el mensaje de apertura pendiente.
 4. **Comprobación inicial en producción: SOLO LECTURA.** Con el frontend actual y cuentas reales del negocio: cargar cada pantalla (ADMINISTRADOR, CAJERA, clienta de prueba) y consultas de lectura (`resumen_dashboard` devuelve `envio_cobrado`, `mis_cupones`, estado de `recompensas_config`). **No se crean ventas, anulaciones ni cupones de prueba en producción.** Las pruebas que modifican datos (venta y anulación con devolución de stock, cupones, pedidos, citas) **se mantienen en la instancia desechable** (ya hechas). Una venta, anulación o cupón de prueba real en producción sería una **autorización separada** y específica (qué cuenta, qué producto, cómo se revierte), no incluida en este plan.
 5. Consultar los registros de Postgres/API (`get_logs`/panel) durante 15 minutos: sin errores 4xx/5xx nuevos.
 
@@ -79,11 +79,16 @@ Observar 24–48 h: registros de errores, ventas (códigos `VEN130`+ correlativo
 ## 7. Acciones exactas que requieren tu autorización final
 
 1. Hacer el respaldo previo de producción (§2) y guardarlo en un lugar privado fuera del repo (sin restaurarlo en QA ni en el ensayo).
-2. Aplicar las **21 migraciones** en producción con `apply_migration`, una por una (§3).
-3. Aprobar (o no) las correctivas de privilegios: punto 1 (recomendado) y punto 2 (opcional). Si se aprueban: crear las migraciones nuevas, ensayarlas y pedir una autorización posterior para aplicarlas; **no** se ejecuta el SQL de la propuesta tal cual.
+2. Aplicar las **23 migraciones** en producción con `apply_migration`, una por una (§3).
+3. Aprobar las migraciones 22 y 23 (privilegios y bloqueo de la activación). Ya existen y se ensayaron; aplicarlas en producción requiere tu autorización, como las 21 anteriores.
 4. Merge de `testing` a `main` y publicación del frontend (§4): **no** se hará sin tu orden.
 5. La revisión y confirmación de cada uno de los 5 costos y de las protecciones de servicios (te corresponde a ti, una por una).
 6. Aparte, y no incluido en este plan: la apertura/conversión ×5, la activación de Recompensas, el catálogo de premios y cualquier push a `main` fuera de lo descrito.
+
+## 7b. Documentos de apoyo de esta etapa
+
+* Procedimiento de respaldo, custodia, recuperación y entorno privado propuesto: `PROCEDIMIENTO-RESPALDO-PRODUCCION.md`.
+* Ficha de revisión de los 5 productos con costo cero y de las protecciones de servicios: `FICHA-REVISION-COSTOS-Y-SERVICIOS.md`.
 
 ## 8. Pendientes que no bloquean pero conviene cerrar
 

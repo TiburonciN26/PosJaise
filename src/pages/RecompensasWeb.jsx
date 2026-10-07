@@ -821,6 +821,8 @@ function Proteccion({ estado, servicios, servicioFoco, recargar }) {
 function Programa({ estado, recargar }) {
   const { mostrarToast } = useToast()
   const c = estado.config
+  // Sin apertura ejecutada el servidor rechaza activar (migración 20261008000002): no se ofrece una acción que terminaría en error.
+  const activacionBloqueada = !c.activo && !c.apertura_ejecutada_en
   const [f, setF] = useState({
     tasaServMonedas: String(c.tasa_serv_monedas),
     tasaServSoles: String(c.tasa_serv_soles),
@@ -896,7 +898,12 @@ function Programa({ estado, recargar }) {
             ? `Activo desde ${new Date(c.corte).toLocaleString('es-PE')}. Las ventas confirmadas desde esa fecha acreditan monedas y sellos.`
             : 'Mientras esté apagado ninguna venta acredita monedas ni sellos y no se pueden canjear premios.'}
         </p>
-        {!confirmando ? (
+        {activacionBloqueada ? (
+          <p role="note" className="mt-3 rounded-lg border border-border bg-surface-2 p-3 text-xs text-ink/70">
+            La activación está bloqueada hasta que se autorice y se ejecute la apertura (la conversión de los puntos antiguos). El programa se
+            enciende como parte de ese paso, no desde esta pantalla. Mientras tanto puedes preparar las tasas, los umbrales, el catálogo y las protecciones.
+          </p>
+        ) : !confirmando ? (
           <button type="button" onClick={() => setConfirmando(true)} className="mt-3 rounded-lg border border-border-strong px-3 py-2 text-sm text-ink hover:border-red hover:text-red">
             {c.activo ? 'Apagar programa' : 'Activar programa'}
           </button>

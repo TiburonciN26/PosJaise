@@ -1,7 +1,7 @@
-// Aplica, SOLO en la instancia desechable, las migraciones de la actualización de lanzamiento (las 21 fechadas 20261002..20261007),
+// Aplica, SOLO en la instancia desechable, las migraciones de la actualización de lanzamiento (las 23 fechadas 20261002..20261008),
 // en orden de nombre y una por una, con el rol «postgres» (el mismo que usa apply_migration de Supabase MCP en producción:
 // sus objetos nuevos reciben los privilegios por omisión de producción, no los de Local). Cada archivo se confirma por separado
-// (no hay una transacción común de las 21). Se detiene en el primer error, también si falla registrar la versión en
+// (no hay una transacción común de las 23). Se detiene en el primer error, también si falla registrar la versión en
 // supabase_migrations.schema_migrations o si, tras registrarla, no se encuentra. No usa el CLI, no toca QA ni producción.
 // Uso: node tests/e2e/ensayo-aplicar-migraciones.mjs
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -10,9 +10,10 @@ import { CONTENEDOR, verificarDestinoEnsayo } from './ensayo-destino.mjs';
 import { aplicarEnOrden } from './ensayo-aplicar-migraciones-nucleo.mjs';
 
 verificarDestinoEnsayo('postgres');
+const TOTAL = 23; // 21 de la actualización + 2 de privilegios/bloqueo (20261008)
 const dir = new URL('../../supabase/migrations/', import.meta.url);
-const archivos = readdirSync(dir).filter((f) => /^2026100[2-7]\d+_.+\.sql$/.test(f)).sort();
-if (archivos.length !== 21) throw new Error(`Se esperaban 21 migraciones y hay ${archivos.length}.`);
+const archivos = readdirSync(dir).filter((f) => /^2026100[2-8]\d+_.+\.sql$/.test(f)).sort();
+if (archivos.length !== TOTAL) throw new Error(`Se esperaban ${TOTAL} migraciones y hay ${archivos.length}.`);
 
 const psql = (usuario, extra, input) => spawnSync('docker', ['exec', '-i', CONTENEDOR, 'psql', '-U', usuario, '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-q', ...extra], { input, encoding: 'utf8' });
 const soloDigitos = (v) => { if (!/^\d+$/.test(v)) throw new Error(`Versión inválida: ${v}`); return v; };

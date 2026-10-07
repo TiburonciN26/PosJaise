@@ -260,6 +260,13 @@ export async function configActual() {
   return json(`select row_to_json(c) from public.recompensas_config c where id=1;`);
 }
 export async function activar(activo) {
+  // Desde la migración 20261008000002 activar exige la apertura ejecutada. Estas pruebas no ejecutan la apertura real: la
+  // marcan como lo haría la función de apertura (solo si la columna existe, para seguir sirviendo antes de esa migración).
+  // restaurarConfig() la devuelve a su valor original.
+  if (activo && await json(`select to_json(exists (select 1 from information_schema.columns where table_schema='public' and table_name='recompensas_config' and column_name='apertura_ejecutada_en'));`)) {
+    const m = await admin(`update public.recompensas_config set apertura_ejecutada_en = coalesce(apertura_ejecutada_en, now()) where id = 1;`);
+    if (!m.ok) throw new Error(m.err);
+  }
   const r = await paso(ADMIN, `select public.recompensas_establecer_activo(${activo});`);
   if (!r.ok) throw new Error(r.err);
 }
@@ -267,7 +274,7 @@ export async function restaurarConfig(c) {
   const r = await admin(`update public.recompensas_config set activo=${c.activo}, corte=${c.corte ? `'${c.corte}'` : 'null'},
     tasa_serv_monedas=${c.tasa_serv_monedas}, tasa_serv_soles=${c.tasa_serv_soles},
     tasa_prod_monedas=${c.tasa_prod_monedas}, tasa_prod_soles=${c.tasa_prod_soles},
-    umbral_premium=${c.umbral_premium}, umbral_vip=${c.umbral_vip} where id=1;`);
+    umbral_premium=${c.umbral_premium}, umbral_vip=${c.umbral_vip}${'apertura_ejecutada_en' in c ? `, apertura_ejecutada_en=${c.apertura_ejecutada_en ? `'${c.apertura_ejecutada_en}'` : 'null'}` : ''} where id=1;`);
   if (!r.ok) throw new Error(r.err);
 }
 

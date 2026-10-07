@@ -1,3 +1,5 @@
+-- SUPERADA: estos ajustes ya son las migraciones 20261008000001 (punto 1) y 20261008000002 (punto 2, con un mecanismo distinto: bloqueo hasta la apertura
+-- en vez de retirar EXECUTE). Este archivo queda solo como registro histórico del hallazgo y NO debe ejecutarse.
 -- PROPUESTA (NO es una migración del repositorio y NO se aplicó en ningún entorno remoto): ajustes de privilegios que el ensayo de
 -- lanzamiento detectó al aplicar las 21 migraciones con los privilegios por omisión de PRODUCCIÓN. Se ensayó solo en la instancia desechable.
 -- PENDIENTE DE APROBACIÓN. Este archivo NO se ejecuta como SQL suelto en producción: si se aprueba, su contenido debe convertirse en
