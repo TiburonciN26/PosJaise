@@ -1003,7 +1003,7 @@ export default function RecompensasWeb() {
   }
 
   return (
-    <div className="animate-entrada-pestana mx-auto w-full max-w-3xl p-3 pb-6" style={{ '--color-foco': 'var(--color-red)' }}>
+    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)" style={{ '--color-foco': 'var(--color-red)' }}>
       <h1 className="mt-3 text-base font-semibold text-red">Recompensas Web</h1>
       {desde && (
         <Link to={desde} className="mt-1 inline-block text-sm text-ink/70 underline hover:text-red">

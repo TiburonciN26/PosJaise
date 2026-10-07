@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
+import { Lock, Unlock, ArrowBigDown, Percent, Hand } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -72,7 +72,7 @@ function coloresIndicador(asignados, total) {
   return { pill: 'bg-surface-2 text-ink/60' }
 }
 
-function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGuardar }) {
+function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuardar }) {
   const [bloqueado, setBloqueado] = useState(true)
   const [valor, setValor] = useState(porcentajeActual != null ? String(porcentajeActual) : '')
 
@@ -86,12 +86,26 @@ function FilaAsistentePorcentaje({ servicioId, asistente, porcentajeActual, onGu
     await onGuardar(asistente.id, valor)
   }
 
+  // Monto automático que le corresponde a la asistente: precio del servicio × % escrito (se actualiza al teclear).
+  const porcentajeNumerico = parseFloat(valor)
+  const montoAsistente =
+    valor.trim() !== '' && !Number.isNaN(porcentajeNumerico) && porcentajeNumerico >= 0 && porcentajeNumerico <= 100
+      ? (Number(precio) * porcentajeNumerico) / 100
+      : null
+
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-2.5">
       <span className="min-w-0 flex-1 truncate text-sm text-ink">
         {asistente.nombres_completos}
       </span>
       <div className="flex shrink-0 items-center gap-2">
+        <span
+          title="Monto que recibe la asistente (calculado automáticamente)"
+          className="flex items-center gap-1 font-mono text-xs text-ink/60"
+        >
+          <Hand className="h-3.5 w-3.5" />
+          {montoAsistente != null ? formatearSoles(montoAsistente) : '—'}
+        </span>
         <div className="flex items-center gap-1">
           <input
             type="search"
@@ -172,7 +186,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
 
       <CampoColapsable abierto={abierto}>
         {montado && (
-          <div className="space-y-2 border-t border-border p-3">
+          <div className="space-y-2 border-t border-border px-1.5 py-2">
             {parteOculta && <p className="-mt-1 text-xs text-ink/50">…{parteOculta}</p>}
             {total === 0 ? (
               <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
@@ -180,7 +194,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
               asistentesActivos.map((asistente) => (
                 <FilaAsistentePorcentaje
                   key={asistente.id}
-                  servicioId={servicio.id}
+                  precio={servicio.precio}
                   asistente={asistente}
                   porcentajeActual={porcentajesMap.get(`${servicio.id}_${asistente.id}`) ?? null}
                   onGuardar={(asistenteId, valor) => onGuardar(servicio.id, asistenteId, valor)}
@@ -192,6 +206,19 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
       </CampoColapsable>
     </div>
   )
+}
+
+// Columnas independientes (no una grilla de filas): al desplegar una tarjeta solo crece su columna y la vecina no deja un hueco.
+function useNumeroColumnas() {
+  const consulta = '(min-width: 640px)'
+  const [dos, setDos] = useState(() => window.matchMedia(consulta).matches)
+  useEffect(() => {
+    const mql = window.matchMedia(consulta)
+    const alCambiar = (e) => setDos(e.matches)
+    mql.addEventListener('change', alCambiar)
+    return () => mql.removeEventListener('change', alCambiar)
+  }, [])
+  return dos ? 2 : 1
 }
 
 export default function Porcentajes({ activo = true }) {
@@ -206,6 +233,7 @@ export default function Porcentajes({ activo = true }) {
   const [orden, setOrden] = useState('nombre-asc')
   const [ventana, setVentana] = useState({ clave: '', n: TAMANO_VENTANA })
   const primeraCargaHecha = useRef(false)
+  const numColumnas = useNumeroColumnas()
 
   async function cargarTodo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -339,7 +367,7 @@ export default function Porcentajes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador: fijo arriba al hacer scroll */}
@@ -365,16 +393,22 @@ export default function Porcentajes({ activo = true }) {
       ) : filtrados.length === 0 ? (
         <EstadoVacio icono={Percent} mensaje="No se encontraron servicios." tema="purple-300" />
       ) : (
-        <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
-          {visibles.map((servicio) => (
-            <TarjetaServicioPorcentaje
-              key={servicio.id}
-              servicio={servicio}
-              asistentesActivos={asistentes}
-              porcentajesMap={porcentajesMap}
-              asignados={conteos.get(servicio.id) ?? 0}
-              onGuardar={guardarPorcentaje}
-            />
+        <div className="mt-4 flex items-start gap-3">
+          {Array.from({ length: numColumnas }, (_, c) => (
+            <div key={c} className="flex min-w-0 flex-1 flex-col gap-3">
+              {visibles
+                .filter((_, i) => i % numColumnas === c)
+                .map((servicio) => (
+                  <TarjetaServicioPorcentaje
+                    key={servicio.id}
+                    servicio={servicio}
+                    asistentesActivos={asistentes}
+                    porcentajesMap={porcentajesMap}
+                    asignados={conteos.get(servicio.id) ?? 0}
+                    onGuardar={guardarPorcentaje}
+                  />
+                ))}
+            </div>
           ))}
         </div>
       )}

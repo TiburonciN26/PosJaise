@@ -104,7 +104,7 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
 
       <div className="relative mt-3 h-4 overflow-hidden rounded-full bg-surface-2">
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-purple-300/20 to-purple-300 transition-[width] duration-500"
+          className="absolute inset-y-0 left-0 rounded-full bg-purple-300 transition-[width] duration-500"
           style={{ width: `${anchoRelleno}%` }}
         />
         <Brillo activo={llegoAlTope} />
@@ -253,7 +253,7 @@ export default function Dashboard({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-3xl"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
@@ -283,13 +283,17 @@ export default function Dashboard({ activo = true }) {
             <BarraTermometro filtro={filtro} ingresoBruto={ingresoNeto} meta={metaEquilibrio} />
           </div>
 
+          {/* En PC: totales arriba a todo el ancho, y debajo Resumen | Cascada
+              lado a lado. En móvil se conserva el orden y el apilado original. */}
+          <div className="mt-4 flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
           {/* Resumen del período: lista (antes eran tarjetas sueltas) */}
-          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 lg:order-2">
             <h2 className="text-sm font-semibold text-ink">Resumen del período</h2>
             <div className="mt-3 space-y-2">
               {filasResumen.map((fila) => (
                 <div key={fila.etiqueta} className="flex items-center justify-between text-sm">
                   <span className="text-ink/60">{fila.etiqueta}</span>
+                  <span className="mx-2 min-w-4 flex-1 translate-y-0.5 border-b border-dashed border-ink/25" />
                   <span className={`font-mono ${fila.clase}`}>
                     {fila.positivo ? '+' : '−'}
                     {formatearSoles(Math.abs(fila.valor))}
@@ -300,7 +304,7 @@ export default function Dashboard({ activo = true }) {
           </div>
 
           {/* Tarjetas de conteo (no monetarias) */}
-          <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 lg:order-1 lg:col-span-2">
             <TarjetaResumen etiqueta="Ventas" valor={metricas.cantidadVentas} />
             <TarjetaResumen
               etiqueta="Productos vendidos"
@@ -311,12 +315,13 @@ export default function Dashboard({ activo = true }) {
           </div>
 
           {/* Cascada de ganancia */}
-          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4 lg:order-3">
             <h2 className="text-sm font-semibold text-ink">Cascada de ganancia</h2>
             <div className="mt-3 space-y-2">
               {pasosPrevios.map((paso) => (
                 <div key={paso.etiqueta} className="flex items-center justify-between text-sm">
                   <span className="text-ink/60">{paso.etiqueta}</span>
+                  <span className="mx-2 min-w-4 flex-1 translate-y-0.5 border-b border-dashed border-ink/25" />
                   <span
                     className={`font-mono ${paso.valor < 0 ? 'text-red' : 'text-green'}`}
                   >
@@ -328,6 +333,7 @@ export default function Dashboard({ activo = true }) {
 
               <div className="flex items-center justify-between border-t border-border pt-2">
                 <span className="text-sm text-ink/70">Utilidad neta</span>
+                <span className="mx-2 min-w-4 flex-1 translate-y-0.5 border-b border-dashed border-ink/25" />
                 <span className="font-mono text-sm font-semibold text-ink">
                   {formatearSoles(utilidadNeta)}
                 </span>
@@ -335,11 +341,13 @@ export default function Dashboard({ activo = true }) {
 
               <div className="flex items-center justify-between text-sm">
                 <span className="text-ink/60">10% diezmo</span>
+                <span className="mx-2 min-w-4 flex-1 translate-y-0.5 border-b border-dashed border-ink/25" />
                 <span className="font-mono text-red">− {formatearSoles(montoDiezmo)}</span>
               </div>
 
               <div className="flex items-center justify-between border-t border-border pt-2">
                 <span className="text-sm font-semibold text-ink">Ganancia final</span>
+                <span className="mx-2 min-w-4 flex-1 translate-y-0.5 border-b border-dashed border-ink/25" />
                 <span
                   className={`font-mono text-lg font-semibold ${
                     gananciaFinal < 0 ? 'text-red' : 'text-green'
@@ -349,6 +357,7 @@ export default function Dashboard({ activo = true }) {
                 </span>
               </div>
             </div>
+          </div>
           </div>
         </>
       )}

@@ -325,6 +325,14 @@
   animation: entrada-pestana 120ms ease-out;
 }
 
+/* Ancho máximo compartido de las pestañas del POS en pantallas lg+.
+   Las páginas lo usan con `lg:max-w-(--ancho-pestana)`; cambiar el valor
+   acá lo cambia en todas. Va en :root (no en @theme) para que Tailwind
+   no lo descarte por no tener una utilidad generada a partir de él. */
+:root {
+  --ancho-pestana: 90rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-flash-verde,
   .animate-flash-rojo,
@@ -1999,7 +2007,6 @@ input[type='search']::-webkit-search-decoration {
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
-  --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);

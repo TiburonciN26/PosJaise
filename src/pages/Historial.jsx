@@ -140,19 +140,10 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
   return (
     <div className="px-[17px] pb-[17px] pt-[5px]">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-ink/60">
-          Vendedor: <span className="text-ink/80">{vendedorNombre ?? '—'}</span>
-        </p>
-        {detalle.descuento_pct > 0 && (
-          <span className="text-xs font-medium text-red">Descuento: {detalle.descuento_pct}%</span>
-        )}
-        {detalle.descuento_monto > 0 && (
-          <span className="text-xs font-medium text-red">
-            Descuento: {formatearSoles(detalle.descuento_monto)}
-          </span>
-        )}
-      </div>
+      <div>
+      <p className="text-xs text-ink/60">
+        Vendedor: <span className="text-ink/80">{vendedorNombre ?? '—'}</span>
+      </p>
       {nombreCliente && (
         <p className="mt-0.5 text-xs text-ink/60">
           Cliente: <span className="text-ink/80">{nombreCliente}</span>
@@ -161,9 +152,12 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
       {/* Items */}
       <div className="mt-3 rounded-lg border border-border bg-bg">
-        <div className="grid grid-cols-[1fr_3rem_4.5rem] gap-2 border-b border-border px-3 py-2 font-mono text-xs uppercase tracking-wider text-ink/60">
+        <div className="grid grid-cols-[1fr_3rem_4.5rem] lg:grid-cols-[1fr_5rem_6rem] gap-2 border-b border-border px-3 py-2 lg:gap-4 lg:px-6 font-mono text-xs uppercase tracking-wider text-ink/60">
           <span>Producto</span>
-          <span className="text-center">Cant.</span>
+          <span className="text-center">
+            <span className="lg:hidden">Cant.</span>
+            <span className="hidden lg:inline">Cantidad</span>
+          </span>
           <span className="text-right">Subtotal</span>
         </div>
         <div className="divide-y divide-border">
@@ -179,9 +173,11 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
                     )}
                     <span className="truncate text-sm text-ink">{item.nombre}</span>
                   </div>
-                  <span className="font-mono text-[11px] text-ink/60">
-                    {formatearSoles(item.precio_unitario)} c/u
-                  </span>
+                  {item.tipo !== 'SERVICIO' && (
+                    <span className="font-mono text-[11px] text-ink/60">
+                      {formatearSoles(item.precio_unitario)} c/u
+                    </span>
+                  )}
                 </div>
                 <span className="text-center font-mono text-sm text-ink">{item.cantidad}</span>
                 <span className="text-right font-mono text-sm text-ink">
@@ -192,7 +188,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
 
             if (item.tipo !== 'SERVICIO') {
               return (
-                <div key={item.id} className="grid grid-cols-[1fr_3rem_4.5rem] items-center gap-2 px-3 py-2">
+                <div key={item.id} className="grid grid-cols-[1fr_3rem_4.5rem] lg:grid-cols-[1fr_5rem_6rem] items-center gap-2 px-3 py-2 lg:gap-4 lg:px-6">
                   {contenidoFila}
                 </div>
               )
@@ -205,7 +201,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
                   type="button"
                   onClick={() => alternarItem(item.id)}
                   aria-expanded={abierto}
-                  className="grid w-full grid-cols-[1fr_3rem_4.5rem] items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-2"
+                  className="grid w-full grid-cols-[1fr_3rem_4.5rem] lg:grid-cols-[1fr_5rem_6rem] items-center gap-2 px-3 py-2 text-left lg:gap-4 lg:px-6 transition-colors hover:bg-surface-2"
                 >
                   {contenidoFila}
                 </button>
@@ -226,40 +222,63 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
         </div>
       </div>
 
-      {/* Pago */}
-      {detalle.monto_recibido != null && (
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-ink/60">Recibido</span>
-            <span className="font-mono text-ink">{formatearSoles(detalle.monto_recibido)}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-ink/60">Vuelto</span>
-            <span className="font-mono text-green">{formatearSoles(vuelto)}</span>
-          </div>
+      </div>
+
+      {/* Botones a la izquierda; descuento y pago a la derecha, bajo el carrito */}
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+        <div className="flex gap-2">
+          {!confirmandoAnular && !anulada && (
+            <>
+              <button
+                type="button"
+                onClick={onIniciarAnular}
+                className="rounded-lg border border-red bg-transparent px-4 py-2.5 text-sm font-semibold text-red transition-colors hover:bg-red/10"
+              >
+                Anular venta
+              </button>
+              {/* Reimprimir oculto en ventas anuladas (se podría reactivar más adelante) */}
+              <button
+                type="button"
+                onClick={onImprimir}
+                className="rounded-lg border border-border-strong px-4 py-2.5 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+              >
+                Reimprimir ticket
+              </button>
+            </>
+          )}
+        </div>
+
+      {(detalle.descuento_pct > 0 || detalle.descuento_monto > 0 || detalle.monto_recibido != null) && (
+        <div className="ml-auto space-y-2">
+          {detalle.descuento_pct > 0 && (
+            <div className="flex items-center justify-end gap-3 text-sm">
+              <span className="text-ink/60">Descuento</span>
+              <span className="font-mono font-medium text-red">{detalle.descuento_pct}%</span>
+            </div>
+          )}
+          {detalle.descuento_monto > 0 && (
+            <div className="flex items-center justify-end gap-3 text-sm">
+              <span className="text-ink/60">Descuento</span>
+              <span className="font-mono font-medium text-red">{formatearSoles(detalle.descuento_monto)}</span>
+            </div>
+          )}
+          {detalle.monto_recibido != null && (
+            <>
+              <div className="flex items-center justify-end gap-3 text-sm">
+                <span className="text-ink/60">Recibido</span>
+                <span className="font-mono text-ink">{formatearSoles(detalle.monto_recibido)}</span>
+              </div>
+              <div className="flex items-center justify-end gap-3 text-sm">
+                <span className="text-ink/60">Vuelto</span>
+                <span className="font-mono text-green">{formatearSoles(vuelto)}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
+      </div>
 
-      {!confirmandoAnular ? (
-        <div className="mt-4 flex gap-2">
-          {!anulada && (
-            <button
-              type="button"
-              onClick={onIniciarAnular}
-              className="flex-1 rounded-lg border border-red bg-transparent py-2.5 text-sm font-semibold text-red transition-colors hover:bg-red/10"
-            >
-              Anular venta
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onImprimir}
-            className="flex-1 rounded-lg border border-border-strong py-2.5 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
-          >
-            Reimprimir ticket
-          </button>
-        </div>
-      ) : (
+      {confirmandoAnular && (
         <div className="mt-4 rounded-lg border border-red/40 bg-red/5 p-3">
           <p className="text-sm text-ink">
             ¿Seguro que quieres anular la venta{' '}
@@ -650,7 +669,7 @@ export default function Historial({ activo = true }) {
   const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, filtroMetodo), orden)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl">
+    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
       {/* Buscador + orden: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <BarraBusqueda
@@ -732,7 +751,7 @@ export default function Historial({ activo = true }) {
       )}
 
       {cargando ? (
-        <EsqueletoLista columnas={7} />
+        <EsqueletoLista columnas={6} />
       ) : ventasOrdenadas.length === 0 ? (
         <EstadoVacio
           icono={History}
@@ -776,7 +795,11 @@ export default function Historial({ activo = true }) {
                           Anulada
                         </span>
                       )}
-                      <span className="truncate font-mono text-xs text-ink/60">
+                      <span
+                        className={`truncate font-mono text-xs ${
+                          anulada ? 'text-red line-through' : 'text-ink/60'
+                        }`}
+                      >
                         {formatearFechaHora(venta.fecha)}
                       </span>
                     </div>
@@ -791,7 +814,9 @@ export default function Historial({ activo = true }) {
                       </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          CLASE_METODO_PAGO_PILL[venta.metodo_pago] ?? 'bg-surface-2 text-ink/60'
+                          anulada
+                            ? 'bg-red/15 text-red line-through'
+                            : (CLASE_METODO_PAGO_PILL[venta.metodo_pago] ?? 'bg-surface-2 text-ink/60')
                         }`}
                       >
                         {venta.metodo_pago}
@@ -834,7 +859,6 @@ export default function Historial({ activo = true }) {
                   <th className="px-3 py-2 font-normal">Método</th>
                   <th className="px-3 py-2 text-right font-normal">Items</th>
                   <th className="px-3 py-2 text-right font-normal">Total</th>
-                  <th className="px-3 py-2 text-right font-normal">Estado</th>
                   <th className="px-3 py-2 text-right font-normal" />
                 </tr>
               </thead>
@@ -854,7 +878,7 @@ export default function Historial({ activo = true }) {
                         tabIndex={0}
                         aria-expanded={abierto}
                         className={`cursor-pointer bg-surface transition-colors hover:bg-surface-2 ${
-                          anulada ? 'opacity-70' : ''
+                          anulada ? 'bg-red/5' : ''
                         }`}
                       >
                         <td
@@ -864,19 +888,29 @@ export default function Historial({ activo = true }) {
                         >
                           {codigoCorto(venta.codigo)}
                         </td>
-                        <td className="px-3 py-2.5 font-mono text-ink/60">
+                        <td
+                          className={`px-3 py-2.5 font-mono ${
+                            anulada ? 'text-red line-through' : 'text-ink/60'
+                          }`}
+                        >
                           {formatearFechaHora(venta.fecha)}
                         </td>
                         <td className="px-3 py-2.5">
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                              CLASE_METODO_PAGO_PILL[venta.metodo_pago] ?? 'bg-surface-2 text-ink/60'
+                              anulada
+                                ? 'bg-red/15 text-red line-through'
+                                : (CLASE_METODO_PAGO_PILL[venta.metodo_pago] ?? 'bg-surface-2 text-ink/60')
                             }`}
                           >
                             {venta.metodo_pago}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 text-right font-mono text-ink/60">
+                        <td
+                          className={`px-3 py-2.5 text-right font-mono ${
+                            anulada ? 'text-red line-through' : 'text-ink/60'
+                          }`}
+                        >
                           {cantidadItems}
                         </td>
                         <td
@@ -887,17 +921,6 @@ export default function Historial({ activo = true }) {
                           {formatearSoles(venta.total)}
                         </td>
                         <td className="px-3 py-2.5 text-right">
-                          {anulada ? (
-                            <span className="rounded-full bg-red/15 px-2 py-0.5 text-xs font-medium text-red">
-                              Anulada
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-green/15 px-2 py-0.5 text-xs font-medium text-green">
-                              Activa
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">
                           <ArrowBigDown
                             className={`ml-auto h-4 w-4 text-ink/60 transition-transform duration-300 ${
                               abierto ? 'rotate-180' : ''
@@ -906,7 +929,7 @@ export default function Historial({ activo = true }) {
                         </td>
                       </tr>
                       <tr className="bg-surface">
-                        <td colSpan={7} className="p-0">
+                        <td colSpan={6} className="p-0">
                           <CampoColapsable abierto={abierto}>
                             {(abierto || detalles[venta.id]) && (
                               <DetalleVenta

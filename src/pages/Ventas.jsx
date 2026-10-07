@@ -198,7 +198,7 @@ function FilaTicket({
               transition: arrastrando ? 'none' : undefined,
             }
       }
-      className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} touch-pan-y grid items-center gap-3 overflow-hidden px-3 py-2 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
+      className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} touch-pan-y grid items-center gap-5 overflow-hidden px-6 py-2 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
         saliendo ? 'pointer-events-none -translate-x-full opacity-0 animate-flash-rojo' : 'translate-x-0 opacity-100'
       } ${resaltada ? 'animate-flash-verde' : ''}`}
     >
@@ -212,14 +212,9 @@ function FilaTicket({
           <span className="truncate text-sm text-ink">{item.nombre}</span>
         </div>
         {item.tipo === 'SERVICIO' ? (
-          <div className="mt-0.5">
-            <span className="font-mono text-xs text-ink/60">
-              S/ {item.precioUnitario.toFixed(1)}
-            </span>
-            {item.clienteNombre && (
-              <p className="truncate text-[11px] text-ink/50">Para: {item.clienteNombre}</p>
-            )}
-          </div>
+          item.clienteNombre && (
+            <p className="mt-0.5 truncate text-[11px] text-ink/50">Para: {item.clienteNombre}</p>
+          )
         ) : (
           <span className="font-mono text-xs text-ink/60">
             S/ {item.precioUnitario.toFixed(1)} c/u
@@ -259,7 +254,7 @@ function FilaTicket({
         )}
       </div>
 
-      <span className="-ml-3 whitespace-nowrap text-right font-mono text-sm text-ink">
+      <span className="whitespace-nowrap text-right font-mono text-sm text-ink">
         {subtotal.toFixed(1)}
       </span>
 
@@ -968,7 +963,7 @@ export default function Ventas({ activo = true }) {
         {/* lg: en monitores anchos, el buscador y la fila de cliente/servicio
             se centran en vez de estirarse de borde a borde (la franja de
             fondo sí sigue ocupando todo el ancho). */}
-        <div className="lg:mx-auto lg:w-full lg:max-w-5xl">
+        <div className="lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
         <div className="relative flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink/60">
@@ -1149,6 +1144,13 @@ export default function Ventas({ activo = true }) {
               )}
             </button>
 
+            {/* Contenedor con ancho animado: al abrir/cerrar el campo de código
+                lo que está a su izquierda (cliente, servicio) se desplaza suave */}
+            <div
+              className={`shrink-0 transition-[width] duration-300 ease-in-out ${
+                esCupon ? 'w-20' : 'w-12'
+              }`}
+            >
             {esCupon ? (
               <input
                 type="text"
@@ -1158,12 +1160,10 @@ export default function Ventas({ activo = true }) {
                 onChange={(evento) => actualizarCodigoCupon(evento.target.value)}
                 placeholder="CÓDIGO"
                 aria-label="Código de cupón"
-                className={`w-20 shrink-0 rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs uppercase tracking-widest outline-none ${
-                  cuponPreview
-                    ? 'border-green bg-green/10 text-green'
-                    : cuponError
-                      ? 'border-red bg-red/10 text-red'
-                      : 'border-border bg-surface-2 text-ink focus:border-red'
+                className={`w-full rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs uppercase tracking-widest outline-none focus-visible:outline-none! ${
+                  codigoCupon
+                    ? 'border-red bg-red/10 text-red'
+                    : 'border-border bg-surface-2 text-ink'
                 }`}
               />
             ) : (
@@ -1176,13 +1176,14 @@ export default function Ventas({ activo = true }) {
                 onChange={(evento) => actualizarDescuento(evento.target.value)}
                 placeholder="0"
                 aria-label={esDescuentoPorcentaje ? 'Porcentaje de descuento' : 'Monto de descuento'}
-                className={`w-12 shrink-0 rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs outline-none ${
+                className={`w-full rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs outline-none ${
                   valorDescuento
                     ? 'border-red bg-red/10 text-red'
                     : 'border-border bg-surface-2 text-ink focus:border-red'
                 }`}
               />
             )}
+            </div>
           </div>
         </CampoColapsable>
 
@@ -1213,14 +1214,14 @@ export default function Ventas({ activo = true }) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden p-3 pt-0 sm:overflow-y-auto">
-        <div className="flex h-full min-h-0 w-full flex-col gap-3 sm:h-auto lg:mx-auto lg:max-w-5xl lg:flex-row lg:items-start">
+        <div className="flex h-full min-h-0 w-full flex-col gap-3 sm:h-auto lg:mx-auto lg:max-w-(--ancho-pestana) lg:flex-row lg:items-start">
           {/* Columna de ticket (fija en móvil el espacio disponible; crece en desktop) */}
           <div className="flex min-h-0 flex-1 flex-col gap-3">
             {/* Zona de ticket: en móvil ocupa el espacio libre (entre header y
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
             <div
-              className={`-mx-3 flex min-h-0 flex-1 flex-col border-border bg-bg sm:mx-0 sm:rounded-lg sm:border-t sm:flex-none ${
+              className={`-mx-3 flex min-h-0 flex-1 flex-col border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none ${
                 carritoExpandido ? 'border-t' : ''
               }`}
             >
@@ -1231,11 +1232,11 @@ export default function Ventas({ activo = true }) {
                 onKeyDown={manejarActivacionTeclado(() => setCarritoExpandido((anterior) => !anterior))}
                 aria-expanded={carritoExpandido}
                 aria-label={carritoExpandido ? 'Contraer carrito' : 'Expandir carrito'}
-                className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} grid cursor-pointer gap-3 border-b border-border pr-2 pl-3 py-2.5 font-mono text-[11px] uppercase tracking-wider text-ink transition-colors hover:bg-surface-2/50`}
+                className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} grid cursor-pointer gap-5 border-b border-border px-6 py-2.5 font-mono text-[11px] uppercase tracking-wider text-ink transition-colors hover:bg-surface-2/50`}
               >
                 <span>Producto</span>
                 <span className="text-center">Cantidad</span>
-                <span className="-ml-3 text-right">Subtotal</span>
+                <span className="text-right">Subtotal</span>
                 {!esTactil && <span />}
               </div>
 
@@ -1247,7 +1248,7 @@ export default function Ventas({ activo = true }) {
                 {carrito.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
                     <ShoppingCart className="h-10 w-10 text-ink/20" />
-                    <p className="font-mono text-sm text-ink/30">La cuenta está vacía</p>
+                    <p className="font-mono text-sm text-ink/30">El carrito está vacío</p>
                   </div>
                 ) : (
                   carrito.map((item) => (
@@ -1278,7 +1279,7 @@ export default function Ventas({ activo = true }) {
               contenido no entra en pantallas muy chicas, se scrollea dentro
               del propio panel en vez de mandar los botones fuera de la vista. */}
           <div
-            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:w-[360px] lg:flex-none ${
+            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:mt-3 lg:w-[360px] lg:flex-none ${
               carritoExpandido ? 'translate-y-full pointer-events-none' : 'translate-y-0'
             }`}
           >
@@ -1335,7 +1336,13 @@ export default function Ventas({ activo = true }) {
                       {metodo.nombre === 'Tarjeta' ? (
                         <span className="shrink-0 text-sm leading-none">💳</span>
                       ) : (
-                        <img src={metodo.icono} alt="" className="h-4 w-4 shrink-0" />
+                        <img
+                          src={metodo.icono}
+                          alt=""
+                          className={`h-4 w-4 shrink-0 ${
+                            metodo.nombre === 'Transferencia' ? 'opacity-80 brightness-0 invert' : ''
+                          }`}
+                        />
                       )}
                       <span className="sm:hidden">{metodo.nombreCorto}</span>
                       <span className="hidden sm:inline">{metodo.nombre}</span>
@@ -1356,7 +1363,7 @@ export default function Ventas({ activo = true }) {
                     value={montoRecibido}
                     onChange={(evento) => setMontoRecibido(evento.target.value)}
                     placeholder="0.00"
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
+                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-green focus-visible:outline-green!"
                   />
                   <div className="flex shrink-0 items-center gap-1.5">
                     <button

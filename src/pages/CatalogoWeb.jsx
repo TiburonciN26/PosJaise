@@ -241,7 +241,7 @@ export default function CatalogoWeb({ activo = true }) {
   const etiquetaTab = tab === 'servicios' ? 'servicios' : 'productos'
 
   return (
-    <div ref={raizRef} className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl" style={{ '--color-foco': 'var(--color-red)' }}>
+    <div ref={raizRef} className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)" style={{ '--color-foco': 'var(--color-red)' }}>
       <h1 className="mt-3 text-base font-semibold text-red">Catálogo Web</h1>
       {desde && (
         <Link to={desde} className="mt-1 inline-block text-sm text-ink/70 underline hover:text-red">

@@ -59,7 +59,7 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
           {gasto.nombre}
         </p>
         <div className="mt-0.5 flex flex-wrap items-center gap-2">
-          <span className={`font-mono text-sm ${cancelado ? 'text-red/70' : 'text-purple-300'}`}>
+          <span className={`font-mono text-sm ${cancelado ? 'text-red/70' : gasto.tipo === 'FIJO' ? 'text-blue' : 'text-purple-300'}`}>
             {formatearSoles(gasto.monto)}
           </span>
           {gasto.creado_en && (
@@ -348,7 +348,7 @@ export default function Gastos({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Resumen del período — la cajera solo maneja caja chica (variable),
@@ -595,7 +595,6 @@ export default function Gastos({ activo = true }) {
               <thead>
                 <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
                   <th className="px-3 py-2 font-normal">Gasto</th>
-                  <th className="px-3 py-2 font-normal">Tipo</th>
                   <th className="px-3 py-2 font-normal">Período</th>
                   <th className="px-3 py-2 text-right font-normal">Monto</th>
                   <th className="px-3 py-2 text-right font-normal">Acciones</th>
@@ -621,7 +620,6 @@ export default function Gastos({ activo = true }) {
                         </div>
                         <p className="mt-0.5 text-xs text-ink/60">{resumenNombres(fijos)}</p>
                       </td>
-                      <td className="px-3 py-2.5" />
                       <td className="px-3 py-2.5 text-ink/60">
                         {MESES[mes - 1]} {anioDebounced}
                       </td>
@@ -639,7 +637,7 @@ export default function Gastos({ activo = true }) {
                       </td>
                     </tr>
                     <tr>
-                      <td colSpan={5} className="p-0">
+                      <td colSpan={4} className="p-0">
                         <CampoColapsable abierto={fijosAbiertos}>
                           <div className="space-y-2 border-t border-border bg-bg p-3">
                             {fijos.map((gasto) => (
@@ -678,7 +676,6 @@ export default function Gastos({ activo = true }) {
                         </div>
                         <p className="mt-0.5 text-xs text-ink/60">{resumenNombres(variables)}</p>
                       </td>
-                      <td className="px-3 py-2.5" />
                       <td className="px-3 py-2.5 text-ink/60">
                         {MESES[mes - 1]} {anioDebounced}
                       </td>
@@ -696,7 +693,7 @@ export default function Gastos({ activo = true }) {
                       </td>
                     </tr>
                     <tr>
-                      <td colSpan={5} className="p-0">
+                      <td colSpan={4} className="p-0">
                         <CampoColapsable abierto={variablesAbiertos}>
                           <div className="space-y-2 border-t border-border bg-bg p-3">
                             {variables.map((gasto) => (

@@ -261,6 +261,7 @@ export default function Citas({ activo = true }) {
   const [citaAEliminar, setCitaAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [citaAReactivar, setCitaAReactivar] = useState(null)
+  const [citaACancelar, setCitaACancelar] = useState(null)
 
   const [mesAbierto, setMesAbierto] = useState(false)
   // El botón vive dentro de un contenedor que anima su ancho para la
@@ -281,12 +282,16 @@ export default function Citas({ activo = true }) {
   const panelDetalleRef = useRef(null)
   const panelEliminarRef = useRef(null)
   const panelReactivarRef = useRef(null)
+  const panelCancelarRef = useRef(null)
+  const inputBusquedaRef = useRef(null)
   useCerrarConEscape(() => setCitaSeleccionada(null), Boolean(citaSeleccionada))
   useModalA11y(panelDetalleRef, Boolean(citaSeleccionada))
   useCerrarConEscape(() => setCitaAEliminar(null), Boolean(citaAEliminar))
   useModalA11y(panelEliminarRef, Boolean(citaAEliminar))
   useCerrarConEscape(() => setCitaAReactivar(null), Boolean(citaAReactivar))
   useModalA11y(panelReactivarRef, Boolean(citaAReactivar))
+  useCerrarConEscape(() => setCitaACancelar(null), Boolean(citaACancelar))
+  useModalA11y(panelCancelarRef, Boolean(citaACancelar))
   useCerrarConEscape(() => setMesAbierto(false), mesAbierto)
   useCerrarConEscape(() => setFiltroAbierto(false), filtroAbierto)
 
@@ -320,6 +325,12 @@ export default function Citas({ activo = true }) {
     setAsistenteFiltro(valor)
     setFiltroAbierto(false)
   }
+
+  // En móvil el input se monta al abrir la búsqueda; en PC está siempre
+  // montado, así que el foco se pide aquí en vez de con autoFocus.
+  useEffect(() => {
+    if (busquedaAbierta) inputBusquedaRef.current?.focus()
+  }, [busquedaAbierta])
 
   function cerrarBusqueda() {
     setBusquedaAbierta(false)
@@ -550,6 +561,12 @@ export default function Citas({ activo = true }) {
     await cambiarEstado(citaAReactivar, 'PENDIENTE')
   }
 
+  async function confirmarCancelar() {
+    if (!citaACancelar) return
+    setCitaACancelar(null)
+    await cambiarEstado(citaACancelar, 'CANCELADA')
+  }
+
   async function confirmarEliminar() {
     if (!citaAEliminar) return
     setEliminando(true)
@@ -623,13 +640,13 @@ export default function Citas({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
         <div
           className={`grid overflow-x-hidden transition-[grid-template-columns] duration-300 ease-in-out ${
-            busquedaAbierta ? 'grid-cols-[0fr]' : 'grid-cols-[1fr]'
+            busquedaAbierta ? 'max-lg:grid-cols-[0fr] grid-cols-[1fr]' : 'grid-cols-[1fr]'
           }`}
         >
           <div className="flex min-w-0 items-center gap-2 overflow-x-hidden">
@@ -779,15 +796,17 @@ export default function Citas({ activo = true }) {
         </div>
 
         <div
-          className={`flex min-w-0 items-center transition-[flex-grow] duration-300 ease-in-out ${
+          className={`flex min-w-0 items-center transition-[flex-grow] duration-300 ease-in-out lg:flex-1 ${
             busquedaAbierta ? 'flex-1' : 'shrink-0'
           }`}
         >
-          {busquedaAbierta ? (
-            <div className="flex w-full items-center gap-1">
+          {/* En PC la barra está siempre desplegada hasta el borde derecho;
+              en móvil sigue siendo un ícono que se expande al tocarlo. */}
+          <div className={`w-full items-center gap-1 ${busquedaAbierta ? 'flex' : 'hidden lg:flex'}`}>
+              <div className="relative w-full">
               <input
+                ref={inputBusquedaRef}
                 type="search"
-                autoFocus
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -795,23 +814,25 @@ export default function Citas({ activo = true }) {
                 value={busquedaCitas}
                 onChange={(evento) => setBusquedaCitas(evento.target.value)}
                 placeholder="Buscar por cliente o servicio..."
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300 lg:pr-9"
               />
+              <Search className="pointer-events-none absolute right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-ink/50 lg:block" />
+              </div>
               <button
                 type="button"
                 onClick={cerrarBusqueda}
                 aria-label="Cerrar búsqueda"
-                className="shrink-0 rounded-lg p-2 text-ink/70 hover:bg-surface-2 hover:text-purple-300"
+                className="shrink-0 rounded-lg p-2 text-ink/70 hover:bg-surface-2 hover:text-purple-300 lg:hidden"
               >
                 <X className="h-4 w-4" />
               </button>
-            </div>
-          ) : (
+          </div>
+          {!busquedaAbierta && (
             <button
               type="button"
               onClick={() => setBusquedaAbierta(true)}
               aria-label="Buscar citas"
-              className="shrink-0 rounded-lg p-2 text-ink/70 hover:bg-surface-2 hover:text-purple-300"
+              className="shrink-0 rounded-lg p-2 text-ink/70 hover:bg-surface-2 hover:text-purple-300 lg:hidden"
             >
               <Search className="h-4 w-4" />
             </button>
@@ -1069,7 +1090,7 @@ export default function Citas({ activo = true }) {
         />
       )}
 
-      {citaSeleccionada && !citaACompletar && !modalCita && !citaAEliminar && !citaAReactivar && (
+      {citaSeleccionada && !citaACompletar && !modalCita && !citaAEliminar && !citaAReactivar && !citaACancelar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
           <div
             ref={panelDetalleRef}
@@ -1149,7 +1170,7 @@ export default function Citas({ activo = true }) {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => cambiarEstado(citaSeleccionada, 'CANCELADA')}
+                    onClick={() => setCitaACancelar(citaSeleccionada)}
                     className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong px-2 py-1.5 text-xs font-medium text-ink/70 hover:border-red hover:text-red"
                   >
                     <X className="h-3.5 w-3.5 shrink-0" />
@@ -1244,6 +1265,31 @@ export default function Citas({ activo = true }) {
                 className="flex-1 rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10 disabled:opacity-40"
               >
                 {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {citaACancelar && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+            <h2 className="text-base font-semibold text-ink">¿Cancelar esta cita?</h2>
+            <p className="mt-1 text-sm text-ink/60">Podrás reactivarla después si cambia el plan.</p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCitaACancelar(null)}
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={confirmarCancelar}
+                className="flex-1 rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10"
+              >
+                Sí, cancelar
               </button>
             </div>
           </div>

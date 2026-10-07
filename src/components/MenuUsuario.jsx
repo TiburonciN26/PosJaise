@@ -147,13 +147,13 @@ export default function MenuUsuario() {
   const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS, usuario?.foto_url) : null
 
   return (
-    <div ref={menuRef} className="relative shrink-0">
+    <div ref={menuRef} className="relative flex shrink-0 flex-row-reverse items-center">
       <button
         type="button"
         onClick={() => setMenuAbierto((valorAnterior) => !valorAnterior)}
         aria-expanded={menuAbierto}
         aria-label="Menú de usuario"
-        className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300"
+        className="peer relative z-10 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300"
       >
         {urlFoto ? (
           <img
@@ -166,6 +166,23 @@ export default function MenuUsuario() {
           iniciales(usuario?.nombre_completo)
         )}
       </button>
+
+      {/* Saludo: ocupa espacio real (el ancho crece de 0 a su tamaño con
+          grid 0fr→1fr), así empuja al vecino de la izquierda al pasar el
+          mouse y lo devuelve al quitarlo. flex-row-reverse + peer: sigue al
+          botón en el DOM pero se pinta a su izquierda. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none grid grid-cols-[0fr] opacity-0 transition-[grid-template-columns,opacity] duration-500 ease-out ${
+          menuAbierto ? '' : 'peer-hover:grid-cols-[1fr] peer-hover:opacity-100'
+        }`}
+      >
+        <span className="block min-w-0 overflow-hidden">
+          <span className="mr-2 block max-w-56 truncate whitespace-nowrap rounded-full border border-border bg-surface-2 px-3 py-1 text-xs text-ink">
+            Hola! {usuario?.nombre_completo}
+          </span>
+        </span>
+      </div>
 
       {menuAbierto && (
         <div className="animate-entrada-dropdown absolute right-0 top-full z-30 mt-2 w-72 rounded-lg border border-border bg-surface-2 p-3 shadow-lg">

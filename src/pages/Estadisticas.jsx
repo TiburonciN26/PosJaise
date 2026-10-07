@@ -176,13 +176,13 @@ function GraficoTendencia({ dias }) {
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex h-32 min-w-max items-end gap-1.5 px-1">
+      <div className="flex h-32 w-full min-w-max items-end gap-1.5 px-1">
         {dias.map((dia, indice) => {
           const alturaPct = Math.max((dia.monto / maximo) * 100, dia.monto > 0 ? 3 : 0)
           return (
             <div
               key={dia.fecha}
-              className="relative flex h-full w-6 shrink-0 flex-col items-center justify-end"
+              className="relative flex h-full min-w-6 flex-1 flex-col items-center justify-end"
               onMouseEnter={() => setActivo(indice)}
               onMouseLeave={() => setActivo(null)}
               onTouchStart={() => setActivo(indice)}
@@ -322,7 +322,7 @@ export default function Estadisticas({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-5xl"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
@@ -431,8 +431,10 @@ export default function Estadisticas({ activo = true }) {
             </div>
           </div>
 
+          {/* 4 y 5. Rendimiento por asistente + Métodos de pago (lado a lado en pantallas anchas) */}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* 4. Rendimiento por asistente */}
-          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
             <h2 className="text-sm font-semibold text-ink">Rendimiento por asistente</h2>
             {porAsistente.length === 0 ? (
               <p className="mt-4 text-center font-mono text-sm text-ink/60">
@@ -455,7 +457,7 @@ export default function Estadisticas({ activo = true }) {
           </div>
 
           {/* 5. Métodos de pago */}
-          <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-surface p-4">
             <h2 className="text-sm font-semibold text-ink">Métodos de pago</h2>
             {metodosPago.length === 0 ? (
               <p className="mt-4 text-center font-mono text-sm text-ink/60">Sin datos.</p>
@@ -473,6 +475,7 @@ export default function Estadisticas({ activo = true }) {
                 ))}
               </div>
             )}
+          </div>
           </div>
         </>
       )}

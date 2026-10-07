@@ -187,6 +187,24 @@ function BarraCompletitud({ porcentaje, colores }) {
   )
 }
 
+// 1 columna en móvil, 2 desde sm (640px), 3 desde lg (1024px). Las columnas son
+// independientes (flex) para que expandir una tarjeta no deje huecos en las vecinas.
+function useNumColumnas() {
+  const calcular = () => {
+    if (typeof window === 'undefined') return 1
+    if (window.matchMedia('(min-width: 1024px)').matches) return 3
+    if (window.matchMedia('(min-width: 640px)').matches) return 2
+    return 1
+  }
+  const [n, setN] = useState(calcular)
+  useEffect(() => {
+    const alCambiar = () => setN(calcular())
+    window.addEventListener('resize', alCambiar)
+    return () => window.removeEventListener('resize', alCambiar)
+  }, [])
+  return n
+}
+
 export default function Clientes({ activo = true }) {
   const { mostrarToast } = useToast()
 
@@ -204,6 +222,7 @@ export default function Clientes({ activo = true }) {
   const [clienteAEliminar, setClienteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [abiertos, setAbiertos] = useState(() => new Set())
+  const numColumnas = useNumColumnas()
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
   // cargarMasClientes descarte una respuesta que llega tarde de una
@@ -313,7 +332,7 @@ export default function Clientes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-6xl"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
@@ -366,8 +385,12 @@ export default function Clientes({ activo = true }) {
           tema="purple-300"
         />
       ) : (
-        <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
-          {clientesOrdenados.map((cliente) => {
+        <div className="mt-4 flex items-start gap-3">
+          {Array.from({ length: numColumnas }, (_, col) => (
+            <div key={col} className="flex min-w-0 flex-1 flex-col gap-3">
+              {clientesOrdenados
+                .filter((_, i) => i % numColumnas === col)
+                .map((cliente) => {
             const abierto = abiertos.has(cliente.id)
             const porcentaje = completitud(cliente)
             const colores = coloresCompletitud(porcentaje)
@@ -489,6 +512,8 @@ export default function Clientes({ activo = true }) {
               </div>
             )
           })}
+            </div>
+          ))}
         </div>
       )}
 

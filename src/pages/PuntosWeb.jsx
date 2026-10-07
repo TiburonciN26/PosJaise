@@ -91,7 +91,7 @@ export default function PuntosWeb() {
 
   return (
     <div
-      className="animate-entrada-pestana mx-auto w-full max-w-lg p-3 pb-6"
+      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-red)' }}
     >
       <div className="mt-3 flex flex-col items-center gap-2 text-center">
