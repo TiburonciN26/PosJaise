@@ -15,7 +15,7 @@ const exitoso = () => ({
     roles: { codigo: 0, lineas_create_role: 16, contiene_contrasenas: false, dump_contiene_roles: false, roles_en_origen: new Array(16).fill('r') },
     restauracion_con_roles: { codigo: 0, diferencias: [] },
     contraste_sin_propietarios: { codigo: 0, categorias_que_difieren: [...CATEGORIAS_CONTRASTE] },
-    restauracion_sin_roles: { codigo: 1, errores_rol_inexistente: 455 },
+    restauracion_sin_roles: { codigo: 1, errores_rol_inexistente: 455, otros_errores: 0, ejemplos_otros: [] },
     restauracion_cluster_preparado: {
       preparacion_roles: { codigo_psql: 0, errores_total: 24, por_categoria: { rol_preexistente: 1, atributos_preexistente: 1, membresia_con_otorgante: 22 }, inesperados: [], reparacion: { aplicadas: 22, codigo: 0 } },
       verificacion_roles: { pertenencias_distintas: [], atributos_distintos: ['postgres'], atributos_distintos_esperados: ['postgres'] },
@@ -66,13 +66,31 @@ test('exportación y lectura: código, archivo vacío, sin sha256, sin ACL/OWNER
 
 test('controles negativos: deben fallar COMO se espera; si no fallan, el ensayo falla', () => {
   // «sin roles» debe fallar y con «role … does not exist».
-  unFallo((r) => { r.pasos.restauracion_sin_roles = { codigo: 0, errores_rol_inexistente: 0 }; }, /NO falló \(el control no discrimina\)/);
-  unFallo((r) => { r.pasos.restauracion_sin_roles = { codigo: 1, errores_rol_inexistente: 0 }; }, /no hubo errores «role … does not exist»/);
+  unFallo((r) => { r.pasos.restauracion_sin_roles = { codigo: 0, errores_rol_inexistente: 0, otros_errores: 0, ejemplos_otros: [] }; }, /NO falló \(el control no discrimina\)/);
+  unFallo((r) => { r.pasos.restauracion_sin_roles = { codigo: 1, errores_rol_inexistente: 0, otros_errores: 0, ejemplos_otros: [] }; }, /no hubo errores «role … does not exist»/);
   // «sin propietarios» debe restaurar y perder exactamente las 6 categorías.
   unFallo((r) => { r.pasos.contraste_sin_propietarios = { codigo: 0, categorias_que_difieren: [] }; }, /debían diferir/);
   unFallo((r) => { r.pasos.contraste_sin_propietarios.categorias_que_difieren = CATEGORIAS_CONTRASTE.slice(1); }, /debían diferir/);
   unFallo((r) => { r.pasos.contraste_sin_propietarios.categorias_que_difieren = [...CATEGORIAS_CONTRASTE, 'datos']; }, /difiere algo no esperado \(datos\)/);
   unFallo((r) => { r.pasos.contraste_sin_propietarios = { codigo: 1 }; }, /debía terminar y terminó con código 1/);
+});
+
+test('control «sin roles» con errores MEZCLADOS: debe fallar solo por roles; un error de E/S lo invalida (caso de Codex)', () => {
+  const io = 'pg_restore: error: could not read from input file: Input/output error';
+  unFallo((r) => { Object.assign(r.pasos.restauracion_sin_roles, { otros_errores: 1, ejemplos_otros: [io] }); }, /falló también por 1 error\(es\) distinto\(s\) de los de roles: pg_restore: error: could not read/);
+  // aunque los errores de roles sigan presentes y el código sea 1, la mezcla no se acepta
+  unFallo((r) => { Object.assign(r.pasos.restauracion_sin_roles, { codigo: 1, errores_rol_inexistente: 455, otros_errores: 3, ejemplos_otros: [io] }); }, /3 error\(es\) distinto\(s\)/);
+  // ejemplos presentes con contador en 0 (resultado incoherente) tampoco
+  unFallo((r) => { r.pasos.restauracion_sin_roles.ejemplos_otros = [io]; }, /ejemplos de errores no previstos/);
+});
+
+test('control «sin roles» con verificación AUSENTE o inválida → fallo', () => {
+  unFallo((r) => { delete r.pasos.restauracion_sin_roles.otros_errores; }, /falta la verificación de otros errores/);
+  unFallo((r) => { delete r.pasos.restauracion_sin_roles.otros_errores; delete r.pasos.restauracion_sin_roles.ejemplos_otros; }, /falta la verificación de otros errores/);
+  unFallo((r) => { r.pasos.restauracion_sin_roles.otros_errores = null; }, /falta la verificación/);
+  unFallo((r) => { r.pasos.restauracion_sin_roles.otros_errores = '0'; }, /falta la verificación/);
+  unFallo((r) => { r.pasos.restauracion_sin_roles.otros_errores = NaN; }, /falta la verificación/);
+  unFallo((r) => { delete r.pasos.restauracion_sin_roles; }, /control negativo «sin roles»/);
 });
 
 test('fallo deliberado ≠ fallo inesperado: «sin roles» con código 1 NO es un fallo; el mismo código 1 en una restauración real sí', () => {

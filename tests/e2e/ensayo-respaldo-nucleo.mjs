@@ -98,6 +98,10 @@ export function evaluarResultado(res) {
   const s = p.restauracion_sin_roles ?? {};
   necesita(s.codigo !== undefined && s.codigo !== 0, 'control negativo «sin roles»: la restauración sin roles NO falló (el control no discrimina)');
   necesita(s.errores_rol_inexistente > 0, 'control negativo «sin roles»: no hubo errores «role … does not exist»');
+  // El control debe fallar EXCLUSIVAMENTE por los errores de roles previstos: cualquier otro error (E/S, permisos, objetos…) lo invalida.
+  necesita(Number.isInteger(s.otros_errores), 'control negativo «sin roles»: falta la verificación de otros errores (otros_errores ausente o inválido)');
+  necesita(!Number.isInteger(s.otros_errores) || s.otros_errores === 0, `control negativo «sin roles»: falló también por ${s.otros_errores} error(es) distinto(s) de los de roles: ${(s.ejemplos_otros ?? []).slice(0, 2).join(' | ')}`);
+  necesita(!Array.isArray(s.ejemplos_otros) || s.ejemplos_otros.length === 0, 'control negativo «sin roles»: hay ejemplos de errores no previstos');
   const c = p.contraste_sin_propietarios ?? {};
   necesita(c.codigo === 0, `control negativo «sin propietarios»: la restauración debía terminar y terminó con código ${c.codigo ?? 'desconocido'}`);
   const cat = c.categorias_que_difieren ?? null;
