@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command, mode }) => {
   // GitHub Pages sirve este proyecto bajo /PosJaise/ (Pages de proyecto, no
   // de usuario), así que el build necesita ese prefijo en assets, rutas y
   // manifest. En dev queda "/" porque Vite lo sirve desde la raíz.
@@ -81,6 +81,13 @@ export default defineConfig(({ command }) => {
       // Host header que no reconozca, y estos túneles usan un dominio
       // público aleatorio cada vez.
       allowedHosts: true,
+      // Solo en `vite --mode movil` (npm run dev:movil): el celular entra por UN túnel (ngrok al
+      // puerto de Vite) y /__supabase reenvía al Supabase local (Docker, 127.0.0.1:54321),
+      // incluidos los websockets de Realtime. Sin esto, 127.0.0.1 en el celular es el propio celular.
+      proxy:
+        mode === 'movil'
+          ? { '/__supabase': { target: 'http://127.0.0.1:54321', changeOrigin: true, ws: true, rewrite: (path) => path.replace(/^\/__supabase/, '') } }
+          : undefined,
     },
   }
 })
