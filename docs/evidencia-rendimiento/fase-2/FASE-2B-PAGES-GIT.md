@@ -1,6 +1,8 @@
-# Fase 2B · Cloudflare Pages con integración Git (repo PÚBLICO) y Supabase del negocio — PLAN v3.3 (commit y push autorizados y ejecutados a `feat/cloudflare-pages`)
+# Fase 2B · Cloudflare Pages con integración Git (repo PÚBLICO) y Supabase del negocio — PLAN v3.5
 
-**Estado: preparado y corregido, NO ejecutado.** No se hizo commit/push, no se conectó GitHub, no se creó el proyecto Git de Pages, no se publicó B, no se tocó producción, el Supabase del negocio, el dominio, DNS ni R2. Cada paso con 🔒 necesita autorización expresa del usuario. Las Fases 1 y 2 conservan sus veredictos (aprobada / aprobada con observaciones).
+**Estado vigente (v3.5):** la parte **Git/preview de staging está EJECUTADA y APROBADA por Codex, y O1 online está CERRADA** (`.codex/VERIFICACION-O1-ONLINE.md`; detalle en `O1-ONLINE.md`). Existe el proyecto Pages `pos-jaise` conectado solo a `PosJaise`, con el preview `https://feat-cloudflare-pages.pos-jaise.pages.dev` (solo staging, producción automática desactivada, `pos-jaise.pages.dev` sin app). **No se ha hecho** el cambio definitivo: el hosting del negocio sigue siendo GitHub Pages, `main` sigue en `0dc629e`, el repo se mantiene público, no se tocó el Supabase del negocio, DNS, dominio ni R2, y las cuentas QA y todos los deployments se conservan. Producción, retiro de GitHub Pages, limpieza de QA y R2 esperan indicación del usuario.
+
+> Los bloques siguientes (v3.4 hacia atrás, secciones 0–4) conservan el historial de la preparación; donde dicen «no ejecutado», «pendiente de autorización» o describen el plan previo, **manda este estado vigente y los bloques v3.5/v3.4/v3.3**.
 
 Revisión de origen: `.codex/VERIFICACION-PREPARACION-FASE-2B.md` (B1–B5). Resumen de lo corregido:
 
