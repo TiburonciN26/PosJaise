@@ -48,6 +48,31 @@ Revisión de origen: `.codex/VERIFICACION-PREPARACION-FASE-2B.md` (B1–B5). Res
 - Push a `origin/feat/cloudflare-pages` (ver estado más abajo); `main`, `testing` remoto, la visibilidad del repo y GitHub Pages **no se tocaron**.
 - Disponibilidad de `pos-jaise`: `pos-jaise.pages.dev` no resuelve (curl sin respuesta, sin registro DNS) — señal de que el nombre está libre, **no es una reserva**; solo se confirma al crear el proyecto.
 
+**Estado de la ejecución (al cerrar esta etapa):**
+- ✅ Commit `e167600` (184 archivos) + `9867e2d` (validación) en `feat/cloudflare-pages`, **empujados**; `origin/main` sigue en `0dc629e`; repo PÚBLICO; GitHub Pages sin cambios (fuente `main`, ruta `/`). Validación del commit final `9867e2d` desde un checkout limpio: build correcto, 178 archivos, 0 diferencias de contenido (11 solo de fin de línea).
+- ⏸ **Falta crear el proyecto de Pages con Git y ejecutar O1: no pude hacerlo desde esta sesión.** La conexión MCP de Cloudflare no crea proyectos de Pages, no hay `wrangler login` ni token en esta máquina, y la autorización de la app de GitHub de Cloudflare es interactiva en el dashboard. No pedí ni usé tokens o contraseñas. Lo hace el usuario (o Codex con la sesión del usuario en el dashboard) con la configuración de abajo; después yo ejecuto O1.
+
+**Configuración de Pages a aplicar (revisa la secuencia de Codex: no se asume que el asistente admita una rama inexistente):**
+1. Workers & Pages → Create → **Pages → Connect to Git** → GitHub `TiburonciN26` → **solo el repositorio `PosJaise`** («Only select repositories»); nombre del proyecto `pos-jaise` (no hay registro DNS de `pos-jaise.pages.dev`, pero la disponibilidad real se ve al crearlo; si está tomado, elegir otro y avisarme).
+2. **Rama de producción = `main`** (cambio respecto a la propuesta `cloudflare-produccion`, que exigía una rama que el asistente puede no aceptar y que habría obligado a un push adicional). Es seguro porque `main` (`0dc629e`) **no tiene** `build:cloudflare` (un build de `main` falla) y porque la guarda trata `main` como producción y exige el backend del negocio, que **no** se carga. Variable **`RAMA_PRODUCCION=main`** en **Production y en Preview** (debe coincidir con la rama de producción de Pages).
+3. Build: comando `npm run build:cloudflare`, directorio de salida `dist`, directorio raíz vacío. Node 22 lo toma de `.node-version`.
+4. Variables de entorno:
+
+   | Variable | Production | Preview |
+   |---|---|---|
+   | `RAMA_PRODUCCION` | `main` | `main` |
+   | `VITE_SUPABASE_URL` | *(vacía)* | `https://tqkdtojnhgykmcbvwdmz.supabase.co` |
+   | `VITE_SUPABASE_ANON_KEY` | *(vacía)* | la anon key de staging (pública; está en `.env.staging.local` local, no se copia al chat) |
+   | `VITE_CULQI_PUBLIC_KEY` | *(vacía)* | *(vacía a propósito: el pago con tarjeta no se prueba en staging)* |
+5. **Settings → Builds → Branch control** (controles de ramas): desactivar los **despliegues automáticos de la rama de producción** (hasta el cambio definitivo) y en **ramas de preview** elegir solo `feat/cloudflare-pages` (lista personalizada). Ninguna otra rama (`main`, `testing`, `fix/*`) debe disparar builds.
+6. Sin dominio personalizado. El alias de la rama será `https://feat-cloudflare-pages.pos-jaise.pages.dev` (Cloudflare sustituye `/` por `-`; **comprobar la URL exacta en el panel**).
+7. Comprobar en el panel los valores efectivos **antes del primer build** (rama de producción, `RAMA_PRODUCCION` en ambos entornos, variables, ramas de preview) y, si Auth de staging va a enviar correos, añadir `https://feat-cloudflare-pages.pos-jaise.pages.dev/**` a las Redirect URLs de **staging** (no de producción); el login por contraseña no lo necesita.
+
+**O1 online (lo ejecuto yo cuando el preview esté en línea):**
+- A = commit `9867e2d` (marca `9867e2df`, porque `build:cloudflare` usa `CF_PAGES_COMMIT_SHA[0:8]`). B = un **segundo commit real** que se empuja a la misma rama (p. ej. un cambio de documentación): su marca será distinta y `sw.js` cambiará.
+- Comando: `node scripts/verificar-actualizacion-pwa-online.cjs --origen=https://feat-cloudflare-pages.pos-jaise.pages.dev --permitir-origen=feat-cloudflare-pages.pos-jaise.pages.dev --a=9867e2df --b=<sha8 del segundo commit> --estado=venta --espera-min=20 --publicar-cmd="git push origin feat/cloudflare-pages"`, y repetirlo con `--estado=vacio` y `--estado=atras` si hay tiempo. El script valida origen y staging antes del login, aborta si A no es exactamente `9867e2df`, bloquea tráfico ajeno y falla ante cualquier otra versión.
+- Se ejecutará con cuentas QA de staging, sin cobrar ni guardar datos. La limpieza de cuentas queda para después, como indicó el usuario.
+
 ## v3.2 — estado vigente tras `.codex/VERIFICACION-FASE-2B-V3-1.md` (P2 cerrado; preparación 2B APROBADA para rama y preview QA)
 **Sigue sin ejecutarse nada externo:** sin commit/push, sin conectar GitHub, sin publicar B, sin tocar `main`, producción, visibilidad del repo, GitHub Pages ni R2. Faltan la autorización del usuario para el commit/push a `feat/cloudflare-pages` y el nombre del proyecto de Pages; después: validar el commit exacto, integrar Git y ejecutar O1 online.
 
