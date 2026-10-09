@@ -3,3 +3,4 @@
 Alias: https://feat-cloudflare-pages.pos-jaise.pages.dev
 Ronda 1 (estado=venta): A=f436e09e
 Ronda 2 (estado=atras): A=fb938add
+Ronda 3 (estado=vacio): A=74e00c1d
