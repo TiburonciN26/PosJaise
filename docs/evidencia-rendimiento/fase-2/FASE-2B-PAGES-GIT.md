@@ -76,6 +76,9 @@ Revisión de origen: `.codex/VERIFICACION-PREPARACION-FASE-2B.md` (B1–B5). Res
 ## v3.4 — Pages con Git creado por Codex; primer preview y O1 online ejecutados
 Proyecto `pos-jaise` creado con la configuración de v3.3 (con una diferencia: `VITE_CULQI_PUBLIC_KEY` queda **ausente** porque el dashboard no admite valores vacíos; el frontend no ofrece Tarjeta sin ella). Primer build de la rama **exitoso**; preview en `https://feat-cloudflare-pages.pos-jaise.pages.dev`; contenido solo staging; 38 rutas OK; **O1 online: 3 rondas OK + negativo de A incorrecta** con commits reales bajo el mismo alias. Detalle, URLs, commits y límites en `O1-ONLINE.md`. Pendiente: revisión de Codex y el cambio definitivo.
 
+## v3.5 — verificación de Codex: preview Git aprobado y O1 cerrada
+`.codex/VERIFICACION-O1-ONLINE.md`: **APROBADA** la integración Git y el preview de staging; **O1 CERRADA** (3 rondas, 67 pasos positivos auditados, negativo de A incorrecta repetido por Codex). Corrección: el Node del preview A fue **22.22.0** (22.16.0 era el intento inicial fallido de `main`); la advertencia `EBADENGINE` de zxing (`>=24`) sigue como observación y el escáner no se validó. El alias sirve ahora `399c960e`. Pendientes y límites en `O1-ONLINE.md`. Sin autorización para producción, retiro de GitHub Pages, limpieza de QA ni R2.
+
 ## v3.2 — estado vigente tras `.codex/VERIFICACION-FASE-2B-V3-1.md` (P2 cerrado; preparación 2B APROBADA para rama y preview QA)
 **Sigue sin ejecutarse nada externo:** sin commit/push, sin conectar GitHub, sin publicar B, sin tocar `main`, producción, visibilidad del repo, GitHub Pages ni R2. Faltan la autorización del usuario para el commit/push a `feat/cloudflare-pages` y el nombre del proyecto de Pages; después: validar el commit exacto, integrar Git y ejecutar O1 online.
 
