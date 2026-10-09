@@ -73,6 +73,9 @@ Revisión de origen: `.codex/VERIFICACION-PREPARACION-FASE-2B.md` (B1–B5). Res
 - Comando: `node scripts/verificar-actualizacion-pwa-online.cjs --origen=https://feat-cloudflare-pages.pos-jaise.pages.dev --permitir-origen=feat-cloudflare-pages.pos-jaise.pages.dev --a=<sha8 de A> --b=<sha8 del segundo commit> --estado=venta --espera-min=20 --publicar-cmd="git push origin feat/cloudflare-pages"`, y repetirlo con `--estado=vacio` y `--estado=atras` si hay tiempo. El script valida origen y staging antes del login, aborta si A no es exactamente la marca esperada, bloquea tráfico ajeno y falla ante cualquier otra versión.
 - Se ejecutará con cuentas QA de staging, sin cobrar ni guardar datos. La limpieza de cuentas queda para después, como indicó el usuario.
 
+## v3.4 — Pages con Git creado por Codex; primer preview y O1 online ejecutados
+Proyecto `pos-jaise` creado con la configuración de v3.3 (con una diferencia: `VITE_CULQI_PUBLIC_KEY` queda **ausente** porque el dashboard no admite valores vacíos; el frontend no ofrece Tarjeta sin ella). Primer build de la rama **exitoso**; preview en `https://feat-cloudflare-pages.pos-jaise.pages.dev`; contenido solo staging; 38 rutas OK; **O1 online: 3 rondas OK + negativo de A incorrecta** con commits reales bajo el mismo alias. Detalle, URLs, commits y límites en `O1-ONLINE.md`. Pendiente: revisión de Codex y el cambio definitivo.
+
 ## v3.2 — estado vigente tras `.codex/VERIFICACION-FASE-2B-V3-1.md` (P2 cerrado; preparación 2B APROBADA para rama y preview QA)
 **Sigue sin ejecutarse nada externo:** sin commit/push, sin conectar GitHub, sin publicar B, sin tocar `main`, producción, visibilidad del repo, GitHub Pages ni R2. Faltan la autorización del usuario para el commit/push a `feat/cloudflare-pages` y el nombre del proyecto de Pages; después: validar el commit exacto, integrar Git y ejecutar O1 online.
 

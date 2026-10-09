@@ -1,5 +1,7 @@
 # Fase 2 · Cloudflare Pages en preview — ESTADO VIGENTE
 
+> **Actualización:** el proyecto Pages con Git `pos-jaise` existe, su preview de la rama `feat/cloudflare-pages` compila y la prueba O1 online se ejecutó con éxito (3 rondas + negativo). Ver `O1-ONLINE.md`. Pendiente la revisión de Codex; producción, GitHub Pages y R2 sin cambios.
+
 **Veredicto de Codex: APROBADA CON OBSERVACIONES para el preview de staging** (`.codex/VERIFICACION-FORMAL-FASE-2.md`). Fase 1 aprobada previamente por Codex (el registro `.codex/FASES-RENDIMIENTO-CLOUDFLARE.md` la enlaza como `VERIFICACION-FASE-1.md`; ese archivo no está en la carpeta `.codex` de este árbol, por lo que no pude comprobar su contenido).
 
 - **Publicado (QA, ficticio):** `https://preview.pos-jaise-preview.pages.dev` (deployment `91c40d00…`), proyecto Direct Upload `pos-jaise-preview`, backend `pos-jaise-staging`. Es un entorno QA que se conserva; **no** autoriza publicar el POS real, retirar GitHub Pages, borrar/rotar recursos ni iniciar R2.

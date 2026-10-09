@@ -1,0 +1,142 @@
+{
+  "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "estado": "atras",
+  "idEsperadoA": "fb938add",
+  "idEsperadoB": "74e00c1d",
+  "fecha": "2026-10-09T23:04:16.015Z",
+  "pasos": [
+    {
+      "n": "preflight: Supabase de .env.staging.local = staging aprobado y clave anon/publishable válida",
+      "ok": true
+    },
+    {
+      "n": "preflight: cuenta QA ficticia (@staging.test)",
+      "ok": true
+    },
+    {
+      "n": "preflight: origen QA permitido",
+      "ok": true,
+      "d": "feat-cloudflare-pages.pos-jaise.pages.dev"
+    },
+    {
+      "n": "A: el documento tiene EXACTAMENTE la marca esperada",
+      "ok": true,
+      "d": {
+        "observada": "fb938add",
+        "esperada": "fb938add"
+      }
+    },
+    {
+      "n": "A: el service worker controla la pestaña",
+      "ok": true
+    },
+    {
+      "n": "A: sesión autenticada (usuario propio + su fila en usuarios, a staging)",
+      "ok": true,
+      "d": {
+        "ok": true,
+        "auth": 200,
+        "lectura": 200,
+        "rol": "ADMINISTRADOR"
+      }
+    },
+    {
+      "n": "A: sin tráfico bloqueado hasta aquí",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "publicación de B por el comando indicado",
+      "ok": true,
+      "d": 0
+    },
+    {
+      "n": "aparece el aviso «Hay una versión nueva de la app.»",
+      "ok": true
+    },
+    {
+      "n": "mientras espera, la pestaña sigue en A EXACTA (sin actualización silenciosa)",
+      "ok": true
+    },
+    {
+      "n": "Ventas con el diálogo abierto: «Actualizar» DESHABILITADO",
+      "ok": true
+    },
+    {
+      "n": "«Atrás» deja la página anterior visible (/clientes) y Ventas oculta en la caché",
+      "ok": true,
+      "d": "/clientes"
+    },
+    {
+      "n": "con el diálogo en la página OCULTA «Actualizar» sigue DESHABILITADO",
+      "ok": true
+    },
+    {
+      "n": "sin recarga: la pestaña sigue en A EXACTA",
+      "ok": true
+    },
+    {
+      "n": "al volver a /ventas el diálogo retenido sigue y «Actualizar» sigue DESHABILITADO",
+      "ok": true
+    },
+    {
+      "n": "al cerrar el último diálogo «Actualizar» se habilita solo (sin bloqueo permanente)",
+      "ok": true
+    },
+    {
+      "n": "tras «Actualizar» el documento tiene EXACTAMENTE la marca B",
+      "ok": true,
+      "d": {
+        "observada": "74e00c1d",
+        "esperada": "74e00c1d"
+      }
+    },
+    {
+      "n": "B: sesión autenticada tras actualizar (usuario propio + su fila)",
+      "ok": true,
+      "d": {
+        "ok": true,
+        "auth": 200,
+        "lectura": 200,
+        "rol": "ADMINISTRADOR"
+      }
+    },
+    {
+      "n": "clave FICTICIA de localStorage conservada (no prueba borradores operativos)",
+      "ok": true
+    },
+    {
+      "n": "sin respuestas HTTP ≥ 400 del mismo origen",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "sin requestfailed (salvo abortadas/bloqueadas)",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "sin pageerror",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "ninguna petición bloqueada (otro backend, Supabase local o pasarela)",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "tráfico Supabase solo al staging aprobado",
+      "ok": true,
+      "d": {
+        "tqkdtojnhgykmcbvwdmz.supabase.co": 34
+      }
+    }
+  ],
+  "bloqueadas": [],
+  "trafico": {
+    "tqkdtojnhgykmcbvwdmz.supabase.co": 34
+  },
+  "publicadoB": true,
+  "resultado": "OK"
+}

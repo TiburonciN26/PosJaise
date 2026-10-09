@@ -1,0 +1,39 @@
+{
+  "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "estado": "vacio",
+  "idEsperadoA": "marca-incorrecta",
+  "idEsperadoB": "00000000",
+  "fecha": "2026-10-09T23:07:11.322Z",
+  "pasos": [
+    {
+      "n": "preflight: Supabase de .env.staging.local = staging aprobado y clave anon/publishable válida",
+      "ok": true
+    },
+    {
+      "n": "preflight: cuenta QA ficticia (@staging.test)",
+      "ok": true
+    },
+    {
+      "n": "preflight: origen QA permitido",
+      "ok": true,
+      "d": "feat-cloudflare-pages.pos-jaise.pages.dev"
+    },
+    {
+      "n": "A: el documento tiene EXACTAMENTE la marca esperada",
+      "ok": false,
+      "d": {
+        "observada": "1cd03d62",
+        "esperada": "marca-incorrecta"
+      }
+    },
+    {
+      "n": "ejecución",
+      "ok": false,
+      "d": "A inválida (A: el documento tiene EXACTAMENTE la marca esperada): se aborta; NO se publica B"
+    }
+  ],
+  "bloqueadas": [],
+  "trafico": {},
+  "publicadoB": false,
+  "resultado": "FALLA"
+}
