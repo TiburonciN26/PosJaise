@@ -47,8 +47,10 @@ export default function IconoCampana({
   onClick,
   className = '',
   ariaLabel = 'Notificaciones',
+  grande = false,
   estiloBadge = { background: '#ef4444', color: '#ffffff' },
 }) {
+  const tam = grande ? 'h-6 w-6' : 'h-5 w-5'
   const glifoRef = useRef(null)
   const badajoRef = useRef(null)
   const ondaIzqRef = useRef(null)
@@ -112,18 +114,18 @@ export default function IconoCampana({
       aria-label={contador > 0 ? `${ariaLabel} (${contador} sin leer)` : ariaLabel}
       className={`relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${className}`}
     >
-      <span className="relative inline-grid h-5 w-5 place-items-center" aria-hidden="true">
+      <span className={`relative inline-grid ${tam} place-items-center`} aria-hidden="true">
         <span
           ref={glifoRef}
-          className="inline-grid h-5 w-5 place-items-center [transform-origin:50%_16%]"
+          className={`inline-grid ${tam} place-items-center [transform-origin:50%_16%]`}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={tam}>
             <path d="M6 16.5V10a6 6 0 0 1 12 0v6.5l1.6 2.3H4.4L6 16.5z" />
             <path d="M12 2.5V4" />
           </svg>
         </span>
         <span ref={badajoRef} className="pointer-events-none absolute inset-0 [transform-origin:50%_16%]">
-          <svg viewBox="0 0 24 24" className="h-5 w-5">
+          <svg viewBox="0 0 24 24" className={tam}>
             <circle cx="12" cy="20.4" r="1.7" fill="currentColor" />
           </svg>
         </span>

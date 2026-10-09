@@ -1,0 +1,142 @@
+--- a/src/index.css
++++ b/src/index.css
+@@ -3238,7 +3238,13 @@
+   mask-image: linear-gradient(115deg, transparent 30%, #000 80%);
+   pointer-events: none;
+ }
+-/* Iridiscencia (solo Diamante y Rubí) */
++/* Destello que cruza la tarjeta. En reposo está FUERA de la tarjeta (left
++   -45%, la recorta el overflow:hidden de .cupon-tarjeta) y sin animación:
++   con cientos de cupones en pantalla (Promociones/Referidos/Fidelización)
++   el barrido continuo por `left` + el mix-blend-mode saturaba el hilo
++   principal (auditoría PERF-01, Fase 1). Solo corre una pasada breve al
++   interactuar — ver `.cupon-envoltura:hover` más abajo — y SOLO con
++   transform (sin layout por frame). */
+ .cupon-metal::after {
+   content: '';
+   position: absolute;
+@@ -3248,8 +3254,7 @@
+   width: 30%;
+   background: linear-gradient(100deg, rgba(255, 250, 225, 0), rgba(255, 252, 235, 0.75) 50%, rgba(255, 250, 225, 0));
+   mix-blend-mode: overlay;
+-  transform: rotate(18deg);
+-  animation: cupon-sheen 6s ease-in-out infinite;
++  transform: translateX(0) rotate(18deg);
+   pointer-events: none;
+ }
+ .cupon-metal.cupon-iri {
+@@ -3328,6 +3333,44 @@
+   --cupon-oro: #bfe3ff;
+ }
+ 
++/* Chispas de las tarjetas de LISTA (EnvolturaCupon): hermanas de la tarjeta,
++   por eso no basta con apagar los descendientes de .cupon-metal. En reposo
++   quedan estáticas (sin animación ni opacity/filter cambiante); las del
++   cupón apagado (vencido/canjeado/inactivo) no se muestran. El centelleo
++   es una interacción breve, no un bucle infinito. */
++.cupon-chispa.cupon-chispa-lista {
++  animation: none;
++  opacity: 0.85;
++  transform: scale(0.8) rotate(45deg);
++}
++.cupon-envoltura-apagada .cupon-chispa-lista {
++  display: none;
++}
++
++/* Interacción breve: una pasada del destello y un par de centelleos mientras
++   el puntero está sobre el cupón o hay foco dentro (teclado / toque). Solo
++   transform/opacity. Con movimiento reducido no se anima nada: la tarjeta y
++   sus chispas quedan estáticas. */
++@keyframes cupon-sheen-pasada {
++  from {
++    transform: translateX(0) rotate(18deg);
++  }
++  to {
++    /* 175% del ancho de la tarjeta (de -45% a 130%) ÷ 30% de ancho propio */
++    transform: translateX(583%) rotate(18deg);
++  }
++}
++@media (prefers-reduced-motion: no-preference) {
++  .cupon-envoltura:hover .cupon-metal::after,
++  .cupon-envoltura:focus-within .cupon-metal::after {
++    animation: cupon-sheen-pasada 1.1s ease-in-out 1;
++  }
++  .cupon-envoltura:not(.cupon-envoltura-apagada):hover .cupon-chispa-lista,
++  .cupon-envoltura:not(.cupon-envoltura-apagada):focus-within .cupon-chispa-lista {
++    animation: cupon-titilar 1.6s ease-in-out 2;
++  }
++}
++
+ @media (prefers-reduced-motion: reduce) {
+   .cupon-metal::after {
+     animation: none;
+--- a/src/components/EnvolturaCupon.jsx
++++ b/src/components/EnvolturaCupon.jsx
+@@ -11,7 +11,7 @@
+ function Chispa({ estilo, size, delay, variante }) {
+   return (
+     <svg
+-      className={`cupon-chispa ${variante === 'roja' ? 'cupon-chispa-roja' : ''} ${variante === 'diamante' ? 'cupon-chispa-diamante' : ''} ${variante === 'verde' ? 'cupon-chispa-verde' : ''}`}
++      className={`cupon-chispa cupon-chispa-lista ${variante === 'roja' ? 'cupon-chispa-roja' : ''} ${variante === 'diamante' ? 'cupon-chispa-diamante' : ''} ${variante === 'verde' ? 'cupon-chispa-verde' : ''}`}
+       style={{ ...estilo, width: size, height: size, animationDelay: delay }}
+       viewBox="0 0 24 24"
+       fill="currentColor"
+@@ -29,6 +29,11 @@
+ // usen EXACTAMENTE el mismo acabado y las mismas animaciones con otro
+ // contenido, sin duplicar clases.
+ //
++// Fase 1 de rendimiento: en reposo el destello y las chispas NO se animan (con
++// cientos de cupones saturaban el renderizado); solo hay una pasada breve al
++// pasar el puntero / enfocar (`.cupon-envoltura` en index.css), y las chispas
++// del cupón apagado ni se muestran (`.cupon-envoltura-apagada`).
++//
+ // La etiqueta "Nuevo" y las chispas de Oro van FUERA del div con
+ // overflow:hidden (el de `.cupon-tarjeta`) — si estuvieran adentro, ese
+ // overflow (necesario para recortar el brillo/degradado a la forma de
+@@ -37,7 +42,7 @@
+ export default function EnvolturaCupon({ nivel, apagada = false, esNuevo = false, children }) {
+ 
+   return (
+-    <div className={`relative ${apagada ? 'opacity-50' : ''}`}>
++    <div className={`cupon-envoltura relative ${apagada ? 'cupon-envoltura-apagada opacity-50' : ''}`}>
+       {esNuevo && (
+         <span className="cupon-etiqueta-nueva">
+           <span>Nuevo</span>
+diff --git a/tests/e2e/niveles-visuales-helpers.mjs b/tests/e2e/niveles-visuales-helpers.mjs
+index 0686b0d..f7614d5 100644
+--- a/tests/e2e/niveles-visuales-helpers.mjs
++++ b/tests/e2e/niveles-visuales-helpers.mjs
+@@ -2,7 +2,7 @@
+ // suite Playwright (qa-recompensas-037-040.spec.mjs) y por el verificador sin sesión (qa-062-niveles-visuales-publico.mjs).
+ //
+ // Las anclas son las clases del diseño vigente (index.css): `.cupon-n-plata|oro|diamante|rubi` sobre `.cupon-metal`, el destello
+-// `cupon-sheen` en `::after`, la iridiscencia `.cupon-iri` (Diamante y Especial) y las chispas `.cupon-chispa` (solo Diamante y Especial).
++// `cupon-sheen-pasada` en `::after` (solo con puntero/foco), la iridiscencia `.cupon-iri` (Diamante y Especial) y las chispas `.cupon-chispa` (solo Diamante y Especial).
+ // Las clases antiguas (`.cupon-oro`, `.cupon-plata`, `.cupon-texto-oro` y la animación `cupon-glow`) ya no existen en las tarjetas por
+ // nivel: el diseño aprobado las reemplazó por el acabado metálico. No se usa `first()` para elegir «cualquiera»: cada fila se identifica
+ // por el nombre del premio de ejemplo cuyo nivel de negocio se conoce (datos.js: r1 Todos los niveles, r5 Desde Premium, r6 Desde VIP).
+@@ -28,7 +28,8 @@ export async function comprobarNivelYEfectosEnCanje(page, expect) {
+     await tarjeta.getByRole('button').first().click();
+     await expect(tarjeta.locator('dt', { hasText: 'Nivel' }).locator('xpath=following-sibling::dd[1]')).toHaveText(fila.requisito);
+ 
+-    // Efectos: destello que cruza la tarjeta (::after → cupon-sheen) y resplandor metálico.
++    // Efectos: destello que cruza la tarjeta (::after → cupon-sheen-pasada, solo al interactuar: Fase 1 de rendimiento) y resplandor metálico.
++    await tarjeta.hover();
+     expect(await tarjeta.evaluate((el) => getComputedStyle(el, '::after').animationName), `destello de ${fila.etiqueta}`).toContain('cupon-sheen');
+     expect(await tarjeta.evaluate((el) => getComputedStyle(el).boxShadow), `resplandor de ${fila.etiqueta}`).not.toBe('none');
+     expect(await tarjeta.locator('.cupon-metal-texto').first().evaluate((el) => getComputedStyle(el).textShadow), `tinta metálica de ${fila.etiqueta}`).not.toBe('none');
+@@ -46,7 +47,13 @@ export async function comprobarNivelYEfectosEnCanje(page, expect) {
+   const envoltura = (fila) => tarjetaDe(page, fila.nombre).locator('xpath=..');
+   const chispasDiamante = envoltura(FILAS_EJEMPLO[2]).locator('.cupon-chispa.cupon-chispa-diamante');
+   expect(await chispasDiamante.count(), 'chispas del nivel Diamante').toBeGreaterThanOrEqual(3);
+-  expect(await chispasDiamante.first().evaluate((el) => getComputedStyle(el).animationName)).toContain('cupon-titilar');
++  // Fase 1 de rendimiento: en reposo (sin puntero ni foco dentro) ni el destello ni las chispas se animan; centellean solo al interactuar.
++  await page.mouse.move(0, 0);
++  await page.evaluate(() => document.activeElement?.blur());
++  expect(await chispasDiamante.first().evaluate((el) => getComputedStyle(el).animationName), 'chispas quietas en reposo').toBe('none');
++  expect(await tarjetaDe(page, FILAS_EJEMPLO[2].nombre).evaluate((el) => getComputedStyle(el, '::after').animationName), 'destello quieto en reposo').toBe('none');
++  await envoltura(FILAS_EJEMPLO[2]).hover();
++  expect(await chispasDiamante.first().evaluate((el) => getComputedStyle(el).animationName), 'chispas centellean al interactuar').toContain('cupon-titilar');
+   await expect(envoltura(FILAS_EJEMPLO[0]).locator('.cupon-chispa')).toHaveCount(0);
+   await expect(envoltura(FILAS_EJEMPLO[1]).locator('.cupon-chispa')).toHaveCount(0);
+ }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import BotonVoz from './BotonVoz.jsx'
 import { supabase } from '../lib/supabase.js'
 import { buscarProductosCombo, productoNombrePorId } from '../lib/buscarProductosVenta.js'
 import { useDebounce } from '../hooks/useDebounce.js'
@@ -60,15 +61,18 @@ export default function SelectorProductoBuscable({ id, valor, onCambiar, textoVa
 
   return (
     <div className="space-y-1.5">
-      <input
-        type="search"
-        autoComplete="off"
-        value={texto}
-        onChange={(evento) => setTexto(evento.target.value)}
-        placeholder="Buscar producto por nombre..."
-        aria-label="Buscar producto por nombre"
-        className={CLASE_CAMPO}
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="search"
+          autoComplete="off"
+          value={texto}
+          onChange={(evento) => setTexto(evento.target.value)}
+          placeholder="Buscar producto por nombre..."
+          aria-label="Buscar producto por nombre"
+          className={`${CLASE_CAMPO} min-w-0 flex-1`}
+        />
+        <BotonVoz onTexto={setTexto} />
+      </div>
       <select
         id={id}
         value={valor}

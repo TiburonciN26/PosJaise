@@ -1,0 +1,3351 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+/*
+ ---break---
+ */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tema POS — Negocio 2 — oscuro (por defecto) y claro
+ * =========================================================
+ * Estas variables generan utilidades de Tailwind automáticamente:
+ * --color-x  -> bg-x / text-x / border-x
+ * --font-x   -> font-x
+ *
+ * Tailwind v4 compila cada utilidad como una referencia var() real
+ * (ej. .bg-bg{background-color:var(--color-bg)}), no como un valor
+ * fijo — por eso alcanza con sobreescribir estas mismas variables
+ * bajo :root[data-tema="claro"] (ver más abajo) para que TODA la
+ * app cambie de tema al instante, sin duplicar un solo componente:
+ * cualquier className que ya usa bg-bg/text-ink/bg-amber/etc. se
+ * adapta solo, sin tocarlo.
+ *
+ * Temas principales (oscuro/claro) vs. sub-temas de acento (amber,
+ * y el "rosa pastel" purple-300, además de green/blue/red/orange-400):
+ * los acentos son marca/estado y quedan IDÉNTICOS en los dos temas
+ * principales, sin excepción — no se redeclaran bajo
+ * :root[data-tema="claro"], así que ahí abajo siguen sacando el
+ * mismo valor de acá. Lo único que invierte entre temas principales
+ * son los neutros: bg/surface/surface-2/surface-3/border/
+ * border-strong/ink.
+ */
+@theme {
+  /* Fondos y superficies (oscuro — sin cambios respecto al diseño actual) */
+  --color-bg: #0d0d0d;
+  --color-surface: #161616;
+  --color-surface-2: #1e1e1e;
+  --color-surface-3: #262626;
+
+  /* Bordes */
+  --color-border: #2e2e2e;
+  --color-border-strong: #3a3a3a;
+
+  /* Texto */
+  --color-ink: #f0ede6;
+
+  /* Acentos */
+  --color-amber: #f5a623;
+  --color-green: #3ecf6a;
+  --color-blue: #5b9cf6;
+  --color-red: #f06565;
+  /* Acento de la pestaña Web del POS: el azul metálico de la web de clientes
+     (--lw-gold). En claro cambia al par oscuro, ver :root[data-tema='claro']. */
+  --color-azul-metal: #a9c6ec;
+
+  /* Tipografías */
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Feedback: fila recién agregada al ticket */
+  --animate-flash-verde: flash-verde 450ms ease-out;
+  /* Feedback: fila recién quitada del ticket */
+  --animate-flash-rojo: flash-rojo 450ms ease-out;
+  /* Header: nombre de pestaña deslizándose detrás del botón menú */
+  --animate-deslizar-pestana: deslizar-pestana 300ms ease-out;
+  /* Barra de punto de equilibrio: brillo en bucle al llegar al 100% */
+  --animate-brillo-barra: brillo-barra 8.5s linear infinite;
+  /* Texto de punto de equilibrio: brillo en bucle recorriendo solo las letras */
+  --animate-brillo-texto: brillo-texto 8.5s linear infinite;
+  /* Tarjeta de punto de equilibrio: brillo rosa tenue de fondo, detrás del contenido */
+  --animate-brillo-tarjeta: brillo-tarjeta 8.5s linear infinite;
+  /* Tarjeta de cumpleaños: borde que se ilumina, intercalado con brillo-tarjeta */
+  --animate-brillo-borde-tarjeta: brillo-borde-tarjeta 8.5s linear infinite;
+  /* Flechita verde: sube y se desvanece durante TODO el bucle (sin pausa muerta) */
+  --animate-elevar-flecha: elevar-flecha 1.5s ease-out infinite;
+  /* Ícono de la pestaña "Web... Próximamente": martillazo en bucle */
+  --animate-martillar: martillar 1.3s ease-in-out infinite;
+  /* Chispas del martillazo — misma duración, cada una con su propio --dx/--dy */
+  --animate-chispa-martillo: chispa-martillo 1.3s ease-out infinite;
+}
+
+/*
+ * Convención de breakpoints (M3 de la auditoría técnica)
+ * =========================================================
+ * Tres zonas: móvil <640px (sm), tablet 640–1024px (sm a lg),
+ * desktop ≥1024px (lg). Un cambio de LAYOUT (no cosmético) —
+ * tarjetas↔tabla, mostrar/ocultar FAB, hamburguesa↔nav completo —
+ * tiene que anclarse a uno de los dos bordes reales de esas
+ * zonas: `sm` (móvil→tablet) o `lg` (tablet→desktop). Nunca a
+ * `md` — no es el borde de ninguna zona, solo un punto arbitrario
+ * a la mitad de "tablet", y mezclar `md` con `sm`/`lg` en la misma
+ * pantalla es lo que generaba estados mezclados en tablet vertical
+ * (~600–800px): tarjetas de móvil + botón "Nuevo X" ya en modo
+ * escritorio + header en modo hamburguesa, los tres a la vez.
+ *
+ * - Tarjetas móviles ↔ tabla de escritorio, FAB, botón "Nuevo X",
+ *   texto de BotonAccion: todos migrados a `lg` (antes `md` en
+ *   varias pantallas) — la tabla necesita el ancho de escritorio
+ *   real, tablet se queda con las tarjetas.
+ * - Header / MenúLateral (hamburguesa ↔ nav completo): ya usaba
+ *   `lg`, es la referencia.
+ * - Ventas.jsx (panel de cobro) usa `sm` Y `lg` a propósito: hoja
+ *   fija abajo en móvil, panel en flujo normal en tablet (`sm`),
+ *   barra lateral de ancho fijo en desktop (`lg`). Es el único caso
+ *   con 3 estados reales — motivo válido para usar ambos bordes,
+ *   a diferencia de usar `md` sin razón.
+ * - `sm`/`md`/`lg` para densidad de grillas (ej. grid-cols-2 → 4)
+ *   o ajustes de espaciado no son un "cambio de layout" en este
+ *   sentido — esos se dejan como estén, esta convención es sobre
+ *   mostrar/ocultar u ocupar el lugar de otra estructura.
+ *
+ * Migración: ya aplicada a los casos md→lg identificados en la
+ * auditoría (Inventario/Servicios/Historial/Gastos/Clientes/
+ * Asistentes/MiPanel, BotonAccion, BotonFlotanteAgregar). Si se
+ * agrega un nuevo cambio de layout, seguir esta misma regla.
+ */
+
+@keyframes flash-verde {
+  from {
+    background-color: color-mix(in srgb, var(--color-green) 30%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-rojo {
+  from {
+    background-color: color-mix(in srgb, var(--color-red) 30%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes deslizar-pestana {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes brillo-barra {
+  0% {
+    transform: translateX(-100%);
+  }
+  41% {
+    transform: translateX(350%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes brillo-texto {
+  0% {
+    background-position: 160% 0;
+  }
+  41% {
+    background-position: -60% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes brillo-tarjeta {
+  0% {
+    transform: translateX(-100%);
+  }
+  41% {
+    transform: translateX(300%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Segundo brillo, intercalado con brillo-tarjeta: mientras ese recorre toda
+   la tarjeta en el primer ~41% del bucle, este ilumina solo el borde a la
+   mitad del hueco que queda libre (antes de que el bucle vuelva a
+   empezar), más sutil (opacidad, no toda la superficie). Pensado para usar
+   con la MISMA duración que brillo-tarjeta (8.5s) en el mismo elemento. */
+@keyframes brillo-borde-tarjeta {
+  0%, 55% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  85%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes elevar-flecha {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+}
+
+/* Martillo de la pestaña "Web... Próximamente": cocked-back con pausa
+   (anticipación), golpe rápido, rebote breve y vuelta a cocked-back. El
+   pivote va en el JSX (transform-origin cerca del mango) para que gire
+   como si golpeara en vez de rotar sobre el centro del ícono. */
+@keyframes martillar {
+  0%, 30% {
+    transform: rotate(-28deg);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: rotate(14deg);
+    animation-timing-function: ease-out;
+  }
+  62% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(-28deg);
+  }
+}
+
+/* Chispas: invisibles casi todo el ciclo, aparecen justo en el golpe (50%,
+   sincronizado con martillar) y salen disparadas hacia --dx/--dy antes de
+   desvanecerse. --dx/--dy son fijos por chispa (ver IconoMartillo.jsx), no
+   se animan en sí — solo el transform que los usa. */
+@keyframes chispa-martillo {
+  0%, 48% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  52% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* C3+A3 (useModalA11y.js): estas dos clases se agregan vía classList.add
+   en JS, no aparecen como className literal en ningún JSX — por eso van
+   como CSS a mano en vez de pasar por @theme --animate-x (Tailwind
+   necesita ver el nombre de la clase como texto en un archivo para
+   generarla; acá alcanza con que exista la regla). */
+@keyframes entrada-modal {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes entrada-overlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entrada-modal {
+  animation: entrada-modal 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-entrada-overlay {
+  animation: entrada-overlay 180ms ease-out;
+}
+
+/* M3: los desplegables (SelectorOrden, sugerencias de búsqueda en
+   Ventas) aparecían en 0ms — seco al lado de acordeones/menús que sí
+   animan. Entrada breve con la duración "media" de la escala. */
+@keyframes entrada-dropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-entrada-dropdown {
+  animation: entrada-dropdown var(--dur-media) cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top;
+}
+
+/* M4: PestanasCacheadas mantiene cada pestaña montada y alterna
+   display:none/contents — instantáneo (bien, no se paga red de nuevo),
+   pero visualmente seco. Solo opacity, sin transform: no debe competir
+   con el layout ancla-al-viewport de Ventas (panel de cobro). */
+@keyframes entrada-pestana {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entrada-pestana {
+  animation: entrada-pestana 120ms ease-out;
+}
+
+/* Ancho máximo compartido de las pestañas del POS en pantallas lg+.
+   Las páginas lo usan con `lg:max-w-(--ancho-pestana)`; cambiar el valor
+   acá lo cambia en todas. Va en :root (no en @theme) para que Tailwind
+   no lo descarte por no tener una utilidad generada a partir de él. */
+:root {
+  --ancho-pestana: 90rem;
+  /* Distancia entre el header y lo primero de cada pestaña (igual al buscador de Ventas). Pestañas con barra pegajosa la aplican como padding-top de la barra. */
+  --separador-horizontal: 10px;
+  /* Padding lateral de las pestañas (bordes izquierdo/derecho de la pantalla). */
+  --separador-vertical: 10px;
+  /* Separadores SECUNDARIOS: padding interno de los bloques/tarjetas dentro de
+     una pestaña (formularios, tarjetas de lista). Variables propias para poder
+     ajustarlos sin mover los márgenes de pantalla de arriba. `horizontal` =
+     arriba/abajo, `vertical` = izquierda/derecha (misma convención). */
+  --separador-horizontal-secundario: 12px;
+  --separador-vertical-secundario: 12px;
+}
+/* En lg+ (PC) se mantienen los 0.75rem originales; los 10px son solo móvil. */
+@media (min-width: 64rem) {
+  :root {
+    --separador-horizontal: 0.75rem;
+    --separador-vertical: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flash-verde,
+  .animate-flash-rojo,
+  .animate-deslizar-pestana,
+  .animate-brillo-barra,
+  .animate-brillo-texto,
+  .animate-brillo-tarjeta,
+  .animate-elevar-flecha,
+  .animate-martillar,
+  .animate-chispa-martillo,
+  .animate-entrada-modal,
+  .animate-entrada-overlay,
+  .animate-entrada-dropdown,
+  .animate-entrada-pestana {
+    animation: none;
+  }
+
+  .foto-borde-luz {
+    animation: none;
+  }
+}
+
+/* Registra el ángulo como tipo <angle> animable — sin esto, animar una
+   variable custom por keyframes no interpola (salta de golpe). Es lo que
+   permite girar SOLO el gradiente de fondo sin usar transform: rotate en
+   el elemento (eso giraba la caja entera, incluida la foto de adentro —
+   el bug de la vuelta anterior). */
+@property --angulo-luz-foto {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes girar-luz-foto {
+  to {
+    --angulo-luz-foto: 360deg;
+  }
+}
+
+/* Miniatura de foto de producto (ModalDetalleProducto): borde ámbar con
+   un punto brillante que recorre todo el borde en bucle, dejando una
+   estela de luz atrás (efecto "cometa"), invitando a tocarla para
+   expandirla.
+   Técnica "padding reveal": este elemento tiene el conic-gradient de
+   fondo y 2px de padding; el hijo directo (la foto, con su propio fondo
+   opaco) tapa todo excepto ese anillo de 2px, donde se asoma el
+   gradiente. Solo se anima el ángulo "from" del gradiente (arriba) — el
+   elemento en sí queda quieto, la foto de adentro nunca gira. */
+.foto-borde-luz {
+  padding: 2px;
+  --angulo-luz-foto: 0deg;
+  background: conic-gradient(
+    from var(--angulo-luz-foto),
+    var(--color-amber) 0deg,
+    var(--color-amber) 280deg,
+    #ffe7b3 320deg,
+    #fff8e8 345deg,
+    var(--color-amber) 360deg
+  );
+  animation: girar-luz-foto 3.5s linear infinite;
+}
+
+:root {
+  /* Radio de borde estándar del proyecto: usar rounded-lg (8px) en componentes */
+  --radius: 0.625rem;
+  color-scheme: dark;
+  /* Anillo de foco de teclado (regla :focus-visible más abajo). En
+     oscuro el ámbar de marca contrasta de sobra; claro lo redefine. */
+  --color-foco: var(--color-amber);
+  /* M3 de la 5ª auditoría: las duraciones de motion convivían sin
+     escala (150/200/300/350/500ms repartidos sin criterio). Estos tres
+     tokens son la referencia única de acá en más — rápida para
+     hover/press, media para dropdowns/colapsables, lenta para overlays
+     y el fundido de tema. */
+  --dur-rapida: 150ms;
+  --dur-media: 250ms;
+  --dur-lenta: 350ms;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+/* C2 de la auditoría frontend (WCAG 2.4.7): el proyecto usa
+ * outline-none en todos los inputs y ningún botón declara estado de
+ * foco — un usuario de teclado navegaba sin saber dónde estaba parado.
+ * :focus-visible solo se activa con teclado (los clics de mouse/touch
+ * no muestran el anillo, así la UI táctil queda igual que siempre).
+ * :where() deja la especificidad en cero: cualquier componente puede
+ * pisarlo declarando su propio foco si algún día lo necesita. */
+:where(button, a, input, select, textarea, [role='switch']):focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* Pedido del usuario: los campos de texto no llevan el anillo exterior de
+ * foco (el borde de color interior ya marca cuál está activo). Los
+ * botones y enlaces conservan el anillo de teclado. */
+:where(input, select, textarea):focus-visible {
+  outline: none;
+}
+
+/* A4 de la auditoría frontend: los CTAs sólidos (Cobrar, Guardar,
+ * Entrar, el FAB, filtros activos) no tenían NINGÚN feedback de
+ * hover/press — .text-bg ya es, en toda la app, la marca de "texto
+ * sobre un acento sólido" (bg-amber/bg-purple-300/bg-green + text-bg),
+ * así que basta esta única regla para darle microinteracción a los
+ * ~25 CTAs de golpe, sin tocar un componente. :where() = especificidad
+ * cero: donde un botón ya declara su propio active:scale-* (el FAB),
+ * ese gana y esta regla queda inerte para esa propiedad. */
+@media (hover: hover) {
+  :where(button.text-bg, a.text-bg):hover {
+    filter: brightness(1.08);
+  }
+}
+:where(button.text-bg, a.text-bg) {
+  transition:
+    filter 150ms ease,
+    transform 100ms ease;
+}
+:where(button.text-bg, a.text-bg):active {
+  transform: scale(0.98);
+}
+
+/* Tema claro: se activa poniendo data-tema="claro" en <html> (ver
+ * ThemeContext.jsx). Mismos nombres de variable que @theme arriba —
+ * el selector de atributo pesa más que el :root plano de arriba, así
+ * que gana en cascada sin !important. No pure-white: fondo gris muy
+ * suave, cards en blanco real (así se distinguen del fondo), bordes
+ * sutiles. color-scheme: light además le pide al navegador pintar
+ * los controles NATIVOS en claro — scrollbars, <input type="date">/
+ * "datetime-local" (los calendarios), <select> — sin eso quedarían
+ * oscuros aunque el resto de la UI ya esté en claro.
+ *
+ * Solo se tocan los NEUTROS (fondo/superficie/borde/texto). Los
+ * acentos (amber y el "rosa pastel" purple-300, más verde/azul/rojo/
+ * naranja) son sub-temas de marca/estado — quedan EXACTAMENTE
+ * iguales en los dos temas principales, sin excepción: no se
+ * redeclaran acá, así que siguen tomando el valor de @theme de
+ * arriba pase lo que pase con data-tema.
+ */
+:root[data-tema='claro'] {
+  color-scheme: light;
+
+  /* Gris/azul ultra suave (slate-50) en vez de blanco puro — así las
+     cards (--color-surface, blanco real, sin cambios) "flotan" encima.
+     A7 de la auditoría frontend: surface-2/3 y los bordes eran beige
+     cálido (#f1efe9…) mientras bg/ink ya eran slate frío — tres
+     temperaturas de neutro conviviendo (fondo azulado, inputs beige,
+     texto frío) se leía "casi bien pero raro". Unificado a la escala
+     slate completa. */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #e2e8f0;
+
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Base slate-900 (antes un negro cálido) — texto principal. */
+  --color-ink: #0f172a;
+
+  /* A1 de la auditoría frontend — texto secundario (etiquetas,
+     subtítulos, metadatos): slate-600 real, no opacidad sobre ink.
+     Legible (7.6:1 sobre blanco, pasa AAA) pero visualmente distinto
+     del texto principal, así la jerarquía no se aplana. Lo consume la
+     regla [class*='text-ink/'] de abajo. */
+  --color-ink-secundario: #475569;
+
+  /* Único acento que sí cambia entre temas (pedido explícito): el
+     "rosa pastel" (Asistentes/Porcentajes) pasa a #ED8BAC solo en
+     claro — en oscuro sigue el lavanda original de @theme, sin tocar. */
+  --color-purple-300: #ed8bac;
+
+  /* C1 de la auditoría — los acentos usados COMO TEXTO sobre
+     superficies claras no llegan ni a 3:1 (amber sobre blanco: 2.0).
+     La identidad pide acentos de MARCA idénticos en ambos temas, así
+     que la corrección separa el ROL: rellenos/bordes/pills no se
+     tocan; el acento-texto usa estos pares oscurecidos del mismo matiz
+     (todos ≥4.5:1 sobre blanco), aplicados por override de las
+     utilidades .text-* de abajo, sin tocar componentes. */
+  --color-amber-texto: #9a6700;
+  --color-green-texto: #15803d;
+  --color-red-texto: #dc2626;
+  --color-azul-metal: #4a78b0;
+  --color-blue-texto: #2563eb;
+  --color-rosa-texto: #c2456b;
+  --color-naranja-texto: #c2410c;
+
+  /* Anillo de foco (regla :focus-visible, más abajo): en claro, el
+     ámbar de marca no contrasta sobre blanco — usa el par de texto. */
+  --color-foco: var(--color-amber-texto);
+}
+
+/* Texto secundario en claro: antes se forzaba ink al 100% (legible pero
+ * jerarquía aplanada: etiquetas y valores se veían igual que el texto
+ * principal). Ahora usa el token secundario. En oscuro no se toca:
+ * sobre #0d0d0d las opacidades ya funcionan bien. */
+[data-tema='claro'] [class*='text-ink/'] {
+  color: var(--color-ink-secundario);
+}
+
+/* C1 (continuación): override de las utilidades de TEXTO de acento en
+ * claro — la clase base y su variante hover (con :hover en el selector
+ * para pisar a la de Tailwind solo cuando corresponde). */
+[data-tema='claro'] :is(.text-amber, .hover\:text-amber:hover) {
+  color: var(--color-amber-texto);
+}
+[data-tema='claro'] :is(.text-green, .hover\:text-green:hover) {
+  color: var(--color-green-texto);
+}
+[data-tema='claro'] :is(.text-red, .hover\:text-red:hover) {
+  color: var(--color-red-texto);
+}
+/* Azul metálico de la pestaña Web (POS): como TEXTO en claro usa el extremo
+   oscuro del mismo acero (#2f578c, ~7:1 sobre blanco). El #4a78b0 de
+   --color-azul-metal se queda para rellenos/bordes. */
+[data-tema='claro'] :is(.text-azul-metal, .hover\:text-azul-metal:hover, .text-azul-metal\/70, .text-azul-metal\/90) {
+  color: #2f578c;
+}
+[data-tema='claro'] :is(.text-blue, .hover\:text-blue:hover) {
+  color: var(--color-blue-texto);
+}
+[data-tema='claro'] :is(.text-purple-300, .hover\:text-purple-300:hover) {
+  color: var(--color-rosa-texto);
+}
+[data-tema='claro'] .text-orange-400 {
+  color: var(--color-naranja-texto);
+}
+
+/* Variantes con opacidad del rosa (pestañas inactivas del header y del
+ * menú lateral): mismo par de texto, apenas atenuado — mantiene la
+ * distinción activa/inactiva sin volver a caer bajo 4.5:1. */
+[data-tema='claro'] :is(.text-purple-300\/70, .text-purple-300\/90) {
+  color: color-mix(in oklab, var(--color-rosa-texto) 85%, transparent);
+}
+
+/* C1b: .text-bg existe para "texto sobre acento sólido" (botones
+ * Guardar/Cobrar, FAB, filtros activos). En oscuro resuelve a #0d0d0d
+ * (texto oscuro sobre ámbar: 9.6:1 ✓). En claro, --color-bg es casi
+ * blanco y esos botones quedaban con texto blanquecino sobre ámbar
+ * (2:1, ilegible). Los acentos sólidos son idénticos en ambos temas,
+ * así que el texto encima debe ser oscuro SIEMPRE (≥5.7:1 sobre los
+ * cinco acentos). */
+[data-tema='claro'] .text-bg {
+  color: var(--color-ink);
+}
+
+/* Títulos, menús y demás texto "importante" en negrita en claro —
+ * en oscuro se deja tal cual (no se pidió cambiarlo ahí). h1-h3 ya
+ * suelen traer font-semibold (600) por className; acá se refuerza a
+ * 700 SOLO en claro. Los links de <nav> (pestañas del header y del
+ * menú lateral) no traían ningún peso propio — se les da 600. */
+[data-tema='claro'] h1,
+[data-tema='claro'] h2,
+[data-tema='claro'] h3 {
+  font-weight: 700;
+}
+
+[data-tema='claro'] nav a {
+  font-weight: 600;
+}
+
+/* Fundido suave al cambiar de tema — SOLO mientras el toggle está en
+ * curso. ThemeContext.alternarTema le pone .cambiando-tema al <html>
+ * justo antes de invertir data-tema y se la quita a los 500ms. Fuera de
+ * ese instante NO hay ninguna transición global: así no se anima por
+ * accidente ningún otro cambio de color de la app (lo que antes hacía
+ * "saltar"/parpadear valores y filas), y el menú lateral desliza sin
+ * tirones porque no compite con transiciones de color permanentes.
+ *
+ * Se incluye transform (con su propia curva) porque el thumb del switch
+ * de tema se mueve exactamente en el mismo toggle — sin esto, el
+ * !important le quitaría su transición y saltaría de golpe en vez de
+ * deslizarse. Cubre ::before/::after para que ningún pseudo-elemento
+ * coloreado quede fuera del fundido. */
+@media (prefers-reduced-motion: no-preference) {
+  html.cambiando-tema,
+  html.cambiando-tema *,
+  html.cambiando-tema *::before,
+  html.cambiando-tema *::after {
+    transition:
+      background-color 350ms ease,
+      border-color 350ms ease,
+      color 350ms ease,
+      fill 350ms ease,
+      stroke 350ms ease,
+      transform 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+
+/* Cambio de tema con View Transitions (ThemeContext.alternarTema): mismo
+ * fundido de 350 ms que el de arriba, pero sobre la captura de la página. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 350ms;
+  animation-timing-function: ease;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Scrollbars sutiles y delgadas, sin flechitas, en cualquier
+   contenedor con scroll (Firefox + navegadores basados en Chromium) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Los buscadores usan <input type="search"> (evita que Chrome/Safari
+   ofrezcan autocompletar con contraseñas/tarjetas/direcciones guardadas
+   sobre un campo que solo busca texto) — sin este reset, WebKit dibuja su
+   propia "x" nativa encima del botón de limpiar que la app ya tiene. */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Catálogo de servicios de la Web (ServiciosCliente.jsx) — tarjeta
+   "iridiscente" replicada de headerYServicios.html (código de
+   referencia del cliente). Paleta dorado/rosa escopeada bajo
+   .catalogo-iridiscente para no filtrar estas variables genéricas
+   (--gold-1, --pink-1...) al resto del POS. --mx/--my/--iri-shift los
+   pone el mousemove de ServiciosCliente.jsx directo por JS (variables
+   CSS en el propio elemento, sin pasar por React state — el mismo
+   truco de la referencia, para no re-renderizar en cada movimiento).
+   ═══════════════════════════════════════════════════════ */
+.catalogo-iridiscente {
+  --gold-1: #ffd700;
+  --gold-2: #e6b422;
+  --pink-1: #ff4d6d;
+  --pink-2: #ff85a1;
+}
+
+.iri-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  perspective: 900px;
+}
+.iri-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--color-surface-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transform: perspective(900px) rotateX(0) rotateY(0) scale(1);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+  isolation: isolate;
+}
+.iri-card.is-hover {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+  box-shadow:
+    0 16px 48px rgba(255, 215, 0, 0.35),
+    0 8px 24px rgba(255, 77, 109, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 0 2px var(--gold-1) inset;
+}
+
+.iri-img {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.iri-img-real {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.iri-img-grad {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+}
+.iri-img-vacia {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a, #0d0d0d);
+  color: color-mix(in oklab, var(--gold-1) 55%, #ffffff);
+}
+
+.iri-iridescent {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  mix-blend-mode: color-dodge;
+  background:
+    radial-gradient(
+      circle at var(--mx) var(--my),
+      hsla(calc(330 + var(--iri-shift)), 95%, 70%, 0.5) 0%,
+      hsla(calc(45 + var(--iri-shift)), 95%, 65%, 0.35) 25%,
+      hsla(calc(280 + var(--iri-shift)), 80%, 60%, 0.25) 45%,
+      transparent 70%
+    ),
+    conic-gradient(
+      from calc(var(--iri-shift) * 1deg) at var(--mx) var(--my),
+      hsla(340, 100%, 70%, 0.18),
+      hsla(45, 100%, 65%, 0.22),
+      hsla(0, 100%, 70%, 0.18),
+      hsla(320, 100%, 70%, 0.22),
+      hsla(45, 100%, 65%, 0.18)
+    );
+}
+.iri-card.is-hover .iri-iridescent {
+  opacity: 1;
+}
+
+.iri-specular {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  mix-blend-mode: overlay;
+  background: radial-gradient(
+    circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.15) 12%,
+    transparent 35%
+  );
+}
+.iri-card.is-hover .iri-specular {
+  opacity: 1;
+}
+
+.iri-border {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: linear-gradient(
+    135deg,
+    #fff5b8 0%,
+    var(--gold-1) 25%,
+    var(--pink-2) 50%,
+    var(--gold-1) 75%,
+    #fff5b8 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 2px;
+}
+.iri-card.is-hover .iri-border {
+  opacity: 1;
+}
+
+.iri-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(255, 215, 0, 0.65) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 70%, rgba(255, 77, 109, 0.5) 0%, transparent 60%);
+  filter: blur(14px);
+}
+.iri-card.is-hover .iri-glow {
+  opacity: 1;
+}
+
+.iri-heart {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+  z-index: 5;
+}
+.iri-heart:hover {
+  background: rgba(0, 0, 0, 0.65);
+  transform: scale(1.1);
+}
+.iri-heart.on {
+  background: rgba(0, 0, 0, 0.65);
+}
+.iri-heart.on:hover {
+  transform: scale(1.15);
+}
+.iri-heart svg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.92);
+}
+.iri-heart.on svg {
+  fill: #ff2d55;
+  stroke: #ff2d55;
+}
+
+.iri-share {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.25s, background 0.2s, transform 0.15s;
+  z-index: 5;
+}
+.iri-card.is-hover .iri-share {
+  opacity: 1;
+}
+.iri-share:hover {
+  background: #25d366;
+  transform: scale(1.1);
+}
+
+.iri-price {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 4px 8px;
+  line-height: 1;
+  z-index: 4;
+}
+.iri-price-from {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.05em;
+}
+.iri-price-num {
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-1), var(--pink-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Etiqueta "Agotado" (catálogo de productos, ProductosCliente.jsx) —
+   mismo tratamiento de vidrio que .iri-price pero en la esquina
+   opuesta, para no competir por espacio con el precio. */
+.iri-agotado {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.75);
+  z-index: 4;
+}
+
+.iri-name {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.25;
+  color: #ffffff;
+  letter-spacing: -0.005em;
+}
+.iri-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 3px;
+}
+@media (min-width: 720px) {
+  .iri-name {
+    font-size: 14px;
+  }
+  .iri-meta {
+    font-size: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Pestaña Web — diseño tipo landing de TODA la Web de clientes
+   (PortalCliente.jsx la aplica siempre, ya no es condicional por
+   ruta, así que cualquier pestaña nueva la hereda sola). Paleta e
+   idioma visual PROPIOS — siempre oscuro, no responde al switch claro/
+   oscuro del resto de la app (ese switch sigue existiendo solo para el
+   POS) — todo vive bajo .landing-web para no tocar ni un token
+   compartido con el POS.
+   ═══════════════════════════════════════════════════════ */
+.landing-web {
+  /* #0b0b0c, no #000000 puro (§7.47) — a pedido del usuario, para que
+     el fondo de TODO el shell de cliente (no solo el hero) sea
+     exactamente el mismo tono que ya usaba el hero (bg-[#0b0b0c] en
+     InicioCliente.jsx) — antes había una costura sutil entre el hero y
+     el resto de las secciones al hacer scroll, cada uno con un negro
+     ligeramente distinto. */
+  --lw-bg: #0b0b0c;
+  --lw-fg: #ffffff;
+  --lw-muted: #a6a6a6;
+  --lw-card: #0d0d0d;
+  --lw-border: #2e2e2e;
+  --lw-subtitle: #f1f3f5;
+  /* #a9c6ec, no #ffd700 (§7.57): el usuario retiró el dorado como
+     acento de TODO el portal cliente, a favor del azul metálico que
+     había arrancado "por ahora" solo en Inicio (§7.36 en adelante). El
+     NOMBRE de la variable se dejó igual a propósito — renombrarla
+     tocaría cada uno de sus ~100 usos en ~25 archivos del portal
+     cliente por un beneficio puramente cosmético (el nombre ya no
+     describe el color); es deuda técnica, no un bug, documentada acá.
+     Valor plano, NO el degradado `--lw-metal-azul` de abajo: esta
+     variable se usa en propiedades como `color`/`border-color`, que
+     no aceptan un gradient como valor — solo `background` sí. Los
+     pocos lugares que ya usaban `--lw-metal-azul` de verdad (badges,
+     texto del nav activo en Inicio) se dejan como estaban; ver
+     comentarios puntuales en PortalCliente.jsx. */
+  --lw-gold: #a9c6ec;
+  --lw-rose: #ff85a1;
+  /* Margen lateral ÚNICO del portal cliente: lo usan el header y todos
+     los bloques de contenido vía la clase `.lw-gutter`. Para separar o
+     acercar todo de los bordes, se cambia SOLO este valor. Fluido:
+     16px en móvil, crece con el ancho hasta 72px. */
+  --lw-gutter: clamp(1rem, 4vw, 4.5rem);
+  background: var(--lw-bg);
+  color: var(--lw-fg);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.landing-web .lw-gutter {
+  padding-inline: var(--lw-gutter);
+}
+
+/* Detalle de servicio/producto: margen lateral más corto que el resto del portal. */
+.landing-web .lw-gutter-detalle {
+  padding-inline: clamp(1rem, 2.5vw, 3rem);
+}
+
+.landing-web .lw-serif {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Variante recta (sin itálica) — para titulares completos en Instrument
+   Serif, reservando .lw-serif solo para la palabra/frase de énfasis
+   dentro de ese mismo titular. */
+.landing-web .lw-serif-regular {
+  font-family: 'Instrument Serif', serif;
+  font-style: normal;
+  font-weight: 400;
+}
+
+/* Vidrio esmerilado — receta base de la referencia del cliente, con el
+   blur subido de 4px a 16px (escala de la referencia "Apogee": 17-20px)
+   para que se note de verdad como vidrio, sobre todo en el header
+   flotante (PortalCliente.jsx), que ahora sí tiene contenido real
+   pasando por detrás al hacer scroll.
+   Ya NO lleva el borde en degradado de la receta original (el ::before
+   de más abajo que tenía esta clase) — a pedido del usuario, que lo vio
+   como un borde visible envolviendo cada tarjeta/panel (Servicios,
+   Productos, Carrito, etc.) y pidió sacarlo de todas las pestañas. Se
+   queda solo el tinte + blur + brillo superior sutil (box-shadow). */
+.landing-web .liquid-glass {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Variante de vidrio para barras/paneles que necesitan que algo se
+   desborde por fuera de su caja (el header y su menú de avatar, el
+   drawer móvil) — sin `overflow: hidden` (recortaría ese desborde) ni
+   el borde en degradado de .liquid-glass (ese ::before sí exige que el
+   propio z-index/contexto de apilamiento del elemento ya esté resuelto
+   por fuera, y acá conviene mantenerlo simple). Sí lleva el mismo
+   `backdrop-filter` — el header ya tiene z-index propio (z-30, puesto
+   directo en PortalCliente.jsx) así que el contexto de apilamiento que
+   crea backdrop-filter ya no atrapa nada por detrás, era el
+   `overflow: hidden` el que realmente recortaba el dropdown, no esto. */
+.landing-web .lw-bar {
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Composición "showcase" del hero — reemplaza el video/dashboard de la
+   referencia (no hay fotos/video real del salón todavía): resplandor
+   dorado-rosa animado detrás de una tarjeta de vidrio con los íconos
+   del servicio. Mismos tonos que ya usa el catálogo iridiscente
+   (.catalogo-iridiscente), para que la Web no se sienta como dos
+   marcas distintas conviviendo. */
+@keyframes lw-resplandor {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.8;
+  }
+}
+.landing-web .lw-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--lw-gold) 0%, var(--lw-rose) 45%, transparent 75%);
+  filter: blur(60px);
+  animation: lw-resplandor 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-glow {
+    animation: none;
+  }
+}
+
+/* Ícono "chanchito" (alcancía) del header — animaciones portadas tal
+   cual de la referencia que trajo el usuario (renombradas con prefijo
+   chanchito- para no chocar con nada existente). Hoy el botón del header
+   (PortalCliente.jsx) solo usa `.icono-chanchito` en reposo, sin
+   sistema de puntos real todavía — se dejan también las clases/keyframes
+   de rebote, lleno, moneda cayendo, "+N" flotante y destellos listas
+   para conectarlas el día que exista esa pantalla (ver
+   implementacionesWed.md §7.13), igual que en la referencia original. */
+.landing-web .icono-chanchito {
+  transform-origin: 50% 92%;
+}
+.landing-web .icono-chanchito.chanchito-rebote {
+  animation: chanchito-rebote 0.42s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.landing-web .icono-chanchito.chanchito-lleno {
+  animation:
+    chanchito-estallido 1.5s ease-in-out,
+    chanchito-pulso 9s ease-in-out 1.5s infinite;
+  filter: drop-shadow(0 0 6px rgba(245, 184, 46, 0.55));
+}
+.landing-web .chanchito-moneda {
+  animation: chanchito-moneda-cae 0.62s cubic-bezier(0.55, 0, 0.8, 0.45) both;
+}
+.landing-web .chanchito-mas {
+  animation: chanchito-mas-sube 0.95s ease-out 0.5s both;
+}
+.landing-web .chanchito-destello {
+  animation: chanchito-titilar 2.6s ease-in-out infinite;
+}
+.landing-web .chanchito-fantasma {
+  transform-origin: 50% 60%;
+  animation: chanchito-fantasma-pop 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) 0.85s both;
+}
+
+@keyframes chanchito-rebote {
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.07, 0.93);
+  }
+  60% {
+    transform: scale(0.97, 1.05);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+@keyframes chanchito-estallido {
+  0% {
+    transform: translateX(0) scale(1, 1);
+  }
+  10% {
+    transform: translateX(0) scale(1.05, 1.04);
+  }
+  20% {
+    transform: translateX(-2px) scale(1.08, 1.06);
+  }
+  27% {
+    transform: translateX(2px) scale(1.09, 1.07);
+  }
+  34% {
+    transform: translateX(-2px) scale(1.1, 1.08);
+  }
+  41% {
+    transform: translateX(2px) scale(1.11, 1.09);
+  }
+  48% {
+    transform: translateX(-1px) scale(1.12, 1.1);
+  }
+  58% {
+    transform: translateX(0) scale(0.96, 1.03);
+  }
+  70% {
+    transform: translateX(0) scale(1.02, 0.99);
+  }
+  80%,
+  100% {
+    transform: translateX(0) scale(1, 1);
+  }
+}
+@keyframes chanchito-pulso {
+  0% {
+    transform: translateX(0) scale(1, 1);
+  }
+  11.5% {
+    transform: translateX(0) scale(1.04, 1.04);
+  }
+  23% {
+    transform: translateX(0) scale(1, 1);
+  }
+  34.5% {
+    transform: translateX(0) scale(1.04, 1.04);
+  }
+  46% {
+    transform: translateX(0) scale(1, 1);
+  }
+  57.5% {
+    transform: translateX(0) scale(1.04, 1.04);
+  }
+  69%,
+  70% {
+    transform: translateX(0) scale(1, 1);
+  }
+  72% {
+    transform: translateX(0) scale(1.05, 1.04);
+  }
+  73.5% {
+    transform: translateX(-2px) scale(1.08, 1.06);
+  }
+  74.5% {
+    transform: translateX(2px) scale(1.09, 1.07);
+  }
+  75.5% {
+    transform: translateX(-2px) scale(1.1, 1.08);
+  }
+  76.5% {
+    transform: translateX(2px) scale(1.11, 1.09);
+  }
+  77.5% {
+    transform: translateX(-1px) scale(1.12, 1.1);
+  }
+  79% {
+    transform: translateX(0) scale(0.96, 1.03);
+  }
+  81% {
+    transform: translateX(0) scale(1.02, 0.99);
+  }
+  83% {
+    transform: translateX(0) scale(1, 1);
+  }
+  91.5% {
+    transform: translateX(0) scale(1.04, 1.04);
+  }
+  100% {
+    transform: translateX(0) scale(1, 1);
+  }
+}
+@keyframes chanchito-moneda-cae {
+  0% {
+    transform: translateY(-190px) scaleX(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  65% {
+    transform: translateY(-6px) scaleX(0.55);
+  }
+  100% {
+    transform: translateY(84px) scaleX(0.3);
+    opacity: 1;
+  }
+}
+@keyframes chanchito-mas-sube {
+  0% {
+    transform: translate(-50%, 0) scale(0.5);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -14px) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -70px) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes chanchito-titilar {
+  0%,
+  100% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(0.8);
+    opacity: 0.55;
+  }
+}
+@keyframes chanchito-fantasma-pop {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .icono-chanchito.chanchito-rebote,
+  .landing-web .icono-chanchito.chanchito-lleno,
+  .landing-web .chanchito-moneda,
+  .landing-web .chanchito-mas,
+  .landing-web .chanchito-destello,
+  .landing-web .chanchito-fantasma {
+    animation: none;
+  }
+}
+
+/* Tarjeta de puntos ("Mis puntos", TarjetaPuntos.jsx) — recreación de la
+   referencia animada que trajo el usuario ("Niveles de Tarjeta
+   Rewards"): tarjeta 3D que gira al arrastrar, con degradado metálico +
+   brillo que dependen del NIVEL REAL del cliente (Básico/Premium/VIP,
+   calculado en el servidor por mis_puntos(), ver 88_puntos.sql) — a
+   diferencia de la referencia, no hay selector manual (ese era solo para
+   previsualizar los 3 niveles en la demo; acá cada cliente ve siempre
+   SU propio nivel). Los colores de cada nivel se asignan como variables
+   CSS por inline style desde React según el nivel que devolvió el
+   servidor, nunca a mano por el cliente. Todo el "lienzo" se dibuja a un
+   tamaño de diseño fijo (1160×800) y se escala para caber en su
+   contenedor (ver `ajustarEscala` en TarjetaPuntos.jsx), igual que la
+   referencia original — así ningún cálculo de posición en px se rompe
+   en pantallas chicas. */
+.tp-stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.tp-lienzo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1160px;
+  height: 800px;
+  transform-origin: 0 0;
+  font-family: inherit;
+}
+.tp-wrap {
+  position: absolute;
+  left: 80px;
+  top: 85px;
+  width: 1000px;
+  height: 630px;
+  perspective: 2200px;
+}
+.tp-card {
+  position: relative;
+  width: 1000px;
+  height: 630px;
+  transform-style: preserve-3d;
+  cursor: grab;
+  touch-action: none;
+}
+.tp-card.tp-arrastrando {
+  cursor: grabbing;
+}
+.tp-cara {
+  position: absolute;
+  inset: 0;
+  border-radius: 44px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--tp-g);
+  box-shadow:
+    0 0 80px var(--tp-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.3),
+    inset 0 -8px 30px rgba(0, 0, 0, 0.35);
+}
+.tp-cara.tp-dorso {
+  transform: rotateY(180deg);
+  background: var(--tp-gb);
+}
+.tp-iri {
+  position: absolute;
+  inset: 0;
+  opacity: var(--tp-iri, 0);
+  mix-blend-mode: soft-light;
+  background: linear-gradient(120deg, #ffb3d9, #b3e5ff 25%, #d4ffb3 45%, #fff0b3 60%, #d9b3ff 80%, #b3fff6);
+}
+.tp-tinta {
+  color: var(--tp-ink);
+  text-shadow:
+    0 1px 0 var(--tp-inkhi),
+    0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+.tp-marca {
+  position: absolute;
+  left: 64px;
+  top: 56px;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 10px;
+}
+.tp-nivel-badge {
+  position: absolute;
+  right: 64px;
+  top: 60px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  padding: 10px 22px;
+  border: 2px solid currentColor;
+  opacity: 0.8;
+  border-radius: 999px;
+}
+.tp-chip {
+  position: absolute;
+  left: 64px;
+  top: 170px;
+}
+.tp-etiqueta {
+  position: absolute;
+  left: 64px;
+  top: 300px;
+  font-size: 22px;
+  letter-spacing: 6px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.tp-puntos {
+  position: absolute;
+  left: 60px;
+  top: 334px;
+  font-size: 120px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.tp-puntos span {
+  font-size: 34px;
+  letter-spacing: 6px;
+  margin-left: 14px;
+}
+.tp-barra {
+  position: absolute;
+  left: 64px;
+  top: 492px;
+  width: 560px;
+  height: 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+.tp-barra i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 10px;
+  background: var(--tp-ink);
+}
+.tp-siguiente {
+  position: absolute;
+  left: 64px;
+  bottom: 40px;
+  font-size: 19px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.tp-nombre {
+  position: absolute;
+  right: 64px;
+  bottom: 40px;
+  max-width: 420px;
+  font-size: 24px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-estrella {
+  position: absolute;
+  right: 70px;
+  top: 220px;
+  width: 200px;
+  height: 200px;
+  opacity: 0.55;
+}
+.tp-estrella-dorso {
+  position: absolute;
+  right: 64px;
+  bottom: 56px;
+  width: 170px;
+  height: 170px;
+  opacity: 0.6;
+}
+.tp-franja {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 70px;
+  height: 110px;
+  background: var(--tp-franja);
+}
+.tp-firma {
+  position: absolute;
+  left: 64px;
+  top: 220px;
+  width: 560px;
+  height: 80px;
+  border-radius: 10px;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0 8px, rgba(255, 255, 255, 0.2) 8px 16px);
+  border: 2px solid rgba(0, 0, 0, 0.25);
+}
+.tp-info {
+  position: absolute;
+  left: 64px;
+  top: 340px;
+  width: 600px;
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.tp-marca-dorso {
+  position: absolute;
+  left: 64px;
+  bottom: 48px;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: 8px;
+}
+.tp-glare {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: soft-light;
+}
+.tp-sheen {
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 60%;
+  height: 180%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(18deg);
+  mix-blend-mode: overlay;
+}
+.tp-pista {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.4);
+  transition: opacity 0.6s;
+}
+.tp-card.tp-pop {
+  animation: tp-pop 0.7s ease;
+}
+@keyframes tp-pop {
+  0% {
+    filter: brightness(1);
+  }
+  30% {
+    filter: brightness(1.5);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-card.tp-pop {
+    animation: none;
+  }
+}
+
+/* Impresión de tickets: el ticket se monta vía portal directo en
+   document.body (fuera de #root), así que basta con ocultar toda
+   la app al imprimir — lo único que queda visible es el ticket. */
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  #root {
+    display: none;
+  }
+}
+
+/* ===========================================================
+   Cupones (Referidos / Cupones y ofertas) — diseño por nivel.
+   Solo las tarjetas en sí (pedido del usuario, con una referencia
+   HTML de 3 niveles) — reutiliza los mismos umbrales de nivelCupon()
+   (lib/cupones.js): Bronce sigue con color plano vía Tailwind
+   (border-[#c8935a]/50 bg-[#c8935a]/10, ver TarjetaCupon.jsx), acá
+   solo van Plata/Oro — los dos únicos que necesitan gradiente/brillo
+   que Tailwind no puede expresar solo. --lw-gold ya existe en el
+   scope .landing-web, se reutiliza tal cual.
+   =========================================================== */
+.cupon-tarjeta,
+.cupon-chispa {
+  /* Dorado propio del cupón Oro: --lw-gold pasó a azul metálico en el
+     rediseño del portal (§7.36) y teñía las tarjetas Oro de azul. */
+  --cupon-oro: #ffd700;
+}
+
+.cupon-tarjeta {
+  position: relative;
+  overflow: hidden;
+  /* Muescas semicirculares a media altura de cada lado: aspecto de ticket.
+     Dos máscaras de media tarjeta (51% para que se solapen sin costura). */
+  -webkit-mask:
+    radial-gradient(ellipse 5px 9px at 0 50%, #0000 97%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(ellipse 5px 9px at 100% 50%, #0000 97%, #000) 100% 0 / 51% 100% no-repeat;
+  mask:
+    radial-gradient(ellipse 5px 9px at 0 50%, #0000 97%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(ellipse 5px 9px at 100% 50%, #0000 97%, #000) 100% 0 / 51% 100% no-repeat;
+}
+
+/* Cupón rojo (promoción activa de Inicio): mismo lenguaje que .cupon-oro
+   (borde degradado + glow que respira + destello que cruza), en rojo. El
+   glow tiene keyframes propios: cupon-glow usa --lw-gold, que es azul. */
+.cupon-rojo {
+  --cupon-rojo: #ff2d3f;
+  border: 1px solid transparent;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cupon-rojo) 16%, transparent), transparent 55%)
+      padding-box,
+    linear-gradient(#120708, #120708) padding-box,
+    linear-gradient(120deg, var(--cupon-rojo), #ffb3ba 38%, var(--cupon-rojo) 58%, #5a1219 100%) border-box;
+  animation: cupon-glow-rojo 4.5s ease-in-out infinite;
+}
+.cupon-rojo::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -45%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 218, 0.2), transparent);
+  transform: skewX(-20deg);
+  animation: cupon-sheen 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cupon-rojo-canjeado {
+  /* Cupón ya reclamado: borde opaco y sin luz (ni glow ni destello). */
+  background:
+    linear-gradient(#120708, #120708) padding-box,
+    linear-gradient(#3a1a1d, #3a1a1d) border-box;
+  animation: none;
+  box-shadow: none;
+}
+.cupon-rojo-canjeado::after {
+  display: none;
+}
+
+.cupon-texto-rojo {
+  background: linear-gradient(100deg, #ff2d3f 0%, #ff2d3f 35%, #ffd0d4 50%, #ff2d3f 65%, #ff2d3f 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cupon-brillo-texto 4.5s linear infinite;
+}
+
+@keyframes cupon-glow-rojo {
+  0%,
+  100% {
+    box-shadow: 0 0 26px -6px rgba(255, 45, 63, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 52px 0 rgba(255, 45, 63, 0.5);
+  }
+}
+
+.cupon-chispa {
+  position: absolute;
+  color: var(--cupon-oro);
+  opacity: 0;
+  animation: cupon-titilar 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px var(--cupon-oro));
+  pointer-events: none;
+}
+
+.cupon-chispa.cupon-chispa-roja {
+  --cupon-oro: #ff4d5e;
+}
+
+/* La etiqueta "Nuevo" se calcula en JS (useCuponesNuevos.js) — se
+   muestra una sola vez, la primera vez que el cliente ve ese cupón. */
+.cupon-etiqueta-nueva {
+  position: absolute;
+  top: -9px;
+  right: -6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1.5px solid #ff2d3f;
+  background: #050505;
+  color: #ff2d3f;
+  text-shadow: 0 0 8px rgba(255, 45, 63, 0.55);
+  box-shadow:
+    0 0 10px -1px rgba(255, 45, 63, 0.55),
+    inset 0 0 6px -2px rgba(255, 45, 63, 0.5);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+@keyframes cupon-sheen {
+  0% {
+    left: -45%;
+  }
+  55%,
+  100% {
+    left: 130%;
+  }
+}
+
+@keyframes cupon-brillo-texto {
+  0% {
+    background-position: 130% 0;
+  }
+  100% {
+    background-position: -130% 0;
+  }
+}
+
+@keyframes cupon-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 26px -6px color-mix(in srgb, var(--lw-gold) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 52px 0 color-mix(in srgb, var(--lw-gold) 50%, transparent);
+  }
+}
+
+@keyframes cupon-titilar {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(0.4) rotate(90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cupon-plata::after,
+  .cupon-oro,
+  .cupon-oro::after,
+  .cupon-texto-oro,
+  .cupon-rojo,
+  .cupon-rojo::after,
+  .cupon-texto-rojo,
+  .cupon-chispa {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Hero de Inicio — nuevo lenguaje visual (a partir de una referencia
+   HTML nueva del usuario, ver implementacionesWed.md §7.36-7.38): arranca
+   SOLO en el hero de InicioCliente.jsx, "por ahora" a pedido explícito
+   del usuario — el resto de la Web se queda con el look dorado/
+   liquid-glass hasta que se migre página por página. Por eso estas
+   clases NO tocan --lw-gold ni ninguna del bloque .landing-web de
+   arriba, viven aparte con su propio degradado azul/acento (el header
+   de PortalCliente.jsx sí usa ese mismo celeste, pero solo cuando la
+   ruta activa es /inicio — ver comentario ahí).
+   Kunaroh NO está en Google Fonts (family=Kunaroh devuelve 400 "Font
+   family not found" — se probó en vivo) — por eso el título caía a
+   Orbitron pese al fallback declarado. El .ttf que trajo la referencia
+   es la fuente real, así que va como @font-face local. */
+@font-face {
+  font-family: 'Kunaroh';
+  src: url('./assets/fonts/Kunaroh.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Heavitas: reservada para títulos importantes de pantallas nuevas de la
+   Web ("Tu carrito", "Tus cupones" — ver el diseño de docs/diseno-carrito/)
+   en blanco sólido, sin cursiva ni degradado — a diferencia de Kunaroh
+   (logo/Inicio) o del acento serif itálico de otras secciones. Mismo
+   motivo que Kunaroh arriba: no está en Google Fonts, va como @font-face
+   local con el .ttf que subió el usuario. */
+@font-face {
+  font-family: 'Heavitas';
+  src: url('./assets/fonts/Heavitas.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.lw-titulo-heavitas {
+  margin: 0;
+  font-family: 'Heavitas', 'Inter', sans-serif;
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+/* --lw-metal-azul: el "acero pulido" de la referencia (--metal en su
+   styles.css) — un degradado con una banda clara al centro, no un color
+   plano, para que se vea con brillo/reflejo en vez de chato. §7.38: el
+   header lo usa (pestaña activa + insignia del carrito) cuando
+   esInicio, no solo el título. */
+.landing-web {
+  --lw-metal-azul: linear-gradient(90deg, #86a9d8 0%, #a9c6ec 40%, #d3e4f8 50%, #a9c6ec 60%, #86a9d8 100%);
+  /* Texto sobre insignias con --lw-metal-azul (carrito, notificaciones). */
+  --lw-badge-text: #000;
+}
+
+.lw-titulo-kunaroh {
+  margin: 0;
+  font-family: 'Kunaroh', 'Orbitron', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.05;
+}
+
+.lw-metal-azul-texto {
+  background: var(--lw-metal-azul);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Botón "Reserva tu cita" — mismo espíritu ghost-button de la
+   referencia (jx-cta): borde fino, invierte a fondo claro/texto negro
+   en hover, la flecha se corre hacia la esquina.
+   Borde + letras en azul metálico, fondo transparente (pedido del
+   usuario). Primer intento con `border-image` funcionaba para el
+   color pero `border-image` IGNORA `border-radius` por spec — las
+   esquinas se veían en ángulo recto (bug reportado). Fix real: el
+   borde de layout queda transparente (`border: 1px solid transparent`,
+   solo para reservar el espacio) y un `::before` absoluto dibuja el
+   anillo degradado encima, con `border-radius: inherit` (sí redondea)
+   y la técnica de `mask-composite` para "vaciar" el centro (padding:1px
+   = grosor del anillo) — así el centro del botón queda genuinamente
+   transparente (se ve la foto detrás), no un relleno sólido fingiendo
+   transparencia. El texto usa `.lw-metal-azul-texto`
+   (background-clip:text) puesto directo en el <span> del JSX, no acá
+   — así no le agarra también al ícono de la flecha (que solo hereda
+   un tono sólido del degradado vía `color`, currentColor). En hover
+   se cae a la versión sólida de siempre (border-radius normal, sin
+   truco) — el anillo degradado es SOLO el estado de reposo. */
+.lw-cta-hero {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 14px);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #a9c6ec;
+  /* clamp(), no 14px/26px fijos (§7.50): mismo motivo que el resto del
+     hero — en celular, con la <section> ahora bajita (sin min-h, ver
+     §7.49), un botón de tamaño fijo desktop no entraba bien en el
+     "formato miniatura" que pidió el usuario. */
+  padding: clamp(10px, 2.5vw, 14px) clamp(16px, 4vw, 26px);
+  font-size: clamp(11px, 2vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  /* nowrap (pedido del usuario): "Reserva tu cita" nunca se parte en 2
+     líneas, ni achicando el botón en celular abajo. */
+  white-space: nowrap;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.lw-cta-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--lw-metal-azul);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.lw-cta-hero:hover {
+  background: #f5f5f4;
+  color: #0b0b0c;
+  border-color: #f5f5f4;
+}
+.lw-cta-hero:hover::before {
+  opacity: 0;
+}
+.lw-cta-hero:hover .lw-cta-flecha {
+  transform: translate(2px, -2px);
+}
+.lw-cta-flecha {
+  transition: transform 0.2s;
+}
+
+/* Más chico solo en celular (pedido del usuario) — el clamp() de arriba
+   ya baja bastante, pero esto lo achica más todavía por debajo de
+   640px, mismo corte que el resto del hero (InicioCliente.jsx). De
+   640px para arriba queda intacto, gobernado solo por el clamp(). */
+@media (max-width: 640px) {
+  .lw-cta-hero {
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 10px;
+  }
+}
+
+.lw-hint-cursor {
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  background: #0b0b0c;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.6;
+  color: #f5f5f4;
+}
+/* ===========================================================
+   Recompensas — tarjetas "Beneficios por nivel" (FondoNivel.jsx).
+   Heredan el acabado metálico de la tarjeta de puntos de SU nivel:
+   las mismas variables --tp-* (se asignan por inline style desde
+   lib/nivelesPuntos.js) y las mismas capas .tp-iri / .tp-glare /
+   .tp-sheen de arriba — acá solo cambia el contenedor (sin 3D ni
+   arrastre), así cualquier ajuste de esas capas se refleja también en
+   estas tarjetas.
+   =========================================================== */
+.tn-fondo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--tp-g);
+  color: var(--tp-ink);
+  box-shadow:
+    0 0 40px var(--tp-glow),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.3),
+    inset 0 -6px 22px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease;
+}
+.tn-fondo.tn-destacada {
+  box-shadow:
+    0 0 64px var(--tp-glow),
+    0 18px 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.45),
+    inset 0 -6px 22px rgba(0, 0, 0, 0.3);
+}
+.tn-contenido {
+  position: relative;
+}
+
+/* ───────── Login (diseño oscuro propio: public/diseñosPropios/Login.html) ─────────
+   Colores fijos a propósito: el login es oscuro siempre, no sigue el tema
+   claro/oscuro de la app. Escritorio: foto a la izquierda + tarjeta; móvil
+   (<768px): foto arriba + formulario abajo. Las animaciones de entrada
+   escalonadas son las del diseño. */
+.lgn {
+  background: #0b0b0c;
+  color: #f5f5f4;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.lgn-foto {
+  background-image: var(--lgn-foto);
+  background-size: cover;
+  background-position: 50% 22%;
+  background-repeat: no-repeat;
+}
+@media (min-width: 768px) {
+  .lgn-foto { background-position: 50% 30%; }
+}
+.lgn-campo input {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  color: #f5f5f4;
+}
+.lgn-campo input::placeholder { color: #8b8b93; opacity: 1; }
+.lgn-campo:focus-within { border-color: #f5f5f4 !important; background: #111113 !important; }
+.lgn-btn { transition: transform .18s cubic-bezier(.2,.7,.3,1), filter .18s ease; }
+.lgn-btn:hover:not(:disabled) { filter: brightness(1.12); }
+.lgn-btn:active:not(:disabled) { transform: translateY(1px); }
+.lgn-btn:hover:not(:disabled) .lgn-flecha { transform: translateX(3px); }
+.lgn-flecha { transition: transform .18s ease; }
+.lgn-google { transition: background .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2,.7,.3,1); }
+.lgn-google:hover { background: #27272a !important; box-shadow: 0 3px 10px rgba(0,0,0,.4) !important; }
+.lgn-google:active { transform: translateY(1px); }
+.lgn :focus-visible { outline: 2px solid #2b6cb0; outline-offset: 2px; }
+@keyframes lgnIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes lgnCard { from { opacity: 0; transform: translateY(12px) scale(.988); } to { opacity: 1; transform: none; } }
+@keyframes lgnHl { from { opacity: 0; transform: translateY(16px); clip-path: inset(100% 0 0 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+.lgn-a-card { animation: lgnCard .82s cubic-bezier(.16,1,.3,1) 40ms both; }
+.lgn-a-hl1 { animation: lgnHl .76s cubic-bezier(.16,1,.3,1) 240ms both; }
+.lgn-a-hl2 { animation: lgnHl .76s cubic-bezier(.16,1,.3,1) 330ms both; }
+.lgn-a-logo { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 400ms both; }
+.lgn-a-h1 { animation: lgnIn .62s cubic-bezier(.16,1,.3,1) 470ms both; }
+.lgn-a-sub { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 570ms both; }
+.lgn-a-email { animation: lgnIn .52s cubic-bezier(.22,1,.36,1) 720ms both; }
+.lgn-a-pw { animation: lgnIn .52s cubic-bezier(.22,1,.36,1) 790ms both; }
+.lgn-a-btn { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 930ms both; }
+.lgn-a-div { animation: lgnIn .44s cubic-bezier(.22,1,.36,1) 1060ms both; }
+.lgn-a-g { animation: lgnIn .54s cubic-bezier(.16,1,.3,1) 1150ms both; }
+.lgn-a-bottom { animation: lgnIn .5s cubic-bezier(.22,1,.36,1) 1260ms both; }
+@media (prefers-reduced-motion: reduce) {
+  .lgn *, .lgn { transition: none !important; animation: none !important; }
+}
+
+/*
+ ---break---
+ */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+/*
+ ---break---
+ */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* ═══════════════════════════════════════════════════════
+   React Bits — ShinyText (§7.60, src/components/ShinyText.jsx):
+   degradado en movimiento recortado al texto (background-clip:text),
+   background-size 200% + una animación que corre background-position
+   de 100% a -100% — la banda clara del degradado, al desplazarse, se
+   lee como un brillo recorriendo el texto. Gris/blanco acá abajo es
+   el look real de React Bits, sin tocar — para el botón de Inicio se
+   usa la variante .lw-cta-shiny más abajo, que reemplaza el color por
+   --lw-metal-azul en vez de gris. */
+.shiny-text {
+  display: inline-block;
+  color: #b5b5b5a4;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.8) 50%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shiny-text-recorrido 5s linear infinite;
+}
+@keyframes shiny-text-recorrido {
+  0% {
+    background-position: 100%;
+  }
+  100% {
+    background-position: -100%;
+  }
+}
+.shiny-text.disabled {
+  animation: none;
+}
+
+/* Variante para "Reserva tu cita" (hero de Inicio, pedido del usuario:
+   "no modifiques los colores azul metálico").
+   §7.61 — bug real corregido: la primera versión usaba TODO
+   --lw-metal-azul (opaco de punta a punta, sin transparencia) como
+   fondo animado. El bucle de ShinyText es continuo SOLO porque el
+   degradado original es transparente en las dos puntas (rgba(...,0) a
+   los costados) — al llegar a -100% y volver a saltar a 100%, las dos
+   puntas transparentes coinciden visualmente (se ve el color base de
+   fondo en ambas) y el salto es invisible. Con un degradado 100%
+   opaco, cada punta muestra un tramo de color DISTINTO — el salto de
+   vuelta se nota como un corte a la mitad del texto cada dos vueltas
+   (bug reportado por el usuario).
+   Fix: mismo mecanismo que el original — color base SÓLIDO (#a9c6ec,
+   ya un color propio de --lw-metal-azul, no uno nuevo) + un degradado
+   de brillo con las puntas transparentes de verdad, usando el tono
+   más claro del mismo degradado (#d3e4f8) con alfa en vez de blanco.
+   Nada de --lw-metal-azul directo como fondo animado. */
+.shiny-text.lw-cta-shiny {
+  /* alfa .78, NO #a9c6ec sólido (§7.62, bug real: por qué no se veía
+     el efecto) — con color 100% opaco, el propio relleno del texto
+     tapa por completo el degradado animado de atrás (background-clip
+     solo hace visible el fondo donde el color de encima lo deja pasar
+     — mismo motivo por el que el ShinyText original de React Bits usa
+     un gris con alfa, `#b5b5b5a4`, no un gris sólido). Con esto el
+     brillo blanco-azulado del centro (alfa 1) SÍ se nota al pasar. */
+  color: rgba(169, 198, 236, 0.78);
+  background: linear-gradient(120deg, rgba(211, 228, 248, 0) 40%, rgba(211, 228, 248, 1) 50%, rgba(211, 228, 248, 0) 60%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* En hover el botón se invierte a fondo claro/texto oscuro sólido
+   (.lw-cta-hero:hover, más arriba) — el brillo animado no tiene
+   sentido ahí, se apaga junto con el resto. */
+.lw-cta-hero:hover .shiny-text.lw-cta-shiny {
+  background: none;
+  animation: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: #0b0b0c;
+}
+
+/* Carrito (§ docs/diseno-carrito/) — diseño aprobado, portado tal cual
+   del `<style>` del mock a clases reusables acá (mismo criterio que
+   `.liquid-glass`/`.lw-bar`: una clase compartida, no repetir un string
+   larguísimo de Tailwind arbitrario en cada bloque del carrito). Los
+   nombres llevan el prefijo `lw-` para no chocar con nada global —
+   `.field`/`.chip`/`.seg` del mock son demasiado genéricos para vivir
+   sueltos en un CSS compartido por toda la app. */
+.landing-web .lw-panel {
+  background: #111113;
+  border: 1px solid #1f1f22;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+.landing-web .lw-seg {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #2e2e2e;
+  background: transparent;
+  color: #bdbdbd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: 500 14px Inter, sans-serif;
+  cursor: pointer;
+}
+.landing-web .lw-seg:hover {
+  border-color: #4a4a4f;
+}
+.landing-web .lw-seg.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+  color: var(--lw-gold);
+}
+
+.landing-web .lw-campo {
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #2e2e2e;
+  background: #141416;
+  color: #fff;
+  padding: 0 12px;
+  font: 14px Inter, sans-serif;
+  outline: none;
+}
+.landing-web .lw-campo:focus {
+  border-color: var(--lw-gold);
+}
+
+.landing-web .lw-stepper {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid #2e2e2e;
+  border-radius: 999px;
+  padding: 0 4px;
+}
+.landing-web .lw-stepper button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: none;
+  color: #d0d0d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.landing-web .lw-stepper button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.landing-web .lw-stepper button:disabled {
+  color: #555;
+  cursor: default;
+}
+
+.landing-web .lw-chip {
+  font: 600 11px Inter, sans-serif;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lw-gold) 12%, transparent);
+  color: var(--lw-gold);
+  white-space: nowrap;
+}
+
+.landing-web .lw-chip-pred {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lw-gold) 15%, transparent);
+  color: var(--lw-gold);
+  font: 500 10px Inter, sans-serif;
+}
+
+.landing-web .lw-tarjeta-direccion {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid #232326;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+.landing-web .lw-tarjeta-direccion.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 4%, transparent);
+}
+
+.landing-web .lw-etq-stock {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #1a1a1c;
+  border: 1px solid #3a3a3f;
+  color: #d0d0d0;
+  font: 600 10px Inter, sans-serif;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+
+.landing-web .lw-etq-desc {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #ff85a1;
+  color: #0b0b0c;
+  font: 700 11px Inter, sans-serif;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.landing-web .lw-capsula-agotado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  white-space: nowrap;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: #1a1a1c;
+  border: 1px solid #3a3a3f;
+  color: #ffffff;
+  font: 600 12px Inter, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+
+.landing-web .lw-precio-antes {
+  font-size: 13px;
+  font-weight: 400;
+  color: #8f8f8f;
+  text-decoration: line-through;
+}
+
+.landing-web .lw-pago-opcion {
+  min-height: 46px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid #2e2e2e;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+}
+.landing-web .lw-pago-opcion:hover {
+  border-color: #4a4a4f;
+}
+.landing-web .lw-pago-opcion.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+}
+
+.landing-web .lw-comprobante-opcion {
+  height: 40px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid #2e2e2e;
+  background: transparent;
+  color: #ffffff;
+  font: 600 14px Inter, sans-serif;
+  cursor: pointer;
+}
+.landing-web .lw-comprobante-opcion:hover {
+  border-color: #4a4a4f;
+}
+.landing-web .lw-comprobante-opcion.on {
+  border-color: var(--lw-gold);
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+}
+
+.landing-web .lw-subir-captura {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px dashed var(--lw-gold);
+  color: var(--lw-gold);
+  font: 600 13px Inter, sans-serif;
+  cursor: pointer;
+  position: relative;
+}
+.landing-web .lw-subir-captura:hover {
+  background: color-mix(in srgb, var(--lw-gold) 8%, transparent);
+}
+
+.landing-web .lw-cuponrow {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: 0;
+  border-top: 1px solid #232326;
+  border-bottom: 1px solid #232326;
+  padding: 14px 0;
+  cursor: pointer;
+  color: #fff;
+  font: 600 14px Inter, sans-serif;
+  text-align: left;
+}
+.landing-web .lw-cuponrow:hover .lw-plus {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.landing-web .lw-plus {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid #3a3a3f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.landing-web .lw-wa-ayuda {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(62, 207, 106, 0.3);
+  background: rgba(62, 207, 106, 0.07);
+  color: #7fe0a0;
+  font: 600 14px Inter, sans-serif;
+}
+.landing-web .lw-wa-ayuda:hover {
+  background: rgba(62, 207, 106, 0.12);
+  color: #9ff0bb;
+}
+
+@keyframes lw-panel-entra-derecha {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes lw-panel-sube {
+  from {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.landing-web .lw-panel-cupones {
+  animation: lw-panel-sube 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 1024px) {
+  .landing-web .lw-panel-cupones {
+    animation-name: lw-panel-entra-derecha;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-panel-cupones {
+    animation: none;
+  }
+}
+
+/* Barras de progreso del carrusel de fotos (hero de Servicios y galería
+   del Detalle): se llenan solas en 5s mientras esa foto está activa —
+   mismo truco CSS que el lienzo aprobado (.bar/.bar.run/.bar.done): el
+   navegador reinicia la animación solo con que la clase `activa` deje de
+   aplicar y vuelva a aplicar (no hace falta remontar nada a mano). */
+@keyframes lw-barra-progreso {
+  to {
+    transform: scaleX(1);
+  }
+}
+.landing-web .lw-barra-progreso {
+  position: relative;
+  flex-grow: 1;
+  height: 3px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+}
+.landing-web .lw-barra-progreso > span {
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: #fff;
+}
+.landing-web .lw-barra-progreso.completa > span {
+  transform: scaleX(1);
+}
+.landing-web .lw-barra-progreso.activa > span {
+  animation: lw-barra-progreso 5s linear forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-barra-progreso.activa > span {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
+/* Animación de entrada de Servicios (docs/diseno-servicios/README.md,
+   "Animación de entrada" — valores exactos de Main.dc.html/Movil.dc.html):
+   cada bloque llega a su lugar con un retraso distinto (puesto inline vía
+   animationDelay desde ServiciosCliente.jsx, resuelto una sola vez al
+   montar según el breakpoint lg) para que la pestaña se sienta armar en
+   vez de aparecer de golpe. Solo opacity/transform/filter — nunca layout. */
+.landing-web .in-left,
+.landing-web .in-right,
+.landing-web .in-up,
+.landing-web .in-photo {
+  animation-duration: 0.9s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation-fill-mode: both;
+}
+.landing-web .in-left {
+  animation-name: lw-in-left;
+}
+.landing-web .in-right {
+  animation-name: lw-in-right;
+}
+.landing-web .in-up {
+  animation-name: lw-in-up;
+  animation-duration: 0.8s;
+}
+.landing-web .in-photo {
+  animation-name: lw-in-photo;
+  animation-duration: 1.3s;
+}
+@keyframes lw-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes lw-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes lw-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lw-in-photo {
+  from {
+    opacity: 0;
+    transform: translateX(48px) scale(1.03);
+    filter: blur(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .in-left,
+  .landing-web .in-right,
+  .landing-web .in-up,
+  .landing-web .in-photo {
+    animation: none;
+  }
+}
+
+/* Cinta continua de Productos (Ofertas/Destacados) — docs/diseno-productos/
+   README.md, sección "Ofertas y destacados: dos filas en movimiento
+   continuo". El desplazamiento en sí lo lleva useCintaContinua.js (JS,
+   requestAnimationFrame) — esto solo desvanece los bordes laterales de
+   la fila para que las tarjetas entren/salgan sin un corte brusco. */
+.lw-cinta-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+}
+
+/* "Resultados reales" (Inicio) — cada foto cae como un meteorito: acelera
+   (ease-in), choca, se aplasta un poco y rebota; destello + onda expansiva
+   + sacudida de la fila en el impacto (~0.52s). Valores exactos de
+   docs/diseno-inicio/Main.dc.html. Disparada por src/hooks/useSecuenciaScroll.js
+   vía las clases .foto.espera/.foto.cae y .sacA/.sacB (alternadas para que
+   la sacudida se reinicie en cada foto, ya que CSS no reinicia una
+   animación si la clase no cambia). */
+.landing-web .foto.espera {
+  opacity: 0;
+}
+.landing-web .foto.cae {
+  z-index: 5;
+  animation: lw-caer 0.75s both;
+}
+.landing-web .foto.cae::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  animation: lw-destello 0.45s ease-out 0.52s both;
+}
+.landing-web .foto.cae::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--lw-gold);
+  opacity: 0;
+  pointer-events: none;
+  animation: lw-onda 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.52s both;
+}
+@keyframes lw-caer {
+  0% {
+    opacity: 0.12;
+    transform: scale(2.6);
+    filter: blur(8px);
+    animation-timing-function: cubic-bezier(0.6, 0, 1, 0.4);
+  }
+  70% {
+    opacity: 0.9;
+    transform: scale(1.03);
+    filter: blur(1px);
+    animation-timing-function: cubic-bezier(0, 0, 0.3, 1);
+  }
+  78% {
+    opacity: 1;
+    transform: scale(0.95);
+    filter: blur(0);
+  }
+  89% {
+    transform: scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes lw-destello {
+  0% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes lw-onda {
+  0% {
+    opacity: 0.8;
+    inset: 0;
+  }
+  100% {
+    opacity: 0;
+    inset: -28px;
+  }
+}
+.landing-web .sacA {
+  animation: lw-sacudirA 0.32s linear 0.52s;
+}
+.landing-web .sacB {
+  animation: lw-sacudirB 0.32s linear 0.52s;
+}
+@keyframes lw-sacudirA {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(4px, -3px);
+  }
+  60% {
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    transform: translate(2px, -1px);
+  }
+}
+@keyframes lw-sacudirB {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(4px, -3px);
+  }
+  60% {
+    transform: translate(-3px, 2px);
+  }
+  80% {
+    transform: translate(2px, -1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .foto.cae,
+  .landing-web .foto.cae::before,
+  .landing-web .foto.cae::after,
+  .landing-web .sacA,
+  .landing-web .sacB {
+    animation: none;
+  }
+}
+
+/* ===========================================================
+   Tema claro del portal cliente — paleta "Jaise Page 1".
+   Se activa con .lw-claro sobre .landing-web (PortalCliente.jsx, switch
+   en el menú del avatar; preferencia propia en TemaWebContext, sin
+   relación con data-tema del POS). Solo reemplaza COLORES: ningún
+   tamaño, espaciado, fuente ni posición se toca acá.
+   Las clases de Tailwind con color fijo (text-white, bg-[#111113],
+   border-white/10…) se reasignan por selector de atributo: `^=`/`*=' '`
+   con el espacio previo evitan atrapar variantes (hover:, sm:…), que
+   se tratan aparte. Esta hoja va sin @layer, así que gana a las
+   utilidades de Tailwind sin !important.
+   =========================================================== */
+.landing-web.lw-claro,
+.lw-claro .landing-web {
+  --bg: #ebebed;
+  --bg-gradient: radial-gradient(99% 99% at 52.9% 61.8%, #f0f0f2 0%, #ebebed 60%, #ccccce 100%);
+  --bg-subtle: #f3f4f6;
+  --bg-muted: #e7e5e4;
+  --surface-glass: rgba(255, 255, 255, 0.85);
+  --surface-glass-2: rgba(255, 255, 255, 0.7);
+  --overlay: rgba(0, 0, 0, 0.2);
+  --text: #000000;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-body: #374151;
+  --border: #e5e7eb;
+  --border-strong: #9ca3af;
+  --border-input: #d1d5db;
+  --avatar-ring: #e4e4e7;
+  --grid-line: #64748b;
+  --btn-hover-bg: #000000;
+  --btn-hover-text: #ffffff;
+  --btn-dark-hover: #1f2937;
+  --metal: linear-gradient(90deg, #2f578c 0%, #4a78b0 40%, #6f98cb 50%, #4a78b0 60%, #2f578c 100%);
+  --badge-text: #ffffff;
+
+  /* Variables propias del portal, apuntadas a la paleta. --lw-gold se usa
+     como color plano (color/border-color no aceptan degradado): toma el
+     tono medio del acero, #4a78b0. */
+  --lw-bg: var(--bg);
+  --lw-fg: var(--text);
+  --lw-muted: var(--text-secondary);
+  --lw-card: var(--bg-subtle);
+  --lw-border: var(--border);
+  --lw-subtitle: var(--text-body);
+  --lw-gold: #4a78b0;
+  --lw-metal-azul: var(--metal);
+  --lw-badge-text: var(--badge-text);
+  color-scheme: light;
+}
+
+/* Fondo del tema claro: un solo degradado para todas las pestañas. El
+   contenedor del portal ocupa exactamente la pantalla (h-svh) y el
+   contenido hace scroll dentro, así que el degradado queda fijo. Los
+   wrappers de página (.landing-web anidados y sus bg-[#0b0b0c]) son
+   transparentes para dejarlo ver; tarjetas, inputs y menús conservan su
+   superficie. */
+.landing-web.lw-claro {
+  background: var(--bg-gradient);
+  background-color: var(--bg);
+}
+.lw-claro .landing-web {
+  background: transparent;
+}
+.lw-claro .landing-web[class~='bg-[#0b0b0c]'] {
+  background-color: transparent;
+}
+/* Header sin fondo propio: deja ver el mismo degradado de la página. */
+.lw-claro header[class~='bg-[#0b0b0c]'] {
+  background-color: transparent;
+}
+.lw-claro [class~='bg-[#0b0b0c]/90'] {
+  background-color: rgba(235, 235, 237, 0.9);
+}
+
+/* Texto */
+.lw-claro .text-white,
+.lw-claro .lw-titulo-heavitas,
+.lw-claro [class~='text-[#f1f3f5]'] {
+  color: var(--text);
+}
+.lw-claro :is([class^='text-white/'], [class*=' text-white/']) {
+  color: var(--text-secondary);
+}
+.lw-claro :is([class~='text-[#a6a6a6]'], [class~='text-[#8a8a8f]'], [class~='text-[#9a9a9f]']) {
+  color: var(--text-muted);
+}
+.lw-claro :is([class~='text-[#e8e8ea]'], [class~='text-[#d9d9dc]'], [class~='text-[#f5f5f4]']) {
+  color: var(--text-body);
+}
+.lw-claro [class~='text-[#a9c6ec]'] {
+  color: var(--lw-gold);
+}
+.lw-claro :is(.hover\:text-white:hover, [class~='hover:text-white/80']:hover) {
+  color: var(--text);
+}
+.lw-claro .hover\:text-black:hover {
+  color: var(--btn-hover-text);
+}
+/* Botones principales (relleno de acento): fondo blanco, borde gris claro
+   y texto negro. El borde es un anillo inset (box-shadow) para no
+   cambiar el tamaño. Los de estilo inline (background: var(--lw-gold))
+   necesitan !important; el estado "ya agregado" (transparente) no entra. */
+.lw-claro :is(button, a)[class~='bg-[var(--lw-gold)]'].text-black,
+.lw-claro :is(button, a)[style*='background: var(--lw-gold)'] {
+  background: #ffffff !important;
+  color: var(--text) !important;
+  box-shadow: inset 0 0 0 1px var(--border-input);
+}
+/* Círculos de ícono dentro de esos botones y de los bloques de ayuda:
+   fondo negro, ícono blanco. */
+.lw-claro [class~='rounded-full'][class~='bg-[#0b0b0c]'][class*=' h-'],
+.lw-claro [class~='bg-[#18181b]'] {
+  background-color: #0b0b0c;
+  color: #ffffff;
+}
+.lw-claro [class~='bg-[#18181b]'].text-white {
+  color: #ffffff;
+}
+/* Chips de categorías (BarraCatalogo): contorno oscuro y letra negra sobre
+   el fondo; el elegido va en blanco liso. */
+.lw-claro .lw-chip-cat:not(.lw-chip-cat-on) {
+  background-color: transparent;
+  border-color: #3a3a3e;
+  color: var(--text);
+}
+.lw-claro .lw-chip-cat-on {
+  background-color: #ffffff;
+  border-color: transparent;
+  color: var(--text);
+}
+/* Buscadores: en claro eran negros con texto negro (no se leía lo escrito). */
+.lw-claro .lw-buscador {
+  background-color: #ffffff;
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 1px var(--border-input);
+}
+.lw-claro .lw-buscador input {
+  color: var(--text);
+}
+.lw-claro .lw-buscador input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Barras flotantes "Tu cita" / "Tu carrito": píldora de vidrio claro
+   (en oscuro es #141417 con texto blanco, que en claro quedaba ilegible). */
+.lw-claro .lw-barra-flotante {
+  background-color: var(--surface-glass);
+  border-color: var(--border-input);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.25);
+}
+/* Flechita de los botones verdes de confirmación: solo en tema claro. */
+.landing-web .lw-flecha-claro {
+  display: none;
+}
+.lw-claro .lw-flecha-claro {
+  display: inline-block;
+}
+
+/* Fondos */
+.lw-claro [class~='bg-[#0b0b0c]'] {
+  background-color: var(--bg);
+}
+.lw-claro :is([class~='bg-[#111113]'], [class~='bg-[#0d0d0d]'], [class~='bg-[#151517]']) {
+  background-color: var(--bg-subtle);
+}
+.lw-claro :is([class~='bg-[#1c1c20]'], [class~='bg-[#222228]'], [class~='bg-[#1f1f22]'], [class~='bg-[#1b2230]']) {
+  background-color: var(--bg-muted);
+}
+.lw-claro :is([class^='bg-white/'], [class*=' bg-white/']) {
+  background-color: var(--bg-subtle);
+}
+.lw-claro :is(.hover\:bg-white\/5:hover, .hover\:bg-white\/10:hover) {
+  background-color: var(--bg-subtle);
+}
+/* Velos a pantalla completa (modales) → --overlay. Las etiquetas negras
+   sobre fotos (bg-black/70) se quedan oscuras con su texto blanco. */
+.lw-claro .fixed:is([class^='bg-black/'], [class*=' bg-black/']) {
+  background-color: var(--overlay);
+}
+.lw-claro :is([class^='bg-black/'], [class*=' bg-black/']):not(.fixed),
+.lw-claro :is([class^='bg-black/'], [class*=' bg-black/']):not(.fixed) .text-white {
+  color: #ffffff;
+}
+.lw-claro [role='status'][class*='bg-black/'] {
+  /* "Cupón canjeado": velo apenas visible, el contenido se lee. */
+  background-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Carrito, Citas y demás pantallas con paneles .lw-*: en oscuro llevan
+   fondos y bordes casi negros fijos; en claro pasan a superficies y
+   bordes de la paleta. */
+.lw-claro .lw-panel {
+  background: var(--bg-subtle);
+  border-color: var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.lw-claro :is(.lw-seg, .lw-stepper, .lw-pago-opcion, .lw-comprobante-opcion) {
+  border-color: var(--border-input);
+  color: var(--text-secondary);
+}
+.lw-claro :is(.lw-pago-opcion, .lw-comprobante-opcion) {
+  color: var(--text);
+}
+.lw-claro :is(.lw-pago-opcion, .lw-comprobante-opcion):hover,
+.lw-claro .lw-seg:hover {
+  border-color: var(--border-strong);
+}
+.lw-claro .lw-seg.on,
+.lw-claro .lw-pago-opcion.on,
+.lw-claro .lw-comprobante-opcion.on {
+  border-color: var(--lw-gold);
+  color: var(--lw-gold);
+}
+.lw-claro .lw-campo {
+  background: #ffffff;
+  border-color: var(--border-input);
+  color: var(--text);
+}
+.lw-claro .lw-stepper button {
+  color: var(--text-secondary);
+}
+.lw-claro .lw-stepper button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text);
+}
+.lw-claro .lw-stepper button:disabled {
+  color: var(--border-strong);
+}
+.lw-claro .lw-tarjeta-direccion {
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.lw-claro .lw-cuponrow {
+  border-color: var(--border);
+  color: var(--text);
+}
+.lw-claro .lw-cuponrow:hover .lw-plus {
+  background: rgba(0, 0, 0, 0.06);
+}
+.lw-claro .lw-plus {
+  border-color: var(--border-input);
+  color: var(--text);
+}
+.lw-claro .lw-etq-stock {
+  background: #ffffff;
+  border-color: var(--border-input);
+  color: var(--text-body);
+}
+.lw-claro .lw-wa-ayuda {
+  color: #15803d;
+}
+.lw-claro .lw-wa-ayuda:hover {
+  color: #166534;
+}
+.lw-claro :is([class~='border-[#232326]'], [class~='border-[#1f1f22]'], [class~='border-[#2e2e2e]']) {
+  border-color: var(--border);
+}
+.lw-claro [class~='border-[#4a4a4f]'] {
+  border-color: var(--border-strong);
+}
+.lw-claro :is([class~='bg-[#141416]'], [class~='bg-[#0d0d0f]'], [class~='bg-[#0f0f11]']) {
+  background-color: #ffffff;
+}
+.lw-claro [class~='text-[#4a4a4f]'] {
+  color: var(--text-muted);
+}
+.lw-claro [class~='text-[#d3e4f8]'] {
+  color: #2f578c;
+}
+
+/* Cupón rojo de Inicio (promoción activa) en tema claro: relleno rosado. */
+.lw-claro .cupon-rojo {
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(255, 255, 255, 0.45), transparent 55%) padding-box,
+    linear-gradient(135deg, #ffdde0 0%, #ffc4ca 55%, #ffe0e3 100%) padding-box,
+    linear-gradient(120deg, var(--cupon-rojo), #ffb3ba 38%, var(--cupon-rojo) 58%, #8e1522 100%) border-box;
+}
+.lw-claro .cupon-rojo-canjeado {
+  background:
+    linear-gradient(#fbd3d7, #fbd3d7) padding-box,
+    linear-gradient(#e7a5ac, #e7a5ac) border-box;
+}
+.lw-claro .cupon-texto-rojo {
+  background-image: linear-gradient(100deg, #c4101f 0%, #c4101f 35%, #ff5a68 50%, #c4101f 65%, #c4101f 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.lw-claro [class~='text-[#ff4d5e]'] {
+  color: #c4101f;
+}
+.lw-claro [class~='border-[#ff2d3f]'].hover\:bg-\[\#ff2d3f\]\/10:hover {
+  background-color: rgba(196, 16, 31, 0.1);
+}
+.lw-claro .lw-bar {
+  background: #ffffff;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.18);
+}
+
+/* Bordes */
+.lw-claro :is([class^='border-white/'], [class*=' border-white/']) {
+  border-color: var(--border);
+}
+.lw-claro :is(.hover\:border-white\/30:hover, .hover\:border-white:hover) {
+  border-color: var(--border-strong);
+}
+.lw-claro .hover\:bg-white:hover {
+  background-color: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+
+/* Acento: pestaña activa, rayita, insignias, aro del avatar */
+.lw-claro .lw-metal-azul-texto {
+  background: var(--metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lw-claro [class~='border-[var(--lw-gold)]/30'] {
+  border-color: var(--avatar-ring);
+}
+
+/* Hero de Inicio: la foto es un bloque oscuro propio (fondo negro del
+   retrato), así que el texto que va SOBRE la foto conserva sus colores
+   claros; solo el botón y el recuadro de ayuda usan el vidrio de la
+   paleta. */
+.lw-claro .lw-sobre-foto {
+  background-color: #0b0b0c;
+}
+.lw-claro .lw-sobre-foto .text-white {
+  color: #ffffff;
+}
+.lw-claro .lw-sobre-foto [class~='text-[#a6a6a6]'] {
+  color: #a6a6a6;
+}
+.lw-claro .lw-sobre-foto [class~='text-[#e8e8ea]'] {
+  color: #e8e8ea;
+}
+.lw-claro .lw-sobre-foto [class*=' border-white/'] {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.lw-claro .lw-sobre-foto .hover\:bg-white:hover {
+  background-color: #ffffff;
+  color: #000000;
+}
+.lw-claro .lw-cta-hero {
+  background: var(--surface-glass);
+}
+.lw-claro .lw-cta-hero::before {
+  background: var(--border-strong);
+}
+.lw-claro .lw-cta-hero:hover {
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
+  color: var(--btn-hover-text);
+}
+.lw-claro .shiny-text.lw-cta-shiny {
+  color: rgba(47, 87, 140, 0.85);
+  background-image: linear-gradient(120deg, rgba(111, 152, 203, 0) 40%, rgba(111, 152, 203, 1) 50%, rgba(111, 152, 203, 0) 60%);
+}
+.lw-claro .lw-cta-hero:hover .shiny-text.lw-cta-shiny {
+  color: var(--btn-hover-text);
+}
+.lw-claro .lw-hint-cursor {
+  background: var(--surface-glass-2);
+  color: var(--text);
+}
+.lw-claro .lw-hint-cursor svg {
+  stroke: var(--text);
+}
+
+/* ===========================================================
+   Cupones por nivel — mismo acabado metálico que las tarjetas de puntos
+   (lib/nivelesPuntos.js, referencia "Niveles de Tarjeta Rewards"):
+   Plata (el más básico) < Oro < Diamante, más "Especial" (rubí) para los
+   cupones de ofertas. Igual en tema claro y oscuro: es una pieza
+   metálica con su propia tinta, no depende del fondo de la página.
+   =========================================================== */
+.cupon-metal {
+  background: var(--cm-g);
+  color: var(--cm-ink);
+  box-shadow:
+    0 0 26px -6px var(--cm-glow),
+    inset 0 0 0 1px var(--cm-borde),
+    inset 0 -6px 18px rgba(0, 0, 0, 0.16);
+}
+/* Rayado fino (sin puntos: cubrían todo el cupón) */
+.cupon-metal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 4px);
+  -webkit-mask-image: linear-gradient(115deg, transparent 30%, #000 80%);
+  mask-image: linear-gradient(115deg, transparent 30%, #000 80%);
+  pointer-events: none;
+}
+/* Iridiscencia (solo Diamante y Rubí) */
+.cupon-metal::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  bottom: -40%;
+  left: -45%;
+  width: 30%;
+  background: linear-gradient(100deg, rgba(255, 250, 225, 0), rgba(255, 252, 235, 0.75) 50%, rgba(255, 250, 225, 0));
+  mix-blend-mode: overlay;
+  transform: rotate(18deg);
+  animation: cupon-sheen 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.cupon-metal.cupon-iri {
+  background-image:
+    linear-gradient(120deg, rgba(255, 179, 217, 0.22), rgba(179, 229, 255, 0.22) 25%, rgba(212, 255, 179, 0.18) 45%, rgba(255, 240, 179, 0.2) 60%, rgba(217, 179, 255, 0.22) 80%, rgba(179, 255, 246, 0.22)),
+    var(--cm-g);
+}
+.cupon-n-plata {
+  --cm-g: linear-gradient(135deg, #6f757b 0%, #b9bec4 18%, #f4f6f8 34%, #8e949a 50%, #dde1e5 66%, #747a80 84%, #c8cdd2 100%);
+  --cm-ink: #25292d;
+  --cm-inkhi: rgba(255, 255, 255, 0.6);
+  --cm-glow: rgba(210, 216, 222, 0.5);
+  --cm-borde: rgba(255, 255, 255, 0.5);
+}
+.cupon-n-oro {
+  --cm-g: linear-gradient(135deg, #6e5214 0%, #c9a24a 18%, #f6e1a1 34%, #b48a2e 50%, #e9c874 66%, #8c6a1c 84%, #d9b660 100%);
+  --cm-ink: #3b2a06;
+  --cm-inkhi: rgba(255, 240, 195, 0.55);
+  --cm-glow: rgba(233, 200, 116, 0.55);
+  --cm-borde: rgba(255, 240, 200, 0.5);
+}
+.cupon-n-diamante {
+  --cm-g: linear-gradient(135deg, #8ea6bd 0%, #cfe2f3 18%, #ffffff 34%, #a9c3da 50%, #eaf4ff 66%, #93adc6 84%, #d8e8f7 100%);
+  --cm-ink: #1b2a3b;
+  --cm-inkhi: rgba(255, 255, 255, 0.7);
+  --cm-glow: rgba(190, 225, 255, 0.7);
+  --cm-borde: rgba(255, 255, 255, 0.6);
+}
+.cupon-n-rubi {
+  --cm-g: linear-gradient(135deg, #3f0510 0%, #9a1226 18%, #ef6a7c 34%, #7a0b1c 50%, #cf2c44 66%, #4f0713 84%, #b51d35 100%);
+  --cm-ink: #ffe4e8;
+  --cm-inkhi: rgba(40, 0, 8, 0.55);
+  --cm-glow: rgba(230, 50, 80, 0.6);
+  --cm-borde: rgba(255, 190, 200, 0.4);
+}
+/* Verde (diamante verde de «Niveles de Tarjeta Rewards»): cupones de bienvenida, referido y fidelización. Fuera de la escala. */
+.cupon-n-verde {
+  --cm-g: linear-gradient(135deg, #03321f 0%, #0b7a4c 18%, #7ff0bd 34%, #06573a 50%, #22b77a 66%, #044029 84%, #16996a 100%);
+  --cm-ink: #e8fff4;
+  --cm-inkhi: rgba(0, 30, 18, 0.55);
+  --cm-glow: rgba(40, 220, 140, 0.45);
+  --cm-borde: rgba(180, 255, 215, 0.4);
+}
+
+/* Tinta: texto principal, subtextos e íconos toman el color del nivel.
+   Selectores con .landing-web para ganar a los overrides del tema claro. */
+.landing-web .cupon-metal .cupon-metal-texto,
+.landing-web .cupon-metal .cupon-metal-icono {
+  color: var(--cm-ink);
+  text-shadow: 0 1px 0 var(--cm-inkhi);
+}
+.landing-web .cupon-metal :is(.text-white, [class*='text-white/']) {
+  color: color-mix(in srgb, var(--cm-ink) 78%, transparent);
+  text-shadow: 0 1px 0 var(--cm-inkhi);
+}
+.landing-web .cupon-metal [class*='border-white/'] {
+  border-color: color-mix(in srgb, var(--cm-ink) 30%, transparent);
+}
+.landing-web .cupon-metal [class*='bg-black/'] {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+.landing-web :is(.cupon-n-rubi, .cupon-n-verde) [class*='bg-black/'] {
+  background-color: rgba(0, 0, 0, 0.22);
+}
+.landing-web .cupon-metal .cupon-metal-boton {
+  border-color: var(--cm-ink);
+  color: var(--cm-ink);
+}
+.landing-web .cupon-metal .cupon-metal-boton:hover {
+  background-color: color-mix(in srgb, var(--cm-ink) 14%, transparent);
+}
+.cupon-chispa.cupon-chispa-verde {
+  --cupon-oro: #7ff0bd;
+}
+.cupon-chispa.cupon-chispa-diamante {
+  --cupon-oro: #bfe3ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cupon-metal::after {
+    animation: none;
+    display: none;
+  }
+}
+
+/*
+ ---break---
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

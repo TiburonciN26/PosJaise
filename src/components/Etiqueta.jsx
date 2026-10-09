@@ -4,9 +4,11 @@
 // lector de pantalla anuncia el input sin nombre y tocar la etiqueta no
 // enfoca el campo. Para etiquetas de grupos que no son un control único
 // (botones Activo/Inactivo, la foto, un valor calculado) se omite htmlFor.
-export default function Etiqueta({ children, obligatorio, htmlFor }) {
+// `className` reemplaza el margen/bloque por defecto (p. ej. para poner la
+// etiqueta al lado de su input en una fila).
+export default function Etiqueta({ children, obligatorio, htmlFor, className = 'mb-1 block' }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1 block text-xs text-ink/60">
+    <label htmlFor={htmlFor} className={`${className} text-xs text-ink/60`}>
       {children}
       {obligatorio && <span className="text-red"> *</span>}
     </label>

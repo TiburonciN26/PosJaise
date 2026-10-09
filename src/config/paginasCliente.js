@@ -62,6 +62,10 @@ export const importadores = {
   NotificacionesCliente: () => import('../pages/cliente/NotificacionesCliente.jsx'),
   SeguridadCuentaCliente: () => import('../pages/cliente/SeguridadCuentaCliente.jsx'),
   ReferidosCliente: () => import('../pages/cliente/ReferidosCliente.jsx'),
+  LibroReclamacionesCliente: () => import('../pages/cliente/LibroReclamacionesCliente.jsx'),
+  TerminosCliente: () => import('../pages/cliente/TerminosCliente.jsx'),
+  PoliticaCambiosCliente: () => import('../pages/cliente/PoliticaCambiosCliente.jsx'),
+  PrivacidadCliente: () => import('../pages/cliente/PrivacidadCliente.jsx'),
 }
 
 export const pagina = Object.fromEntries(
@@ -90,6 +94,10 @@ const RUTAS = [
   [/^\/mi-perfil\/notificaciones\/?$/, 'NotificacionesCliente'],
   [/^\/mi-perfil\/seguridad\/?$/, 'SeguridadCuentaCliente'],
   [/^\/mi-perfil\/referidos\/?$/, 'ReferidosCliente'],
+  [/^\/libro-de-reclamaciones\/?$/, 'LibroReclamacionesCliente'],
+  [/^\/terminos-y-condiciones\/?$/, 'TerminosCliente'],
+  [/^\/politica-de-cambios-y-devoluciones\/?$/, 'PoliticaCambiosCliente'],
+  [/^\/politica-de-privacidad\/?$/, 'PrivacidadCliente'],
 ]
 
 // Carga el portal y la página de la URL actual (más Inicio, aterrizaje de la

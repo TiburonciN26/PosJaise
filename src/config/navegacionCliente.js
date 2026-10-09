@@ -44,4 +44,8 @@ export const titulosSubpaginasCliente = {
   '/mi-perfil/notificaciones': 'Notificaciones',
   '/mi-perfil/seguridad': 'Seguridad de la cuenta',
   '/mi-perfil/referidos': 'Referidos',
+  '/libro-de-reclamaciones': 'Libro de Reclamaciones',
+  '/terminos-y-condiciones': 'Términos y condiciones',
+  '/politica-de-cambios-y-devoluciones': 'Cambios y devoluciones',
+  '/politica-de-privacidad': 'Política de privacidad',
 }

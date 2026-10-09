@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase.js'
 import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
@@ -45,6 +46,7 @@ const INTERVALO_HERO_MS = 5000
 // genérico por categoría en servicios que todavía no la tienen.
 export default function ServiciosCliente() {
   const { serviciosCarrito, agregarServicio } = useCarritoCliente()
+  const requerirSesion = useRequerirSesion()
   const [searchParams] = useSearchParams()
 
   const [servicios, setServicios] = useState([])
@@ -173,6 +175,7 @@ export default function ServiciosCliente() {
 
   async function reservarHero() {
     if (!heroActual) return
+    if (!requerirSesion('reservar este servicio')) return
     const yaEsta = serviciosCarrito.has(heroActual.id)
     if (!yaEsta) await agregarServicio(heroActual.id)
   }

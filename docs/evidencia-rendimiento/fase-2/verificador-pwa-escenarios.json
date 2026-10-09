@@ -1,0 +1,86 @@
+{
+  "fecha": "2026-10-09T19:27:17.526Z",
+  "total": 8,
+  "fallos": 0,
+  "resultados": [
+    {
+      "escenario": "positivo · estado=vacio",
+      "ok": true,
+      "detalle": "exit=0 publicada=true pasos=19",
+      "exit": 0,
+      "resultado": "OK",
+      "publicacionEjecutada": true,
+      "pasosFallidos": []
+    },
+    {
+      "escenario": "positivo · estado=venta",
+      "ok": true,
+      "detalle": "exit=0 publicada=true pasos=24",
+      "exit": 0,
+      "resultado": "OK",
+      "publicacionEjecutada": true,
+      "pasosFallidos": []
+    },
+    {
+      "escenario": "positivo · estado=ventana",
+      "ok": true,
+      "detalle": "exit=0 publicada=true pasos=22",
+      "exit": 0,
+      "resultado": "OK",
+      "publicacionEjecutada": true,
+      "pasosFallidos": []
+    },
+    {
+      "escenario": "positivo · estado=atras",
+      "ok": true,
+      "detalle": "exit=0 publicada=true pasos=24",
+      "exit": 0,
+      "resultado": "OK",
+      "publicacionEjecutada": true,
+      "pasosFallidos": []
+    },
+    {
+      "escenario": "positivo · estado=dos-dialogos",
+      "ok": true,
+      "detalle": "exit=0 publicada=true pasos=26",
+      "exit": 0,
+      "resultado": "OK",
+      "publicacionEjecutada": true,
+      "pasosFallidos": []
+    },
+    {
+      "escenario": "negativo · A con marca incorrecta (no se publica)",
+      "ok": true,
+      "detalle": "exit=1 publicada=false sinPasoDeAviso=true",
+      "exit": 1,
+      "resultado": "FALLA",
+      "publicacionEjecutada": false,
+      "pasosFallidos": [
+        "A: el documento tiene EXACTAMENTE la marca esperada",
+        "ejecución"
+      ]
+    },
+    {
+      "escenario": "negativo · origen no permitido (preflight, sin login)",
+      "ok": true,
+      "detalle": "exit=1 motivo=preflight fallido: no se abrió el navegador ni se envió ning",
+      "exit": 1,
+      "resultado": "FALLA",
+      "publicacionEjecutada": false,
+      "pasosFallidos": [
+        "preflight: origen QA permitido"
+      ]
+    },
+    {
+      "escenario": "negativo · backend no aprobado (negocio) en el entorno (preflight, sin login)",
+      "ok": true,
+      "detalle": "exit=1 publicada=false",
+      "exit": 1,
+      "resultado": "FALLA",
+      "publicacionEjecutada": false,
+      "pasosFallidos": [
+        "preflight: Supabase de .env.staging.local = staging aprobado y clave anon/publishable válida"
+      ]
+    }
+  ]
+}

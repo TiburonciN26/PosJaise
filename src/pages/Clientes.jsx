@@ -16,7 +16,9 @@ import {
   Venus,
   Mars,
   Filter,
+  ArrowRight,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { urlPublicaFoto } from '../lib/imagenes.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -174,7 +176,7 @@ function DatoCliente({ icono: Icono, children, mono }) {
 
 function BarraCompletitud({ porcentaje, colores }) {
   return (
-    <div className="flex items-center gap-2 px-3 pb-3 text-xs text-ink/60">
+    <div className="flex items-center gap-2 px-3 pb-2.5 text-xs lg:pb-3 text-ink/60">
       <span className="shrink-0">Datos completos</span>
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
         <div
@@ -332,19 +334,20 @@ export default function Clientes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar por nombre o teléfono..."
           tema="purple-300"
+          sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" sinBorde />
 
         <SelectorOrden
           opciones={OPCIONES_SEXO}
@@ -353,6 +356,7 @@ export default function Clientes({ activo = true }) {
           tema="purple-300"
           icono={Filter}
           ariaLabel="Filtrar por sexo"
+          sinBorde
         />
 
         <button
@@ -365,9 +369,18 @@ export default function Clientes({ activo = true }) {
         </button>
       </div>
 
-      <p className="mt-3 text-sm text-ink/60">
-        Clientes: <span className="font-mono font-semibold text-purple-300">{totalClientes}</span>
-      </p>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-sm text-ink/60">
+          Clientes: <span className="font-mono font-semibold text-purple-300">{totalClientes}</span>
+        </p>
+        <Link
+          to="/deudas"
+          className="inline-flex items-center gap-1 text-sm text-purple-300 transition-colors hover:text-purple-200"
+        >
+          Ver deudas
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -397,7 +410,7 @@ export default function Clientes({ activo = true }) {
 
             return (
               <div key={cliente.id} className="rounded-lg border border-border bg-surface">
-                <div className="flex items-center gap-3 p-3">
+                <div className="flex items-center gap-3 px-3 pb-1 pt-2 lg:p-3">
                   <div
                     onClick={() => alternarAbierto(cliente.id)}
                     onKeyDown={manejarActivacionTeclado(() => alternarAbierto(cliente.id))}
@@ -548,8 +561,8 @@ export default function Clientes({ activo = true }) {
       )}
 
       {clienteAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar a "{clienteAEliminar.nombre}"?
             </h2>

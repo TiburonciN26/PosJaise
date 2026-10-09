@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BotonVoz from './BotonVoz.jsx'
 import { supabase } from '../lib/supabase.js'
 import { servicioPorId } from '../lib/buscarServicios.js'
 import { useBusquedaServicios } from '../hooks/useBusquedaServicios.js'
@@ -55,15 +56,18 @@ export default function SelectorServicioBuscable({
 
   return (
     <div className="space-y-1.5">
-      <input
-        type="search"
-        autoComplete="off"
-        value={texto}
-        onChange={(evento) => setTexto(evento.target.value)}
-        placeholder="Buscar servicio por nombre..."
-        aria-label="Buscar servicio por nombre"
-        className={`${CLASE_CAMPO} ${claseFoco}`}
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="search"
+          autoComplete="off"
+          value={texto}
+          onChange={(evento) => setTexto(evento.target.value)}
+          placeholder="Buscar servicio por nombre..."
+          aria-label="Buscar servicio por nombre"
+          className={`${CLASE_CAMPO} ${claseFoco}`}
+        />
+        <BotonVoz onTexto={setTexto} />
+      </div>
       <select
         id={id}
         value={valor}

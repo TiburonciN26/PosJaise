@@ -10,6 +10,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
+import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { useSecuenciaScroll } from '../../hooks/useSecuenciaScroll.js'
 import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
 import { formatearCantidad } from '../../lib/programaRecompensas.js'
@@ -220,7 +221,9 @@ export default function InicioCliente() {
   const [topServicios, setTopServicios] = useState([])
   const [proximaCita, setProximaCita] = useState(null)
   const [puntosCliente, setPuntosCliente] = useState(null)
-  const { session } = useAuth()
+  const { session, usuario } = useAuth()
+  const usuarioId = usuario?.id ?? null
+  const requerirSesion = useRequerirSesion()
   // Con el programa activo mis_puntos().puntos es el saldo GASTABLE: aquí se muestra como monedas, con su propio nombre.
   const programa = useProgramaRecompensas(session?.user?.id ?? null)
   const saldoProg = programa.saldo.estado === 'ok' ? programa.saldo.datos : null
@@ -239,7 +242,9 @@ export default function InicioCliente() {
 
     async function cargar() {
       const ahoraIso = new Date().toISOString()
-      const miId = await obtenerMiClienteId()
+      // Visitante: solo contenido público. Nada de lo personal (próxima cita, puntos,
+      // cupones) se consulta sin sesión.
+      const miId = usuarioId ? await obtenerMiClienteId() : null
       const [
         serviciosRes,
         masPedidoRes,
@@ -268,12 +273,12 @@ export default function InicioCliente() {
               .order('fecha_hora')
               .limit(1)
           : Promise.resolve({ data: [] }),
-        supabase.rpc('mis_puntos'),
+        usuarioId ? supabase.rpc('mis_puntos') : Promise.resolve({ data: [] }),
         supabase
           .from('promociones')
           .select('id, titulo, descripcion, tipo_descuento, valor, vigente_hasta')
           .order('vigente_hasta', { ascending: true, nullsFirst: false }),
-        supabase.rpc('mis_cupones'),
+        usuarioId ? supabase.rpc('mis_cupones') : Promise.resolve({ data: [] }),
         supabase.rpc('resenas_publicas'),
         supabase.rpc('resenas_inicio'),
         supabase.rpc('galeria_para_web'),
@@ -322,7 +327,7 @@ export default function InicioCliente() {
     return () => {
       vigente = false
     }
-  }, [])
+  }, [usuarioId])
 
   const ENTRADA_FIJA = esDesktop
     ? { foto: 200, eyebrow: 150, titulo: 300, subtitulo: 420, botones: 540, confianza: 680, tira: 850, promo: 950 }
@@ -359,6 +364,7 @@ export default function InicioCliente() {
 
   async function reclamarCupon() {
     if (!promocion || reclamando) return
+    if (!requerirSesion('reclamar este cupón')) return
     setReclamando(true)
     const { data, error } = await supabase.rpc('reclamar_cupon_promocion', { p_promocion_id: promocion.id })
     setReclamando(false)

@@ -1,6 +1,7 @@
 import { Menu, ShoppingCart, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Suspense, useEffect, useState } from 'react'
+import { useAuth } from '../context/AuthContext.jsx'
 import { TemaWebProvider, useTemaWeb } from '../context/TemaWebContext.jsx'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
@@ -8,6 +9,7 @@ import { NotificacionesClienteProvider, useNotificacionesCliente } from '../cont
 import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
 import { precargarPestanasPrincipales } from '../config/paginasCliente.js'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
+import AccionesVisitante from '../components/AccionesVisitante.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
 import IconoCampana from '../components/IconoCampana.jsx'
 
@@ -274,6 +276,9 @@ export default function PortalCliente() {
 function PortalClienteContenido() {
   const location = useLocation()
   const { tema } = useTemaWeb()
+  // Visitante (sin sesión): ve "Iniciar sesión" / "Crear cuenta" en vez del carrito,
+  // las notificaciones y el menú de la cuenta, que son personales.
+  const { usuario } = useAuth()
   const [menuAbierto, setMenuAbierto] = useState(false)
 
   // QA-021: con el portal ya visible, se descargan en reposo las pestañas más usadas.
@@ -449,11 +454,17 @@ function PortalClienteContenido() {
                 <div className="flex shrink-0 items-center gap-1 sm:gap-3">
                   <BotonChanchito estaEnPuntos={location.pathname === '/recompensas'} />
   
-                  <BotonCarrito estaEnCarrito={location.pathname === '/carrito'} />
+                  {usuario ? (
+                    <>
+                      <BotonCarrito estaEnCarrito={location.pathname === '/carrito'} />
 
-                  <BotonNotificaciones estaEnNotificaciones={location.pathname === '/mi-perfil/notificaciones'} />
+                      <BotonNotificaciones estaEnNotificaciones={location.pathname === '/mi-perfil/notificaciones'} />
 
-                  <MenuUsuarioCliente />
+                      <MenuUsuarioCliente />
+                    </>
+                  ) : (
+                    <AccionesVisitante />
+                  )}
                 </div>
               </div>
             </header>

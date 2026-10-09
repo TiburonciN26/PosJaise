@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import BotonVoz from './BotonVoz.jsx'
 import { X, UserPlus, UserRoundPlus, Users } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useBusquedaClientes } from '../hooks/useBusquedaClientes.js'
@@ -74,14 +75,14 @@ export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, on
   return (
     <div
       onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4"
     >
       <div
         ref={panelRef}
         onClick={(evento) => evento.stopPropagation()}
         className="flex max-h-[80dvh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface"
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border p-3">
+        <div className="flex items-center justify-between gap-2 border-b border-border px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
           <h2 className="text-base font-semibold text-ink">Seleccionar cliente</h2>
           <button
             type="button"
@@ -93,34 +94,37 @@ export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, on
           </button>
         </div>
 
-        <div className="border-b border-border p-3">
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/60">
-              <IconoBuscar />
-            </span>
-            <input
-              type="search"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck="false"
-              autoFocus
-              value={busqueda}
-              onChange={(evento) => manejarCambioBusqueda(evento.target.value)}
-              onKeyDown={manejarKeyDown}
-              placeholder="Buscar por nombre o teléfono..."
-              className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber"
-            />
-            {busqueda && (
-              <button
-                type="button"
-                onClick={() => manejarCambioBusqueda('')}
-                aria-label="Limpiar búsqueda"
-                className="absolute right-0.5 top-1/2 -translate-y-1/2 p-2.5 text-ink/60 transition-colors hover:text-ink"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+        <div className="border-b border-border px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/60">
+                <IconoBuscar />
+              </span>
+              <input
+                type="search"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                autoFocus
+                value={busqueda}
+                onChange={(evento) => manejarCambioBusqueda(evento.target.value)}
+                onKeyDown={manejarKeyDown}
+                placeholder="Buscar por nombre o teléfono..."
+                className="w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber"
+              />
+              {busqueda && (
+                <button
+                  type="button"
+                  onClick={() => manejarCambioBusqueda('')}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 p-2.5 text-ink/60 transition-colors hover:text-ink"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <BotonVoz onTexto={manejarCambioBusqueda} />
           </div>
         </div>
 

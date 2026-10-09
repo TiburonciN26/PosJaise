@@ -90,7 +90,7 @@ function CampoFoto({ etiqueta, foto, idInput }) {
             <ImagePlus className="h-6 w-6 text-ink/40" />
           )}
         </div>
-        <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-red hover:text-red">
+        <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-azul-metal hover:text-azul-metal">
           <ImagePlus className="h-3.5 w-3.5" />
           {foto.procesando ? 'Procesando...' : foto.preview ? 'Cambiar foto' : 'Elegir foto'}
           <input
@@ -182,12 +182,12 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
         ref={panelRef}
         onSubmit={guardar}
-        style={{ '--color-foco': 'var(--color-red)' }}
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        style={{ '--color-foco': 'var(--color-azul-metal)' }}
+        className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
           {esEdicion ? 'Editar foto de galería' : 'Nueva foto de galería'}
@@ -206,7 +206,7 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
               value={titulo}
               onChange={(evento) => setTitulo(evento.target.value)}
               placeholder="Opcional — ej. Corte + color"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-red"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -218,7 +218,7 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
               step="1"
               value={orden}
               onChange={(evento) => setOrden(evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
             />
             <p className="mt-1 text-xs text-ink/60">Las fotos con número más chico van primero.</p>
           </div>
@@ -226,10 +226,10 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
           <button
             type="button"
             onClick={() => setActivo((anterior) => !anterior)}
-            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-red"
+            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-azul-metal"
           >
             <span className="text-sm text-ink">Visible en la Web</span>
-            <Interruptor activado={activo} colorActivado="bg-red" />
+            <Interruptor activado={activo} colorActivado="bg-azul-metal" />
           </button>
         </div>
 
@@ -242,14 +242,14 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
             type="button"
             onClick={onCerrar}
             disabled={guardando}
-            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red disabled:opacity-40"
+            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={guardando}
-            className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40"
           >
             {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar'}
           </button>

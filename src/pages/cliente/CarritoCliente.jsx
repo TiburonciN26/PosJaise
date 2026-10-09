@@ -37,9 +37,11 @@ import { formatearSoles } from '../../lib/moneda.js'
 import { procesarImagen, subirFoto, urlPublicaFoto } from '../../lib/imagenes.js'
 import { aLima, anioMesEnLima, claveDiaLima, diaSemanaLima, iniciarDia, iniciarMesLima, sumarDias } from '../../lib/fechas.js'
 import TarjetaCupon from '../../components/TarjetaCupon.jsx'
+import AceptoTerminos from '../../components/AceptoTerminos.jsx'
 import { estadoEfectivoCupon } from '../../lib/cupones.js'
 import CampoSubirArchivo from '../../components/CampoSubirArchivo.jsx'
 import Contador from '../../components/Contador.jsx'
+import { abrirCheckoutCulqi, cobrarPedidoConTarjeta, culqiConfigurado, precargarCulqi } from '../../lib/culqi.js'
 
 const BUCKET_FOTOS_PRODUCTOS = 'fotos-productos'
 const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
@@ -227,7 +229,11 @@ const METODOS_PAGO = [
   { id: 'YAPE', nombre: 'Yape', conQR: true, icono: 'icons/yape.svg' },
   { id: 'PLIN', nombre: 'Plin', conQR: true, icono: null },
   { id: 'TRANSFERENCIA', nombre: 'Transferencia', conQR: false, icono: 'icons/transferencia.svg' },
+  { id: 'TARJETA', nombre: 'Tarjeta', conQR: false, icono: 'icons/targueta.svg' },
 ]
+
+// Tarjeta solo se ofrece si el build trae la llave pública de Culqi.
+const METODOS_VISIBLES = METODOS_PAGO.filter((m) => m.id !== 'TARJETA' || culqiConfigurado)
 
 // QA-054: el descuento de un cupón NUNCA se calcula aquí. Lo valida el servidor (vista_previa_cupon_pedido) con la misma
 // lógica que usan el pedido y la venta (alcance, compra mínima, nivel, vigencia, tope, costo conocido y protección
@@ -681,6 +687,7 @@ export default function CarritoCliente() {
   const [codigoManual, setCodigoManual] = useState('')
   const [errorCodigo, setErrorCodigo] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [terminosAceptados, setTerminosAceptados] = useState(false)
   // Validación del cupón por el servidor: 'ninguno' | 'validando' | 'ok' | 'rechazado' | 'error'.
   const [validacion, setValidacion] = useState(VALIDACION_NINGUNA)
   // Sube cuando el carrito del servidor cambió (cantidades, quitar) o cuando hay que volver a validar.
@@ -846,35 +853,101 @@ export default function CarritoCliente() {
     setDrawerAbierto(false)
   }
 
+  // Crea el pedido en el servidor (precios, cupón y total los calcula él). Devuelve { data: id del pedido, error }.
+  function crearPedidoEnServidor(rutaComprobante) {
+    const direccionSeleccionada = direcciones.find((d) => d.id === direccionId)
+    return supabase.rpc('confirmar_pedido_productos', {
+      p_producto_ids: productosMarcados.map((p) => p.id),
+      p_tipo_entrega: entrega,
+      p_fecha_entrega: claveDiaAISO(dia),
+      p_hora_entrega: hora,
+      p_metodo_pago: metodoPago,
+      p_comprobante_url: rutaComprobante,
+      p_zona_delivery_id: entrega === 'DELIVERY' ? zonaId : null,
+      p_direccion: entrega === 'DELIVERY' ? direccionSeleccionada?.direccion : null,
+      p_celular_entrega: entrega === 'DELIVERY' ? direccionSeleccionada?.celular : null,
+      p_codigo_cupon: cupon?.codigo ?? null,
+      p_tipo_comprobante: comprobante,
+      p_ruc: comprobante === 'FACTURA' ? ruc : null,
+      p_razon_social: comprobante === 'FACTURA' ? razonSocial : null,
+      // QA-057: lo que la clienta ve y confirma. El servidor recalcula precios, descuento y protección y RECHAZA si no
+      // coinciden (sin pedido); nunca se envían precios del navegador para cobrar.
+      p_cantidades: productosMarcados.map((p) => ({ producto_id: p.id, cantidad: p.cantidad })),
+      p_total_esperado: centavos(total) / 100,
+    })
+  }
+
+  // Tarjeta: 1) el formulario de Culqi da un token (la tarjeta nunca toca nuestro código); 2) se crea el pedido;
+  // 3) el servidor cobra el pedido con ese token. El carrito solo se vacía cuando el cobro salió bien.
+  async function pagarConTarjeta() {
+    try {
+      await abrirCheckoutCulqi({
+        titulo: 'Jaise Beauty Academy',
+        montoCentavos: centavos(total),
+        email: usuario.email,
+        onToken: cobrarYConfirmar,
+        onError: (mensaje) => mostrarToast(mensaje, 'error'),
+      })
+    } catch (error) {
+      mostrarToast(error.message || 'No se pudo abrir el pago con tarjeta.', 'error')
+    }
+  }
+
+  async function cobrarYConfirmar(tokenId) {
+    if (enviando) return
+    setEnviando(true)
+    let pedidoId = null
+    let resultado = null
+    try {
+      const { data, error } = await crearPedidoEnServidor(null)
+      if (error) throw error
+      pedidoId = data
+      resultado = await cobrarPedidoConTarjeta(supabase, pedidoId, tokenId)
+    } catch (error) {
+      // Tarjeta rechazada o pedido inválido: se anula el pedido para no dejar uno pendiente sin cobrar. Si el cobro
+      // quedó "en curso" (sin respuesta de Culqi) el servidor no deja cancelar y se avisa de contactar al negocio.
+      if (pedidoId) await supabase.rpc('cancelar_mi_pedido_web', { p_pedido_id: pedidoId })
+      mostrarToast(error.message || 'No se pudo completar el pago.', 'error')
+      await recargarDesdeServidor()
+      setVersionCarrito((v) => v + 1)
+      setEnviando(false)
+      return
+    }
+
+    // Cobro hecho: de aquí en adelante nada debe anular el pedido.
+    try {
+      await supabase
+        .from('carrito_productos')
+        .delete()
+        .eq('cliente_web_id', usuario.id)
+        .in('producto_id', productosMarcados.map((p) => p.id))
+    } catch {
+      // el pago ya está hecho; un carrito que queda con los productos no es grave
+    }
+    mostrarToast(
+      resultado?.verificado
+        ? '¡Pago recibido! Tu pedido quedó confirmado.'
+        : '¡Pago recibido! Estamos confirmando tu pedido y te avisamos por WhatsApp.',
+      'exito',
+    )
+    recargarCarrito()
+    navigate('/inicio')
+    setEnviando(false)
+  }
+
   async function confirmar() {
     if (ctaDeshabilitado || enviando) return
+    if (metodoPago === 'TARJETA') {
+      await pagarConTarjeta()
+      return
+    }
     setEnviando(true)
     try {
       const { blob, extension } = await procesarImagen(capturaArchivo, { ladoMaximo: 1400, calidad: 0.9 })
       const rutaComprobante = `${usuario.id}/${crypto.randomUUID()}.${extension}`
       await subirFoto(BUCKET_COMPROBANTES_PEDIDOS, rutaComprobante, blob)
 
-      const direccionSeleccionada = direcciones.find((d) => d.id === direccionId)
-
-      const { error } = await supabase.rpc('confirmar_pedido_productos', {
-        p_producto_ids: productosMarcados.map((p) => p.id),
-        p_tipo_entrega: entrega,
-        p_fecha_entrega: claveDiaAISO(dia),
-        p_hora_entrega: hora,
-        p_metodo_pago: metodoPago,
-        p_comprobante_url: rutaComprobante,
-        p_zona_delivery_id: entrega === 'DELIVERY' ? zonaId : null,
-        p_direccion: entrega === 'DELIVERY' ? direccionSeleccionada?.direccion : null,
-        p_celular_entrega: entrega === 'DELIVERY' ? direccionSeleccionada?.celular : null,
-        p_codigo_cupon: cupon?.codigo ?? null,
-        p_tipo_comprobante: comprobante,
-        p_ruc: comprobante === 'FACTURA' ? ruc : null,
-        p_razon_social: comprobante === 'FACTURA' ? razonSocial : null,
-        // QA-057: lo que la clienta ve y confirma. El servidor recalcula precios, descuento y protección y RECHAZA si no
-        // coinciden (sin pedido); nunca se envían precios del navegador para cobrar.
-        p_cantidades: productosMarcados.map((p) => ({ producto_id: p.id, cantidad: p.cantidad })),
-        p_total_esperado: centavos(total) / 100,
-      })
+      const { error } = await crearPedidoEnServidor(rutaComprobante)
 
       if (error) throw error
 
@@ -916,9 +989,11 @@ export default function CarritoCliente() {
 
   const facturaCompleta = comprobante !== 'FACTURA' || (ruc.length === 11 && razonSocial.trim().length > 0)
   const direccionLista = entrega !== 'DELIVERY' || Boolean(direccionId)
-  const faltaPago = !capturaArchivo
+  const esTarjeta = metodoPago === 'TARJETA'
+  // Con tarjeta no hay captura: la pasarela cobra y confirma sola.
+  const faltaPago = !esTarjeta && !capturaArchivo
   const ctaDeshabilitado =
-    productosMarcados.length === 0 || !dia || !hora || !facturaCompleta || !direccionLista || faltaPago || !totalConfirmado || hayPendientes
+    productosMarcados.length === 0 || !dia || !hora || !facturaCompleta || !direccionLista || faltaPago || !totalConfirmado || hayPendientes || !terminosAceptados
 
   const metodoActual = METODOS_PAGO.find((m) => m.id === metodoPago)
   // Número/titular/QR reales del negocio (ContactoWeb.jsx los edita,
@@ -1274,6 +1349,12 @@ export default function CarritoCliente() {
                   Guardando los cambios de tu carrito…
                 </p>
               )}
+              <AceptoTerminos
+                id="carrito-acepto-terminos"
+                aceptado={terminosAceptados}
+                onCambiar={setTerminosAceptados}
+                incluirCambios
+              />
               <button
                 type="button"
                 onClick={confirmar}
@@ -1281,7 +1362,9 @@ export default function CarritoCliente() {
                 className="flex h-14 items-center justify-center gap-2.5 rounded-[10px] bg-[#3ECF6A] text-[18px] font-semibold text-black transition-[filter] hover:brightness-[1.06] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:brightness-100"
               >
                 <Check className="h-[18px] w-[18px]" />
-                {enviando ? 'Enviando...' : `Confirmar pedido (${productosMarcados.length})`}
+                {enviando
+                  ? esTarjeta ? 'Procesando pago...' : 'Enviando...'
+                  : esTarjeta ? `Pagar ${formatearSoles(total)} con tarjeta` : `Confirmar pedido (${productosMarcados.length})`}
                 <ArrowUpRight className="lw-flecha-claro h-[18px] w-[18px]" />
               </button>
 
@@ -1290,12 +1373,15 @@ export default function CarritoCliente() {
                   <CreditCard className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                   Método de pago
                 </h2>
-                <div role="group" aria-label="Elige cómo pagar" className="grid grid-cols-3 gap-2.5">
-                  {METODOS_PAGO.map((metodo) => (
+                <div role="group" aria-label="Elige cómo pagar" className={`grid gap-2.5 ${METODOS_VISIBLES.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                  {METODOS_VISIBLES.map((metodo) => (
                     <button
                       key={metodo.id}
                       type="button"
-                      onClick={() => setMetodoPago(metodo.id)}
+                      onClick={() => {
+                        setMetodoPago(metodo.id)
+                        if (metodo.id === 'TARJETA') precargarCulqi()
+                      }}
                       aria-pressed={metodoPago === metodo.id}
                       className={`lw-pago-opcion ${metodoPago === metodo.id ? 'on' : ''}`}
                     >
@@ -1308,6 +1394,17 @@ export default function CarritoCliente() {
                     </button>
                   ))}
                 </div>
+                {esTarjeta ? (
+                  <div className="flex flex-col gap-2 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5">
+                    <p className="text-[15px] font-semibold leading-snug text-white">
+                      Paga con tu tarjeta de débito o crédito{totalConfirmado ? ` (${formatearSoles(total)})` : ''}.
+                    </p>
+                    <p className="text-[13px] text-white/60">
+                      Al pulsar el botón se abre el formulario seguro de Culqi. Tus datos de tarjeta no pasan por esta web
+                      y tu pedido se confirma al instante.
+                    </p>
+                  </div>
+                ) : (
                 <div className="flex flex-col items-center gap-4 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5 sm:flex-row">
                   {metodoActual.conQR && (
                     datosMetodoActual.qrUrl ? (
@@ -1339,14 +1436,17 @@ export default function CarritoCliente() {
                     />
                   </div>
                 </div>
-                <p className="flex items-center gap-2 text-xs text-white/60">
-                  <Info className="h-3.5 w-3.5 shrink-0" />
-                  Por ahora no aceptamos tarjetas de crédito ni débito.
-                </p>
+                )}
+                {!culqiConfigurado && (
+                  <p className="flex items-center gap-2 text-xs text-white/60">
+                    <Info className="h-3.5 w-3.5 shrink-0" />
+                    Por ahora no aceptamos tarjetas de crédito ni débito.
+                  </p>
+                )}
               </section>
 
               <p className="-mt-2 text-center text-xs leading-relaxed text-white/50">
-                Revisamos tu comprobante y te confirmamos el pedido.
+                {esTarjeta ? 'Con tarjeta, tu pedido se confirma apenas se aprueba el pago.' : 'Revisamos tu comprobante y te confirmamos el pedido.'}
               </p>
             </aside>
 

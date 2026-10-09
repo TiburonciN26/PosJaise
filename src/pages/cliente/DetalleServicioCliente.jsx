@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
@@ -62,6 +63,9 @@ export default function DetalleServicioCliente() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { usuario } = useAuth()
+  const usuarioId = usuario?.id ?? null
+  // Visitante: explora el detalle completo; agregar a la cita, favoritos y reseñas piden cuenta.
+  const requerirSesion = useRequerirSesion()
   const { mostrarToast } = useToast()
   const { serviciosCarrito, agregarServicio, quitarServicio } = useCarritoCliente()
   const { adelantoMinimo, cancelacionPlazoHoras, cargando: cargandoNegocio } = useEstadoNegocio()
@@ -107,12 +111,16 @@ export default function DetalleServicioCliente() {
             .eq('activo', true)
             .maybeSingle(),
           supabase.from('servicio_fotos').select('id, foto_url, etiqueta').eq('servicio_id', id).order('orden'),
-          supabase.from('favoritos_servicios').select('servicio_id').eq('servicio_id', id).maybeSingle(),
-          supabase.from('config_puntos').select('puntos_por_sol_gastado').eq('id', 1).maybeSingle(),
+          usuarioId
+            ? supabase.from('favoritos_servicios').select('servicio_id').eq('servicio_id', id).maybeSingle()
+            : Promise.resolve({ data: null }),
+          usuarioId
+            ? supabase.from('config_puntos').select('puntos_por_sol_gastado').eq('id', 1).maybeSingle()
+            : Promise.resolve({ data: null }),
           supabase.rpc('datos_contacto'),
           supabase.rpc('resenas_servicio_resumen', { p_servicio_id: id }),
           supabase.rpc('resenas_servicio_publicas', { p_servicio_id: id }),
-          supabase.rpc('mi_resena_servicio', { p_servicio_id: id }),
+          usuarioId ? supabase.rpc('mi_resena_servicio', { p_servicio_id: id }) : Promise.resolve({ data: null }),
         ])
 
       if (!vigente) return
@@ -175,7 +183,7 @@ export default function DetalleServicioCliente() {
     return () => {
       vigente = false
     }
-  }, [id])
+  }, [id, usuarioId])
 
   // Galería (servicio_fotos, migración 110): si el servicio todavía no
   // tiene ninguna foto propia ahí, cae a la única foto de
@@ -210,11 +218,13 @@ export default function DetalleServicioCliente() {
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
 
   async function alternarCita() {
+    if (!requerirSesion('agregar este servicio a tu cita')) return
     const exito = enCita ? await quitarServicio(servicio.id) : await agregarServicio(servicio.id)
     if (!exito) mostrarToast('No se pudo actualizar tu cita.', 'error')
   }
 
   async function reservarAhora() {
+    if (!requerirSesion('reservar este servicio')) return
     if (!enCita) {
       const exito = await agregarServicio(servicio.id)
       if (!exito) {
@@ -226,6 +236,7 @@ export default function DetalleServicioCliente() {
   }
 
   async function agregarCombo() {
+    if (!requerirSesion('agregar el combo a tu cita')) return
     const idsAAgregar = [servicio.id, combo.id].filter((idServicio) => !serviciosCarrito.has(idServicio))
     const resultados = await Promise.all(idsAAgregar.map((idServicio) => agregarServicio(idServicio)))
     if (resultados.some((exito) => !exito)) {
@@ -264,6 +275,7 @@ export default function DetalleServicioCliente() {
   }
 
   async function alternarFavorito() {
+    if (!requerirSesion('guardar tus favoritos')) return
     const { error } = favorito
       ? await supabase.from('favoritos_servicios').delete().eq('cliente_web_id', usuario.id).eq('servicio_id', servicio.id)
       : await supabase.from('favoritos_servicios').insert({ cliente_web_id: usuario.id, servicio_id: servicio.id })
@@ -785,7 +797,10 @@ export default function DetalleServicioCliente() {
             <div className="mt-1 flex flex-wrap gap-2.5">
               <button
                 type="button"
-                onClick={() => setMostrarFormResena((v) => !v)}
+                onClick={() => {
+                  if (!requerirSesion('escribir una reseña')) return
+                  setMostrarFormResena((v) => !v)
+                }}
                 className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold text-black"
                 style={{ background: 'var(--lw-gold)' }}
               >

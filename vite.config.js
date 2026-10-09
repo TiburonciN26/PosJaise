@@ -9,7 +9,17 @@ export default defineConfig(({ command, mode }) => {
   // GitHub Pages sirve este proyecto bajo /PosJaise/ (Pages de proyecto, no
   // de usuario), así que el build necesita ese prefijo en assets, rutas y
   // manifest. En dev queda "/" porque Vite lo sirve desde la raíz.
-  const base = command === 'build' ? '/PosJaise/' : '/'
+  //
+  // Fase 2 (Cloudflare Pages): el mismo código también se publica en la raíz de
+  // un dominio (`*.pages.dev` o dominio propio). `VITE_BASE_PATH=/` en ese build
+  // (ver scripts/build-cloudflare.mjs) cambia el prefijo; sin la variable el
+  // resultado es idéntico al de siempre (/PosJaise/), así que GitHub Pages no cambia.
+  const baseConfigurada = (process.env.VITE_BASE_PATH ?? '/PosJaise/').trim()
+  const baseNormalizada = `/${baseConfigurada.replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/')
+  const base = command === 'build' ? baseNormalizada : '/'
+  // 404.html es el truco de SPA de GitHub Pages; en la raíz de Cloudflare Pages su
+  // sola presencia DESACTIVA el fallback de SPA, así que ese build lo excluye (y del precache).
+  const esRaiz = base === '/'
 
   return {
     base,
@@ -21,6 +31,13 @@ export default defineConfig(({ command, mode }) => {
     },
     plugins: [
       react(),
+      // Marca opcional de versión (Fase 2B, prueba de actualización PWA entre dos builds):
+      // solo si VITE_BUILD_ID está definido añade <meta name="build-id"> al index.html (entra al
+      // precache y cambia sw.js). Sin la variable el build es idéntico al de siempre.
+      {
+        name: 'marca-build-id',
+        transformIndexHtml: (html) => (process.env.VITE_BUILD_ID ? html.replace('</head>', `<meta name="build-id" content="${process.env.VITE_BUILD_ID.replace(/[^\w.-]/g, '')}" /></head>`) : html),
+      },
       tailwindcss(),
       VitePWA({
         // A2 de la 4ª auditoría: con 'autoUpdate' la versión nueva se activa
@@ -39,6 +56,7 @@ export default defineConfig(({ command, mode }) => {
         // negocio (stock, ventas, etc.) al usuario.
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          globIgnores: esRaiz ? ['**/404.html'] : [],
         },
         manifest: {
           name: 'Pos Jaise Beauty Academy',

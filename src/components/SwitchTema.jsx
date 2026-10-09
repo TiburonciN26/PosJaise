@@ -8,12 +8,17 @@ import { useTheme } from '../context/ThemeContext.jsx'
 // opuesto al thumb. Se integra al ThemeContext ya existente
 // (localStorage + preferencia del sistema).
 const COLORES = {
-  claro: { fondo: '#f6f1e8', thumb: '#2c2f38', iconoThumb: '#e8c36b', texto: '#2c2f38' },
-  oscuro: { fondo: '#232833', thumb: '#f6f1e8', iconoThumb: '#3d4a63', texto: '#f6f1e8' },
+  claro: { fondo: '#f6f1e8', thumb: '#ffffff', iconoThumb: '#000000', texto: '#2c2f38' },
+  oscuro: { fondo: '#000000', thumb: '#ffffff', iconoThumb: '#000000', texto: '#f6f1e8' },
 }
 
 // Sin props usa el tema del POS; el portal cliente pasa el suyo (TemaWebContext).
-export default function SwitchTema({ tema: temaProp, alternarTema: alternarProp }) {
+// `anchoCompleto` estira la píldora al ancho del contenedor (menú POS).
+export default function SwitchTema({
+  tema: temaProp,
+  alternarTema: alternarProp,
+  anchoCompleto = false,
+}) {
   const temaPos = useTheme()
   const tema = temaProp ?? temaPos.tema
   const alternarTema = alternarProp ?? temaPos.alternarTema
@@ -27,7 +32,9 @@ export default function SwitchTema({ tema: temaProp, alternarTema: alternarProp 
       aria-checked={esOscuro}
       aria-label={esOscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
       onClick={alternarTema}
-      className="relative inline-block h-8 w-[104px] shrink-0 cursor-pointer rounded-full shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)] transition-colors duration-300 ease-out"
+      className={`relative inline-block h-8 shrink-0 cursor-pointer rounded-full shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)] transition-colors duration-300 ease-out ${
+        anchoCompleto ? 'w-full' : 'w-[104px]'
+      }`}
       style={{ backgroundColor: colores.fondo }}
     >
       <span
@@ -40,8 +47,8 @@ export default function SwitchTema({ tema: temaProp, alternarTema: alternarProp 
       </span>
 
       <span
-        className={`absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.25)] transition-transform duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          esOscuro ? 'translate-x-[72px]' : 'translate-x-0'
+        className={`absolute top-1 flex h-6 w-6 items-center justify-center rounded-full shadow-[0_2px_5px_rgba(0,0,0,0.25)] transition-[left] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          esOscuro ? 'left-[calc(100%-1.75rem)]' : 'left-1'
         }`}
         style={{ backgroundColor: colores.thumb }}
       >

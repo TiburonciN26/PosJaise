@@ -314,18 +314,19 @@ export default function Mobiliario({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar por nombre, marca, modelo..."
           tema="purple-300"
+          sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" sinBorde />
 
         <button
           type="button"
@@ -532,10 +533,10 @@ export default function Mobiliario({ activo = true }) {
       )}
 
       {muebleAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
           <div
             ref={panelEliminarMuebleRef}
-            className="w-full max-w-sm rounded-lg border border-border bg-surface p-5"
+            className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
           >
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{muebleAEliminar.nombre}"?
@@ -566,10 +567,10 @@ export default function Mobiliario({ activo = true }) {
       )}
 
       {compraAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
           <div
             ref={panelEliminarCompraRef}
-            className="w-full max-w-sm rounded-lg border border-border bg-surface p-5"
+            className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
           >
             <h2 className="text-base font-semibold text-ink">¿Eliminar esta compra?</h2>
             <p className="mt-1 text-sm text-ink/60">Esta acción no se puede deshacer.</p>

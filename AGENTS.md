@@ -126,3 +126,41 @@ strictly read-only.
 
 Local test data may be destroyed or recreated as part of testing.
 Production data must always be treated as read-only.
+
+### LOCAL QA USER PROVISIONING
+
+Codex MAY create and manage fictitious QA users directly in Supabase Auth
+and the corresponding application profile/user records when ALL of the
+following conditions are true:
+
+- Supabase has been positively verified as LOCAL at `http://127.0.0.1:54321`.
+- The accounts are clearly fictitious TEST/QA accounts.
+- The purpose is preparing accounts for functional or E2E testing.
+- Only roles already supported by the application's existing schema and
+  authorization logic may be used.
+
+For this limited purpose, Codex MAY use local Supabase tools, CLI, Studio,
+or local database/API access when necessary to:
+
+- inspect which application roles actually exist;
+- create fictitious local Auth users;
+- create the corresponding local application user/profile record;
+- assign an existing supported role to a fictitious QA user;
+- verify that the QA account was created correctly;
+- remove or recreate fictitious QA accounts when needed for testing.
+
+This permission applies ONLY to QA user provisioning in Supabase Local.
+
+Codex MUST NOT:
+
+- create, modify, or delete production users;
+- use production credentials or production Supabase endpoints;
+- invent new roles or permissions;
+- modify RLS policies, grants, functions, triggers, tables, constraints,
+  schemas, or migrations;
+- weaken authentication or authorization to make a test pass;
+- copy real production users, passwords, personal data, or credentials
+  into the local environment.
+
+If Codex cannot positively verify that the target is Supabase Local at
+`http://127.0.0.1:54321`, it MUST NOT perform user provisioning.

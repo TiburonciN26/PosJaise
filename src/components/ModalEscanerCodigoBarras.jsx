@@ -103,8 +103,8 @@ export default function ModalEscanerCodigoBarras({ buscarPorCodigo, onProductoEn
   }, [])
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/80 p-4">
-      <div ref={panelRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80 px-4 pb-4 pt-3 sm:pt-4">
+      <div ref={panelRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
         <div className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
             <Camera className="h-5 w-5 text-amber" />

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import GuiaPestana from '../components/GuiaPestana.jsx'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Package, Pencil, Scissors } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
@@ -57,8 +58,8 @@ function DialogoConflictoBorrador({ abierta, onSeguir, onDescartar }) {
   useModalA11y(panelRef)
   useCerrarConEscape(onSeguir)
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-      <div ref={panelRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+      <div ref={panelRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
         <h2 className="text-base font-semibold text-ink">Hay una ficha abierta con cambios sin guardar</h2>
         <p className="mt-2 text-sm text-ink/70">
           Tienes abierta «{abierta}» y pediste abrir otra ficha. No se guardó ni se descartó nada.
@@ -68,14 +69,14 @@ function DialogoConflictoBorrador({ abierta, onSeguir, onDescartar }) {
             type="button"
             autoFocus
             onClick={onSeguir}
-            className="rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+            className="rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal"
           >
             Seguir con la ficha abierta
           </button>
           <button
             type="button"
             onClick={onDescartar}
-            className="rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10"
+            className="rounded-lg border border-azul-metal bg-transparent py-2 text-sm font-semibold text-azul-metal transition-colors hover:bg-azul-metal/10"
           >
             Abrir la solicitada (descarta los cambios sin guardar)
           </button>
@@ -241,19 +242,15 @@ export default function CatalogoWeb({ activo = true }) {
   const etiquetaTab = tab === 'servicios' ? 'servicios' : 'productos'
 
   return (
-    <div ref={raizRef} className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)" style={{ '--color-foco': 'var(--color-red)' }}>
-      <h1 className="mt-3 text-base font-semibold text-red">Catálogo Web</h1>
+    <div ref={raizRef} className="relative animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)" style={{ '--color-foco': 'var(--color-azul-metal)' }}>
       {desde && (
-        <Link to={desde} className="mt-1 inline-block text-sm text-ink/70 underline hover:text-red">
+        <Link to={desde} className="inline-block text-sm text-ink/70 underline hover:text-azul-metal">
           ← Volver a {ORIGENES[desde]}
         </Link>
       )}
-      <p className="mt-1 text-xs text-ink/60">
-        Contenido editorial y configuración Web de las mismas fichas del POS. El precio real, el stock y la protección económica no se
-        editan aquí.
-      </p>
+      <GuiaPestana>Contenido editorial y configuración Web de las mismas fichas del POS. El precio real, el stock y la protección económica no se editan aquí.</GuiaPestana>
 
-      <div role="tablist" aria-label="Catálogo Web" className="mt-3 flex gap-2">
+      <div role="tablist" aria-label="Catálogo Web" className={`${desde ? 'mt-3' : ''} flex gap-2`}>
         {PESTANAS.map((p) => {
           const Icono = p.icono
           const seleccionada = p.id === tab
@@ -265,7 +262,7 @@ export default function CatalogoWeb({ activo = true }) {
               aria-selected={seleccionada}
               onClick={() => irA(p.id)}
               className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                seleccionada ? 'border-red bg-red/10 text-red' : 'border-border text-ink/70 hover:border-border-strong'
+                seleccionada ? 'border-azul-metal bg-azul-metal/10 text-azul-metal' : 'border-border text-ink/70 hover:border-border-strong'
               }`}
             >
               <Icono className="h-4 w-4" />
@@ -279,19 +276,20 @@ export default function CatalogoWeb({ activo = true }) {
         <div role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
           <p>{aviso.texto}</p>
           {aviso.tipo === 'error' && (
-            <button type="button" onClick={() => abrirPorId(aviso.id)} className="mt-2 rounded-lg border border-red/40 px-3 py-1 text-xs">
+            <button type="button" onClick={() => abrirPorId(aviso.id)} className="mt-2 rounded-lg border border-azul-metal/40 px-3 py-1 text-xs">
               Reintentar
             </button>
           )}
         </div>
       )}
 
-      <div className="sticky top-0 z-10 -mx-3 mt-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) mt-2 bg-bg px-(--separador-vertical) py-2">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder={tab === 'servicios' ? 'Buscar servicio...' : 'Buscar producto...'}
-          tema="red"
+          tema="azul-metal"
+          sinBorde
         />
       </div>
 
@@ -332,7 +330,7 @@ export default function CatalogoWeb({ activo = true }) {
               type="button"
               onClick={cargarMas}
               disabled={cargandoMas}
-              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-red hover:text-red disabled:opacity-40"
+              className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
             >
               {cargandoMas ? 'Cargando...' : 'Cargar más'}
             </button>

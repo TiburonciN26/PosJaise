@@ -14,8 +14,9 @@ export async function logout(page) {
   await page.getByRole('button', { name: /Menú de (usuario|cuenta)/ }).click();
   await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click();
   await page.getByRole('button', { name: 'Sí, cerrar sesión', exact: true }).click();
-  await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeVisible();
+  // Cerrar sesión vuelve al inicio público de la web (no al formulario de login).
+  await expect(page).toHaveURL(/\/inicio$/);
+  await expect(page.getByRole('link', { name: 'Iniciar sesión' }).first()).toBeVisible();
 }
 
 export const formWithTitle = (page, title) => page.locator('form').filter({ has: page.getByRole('heading', { name: title, exact: true }) });

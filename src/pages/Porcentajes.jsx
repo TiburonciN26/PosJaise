@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Lock, Unlock, ArrowBigDown, Percent, Hand } from 'lucide-react'
+import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -103,7 +103,6 @@ function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuarda
           title="Monto que recibe la asistente (calculado automáticamente)"
           className="flex items-center gap-1 font-mono text-xs text-ink/60"
         >
-          <Hand className="h-3.5 w-3.5" />
           {montoAsistente != null ? formatearSoles(montoAsistente) : '—'}
         </span>
         <div className="flex items-center gap-1">
@@ -121,7 +120,7 @@ function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuarda
             onKeyDown={(evento) => {
               if (evento.key === 'Enter') evento.target.blur()
             }}
-            className="w-14 rounded-lg border border-border bg-surface px-2 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:text-ink/60"
+            className="w-9 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:text-ink/60"
           />
           <span className="text-xs text-ink/60">%</span>
         </div>
@@ -161,7 +160,11 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
   const colores = coloresIndicador(asignados, total)
 
   return (
-    <div className="rounded-lg border border-border bg-surface">
+    <div
+      className={`border border-border bg-surface ${
+        abierto ? 'rounded-r-lg border-l-2 border-l-purple-300' : 'rounded-lg'
+      }`}
+    >
       <button
         type="button"
         onClick={() => {
@@ -186,7 +189,7 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
 
       <CampoColapsable abierto={abierto}>
         {montado && (
-          <div className="space-y-2 border-t border-border px-1.5 py-2">
+          <div className="space-y-1 border-t border-border p-1">
             {parteOculta && <p className="-mt-1 text-xs text-ink/50">…{parteOculta}</p>}
             {total === 0 ? (
               <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
@@ -367,19 +370,20 @@ export default function Porcentajes({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador: fijo arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar servicio..."
           tema="purple-300"
+          sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" sinBorde />
       </div>
 
       {error && (
@@ -393,7 +397,7 @@ export default function Porcentajes({ activo = true }) {
       ) : filtrados.length === 0 ? (
         <EstadoVacio icono={Percent} mensaje="No se encontraron servicios." tema="purple-300" />
       ) : (
-        <div className="mt-4 flex items-start gap-3">
+        <div className="flex items-start gap-3">
           {Array.from({ length: numColumnas }, (_, c) => (
             <div key={c} className="flex min-w-0 flex-1 flex-col gap-3">
               {visibles

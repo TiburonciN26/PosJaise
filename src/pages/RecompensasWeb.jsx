@@ -34,7 +34,7 @@ const NIVELES = [
 ]
 
 const CLASE_INPUT =
-  'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red'
+  'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal'
 
 const soles = (n) => `S/ ${Number(n).toFixed(2)}`
 const vacioANulo = (v) => (v === '' || v === null || v === undefined ? null : v)
@@ -207,12 +207,12 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
         ref={panelRef}
         onSubmit={guardar}
         autoComplete="off"
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="max-h-full w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
           {premio ? 'Editar premio' : esMonedas ? 'Nuevo premio de monedas' : 'Nuevo premio de sellos'}
@@ -359,7 +359,7 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
               <button type="button" aria-pressed={f.activo} onClick={() => set('activo', true)} className={`rounded-lg border px-3 py-2 text-sm ${f.activo ? 'border-green bg-green/10 text-green' : 'border-border text-ink/70'}`}>
                 Publicado
               </button>
-              <button type="button" aria-pressed={!f.activo} onClick={() => set('activo', false)} className={`rounded-lg border px-3 py-2 text-sm ${!f.activo ? 'border-red bg-red/10 text-red' : 'border-border text-ink/70'}`}>
+              <button type="button" aria-pressed={!f.activo} onClick={() => set('activo', false)} className={`rounded-lg border px-3 py-2 text-sm ${!f.activo ? 'border-azul-metal bg-azul-metal/10 text-azul-metal' : 'border-border text-ink/70'}`}>
                 Sin publicar
               </button>
             </div>
@@ -376,7 +376,7 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
           <button type="button" onClick={onCerrar} disabled={guardando} className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink disabled:opacity-40">
             Cancelar
           </button>
-          <button type="submit" disabled={guardando} className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40">
+          <button type="submit" disabled={guardando} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">
             {guardando ? 'Guardando...' : 'Guardar'}
           </button>
         </div>
@@ -412,7 +412,7 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
             ? 'Premios que la clienta canjea con monedas, según su nivel.'
             : `Premios que la clienta reclama con ${sellosPorPremio} sellos, solo desde «Mis sellos».`}
         </p>
-        <button type="button" onClick={() => setEditando('nuevo')} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-red px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={() => setEditando('nuevo')} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-azul-metal px-3 py-2 text-sm font-semibold text-bg">
           <Plus className="h-4 w-4" />
           Nuevo
         </button>
@@ -427,7 +427,7 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
           {lista.map((p) => {
             const usados = estado.canjes[p.id] ?? 0
             return (
-              <li key={p.id} className="rounded-lg border border-border bg-surface p-3">
+              <li key={p.id} className="rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{p.nombre}</p>
@@ -451,7 +451,7 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
                   Reclamo: {p.reclamo_desde || p.reclamo_hasta ? `${p.reclamo_desde ? new Date(p.reclamo_desde).toLocaleDateString('es-PE') : '…'} – ${p.reclamo_hasta ? new Date(p.reclamo_hasta).toLocaleDateString('es-PE') : '…'}` : 'siempre'}
                   {' · '}Cupón: {p.cupon_vigencia_dias || p.cupon_vence_el ? `${p.cupon_vigencia_dias ? `${p.cupon_vigencia_dias} días` : ''}${p.cupon_vigencia_dias && p.cupon_vence_el ? ' / ' : ''}${p.cupon_vence_el ? `hasta ${new Date(p.cupon_vence_el).toLocaleDateString('es-PE')}` : ''}` : 'indefinido'}
                 </p>
-                <button type="button" onClick={() => setEditando(p)} className="mt-2 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink hover:border-red hover:text-red">
+                <button type="button" onClick={() => setEditando(p)} className="mt-2 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink hover:border-azul-metal hover:text-azul-metal">
                   Editar
                 </button>
               </li>
@@ -545,7 +545,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
   }
 
   return (
-    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-red' : 'border-border'}`}>
+    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
       <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-ink">{servicio.nombre}</span>
@@ -585,7 +585,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
             comisiones ni pagos reales.
           </p>
           <div className="mt-3 flex gap-2">
-            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40">
+            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">
               {guardando ? 'Guardando...' : 'Guardar protección'}
             </button>
             {prot && (
@@ -665,7 +665,7 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
   }
 
   return (
-    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-red' : 'border-border'}`}>
+    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
       <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-ink">{producto.nombre}</span>
@@ -704,7 +704,7 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
             salvo que los escribas en «otros». Esto limita cupones: las ventas sin cupón no cambian.
           </p>
           <div className="mt-3 flex gap-2">
-            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40">
+            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">
               {guardando ? 'Guardando...' : 'Guardar protección'}
             </button>
             {prot && (
@@ -888,7 +888,7 @@ function Programa({ estado, recargar }) {
 
   return (
     <div className="mt-3 space-y-4">
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
         <p className="text-sm font-medium text-ink">
           Estado del programa:{' '}
           <span className={c.activo ? 'text-green' : 'text-red'}>{c.activo ? 'Activo' : 'Apagado'}</span>
@@ -904,7 +904,7 @@ function Programa({ estado, recargar }) {
             enciende como parte de ese paso, no desde esta pantalla. Mientras tanto puedes preparar las tasas, los umbrales, el catálogo y las protecciones.
           </p>
         ) : !confirmando ? (
-          <button type="button" onClick={() => setConfirmando(true)} className="mt-3 rounded-lg border border-border-strong px-3 py-2 text-sm text-ink hover:border-red hover:text-red">
+          <button type="button" onClick={() => setConfirmando(true)} className="mt-3 rounded-lg border border-border-strong px-3 py-2 text-sm text-ink hover:border-azul-metal hover:text-azul-metal">
             {c.activo ? 'Apagar programa' : 'Activar programa'}
           </button>
         ) : (
@@ -918,7 +918,7 @@ function Programa({ estado, recargar }) {
               <button type="button" onClick={() => setConfirmando(false)} disabled={guardando} className="flex-1 rounded-lg border border-border-strong py-2 text-sm">
                 Cancelar
               </button>
-              <button type="button" onClick={() => cambiarActivo(!c.activo)} disabled={guardando} className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40">
+              <button type="button" onClick={() => cambiarActivo(!c.activo)} disabled={guardando} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">
                 {guardando ? 'Aplicando...' : 'Confirmar'}
               </button>
             </div>
@@ -926,7 +926,7 @@ function Programa({ estado, recargar }) {
         )}
       </div>
 
-      <form onSubmit={guardar} className="space-y-3 rounded-lg border border-border bg-surface p-4">
+      <form onSubmit={guardar} className="space-y-3 rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
         <p className="text-sm font-medium text-ink">Tasas de monedas (sobre importes netos)</p>
         <div className="grid grid-cols-2 gap-3">
           {campo('sm', 'Servicios: monedas', 'tasaServMonedas')}
@@ -943,7 +943,7 @@ function Programa({ estado, recargar }) {
         <p className="text-xs text-ink/50">
           Sellos: {c.sellos_max} como máximo para acumular; cada premio cuesta {c.sellos_por_premio}. Un sello por clienta y día de Perú con venta de servicios.
         </p>
-        <button type="submit" disabled={guardando} className="w-full rounded-lg bg-red py-2.5 text-sm font-semibold text-white disabled:opacity-40">
+        <button type="submit" disabled={guardando} className="w-full rounded-lg bg-azul-metal py-2.5 text-sm font-semibold text-bg disabled:opacity-40">
           {guardando ? 'Guardando...' : 'Guardar configuración'}
         </button>
       </form>
@@ -1010,15 +1010,14 @@ export default function RecompensasWeb() {
   }
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)" style={{ '--color-foco': 'var(--color-red)' }}>
-      <h1 className="mt-3 text-base font-semibold text-red">Recompensas Web</h1>
+    <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)" style={{ '--color-foco': 'var(--color-azul-metal)' }}>
       {desde && (
-        <Link to={desde} className="mt-1 inline-block text-sm text-ink/70 underline hover:text-red">
+        <Link to={desde} className="inline-block text-sm text-ink/70 underline hover:text-azul-metal">
           ← Volver a {desde === '/servicios' ? 'Servicios' : desde === '/inventario' ? 'Inventario' : 'la pantalla anterior'}
         </Link>
       )}
 
-      <div role="tablist" aria-label="Secciones de Recompensas" className="mt-3 flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Secciones de Recompensas" className={`${desde ? 'mt-3' : ''} flex flex-wrap gap-2`}>
         {PESTANAS.map((p) => {
           const Icono = p.icono
           const activa = pestana === p.id
@@ -1029,7 +1028,7 @@ export default function RecompensasWeb() {
               role="tab"
               aria-selected={activa}
               onClick={() => irA(p.id)}
-              className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${activa ? 'border-red bg-red/10 text-red' : 'border-border text-ink/70 hover:border-border-strong'}`}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${activa ? 'border-azul-metal bg-azul-metal/10 text-azul-metal' : 'border-border text-ink/70 hover:border-border-strong'}`}
             >
               <Icono className="h-4 w-4" />
               {p.label}

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
+import { limpiarPendiente, marcarPendiente } from '../lib/trabajoPendiente.js'
 
 // B5 de la 4ª auditoría: con modales apilados (ej. Gastos -> Plantillas ->
 // confirmación), cada capa registraba su propio listener de Escape — un
@@ -13,7 +14,8 @@ const pila = []
 // Convención del proyecto: todo modal se puede cerrar con Esc.
 // `activo` permite usar el hook también en diálogos condicionales
 // (que no siempre están montados) sin romper las reglas de hooks.
-export function useCerrarConEscape(onCerrar, activoSolicitado = true) {
+// `opciones.trabajoPendiente = false` excluye menús/selectores desplegables: no tienen nada que perder al recargar.
+export function useCerrarConEscape(onCerrar, activoSolicitado = true, { trabajoPendiente = true } = {}) {
   // Un diálogo de una pestaña cacheada y OCULTA no participa en la pila (QA-049); vuelve al ser visible, con su estado intacto.
   const paginaActiva = usePaginaActiva()
   const activo = activoSolicitado && paginaActiva
@@ -50,4 +52,15 @@ export function useCerrarConEscape(onCerrar, activoSolicitado = true) {
       if (indice !== -1) pila.splice(indice, 1)
     }
   }, [activo])
+
+  // Fase 2B (B4): trabajo pendiente = el diálogo está ABIERTO/montado, aunque su página esté oculta en la caché de pestañas
+  // (Atrás del navegador oculta la página, pero su formulario sigue en memoria y se perdería al recargar). Por eso depende
+  // de `activoSolicitado` y NO de `paginaActiva`; Escape y la pila de capas (QA-049) siguen limitados a la página visible.
+  // Solo informa al aviso de «versión nueva»: no cambia el comportamiento del diálogo.
+  useLayoutEffect(() => {
+    if (!activoSolicitado || !trabajoPendiente) return undefined
+    const id = idRef.current
+    marcarPendiente(id, 'una ventana o formulario abierto')
+    return () => limpiarPendiente(id)
+  }, [activoSolicitado, trabajoPendiente])
 }

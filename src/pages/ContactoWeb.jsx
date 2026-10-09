@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
-import { ImagePlus, MapPin, Phone, Wallet, X } from 'lucide-react'
+import GuiaPestana from '../components/GuiaPestana.jsx'
+import { CalendarDays, ImagePlus, MapPin, Phone, Wallet, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
+import AyudaCampo from '../components/AyudaCampo.jsx'
+import ErrorCampo from '../components/ErrorCampo.jsx'
+import IndicadorValidez from '../components/IndicadorValidez.jsx'
 import {
   eliminarFoto,
   procesarImagen,
@@ -12,6 +16,19 @@ import {
 } from '../lib/imagenes.js'
 
 const BUCKET_QR = 'qr-pagos'
+
+// Yape/Plin: celular peruano de 9 dígitos. Transferencia: cuenta o CCI,
+// solo dígitos (13 a 20). Vacío es válido (los tres son opcionales).
+const LARGO_CELULAR = 9
+const CUENTA_MIN = 13
+const CUENTA_MAX = 20
+const soloDigitos = (valor, max) => valor.replace(/\D/g, '').slice(0, max)
+// Monto: dígitos con un solo punto decimal y hasta 2 decimales.
+function soloMonto(valor) {
+  const limpio = valor.replace(',', '.').replace(/[^\d.]/g, '')
+  const [entero, ...resto] = limpio.split('.')
+  return resto.length ? `${entero}.${resto.join('').slice(0, 2)}` : entero
+}
 
 const formularioVacio = {
   direccion: '',
@@ -37,9 +54,11 @@ const formularioVacio = {
 // producto — así cancelar el formulario no deja un archivo huérfano).
 function CampoMetodoPago({
   titulo,
-  icono: Icono,
+  icono,
   numero,
   onNumero,
+  mostrarError,
+  onBlurNumero,
   titular,
   onTitular,
   idBase,
@@ -48,34 +67,46 @@ function CampoMetodoPago({
   onElegirQr,
   onQuitarQr,
 }) {
+  const completo = numero.length === LARGO_CELULAR
+  const incompleto = numero.length > 0 && !completo
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-surface-2 p-3">
+    <div className="space-y-3 rounded-lg border border-border bg-surface-2 px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
       <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-        <Icono className="h-4 w-4 text-red" />
+        <img src={icono} alt="" className="h-4 w-4 object-contain" />
         {titulo}
       </p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+      <div className="space-y-3 lg:flex-1">
         <div>
-          <Etiqueta htmlFor={`${idBase}-numero`}>Número</Etiqueta>
-          <input
-            id={`${idBase}-numero`}
-            type="text"
-            inputMode="tel"
-            value={numero}
-            onChange={(evento) => onNumero(evento.target.value)}
-            placeholder="Ej. 987654321"
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
-          />
+          <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:gap-3">
+            <Etiqueta htmlFor={`${idBase}-numero`} className="lg:w-36 lg:shrink-0">Número</Etiqueta>
+            <div className="relative min-w-0 lg:flex-1">
+              <input
+                id={`${idBase}-numero`}
+                type="tel"
+                inputMode="numeric"
+                maxLength={LARGO_CELULAR}
+                value={numero}
+                onChange={(evento) => onNumero(soloDigitos(evento.target.value, LARGO_CELULAR))}
+                onBlur={onBlurNumero}
+                className="w-full rounded-lg border border-border bg-surface py-2 pl-3 pr-9 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
+              />
+              <IndicadorValidez
+                estado={completo ? 'ok' : incompleto && mostrarError ? 'error' : null}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2"
+              />
+            </div>
+          </div>
+          <ErrorCampo visible={incompleto && mostrarError} className="lg:pl-39">El número debe tener 9 dígitos.</ErrorCampo>
         </div>
-        <div>
-          <Etiqueta htmlFor={`${idBase}-titular`}>Titular</Etiqueta>
+        <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:gap-3">
+          <Etiqueta htmlFor={`${idBase}-titular`} className="lg:w-36 lg:shrink-0">Titular</Etiqueta>
           <input
             id={`${idBase}-titular`}
             type="text"
             value={titular}
             onChange={(evento) => onTitular(evento.target.value)}
-            placeholder="Nombre completo"
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
+            className="min-w-0 lg:flex-1rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
           />
         </div>
       </div>
@@ -90,7 +121,7 @@ function CampoMetodoPago({
             )}
           </div>
           <div className="flex flex-1 flex-col gap-2">
-            <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-red hover:text-red">
+            <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-azul-metal hover:text-azul-metal">
               <ImagePlus className="h-3.5 w-3.5" />
               {procesandoQr ? 'Procesando...' : previewQr ? 'Cambiar QR' : 'Subir QR'}
               <input
@@ -105,7 +136,7 @@ function CampoMetodoPago({
               <button
                 type="button"
                 onClick={onQuitarQr}
-                className="flex w-fit items-center gap-1 text-xs text-ink/60 transition-colors hover:text-red"
+                className="flex w-fit items-center gap-1 text-xs text-ink/60 transition-colors hover:text-azul-metal"
               >
                 <X className="h-3 w-3" />
                 Quitar QR
@@ -113,6 +144,7 @@ function CampoMetodoPago({
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )
@@ -129,6 +161,10 @@ export default function ContactoWeb() {
   const [formulario, setFormulario] = useState(formularioVacio)
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
+  // El ✗ y el mensaje de un número incompleto solo se ven tras salir del
+  // campo (blur) o tras un Guardar fallido, y se ocultan apenas el usuario
+  // vuelve a escribir. Clave = nombre del campo en `formulario`.
+  const [erroresVisibles, setErroresVisibles] = useState({})
 
   // qrActual: ruta ya guardada en Storage (o null). qrNueva: recién
   // elegida, ya redimensionada/convertida a WebP, pendiente de subir
@@ -185,7 +221,12 @@ export default function ContactoWeb() {
     }
   }, [yapeQrNueva, plinQrNueva])
 
+  function mostrarError(campo) {
+    setErroresVisibles((anterior) => (anterior[campo] ? anterior : { ...anterior, [campo]: true }))
+  }
+
   function actualizarCampo(campo, valor) {
+    setErroresVisibles((anterior) => (anterior[campo] ? { ...anterior, [campo]: false } : anterior))
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }
 
@@ -231,8 +272,31 @@ export default function ContactoWeb() {
       ? urlPublicaFoto(BUCKET_QR, plinQrActual)
       : null
 
+  const telefonoCompleto = formulario.telefono.length === 9
+  const telefonoIncompleto = formulario.telefono.length > 0 && !telefonoCompleto
+  const yapeIncompleto = formulario.yapeNumero.length > 0 && formulario.yapeNumero.length !== LARGO_CELULAR
+  const plinIncompleto = formulario.plinNumero.length > 0 && formulario.plinNumero.length !== LARGO_CELULAR
+  const transferenciaLargo = formulario.cuentaTransferencia.length
+  const transferenciaCompleta = transferenciaLargo >= CUENTA_MIN
+  const transferenciaIncompleta = transferenciaLargo > 0 && !transferenciaCompleta
+
   async function guardar(evento) {
     evento.preventDefault()
+
+    const primerInvalido = telefonoIncompleto
+      ? 'contacto-telefono'
+      : yapeIncompleto
+        ? 'contacto-yape-numero'
+        : plinIncompleto
+          ? 'contacto-plin-numero'
+          : transferenciaIncompleta
+            ? 'contacto-transferencia'
+            : null
+    if (primerInvalido) {
+      setErroresVisibles({ telefono: true, yapeNumero: true, plinNumero: true, cuentaTransferencia: true })
+      document.getElementById(primerInvalido)?.focus()
+      return
+    }
 
     if (formulario.adelantoMinimo.trim() && (Number.isNaN(parseFloat(formulario.adelantoMinimo)) || parseFloat(formulario.adelantoMinimo) <= 0)) {
       mostrarToast('El adelanto mínimo debe ser un número mayor a 0.', 'error')
@@ -325,92 +389,108 @@ export default function ContactoWeb() {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
-      style={{ '--color-foco': 'var(--color-red)' }}
+      className="relative animate-entrada-pestana px-(--separador-vertical) pb-24 pt-(--separador-horizontal) lg:mx-auto lg:pb-6 lg:w-full lg:max-w-(--ancho-pestana)"
+      style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
-      <div className="mt-3 flex flex-col items-center gap-2 text-center">
-        <MapPin className="h-8 w-8 text-red" />
-        <p className="text-base font-semibold text-red">Contacto Web</p>
-        <p className="max-w-sm text-sm text-ink/60">
-          Esto es lo que ven tus clientes en Nosotros &gt; Contacto — el horario ya está cargado
-          (ver Citas), acá solo falta dirección, teléfono y redes.
+      <GuiaPestana>Esto es lo que ven tus clientes en Nosotros &gt; Contacto — el horario ya está cargado (ver Citas), acá solo falta dirección, teléfono y redes.</GuiaPestana>
+
+      <form onSubmit={guardar} className="space-y-3 rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+          <MapPin className="h-4 w-4 text-azul-metal" />
+          Datos de contacto y redes
         </p>
-      </div>
 
-      <form onSubmit={guardar} className="mt-6 space-y-3 rounded-lg border border-border bg-surface p-4">
-        <div>
-          <Etiqueta htmlFor="contacto-direccion">Dirección</Etiqueta>
-          <input
-            id="contacto-direccion"
-            type="text"
-            value={formulario.direccion}
-            onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
-            placeholder="Ej. Av. Pardo 123, Nuevo Chimbote"
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
-          />
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-y-0 lg:grid-cols-2 lg:gap-3">
+          <div className="flex items-center gap-3">
+            <Etiqueta htmlFor="contacto-direccion" className="w-24 shrink-0 lg:w-36">Dirección</Etiqueta>
+            <input
+              id="contacto-direccion"
+              type="text"
+              value={formulario.direccion}
+              onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
+              placeholder="Ej. Av. Pardo 123, Nuevo Chimbote"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center gap-3">
+              <Etiqueta htmlFor="contacto-telefono" className="flex w-24 shrink-0 lg:w-36 items-center gap-1">
+                <img src={`${import.meta.env.BASE_URL}icons/whatsappColor.svg`} alt="WhatsApp" className="h-4 w-4 lg:hidden" />
+                <span className="lg:hidden">/</span>
+                <span>Teléfono</span>
+                <span className="hidden lg:inline">/ WhatsApp</span>
+              </Etiqueta>
+              <div className="relative min-w-0 flex-1">
+                <input
+                  id="contacto-telefono"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={9}
+                  value={formulario.telefono}
+                  onChange={(evento) => actualizarCampo('telefono', evento.target.value.replace(/\D/g, '').slice(0, 9))}
+                  onBlur={() => mostrarError('telefono')}
+                  placeholder="Ej. 987654321"
+                  className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
+                />
+                <IndicadorValidez
+                  estado={telefonoCompleto ? 'ok' : telefonoIncompleto && erroresVisibles.telefono ? 'error' : null}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                />
+              </div>
+            </div>
+            <ErrorCampo visible={telefonoIncompleto && erroresVisibles.telefono} className="pl-27 lg:pl-39">El teléfono debe tener 9 dígitos.</ErrorCampo>
+          </div>
         </div>
 
-        <div>
-          <Etiqueta htmlFor="contacto-telefono">Teléfono / WhatsApp</Etiqueta>
-          <input
-            id="contacto-telefono"
-            type="text"
-            inputMode="tel"
-            value={formulario.telefono}
-            onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
-            placeholder="Ej. 987654321"
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
-          />
-        </div>
-
-        <div>
-          <Etiqueta htmlFor="contacto-instagram">Instagram (link completo)</Etiqueta>
+        <div className="flex items-center gap-3">
+          <Etiqueta htmlFor="contacto-instagram" className="flex w-24 shrink-0 lg:w-36 items-center gap-1.5"><img src={`${import.meta.env.BASE_URL}icons/InstagramColor.svg`} alt="" className="h-4 w-4" />Instagram</Etiqueta>
           <input
             id="contacto-instagram"
             type="url"
             value={formulario.instagramUrl}
             onChange={(evento) => actualizarCampo('instagramUrl', evento.target.value)}
-            placeholder="Opcional"
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
           />
         </div>
 
-        <div>
-          <Etiqueta htmlFor="contacto-facebook">Facebook (link completo)</Etiqueta>
+        <div className="flex items-center gap-3">
+          <Etiqueta htmlFor="contacto-facebook" className="flex w-24 shrink-0 lg:w-36 items-center gap-1.5"><img src={`${import.meta.env.BASE_URL}icons/facebookColor.svg`} alt="" className="h-4 w-4" />Facebook</Etiqueta>
           <input
             id="contacto-facebook"
             type="url"
             value={formulario.facebookUrl}
             onChange={(evento) => actualizarCampo('facebookUrl', evento.target.value)}
-            placeholder="Opcional"
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
           />
         </div>
 
-        <div>
-          <Etiqueta htmlFor="contacto-tiktok">TikTok (link completo)</Etiqueta>
+        <div className="flex items-center gap-3">
+          <Etiqueta htmlFor="contacto-tiktok" className="flex w-24 shrink-0 lg:w-36 items-center gap-1.5"><img src={`${import.meta.env.BASE_URL}icons/tiktokColor.svg`} alt="" className="h-4 w-4" />TikTok</Etiqueta>
           <input
             id="contacto-tiktok"
             type="url"
             value={formulario.tiktokUrl}
             onChange={(evento) => actualizarCampo('tiktokUrl', evento.target.value)}
-            placeholder="Opcional"
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
           />
         </div>
 
         <div className="border-t border-border pt-3">
           <p className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink">
-            <Wallet className="h-4 w-4 text-red" />
+            <Wallet className="h-4 w-4 text-azul-metal" />
             Métodos de pago del carrito web
           </p>
           <div className="space-y-3">
             <CampoMetodoPago
               titulo="Yape"
-              icono={Wallet}
+              icono={`${import.meta.env.BASE_URL}icons/yape.svg`}
               idBase="contacto-yape"
               numero={formulario.yapeNumero}
               onNumero={(valor) => actualizarCampo('yapeNumero', valor)}
+              mostrarError={erroresVisibles.yapeNumero}
+              onBlurNumero={() => mostrarError('yapeNumero')}
               titular={formulario.yapeTitular}
               onTitular={(valor) => actualizarCampo('yapeTitular', valor)}
               previewQr={previewYapeQr}
@@ -428,10 +508,12 @@ export default function ContactoWeb() {
             />
             <CampoMetodoPago
               titulo="Plin"
-              icono={Wallet}
+              icono={`${import.meta.env.BASE_URL}icons/plinColor.png`}
               idBase="contacto-plin"
               numero={formulario.plinNumero}
               onNumero={(valor) => actualizarCampo('plinNumero', valor)}
+              mostrarError={erroresVisibles.plinNumero}
+              onBlurNumero={() => mostrarError('plinNumero')}
               titular={formulario.plinTitular}
               onTitular={(valor) => actualizarCampo('plinTitular', valor)}
               previewQr={previewPlinQr}
@@ -448,62 +530,78 @@ export default function ContactoWeb() {
               }
             />
             <div>
-              <Etiqueta htmlFor="contacto-transferencia">Transferencia (cuenta a mostrar)</Etiqueta>
-              <input
-                id="contacto-transferencia"
-                type="text"
-                value={formulario.cuentaTransferencia}
-                onChange={(evento) => actualizarCampo('cuentaTransferencia', evento.target.value)}
-                placeholder="Ej. BCP 191-XXXXXXX-0-XX — Juan Pérez"
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
-              />
-              <p className="mt-1 text-xs text-ink/50">
-                Mismo dato que se edita rápido desde Ventas al cobrar por transferencia en el
-                mostrador — cambiarlo acá o allá actualiza lo mismo.
-              </p>
+              <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:gap-3">
+                <div className="flex items-center gap-1 lg:w-36 lg:shrink-0">
+                  <Etiqueta htmlFor="contacto-transferencia" className="block">Transferencia</Etiqueta>
+                  <AyudaCampo>
+                    Mismo dato que se edita rápido desde Ventas al cobrar por transferencia en el
+                    mostrador — cambiarlo acá o allá actualiza lo mismo.
+                  </AyudaCampo>
+                </div>
+                <div className="relative min-w-0 lg:flex-1">
+                  <input
+                    id="contacto-transferencia"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={CUENTA_MAX}
+                    value={formulario.cuentaTransferencia}
+                    onChange={(evento) => actualizarCampo('cuentaTransferencia', soloDigitos(evento.target.value, CUENTA_MAX))}
+                    onBlur={() => mostrarError('cuentaTransferencia')}
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
+                  />
+                  <IndicadorValidez
+                    estado={transferenciaCompleta ? 'ok' : transferenciaIncompleta && erroresVisibles.cuentaTransferencia ? 'error' : null}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                  />
+                </div>
+              </div>
+              <ErrorCampo visible={transferenciaIncompleta && erroresVisibles.cuentaTransferencia} className="lg:pl-39">La cuenta debe tener entre 13 y 20 dígitos.</ErrorCampo>
             </div>
           </div>
         </div>
 
         <div className="border-t border-border pt-3">
-          <p className="mb-3 text-sm font-semibold text-ink">Citas — adelanto y cancelación</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Etiqueta htmlFor="contacto-adelanto-minimo">Adelanto mínimo (S/)</Etiqueta>
+          <p className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink">
+            <CalendarDays className="h-4 w-4 text-azul-metal" />
+            Citas — adelanto y cancelación
+            <AyudaCampo>
+              Se muestran en "Adelanto y pago" del Detalle del servicio, en la Web.
+            </AyudaCampo>
+          </p>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Etiqueta htmlFor="contacto-adelanto-minimo" className="w-36 shrink-0">Adelanto mínimo (S/)</Etiqueta>
               <input
                 id="contacto-adelanto-minimo"
                 type="search"
                 inputMode="decimal"
                 autoComplete="new-password"
                 value={formulario.adelantoMinimo}
-                onChange={(evento) => actualizarCampo('adelantoMinimo', evento.target.value)}
+                onChange={(evento) => actualizarCampo('adelantoMinimo', soloMonto(evento.target.value))}
                 placeholder="Opcional"
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
               />
             </div>
-            <div>
-              <Etiqueta htmlFor="contacto-cancelacion-plazo">Plazo de cancelación (h)</Etiqueta>
+            <div className="flex items-center gap-3">
+              <Etiqueta htmlFor="contacto-cancelacion-plazo" className="w-36 shrink-0">Plazo de cancelación (h)</Etiqueta>
               <input
                 id="contacto-cancelacion-plazo"
                 type="search"
                 inputMode="numeric"
                 autoComplete="new-password"
                 value={formulario.cancelacionPlazoHoras}
-                onChange={(evento) => actualizarCampo('cancelacionPlazoHoras', evento.target.value)}
+                onChange={(evento) => actualizarCampo('cancelacionPlazoHoras', soloDigitos(evento.target.value, 4))}
                 placeholder="Opcional, ej. 24"
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-red"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-azul-metal"
               />
             </div>
           </div>
-          <p className="mt-1.5 text-xs text-ink/50">
-            Se muestran en "Adelanto y pago" del Detalle del servicio, en la Web.
-          </p>
         </div>
 
         <button
           type="submit"
           disabled={guardando}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-red py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          className="fixed bottom-[max(var(--separador-horizontal),env(safe-area-inset-bottom))] left-1/2 z-20 flex -translate-x-1/2 items-center justify-center gap-1.5 rounded-full bg-azul-metal px-5 py-3 text-sm font-semibold text-bg shadow-lg transition-transform active:scale-95 disabled:opacity-40 lg:static lg:translate-x-0 lg:w-full lg:rounded-lg lg:py-2.5 lg:shadow-none lg:active:scale-100"
         >
           <Phone className="h-4 w-4" />
           {guardando ? 'Guardando...' : 'Guardar'}

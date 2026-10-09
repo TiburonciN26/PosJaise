@@ -1,8 +1,17 @@
 import { test, expect } from './fixtures.mjs';
 import { login, logout } from './helpers.mjs';
 
+// La web de clientas es pública: el visitante la explora sin login y solo lo privado lo pide.
+test('AUTH: sin sesión, la web pública abre sin pedir login', async ({ page }) => {
+  for (const path of ['/inicio', '/servicios', '/productos', '/nosotros', '/recompensas']) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await expect(page.getByRole('link', { name: 'Iniciar sesión' }).first()).toBeVisible();
+  }
+});
+
 test('AUTH: sin sesión, rutas protegidas redirigen a login', async ({ page }) => {
-  for (const path of ['/ventas', '/clientes', '/inicio', '/mi-perfil', '/pedidos-web']) {
+  for (const path of ['/ventas', '/clientes', '/mi-perfil', '/pedidos-web']) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeVisible();
@@ -36,7 +45,8 @@ for (const [role, allowed, denied, destination] of [
       await expect(page).toHaveURL(new RegExp(`${destination}$`));
     }
     await logout(page);
-    await page.goto(allowed[0]);
+    // /inicio es público: para el CLIENTE la prueba de «sin sesión» usa una ruta privada.
+    await page.goto(role === 'CLIENTE' ? '/mi-perfil' : allowed[0]);
     await expect(page).toHaveURL(/\/login$/);
   });
 }

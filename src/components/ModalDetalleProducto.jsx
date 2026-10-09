@@ -78,7 +78,7 @@ export default function ModalDetalleProducto({
   const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)
 
   return (
-    <div onClick={onCerrar} className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div onClick={onCerrar} className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       {/* flex-col + footer shrink-0: con muchos movimientos de stock, el
           contenido del medio scrollea pero las acciones y "Cerrar" quedan
           siempre visibles abajo, en vez de que la lista los empuje fuera
@@ -86,9 +86,9 @@ export default function ModalDetalleProducto({
       <div
         ref={panelRef}
         onClick={(evento) => evento.stopPropagation()}
-        className="flex max-h-[90dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface"
+        className="flex max-h-full w-full max-w-md flex-col rounded-lg border border-border bg-surface"
       >
-        <div className="min-h-0 flex-1 overflow-y-auto p-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
           {urlFoto ? (
             <button
               type="button"
@@ -180,7 +180,7 @@ export default function ModalDetalleProducto({
 
         {/* Sin bg/border propio: los botones quedan "flotando" sobre el
             mismo fondo del modal, no en una barra separada. */}
-        <div className="flex shrink-0 items-center justify-between gap-1 p-3">
+        <div className="flex shrink-0 items-center justify-between gap-1 px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
           <button
             type="button"
             onClick={onCerrar}

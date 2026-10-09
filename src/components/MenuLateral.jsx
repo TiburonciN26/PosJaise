@@ -8,11 +8,11 @@ import IconoMartillo from './IconoMartillo.jsx'
 
 function clasesFila(seccion, isActive, opacidadRosaInactiva, opacidadRojoInactiva) {
   const esRosa = seccion.tema === 'rosa'
-  const esRojo = seccion.tema === 'rojo'
+  const esRojo = seccion.tema === 'azul-metal'
   if (esRojo) {
     return isActive
-      ? 'border-red bg-surface-2 text-red'
-      : `border-transparent ${opacidadRojoInactiva} hover:bg-surface-2 hover:text-red`
+      ? 'border-azul-metal bg-surface-2 text-azul-metal'
+      : `border-transparent ${opacidadRojoInactiva} hover:bg-surface-2 hover:text-azul-metal`
   }
   if (esRosa) {
     return isActive
@@ -54,7 +54,7 @@ export default function MenuLateral({ abierto, onCerrar }) {
   // claro — un poco más de opacidad, solo acá (pestañas inactivas del
   // menú lateral) y solo en este tema; en oscuro se deja como estaba.
   const opacidadRosaInactiva = tema === 'claro' ? 'text-purple-300/90' : 'text-purple-300/70'
-  const opacidadRojoInactiva = tema === 'claro' ? 'text-red/90' : 'text-red/70'
+  const opacidadRojoInactiva = tema === 'claro' ? 'text-azul-metal/90' : 'text-azul-metal/70'
 
   return (
     <div

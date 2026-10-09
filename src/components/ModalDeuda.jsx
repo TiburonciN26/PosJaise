@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import BotonVoz from './BotonVoz.jsx'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { buscarServicios } from '../lib/buscarServicios.js'
 import { patronIlike } from '../lib/buscarClientes.js'
@@ -159,9 +160,14 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
       nota: formulario.nota.trim() || null,
     }
 
-    const { error: errorGuardado } = esEdicion
+    let { error: errorGuardado } = esEdicion
       ? await supabase.from('deudas').update(datos).eq('id', deuda.id)
       : await supabase.from('deudas').insert({ ...datos, creado_por: usuario.id })
+
+    // Si cambió el monto, el estado (cobrada/pendiente) se recalcula con los pagos ya hechos.
+    if (esEdicion && !errorGuardado) {
+      ;({ error: errorGuardado } = await supabase.rpc('recalcular_estado_deuda', { p_deuda_id: deuda.id }))
+    }
 
     setGuardando(false)
 
@@ -174,13 +180,13 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
         style={{ '--color-foco': 'var(--color-purple-300)' }}
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
           {esEdicion ? 'Editar deuda' : 'Nueva deuda'}
@@ -192,96 +198,103 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
           <div className="mt-4 space-y-3">
             <div>
               <Etiqueta obligatorio htmlFor={`${idBase}-cliente`}>Cliente</Etiqueta>
-              <div className="relative">
-                <input
-                  ref={inputClienteRef}
-                  id={`${idBase}-cliente`}
-                  type="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  value={busquedaCliente}
-                  onChange={(evento) => {
-                    setBusquedaCliente(evento.target.value)
-                    actualizarCampo('clienteId', '')
-                    setMostrarSugerenciasCliente(true)
-                  }}
-                  onFocus={() => setMostrarSugerenciasCliente(true)}
-                  onBlur={() => setTimeout(() => setMostrarSugerenciasCliente(false), 150)}
-                  placeholder="Buscar cliente..."
-                  className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
-                />
-                {busquedaCliente ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBusquedaCliente('')
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    ref={inputClienteRef}
+                    id={`${idBase}-cliente`}
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    value={busquedaCliente}
+                    onChange={(evento) => {
+                      setBusquedaCliente(evento.target.value)
                       actualizarCampo('clienteId', '')
+                      setMostrarSugerenciasCliente(true)
                     }}
-                    aria-label="Limpiar búsqueda"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
-                )}
-
-                {mostrarSugerenciasCliente && (
-                  <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                    {busquedaClientes.buscando && (
-                      <p role="status" className="px-3 py-2 text-xs text-ink/60">
-                        Buscando clientes…
-                      </p>
-                    )}
-                    {busquedaClientes.error && (
-                      <p role="alert" className="px-3 py-2 text-xs text-red">
-                        No se pudo buscar clientes.{' '}
+                    onFocus={() => setMostrarSugerenciasCliente(true)}
+                    onBlur={() => setTimeout(() => setMostrarSugerenciasCliente(false), 150)}
+                    placeholder="Buscar cliente..."
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                  />
+                  {busquedaCliente ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBusquedaCliente('')
+                        actualizarCampo('clienteId', '')
+                      }}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                  )}
+  
+                  {mostrarSugerenciasCliente && (
+                    <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
+                      {busquedaClientes.buscando && (
+                        <p role="status" className="px-3 py-2 text-xs text-ink/60">
+                          Buscando clientes…
+                        </p>
+                      )}
+                      {busquedaClientes.error && (
+                        <p role="alert" className="px-3 py-2 text-xs text-red">
+                          No se pudo buscar clientes.{' '}
+                          <button
+                            type="button"
+                            onMouseDown={(evento) => evento.preventDefault()}
+                            onClick={busquedaClientes.reintentar}
+                            className="underline"
+                          >
+                            Reintentar
+                          </button>
+                        </p>
+                      )}
+                      {busquedaClientes.listo && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
+                        <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
+                      )}
+                      {busquedaClientes.listo && sugerenciasCliente.map((cliente) => (
+                        <button
+                          key={cliente.id}
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={() => seleccionarCliente(cliente)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
+                        >
+                          <span className="truncate">{cliente.nombre}</span>
+                        </button>
+                      ))}
+                      {busquedaClientes.listo && busquedaCliente.trim() && !hayCoincidenciaExacta && (
                         <button
                           type="button"
                           onMouseDown={(evento) => evento.preventDefault()}
-                          onClick={busquedaClientes.reintentar}
-                          className="underline"
+                          onClick={() => {
+                            setMostrarSugerenciasCliente(false)
+                            setModalClienteNuevoAbierto(true)
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3 ${
+                            sugerenciasCliente.length > 0 ? 'border-t border-border' : ''
+                          }`}
                         >
-                          Reintentar
+                          <UserRoundPlus className="h-4 w-4 shrink-0" />
+                          <span className="truncate">
+                            Registrar "{busquedaCliente.trim()}" como cliente nuevo
+                          </span>
                         </button>
-                      </p>
-                    )}
-                    {busquedaClientes.listo && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
-                      <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
-                    )}
-                    {busquedaClientes.listo && sugerenciasCliente.map((cliente) => (
-                      <button
-                        key={cliente.id}
-                        type="button"
-                        onMouseDown={(evento) => evento.preventDefault()}
-                        onClick={() => seleccionarCliente(cliente)}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
-                      >
-                        <span className="truncate">{cliente.nombre}</span>
-                      </button>
-                    ))}
-                    {busquedaClientes.listo && busquedaCliente.trim() && !hayCoincidenciaExacta && (
-                      <button
-                        type="button"
-                        onMouseDown={(evento) => evento.preventDefault()}
-                        onClick={() => {
-                          setMostrarSugerenciasCliente(false)
-                          setModalClienteNuevoAbierto(true)
-                        }}
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3 ${
-                          sugerenciasCliente.length > 0 ? 'border-t border-border' : ''
-                        }`}
-                      >
-                        <UserRoundPlus className="h-4 w-4 shrink-0" />
-                        <span className="truncate">
-                          Registrar "{busquedaCliente.trim()}" como cliente nuevo
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
+                <BotonVoz onTexto={(texto) => {
+ setBusquedaCliente(texto)
+ actualizarCampo('clienteId', '')
+ setMostrarSugerenciasCliente(true)
+ }} />
               </div>
             </div>
 
@@ -289,46 +302,52 @@ export default function ModalDeuda({ deuda, onCerrar, onGuardado }) {
               <Etiqueta obligatorio htmlFor={`${idBase}-concepto`}>
                 Servicio / producto / motivo de la deuda
               </Etiqueta>
-              <div className="relative">
-                <input
-                  ref={inputConceptoRef}
-                  id={`${idBase}-concepto`}
-                  type="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  value={formulario.concepto}
-                  onChange={(evento) => {
-                    actualizarCampo('concepto', evento.target.value)
-                    setMostrarSugerenciasConcepto(true)
-                  }}
-                  onFocus={() => setMostrarSugerenciasConcepto(true)}
-                  onBlur={() => setTimeout(() => setMostrarSugerenciasConcepto(false), 150)}
-                  placeholder="Buscar servicio o producto, o escribir uno..."
-                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
-                />
-
-                {mostrarSugerenciasConcepto && sugerenciasConcepto.length > 0 && (
-                  <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                    {sugerenciasConcepto.map((item) => (
-                      <button
-                        key={`${item.tipo}-${item.id}`}
-                        type="button"
-                        onMouseDown={(evento) => evento.preventDefault()}
-                        onClick={() => seleccionarConcepto(item)}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
-                      >
-                        {item.tipo === 'servicio' ? (
-                          <Scissors className="h-3.5 w-3.5 shrink-0 text-ink/40" />
-                        ) : (
-                          <Package className="h-3.5 w-3.5 shrink-0 text-ink/40" />
-                        )}
-                        <span className="truncate">{item.nombre}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    ref={inputConceptoRef}
+                    id={`${idBase}-concepto`}
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    value={formulario.concepto}
+                    onChange={(evento) => {
+                      actualizarCampo('concepto', evento.target.value)
+                      setMostrarSugerenciasConcepto(true)
+                    }}
+                    onFocus={() => setMostrarSugerenciasConcepto(true)}
+                    onBlur={() => setTimeout(() => setMostrarSugerenciasConcepto(false), 150)}
+                    placeholder="Buscar servicio o producto, o escribir uno..."
+                    className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+                  />
+  
+                  {mostrarSugerenciasConcepto && sugerenciasConcepto.length > 0 && (
+                    <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
+                      {sugerenciasConcepto.map((item) => (
+                        <button
+                          key={`${item.tipo}-${item.id}`}
+                          type="button"
+                          onMouseDown={(evento) => evento.preventDefault()}
+                          onClick={() => seleccionarConcepto(item)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
+                        >
+                          {item.tipo === 'servicio' ? (
+                            <Scissors className="h-3.5 w-3.5 shrink-0 text-ink/40" />
+                          ) : (
+                            <Package className="h-3.5 w-3.5 shrink-0 text-ink/40" />
+                          )}
+                          <span className="truncate">{item.nombre}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <BotonVoz onTexto={(texto) => {
+ actualizarCampo('concepto', texto)
+ setMostrarSugerenciasConcepto(true)
+ }} />
               </div>
               {errorCatalogo && (
                 <p className="mt-1 text-xs text-red">

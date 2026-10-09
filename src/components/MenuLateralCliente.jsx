@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import { seccionesCliente } from '../config/navegacionCliente.js'
+import AccionesVisitante from './AccionesVisitante.jsx'
 
 // Mismo patrón que MenuLateral.jsx (POS) — overlay + drawer que desliza
 // desde la izquierda, solo visible en móvil (en desktop las pestañas
@@ -12,6 +14,7 @@ import { seccionesCliente } from '../config/navegacionCliente.js'
 // el dorado del todo), así que esto ya no es una excepción — es el
 // mismo criterio en todos lados.
 export default function MenuLateralCliente({ abierto, onCerrar }) {
+  const { usuario } = useAuth()
   return (
     <div
       className={`absolute inset-0 z-20 lg:hidden ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`}
@@ -59,6 +62,14 @@ export default function MenuLateralCliente({ abierto, onCerrar }) {
             )}
           </NavLink>
         ))}
+
+        {/* Visitante: aquí van «Iniciar sesión» y «Crear cuenta» (en la barra del
+            encabezado solo cabe el primero en pantallas angostas). */}
+        {!usuario && (
+          <div className="mt-auto pb-2">
+            <AccionesVisitante variante="menu" onNavegar={onCerrar} />
+          </div>
+        )}
       </nav>
     </div>
   )

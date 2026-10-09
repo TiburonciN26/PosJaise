@@ -2,6 +2,7 @@ import { Circle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
+import { useSalir } from '../hooks/useSalir.js'
 
 // Si un asistente ya tenía sesión abierta y el admin cierra el negocio
 // mientras la sigue usando (EstadoNegocioContext se entera vía Realtime,
@@ -11,7 +12,8 @@ import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 // servidor (RLS + RPCs), esto es solo para que no llegue a intentarlo.
 // Desaparece solo cuando el admin vuelve a abrir (mismo mecanismo).
 export default function AvisoNegocioCerrado() {
-  const { rol, cerrarSesion } = useAuth()
+  const { rol } = useAuth()
+  const salir = useSalir()
   const { abierto, cargando } = useEstadoNegocio()
 
   if (cargando || rol === 'ADMINISTRADOR' || abierto) return null
@@ -23,7 +25,7 @@ export default function AvisoNegocioCerrado() {
       <p className="max-w-sm text-sm text-ink/60">{MENSAJE_NEGOCIO_CERRADO}</p>
       <button
         type="button"
-        onClick={cerrarSesion}
+        onClick={salir}
         className="mt-3 rounded-lg border border-border-strong px-4 py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
       >
         Cerrar sesión

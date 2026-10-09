@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react'
-import { Gift } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import AyudaCampo from '../components/AyudaCampo.jsx'
+import BarraBusqueda from '../components/BarraBusqueda.jsx'
+import SelectorOrden from '../components/SelectorOrden.jsx'
+import { Gift, ListFilter, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { formatearSoles } from '../lib/moneda.js'
+import { nivelDeCupon } from '../lib/cupones.js'
 import Etiqueta from '../components/Etiqueta.jsx'
+import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 
 const formularioVacio = {
@@ -22,6 +27,18 @@ const ETIQUETAS_ESTADO = {
   ANULADO: { texto: 'Anulado', clase: 'bg-ink/10 text-ink/50' },
 }
 
+// Acabado verde de los cupones de referidos en la web de clientes.
+const NIVEL_CUPON = nivelDeCupon({ origen: 'REFERIDO_BIENVENIDA' })
+
+const OPCIONES_FILTRO = [
+  { id: 'RECIENTES', label: 'Más recientes' },
+  { id: 'DISPONIBLE', label: 'Disponibles' },
+  { id: 'CANJEADO', label: 'Canjeados' },
+]
+
+const normalizar = (texto) =>
+  (texto ?? '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+
 // Panel administrativo de "Referidos Web" (cuelga de /web como "padre",
 // admin-only, junto a Puntos Web) — configura el crédito en soles que
 // gana cada lado y muestra los cupones emitidos (§7.26/§7.27,
@@ -37,6 +54,19 @@ export default function ReferidosWeb() {
   const [cupones, setCupones] = useState([])
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
+  const [filtro, setFiltro] = useState('RECIENTES')
+  const [busqueda, setBusqueda] = useState('')
+
+  // La consulta ya llega ordenada por creado_en desc, así que "Más recientes"
+  // es el orden base y los otros filtros solo recortan por estado.
+  const cuponesVisibles = useMemo(() => {
+    const consulta = normalizar(busqueda)
+    return cupones.filter((cupon) => {
+      if (filtro !== 'RECIENTES' && cupon.estado !== filtro) return false
+      if (!consulta) return true
+      return normalizar(cupon.codigo).includes(consulta) || normalizar(cupon.cliente?.nombre).includes(consulta)
+    })
+  }, [cupones, filtro, busqueda])
 
   useEffect(() => {
     Promise.all([
@@ -106,81 +136,94 @@ export default function ReferidosWeb() {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
-      style={{ '--color-foco': 'var(--color-red)' }}
+      className="relative animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
-      <div className="mt-3 flex flex-col items-center gap-2 text-center">
-        <Gift className="h-8 w-8 text-red" />
-        <p className="text-base font-semibold text-red">Referidos Web</p>
-        <p className="max-w-sm text-sm text-ink/60">
-          Define cuánto vale el cupón de bienvenida y el de recompensa. El cupón de quien invita
-          recién se crea cuando el de bienvenida se canjea de verdad en una venta — en Ventas, el
-          botón de descuento tiene un modo "Cupón" que pide el código, no hace falta buscarlo acá.
-        </p>
-      </div>
+      <form onSubmit={guardar} className="rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+        <div className="space-y-3">
+          <div className="min-w-0">
+            <Etiqueta htmlFor="referido-credito-referidor">Crédito (S/) para quien invita</Etiqueta>
+            <input
+              id="referido-credito-referidor"
+              type="number"
+              min="0"
+              step="1"
+              value={formulario.creditoReferidor}
+              onChange={(evento) => actualizarCampo('creditoReferidor', evento.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
+            />
+          </div>
 
-      <form onSubmit={guardar} className="mt-6 space-y-3 rounded-lg border border-border bg-surface p-4">
-        <div>
-          <Etiqueta htmlFor="referido-credito-referidor">Crédito (S/) para quien invita</Etiqueta>
-          <input
-            id="referido-credito-referidor"
-            type="number"
-            min="0"
-            step="1"
-            value={formulario.creditoReferidor}
-            onChange={(evento) => actualizarCampo('creditoReferidor', evento.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
-          />
-        </div>
-
-        <div>
-          <Etiqueta htmlFor="referido-credito-referido">Crédito (S/) para quien se registra</Etiqueta>
-          <input
-            id="referido-credito-referido"
-            type="number"
-            min="0"
-            step="1"
-            value={formulario.creditoReferido}
-            onChange={(evento) => actualizarCampo('creditoReferido', evento.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
-          />
+          <div className="min-w-0">
+            <div className="flex items-center gap-1">
+              <Etiqueta htmlFor="referido-credito-referido">Crédito (S/) para quien se registra</Etiqueta>
+              <span className="mb-1 flex"><AyudaCampo>Define cuánto vale el cupón de bienvenida y el de recompensa. El cupón de quien invita recién se crea cuando el de bienvenida se canjea de verdad en una venta — en Ventas, el botón de descuento tiene un modo "Cupón" que pide el código, no hace falta buscarlo acá.</AyudaCampo></span>
+            </div>
+            <input
+              id="referido-credito-referido"
+              type="number"
+              min="0"
+              step="1"
+              value={formulario.creditoReferido}
+              onChange={(evento) => actualizarCampo('creditoReferido', evento.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
+            />
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={guardando}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-red py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-azul-metal px-4 py-2.5 text-sm font-semibold text-bg disabled:opacity-40"
         >
           <Gift className="h-4 w-4" />
           {guardando ? 'Guardando...' : 'Guardar'}
         </button>
       </form>
 
-      <p className="mt-6 text-sm font-semibold text-ink">Cupones emitidos</p>
+      <div className="relative mt-(--separador-horizontal) flex items-center gap-2">
+        <p className="w-min shrink-0 text-sm font-semibold leading-tight text-ink sm:w-auto">Cupones emitidos</p>
+        <BarraBusqueda
+          valor={busqueda}
+          onCambiar={setBusqueda}
+          placeholder="Código o cliente"
+          tema="azul-metal"
+          sinVoz
+        />
+        <SelectorOrden
+          opciones={OPCIONES_FILTRO}
+          valor={filtro}
+          onCambiar={setFiltro}
+          tema="azul-metal"
+          icono={ListFilter}
+          ariaLabel="Filtrar cupones"
+        />
+      </div>
+
       {cupones.length === 0 ? (
         <EstadoVacio icono={Gift} mensaje="Todavía no se emitió ningún cupón." />
+      ) : cuponesVisibles.length === 0 ? (
+        <EstadoVacio icono={Gift} mensaje="Ningún cupón coincide con la búsqueda o el filtro." />
       ) : (
-        <div className="mt-2 space-y-2">
-          {cupones.map((cupon) => {
+        <div className="mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)]">
+          {cuponesVisibles.map((cupon) => {
             const etiquetaEstado = ETIQUETAS_ESTADO[cupon.estado] ?? ETIQUETAS_ESTADO.DISPONIBLE
             return (
-              <div
-                key={cupon.codigo}
-                className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3 text-sm"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-ink">{cupon.cliente?.nombre ?? '—'}</p>
-                  <p className="truncate text-xs text-ink/50">
-                    {ETIQUETAS_ORIGEN[cupon.origen] ?? cupon.origen} · <span className="font-mono">{cupon.codigo}</span>
-                  </p>
+              <EnvolturaCupon key={cupon.codigo} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
+                <div className="relative flex items-center gap-3 p-3">
+                  <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-mono text-base font-semibold tracking-widest ${NIVEL_CUPON.claseTexto}`}>{cupon.codigo}</p>
+                    <p className="truncate text-xs text-white/50">
+                      {cupon.cliente?.nombre ?? '—'} · {ETIQUETAS_ORIGEN[cupon.origen] ?? cupon.origen}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className={`font-semibold ${NIVEL_CUPON.claseTexto}`}>{formatearSoles(cupon.valor)}</p>
+                    <p className="text-[11px] text-white/50">{etiquetaEstado.texto}</p>
+                  </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-mono text-red">{formatearSoles(cupon.valor)}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${etiquetaEstado.clase}`}>
-                    {etiquetaEstado.texto}
-                  </span>
-                </div>
-              </div>
+              </EnvolturaCupon>
             )
           })}
         </div>

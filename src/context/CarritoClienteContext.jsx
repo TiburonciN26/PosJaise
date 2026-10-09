@@ -15,9 +15,21 @@ export function CarritoClienteProvider({ children }) {
   const { usuario } = useAuth()
   const [serviciosCarrito, setServiciosCarrito] = useState(() => new Set())
   const [productosCarrito, setProductosCarrito] = useState(() => new Map())
-  const [cargando, setCargando] = useState(true)
+  const [cargando, setCargando] = useState(Boolean(usuario))
+
+  // Sin sesión (visitante) el carrito no existe: no se consulta y queda vacío.
+  // El portal no se remonta al iniciar o cerrar sesión, así que el efecto depende
+  // del id del usuario: carga el carrito al entrar y lo vacía al salir (el
+  // siguiente visitante nunca ve el carrito anterior).
+  const usuarioId = usuario?.id ?? null
 
   const recargar = useCallback(async () => {
+    if (!usuarioId) {
+      setServiciosCarrito(new Set())
+      setProductosCarrito(new Map())
+      setCargando(false)
+      return
+    }
     const [serviciosRes, productosRes] = await Promise.all([
       supabase.from('carrito_servicios').select('servicio_id'),
       supabase.from('carrito_productos').select('producto_id, cantidad'),
@@ -27,14 +39,16 @@ export function CarritoClienteProvider({ children }) {
       new Map((productosRes.data ?? []).map((fila) => [fila.producto_id, fila.cantidad])),
     )
     setCargando(false)
-  }, [])
+  }, [usuarioId])
 
   useEffect(() => {
+    if (usuarioId) setCargando(true)
     recargar()
-  }, [recargar])
+  }, [usuarioId, recargar])
 
   const agregarServicio = useCallback(
     async (servicioId) => {
+      if (!usuario) return false
       const { error } = await supabase
         .from('carrito_servicios')
         .insert({ cliente_web_id: usuario.id, servicio_id: servicioId })
@@ -47,6 +61,7 @@ export function CarritoClienteProvider({ children }) {
 
   const quitarServicio = useCallback(
     async (servicioId) => {
+      if (!usuario) return false
       const { error } = await supabase
         .from('carrito_servicios')
         .delete()
@@ -70,7 +85,7 @@ export function CarritoClienteProvider({ children }) {
   // quitarServicio() por cada uno.
   const vaciarServiciosReservados = useCallback(
     async (servicioIds) => {
-      if (!servicioIds || servicioIds.length === 0) return
+      if (!usuario || !servicioIds || servicioIds.length === 0) return
       const { error } = await supabase
         .from('carrito_servicios')
         .delete()
@@ -102,6 +117,7 @@ export function CarritoClienteProvider({ children }) {
     // confirmar_venta() al verificar el pago — esto es solo para no
     // dejar que el carrito prometa más de lo que existe.
     async (productoId, cantidad = 1) => {
+      if (!usuario) return 0
       const cantidadActual = productosCarrito.get(productoId) ?? 0
 
       const { data: producto } = await supabase
@@ -140,6 +156,7 @@ export function CarritoClienteProvider({ children }) {
 
   const cambiarCantidadProducto = useCallback(
     async (productoId, cantidad) => {
+      if (!usuario) return false
       if (cantidad <= 0) {
         const { error } = await supabase
           .from('carrito_productos')

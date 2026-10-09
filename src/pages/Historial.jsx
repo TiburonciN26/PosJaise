@@ -139,7 +139,7 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
   const nombreCliente = nombreClienteDeVenta(detalle)
 
   return (
-    <div className="px-[17px] pb-[17px] pt-[5px]">
+    <div className="px-[14px] pb-[26px] pt-0">
       <div>
       <p className="text-xs text-ink/60">
         Vendedor: <span className="text-ink/80">{vendedorNombre ?? '—'}</span>
@@ -669,21 +669,23 @@ export default function Historial({ activo = true }) {
   const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, filtroMetodo), orden)
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
+    <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
       {/* Buscador + orden: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar por código o cliente..."
           tema="amber"
+          sinBorde
         />
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" sinBorde />
         <SelectorOrden
           opciones={OPCIONES_METODO}
           valor={filtroMetodo}
           onCambiar={setFiltroMetodo}
           tema="amber"
+          sinBorde
           icono={Filter}
           ariaLabel="Filtrar por método de pago"
         />
@@ -695,7 +697,7 @@ export default function Historial({ activo = true }) {
             disabled={exportando}
             aria-label="Exportar CSV del período"
             title="Exportar CSV del período"
-            className="flex shrink-0 items-center justify-center rounded-lg border border-dashed border-border-strong p-2.5 text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+            className="flex shrink-0 items-center justify-center rounded-lg border border-transparent p-2.5 text-ink/70 transition-colors hover:text-amber disabled:opacity-40"
           >
             <Download className="h-4 w-4" />
           </button>
@@ -710,7 +712,7 @@ export default function Historial({ activo = true }) {
           etiqueta="Ventas realizadas"
           valor={resumen.cantidadVentas}
           compacto
-          padding="p-2"
+          padding="p-1"
         />
         <TarjetaResumen
           etiqueta="Total recaudado"
@@ -718,14 +720,14 @@ export default function Historial({ activo = true }) {
           claseValor="text-green"
           compacto
           apilarCompacto
-          padding="p-2"
+          padding="p-1"
         />
         <TarjetaResumen
           etiqueta="Productos vendidos"
           valor={resumen.productosVendidos}
           claseValor="text-purple-300"
           compacto
-          padding="p-2"
+          padding="p-1"
         />
       </div>
 
@@ -790,11 +792,6 @@ export default function Historial({ activo = true }) {
                       >
                         {codigoCorto(venta.codigo)}
                       </span>
-                      {anulada && (
-                        <span className="shrink-0 rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
-                          Anulada
-                        </span>
-                      )}
                       <span
                         className={`truncate font-mono text-xs ${
                           anulada ? 'text-red line-through' : 'text-ink/60'

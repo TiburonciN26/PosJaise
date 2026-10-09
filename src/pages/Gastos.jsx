@@ -50,15 +50,19 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
   const cancelado = gasto.estado === 'CANCELADO'
   return (
     <div
-      className={`flex items-center justify-between gap-2 rounded-lg p-2.5 ${
+      className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 rounded-lg p-2.5 ${
         cancelado ? 'border border-red/40 bg-red/5' : 'bg-surface-2'
       }`}
     >
-      <div className="min-w-0">
-        <p className={`truncate text-sm ${cancelado ? 'text-red line-through' : 'text-ink'}`}>
-          {gasto.nombre}
-        </p>
-        <div className="mt-0.5 flex flex-wrap items-center gap-2">
+      <p
+        className={`col-span-2 text-sm break-words lg:col-span-1 ${
+          cancelado ? 'text-red line-through' : 'text-ink'
+        }`}
+      >
+        {gasto.nombre}
+      </p>
+      <div className="col-start-1 row-start-2 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
           <span className={`font-mono text-sm ${cancelado ? 'text-red/70' : gasto.tipo === 'FIJO' ? 'text-blue' : 'text-purple-300'}`}>
             {formatearSoles(gasto.monto)}
           </span>
@@ -75,15 +79,15 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
           )}
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="col-start-2 row-start-2 flex shrink-0 items-center gap-0 lg:row-span-2 lg:row-start-1">
         {!cancelado && (
           <>
-            <BotonAccion icono={Pencil} texto="Editar" color="celeste" onClick={onEditar} />
-            <BotonAccion icono={Ban} texto="Cancelar" color="rojo" onClick={onCancelar} />
+            <BotonAccion icono={Pencil} texto="Editar" color="celeste" sinBorde onClick={onEditar} />
+            <BotonAccion icono={Ban} texto="Cancelar" color="rojo" sinBorde onClick={onCancelar} />
           </>
         )}
         {esAdmin && (
-          <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" onClick={onEliminar} />
+          <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" sinBorde onClick={onEliminar} />
         )}
       </div>
     </div>
@@ -158,7 +162,7 @@ export default function Gastos({ activo = true }) {
   useModalA11y(panelEliminarRef, Boolean(gastoAEliminar))
   useCerrarConEscape(() => setGastoACancelar(null), Boolean(gastoACancelar))
   useModalA11y(panelCancelarRef, Boolean(gastoACancelar))
-  useCerrarConEscape(() => setMesAbierto(false), mesAbierto)
+  useCerrarConEscape(() => setMesAbierto(false), mesAbierto, { trabajoPendiente: false })
 
   function alternarMes() {
     if (mesAbierto) {
@@ -348,7 +352,7 @@ export default function Gastos({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Resumen del período — la cajera solo maneja caja chica (variable),
@@ -375,7 +379,7 @@ export default function Gastos({ activo = true }) {
       </div>
 
       {/* Filtro de período + Nuevo gasto: fijos arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-3 mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto bg-bg px-(--separador-vertical) py-2">
         <div className="relative min-w-0 flex-1 md:flex-none">
           <button
             ref={botonMesRef}
@@ -456,11 +460,11 @@ export default function Gastos({ activo = true }) {
       {/* Gestión de plantillas de gastos fijos — exclusivo del admin, la
           cajera no ve ni gestiona nada de gastos fijos. */}
       {esAdmin && (
-        <div className="mt-3 flex flex-nowrap gap-2 overflow-x-auto">
+        <div className="mt-3 flex flex-nowrap gap-1 overflow-x-auto">
           <button
             type="button"
             onClick={() => setMostrarPlantillas(true)}
-            className="shrink-0 whitespace-nowrap rounded-lg border border-border-strong px-3 py-1.5 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-border-strong px-1.5 py-0.5 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300"
           >
             Plantillas de gastos fijos
           </button>
@@ -468,7 +472,7 @@ export default function Gastos({ activo = true }) {
             type="button"
             onClick={generarGastosFijos}
             disabled={generando}
-            className="shrink-0 whitespace-nowrap rounded-lg border border-blue/40 bg-blue/10 px-3 py-1.5 text-sm text-blue transition-colors hover:bg-blue/20 disabled:opacity-40"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-blue/40 bg-blue/10 px-1.5 py-0.5 text-sm text-blue transition-colors hover:bg-blue/20 disabled:opacity-40"
           >
             {generando ? 'Creando...' : 'Crear gastos fijos del mes'}
           </button>
@@ -749,8 +753,8 @@ export default function Gastos({ activo = true }) {
       )}
 
       {gastoAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{gastoAEliminar.nombre}"?
             </h2>
@@ -778,8 +782,8 @@ export default function Gastos({ activo = true }) {
       )}
 
       {gastoACancelar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               ¿Cancelar "{gastoACancelar.nombre}"?
             </h2>

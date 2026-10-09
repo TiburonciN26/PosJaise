@@ -14,6 +14,10 @@ const TEMA_CLASES = {
     micHover:
       'border-dashed border-border-strong text-ink/70 hover:border-purple-300 hover:text-purple-300',
   },
+  'azul-metal': {
+    focus: 'focus:border-azul-metal',
+    micHover: 'border-dashed border-border-strong text-ink/70 hover:border-azul-metal hover:text-azul-metal',
+  },
   red: {
     focus: 'focus:border-red',
     micHover: 'border-dashed border-border-strong text-ink/70 hover:border-red hover:text-red',
@@ -24,7 +28,7 @@ const TEMA_CLASES = {
 // que se repetía casi igual en cada pantalla con lista. Devuelve dos
 // elementos hermanos (no un solo div envolvente) para que la página los siga
 // ubicando junto a su SelectorOrden/botón "Nuevo X" en la misma fila.
-export default function BarraBusqueda({ valor, onCambiar, placeholder, tema = 'amber' }) {
+export default function BarraBusqueda({ valor, onCambiar, placeholder, tema = 'amber', sinBorde = false, sinVoz = false }) {
   const { mostrarToast } = useToast()
   const clases = TEMA_CLASES[tema]
 
@@ -67,13 +71,17 @@ export default function BarraBusqueda({ valor, onCambiar, placeholder, tema = 'a
         )}
       </div>
 
-      {vozSoportada && (
+      {vozSoportada && !sinVoz && (
         <button
           type="button"
           onClick={alternarVoz}
           aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
           className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
-            escuchando ? 'animate-pulse border-red bg-red/10 text-red' : clases.micHover
+            escuchando
+              ? 'animate-pulse border-red bg-red/10 text-red'
+              : sinBorde
+                ? 'border-transparent text-ink/70 hover:text-amber'
+                : clases.micHover
           }`}
         >
           <Mic className="h-4 w-4" />

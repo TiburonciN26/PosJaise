@@ -399,16 +399,17 @@ export default function MiPanel({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador: fijo arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-(--separador-horizontal) pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar por servicio o cliente..."
           tema="purple-300"
+          sinBorde
         />
 
         {esAdmin && (
@@ -419,6 +420,7 @@ export default function MiPanel({ activo = true }) {
             tema="purple-300"
             icono={Users}
             ariaLabel="Filtrar por asistente"
+            sinBorde
           />
         )}
       </div>
@@ -427,8 +429,9 @@ export default function MiPanel({ activo = true }) {
       <FiltrosFecha.Botones
         filtro={filtro}
         onCambiarFiltro={setFiltro}
+        personalizado={personalizado}
+        onCambiarPersonalizado={setPersonalizado}
         tema="purple-300"
-        className="mt-3"
       />
 
       {/* Resumen del período + Registrar atención (desktop) */}
@@ -518,7 +521,7 @@ export default function MiPanel({ activo = true }) {
                 <button
                   type="button"
                   onClick={() => alternarDia(grupo.clave)}
-                  className="flex w-full items-center gap-2 p-3 text-left"
+                  className="flex w-full items-center gap-2 px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) text-left"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-2">
@@ -754,8 +757,8 @@ export default function MiPanel({ activo = true }) {
       )}
 
       {registroAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Eliminar esta atención?</h2>
             <p className="mt-1 text-sm text-ink/60">Esta acción no se puede deshacer.</p>
             <div className="mt-4 flex gap-2">
@@ -781,8 +784,8 @@ export default function MiPanel({ activo = true }) {
       )}
 
       {registroACancelar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Cancelar esta atención?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Quedará marcada como cancelada y no contará en tus totales del período.

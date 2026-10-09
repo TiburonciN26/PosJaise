@@ -160,15 +160,16 @@ export default function PedidosWeb({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
-      style={{ '--color-foco': 'var(--color-red)' }}
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar por clienta..."
-          tema="red"
+          tema="azul-metal"
+          sinBorde
         />
       </div>
 
@@ -198,7 +199,7 @@ export default function PedidosWeb({ activo = true }) {
                   aria-expanded={abierto}
                   className="flex cursor-pointer items-center gap-3 p-3"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-red/30 bg-red/15 text-red">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-azul-metal/30 bg-azul-metal/15 text-azul-metal">
                     {pedido.tipo_entrega === 'DELIVERY' ? (
                       <Bike className="h-4 w-4" />
                     ) : (
@@ -209,7 +210,7 @@ export default function PedidosWeb({ activo = true }) {
                     <p className="truncate text-sm font-medium text-ink">
                       {pedido.clientes?.nombre ?? 'Cliente'}
                     </p>
-                    <p className="font-mono text-sm text-red">{formatearSoles(pedido.total)}</p>
+                    <p className="font-mono text-sm text-azul-metal">{formatearSoles(pedido.total)}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${etiqueta.clase}`}>
                     {etiqueta.texto}

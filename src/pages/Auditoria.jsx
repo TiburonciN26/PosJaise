@@ -323,17 +323,18 @@ export default function Auditoria({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Buscador + orden + filtros de fecha: fijos arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-3 space-y-3 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) space-y-3 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <div className="flex items-center gap-2">
           <BarraBusqueda
             valor={busqueda}
             onCambiar={setBusqueda}
             placeholder="Buscar por usuario, tabla o contenido..."
             tema="purple-300"
+            sinBorde
           />
 
           <SelectorOrden
@@ -342,10 +343,17 @@ export default function Auditoria({ activo = true }) {
             onCambiar={setTablaFiltro}
             tema="purple-300"
             ariaLabel="Filtrar por tabla"
+            sinBorde
           />
         </div>
 
-        <FiltrosFecha.Botones filtro={filtro} onCambiarFiltro={setFiltro} tema="purple-300" />
+        <FiltrosFecha.Botones
+          filtro={filtro}
+          onCambiarFiltro={setFiltro}
+          personalizado={personalizado}
+          onCambiarPersonalizado={setPersonalizado}
+          tema="purple-300"
+        />
       </div>
 
       <FiltrosFecha.CamposPersonalizado

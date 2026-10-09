@@ -158,17 +158,18 @@ export default function Servicios({ activo = true }) {
   const filtradosOrdenados = servicios
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
-      {/* Buscador + Nuevo servicio: fijos arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+    <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
+      {/* Buscador + Nuevo servicio: fijos arriba al hacer scroll, siempre debajo del header */}
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar servicio..."
           tema="amber"
+          sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" sinBorde />
 
         {esAdmin && (
           <button
@@ -183,7 +184,7 @@ export default function Servicios({ activo = true }) {
       </div>
 
       {error && (
-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+        <p className="mt-1 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
           {error}
         </p>
       )}
@@ -199,7 +200,7 @@ export default function Servicios({ activo = true }) {
       ) : (
         <>
           {/* Tarjetas: solo móvil */}
-          <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
+          <div className="mt-3 grid grid-cols-1 gap-2.5 lg:hidden">
             {filtradosOrdenados.map((servicio) => {
               const abierto = abiertos.has(servicio.id)
 
@@ -281,7 +282,7 @@ export default function Servicios({ activo = true }) {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
+          <div className="mt-3 hidden overflow-x-auto rounded-lg border border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
@@ -386,8 +387,8 @@ export default function Servicios({ activo = true }) {
       )}
 
       {servicioAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{servicioAEliminar.nombre}"?
             </h2>

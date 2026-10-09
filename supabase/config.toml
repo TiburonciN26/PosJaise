@@ -384,6 +384,11 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Culqi llama a esta función sin JWT de Supabase; se protege con una clave
+# compartida en la URL y verificando el cargo directo con Culqi (ver index.ts).
+[functions.webhook-pasarela]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

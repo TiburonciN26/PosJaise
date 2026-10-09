@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useSalir } from '../hooks/useSalir.js'
 import ModalCamara from './ModalCamara.jsx'
 import Interruptor from './Interruptor.jsx'
 import SwitchTema from './SwitchTema.jsx'
@@ -33,7 +34,8 @@ function iniciales(nombre) {
 // cerrar sesión. Reemplaza al logo+MenuEstadoNegocio: el logo pasa acá,
 // abajo del todo, como firma de marca en vez de disparador de un menú.
 export default function MenuUsuario() {
-  const { usuario, rol, cerrarSesion, actualizarFotoPerfil, entrarComoClienta } = useAuth()
+  const { usuario, rol, actualizarFotoPerfil, entrarComoClienta } = useAuth()
+  const salir = useSalir()
   const { abierto: negocioAbierto, cambiarEstado } = useEstadoNegocio()
   const { mostrarToast } = useToast()
   const esAdmin = rol === 'ADMINISTRADOR'
@@ -46,7 +48,7 @@ export default function MenuUsuario() {
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [entrandoComoClienta, setEntrandoComoClienta] = useState(false)
 
-  useCerrarConEscape(() => setMenuAbierto(false), menuAbierto)
+  useCerrarConEscape(() => setMenuAbierto(false), menuAbierto, { trabajoPendiente: false })
   useCerrarConEscape(() => setConfirmando(false), confirmando)
   useCerrarConEscape(() => setConfirmandoSalir(false), confirmandoSalir)
 
@@ -271,8 +273,8 @@ export default function MenuUsuario() {
             )}
           </div>
 
-          <div className="mt-3 flex justify-center">
-            <SwitchTema />
+          <div className="mt-3">
+            <SwitchTema anchoCompleto />
           </div>
 
           <button
@@ -306,8 +308,8 @@ export default function MenuUsuario() {
       )}
 
       {confirmando && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               {negocioAbierto
                 ? '¿Está seguro de cerrar el negocio?'
@@ -343,8 +345,8 @@ export default function MenuUsuario() {
       )}
 
       {confirmandoSalir && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Cerrar sesión?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Vas a salir de tu cuenta en este dispositivo.
@@ -359,7 +361,7 @@ export default function MenuUsuario() {
               </button>
               <button
                 type="button"
-                onClick={cerrarSesion}
+                onClick={salir}
                 className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white"
               >
                 Sí, cerrar sesión

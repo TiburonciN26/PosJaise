@@ -50,6 +50,9 @@
   --color-green: #3ecf6a;
   --color-blue: #5b9cf6;
   --color-red: #f06565;
+  /* Acento de la pestaña Web del POS: el azul metálico de la web de clientes
+     (--lw-gold). En claro cambia al par oscuro, ver :root[data-tema='claro']. */
+  --color-azul-metal: #a9c6ec;
 
   /* Tipografías */
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
@@ -69,8 +72,8 @@
   --animate-brillo-tarjeta: brillo-tarjeta 8.5s linear infinite;
   /* Tarjeta de cumpleaños: borde que se ilumina, intercalado con brillo-tarjeta */
   --animate-brillo-borde-tarjeta: brillo-borde-tarjeta 8.5s linear infinite;
-  /* Flechita verde: sube y se desvanece, con pausa antes de repetir */
-  --animate-elevar-flecha: elevar-flecha 3s ease-out infinite;
+  /* Flechita verde: sube y se desvanece durante TODO el bucle (sin pausa muerta) */
+  --animate-elevar-flecha: elevar-flecha 1.5s ease-out infinite;
   /* Ícono de la pestaña "Web... Próximamente": martillazo en bucle */
   --animate-martillar: martillar 1.3s ease-in-out infinite;
   /* Chispas del martillazo — misma duración, cada una con su propio --dx/--dy */
@@ -203,10 +206,6 @@
     transform: translateY(0);
     opacity: 1;
   }
-  33% {
-    transform: translateY(-3px);
-    opacity: 0;
-  }
   100% {
     transform: translateY(-3px);
     opacity: 0;
@@ -331,6 +330,23 @@
    no lo descarte por no tener una utilidad generada a partir de él. */
 :root {
   --ancho-pestana: 90rem;
+  /* Distancia entre el header y lo primero de cada pestaña (igual al buscador de Ventas). Pestañas con barra pegajosa la aplican como padding-top de la barra. */
+  --separador-horizontal: 10px;
+  /* Padding lateral de las pestañas (bordes izquierdo/derecho de la pantalla). */
+  --separador-vertical: 10px;
+  /* Separadores SECUNDARIOS: padding interno de los bloques/tarjetas dentro de
+     una pestaña (formularios, tarjetas de lista). Variables propias para poder
+     ajustarlos sin mover los márgenes de pantalla de arriba. `horizontal` =
+     arriba/abajo, `vertical` = izquierda/derecha (misma convención). */
+  --separador-horizontal-secundario: 12px;
+  --separador-vertical-secundario: 12px;
+}
+/* En lg+ (PC) se mantienen los 0.75rem originales; los 10px son solo móvil. */
+@media (min-width: 64rem) {
+  :root {
+    --separador-horizontal: 0.75rem;
+    --separador-vertical: 0.75rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -455,6 +471,13 @@
   outline-offset: 2px;
 }
 
+/* Pedido del usuario: los campos de texto no llevan el anillo exterior de
+ * foco (el borde de color interior ya marca cuál está activo). Los
+ * botones y enlaces conservan el anillo de teclado. */
+:where(input, select, textarea):focus-visible {
+  outline: none;
+}
+
 /* A4 de la auditoría frontend: los CTAs sólidos (Cobrar, Guardar,
  * Entrar, el FAB, filtros activos) no tenían NINGÚN feedback de
  * hover/press — .text-bg ya es, en toda la app, la marca de "texto
@@ -537,6 +560,7 @@
   --color-amber-texto: #9a6700;
   --color-green-texto: #15803d;
   --color-red-texto: #dc2626;
+  --color-azul-metal: #4a78b0;
   --color-blue-texto: #2563eb;
   --color-rosa-texto: #c2456b;
   --color-naranja-texto: #c2410c;
@@ -565,6 +589,12 @@
 }
 [data-tema='claro'] :is(.text-red, .hover\:text-red:hover) {
   color: var(--color-red-texto);
+}
+/* Azul metálico de la pestaña Web (POS): como TEXTO en claro usa el extremo
+   oscuro del mismo acero (#2f578c, ~7:1 sobre blanco). El #4a78b0 de
+   --color-azul-metal se queda para rellenos/bordes. */
+[data-tema='claro'] :is(.text-azul-metal, .hover\:text-azul-metal:hover, .text-azul-metal\/70, .text-azul-metal\/90) {
+  color: #2f578c;
 }
 [data-tema='claro'] :is(.text-blue, .hover\:text-blue:hover) {
   color: var(--color-blue-texto);
@@ -2015,6 +2045,65 @@ input[type='search']::-webkit-search-decoration {
   position: relative;
 }
 
+/* ───────── Login (diseño oscuro propio: public/diseñosPropios/Login.html) ─────────
+   Colores fijos a propósito: el login es oscuro siempre, no sigue el tema
+   claro/oscuro de la app. Escritorio: foto a la izquierda + tarjeta; móvil
+   (<768px): foto arriba + formulario abajo. Las animaciones de entrada
+   escalonadas son las del diseño. */
+.lgn {
+  background: #0b0b0c;
+  color: #f5f5f4;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.lgn-foto {
+  background-image: var(--lgn-foto);
+  background-size: cover;
+  background-position: 50% 22%;
+  background-repeat: no-repeat;
+}
+@media (min-width: 768px) {
+  .lgn-foto { background-position: 50% 30%; }
+}
+.lgn-campo input {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  color: #f5f5f4;
+}
+.lgn-campo input::placeholder { color: #8b8b93; opacity: 1; }
+.lgn-campo:focus-within { border-color: #f5f5f4 !important; background: #111113 !important; }
+.lgn-btn { transition: transform .18s cubic-bezier(.2,.7,.3,1), filter .18s ease; }
+.lgn-btn:hover:not(:disabled) { filter: brightness(1.12); }
+.lgn-btn:active:not(:disabled) { transform: translateY(1px); }
+.lgn-btn:hover:not(:disabled) .lgn-flecha { transform: translateX(3px); }
+.lgn-flecha { transition: transform .18s ease; }
+.lgn-google { transition: background .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2,.7,.3,1); }
+.lgn-google:hover { background: #27272a !important; box-shadow: 0 3px 10px rgba(0,0,0,.4) !important; }
+.lgn-google:active { transform: translateY(1px); }
+.lgn :focus-visible { outline: 2px solid #2b6cb0; outline-offset: 2px; }
+@keyframes lgnIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes lgnCard { from { opacity: 0; transform: translateY(12px) scale(.988); } to { opacity: 1; transform: none; } }
+@keyframes lgnHl { from { opacity: 0; transform: translateY(16px); clip-path: inset(100% 0 0 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
+.lgn-a-card { animation: lgnCard .82s cubic-bezier(.16,1,.3,1) 40ms both; }
+.lgn-a-hl1 { animation: lgnHl .76s cubic-bezier(.16,1,.3,1) 240ms both; }
+.lgn-a-hl2 { animation: lgnHl .76s cubic-bezier(.16,1,.3,1) 330ms both; }
+.lgn-a-logo { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 400ms both; }
+.lgn-a-h1 { animation: lgnIn .62s cubic-bezier(.16,1,.3,1) 470ms both; }
+.lgn-a-sub { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 570ms both; }
+.lgn-a-email { animation: lgnIn .52s cubic-bezier(.22,1,.36,1) 720ms both; }
+.lgn-a-pw { animation: lgnIn .52s cubic-bezier(.22,1,.36,1) 790ms both; }
+.lgn-a-btn { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 930ms both; }
+.lgn-a-div { animation: lgnIn .44s cubic-bezier(.22,1,.36,1) 1060ms both; }
+.lgn-a-g { animation: lgnIn .54s cubic-bezier(.16,1,.3,1) 1150ms both; }
+.lgn-a-bottom { animation: lgnIn .5s cubic-bezier(.22,1,.36,1) 1260ms both; }
+@media (prefers-reduced-motion: reduce) {
+  .lgn *, .lgn { transition: none !important; animation: none !important; }
+}
+
 /*
  ---break---
  */
@@ -3149,7 +3238,13 @@ input[type='search']::-webkit-search-decoration {
   mask-image: linear-gradient(115deg, transparent 30%, #000 80%);
   pointer-events: none;
 }
-/* Iridiscencia (solo Diamante y Rubí) */
+/* Destello que cruza la tarjeta. En reposo está FUERA de la tarjeta (left
+   -45%, la recorta el overflow:hidden de .cupon-tarjeta) y sin animación:
+   con cientos de cupones en pantalla (Promociones/Referidos/Fidelización)
+   el barrido continuo por `left` + el mix-blend-mode saturaba el hilo
+   principal (auditoría PERF-01, Fase 1). Solo corre una pasada breve al
+   interactuar — ver `.cupon-envoltura:hover` más abajo — y SOLO con
+   transform (sin layout por frame). */
 .cupon-metal::after {
   content: '';
   position: absolute;
@@ -3159,8 +3254,7 @@ input[type='search']::-webkit-search-decoration {
   width: 30%;
   background: linear-gradient(100deg, rgba(255, 250, 225, 0), rgba(255, 252, 235, 0.75) 50%, rgba(255, 250, 225, 0));
   mix-blend-mode: overlay;
-  transform: rotate(18deg);
-  animation: cupon-sheen 6s ease-in-out infinite;
+  transform: translateX(0) rotate(18deg);
   pointer-events: none;
 }
 .cupon-metal.cupon-iri {
@@ -3237,6 +3331,44 @@ input[type='search']::-webkit-search-decoration {
 }
 .cupon-chispa.cupon-chispa-diamante {
   --cupon-oro: #bfe3ff;
+}
+
+/* Chispas de las tarjetas de LISTA (EnvolturaCupon): hermanas de la tarjeta,
+   por eso no basta con apagar los descendientes de .cupon-metal. En reposo
+   quedan estáticas (sin animación ni opacity/filter cambiante); las del
+   cupón apagado (vencido/canjeado/inactivo) no se muestran. El centelleo
+   es una interacción breve, no un bucle infinito. */
+.cupon-chispa.cupon-chispa-lista {
+  animation: none;
+  opacity: 0.85;
+  transform: scale(0.8) rotate(45deg);
+}
+.cupon-envoltura-apagada .cupon-chispa-lista {
+  display: none;
+}
+
+/* Interacción breve: una pasada del destello y un par de centelleos mientras
+   el puntero está sobre el cupón o hay foco dentro (teclado / toque). Solo
+   transform/opacity. Con movimiento reducido no se anima nada: la tarjeta y
+   sus chispas quedan estáticas. */
+@keyframes cupon-sheen-pasada {
+  from {
+    transform: translateX(0) rotate(18deg);
+  }
+  to {
+    /* 175% del ancho de la tarjeta (de -45% a 130%) ÷ 30% de ancho propio */
+    transform: translateX(583%) rotate(18deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cupon-envoltura:hover .cupon-metal::after,
+  .cupon-envoltura:focus-within .cupon-metal::after {
+    animation: cupon-sheen-pasada 1.1s ease-in-out 1;
+  }
+  .cupon-envoltura:not(.cupon-envoltura-apagada):hover .cupon-chispa-lista,
+  .cupon-envoltura:not(.cupon-envoltura-apagada):focus-within .cupon-chispa-lista {
+    animation: cupon-titilar 1.6s ease-in-out 2;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

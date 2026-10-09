@@ -30,7 +30,7 @@ export async function buscarAtenciones(supabase, termino, { excluirIds = [], lim
   const texto = termino.trim()
 
   if (!texto) {
-    const { data, error } = await pendientes(supabase, `${CAMPOS}, servicios(nombre), clientes(nombre)`, excluirIds)
+    const { data, error } = await pendientes(supabase, `${CAMPOS}, servicios(nombre), clientes(nombre), usuarios(nombre_completo)`, excluirIds)
       .order('fecha')
       .order('id')
       .limit(limite + 1)
@@ -42,12 +42,12 @@ export async function buscarAtenciones(supabase, termino, { excluirIds = [], lim
   // sus primeras `limite + 1` por (fecha, id), las primeras `limite` de la unión están contenidas en ellas.
   const patron = patronIlike(texto)
   const [porServicio, porCliente] = await Promise.all([
-    pendientes(supabase, `${CAMPOS}, servicios!inner(nombre), clientes(nombre)`, excluirIds)
+    pendientes(supabase, `${CAMPOS}, servicios!inner(nombre), clientes(nombre), usuarios(nombre_completo)`, excluirIds)
       .ilike('servicios.nombre', patron)
       .order('fecha')
       .order('id')
       .limit(limite + 1),
-    pendientes(supabase, `${CAMPOS}, servicios(nombre), clientes!inner(nombre)`, excluirIds)
+    pendientes(supabase, `${CAMPOS}, servicios(nombre), clientes!inner(nombre), usuarios(nombre_completo)`, excluirIds)
       .ilike('clientes.nombre', patron)
       .order('fecha')
       .order('id')

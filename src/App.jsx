@@ -1,12 +1,13 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import { rutaInicialPara } from './config/navegacion.js'
 import { pagina, precargarPortalYRuta } from './config/paginasCliente.js'
+import { esRutaDePersonal } from './lib/destinoLogin.js'
 import RutaProtegida from './components/RutaProtegida.jsx'
+import RutaPrivada from './components/RutaPrivada.jsx'
 import Layout from './components/Layout.jsx'
 import PestanasCacheadas from './components/PestanasCacheadas.jsx'
-import RecompensasPublica from './pages/cliente/RecompensasPublica.jsx'
 
 // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
 // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
@@ -16,7 +17,7 @@ const Login = lazy(() => import('./pages/Login.jsx'))
 // inicial de TODOS los roles, incluido el POS que jamás lo usa. Ahora cada página
 // es un chunk precargable (ver config/paginasCliente.js por qué no React.lazy).
 const { PortalCliente } = pagina
-const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, RecompensasCliente, NosotrosCliente, PerfilEquipoCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente } = pagina
+const { InicioCliente, MiPerfil, ServiciosCliente, DetalleServicioCliente, ProductosCliente, DetalleProductoCliente, CitasCliente, HistorialCliente, RecompensasCliente, NosotrosCliente, PerfilEquipoCliente, CarritoCliente, CarritoServiciosCliente, MisResenasCliente, DireccionesCliente, PedidosCliente, NotificacionesCliente, SeguridadCuentaCliente, ReferidosCliente, LibroReclamacionesCliente, TerminosCliente, PoliticaCambiosCliente, PrivacidadCliente } = pagina
 
 function CargandoPantalla() {
   return (
@@ -26,15 +27,29 @@ function CargandoPantalla() {
   )
 }
 
+// Ruta que no existe en la web de clientas. Con sesión de cliente o personal en
+// «modo clienta» vuelve al inicio, como siempre. Un VISITANTE que abre una pantalla
+// del POS (/ventas, /dashboard…) recibe el login con esa ruta guardada: si es
+// personal, entra directo a ella; si no, cae en su pantalla de siempre.
+function RutaDesconocida() {
+  const { usuario } = useAuth()
+  const { pathname, search } = useLocation()
+  if (!usuario && esRutaDePersonal(pathname)) {
+    return <Navigate to="/login" replace state={{ desde: `${pathname}${search}` }} />
+  }
+  return <Navigate to="/inicio" replace />
+}
+
 function App() {
   const { cargando, session, usuario, rol, modoVista, errorPerfil, reintentarPerfil } = useAuth()
-  // Personal (asistente/cajera/admin) que activó su perfil de clienta
-  // (MenuUsuario.jsx → "Mi perfil de clienta") y eligió mirarlo: monta el
-  // árbol de rutas de cliente con la MISMA sesión, sin dejar de ser
-  // personal (rol sigue siendo el suyo real — ver AuthContext.jsx). Un
-  // cliente puro (rol === 'CLIENTE', sin fila en "usuarios") no depende
-  // de esto en absoluto, siempre entra por la primera condición.
-  const vistaCliente = rol === 'CLIENTE' || (Boolean(rol) && rol !== 'CLIENTE' && modoVista === 'CLIENTE')
+  // La web de clientas es la entrada por defecto: la ve quien NO tiene sesión
+  // (visitante: explora lo público y se le pide login solo en lo privado), un
+  // cliente (rol === 'CLIENTE', sin fila en "usuarios") y el personal
+  // (asistente/cajera/admin) que activó su perfil de clienta (MenuUsuario.jsx →
+  // "Mi perfil de clienta") y eligió mirarlo: misma sesión, sin dejar de ser
+  // personal (rol sigue siendo el suyo real — ver AuthContext.jsx). Solo el
+  // personal con sesión en modo POS monta el árbol de rutas del POS.
+  const vistaCliente = !usuario || rol === 'CLIENTE' || modoVista === 'CLIENTE'
 
   // El portal (y la página de la URL actual) se descargan ANTES de montarlo, con
   // el mismo "Cargando..." de siempre: así React no muestra ni estrangula un
@@ -88,48 +103,50 @@ function App() {
           }
         />
 
-        {/* QA-037: /recompensas (catálogo de ejemplo y ayuda) se puede explorar
-            sin sesión. Ruta aparte y solo mientras no hay usuario: con
-            sesión manda el árbol de abajo (portal o POS); todo lo demás
-            sigue detrás de RutaProtegida, y las secciones personales de
-            Recompensas piden iniciar sesión sin consultar nada. */}
-        {!usuario && <Route path="recompensas" element={<RecompensasPublica />} />}
+        {vistaCliente ? (
+          // Visitante, cliente y personal en «modo clienta» comparten ESTE árbol
+          // (mismo PortalCliente y mismas páginas). Primero lo público; lo
+          // privado va detrás de RutaPrivada. Un cliente nunca monta
+          // Layout/MenuLateral (eso es del POS) — MenuUsuarioCliente le suma al
+          // personal un botón para volver.
+          <Route
+            element={
+              portalListo ? (
+                <Suspense fallback={<CargandoPantalla />}>
+                  <PortalCliente />
+                </Suspense>
+              ) : (
+                <CargandoPantalla />
+              )
+            }
+          >
+            <Route index element={<Navigate to="/inicio" replace />} />
+            <Route path="inicio" element={<InicioCliente />} />
+            <Route path="servicios" element={<ServiciosCliente />} />
+            <Route path="servicios/:id" element={<DetalleServicioCliente />} />
+            <Route path="productos" element={<ProductosCliente />} />
+            <Route path="productos/:id" element={<DetalleProductoCliente />} />
+            {/* Sin sesión muestra el catálogo y «Cómo funciona»; las secciones
+                personales piden iniciar sesión sin consultar nada (QA-037). */}
+            <Route path="recompensas" element={<RecompensasCliente publico={!usuario} />} />
+            {/* Rutas viejas de Fidelización / Cupones y ofertas / Mis puntos: ahora
+                son subpestañas de /recompensas (se dejan para no romper enlaces). */}
+            <Route path="fidelizacion" element={<Navigate to="/recompensas?seccion=sellos" replace />} />
+            <Route path="ofertas" element={<Navigate to="/recompensas?seccion=cupones" replace />} />
+            <Route path="mis-puntos" element={<Navigate to="/recompensas?seccion=tarjeta" replace />} />
+            <Route path="nosotros" element={<NosotrosCliente />} />
+            <Route path="nosotros/equipo/:id" element={<PerfilEquipoCliente />} />
+            {/* Obligatorio por ley (INDECOPI): público, sin pedir sesión. */}
+            <Route path="libro-de-reclamaciones" element={<LibroReclamacionesCliente />} />
+            <Route path="terminos-y-condiciones" element={<TerminosCliente />} />
+            <Route path="politica-de-cambios-y-devoluciones" element={<PoliticaCambiosCliente />} />
+            <Route path="politica-de-privacidad" element={<PrivacidadCliente />} />
 
-        <Route element={<RutaProtegida />}>
-          {vistaCliente ? (
-            // Un cliente puro nunca monta Layout/MenuLateral (eso es del
-            // POS, solo para personal) — su único árbol es este. Personal
-            // en "modo cliente" (ver arriba) también cae acá, con la misma
-            // sesión — MenuUsuarioCliente.jsx le suma un botón para volver.
-            <Route
-              element={
-                portalListo ? (
-                  <Suspense fallback={<CargandoPantalla />}>
-                    <PortalCliente />
-                  </Suspense>
-                ) : (
-                  <CargandoPantalla />
-                )
-              }
-            >
-              <Route index element={<Navigate to="/inicio" replace />} />
-              <Route path="inicio" element={<InicioCliente />} />
+            <Route element={<RutaPrivada />}>
               <Route path="mi-perfil" element={<MiPerfil />} />
-              <Route path="servicios" element={<ServiciosCliente />} />
-              <Route path="servicios/:id" element={<DetalleServicioCliente />} />
-              <Route path="productos" element={<ProductosCliente />} />
-              <Route path="productos/:id" element={<DetalleProductoCliente />} />
               <Route path="citas" element={<CitasCliente />} />
               <Route path="citas/carrito" element={<CarritoServiciosCliente />} />
               <Route path="historial" element={<HistorialCliente />} />
-              <Route path="recompensas" element={<RecompensasCliente />} />
-              {/* Rutas viejas de Fidelización / Cupones y ofertas / Mis puntos: ahora
-                  son subpestañas de /recompensas (se dejan para no romper enlaces). */}
-              <Route path="fidelizacion" element={<Navigate to="/recompensas?seccion=sellos" replace />} />
-              <Route path="ofertas" element={<Navigate to="/recompensas?seccion=cupones" replace />} />
-              <Route path="mis-puntos" element={<Navigate to="/recompensas?seccion=tarjeta" replace />} />
-              <Route path="nosotros" element={<NosotrosCliente />} />
-              <Route path="nosotros/equipo/:id" element={<PerfilEquipoCliente />} />
               <Route path="carrito" element={<CarritoCliente />} />
               <Route path="mis-resenas" element={<MisResenasCliente />} />
               <Route path="mi-perfil/direcciones" element={<DireccionesCliente />} />
@@ -137,9 +154,12 @@ function App() {
               <Route path="mi-perfil/notificaciones" element={<NotificacionesCliente />} />
               <Route path="mi-perfil/seguridad" element={<SeguridadCuentaCliente />} />
               <Route path="mi-perfil/referidos" element={<ReferidosCliente />} />
-              <Route path="*" element={<Navigate to="/inicio" replace />} />
             </Route>
-          ) : (
+
+            <Route path="*" element={<RutaDesconocida />} />
+          </Route>
+        ) : (
+          <Route element={<RutaProtegida />}>
             <Route element={<Layout />}>
               <Route index element={<Navigate to={rutaInicialPara(rol)} replace />} />
               {/* Un solo comodín: así el router nunca desmonta PestanasCacheadas
@@ -147,8 +167,8 @@ function App() {
                   aplica el guard de rol (antes hecho por RutaAdmin). */}
               <Route path="*" element={<PestanasCacheadas />} />
             </Route>
-          )}
-        </Route>
+          </Route>
+        )}
       </Routes>
     </BrowserRouter>
   )

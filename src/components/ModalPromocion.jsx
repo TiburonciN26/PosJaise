@@ -103,12 +103,12 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
           {esEdicion ? 'Editar promoción' : 'Nueva promoción'}
@@ -123,7 +123,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
               autoComplete="new-password"
               value={formulario.titulo}
               onChange={(evento) => actualizarCampo('titulo', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-red"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-azul-metal"
               autoFocus
             />
           </div>
@@ -137,7 +137,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
               onChange={(evento) => actualizarCampo('descripcion', evento.target.value)}
               placeholder="Opcional"
               rows={2}
-              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-red"
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
                 onClick={() => actualizarCampo('tipoDescuento', 'PORCENTAJE')}
                 className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                   formulario.tipoDescuento === 'PORCENTAJE'
-                    ? 'border-red bg-red/10 text-red'
+                    ? 'border-azul-metal bg-azul-metal/10 text-azul-metal'
                     : 'border-border text-ink/70 hover:border-border-strong'
                 }`}
               >
@@ -160,7 +160,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
                 onClick={() => actualizarCampo('tipoDescuento', 'MONTO_FIJO')}
                 className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                   formulario.tipoDescuento === 'MONTO_FIJO'
-                    ? 'border-red bg-red/10 text-red'
+                    ? 'border-azul-metal bg-azul-metal/10 text-azul-metal'
                     : 'border-border text-ink/70 hover:border-border-strong'
                 }`}
               >
@@ -180,7 +180,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
               autoComplete="new-password"
               value={formulario.valor}
               onChange={(evento) => actualizarCampo('valor', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
             />
           </div>
 
@@ -192,7 +192,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
                 type="date"
                 value={formulario.vigenteDesde}
                 onChange={(evento) => actualizarCampo('vigenteDesde', evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
               />
             </div>
             <div>
@@ -202,7 +202,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
                 type="date"
                 value={formulario.vigenteHasta}
                 onChange={(evento) => actualizarCampo('vigenteHasta', evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
               />
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
                 onClick={() => actualizarCampo('activo', false)}
                 className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                   !formulario.activo
-                    ? 'border-red bg-red/10 text-red'
+                    ? 'border-azul-metal bg-azul-metal/10 text-azul-metal'
                     : 'border-border text-ink/70 hover:border-border-strong'
                 }`}
               >
@@ -248,14 +248,14 @@ export default function ModalPromocion({ promocion, onCerrar, onGuardado }) {
             type="button"
             onClick={onCerrar}
             disabled={guardando}
-            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red disabled:opacity-40"
+            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={guardando}
-            className="flex-1 rounded-lg bg-red py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40"
           >
             {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar'}
           </button>

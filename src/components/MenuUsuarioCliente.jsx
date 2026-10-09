@@ -19,6 +19,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { useTemaWeb } from '../context/TemaWebContext.jsx'
 import SwitchTema from './SwitchTema.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useSalir } from '../hooks/useSalir.js'
 import { urlPublicaFoto } from '../lib/imagenes.js'
 
 const BUCKET_FOTOS = 'fotos-clientes'
@@ -54,7 +55,8 @@ function iniciales(nombre) {
 
 export default function MenuUsuarioCliente() {
   const { perfil } = usePerfilCliente()
-  const { rol, cerrarSesion, volverAlPos } = useAuth()
+  const { rol, volverAlPos } = useAuth()
+  const salir = useSalir()
   const { mostrarToast } = useToast()
   // Personal (asistente/cajera/admin) mirando su propio perfil de clienta
   // con la misma sesión (ver AuthContext.jsx, "entrarComoClienta") — un
@@ -69,15 +71,9 @@ export default function MenuUsuarioCliente() {
   const [errorFoto, setErrorFoto] = useState(false)
   const menuRef = useRef(null)
 
-  // Cerrar sesión siempre termina en /login (QA-037): desde que /recompensas
-  // tiene una vista pública sin sesión, quedarse en esa ruta ya no rebota
-  // solo al login como cualquier otra pantalla del portal.
-  async function salir() {
-    await cerrarSesion()
-    navigate('/login', { replace: true })
-  }
+  // Cerrar sesión vuelve al inicio público (useSalir), no al formulario de login.
 
-  useCerrarConEscape(() => setAbierto(false), abierto)
+  useCerrarConEscape(() => setAbierto(false), abierto, { trabajoPendiente: false })
   useCerrarConEscape(() => setConfirmandoSalir(false), confirmandoSalir)
 
   // Mismo patrón que MenuUsuario.jsx (POS): cierre por clic-afuera con ref,

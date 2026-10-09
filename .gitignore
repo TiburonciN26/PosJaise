@@ -63,4 +63,14 @@ src/assets/*
 # feedback_tipografias_web.md) — mismo motivo que Kunaroh arriba, sin
 # esto el título del carrito cae en silencio al fallback del proyecto.
 !src/assets/fonts/Heavitas.ttf
+# Foto de la pantalla de login (Login.jsx la importa: sin ella el build de otra
+# máquina/CI/Cloudflare FALLA con UNRESOLVED_IMPORT). Se versiona SOLO este
+# archivo; el resto de src/assets/login/ y de src/assets/ sigue ignorado.
+!src/assets/login/
+src/assets/login/*
+!src/assets/login/foto-login.jpeg
 headerYServicios.html
+
+# Preview de Cloudflare Pages (artefacto de scripts/build-preview-staging.mjs)
+dist-preview/
+dist-preview-*/

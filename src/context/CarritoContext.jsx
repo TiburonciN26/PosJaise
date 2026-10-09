@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { limpiarPendiente, marcarPendiente } from '../lib/trabajoPendiente.js'
 
 const CarritoContext = createContext(null)
 
@@ -18,6 +19,22 @@ export function CarritoProvider({ children }) {
   const [tipoDescuento, setTipoDescuento] = useState('porcentaje')
   const [valorDescuento, setValorDescuento] = useState('')
   const [codigoCupon, setCodigoCupon] = useState('')
+
+  // Fase 2B (B4): una venta en curso vive solo en memoria; se registra como trabajo pendiente para que el aviso de
+  // «versión nueva» no recargue la página y la borre. Solo informa: no cambia cobros, cupones ni stock.
+  const ventaEnCurso =
+    carrito.length > 0 ||
+    !!cliente ||
+    !!metodoPago ||
+    montoRecibido !== '' ||
+    montoPosTarjeta !== '' ||
+    valorDescuento !== '' ||
+    codigoCupon !== ''
+  useEffect(() => {
+    if (ventaEnCurso) marcarPendiente('caja-venta', 'una venta en curso en la caja')
+    else limpiarPendiente('caja-venta')
+    return () => limpiarPendiente('caja-venta')
+  }, [ventaEnCurso])
 
   // Memoizado (M5): los setState de React ya son estables, así que el value
   // solo cambia cuando cambia algún dato real del carrito, no en cada render.

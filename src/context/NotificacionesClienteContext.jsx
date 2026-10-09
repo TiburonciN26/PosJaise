@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from './AuthContext.jsx'
 
 const NotificacionesClienteContext = createContext(null)
 
@@ -7,16 +8,23 @@ const NotificacionesClienteContext = createContext(null)
 // mismo motivo que CarritoClienteContext: un solo fetch compartido, no uno
 // por componente. La lista completa la trae NotificacionesCliente.jsx por su
 // cuenta (no hace falta guardarla acá, nadie más la necesita).
+// Sin sesión no hay nada que contar: no consulta y deja el contador en 0.
 export function NotificacionesClienteProvider({ children }) {
+  const { usuario } = useAuth()
+  const usuarioId = usuario?.id ?? null
   const [noLeidas, setNoLeidas] = useState(0)
 
   const recargar = useCallback(async () => {
+    if (!usuarioId) {
+      setNoLeidas(0)
+      return
+    }
     const { count } = await supabase
       .from('notificaciones')
       .select('id', { count: 'exact', head: true })
       .eq('leida', false)
     setNoLeidas(count ?? 0)
-  }, [])
+  }, [usuarioId])
 
   useEffect(() => {
     recargar()

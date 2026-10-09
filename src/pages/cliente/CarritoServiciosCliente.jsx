@@ -30,6 +30,7 @@ import { degradadoServicio, formatearDuracion } from '../../lib/serviciosVisual.
 import { aLima, formatearFechaISO, iniciarDia, sumarDias } from '../../lib/fechas.js'
 import CampoSubirArchivo from '../../components/CampoSubirArchivo.jsx'
 import Contador from '../../components/Contador.jsx'
+import AceptoTerminos from '../../components/AceptoTerminos.jsx'
 
 const BUCKET_FOTOS_SERVICIOS = 'fotos-servicios'
 const BUCKET_COMPROBANTES_CITAS = 'comprobantes-citas-web'
@@ -191,6 +192,7 @@ export default function CarritoServiciosCliente() {
   const [capturaPreview, setCapturaPreview] = useState('')
   const [capturaArchivo, setCapturaArchivo] = useState(null)
   const [enviando, setEnviando] = useState(false)
+  const [terminosAceptados, setTerminosAceptados] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -413,6 +415,7 @@ export default function CarritoServiciosCliente() {
     if (!diaClave) return 'Elige un día.'
     if (!horarioElegido) return 'Elige un horario.'
     if (!capturaArchivo) return 'Sube la captura de tu pago.'
+    if (!terminosAceptados) return 'Acepta los términos y condiciones.'
     return null
   }
 
@@ -832,6 +835,12 @@ export default function CarritoServiciosCliente() {
                 </div>
               </div>
 
+              <AceptoTerminos
+                id="carrito-servicios-acepto-terminos"
+                aceptado={terminosAceptados}
+                onCambiar={setTerminosAceptados}
+                incluirCambios
+              />
               <button
                 type="button"
                 onClick={confirmar}

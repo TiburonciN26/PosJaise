@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket } from 'lucide-react'
+import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -21,6 +21,8 @@ import { buscarProductosVenta, productoPorCodigo, productosPorIds } from '../lib
 import ModalCliente from '../components/ModalCliente.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
+import { boletaRequiereDni, comprobanteCompleto } from '../lib/comprobante.js'
 
 // El lector de códigos de barras (@zxing) pesa varios cientos de KB;
 // se carga solo cuando se abre el escáner, no en el bundle principal.
@@ -82,6 +84,23 @@ function calcularMontoPosTarjeta(total) {
   const montoPorcentaje = total / (1 - TASA_COMISION_TARJETA)
   const montoFijo = total + COMISION_MINIMA_TARJETA
   return redondear2(Math.max(montoPorcentaje, montoFijo))
+}
+
+// Desglose de lo que se digita en el POS: venta + comisión (3.44% o mínimo
+// S/ 3.50) + IGV 18% sobre la comisión = monto. Solo lectura: se deriva del
+// monto escrito, que es el único campo editable.
+function desglosarMontoTarjeta(monto) {
+  const porPorcentaje = monto * 0.0344
+  const esMinimo = porPorcentaje * 1.18 < COMISION_MINIMA_TARJETA
+  const comision = esMinimo ? 3.5 : porPorcentaje
+  const igv = esMinimo ? COMISION_MINIMA_TARJETA - 3.5 : porPorcentaje * 0.18
+  return {
+    monto,
+    comision,
+    igv,
+    venta: monto - comision - igv,
+    etiquetaComision: esMinimo ? 'mín.' : '3.44%',
+  }
 }
 
 function useContadorAnimado(valorObjetivo, duracionMs = 350) {
@@ -199,7 +218,7 @@ function FilaTicket({
               transition: arrastrando ? 'none' : undefined,
             }
       }
-      className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} touch-pan-y grid items-center gap-5 overflow-hidden px-6 py-2 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
+      className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[minmax(0,1fr)_5rem_5rem_1.5rem]'} touch-pan-y grid items-center gap-5 overflow-hidden px-(--separador-vertical) py-2 sm:px-6 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
         saliendo ? 'pointer-events-none -translate-x-full opacity-0 animate-flash-rojo' : 'translate-x-0 opacity-100'
       } ${resaltada ? 'animate-flash-verde' : ''}`}
     >
@@ -213,8 +232,11 @@ function FilaTicket({
           <span className="truncate text-sm text-ink">{item.nombre}</span>
         </div>
         {item.tipo === 'SERVICIO' ? (
-          item.clienteNombre && (
-            <p className="mt-0.5 truncate text-[11px] text-ink/50">Para: {item.clienteNombre}</p>
+          (item.clienteNombre || item.atendidoPor) && (
+            <div className="mt-0.5 text-[11px] leading-tight text-ink/50">
+              {item.clienteNombre && <p className="truncate">Para: {item.clienteNombre}</p>}
+              {item.atendidoPor && <p className="truncate">Hecho por: {item.atendidoPor}</p>}
+            </div>
           )
         ) : (
           <span className="font-mono text-xs text-ink/60">
@@ -343,6 +365,11 @@ export default function Ventas({ activo = true }) {
   const [errorCobro, setErrorCobro] = useState(null)
   const [ventaConfirmada, setVentaConfirmada] = useState(null)
   const [ventaParaImprimir, setVentaParaImprimir] = useState(null)
+  // Comprobante pedido para esta venta: null (sin comprobante) o
+  // { tipo: 'BOLETA' | 'FACTURA', documento, nombre, direccion }. Por ahora solo
+  // se anota y se valida; aún no viaja al servidor ni se emite a SUNAT.
+  const [comprobante, setComprobante] = useState(null)
+  const [modalComprobante, setModalComprobante] = useState(null) // 'BOLETA' | 'FACTURA' | null
 
   // setTimeout "sueltos" (fuera de un useEffect: quitar fila, cancelar
   // venta, cerrar sugerencias al perder foco) que si el componente se
@@ -507,6 +534,7 @@ export default function Ventas({ activo = true }) {
   const recibidoNumerico = parseFloat(montoRecibido) || 0
   const vuelto = redondear2(recibidoNumerico - total)
   const montoPosTarjetaSugerido = calcularMontoPosTarjeta(total)
+  const desgloseTarjeta = desglosarMontoTarjeta(montoPosTarjetaSugerido)
   const montoPosTarjetaNumerico = parseFloat(montoPosTarjeta) || 0
 
   // "Exacto" fija Recibido al total del momento — si después el total
@@ -669,7 +697,22 @@ export default function Ventas({ activo = true }) {
     metodoPago !== null &&
     !haySobreStock &&
     (metodoPago !== 'Efectivo' || recibidoNumerico >= total) &&
-    (!esCupon || codigoCupon === '' || Boolean(cuponPreview))
+    (!esCupon || codigoCupon === '' || Boolean(cuponPreview)) &&
+    comprobanteCompleto(comprobante, total)
+
+  // Boleta/Factura: tocar el botón activo lo quita (vuelve a "sin comprobante").
+  // La boleta no pide datos salvo desde el umbral de DNI; la factura siempre.
+  function elegirComprobante(tipo) {
+    if (comprobante?.tipo === tipo) {
+      setComprobante(null)
+      return
+    }
+    if (tipo === 'BOLETA' && !boletaRequiereDni(total)) {
+      setComprobante({ tipo, documento: '', nombre: '', direccion: '' })
+      return
+    }
+    setModalComprobante(tipo)
+  }
 
   useEffect(() => {
     if (!filaFlash) return undefined
@@ -722,6 +765,7 @@ export default function Ventas({ activo = true }) {
         servicioId: atencion.servicio_id,
         nombre: atencion.servicios?.nombre ?? 'Servicio',
         clienteNombre: atencion.clientes?.nombre ?? null,
+        atendidoPor: atencion.usuarios?.nombre_completo ?? null,
         cantidad: 1,
         precioUnitario: atencion.precio,
         // Se guarda el objeto tal cual vino del buscador — si se saca del
@@ -801,6 +845,7 @@ export default function Ventas({ activo = true }) {
       setMontoPosTarjeta('')
       setMetodoPago(null)
       setCliente(null)
+      setComprobante(null)
       setValorDescuento('')
       setCodigoCupon('')
       setTipoDescuento('porcentaje')
@@ -841,7 +886,7 @@ export default function Ventas({ activo = true }) {
     }
 
     const venta = Array.isArray(data) ? data[0] : data
-    setVentaConfirmada(venta)
+    setVentaConfirmada({ ...venta, comprobante })
 
     // B3 de la 4ª auditoría: se imprime con los items que devuelve el
     // servidor (venta.items — nombre/precio ya resueltos contra el
@@ -874,6 +919,7 @@ export default function Ventas({ activo = true }) {
     setTipoDescuento('porcentaje')
     setMetodoPago(null)
     setCliente(null)
+    setComprobante(null)
     // El carrito queda vacío: el efecto de arriba vuelve a contar las pendientes.
   }
 
@@ -949,7 +995,7 @@ export default function Ventas({ activo = true }) {
   return (
     <div className="animate-entrada-pestana flex h-full flex-col">
       {/* Buscador / escáner de código de barras + Agregar servicio */}
-      <div className="border-b border-border bg-surface p-3">
+      <div className="border-b border-border bg-surface px-(--separador-vertical) pb-3 pt-(--separador-horizontal)">
         {/* lg: en monitores anchos, el buscador y la fila de cliente/servicio
             se centran en vez de estirarse de borde a borde (la franja de
             fondo sí sigue ocupando todo el ancho). */}
@@ -1040,10 +1086,10 @@ export default function Ventas({ activo = true }) {
             type="button"
             onClick={alternarVoz}
             aria-label={escuchando ? 'Detener búsqueda por voz' : 'Buscar por voz'}
-            className={`flex shrink-0 items-center justify-center rounded-lg border p-2.5 transition-colors ${
+            className={`flex shrink-0 items-center justify-center rounded-lg p-2.5 transition-colors ${
               escuchando
-                ? 'animate-pulse border-red bg-red/10 text-red'
-                : 'border-dashed border-border-strong text-ink/70 hover:border-amber hover:text-amber'
+                ? 'animate-pulse bg-red/10 text-red'
+                : 'text-ink/70 hover:text-amber'
             }`}
           >
             <Mic className="h-4 w-4" />
@@ -1054,7 +1100,7 @@ export default function Ventas({ activo = true }) {
           type="button"
           onClick={() => setModalEscanerAbierto(true)}
           aria-label="Escanear código de barras con la cámara"
-          className="flex shrink-0 items-center justify-center rounded-lg border border-dashed border-border-strong p-2.5 text-ink/70 transition-colors hover:border-amber hover:text-amber"
+          className="flex shrink-0 items-center justify-center rounded-lg p-2.5 text-ink/70 transition-colors hover:text-amber"
         >
           <Camera className="h-4 w-4" />
         </button>
@@ -1203,7 +1249,7 @@ export default function Ventas({ activo = true }) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden p-3 pt-0 sm:overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-hidden px-(--separador-vertical) pb-3 pt-0 sm:overflow-y-auto">
         <div className="flex h-full min-h-0 w-full flex-col gap-3 sm:h-auto lg:mx-auto lg:max-w-(--ancho-pestana) lg:flex-row lg:items-start">
           {/* Columna de ticket (fija en móvil el espacio disponible; crece en desktop) */}
           <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -1211,7 +1257,7 @@ export default function Ventas({ activo = true }) {
                 el bloque de pago fijo); en tablet/desktop mantiene el alto
                 fijo de ~4 filas y media, igual que antes */}
             <div
-              className={`-mx-3 flex min-h-0 flex-1 flex-col border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none ${
+              className={`-mx-(--separador-vertical) flex min-h-0 flex-1 flex-col border-border bg-bg sm:mx-0 sm:rounded-lg sm:flex-none ${
                 carritoExpandido ? 'border-t' : ''
               }`}
             >
@@ -1222,11 +1268,11 @@ export default function Ventas({ activo = true }) {
                 onKeyDown={manejarActivacionTeclado(() => setCarritoExpandido((anterior) => !anterior))}
                 aria-expanded={carritoExpandido}
                 aria-label={carritoExpandido ? 'Contraer carrito' : 'Expandir carrito'}
-                className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[1fr_5rem_auto_1.5rem]'} grid cursor-pointer gap-5 border-b border-border px-6 py-2.5 font-mono text-[11px] uppercase tracking-wider text-ink transition-colors hover:bg-surface-2/50`}
+                className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[minmax(0,1fr)_5rem_5rem_1.5rem]'} grid cursor-pointer gap-5 border-b border-border px-(--separador-vertical) py-2.5 sm:px-6 font-mono text-[11px] uppercase tracking-wider text-ink transition-colors hover:bg-surface-2/50`}
               >
                 <span>Producto</span>
-                <span className="text-center">Cantidad</span>
-                <span className="text-right">Subtotal</span>
+                <span className="translate-x-2 text-center">Cantidad</span>
+                <span className="translate-x-2 text-right">Subtotal</span>
                 {!esTactil && <span />}
               </div>
 
@@ -1269,7 +1315,7 @@ export default function Ventas({ activo = true }) {
               contenido no entra en pantallas muy chicas, se scrollea dentro
               del propio panel en vez de mandar los botones fuera de la vista. */}
           <div
-            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:mt-3 lg:w-[360px] lg:flex-none ${
+            className={`fixed inset-x-0 bottom-0 z-20 max-h-[100dvh] w-full overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical) pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform duration-300 ease-in-out sm:static sm:z-auto sm:max-h-none sm:translate-y-0 sm:pb-3 sm:pointer-events-auto lg:mt-3 lg:w-[360px] lg:flex-none ${
               carritoExpandido ? 'translate-y-full pointer-events-none' : 'translate-y-0'
             }`}
           >
@@ -1388,28 +1434,15 @@ export default function Ventas({ activo = true }) {
 
             <CampoColapsable abierto={metodoPago === 'Tarjeta'} margen>
               <div>
-                <label className="mb-1 block text-xs text-ink">💳 Digitar en POS</label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="search"
-                    inputMode="decimal"
-                    autoComplete="new-password"
-                    value={montoPosTarjeta}
-                    onChange={(evento) => setMontoPosTarjeta(evento.target.value)}
-                    placeholder="0.00"
-                    className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setMontoPosTarjeta(String(montoPosTarjetaSugerido))}
-                    className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
-                      montoPosTarjeta === String(montoPosTarjetaSugerido)
-                        ? 'border-green bg-green/10 text-green'
-                        : 'border-border-strong text-ink/70 hover:border-amber hover:text-amber'
-                    }`}
-                  >
-                    Sugerido
-                  </button>
+                <label className="mb-1 block text-xs text-ink">Digitar en POS</label>
+                <div className="flex min-h-[38px] items-center justify-between gap-2 rounded-lg border border-green bg-surface-2 px-3 py-2 font-mono">
+                  <span className="min-w-0 truncate text-[11px] text-ink/60">
+                    {total.toFixed(2)} + {desgloseTarjeta.comision.toFixed(2)} com. +{' '}
+                    {desgloseTarjeta.igv.toFixed(2)} IGV
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold text-green">
+                    {formatearSoles(montoPosTarjetaSugerido)}
+                  </span>
                 </div>
               </div>
             </CampoColapsable>
@@ -1454,6 +1487,54 @@ export default function Ventas({ activo = true }) {
                 </div>
               </div>
             </CampoColapsable>
+
+            <div className="mt-3">
+              <p className="mb-1.5 text-xs text-ink">Comprobante</p>
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                {[
+                  { tipo: 'BOLETA', nombre: 'Boleta', Icono: Receipt },
+                  { tipo: 'FACTURA', nombre: 'Factura', Icono: ScrollText },
+                ].map((opcion) => (
+                  <button
+                    key={opcion.tipo}
+                    type="button"
+                    aria-pressed={comprobante?.tipo === opcion.tipo}
+                    onClick={() => elegirComprobante(opcion.tipo)}
+                    className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[11px] transition-colors sm:text-sm ${
+                      comprobante?.tipo === opcion.tipo
+                        ? 'border-amber bg-amber/10 text-amber'
+                        : 'border-border bg-surface-2 text-ink hover:border-border-strong'
+                    }`}
+                  >
+                    <opcion.Icono className="h-4 w-4 shrink-0" />
+                    {opcion.nombre}
+                  </button>
+                ))}
+              </div>
+              {comprobante && (
+                <p className="mt-1.5 text-[11px] text-ink/60">
+                  {comprobante.documento
+                    ? `${comprobante.tipo === 'FACTURA' ? 'RUC' : 'DNI'} ${comprobante.documento}${
+                        comprobante.nombre ? ` · ${comprobante.nombre}` : ''
+                      }`
+                    : boletaRequiereDni(total) || comprobante.tipo === 'FACTURA'
+                      ? 'Sin datos del comprador.'
+                      : ''}
+                  {!comprobanteCompleto(comprobante, total) && (
+                    <span className="text-amber"> Faltan datos. </span>
+                  )}{' '}
+                  {(comprobante.tipo === 'FACTURA' || boletaRequiereDni(total)) && (
+                    <button
+                      type="button"
+                      onClick={() => setModalComprobante(comprobante.tipo)}
+                      className="underline hover:text-amber"
+                    >
+                      {comprobanteCompleto(comprobante, total) ? 'Editar' : 'Completar'}
+                    </button>
+                  )}
+                </p>
+              )}
+            </div>
 
             {errorCobro && (
               <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
@@ -1515,6 +1596,7 @@ export default function Ventas({ activo = true }) {
 
       {modalRegistroClienteAbierto && (
         <ModalCliente
+          bajoHeader
           nombreInicial={nombreClienteNuevo}
           onCerrar={() => setModalRegistroClienteAbierto(false)}
           onGuardado={(clienteCreado) => {
@@ -1528,7 +1610,7 @@ export default function Ventas({ activo = true }) {
       {modalEscanerAbierto && (
         <Suspense
           fallback={
-            <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/80">
+            <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
               <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
             </div>
           }
@@ -1541,9 +1623,23 @@ export default function Ventas({ activo = true }) {
         </Suspense>
       )}
 
+      {modalComprobante && (
+        <ModalDatosComprobante
+          tipo={modalComprobante}
+          inicial={comprobante?.tipo === modalComprobante ? comprobante : null}
+          total={total}
+          dniObligatorio={modalComprobante === 'BOLETA' && boletaRequiereDni(total)}
+          onGuardar={(datos) => {
+            setComprobante(datos)
+            setModalComprobante(null)
+          }}
+          onCerrar={() => setModalComprobante(null)}
+        />
+      )}
+
       {confirmandoCancelar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Cancelar esta venta?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Se va a vaciar el ticket completo. Esta acción no se puede deshacer.
@@ -1569,13 +1665,19 @@ export default function Ventas({ activo = true }) {
       )}
 
       {ventaConfirmada && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelConfirmadaRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5 text-center">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelConfirmadaRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) text-center">
             <p className="text-3xl text-green">✓</p>
             <h2 className="mt-2 text-base font-semibold text-ink">Venta confirmada</h2>
             <p className="mt-1 font-mono text-sm text-ink/60">
               {ventaConfirmada.codigo} · {formatearSoles(ventaConfirmada.total)}
             </p>
+            {ventaConfirmada.comprobante && (
+              <p className="mt-2 text-xs text-amber">
+                {ventaConfirmada.comprobante.tipo === 'FACTURA' ? 'Factura' : 'Boleta'} pedida: aún no se emite a SUNAT
+                (falta conectar el proveedor).
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setVentaConfirmada(null)}

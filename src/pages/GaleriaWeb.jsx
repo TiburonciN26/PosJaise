@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import GuiaPestana from '../components/GuiaPestana.jsx'
 import { Image, Pencil, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -88,22 +89,15 @@ export default function GaleriaWeb() {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
-      style={{ '--color-foco': 'var(--color-red)' }}
+      className="relative animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
-      <div className="mt-3 flex flex-col items-center gap-2 text-center">
-        <Image className="h-8 w-8 text-red" />
-        <p className="text-base font-semibold text-red">Galería Web</p>
-        <p className="max-w-sm text-sm text-ink/60">
-          Fotos de antes/después que ven tus clientes en Nosotros → Galería, como un slider
-          arrastrable. Las que estén "Visible en la Web" apagadas no se muestran.
-        </p>
-      </div>
+      <GuiaPestana>Fotos de antes/después que ven tus clientes en Nosotros → Galería, como un slider arrastrable. Las que estén "Visible en la Web" apagadas no se muestran.</GuiaPestana>
 
       <button
         type="button"
         onClick={() => setModal('nuevo')}
-        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-red py-2.5 text-sm font-semibold text-white"
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-azul-metal py-2.5 text-sm font-semibold text-bg"
       >
         <Plus className="h-4 w-4" />
         Agregar foto
@@ -116,7 +110,7 @@ export default function GaleriaWeb() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3"
+              className="flex items-center gap-3 rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
             >
               <div className="flex shrink-0 -space-x-3">
                 <img
@@ -145,7 +139,7 @@ export default function GaleriaWeb() {
                 type="button"
                 onClick={() => setModal(item)}
                 aria-label={`Editar ${item.titulo || 'foto'}`}
-                className="shrink-0 rounded-lg border border-border-strong p-2 text-ink/70 transition-colors hover:border-red hover:text-red"
+                className="shrink-0 rounded-lg border border-border-strong p-2 text-ink/70 transition-colors hover:border-azul-metal hover:text-azul-metal"
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -153,7 +147,7 @@ export default function GaleriaWeb() {
                 type="button"
                 onClick={() => setItemAEliminar(item)}
                 aria-label={`Eliminar ${item.titulo || 'foto'}`}
-                className="shrink-0 rounded-lg border border-border-strong p-2 text-ink/70 transition-colors hover:border-red hover:text-red"
+                className="shrink-0 rounded-lg border border-border-strong p-2 text-ink/70 transition-colors hover:border-azul-metal hover:text-azul-metal"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -176,8 +170,8 @@ export default function GaleriaWeb() {
       )}
 
       {itemAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Eliminar esta foto?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Se borra de la galería y del almacenamiento. No se puede deshacer.
@@ -187,7 +181,7 @@ export default function GaleriaWeb() {
                 type="button"
                 onClick={() => setItemAEliminar(null)}
                 disabled={eliminando}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red disabled:opacity-40"
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
               >
                 Cancelar
               </button>

@@ -35,6 +35,8 @@ const ETIQUETA_COBERTURA = {
   personalizado: 'Gastos del período cubiertos',
 }
 
+const VERDE = '#3ecf6a'
+
 function Brillo({ activo }) {
   if (!activo) return null
   return (
@@ -49,7 +51,7 @@ function Brillo({ activo }) {
 // text-transparent en la misma className, cuál gana depende del orden en el
 // CSS generado por Tailwind, no del orden en el string — y a veces pierde
 // text-transparent, dejando el texto opaco y tapando el degradado.
-function TextoBrillante({ activo, color, className = '', claseColorInactiva = '', children }) {
+function TextoBrillante({ activo, color, destello = '#f7b3ca', className = '', claseColorInactiva = '', children }) {
   if (!activo) {
     return <span className={`${className} ${claseColorInactiva}`}>{children}</span>
   }
@@ -57,7 +59,7 @@ function TextoBrillante({ activo, color, className = '', claseColorInactiva = ''
     <span
       className={`${className} animate-brillo-texto bg-clip-text text-transparent`}
       style={{
-        backgroundImage: `linear-gradient(90deg, ${color} 30%, #ffffff 50%, ${color} 70%)`,
+        backgroundImage: `linear-gradient(90deg, ${color} 30%, ${destello} 50%, ${color} 70%)`,
         backgroundSize: '220% 100%',
       }}
     >
@@ -73,7 +75,46 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
   const llegoAlTope = porcentaje >= 100
 
   return (
-    <div className="relative isolate overflow-hidden rounded-lg border border-purple-300 bg-surface px-4 pb-[11px] pt-[11px]">
+    <div
+      className="relative isolate overflow-hidden rounded-lg border border-purple-300 bg-surface px-4 pb-[11px] pt-[11px]"
+      style={
+        llegoAlTope
+          ? {
+              boxShadow:
+                '0 0 40px rgba(237,139,172,0.28), inset 0 0 0 1px rgba(255,225,235,0.35), inset 0 -4px 14px rgba(237,139,172,0.12)',
+            }
+          : undefined
+      }
+    >
+      {llegoAlTope && (
+        <>
+          {/* Efectos de brillo estáticos (sin movimiento ni puntos) sobre el
+              fondo normal: halo rosa, borde luminoso, iridiscencia suave, líneas
+              finas y reflejo fijo. Solo aparece al superar el 100% de gastos cubiertos. */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10 opacity-[0.14]"
+            style={{
+              background:
+                'linear-gradient(120deg,#ffb3d9,#b3e5ff 25%,#d4ffb3 45%,#fff0b3 60%,#d9b3ff 80%,#b3fff6)',
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background:
+                'repeating-linear-gradient(90deg,rgba(255,225,235,0.05) 0 1px,transparent 1px 4px)',
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background:
+                'radial-gradient(circle at 70% 40%,rgba(237,139,172,0.22),rgba(237,139,172,0) 55%)',
+            }}
+          />
+        </>
+      )}
+
       {llegoAlTope && (
         <div
           className="pointer-events-none absolute inset-0 -z-10 w-1/2 animate-brillo-tarjeta"
@@ -88,17 +129,27 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
       <div className="flex items-center justify-between gap-2">
         <TextoBrillante
           activo={llegoAlTope}
-          color="#f0ede6"
+          color="#ffffff"
           className="text-sm font-semibold"
-          claseColorInactiva="text-ink"
+          claseColorInactiva="text-white"
         >
           Punto de equilibrio
         </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/60">
+        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-white">
           {superado && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
-          <TextoBrillante activo={llegoAlTope} color="rgba(240,237,230,0.5)">
-            {ingresoBruto.toFixed(2)} - {meta.toFixed(2)}
+          <span>
+          <TextoBrillante
+            activo={llegoAlTope}
+            color={superado ? VERDE : '#ffffff'}
+            claseColorInactiva={superado ? 'text-green' : 'text-white'}
+          >
+            {ingresoBruto.toFixed(2)}
           </TextoBrillante>
+          <TextoBrillante activo={llegoAlTope} color="#ffffff" claseColorInactiva="text-white">
+            {' - '}
+            {meta.toFixed(2)}
+          </TextoBrillante>
+          </span>
         </span>
       </div>
 
@@ -111,14 +162,23 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <TextoBrillante activo={llegoAlTope} color="rgba(240,237,230,0.6)" className="text-xs">
+        <TextoBrillante activo={llegoAlTope} color="#ffffff" claseColorInactiva="text-white" className="text-xs">
           {ETIQUETA_COBERTURA[filtro]}
         </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/60">
+        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-white">
           {porcentaje > 100 && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
-          <TextoBrillante activo={llegoAlTope} color="rgba(240,237,230,0.5)">
-            {Math.round(porcentaje)}% - 100%
+          <span>
+          <TextoBrillante
+            activo={llegoAlTope}
+            color={porcentaje > 100 ? VERDE : '#ffffff'}
+            claseColorInactiva={porcentaje > 100 ? 'text-green' : 'text-white'}
+          >
+            {Math.round(porcentaje)}%
           </TextoBrillante>
+          <TextoBrillante activo={llegoAlTope} color="#ffffff" claseColorInactiva="text-white">
+            {' - 100%'}
+          </TextoBrillante>
+          </span>
         </span>
       </div>
     </div>
@@ -253,7 +313,7 @@ export default function Dashboard({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       {/* Filtros de fecha: fijos arriba al hacer scroll */}
@@ -278,16 +338,27 @@ export default function Dashboard({ activo = true }) {
         <EsqueletoResumen cantidad={9} />
       ) : (
         <>
-          {/* Punto de equilibrio: barra tipo termómetro */}
-          <div className="mt-4">
-            <BarraTermometro filtro={filtro} ingresoBruto={ingresoNeto} meta={metaEquilibrio} />
+          <div className="mt-(--separador-horizontal) flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
+          {/* PC: punto de equilibrio a la izquierda y totales a la derecha
+              (cada tarjeta del ancho de su contenido). En móvil el wrapper
+              desaparece (contents) y cada hijo conserva su orden original. */}
+          <div className="contents lg:order-1 lg:col-span-2 lg:flex lg:items-stretch lg:gap-4">
+            <div className="order-1 min-w-0 lg:flex-1">
+              <BarraTermometro filtro={filtro} ingresoBruto={ingresoNeto} meta={metaEquilibrio} />
+            </div>
+            <div className="order-3 grid grid-cols-3 gap-3 lg:flex lg:shrink-0 lg:gap-3 [&>*]:lg:flex [&>*]:lg:flex-col [&>*]:lg:justify-center [&>*]:lg:whitespace-nowrap">
+              <TarjetaResumen etiqueta="Ventas" valor={metricas.cantidadVentas} />
+              <TarjetaResumen
+                etiqueta="Productos vendidos"
+                valor={`${metricas.productosVendidos} uds.`}
+                claseValor="text-ink"
+              />
+              <TarjetaResumen etiqueta="Servicios realizados" valor={metricas.serviciosRealizados} />
+            </div>
           </div>
 
-          {/* En PC: totales arriba a todo el ancho, y debajo Resumen | Cascada
-              lado a lado. En móvil se conserva el orden y el apilado original. */}
-          <div className="mt-4 flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
           {/* Resumen del período: lista (antes eran tarjetas sueltas) */}
-          <div className="rounded-lg border border-border bg-surface p-4 lg:order-2">
+          <div className="rounded-lg border border-border bg-surface p-4 order-2 lg:order-2">
             <h2 className="text-sm font-semibold text-ink">Resumen del período</h2>
             <div className="mt-3 space-y-2">
               {filasResumen.map((fila) => (
@@ -303,19 +374,8 @@ export default function Dashboard({ activo = true }) {
             </div>
           </div>
 
-          {/* Tarjetas de conteo (no monetarias) */}
-          <div className="grid grid-cols-3 gap-3 lg:order-1 lg:col-span-2">
-            <TarjetaResumen etiqueta="Ventas" valor={metricas.cantidadVentas} />
-            <TarjetaResumen
-              etiqueta="Productos vendidos"
-              valor={`${metricas.productosVendidos} uds.`}
-              claseValor="text-ink"
-            />
-            <TarjetaResumen etiqueta="Servicios realizados" valor={metricas.serviciosRealizados} />
-          </div>
-
           {/* Cascada de ganancia */}
-          <div className="rounded-lg border border-border bg-surface p-4 lg:order-3">
+          <div className="rounded-lg border border-border bg-surface p-4 order-4 lg:order-3">
             <h2 className="text-sm font-semibold text-ink">Cascada de ganancia</h2>
             <div className="mt-3 space-y-2">
               {pasosPrevios.map((paso) => (

@@ -23,7 +23,7 @@ export default function BarraCatalogo({
   const [abierto, setAbierto] = useState(false)
   const barraRef = useRef(null)
 
-  useCerrarConEscape(() => setAbierto(false), abierto)
+  useCerrarConEscape(() => setAbierto(false), abierto, { trabajoPendiente: false })
 
   // Clic fuera de la barra: pliega la lista (mismo patrón que el menú del avatar).
   useEffect(() => {

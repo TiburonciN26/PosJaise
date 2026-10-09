@@ -54,12 +54,12 @@ export default function ModalAgregarStock({ producto, onCerrar, onGuardado }) {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        className="max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="max-h-full w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">Agregar stock</h2>
         <p className="mt-1 text-sm text-ink">{producto.nombre}</p>

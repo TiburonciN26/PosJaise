@@ -23,8 +23,10 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
   { id: 'nombre-desc', label: 'Nombre (Z-A)' },
-  { id: 'precio-asc', label: 'Precio (menor a mayor)' },
-  { id: 'precio-desc', label: 'Precio (mayor a menor)' },
+  { id: 'precio-asc', label: 'Venta (menor a mayor)' },
+  { id: 'precio-desc', label: 'Venta (mayor a menor)' },
+  { id: 'costo-asc', label: 'Costo (menor a mayor)', soloAdmin: true },
+  { id: 'costo-desc', label: 'Costo (mayor a menor)', soloAdmin: true },
   { id: 'stock-asc', label: 'Stock (menor a mayor)' },
   { id: 'stock-desc', label: 'Stock (mayor a menor)' },
 ]
@@ -32,6 +34,8 @@ const OPCIONES_ORDEN = [
 const ORDEN_A_COLUMNA = {
   'nombre-asc': { columna: 'nombre', ascending: true },
   'nombre-desc': { columna: 'nombre', ascending: false },
+  'costo-asc': { columna: 'costo', ascending: true },
+  'costo-desc': { columna: 'costo', ascending: false },
   'precio-asc': { columna: 'precio', ascending: true },
   'precio-desc': { columna: 'precio', ascending: false },
   'stock-asc': { columna: 'stock_actual', ascending: true },
@@ -224,17 +228,24 @@ export default function Inventario({ activo = true }) {
   const categoriasExistentes = resumen.categorias
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
+    <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
       {/* Buscador + Nuevo producto: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar producto..."
           tema="amber"
+          sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" />
+        <SelectorOrden
+          opciones={OPCIONES_ORDEN.filter((opcion) => esAdmin || !opcion.soloAdmin)}
+          valor={orden}
+          onCambiar={setOrden}
+          tema="amber"
+          sinBorde
+        />
 
         {esAdmin && (
           <button
@@ -249,7 +260,7 @@ export default function Inventario({ activo = true }) {
       </div>
 
       {/* Estadísticas */}
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mt-1 grid grid-cols-2 gap-3 md:grid-cols-4">
         <div
           className={`rounded-lg border border-border bg-surface px-3 py-2 ${!esAdmin ? 'col-span-2 md:col-span-4' : ''}`}
         >
@@ -336,12 +347,12 @@ export default function Inventario({ activo = true }) {
               historial de stock si es admin), donde ahora viven Editar/
               Eliminar. "Agregar stock" en cambio queda inline acá (lo usan
               seguido ambos roles) Y también dentro del modal. */}
-          <div className="mt-4 grid grid-cols-1 gap-3 lg:hidden">
+          <div className="mt-3 grid grid-cols-1 gap-2.5 lg:hidden">
             {productos.map((producto) => (
               <div
                 key={producto.id}
                 onClick={() => setProductoDetalle({ producto, mostrarAcciones: true })}
-                className="w-full touch-manipulation rounded-lg border border-border bg-surface p-3 text-left transition-colors hover:border-amber/40"
+                className="w-full touch-manipulation rounded-lg border border-border bg-surface p-2 text-left transition-colors hover:border-amber/40"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -576,8 +587,8 @@ export default function Inventario({ activo = true }) {
       )}
 
       {productoAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{productoAEliminar.nombre}"?
             </h2>

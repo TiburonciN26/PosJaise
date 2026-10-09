@@ -1,0 +1,137 @@
+diff --git a/src/components/AvisoActualizacionPWA.jsx b/src/components/AvisoActualizacionPWA.jsx
+index 0c47dec..f3ba579 100644
+--- a/src/components/AvisoActualizacionPWA.jsx
++++ b/src/components/AvisoActualizacionPWA.jsx
+@@ -1,29 +1,52 @@
+ import { useRegisterSW } from 'virtual:pwa-register/react'
++import { usePendientes } from '../lib/trabajoPendiente.js'
+ 
+ // A2 de la 4ª auditoría: registra el service worker y, cuando hay una
+ // versión nueva esperando, muestra un aviso persistente (no un toast que
+ // se autooculta) con un botón explícito — el usuario decide cuándo
+ // recargar, en vez de que la versión cambie sola debajo suyo mientras
+ // tiene el POS abierto a mitad de una venta.
++//
++// Fase 2B (B4): «Actualizar» recarga la página y el trabajo en memoria
++// (venta en curso en la caja, ventanas/formularios abiertos) se perdería.
++// Mientras haya trabajo pendiente registrado (lib/trabajoPendiente.js) el
++// botón queda deshabilitado y el aviso lo explica; al terminar o cancelar
++// ese trabajo se habilita solo. Sin trabajo pendiente, funciona igual que antes.
+ export default function AvisoActualizacionPWA() {
+   const {
+     needRefresh: [needRefresh],
+     updateServiceWorker,
+   } = useRegisterSW()
++  const pendientes = [...new Set(usePendientes())]
+ 
+   if (!needRefresh) return null
+ 
++  const bloqueado = pendientes.length > 0
++
+   return (
+     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+-      <div className="pointer-events-auto flex items-center gap-3 rounded-lg border border-amber/40 bg-surface px-4 py-2.5 text-sm text-ink shadow-lg">
+-        <span>Hay una versión nueva de la app.</span>
+-        <button
+-          type="button"
+-          onClick={() => updateServiceWorker(true)}
+-          className="shrink-0 rounded-lg bg-amber px-3 py-1.5 text-xs font-semibold text-bg"
+-        >
+-          Actualizar
+-        </button>
++      <div
++        role="status"
++        className="pointer-events-auto flex max-w-md flex-col gap-2 rounded-lg border border-amber/40 bg-surface px-4 py-2.5 text-sm text-ink shadow-lg"
++      >
++        <div className="flex items-center gap-3">
++          <span>Hay una versión nueva de la app.</span>
++          <button
++            type="button"
++            disabled={bloqueado}
++            aria-disabled={bloqueado}
++            onClick={() => updateServiceWorker(true)}
++            className="shrink-0 rounded-lg bg-amber px-3 py-1.5 text-xs font-semibold text-bg disabled:cursor-not-allowed disabled:opacity-40"
++          >
++            Actualizar
++          </button>
++        </div>
++        {bloqueado && (
++          <p data-testid="aviso-actualizacion-bloqueada" className="text-xs text-ink/70">
++            Tienes {pendientes.join(' y ')}. Termina o cancela eso primero: actualizar recargaría la página y
++            lo perderías.
++          </p>
++        )}
+       </div>
+     </div>
+   )
+diff --git a/src/context/CarritoContext.jsx b/src/context/CarritoContext.jsx
+index f17e9de..a6474d3 100644
+--- a/src/context/CarritoContext.jsx
++++ b/src/context/CarritoContext.jsx
+@@ -1,4 +1,5 @@
+-import { createContext, useContext, useMemo, useState } from 'react'
++import { createContext, useContext, useEffect, useMemo, useState } from 'react'
++import { limpiarPendiente, marcarPendiente } from '../lib/trabajoPendiente.js'
+ 
+ const CarritoContext = createContext(null)
+ 
+@@ -19,6 +20,22 @@ export function CarritoProvider({ children }) {
+   const [valorDescuento, setValorDescuento] = useState('')
+   const [codigoCupon, setCodigoCupon] = useState('')
+ 
++  // Fase 2B (B4): una venta en curso vive solo en memoria; se registra como trabajo pendiente para que el aviso de
++  // «versión nueva» no recargue la página y la borre. Solo informa: no cambia cobros, cupones ni stock.
++  const ventaEnCurso =
++    carrito.length > 0 ||
++    !!cliente ||
++    !!metodoPago ||
++    montoRecibido !== '' ||
++    montoPosTarjeta !== '' ||
++    valorDescuento !== '' ||
++    codigoCupon !== ''
++  useEffect(() => {
++    if (ventaEnCurso) marcarPendiente('caja-venta', 'una venta en curso en la caja')
++    else limpiarPendiente('caja-venta')
++    return () => limpiarPendiente('caja-venta')
++  }, [ventaEnCurso])
++
+   // Memoizado (M5): los setState de React ya son estables, así que el value
+   // solo cambia cuando cambia algún dato real del carrito, no en cada render.
+   const value = useMemo(
+diff --git a/src/hooks/useCerrarConEscape.js b/src/hooks/useCerrarConEscape.js
+index 9736c2b..d3bd115 100644
+--- a/src/hooks/useCerrarConEscape.js
++++ b/src/hooks/useCerrarConEscape.js
+@@ -1,5 +1,6 @@
+ import { useEffect, useLayoutEffect, useRef } from 'react'
+ import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
++import { limpiarPendiente, marcarPendiente } from '../lib/trabajoPendiente.js'
+ 
+ // B5 de la 4ª auditoría: con modales apilados (ej. Gastos -> Plantillas ->
+ // confirmación), cada capa registraba su propio listener de Escape — un
+@@ -13,7 +14,8 @@ const pila = []
+ // Convención del proyecto: todo modal se puede cerrar con Esc.
+ // `activo` permite usar el hook también en diálogos condicionales
+ // (que no siempre están montados) sin romper las reglas de hooks.
+-export function useCerrarConEscape(onCerrar, activoSolicitado = true) {
++// `opciones.trabajoPendiente = false` excluye menús/selectores desplegables: no tienen nada que perder al recargar.
++export function useCerrarConEscape(onCerrar, activoSolicitado = true, { trabajoPendiente = true } = {}) {
+   // Un diálogo de una pestaña cacheada y OCULTA no participa en la pila (QA-049); vuelve al ser visible, con su estado intacto.
+   const paginaActiva = usePaginaActiva()
+   const activo = activoSolicitado && paginaActiva
+@@ -50,4 +52,15 @@ export function useCerrarConEscape(onCerrar, activoSolicitado = true) {
+       if (indice !== -1) pila.splice(indice, 1)
+     }
+   }, [activo])
++
++  // Fase 2B (B4): trabajo pendiente = el diálogo está ABIERTO/montado, aunque su página esté oculta en la caché de pestañas
++  // (Atrás del navegador oculta la página, pero su formulario sigue en memoria y se perdería al recargar). Por eso depende
++  // de `activoSolicitado` y NO de `paginaActiva`; Escape y la pila de capas (QA-049) siguen limitados a la página visible.
++  // Solo informa al aviso de «versión nueva»: no cambia el comportamiento del diálogo.
++  useLayoutEffect(() => {
++    if (!activoSolicitado || !trabajoPendiente) return undefined
++    const id = idRef.current
++    marcarPendiente(id, 'una ventana o formulario abierto')
++    return () => limpiarPendiente(id)
++  }, [activoSolicitado, trabajoPendiente])
+ }

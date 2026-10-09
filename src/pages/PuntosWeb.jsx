@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import GuiaPestana from '../components/GuiaPestana.jsx'
 import { PiggyBank } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -91,19 +92,12 @@ export default function PuntosWeb() {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
-      style={{ '--color-foco': 'var(--color-red)' }}
+      className="relative animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
-      <div className="mt-3 flex flex-col items-center gap-2 text-center">
-        <PiggyBank className="h-8 w-8 text-red" />
-        <p className="text-base font-semibold text-red">Puntos Web</p>
-        <p className="max-w-sm text-sm text-ink/60">
-          Define cuántos puntos suma cada clienta y cuánto necesita para subir de nivel en su
-          tarjeta (Básico → Premium → VIP). Todo cliente nuevo empieza en Básico.
-        </p>
-      </div>
+      <GuiaPestana>Define cuántos puntos suma cada clienta y cuánto necesita para subir de nivel en su tarjeta (Básico → Premium → VIP). Todo cliente nuevo empieza en Básico.</GuiaPestana>
 
-      <form onSubmit={guardar} className="mt-6 space-y-3 rounded-lg border border-border bg-surface p-4">
+      <form onSubmit={guardar} className="space-y-3 rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
         <div>
           <Etiqueta htmlFor="puntos-visita">Puntos por visita completada</Etiqueta>
           <input
@@ -113,7 +107,7 @@ export default function PuntosWeb() {
             step="0.5"
             value={formulario.puntosPorVisita}
             onChange={(evento) => actualizarCampo('puntosPorVisita', evento.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
           />
         </div>
 
@@ -126,7 +120,7 @@ export default function PuntosWeb() {
             step="0.01"
             value={formulario.puntosPorSolGastado}
             onChange={(evento) => actualizarCampo('puntosPorSolGastado', evento.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
           />
           <p className="mt-1 text-xs text-ink/50">
             Ej. 0.05 = 1 punto por cada S/20 gastados en servicios.
@@ -142,7 +136,7 @@ export default function PuntosWeb() {
             step="1"
             value={formulario.umbralPremium}
             onChange={(evento) => actualizarCampo('umbralPremium', evento.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
           />
         </div>
 
@@ -155,14 +149,14 @@ export default function PuntosWeb() {
             step="1"
             value={formulario.umbralVip}
             onChange={(evento) => actualizarCampo('umbralVip', evento.target.value)}
-            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-red"
+            className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
           />
         </div>
 
         <button
           type="submit"
           disabled={guardando}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-red py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-azul-metal py-2.5 text-sm font-semibold text-bg disabled:opacity-40"
         >
           <PiggyBank className="h-4 w-4" />
           {guardando ? 'Guardando...' : 'Guardar'}

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from './AuthContext.jsx'
 
 const PerfilClienteContext = createContext(null)
 
@@ -7,19 +8,32 @@ const PerfilClienteContext = createContext(null)
 // compartida por el avatar del header (MenuUsuarioCliente) y la pestaña Mi
 // Perfil — sin esto, cada uno haría su propio fetch y editar el nombre/foto
 // en Mi Perfil no se vería reflejado en el avatar hasta recargar la página.
+//
+// Sin sesión (visitante en la web pública) no se consulta nada: perfil null y
+// cargando false. Al iniciar o cerrar sesión el portal NO se remonta, así que el
+// efecto depende del id del usuario: carga el perfil al entrar y lo borra al
+// salir (el siguiente visitante nunca ve el perfil anterior).
 export function PerfilClienteProvider({ children }) {
+  const { usuario } = useAuth()
+  const usuarioId = usuario?.id ?? null
   const [perfil, setPerfil] = useState(null)
-  const [cargando, setCargando] = useState(true)
+  const [cargando, setCargando] = useState(Boolean(usuarioId))
 
   const recargar = useCallback(async () => {
+    if (!usuarioId) {
+      setPerfil(null)
+      setCargando(false)
+      return
+    }
     const { data } = await supabase.rpc('mi_perfil_cliente')
     setPerfil(data?.[0] ?? null)
     setCargando(false)
-  }, [])
+  }, [usuarioId])
 
   useEffect(() => {
+    if (usuarioId) setCargando(true)
     recargar()
-  }, [recargar])
+  }, [usuarioId, recargar])
 
   // setPerfil se expone para que, tras guardar en el modal de edición, se
   // pinte al toque con la fila que ya devolvió la propia RPC de guardado —

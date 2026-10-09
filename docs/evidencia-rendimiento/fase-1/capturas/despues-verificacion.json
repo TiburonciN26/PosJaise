@@ -1,0 +1,141 @@
+{
+  "etiqueta": "despues",
+  "comprobaciones": [
+    {
+      "nombre": "[oscuro] reposo: destello quieto",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro] reposo: chispas quietas",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro] cupón apagado: chispas ocultas",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro] animaciones CSS activas en reposo",
+      "pasa": true,
+      "detalle": 5
+    },
+    {
+      "nombre": "[oscuro] hover: destello corre (transform)",
+      "pasa": true,
+      "detalle": "cupon-sheen-pasada"
+    },
+    {
+      "nombre": "[oscuro] hover: chispas centellean",
+      "pasa": true,
+      "detalle": "cupon-titilar"
+    },
+    {
+      "nombre": "[oscuro] fin del hover: vuelve a quieto",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro] sin errores de página",
+      "pasa": true,
+      "detalle": []
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] reposo: destello quieto",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] reposo: chispas quietas",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] cupón apagado: chispas ocultas",
+      "pasa": true
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] animaciones CSS activas en reposo",
+      "pasa": true,
+      "detalle": 0
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] reduced-motion: sin destello al hover",
+      "pasa": true,
+      "detalle": "none"
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] reduced-motion: sin centelleo al hover",
+      "pasa": true,
+      "detalle": "none"
+    },
+    {
+      "nombre": "[oscuro/reduced-motion] sin errores de página",
+      "pasa": true,
+      "detalle": []
+    },
+    {
+      "nombre": "[claro] reposo: destello quieto",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro] reposo: chispas quietas",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro] cupón apagado: chispas ocultas",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro] animaciones CSS activas en reposo",
+      "pasa": true,
+      "detalle": 5
+    },
+    {
+      "nombre": "[claro] hover: destello corre (transform)",
+      "pasa": true,
+      "detalle": "cupon-sheen-pasada"
+    },
+    {
+      "nombre": "[claro] hover: chispas centellean",
+      "pasa": true,
+      "detalle": "cupon-titilar"
+    },
+    {
+      "nombre": "[claro] fin del hover: vuelve a quieto",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro] sin errores de página",
+      "pasa": true,
+      "detalle": []
+    },
+    {
+      "nombre": "[claro/reduced-motion] reposo: destello quieto",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro/reduced-motion] reposo: chispas quietas",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro/reduced-motion] cupón apagado: chispas ocultas",
+      "pasa": true
+    },
+    {
+      "nombre": "[claro/reduced-motion] animaciones CSS activas en reposo",
+      "pasa": true,
+      "detalle": 0
+    },
+    {
+      "nombre": "[claro/reduced-motion] reduced-motion: sin destello al hover",
+      "pasa": true,
+      "detalle": "none"
+    },
+    {
+      "nombre": "[claro/reduced-motion] reduced-motion: sin centelleo al hover",
+      "pasa": true,
+      "detalle": "none"
+    },
+    {
+      "nombre": "[claro/reduced-motion] sin errores de página",
+      "pasa": true,
+      "detalle": []
+    }
+  ]
+}

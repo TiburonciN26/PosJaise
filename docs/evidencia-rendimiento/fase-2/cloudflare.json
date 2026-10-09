@@ -1,0 +1,469 @@
+{
+  "etiqueta": "cloudflare",
+  "base": "/",
+  "rutas": [
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/ventas",
+      "final": "/ventas",
+      "trasRecarga": "/ventas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/inventario",
+      "final": "/inventario",
+      "trasRecarga": "/inventario",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/historial",
+      "final": "/historial",
+      "trasRecarga": "/historial",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/servicios",
+      "final": "/servicios",
+      "trasRecarga": "/servicios",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/dashboard",
+      "final": "/dashboard",
+      "trasRecarga": "/dashboard",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/mi-panel",
+      "final": "/mi-panel",
+      "trasRecarga": "/mi-panel",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/citas",
+      "final": "/citas",
+      "trasRecarga": "/citas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/estadisticas",
+      "final": "/estadisticas",
+      "trasRecarga": "/estadisticas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/auditoria",
+      "final": "/auditoria",
+      "trasRecarga": "/auditoria",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/clientes",
+      "final": "/clientes",
+      "trasRecarga": "/clientes",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/deudas",
+      "final": "/deudas",
+      "trasRecarga": "/deudas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/porcentajes",
+      "final": "/porcentajes",
+      "trasRecarga": "/porcentajes",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/gastos",
+      "final": "/gastos",
+      "trasRecarga": "/gastos",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/asistentes",
+      "final": "/asistentes",
+      "trasRecarga": "/asistentes",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/mobiliario",
+      "final": "/mobiliario",
+      "trasRecarga": "/mobiliario",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/web",
+      "final": "/web",
+      "trasRecarga": "/web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/promociones",
+      "final": "/promociones",
+      "trasRecarga": "/promociones",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/pedidos-web",
+      "final": "/pedidos-web",
+      "trasRecarga": "/pedidos-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/resenas-web",
+      "final": "/resenas-web",
+      "trasRecarga": "/resenas-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/contacto-web",
+      "final": "/contacto-web",
+      "trasRecarga": "/contacto-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/puntos-web",
+      "final": "/puntos-web",
+      "trasRecarga": "/puntos-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/referidos-web",
+      "final": "/referidos-web",
+      "trasRecarga": "/referidos-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/fidelizacion-web",
+      "final": "/fidelizacion-web",
+      "trasRecarga": "/fidelizacion-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/recompensas-web",
+      "final": "/recompensas-web",
+      "trasRecarga": "/recompensas-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/catalogo-web",
+      "final": "/catalogo-web",
+      "trasRecarga": "/catalogo-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/libro-reclamaciones-web",
+      "final": "/libro-reclamaciones-web",
+      "trasRecarga": "/libro-reclamaciones-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "ADMINISTRADOR",
+      "pedida": "/galeria-web",
+      "final": "/galeria-web",
+      "trasRecarga": "/galeria-web",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CAJERA",
+      "pedida": "/ventas",
+      "final": "/ventas",
+      "trasRecarga": "/ventas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CAJERA",
+      "pedida": "/historial",
+      "final": "/historial",
+      "trasRecarga": "/historial",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CAJERA",
+      "pedida": "/auditoria",
+      "final": "/ventas",
+      "trasRecarga": "/ventas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CAJERA",
+      "pedida": "/dashboard",
+      "final": "/ventas",
+      "trasRecarga": "/ventas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/inicio",
+      "final": "/inicio",
+      "trasRecarga": "/inicio",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/servicios",
+      "final": "/servicios",
+      "trasRecarga": "/servicios",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/productos",
+      "final": "/productos",
+      "trasRecarga": "/productos",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/nosotros",
+      "final": "/nosotros",
+      "trasRecarga": "/nosotros",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/recompensas",
+      "final": "/recompensas",
+      "trasRecarga": "/recompensas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/libro-de-reclamaciones",
+      "final": "/libro-de-reclamaciones",
+      "trasRecarga": "/libro-de-reclamaciones",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/terminos-y-condiciones",
+      "final": "/terminos-y-condiciones",
+      "trasRecarga": "/terminos-y-condiciones",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/politica-de-privacidad",
+      "final": "/politica-de-privacidad",
+      "trasRecarga": "/politica-de-privacidad",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/login",
+      "final": "/login",
+      "trasRecarga": "/login",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "PUBLICO",
+      "pedida": "/ruta-que-no-existe",
+      "final": "/inicio",
+      "trasRecarga": "/inicio",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/inicio",
+      "final": "/inicio",
+      "trasRecarga": "/inicio",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/servicios",
+      "final": "/servicios",
+      "trasRecarga": "/servicios",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/productos",
+      "final": "/productos",
+      "trasRecarga": "/productos",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/citas",
+      "final": "/citas",
+      "trasRecarga": "/citas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/carrito",
+      "final": "/carrito",
+      "trasRecarga": "/carrito",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/mi-perfil",
+      "final": "/mi-perfil",
+      "trasRecarga": "/mi-perfil",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    },
+    {
+      "rol": "CLIENTE",
+      "pedida": "/recompensas?seccion=cupones",
+      "final": "/recompensas",
+      "trasRecarga": "/recompensas",
+      "conContenido": true,
+      "fallosHttp": [],
+      "errores": []
+    }
+  ],
+  "pwa": {
+    "manifest": {
+      "start_url": "/",
+      "scope": "/"
+    },
+    "iconos": [
+      {
+        "src": "/icon-192.png",
+        "status": 200
+      },
+      {
+        "src": "/icon-512.png",
+        "status": 200
+      },
+      {
+        "src": "/icon-192-maskable.png",
+        "status": 200
+      },
+      {
+        "src": "/icon-512-maskable.png",
+        "status": 200
+      }
+    ],
+    "sw": {
+      "scope": "/",
+      "activo": true
+    },
+    "controlaTrasRecargar": true,
+    "avisoActualizacion": true
+  },
+  "errores": []
+}

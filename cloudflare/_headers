@@ -1,0 +1,28 @@
+# Cabeceras de Cloudflare Pages (se copian a la salida solo en el build de Cloudflare,
+# ver scripts/build-cloudflare.mjs). Pages sirve estáticos con compresión; esto fija la caché:
+#  · /assets/* lleva hash en el nombre → inmutable.
+#  · HTML, service worker y manifest SIEMPRE se revalidan: un POS no puede quedar con un
+#    shell viejo (el aviso de actualización PWA depende de que sw.js sea fresco).
+# Sin CSP a propósito en esta fase: el portal usa Google Fonts/Maps y Culqi; una CSP se
+# define y prueba aparte. Nada aquí toca la API de Supabase (otro origen).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/workbox-*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/index.html
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
+
+/registerSW.js
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache

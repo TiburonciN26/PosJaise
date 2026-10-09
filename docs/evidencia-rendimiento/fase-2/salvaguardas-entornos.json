@@ -1,0 +1,386 @@
+{
+  "fecha": "2026-10-09T18:17:16.396Z",
+  "total": 43,
+  "fallos": 0,
+  "resultados": [
+    {
+      "caso": "cf preview → staging + anon JWT",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "cf preview → staging + publishable",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "cf producción → negocio + anon JWT",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "cf producción → negocio + publishable",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "cf rama de producción configurada distinta de main (cloudflare-produccion) → negocio",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "cf main es PREVIEW si la producción es otra rama → staging",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "cf main es PREVIEW si la producción es otra rama → negocio rechazado",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: el entorno «preview» exige el backend de STAGING y la URL apunta a PRODUCCIÓN"
+    },
+    {
+      "caso": "cf sb_secret_",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: es una clave sb_secret_ (privilegiada)"
+    },
+    {
+      "caso": "cf JWT service_role",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: JWT con role \"service_role\" (se exige exactamente anon)"
+    },
+    {
+      "caso": "cf JWT authenticated",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: JWT con role \"authenticated\" (se exige exactamente anon)"
+    },
+    {
+      "caso": "cf JWT sin role",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: JWT con role \"ausente\" (se exige exactamente anon)"
+    },
+    {
+      "caso": "cf JWT role no string",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: JWT con role \"ausente\" (se exige exactamente anon)"
+    },
+    {
+      "caso": "cf JWT roto",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: formato desconocido (ni publishable ni JWT legacy bien formado)"
+    },
+    {
+      "caso": "cf cadena arbitraria \"x\"",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: formato desconocido (ni publishable ni JWT legacy bien formado)"
+    },
+    {
+      "caso": "cf cadena larga arbitraria",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: formato desconocido (ni publishable ni JWT legacy bien formado)"
+    },
+    {
+      "caso": "cf clave vacía",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: clave vacía"
+    },
+    {
+      "caso": "cf clave ausente",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: clave vacía"
+    },
+    {
+      "caso": "cf publishable con formato inválido",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: sb_publishable_ con formato inválido"
+    },
+    {
+      "caso": "cf ref del JWT discordante (anon del negocio en staging)",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: el ref del JWT no coincide con el proyecto del entorno"
+    },
+    {
+      "caso": "cf ref del JWT discordante (anon de staging en producción)",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: VITE_SUPABASE_ANON_KEY rechazada: el ref del JWT no coincide con el proyecto del entorno"
+    },
+    {
+      "caso": "cf preview → backend del negocio",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: el entorno «preview» exige el backend de STAGING y la URL apunta a PRODUCCIÓN"
+    },
+    {
+      "caso": "cf producción → staging",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: el entorno «produccion» exige el backend de PRODUCCIÓN y la URL apunta a STAGING"
+    },
+    {
+      "caso": "cf tercer host Supabase",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: el entorno «preview» exige el backend de STAGING y la URL apunta a un proyecto NO aprobado"
+    },
+    {
+      "caso": "cf host no Supabase",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: el entorno «preview» exige el backend de STAGING y la URL apunta a un proyecto NO aprobado"
+    },
+    {
+      "caso": "cf URL local",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: la URL debe ser exactamente https://<ref>.supabase.co"
+    },
+    {
+      "caso": "cf URL http",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: la URL debe ser exactamente https://<ref>.supabase.co"
+    },
+    {
+      "caso": "cf URL con ruta",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: la URL debe ser exactamente https://<ref>.supabase.co"
+    },
+    {
+      "caso": "cf URL con credenciales",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: la URL debe ser exactamente https://<ref>.supabase.co"
+    },
+    {
+      "caso": "cf URL vacía",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: URL de Supabase inválida o vacía"
+    },
+    {
+      "caso": "cf rama ausente",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: CF_PAGES_BRANCH ausente o vacío"
+    },
+    {
+      "caso": "cf RAMA_PRODUCCION ausente",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-cloudflare: RAMA_PRODUCCION no está definida (debe ser la rama de producción configurada en Pages, en Production Y Preview)"
+    },
+    {
+      "caso": "preview-staging: staging + anon JWT",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "preview-staging: staging + publishable",
+      "esperado": "acepta",
+      "obtenido": "acepta",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false
+    },
+    {
+      "caso": "preview-staging: sb_secret_",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: es una clave sb_secret_ (privilegiada)"
+    },
+    {
+      "caso": "preview-staging: JWT service_role",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: JWT con role \"service_role\" (se exige exactamente anon)"
+    },
+    {
+      "caso": "preview-staging: JWT authenticated",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: JWT con role \"authenticated\" (se exige exactamente anon)"
+    },
+    {
+      "caso": "preview-staging: JWT roto",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: formato desconocido (ni publishable ni JWT legacy bien formado)"
+    },
+    {
+      "caso": "preview-staging: cadena arbitraria larga",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: formato desconocido (ni publishable ni JWT legacy bien formado)"
+    },
+    {
+      "caso": "preview-staging: cadena \"x\"",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: formato desconocido (ni publishable ni JWT legacy bien formado)"
+    },
+    {
+      "caso": "preview-staging: ref discordante",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: VITE_SUPABASE_ANON_KEY rechazada: el ref del JWT no coincide con el proyecto del entorno"
+    },
+    {
+      "caso": "preview-staging: URL del negocio",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: el entorno «preview» exige el backend de STAGING y la URL apunta a PRODUCCIÓN"
+    },
+    {
+      "caso": "preview-staging: tercer host",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: el entorno «preview» exige el backend de STAGING y la URL apunta a un proyecto NO aprobado"
+    },
+    {
+      "caso": "preview-staging: URL local",
+      "esperado": "rechaza",
+      "obtenido": "rechaza",
+      "ok": true,
+      "filtraClave": false,
+      "inicioVite": false,
+      "mensaje": "build-preview-staging: la URL debe ser exactamente https://<ref>.supabase.co"
+    }
+  ]
+}

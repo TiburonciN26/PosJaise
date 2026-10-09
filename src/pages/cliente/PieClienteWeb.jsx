@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Clock, Globe, MapPin, Phone } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { BookOpen, Clock, Globe, MapPin, Phone } from 'lucide-react'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { RUTAS_LEGALES } from '../../config/legal.js'
 
 // Pie de página del portal cliente — solo en Inicio y las pestañas
 // principales de la barra (Servicios/Productos/Citas/Nosotros), a
@@ -91,6 +93,28 @@ export default function PieClienteWeb() {
             ))}
           </div>
         )}
+
+        {/* Culqi exige estos enlaces visibles para afiliar la pasarela. */}
+        <nav aria-label="Información legal" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs">
+          <Link to={RUTAS_LEGALES.terminos} className="text-white/60 transition-colors hover:text-white">
+            Términos y condiciones
+          </Link>
+          <Link to={RUTAS_LEGALES.cambios} className="text-white/60 transition-colors hover:text-white">
+            Cambios y devoluciones
+          </Link>
+          <Link to={RUTAS_LEGALES.privacidad} className="text-white/60 transition-colors hover:text-white">
+            Privacidad
+          </Link>
+        </nav>
+
+        {/* Obligatorio por ley (INDECOPI): visible en el pie de la web. */}
+        <Link
+          to={RUTAS_LEGALES.reclamos}
+          className="flex items-center gap-1.5 rounded border border-white/20 px-3 py-1.5 text-xs text-white/70 transition-colors hover:border-[var(--lw-gold)] hover:text-white"
+        >
+          <BookOpen className="h-3.5 w-3.5 text-[var(--lw-gold)]" />
+          Libro de Reclamaciones
+        </Link>
 
         <p className="text-[11px] text-white/30">
           © {new Date().getFullYear()} Jaise Beauty Academy

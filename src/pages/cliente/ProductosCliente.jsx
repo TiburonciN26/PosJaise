@@ -4,6 +4,7 @@ import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, ShoppingBag, Sp
 import { supabase } from '../../lib/supabase.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
@@ -55,6 +56,7 @@ const CINTA_MEDIDAS = {
 // tienen (mismo criterio que ServiciosCliente.jsx).
 export default function ProductosCliente() {
   const { agregarProducto } = useCarritoCliente()
+  const requerirSesion = useRequerirSesion()
   const { mostrarToast } = useToast()
 
   const [productos, setProductos] = useState([])
@@ -157,6 +159,7 @@ export default function ProductosCliente() {
 
   async function agregarDesdeHero() {
     if (!heroActual) return
+    if (!requerirSesion('agregar productos al carrito')) return
     const agregado = await agregarProducto(heroActual.id, 1)
     mostrarToast(agregado > 0 ? 'Agregado al carrito.' : 'No se pudo agregar — ya no hay stock disponible.', agregado > 0 ? 'exito' : 'error')
   }

@@ -24,7 +24,7 @@ for (const role of ['ADMINISTRADOR','CAJERA','ASISTENTE','CLIENTE']) {
       checks.push({path,allowed:true,observed:new URL(page.url()).pathname});
     }
     await info.attach('route-matrix',{body:Buffer.from(JSON.stringify({role,checks})),contentType:'application/json'});
-    await logout(page); await page.goto(role==='CLIENTE'?'/inicio':'/citas');
+    await logout(page); await page.goto(role==='CLIENTE'?'/mi-perfil':'/citas');
     await expect(page).toHaveURL(/\/login$/);
   });
 }

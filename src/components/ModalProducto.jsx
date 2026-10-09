@@ -421,12 +421,12 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
           {esWeb ? 'Contenido Web del producto' : esEdicion ? 'Editar producto' : 'Nuevo producto'}
@@ -462,7 +462,6 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
               autoComplete="new-password"
               value={formulario.codigoBarras}
               onChange={(evento) => actualizarCampo('codigoBarras', evento.target.value)}
-              placeholder="Opcional"
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
             />
           </div>
@@ -525,7 +524,6 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
               autoComplete="new-password"
               value={formulario.subcategoria}
               onChange={(evento) => actualizarCampo('subcategoria', evento.target.value)}
-              placeholder='Opcional, ej. "Shampoo" — etiqueta corta de la tarjeta en la Web'
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
             />
           </div>

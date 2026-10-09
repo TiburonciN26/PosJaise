@@ -6,13 +6,18 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { formatearSoles } from '../lib/moneda.js'
+import { nivelDeCupon } from '../lib/cupones.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalPromocion from '../components/ModalPromocion.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+
+// Acabado rojo «Especial» de los cupones de promoción en la web de clientes.
+const NIVEL_CUPON = nivelDeCupon({ origen: 'PROMOCION' })
 
 function formatearValor(promocion) {
   return promocion.tipo_descuento === 'PORCENTAJE'
@@ -109,18 +114,19 @@ export default function Promociones({ activo = true }) {
     : promociones
 
   return (
-    <div className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+    <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar promoción..."
-          tema="red"
+          tema="azul-metal"
+          sinBorde
         />
         <button
           type="button"
           onClick={() => setModalPromocion('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-red px-3 py-2.5 text-sm font-semibold text-white lg:flex"
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-azul-metal px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
         >
           <Plus className="h-4 w-4" />
           <span>Nueva promoción</span>
@@ -142,46 +148,38 @@ export default function Promociones({ activo = true }) {
           accion={{ label: '+ Nueva promoción', onClick: () => setModalPromocion('nuevo') }}
         />
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtradas.map((promocion) => {
             const abierta = abiertos.has(promocion.id)
             return (
-              <div key={promocion.id} className="rounded-lg border border-border bg-surface">
+              <EnvolturaCupon key={promocion.id} nivel={NIVEL_CUPON} apagada={!promocion.activo}>
                 <div
                   onClick={() => alternarAbierto(promocion.id)}
                   onKeyDown={manejarActivacionTeclado(() => alternarAbierto(promocion.id))}
                   role="button"
                   tabIndex={0}
                   aria-expanded={abierta}
-                  className="flex cursor-pointer items-center gap-3 p-3"
+                  className="relative flex cursor-pointer items-center gap-3 p-3"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-red/30 bg-red/15 text-sm font-semibold text-red">
-                    <Ticket className="h-4 w-4" />
-                  </div>
+                  <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink">{promocion.titulo}</p>
-                    <p className="font-mono text-sm text-red">{formatearValor(promocion)}</p>
+                    <p className={`truncate text-sm font-semibold ${NIVEL_CUPON.claseTexto}`}>{promocion.titulo}</p>
+                    <p className="text-[11px] text-white/50">{promocion.activo ? 'Activa' : 'Inactiva'}</p>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                      promocion.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
-                    }`}
-                  >
-                    {promocion.activo ? 'Activa' : 'Inactiva'}
-                  </span>
+                  <p className={`shrink-0 font-semibold ${NIVEL_CUPON.claseTexto}`}>{formatearValor(promocion)}</p>
                   <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                    className={`h-3.5 w-3.5 shrink-0 text-white/40 transition-transform duration-300 ${
                       abierta ? 'rotate-180' : ''
                     }`}
                   />
                 </div>
 
                 <CampoColapsable abierto={abierta}>
-                  <div className="border-t border-border p-3">
+                  <div className="relative mx-2.5 mb-2.5 border border-white/10 bg-black/25 p-3">
                     {promocion.descripcion && (
-                      <p className="text-sm text-ink/70">{promocion.descripcion}</p>
+                      <p className="text-sm text-white/70">{promocion.descripcion}</p>
                     )}
-                    <p className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-ink/60">
+                    <p className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-white/50">
                       <Calendar className="h-3.5 w-3.5" />
                       {formatearVigencia(promocion)}
                     </p>
@@ -202,7 +200,7 @@ export default function Promociones({ activo = true }) {
                     </div>
                   </div>
                 </CampoColapsable>
-              </div>
+              </EnvolturaCupon>
             )
           })}
         </div>
@@ -228,8 +226,8 @@ export default function Promociones({ activo = true }) {
       )}
 
       {promocionAEliminar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">
               ¿Eliminar "{promocionAEliminar.titulo}"?
             </h2>
@@ -239,7 +237,7 @@ export default function Promociones({ activo = true }) {
                 type="button"
                 onClick={() => setPromocionAEliminar(null)}
                 disabled={eliminando}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red disabled:opacity-40"
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
               >
                 Cancelar
               </button>

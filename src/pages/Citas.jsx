@@ -292,8 +292,8 @@ export default function Citas({ activo = true }) {
   useModalA11y(panelReactivarRef, Boolean(citaAReactivar))
   useCerrarConEscape(() => setCitaACancelar(null), Boolean(citaACancelar))
   useModalA11y(panelCancelarRef, Boolean(citaACancelar))
-  useCerrarConEscape(() => setMesAbierto(false), mesAbierto)
-  useCerrarConEscape(() => setFiltroAbierto(false), filtroAbierto)
+  useCerrarConEscape(() => setMesAbierto(false), mesAbierto, { trabajoPendiente: false })
+  useCerrarConEscape(() => setFiltroAbierto(false), filtroAbierto, { trabajoPendiente: false })
 
   function alternarMes() {
     if (mesAbierto) {
@@ -640,10 +640,10 @@ export default function Citas({ activo = true }) {
 
   return (
     <div
-      className="animate-entrada-pestana p-3 pb-6 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+      className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
-      <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 bg-bg px-3 py-2">
+      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <div
           className={`grid overflow-x-hidden transition-[grid-template-columns] duration-300 ease-in-out ${
             busquedaAbierta ? 'max-lg:grid-cols-[0fr] grid-cols-[1fr]' : 'grid-cols-[1fr]'
@@ -1091,10 +1091,10 @@ export default function Citas({ activo = true }) {
       )}
 
       {citaSeleccionada && !citaACompletar && !modalCita && !citaAEliminar && !citaAReactivar && !citaACancelar && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
           <div
             ref={panelDetalleRef}
-            className="w-full max-w-sm rounded-lg border border-border bg-surface p-3"
+            className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
           >
             <div className="flex items-start justify-between gap-2">
               <h2 className="text-base font-semibold text-ink">
@@ -1242,8 +1242,8 @@ export default function Citas({ activo = true }) {
       )}
 
       {citaAEliminar && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelEliminarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Eliminar esta cita?</h2>
             <p className="mt-1 text-sm text-ink/60">
               Esta acción no se puede deshacer. Si ya se completó, el registro de atención asociado
@@ -1272,8 +1272,8 @@ export default function Citas({ activo = true }) {
       )}
 
       {citaACancelar && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Cancelar esta cita?</h2>
             <p className="mt-1 text-sm text-ink/60">Podrás reactivarla después si cambia el plan.</p>
             <div className="mt-4 flex gap-2">
@@ -1297,8 +1297,8 @@ export default function Citas({ activo = true }) {
       )}
 
       {citaAReactivar && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
-          <div ref={panelReactivarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelReactivarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Reactivar esta cita?</h2>
             <p className="mt-1 text-sm text-ink/60">Va a volver a quedar pendiente.</p>
             <div className="mt-4 flex gap-2">

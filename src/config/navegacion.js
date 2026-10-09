@@ -25,6 +25,7 @@ import {
   Image,
   Coins,
   LayoutGrid,
+  BookOpen,
 } from 'lucide-react'
 
 export const secciones = [
@@ -89,7 +90,7 @@ export const secciones = [
     label: 'Web',
     icono: Hammer,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     animado: true,
   },
   {
@@ -97,7 +98,7 @@ export const secciones = [
     label: 'Promociones',
     icono: Ticket,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -105,7 +106,7 @@ export const secciones = [
     label: 'Pedidos Web',
     icono: ShoppingBag,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -113,7 +114,7 @@ export const secciones = [
     label: 'Reseñas',
     icono: Star,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -121,7 +122,7 @@ export const secciones = [
     label: 'Contacto Web',
     icono: MapPin,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -129,7 +130,7 @@ export const secciones = [
     label: 'Puntos Web',
     icono: PiggyBank,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -137,7 +138,7 @@ export const secciones = [
     label: 'Referidos Web',
     icono: Gift,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -145,7 +146,7 @@ export const secciones = [
     label: 'Fidelización Web',
     icono: Stamp,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -155,7 +156,7 @@ export const secciones = [
     label: 'Recompensas Web',
     icono: Coins,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -165,7 +166,16 @@ export const secciones = [
     label: 'Catálogo Web',
     icono: LayoutGrid,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
+    padre: '/web',
+  },
+  {
+    // Hojas del Libro de Reclamaciones (obligatorio por ley); solo ADMINISTRADOR.
+    path: '/libro-reclamaciones-web',
+    label: 'Libro de Reclamaciones',
+    icono: BookOpen,
+    roles: ['ADMINISTRADOR'],
+    tema: 'azul-metal',
     padre: '/web',
   },
   {
@@ -173,7 +183,7 @@ export const secciones = [
     label: 'Galería Web',
     icono: Image,
     roles: ['ADMINISTRADOR'],
-    tema: 'rojo',
+    tema: 'azul-metal',
     padre: '/web',
   },
 ]

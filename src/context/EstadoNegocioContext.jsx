@@ -41,8 +41,27 @@ export function EstadoNegocioProvider({ children }) {
       // QA-029: sin sesión AÚN (la auth sigue resolviendo la sesión guardada) no
       // es "sin configuración": marcarlo como cargado haría que el detalle del
       // servicio mostrara el texto de "no configurado" antes de que llegue la fila.
-      if (!cargandoAuth) setCargando(false)
-      return undefined
+      if (cargandoAuth) return undefined
+
+      // Visitante (web pública): solo lo que la ficha del servicio anuncia —adelanto
+      // mínimo y plazo de cancelación— por una función que NO devuelve cuentas de
+      // Yape/Plin ni el estado interno. Al cerrar sesión también se borran los datos
+      // de pago de la sesión anterior (el proveedor sigue montado).
+      let vigenteVisitante = true
+      setCuentaTransferencia('')
+      setPagos({ yapeNumero: '', yapeTitular: '', yapeQrUrl: null, plinNumero: '', plinTitular: '', plinQrUrl: null })
+      supabase
+        .rpc('politicas_cita_publicas')
+        .then(({ data }) => {
+          if (!vigenteVisitante) return
+          const fila = data?.[0]
+          setAdelantoMinimo(fila?.adelanto_minimo ?? null)
+          setCancelacionPlazoHoras(fila?.cancelacion_plazo_horas ?? null)
+          setCargando(false)
+        })
+      return () => {
+        vigenteVisitante = false
+      }
     }
 
     let vigente = true

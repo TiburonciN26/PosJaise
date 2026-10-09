@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import BotonVoz from './BotonVoz.jsx'
 import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -383,14 +384,14 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
 
   return (
     <div
-      className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
       <form
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface p-5"
+        className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
           {esEdicion ? 'Editar cita' : 'Nueva cita'}
@@ -402,211 +403,225 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
           <div className="mt-4 space-y-3">
             <div>
               <Etiqueta obligatorio htmlFor={`${idBase}-cliente`}>Cliente</Etiqueta>
-              <div className="relative">
-                <input
-                  ref={inputClienteRef}
-                  id={`${idBase}-cliente`}
-                  type="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  value={busquedaCliente}
-                  onChange={(evento) => {
-                    setBusquedaCliente(evento.target.value)
-                    actualizarCampo('clienteId', '')
-                    setClienteReferencia('')
-                    setMostrarSugerenciasCliente(true)
-                  }}
-                  onFocus={() => setMostrarSugerenciasCliente(true)}
-                  onBlur={() => setTimeout(() => setMostrarSugerenciasCliente(false), 150)}
-                  placeholder="Buscar cliente..."
-                  className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
-                />
-                {busquedaCliente ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBusquedaCliente('')
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    ref={inputClienteRef}
+                    id={`${idBase}-cliente`}
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    value={busquedaCliente}
+                    onChange={(evento) => {
+                      setBusquedaCliente(evento.target.value)
                       actualizarCampo('clienteId', '')
                       setClienteReferencia('')
+                      setMostrarSugerenciasCliente(true)
                     }}
-                    aria-label="Limpiar búsqueda"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
-                )}
-
-                {mostrarSugerenciasCliente && (
-                  <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                    {busquedaClientes.buscando && (
-                      <p role="status" className="px-3 py-2 text-xs text-ink/60">
-                        Buscando clientes…
-                      </p>
-                    )}
-                    {busquedaClientes.error && (
-                      <p role="alert" className="px-3 py-2 text-xs text-red">
-                        No se pudo buscar clientes.{' '}
-                        <button
-                          type="button"
-                          onMouseDown={(evento) => evento.preventDefault()}
-                          onClick={busquedaClientes.reintentar}
-                          className="underline"
-                        >
-                          Reintentar
-                        </button>
-                      </p>
-                    )}
-                    {busquedaClientes.listo && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
-                      <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
-                    )}
-                    {busquedaClientes.listo && sugerenciasCliente.map((cliente) => (
-                      <button
-                        key={cliente.id}
-                        type="button"
-                        onMouseDown={(evento) => evento.preventDefault()}
-                        onClick={() => seleccionarCliente(cliente)}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
-                      >
-                        <span className="truncate">{cliente.nombre}</span>
-                      </button>
-                    ))}
-                    {busquedaClientes.listo && busquedaCliente.trim() && !hayCoincidenciaExacta && (
-                      <>
-                        <button
-                          type="button"
-                          onMouseDown={(evento) => evento.preventDefault()}
-                          onClick={usarClienteReferencia}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink/70 transition-colors hover:bg-surface-3 ${
-                            sugerenciasCliente.length > 0 ? 'border-t border-border' : ''
-                          }`}
-                        >
-                          <UserPlus className="h-4 w-4 shrink-0" />
-                          <span className="truncate">
-                            Usar "{busquedaCliente.trim()}" (referencia, sin guardar)
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onMouseDown={(evento) => evento.preventDefault()}
-                          onClick={() => {
-                            setMostrarSugerenciasCliente(false)
-                            setModalClienteNuevoAbierto(true)
-                          }}
-                          className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3"
-                        >
-                          <UserRoundPlus className="h-4 w-4 shrink-0" />
-                          <span className="truncate">
-                            Registrar "{busquedaCliente.trim()}" como cliente nuevo
-                          </span>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Etiqueta htmlFor={`${idBase}-agregar-servicio`}>Agregar servicio</Etiqueta>
-              <div className="relative">
-                <input
-                  ref={inputServicioRef}
-                  id={`${idBase}-agregar-servicio`}
-                  type="search"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  spellCheck="false"
-                  value={busquedaServicio}
-                  onChange={(evento) => {
-                    setBusquedaServicio(evento.target.value)
-                    setMostrarSugerenciasServicio(true)
-                  }}
-                  onFocus={() => setMostrarSugerenciasServicio(true)}
-                  onBlur={() => setTimeout(() => setMostrarSugerenciasServicio(false), 150)}
-                  placeholder="Buscar servicio..."
-                  className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
-                />
-                {busquedaServicio ? (
-                  <button
-                    type="button"
-                    onClick={() => setBusquedaServicio('')}
-                    aria-label="Limpiar búsqueda"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <Scissors className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
-                )}
-
-                {mostrarSugerenciasServicio &&
-                  (sugerenciasServicio.length > 0 || busquedaServicio.trim() || busquedaServicios.error) && (
+                    onFocus={() => setMostrarSugerenciasCliente(true)}
+                    onBlur={() => setTimeout(() => setMostrarSugerenciasCliente(false), 150)}
+                    placeholder="Buscar cliente..."
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                  />
+                  {busquedaCliente ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBusquedaCliente('')
+                        actualizarCampo('clienteId', '')
+                        setClienteReferencia('')
+                      }}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                  )}
+  
+                  {mostrarSugerenciasCliente && (
                     <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
-                      {sugerenciasServicio.map((servicio) => (
-                        <button
-                          key={servicio.id}
-                          type="button"
-                          onMouseDown={(evento) => evento.preventDefault()}
-                          onClick={() => agregarLineaServicio(servicio)}
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
-                        >
-                          <span className="truncate">{servicio.nombre}</span>
-                          {servicio.duracion_min && (
-                            <span className="shrink-0 font-mono text-xs text-ink/60">
-                              {servicio.duracion_min} min
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                      {sugerenciasServicio.length >= LIMITE_SERVICIOS && (
-                        <p className="border-t border-border px-3 py-2 text-xs text-ink/60">
-                          Se muestran los primeros {LIMITE_SERVICIOS}. Escribe para afinar la búsqueda.
+                      {busquedaClientes.buscando && (
+                        <p role="status" className="px-3 py-2 text-xs text-ink/60">
+                          Buscando clientes…
                         </p>
                       )}
-                      {busquedaServicios.buscando && (
-                        <p className="px-3 py-2 text-sm text-ink/60">Buscando...</p>
-                      )}
-                      {busquedaServicios.error && (
-                        <p className="px-3 py-2 text-sm text-red">
-                          No se pudo buscar servicios.{' '}
+                      {busquedaClientes.error && (
+                        <p role="alert" className="px-3 py-2 text-xs text-red">
+                          No se pudo buscar clientes.{' '}
                           <button
                             type="button"
                             onMouseDown={(evento) => evento.preventDefault()}
-                            onClick={busquedaServicios.reintentar}
+                            onClick={busquedaClientes.reintentar}
                             className="underline"
                           >
                             Reintentar
                           </button>
                         </p>
                       )}
-                      {busquedaServicio.trim() && busquedaServicios.listo && !puedeCrearServicio && sugerenciasServicio.length === 0 && (
-                        <p className="px-3 py-2 text-sm text-ink/60">No hay servicios que coincidan.</p>
+                      {busquedaClientes.listo && sugerenciasCliente.length === 0 && !busquedaCliente.trim() && (
+                        <p className="px-3 py-2 text-xs text-ink/60">Escribe para buscar un cliente.</p>
                       )}
-                      {busquedaServicio.trim() && busquedaServicios.listo && !hayServicioExacto && puedeCrearServicio && (
+                      {busquedaClientes.listo && sugerenciasCliente.map((cliente) => (
                         <button
+                          key={cliente.id}
                           type="button"
                           onMouseDown={(evento) => evento.preventDefault()}
-                          onClick={() => {
-                            setMostrarSugerenciasServicio(false)
-                            setModalServicioNuevoAbierto(true)
-                          }}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3 ${
-                            sugerenciasServicio.length > 0 ? 'border-t border-border' : ''
-                          }`}
+                          onClick={() => seleccionarCliente(cliente)}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
                         >
-                          <PlusCircle className="h-4 w-4 shrink-0" />
-                          <span className="truncate">
-                            Crear servicio "{busquedaServicio.trim()}"
-                          </span>
+                          <span className="truncate">{cliente.nombre}</span>
                         </button>
+                      ))}
+                      {busquedaClientes.listo && busquedaCliente.trim() && !hayCoincidenciaExacta && (
+                        <>
+                          <button
+                            type="button"
+                            onMouseDown={(evento) => evento.preventDefault()}
+                            onClick={usarClienteReferencia}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink/70 transition-colors hover:bg-surface-3 ${
+                              sugerenciasCliente.length > 0 ? 'border-t border-border' : ''
+                            }`}
+                          >
+                            <UserPlus className="h-4 w-4 shrink-0" />
+                            <span className="truncate">
+                              Usar "{busquedaCliente.trim()}" (referencia, sin guardar)
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onMouseDown={(evento) => evento.preventDefault()}
+                            onClick={() => {
+                              setMostrarSugerenciasCliente(false)
+                              setModalClienteNuevoAbierto(true)
+                            }}
+                            className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3"
+                          >
+                            <UserRoundPlus className="h-4 w-4 shrink-0" />
+                            <span className="truncate">
+                              Registrar "{busquedaCliente.trim()}" como cliente nuevo
+                            </span>
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
+                </div>
+                <BotonVoz onTexto={(texto) => {
+ setBusquedaCliente(texto)
+ actualizarCampo('clienteId', '')
+ setClienteReferencia('')
+ setMostrarSugerenciasCliente(true)
+ }} />
+              </div>
+            </div>
+
+            <div>
+              <Etiqueta htmlFor={`${idBase}-agregar-servicio`}>Agregar servicio</Etiqueta>
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    ref={inputServicioRef}
+                    id={`${idBase}-agregar-servicio`}
+                    type="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    value={busquedaServicio}
+                    onChange={(evento) => {
+                      setBusquedaServicio(evento.target.value)
+                      setMostrarSugerenciasServicio(true)
+                    }}
+                    onFocus={() => setMostrarSugerenciasServicio(true)}
+                    onBlur={() => setTimeout(() => setMostrarSugerenciasServicio(false), 150)}
+                    placeholder="Buscar servicio..."
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                  />
+                  {busquedaServicio ? (
+                    <button
+                      type="button"
+                      onClick={() => setBusquedaServicio('')}
+                      aria-label="Limpiar búsqueda"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <Scissors className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                  )}
+  
+                  {mostrarSugerenciasServicio &&
+                    (sugerenciasServicio.length > 0 || busquedaServicio.trim() || busquedaServicios.error) && (
+                      <div className="animate-entrada-dropdown absolute left-0 right-0 top-full z-10 mt-1 max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-surface-2 shadow-lg">
+                        {sugerenciasServicio.map((servicio) => (
+                          <button
+                            key={servicio.id}
+                            type="button"
+                            onMouseDown={(evento) => evento.preventDefault()}
+                            onClick={() => agregarLineaServicio(servicio)}
+                            className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
+                          >
+                            <span className="truncate">{servicio.nombre}</span>
+                            {servicio.duracion_min && (
+                              <span className="shrink-0 font-mono text-xs text-ink/60">
+                                {servicio.duracion_min} min
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                        {sugerenciasServicio.length >= LIMITE_SERVICIOS && (
+                          <p className="border-t border-border px-3 py-2 text-xs text-ink/60">
+                            Se muestran los primeros {LIMITE_SERVICIOS}. Escribe para afinar la búsqueda.
+                          </p>
+                        )}
+                        {busquedaServicios.buscando && (
+                          <p className="px-3 py-2 text-sm text-ink/60">Buscando...</p>
+                        )}
+                        {busquedaServicios.error && (
+                          <p className="px-3 py-2 text-sm text-red">
+                            No se pudo buscar servicios.{' '}
+                            <button
+                              type="button"
+                              onMouseDown={(evento) => evento.preventDefault()}
+                              onClick={busquedaServicios.reintentar}
+                              className="underline"
+                            >
+                              Reintentar
+                            </button>
+                          </p>
+                        )}
+                        {busquedaServicio.trim() && busquedaServicios.listo && !puedeCrearServicio && sugerenciasServicio.length === 0 && (
+                          <p className="px-3 py-2 text-sm text-ink/60">No hay servicios que coincidan.</p>
+                        )}
+                        {busquedaServicio.trim() && busquedaServicios.listo && !hayServicioExacto && puedeCrearServicio && (
+                          <button
+                            type="button"
+                            onMouseDown={(evento) => evento.preventDefault()}
+                            onClick={() => {
+                              setMostrarSugerenciasServicio(false)
+                              setModalServicioNuevoAbierto(true)
+                            }}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3 ${
+                              sugerenciasServicio.length > 0 ? 'border-t border-border' : ''
+                            }`}
+                          >
+                            <PlusCircle className="h-4 w-4 shrink-0" />
+                            <span className="truncate">
+                              Crear servicio "{busquedaServicio.trim()}"
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                </div>
+                <BotonVoz onTexto={(texto) => {
+ setBusquedaServicio(texto)
+ setMostrarSugerenciasServicio(true)
+ }} />
               </div>
             </div>
 

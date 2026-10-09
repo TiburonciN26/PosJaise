@@ -2,7 +2,7 @@
 // suite Playwright (qa-recompensas-037-040.spec.mjs) y por el verificador sin sesión (qa-062-niveles-visuales-publico.mjs).
 //
 // Las anclas son las clases del diseño vigente (index.css): `.cupon-n-plata|oro|diamante|rubi` sobre `.cupon-metal`, el destello
-// `cupon-sheen` en `::after`, la iridiscencia `.cupon-iri` (Diamante y Especial) y las chispas `.cupon-chispa` (solo Diamante y Especial).
+// `cupon-sheen-pasada` en `::after` (solo con puntero/foco), la iridiscencia `.cupon-iri` (Diamante y Especial) y las chispas `.cupon-chispa` (solo Diamante y Especial).
 // Las clases antiguas (`.cupon-oro`, `.cupon-plata`, `.cupon-texto-oro` y la animación `cupon-glow`) ya no existen en las tarjetas por
 // nivel: el diseño aprobado las reemplazó por el acabado metálico. No se usa `first()` para elegir «cualquiera»: cada fila se identifica
 // por el nombre del premio de ejemplo cuyo nivel de negocio se conoce (datos.js: r1 Todos los niveles, r5 Desde Premium, r6 Desde VIP).
@@ -28,7 +28,8 @@ export async function comprobarNivelYEfectosEnCanje(page, expect) {
     await tarjeta.getByRole('button').first().click();
     await expect(tarjeta.locator('dt', { hasText: 'Nivel' }).locator('xpath=following-sibling::dd[1]')).toHaveText(fila.requisito);
 
-    // Efectos: destello que cruza la tarjeta (::after → cupon-sheen) y resplandor metálico.
+    // Efectos: destello que cruza la tarjeta (::after → cupon-sheen-pasada, solo al interactuar: Fase 1 de rendimiento) y resplandor metálico.
+    await tarjeta.hover();
     expect(await tarjeta.evaluate((el) => getComputedStyle(el, '::after').animationName), `destello de ${fila.etiqueta}`).toContain('cupon-sheen');
     expect(await tarjeta.evaluate((el) => getComputedStyle(el).boxShadow), `resplandor de ${fila.etiqueta}`).not.toBe('none');
     expect(await tarjeta.locator('.cupon-metal-texto').first().evaluate((el) => getComputedStyle(el).textShadow), `tinta metálica de ${fila.etiqueta}`).not.toBe('none');
@@ -46,7 +47,13 @@ export async function comprobarNivelYEfectosEnCanje(page, expect) {
   const envoltura = (fila) => tarjetaDe(page, fila.nombre).locator('xpath=..');
   const chispasDiamante = envoltura(FILAS_EJEMPLO[2]).locator('.cupon-chispa.cupon-chispa-diamante');
   expect(await chispasDiamante.count(), 'chispas del nivel Diamante').toBeGreaterThanOrEqual(3);
-  expect(await chispasDiamante.first().evaluate((el) => getComputedStyle(el).animationName)).toContain('cupon-titilar');
+  // Fase 1 de rendimiento: en reposo (sin puntero ni foco dentro) ni el destello ni las chispas se animan; centellean solo al interactuar.
+  await page.mouse.move(0, 0);
+  await page.evaluate(() => document.activeElement?.blur());
+  expect(await chispasDiamante.first().evaluate((el) => getComputedStyle(el).animationName), 'chispas quietas en reposo').toBe('none');
+  expect(await tarjetaDe(page, FILAS_EJEMPLO[2].nombre).evaluate((el) => getComputedStyle(el, '::after').animationName), 'destello quieto en reposo').toBe('none');
+  await envoltura(FILAS_EJEMPLO[2]).hover();
+  expect(await chispasDiamante.first().evaluate((el) => getComputedStyle(el).animationName), 'chispas centellean al interactuar').toContain('cupon-titilar');
   await expect(envoltura(FILAS_EJEMPLO[0]).locator('.cupon-chispa')).toHaveCount(0);
   await expect(envoltura(FILAS_EJEMPLO[1]).locator('.cupon-chispa')).toHaveCount(0);
 }

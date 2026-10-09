@@ -53,8 +53,8 @@ const idPanel = (clave) => `recompensas-panel-${clave}`
 // /fidelizacion y /ofertas (rutas viejas) redirigen a la sección que
 // corresponde y el botón "atrás" del navegador funciona entre secciones.
 //
-// `publico` (QA-037): la misma pantalla sin sesión, montada fuera del
-// portal (ver RecompensasPublica.jsx). Ahí nunca se consulta ni se
+// `publico` (QA-037): la misma pantalla para el visitante sin sesión (App.jsx la
+// monta dentro del portal con publico={!usuario}). Ahí nunca se consulta ni se
 // muestra nada personal, aunque hubiera una sesión a medio resolver.
 //
 // Cada consulta es un recurso con su propio estado (QA-039, ver

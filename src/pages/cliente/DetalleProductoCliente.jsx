@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
@@ -56,6 +57,9 @@ export default function DetalleProductoCliente() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { usuario } = useAuth()
+  const usuarioId = usuario?.id ?? null
+  // Visitante: explora el detalle completo; agregar al carrito, favoritos y reseñas piden cuenta.
+  const requerirSesion = useRequerirSesion()
   const { mostrarToast } = useToast()
   const { productosCarrito, agregarProducto } = useCarritoCliente()
 
@@ -110,11 +114,13 @@ export default function DetalleProductoCliente() {
             .eq('activo', true)
             .maybeSingle(),
           supabase.from('producto_fotos').select('id, foto_url, etiqueta').eq('producto_id', id).order('orden'),
-          supabase.from('favoritos_productos').select('producto_id').eq('producto_id', id).maybeSingle(),
+          usuarioId
+            ? supabase.from('favoritos_productos').select('producto_id').eq('producto_id', id).maybeSingle()
+            : Promise.resolve({ data: null }),
           supabase.rpc('datos_contacto'),
           supabase.rpc('resenas_producto_resumen', { p_producto_id: id }),
           supabase.rpc('resenas_producto_publicas', { p_producto_id: id }),
-          supabase.rpc('mi_resena_producto', { p_producto_id: id }),
+          usuarioId ? supabase.rpc('mi_resena_producto', { p_producto_id: id }) : Promise.resolve({ data: null }),
         ])
 
       if (!vigente) return
@@ -176,7 +182,7 @@ export default function DetalleProductoCliente() {
     return () => {
       vigente = false
     }
-  }, [id])
+  }, [id, usuarioId])
 
   // Galería (producto_fotos, migración 119): si el producto todavía no
   // tiene ninguna foto propia ahí, cae a la única foto de
@@ -218,6 +224,7 @@ export default function DetalleProductoCliente() {
 
   async function confirmarAgregar() {
     if (!producto || agotado || sinMasParaAgregar) return
+    if (!requerirSesion('agregar productos al carrito')) return
     setAgregando(true)
     const agregado = await agregarProducto(producto.id, cantidad)
     setAgregando(false)
@@ -241,6 +248,7 @@ export default function DetalleProductoCliente() {
 
   async function comprarAhora() {
     if (!producto) return
+    if (!requerirSesion('comprar este producto')) return
     if (!agotado && !sinMasParaAgregar) {
       const agregado = await agregarProducto(producto.id, cantidad)
       if (agregado <= 0) {
@@ -253,6 +261,7 @@ export default function DetalleProductoCliente() {
   }
 
   async function agregarCombo() {
+    if (!requerirSesion('agregar el combo al carrito')) return
     const idsAAgregar = [producto.id, combo.id].filter((idProducto) => (productosCarrito.get(idProducto) ?? 0) <= 0)
     const resultados = await Promise.all(idsAAgregar.map((idProducto) => agregarProducto(idProducto, 1)))
     if (resultados.some((agregado) => agregado <= 0)) {
@@ -263,6 +272,7 @@ export default function DetalleProductoCliente() {
   }
 
   async function alternarFavorito() {
+    if (!requerirSesion('guardar tus favoritos')) return
     const { error } = favorito
       ? await supabase.from('favoritos_productos').delete().eq('cliente_web_id', usuario.id).eq('producto_id', producto.id)
       : await supabase.from('favoritos_productos').insert({ cliente_web_id: usuario.id, producto_id: producto.id })
@@ -823,7 +833,10 @@ export default function DetalleProductoCliente() {
             <div className="mt-1 flex flex-wrap gap-2.5">
               <button
                 type="button"
-                onClick={() => setMostrarFormResena((v) => !v)}
+                onClick={() => {
+                  if (!requerirSesion('escribir una reseña')) return
+                  setMostrarFormResena((v) => !v)
+                }}
                 className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold text-black"
                 style={{ background: 'var(--lw-gold)' }}
               >

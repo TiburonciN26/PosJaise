@@ -1,0 +1,19 @@
+{
+  "etiqueta": "antes",
+  "comprobaciones": [
+    {
+      "nombre": "[oscuro] reposo: destello quieto",
+      "pasa": false
+    },
+    {
+      "nombre": "[oscuro] animaciones CSS activas en reposo",
+      "pasa": false,
+      "detalle": 737
+    },
+    {
+      "nombre": "ejecución",
+      "pasa": false,
+      "detalle": "locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.cupon-envoltura:not(.cupon-envoltura-apagada)').first()\u001b[22m\n"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ const CHISPAS_ORO = [
 function Chispa({ estilo, size, delay, variante }) {
   return (
     <svg
-      className={`cupon-chispa ${variante === 'roja' ? 'cupon-chispa-roja' : ''} ${variante === 'diamante' ? 'cupon-chispa-diamante' : ''} ${variante === 'verde' ? 'cupon-chispa-verde' : ''}`}
+      className={`cupon-chispa cupon-chispa-lista ${variante === 'roja' ? 'cupon-chispa-roja' : ''} ${variante === 'diamante' ? 'cupon-chispa-diamante' : ''} ${variante === 'verde' ? 'cupon-chispa-verde' : ''}`}
       style={{ ...estilo, width: size, height: size, animationDelay: delay }}
       viewBox="0 0 24 24"
       fill="currentColor"
@@ -29,6 +29,11 @@ function Chispa({ estilo, size, delay, variante }) {
 // usen EXACTAMENTE el mismo acabado y las mismas animaciones con otro
 // contenido, sin duplicar clases.
 //
+// Fase 1 de rendimiento: en reposo el destello y las chispas NO se animan (con
+// cientos de cupones saturaban el renderizado); solo hay una pasada breve al
+// pasar el puntero / enfocar (`.cupon-envoltura` en index.css), y las chispas
+// del cupón apagado ni se muestran (`.cupon-envoltura-apagada`).
+//
 // La etiqueta "Nuevo" y las chispas de Oro van FUERA del div con
 // overflow:hidden (el de `.cupon-tarjeta`) — si estuvieran adentro, ese
 // overflow (necesario para recortar el brillo/degradado a la forma de
@@ -37,7 +42,7 @@ function Chispa({ estilo, size, delay, variante }) {
 export default function EnvolturaCupon({ nivel, apagada = false, esNuevo = false, children }) {
 
   return (
-    <div className={`relative ${apagada ? 'opacity-50' : ''}`}>
+    <div className={`cupon-envoltura relative ${apagada ? 'cupon-envoltura-apagada opacity-50' : ''}`}>
       {esNuevo && (
         <span className="cupon-etiqueta-nueva">
           <span>Nuevo</span>
