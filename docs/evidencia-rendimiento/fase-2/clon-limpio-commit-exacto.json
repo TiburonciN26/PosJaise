@@ -1,0 +1,26 @@
+{
+  "fecha": "2026-10-09T20:35:33.745Z",
+  "modo": "checkout exacto de e167600 (e167600796045390841ea092435d01de086b8113)",
+  "candidatos": 812,
+  "incluyeImagenLogin": true,
+  "archivosClon": 178,
+  "archivosArbol": 178,
+  "diferenciasExactas": 11,
+  "diferenciasSoloFinDeLinea": 11,
+  "ejemploSoloFinDeLinea": [
+    "diseñosPropios/Login.html",
+    "diseñosPropios/Niveles de Tarjeta Rewards.html",
+    "icons/chanchitoActivo.svg",
+    "icons/chanchitoBloqueado.svg",
+    "icons/efectivo.svg",
+    "icons/facebookColor.svg",
+    "icons/whatsappColor.svg",
+    "icons.svg",
+    "index.html",
+    "sw.js",
+    "_headers"
+  ],
+  "diferenciasDeContenido": 0,
+  "ejemploDiferencias": [],
+  "identico": true
+}

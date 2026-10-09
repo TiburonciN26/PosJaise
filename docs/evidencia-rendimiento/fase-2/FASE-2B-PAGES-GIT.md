@@ -1,4 +1,4 @@
-# Fase 2B · Cloudflare Pages con integración Git (repo PÚBLICO) y Supabase del negocio — PLAN v3.2 (4.ª revisión de Codex: preparación aprobada)
+# Fase 2B · Cloudflare Pages con integración Git (repo PÚBLICO) y Supabase del negocio — PLAN v3.3 (commit y push autorizados y ejecutados a `feat/cloudflare-pages`)
 
 **Estado: preparado y corregido, NO ejecutado.** No se hizo commit/push, no se conectó GitHub, no se creó el proyecto Git de Pages, no se publicó B, no se tocó producción, el Supabase del negocio, el dominio, DNS ni R2. Cada paso con 🔒 necesita autorización expresa del usuario. Las Fases 1 y 2 conservan sus veredictos (aprobada / aprobada con observaciones).
 
@@ -38,6 +38,15 @@ Revisión de origen: `.codex/VERIFICACION-PREPARACION-FASE-2B.md` (B1–B5). Res
 
 ### Qué queda para ejecutar 2B (decisiones del usuario 🔒)
 (a) aprobar el listado `COMMIT-PROPUESTO.md` y la inclusión de `foto-login.jpeg`; (b) autorizar commit y push a `feat/cloudflare-pages` (no toca `main`, así que no dispara GitHub Pages); (c) nombre definitivo del proyecto de Pages y conexión de solo ese repo; (d) comprobar en el panel rama de producción, `RAMA_PRODUCCION` en ambos entornos y variables; (e) publicar dos versiones y correr la prueba online O1.
+
+## v3.3 — ejecución autorizada por el usuario (2026-10-09)
+**Autorización textual:** «Acepto el listado con sus exclusiones y la imagen. Autorizo commit y push únicamente a feat/cloudflare-pages, validar el commit exacto y conectar solo PosJaise con Cloudflare Pages para el preview de staging. Usa pos-jaise si está disponible y realiza la prueba online O1. Mantén el repositorio público, main y GitHub Pages como están. El cambio definitivo de producción, R2 y la limpieza de cuentas quedan para después.»
+
+**Hecho:**
+- Rama `feat/cloudflare-pages` creada desde `testing` (= `main` remoto `0dc629e`). Commit con **184 archivos** = el listado aceptado (196 entradas de `git status` − 9 informes de `.codex/` − 3 capturas PNG de la Fase 1); la imagen `src/assets/login/foto-login.jpeg` está incluida y `.codex/config.toml` ya estaba versionado desde antes (no es parte de esta exclusión). Los informes de Codex y las capturas siguen en el árbol de trabajo, sin versionar.
+- **Validación del commit exacto** (`node scripts/probar-clon-limpio.mjs --commit=<sha>` → `clon-limpio-commit-exacto.json`): `git archive` del commit → carpeta limpia → `npm ci` → `build:cloudflare` con variables fijas de staging → **178 archivos de salida; el commit contiene la imagen, no contiene informes de Codex ni `.env`; contenido idéntico al del árbol de trabajo** una vez ignorado el fin de línea. Detalle importante: en esta máquina Windows `core.autocrlf=true` deja el árbol con CRLF y el commit guarda LF (lo que verá Cloudflare en Linux), por lo que **11 archivos de la salida (estáticos de `public/`, `_headers`, `index.html` y, por derivación, `sw.js`) difieren byte a byte entre un build local de Windows y el de Cloudflare, solo por fin de línea**. El contenido del bundle JS/CSS es idéntico. Consecuencia: el `index.html` y el `sw.js` que genere Cloudflare no serán byte a byte los de los builds locales; no importa funcionalmente, pero **no se debe comparar hashes de Cloudflare con builds locales de Windows** (sí con checkouts del mismo commit).
+- Push a `origin/feat/cloudflare-pages` (ver estado más abajo); `main`, `testing` remoto, la visibilidad del repo y GitHub Pages **no se tocaron**.
+- Disponibilidad de `pos-jaise`: `pos-jaise.pages.dev` no resuelve (curl sin respuesta, sin registro DNS) — señal de que el nombre está libre, **no es una reserva**; solo se confirma al crear el proyecto.
 
 ## v3.2 — estado vigente tras `.codex/VERIFICACION-FASE-2B-V3-1.md` (P2 cerrado; preparación 2B APROBADA para rama y preview QA)
 **Sigue sin ejecutarse nada externo:** sin commit/push, sin conectar GitHub, sin publicar B, sin tocar `main`, producción, visibilidad del repo, GitHub Pages ni R2. Faltan la autorización del usuario para el commit/push a `feat/cloudflare-pages` y el nombre del proyecto de Pages; después: validar el commit exacto, integrar Git y ejecutar O1 online.
