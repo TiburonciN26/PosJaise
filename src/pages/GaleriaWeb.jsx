@@ -5,17 +5,13 @@ import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
-import { eliminarFoto } from '../lib/imagenes.js'
+import { eliminarFoto, rutaDeUrlGaleria } from '../lib/imagenes.js'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import ModalGaleriaWeb from '../components/ModalGaleriaWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-galeria'
 
-function rutaEnBucket(url) {
-  const marcador = `/${BUCKET_FOTOS}/`
-  const indice = url?.indexOf(marcador) ?? -1
-  return indice === -1 ? null : url.slice(indice + marcador.length)
-}
+const rutaEnBucket = (url) => rutaDeUrlGaleria(BUCKET_FOTOS, url)
 
 function urlDeItem(url) {
   if (!url) return null
@@ -60,11 +56,12 @@ export default function GaleriaWeb() {
     if (!itemAEliminar) return
     setEliminando(true)
 
-    const { error } = await supabase.from('galeria_web').delete().eq('id', itemAEliminar.id)
+    // `.select('id')`: si el delete no afectó ninguna fila (RLS) NO se borran los archivos.
+    const { data: filasEliminadas, error } = await supabase.from('galeria_web').delete().eq('id', itemAEliminar.id).select('id')
 
     setEliminando(false)
 
-    if (error) {
+    if (error || (filasEliminadas ?? []).length !== 1) {
       mostrarToast('No se pudo eliminar. Intenta de nuevo.', 'error')
       return
     }

@@ -1,0 +1,578 @@
+{
+  "fecha": "2026-10-10T04:52:45.326Z",
+  "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+  "publico": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+  "origenPages": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "escribio": true,
+  "advertencias": [
+    "El dominio público es r2.dev: la guía lo reserva para desarrollo; producción debe usar un dominio propio con caché de Cloudflare.",
+    "Se usaron las fotos de referencia del repositorio, NO fotos de catálogo: el peso real del catálogo sigue sin medirse (use --fotos-dir).",
+    "r2.dev no envía X-Content-Type-Options: nosniff; configurarlo en el dominio propio (Transform Rule de cabecera de respuesta) antes de producción.",
+    "El dominio público no devuelve cf-cache-status: no hay caché de Cloudflare delante (r2.dev); HIT/MISS solo se puede validar con un dominio propio."
+  ],
+  "casos": [
+    {
+      "nombre": "A1 PUT sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "A2 inventario sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "A3 origen NO permitido → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "A4 preflight CORS del origen de Pages: 204 con el origen EXACTO, sin comodín",
+      "estado": 204,
+      "acao": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "ok": true
+    },
+    {
+      "nombre": "A5 preflight de un origen ajeno → 403 y sin Allow-Origin",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "A6 destino privado (comprobantes) → 400, nunca aceptado",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "A7 el dominio público NO sirve destinos privados → 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "A8 clave inexistente en el dominio público → 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "B1 cajera → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "B2 cliente → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (VP8X sin píxeles (30 bytes)) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (PNG declarado como WebP) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (HTML/JS) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (archivo truncado) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (exceso de bytes (600 KiB en g)) → 413",
+      "estado": 413,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (cuerpo vacío) → 400",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de hero-antes-referencia.jpg: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 781,
+      "msPutG": 1264,
+      "ok": true
+    },
+    {
+      "nombre": "B5 hero-antes-referencia.jpg: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 200,
+      "ok": true
+    },
+    {
+      "nombre": "B6 hero-antes-referencia.jpg: dominio público 200 en m y g, image/webp, cache-control immutable y contenido IDÉNTICO byte a byte a lo subido (m y g)",
+      "estadoM": 200,
+      "estadoG": 200,
+      "tipoM": "image/webp",
+      "tipoG": "image/webp",
+      "cacheM": "public, max-age=31536000, immutable",
+      "mIgual": true,
+      "gIgual": true,
+      "sha256Subido": {
+        "m": "661853b06265a185e65ef205189a5bcf782052ada6d5a3e63243f1da80c76d38",
+        "g": "13944bb0e6fa41dfc8849d1414947b5af7e62e75a61f336c004b7758f72636da"
+      },
+      "sha256Servido": {
+        "m": "661853b06265a185e65ef205189a5bcf782052ada6d5a3e63243f1da80c76d38",
+        "g": "13944bb0e6fa41dfc8849d1414947b5af7e62e75a61f336c004b7758f72636da"
+      },
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de hero-despues-referencia.jpg: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 740,
+      "msPutG": 1008,
+      "ok": true
+    },
+    {
+      "nombre": "B5 hero-despues-referencia.jpg: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 409,
+      "ok": true
+    },
+    {
+      "nombre": "B6 hero-despues-referencia.jpg: dominio público 200 en m y g, image/webp, cache-control immutable y contenido IDÉNTICO byte a byte a lo subido (m y g)",
+      "estadoM": 200,
+      "estadoG": 200,
+      "tipoM": "image/webp",
+      "tipoG": "image/webp",
+      "cacheM": "public, max-age=31536000, immutable",
+      "mIgual": true,
+      "gIgual": true,
+      "sha256Subido": {
+        "m": "eca2082bc3d067621e917570cf4dd1235571c56eab2da889aad6a4dce52af68e",
+        "g": "d7cb35062833078ddb62ed89597df3f8981e7986d6b4ff4f6f6fcc3a4fbf5e3d"
+      },
+      "sha256Servido": {
+        "m": "eca2082bc3d067621e917570cf4dd1235571c56eab2da889aad6a4dce52af68e",
+        "g": "d7cb35062833078ddb62ed89597df3f8981e7986d6b4ff4f6f6fcc3a4fbf5e3d"
+      },
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de antes-claro.webp: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 790,
+      "msPutG": 1139,
+      "ok": true
+    },
+    {
+      "nombre": "B5 antes-claro.webp: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 409,
+      "ok": true
+    },
+    {
+      "nombre": "B6 antes-claro.webp: dominio público 200 en m y g, image/webp, cache-control immutable y contenido IDÉNTICO byte a byte a lo subido (m y g)",
+      "estadoM": 200,
+      "estadoG": 200,
+      "tipoM": "image/webp",
+      "tipoG": "image/webp",
+      "cacheM": "public, max-age=31536000, immutable",
+      "mIgual": true,
+      "gIgual": true,
+      "sha256Subido": {
+        "m": "dc8f08f005b2ba60f5cdb23787bebe20791fc7e08e34854754851a97a3380e36",
+        "g": "f62c7b29481621a7094f758dc8f43ce8f5411229bbf271083979fdbbc730e5da"
+      },
+      "sha256Servido": {
+        "m": "dc8f08f005b2ba60f5cdb23787bebe20791fc7e08e34854754851a97a3380e36",
+        "g": "f62c7b29481621a7094f758dc8f43ce8f5411229bbf271083979fdbbc730e5da"
+      },
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de foto-login.jpeg: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 785,
+      "msPutG": 1143,
+      "ok": true
+    },
+    {
+      "nombre": "B5 foto-login.jpeg: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 409,
+      "ok": true
+    },
+    {
+      "nombre": "B6 foto-login.jpeg: dominio público 200 en m y g, image/webp, cache-control immutable y contenido IDÉNTICO byte a byte a lo subido (m y g)",
+      "estadoM": 200,
+      "estadoG": 200,
+      "tipoM": "image/webp",
+      "tipoG": "image/webp",
+      "cacheM": "public, max-age=31536000, immutable",
+      "mIgual": true,
+      "gIgual": true,
+      "sha256Subido": {
+        "m": "bdfb406711cecf5cfcecf87cd8fdc0fcf7867e665a439a58ca7a21b66696f05a",
+        "g": "c1cb77898d40258b0b7772f59930289eae457aa5e506898c475ca76bc4f5771b"
+      },
+      "sha256Servido": {
+        "m": "bdfb406711cecf5cfcecf87cd8fdc0fcf7867e665a439a58ca7a21b66696f05a",
+        "g": "c1cb77898d40258b0b7772f59930289eae457aa5e506898c475ca76bc4f5771b"
+      },
+      "ok": true
+    },
+    {
+      "nombre": "B7 el inventario del Worker lista lo subido",
+      "ok": true
+    },
+    {
+      "nombre": "B8 los objetos creados por el script se eliminan (DELETE 200)",
+      "resultadosBorrado": [
+        {
+          "grupo": "fotos-productos/083fcfa9-421c-4040-9cab-6d6fc3a6b505",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        },
+        {
+          "grupo": "fotos-productos/b6a13bbe-e53a-4f7c-bc5a-02849448889f",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        },
+        {
+          "grupo": "fotos-productos/bbfb83c1-e0fd-4284-950f-52f34d9f080d",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        },
+        {
+          "grupo": "fotos-productos/c53d5692-436a-4951-b3fd-ecfac96ab7e9",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        }
+      ],
+      "ok": true
+    }
+  ],
+  "mediciones": {
+    "inventarioInicial": 0,
+    "fotos": [
+      {
+        "foto": "hero-antes-referencia.jpg",
+        "originalKiB": 97.4,
+        "mKiB": 3.8,
+        "gKiB": 8.3,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 341,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 322,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 135,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 136,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 143,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 177,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 142,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 130,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 8
+        },
+        "msMediana": 143
+      },
+      {
+        "foto": "hero-despues-referencia.jpg",
+        "originalKiB": 101.6,
+        "mKiB": 4.4,
+        "gKiB": 9.5,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 240,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 169,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 142,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 133,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 170,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 134,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 140,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 133,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 8
+        },
+        "msMediana": 142
+      },
+      {
+        "foto": "antes-claro.webp",
+        "originalKiB": 100.2,
+        "mKiB": 9.3,
+        "gKiB": 22.2,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 218,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 184,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 140,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 132,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 142,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 137,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 140,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 132,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 8
+        },
+        "msMediana": 140
+      },
+      {
+        "foto": "foto-login.jpeg",
+        "originalKiB": 118.4,
+        "mKiB": 7.5,
+        "gKiB": 15.5,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 346,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 318,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 138,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 129,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 135,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 138,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 139,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 130,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 8
+        },
+        "msMediana": 138
+      }
+    ],
+    "nota": "HIT/MISS dependen del punto de presencia y del momento; se registran, no se exigen. Investigar si TODAS las lecturas repetidas son MISS (cache-control, regla de caché, dominio sin proxy).",
+    "borrado": [
+      {
+        "grupo": "fotos-productos/083fcfa9-421c-4040-9cab-6d6fc3a6b505",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/b6a13bbe-e53a-4f7c-bc5a-02849448889f",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/bbfb83c1-e0fd-4284-950f-52f34d9f080d",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/c53d5692-436a-4951-b3fd-ecfac96ab7e9",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      }
+    ],
+    "cacheTrasBorrado": "Tras el DELETE todas las URLs respondieron distinto de 200."
+  },
+  "noMedibleDesdeAqui": {
+    "cpuDelWorker": "Panel de Cloudflare → Workers y Pages → (Worker) → Metrics → CPU time (p50/p99) y Errors. En plan Free el límite es 10 ms de CPU por petición; revisar p99 durante esta prueba.",
+    "costo": "Panel → Billing y R2 → Metrics: operaciones Clase A/B y almacenamiento. Ver docs/evidencia-rendimiento/fase-3/README.md §7.",
+    "navegadoresYMoviles": "Firefox, Safari/iOS y móvil físico: pasos manuales del runbook (R2-REAL-RUNBOOK.md §5)."
+  },
+  "total": 30,
+  "fallos": 0
+}

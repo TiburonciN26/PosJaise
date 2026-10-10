@@ -1,0 +1,17 @@
+cloudflare/medios-worker/package-lock.json
+cloudflare/medios-worker/package.json
+cloudflare/medios-worker/src/index.js
+cloudflare/medios-worker/src/validar-imagen.js
+cloudflare/medios-worker/test/probar-unitario.mjs
+cloudflare/medios-worker/test/probar-worker.mjs
+cloudflare/medios-worker/wrangler.toml
+scripts/lib/huerfanos-medios.mjs
+scripts/medios-huerfanos.mjs
+scripts/verificar-medios-r2-fase3.cjs
+scripts/verificar-modales-fase3.cjs
+scripts/verificar-r2-real-fase3.mjs
+src/lib/galeriaFotos.js
+src/lib/medios.js
+src/lib/resultadoBd.js
+tests/harness/modales-fase3.html
+tests/harness/modales-fase3.jsx

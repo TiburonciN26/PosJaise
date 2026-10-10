@@ -1,0 +1,13 @@
+{
+  "name": "medios-worker",
+  "private": true,
+  "type": "module",
+  "description": "Worker autenticado de medios (Fase 3). Dependencias aisladas de la app para no tocar su package-lock.",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "test": "node test/probar-worker.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

@@ -15,6 +15,8 @@ import {
   tipoDeImagenValido,
   urlPublicaFoto,
 } from '../lib/imagenes.js'
+import { esResultadoIncierto, estadoFila } from '../lib/resultadoBd.js'
+import { aplicarResultadoGaleria, mensajeGaleriaParcial, sincronizarGaleria } from '../lib/galeriaFotos.js'
 
 const BUCKET_FOTOS = 'fotos-servicios'
 // Más grande que el de producto/perfil (600px): la tarjeta del catálogo
@@ -127,6 +129,12 @@ export default function ModalServicio({
   // elegirla pero se sube recién al guardar, para no dejar un archivo
   // huérfano en Storage si el usuario cancela el modal.
   const [fotoActual] = useState(servicio?.foto_url ?? null)
+  // Lo realmente guardado en BD para la foto principal (cambia tras un guardado
+  // parcial) y la subida ya hecha de la foto nueva: así reintentar tras un fallo
+  // de la galería no vuelve a subir ni borra la foto principal ya guardada.
+  const fotoPersistida = useRef(servicio?.foto_url ?? null)
+  const subidaPrincipal = useRef(null) // { blob, ruta }
+  const principalIncierta = useRef(false) // un guardado anterior terminó sin respuesta
   const [fotoNueva, setFotoNueva] = useState(null) // { blob, extension, previewUrl } | null
   const [fotoEliminada, setFotoEliminada] = useState(false)
   const [procesandoFoto, setProcesandoFoto] = useState(false)
@@ -268,7 +276,7 @@ export default function ModalServicio({
       if (item.esNueva) {
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
       } else {
-        setIdsGaleriaEliminados((ids) => [...ids, item.id])
+        setIdsGaleriaEliminados((ids) => [...ids, { id: item.id, fotoUrl: item.fotoUrl }])
       }
       return anterior.filter((_, i) => i !== indice)
     })
@@ -293,8 +301,22 @@ export default function ModalServicio({
       ? [servicio.categoria, ...categoriasExistentes]
       : categoriasExistentes
 
+  // Guarda de entrada: un segundo envío (clic doble, Enter) mientras el primero sigue
+  // en curso se ignora, aunque el estado `guardando` aún no se haya repintado.
+  const guardandoRef = useRef(false)
   async function guardar(evento) {
     evento.preventDefault()
+    if (guardandoRef.current) return
+    guardandoRef.current = true
+    try {
+      await guardarSinGuarda()
+    } finally {
+      guardandoRef.current = false
+      setGuardando(false) // se libera SOLO al terminar toda la operación (incluidas las lecturas de reconciliación)
+    }
+  }
+
+  async function guardarSinGuarda() {
 
     const mensajeError = validar(formulario, modo)
     if (mensajeError) {
@@ -314,66 +336,94 @@ export default function ModalServicio({
     // después, se borra el archivo recién subido para no dejar huérfanos.
     let rutaFotoSubida = null
     if (esWeb && fotoNueva) {
-      try {
-        const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
-        rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
-      } catch {
-        setGuardando(false)
-        setError('No se pudo subir la foto. Intenta de nuevo.')
-        return
+      if (subidaPrincipal.current?.blob === fotoNueva.blob) {
+        rutaFotoSubida = subidaPrincipal.current.ruta // reintento: ya estaba subida
+      } else {
+        try {
+          const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
+          rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
+          subidaPrincipal.current = { blob: fotoNueva.blob, ruta: rutaFotoSubida }
+        } catch {
+          setGuardando(false)
+          setError('No se pudo subir la foto. Intenta de nuevo.')
+          return
+        }
       }
     }
 
-    const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoActual
+    const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoPersistida.current
 
     // Cada modo guarda SOLO sus columnas (ver el comentario del componente).
     const datosPos = datosPosServicio({ formulario, categoriaFinal })
     const datosWeb = datosWebServicio({ formulario, fotoFinal, pasos, especificaciones, herramientas, materiales, cuidadosAntes, cuidadosDespues })
     const datos = esWeb ? datosWeb : datosPos
 
-    const { data: filaGuardada, error: errorGuardado } = esEdicion
+    const resultadoGuardado = esEdicion
       ? await supabase.from('servicios').update(datos).eq('id', servicio.id).select().single()
       : await supabase.from('servicios').insert(datos).select().single()
+    const { data: filaGuardada, error: errorGuardado } = resultadoGuardado
 
-    setGuardando(false)
-
+    // `guardando` se mantiene hasta terminar TODA la operación (incluida la galería): si se liberara
+    // aquí, el botón volvería a estar activo mientras la galería sigue subiendo.
     if (errorGuardado) {
-      if (rutaFotoSubida) eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
+      // Error de transporte: el guardado pudo confirmarse sin que llegara la respuesta. NO se borra
+      // nada (la foto subida puede ser ya la referenciada); el reintento reutiliza la subida.
+      if (esResultadoIncierto(resultadoGuardado)) {
+        principalIncierta.current = true
+        setError('No se pudo confirmar si el servicio se guardó (conexión interrumpida). Se conservó la foto: pulsa «Guardar cambios» para reintentar.')
+        return
+      }
+      // No borrar la foto si un guardado anterior ya la dejó referenciada.
+      if (rutaFotoSubida && rutaFotoSubida !== fotoPersistida.current) {
+        // Tras un guardado anterior INCIERTO, este rechazo no prueba que la foto no esté referenciada:
+        // solo una lectura que confirme que la fila NO la tiene (false) autoriza a borrarla.
+        if (principalIncierta.current && esEdicion) {
+          // Por REFERENCIA: solo se limpia si la lectura exitosa muestra que la fila NO usa esta foto.
+          const lectura = await estadoFila('servicios', servicio.id, { foto_url: rutaFotoSubida })
+          const noLaUsa = lectura.estado === 'ausente' || (lectura.estado === 'difiere' && lectura.fila.foto_url !== rutaFotoSubida)
+          if (!noLaUsa) {
+            setError('No se pudo confirmar el estado del servicio (conexión inestable). Se conservó la foto: pulsa «Guardar cambios» para reintentar.')
+            return
+          }
+        }
+        eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
+        subidaPrincipal.current = null
+        principalIncierta.current = false
+      }
       setError('No se pudo guardar el servicio. Intenta de nuevo.')
       return
     }
 
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
-    if (esWeb && fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
+    principalIncierta.current = false
+    const fotoAnterior = fotoPersistida.current
+    fotoPersistida.current = fotoFinal
+    if (esWeb && fotoAnterior && fotoAnterior !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoAnterior)
 
     // Galería (servicio_fotos): se procesa DESPUÉS de que el servicio ya
-    // tiene id real (necesario para uno nuevo). Si una foto puntual
-    // falla no se bloquea el guardado del servicio, que ya quedó bien —
-    // se puede reintentar reabriendo el modal.
-    if (esWeb && idsGaleriaEliminados.length > 0) {
-      await supabase.from('servicio_fotos').delete().in('id', idsGaleriaEliminados)
-    }
-    for (let indice = 0; esWeb && indice < fotosGaleria.length; indice += 1) {
-      const item = fotosGaleria[indice]
-      if (item.esNueva) {
-        try {
-          const ruta = `${crypto.randomUUID()}.${item.extension}`
-          const rutaSubida = await subirFoto(BUCKET_FOTOS, ruta, item.blob)
-          await supabase.from('servicio_fotos').insert({
-            servicio_id: filaGuardada.id,
-            foto_url: rutaSubida,
-            etiqueta: item.etiqueta,
-            orden: indice,
-          })
-        } catch {
-          // ver comentario arriba
-        }
-      } else {
-        await supabase.from('servicio_fotos').update({ etiqueta: item.etiqueta, orden: indice }).eq('id', item.id)
+    // tiene id real. Ningún error se ignora (ver lib/galeriaFotos.js): si algo
+    // falla el servicio YA quedó guardado, el modal sigue abierto con un
+    // mensaje claro y «Guardar cambios» reintenta solo lo que falta.
+    if (esWeb) {
+      const sincronizacion = await sincronizarGaleria({
+        tabla: 'servicio_fotos',
+        columnaPadre: 'servicio_id',
+        padreId: filaGuardada.id,
+        bucket: BUCKET_FOTOS,
+        fotos: fotosGaleria,
+        eliminados: idsGaleriaEliminados,
+      })
+      setFotosGaleria((anterior) => aplicarResultadoGaleria(anterior, sincronizacion))
+      setIdsGaleriaEliminados((anterior) => anterior.filter((e) => !sincronizacion.eliminadosOk.includes(e.id)))
+      if (sincronizacion.fallos.length > 0) {
+        setGuardando(false)
+        setError(mensajeGaleriaParcial('servicio', sincronizacion.fallos))
+        return
       }
     }
 
+    setGuardando(false)
     onGuardado(filaGuardada)
   }
 

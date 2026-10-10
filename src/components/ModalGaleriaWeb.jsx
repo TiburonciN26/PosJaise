@@ -5,7 +5,8 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
 import Interruptor from './Interruptor.jsx'
-import { eliminarFoto, procesarImagen, subirFoto, tipoDeImagenValido, urlPublicaFoto } from '../lib/imagenes.js'
+import { esRechazoConfirmado, estadoFila } from '../lib/resultadoBd.js'
+import { eliminarFoto, procesarImagen, rutaDeUrlGaleria, subirFoto, tipoDeImagenValido, urlPublicaFoto } from '../lib/imagenes.js'
 
 const BUCKET_FOTOS = 'fotos-galeria'
 
@@ -26,16 +27,15 @@ function urlDeItem(url) {
 // espíritu que ModalAsistente.jsx). Solo funciona si la URL vieja es de
 // ESTE bucket — la fila de prueba (foto en /public) no tiene ruta de
 // Storage que borrar, así que ahí simplemente no hace nada.
-function rutaEnBucket(url) {
-  const marcador = `/${BUCKET_FOTOS}/`
-  const indice = url?.indexOf(marcador) ?? -1
-  return indice === -1 ? null : url.slice(indice + marcador.length)
-}
+const rutaEnBucket = (url) => rutaDeUrlGaleria(BUCKET_FOTOS, url)
 
 function useFoto(urlActual) {
   const [nueva, setNueva] = useState(null) // { blob, extension, previewUrl } | null
   const [procesando, setProcesando] = useState(false)
   const [error, setError] = useState(null)
+  // Subida ya hecha de la foto elegida: si el guardado en BD es incierto, el reintento la
+  // reutiliza en vez de subir otra copia, y si se confirma que no se guardó se limpia.
+  const subida = useRef(null) // { blob, url }
 
   useEffect(() => {
     return () => {
@@ -70,12 +70,22 @@ function useFoto(urlActual) {
 
   async function subirSiHayNueva() {
     if (!nueva) return null
+    if (subida.current?.blob === nueva.blob) return subida.current.url // reintento
     const ruta = `${crypto.randomUUID()}.${nueva.extension}`
-    await subirFoto(BUCKET_FOTOS, ruta, nueva.blob)
-    return urlPublicaFoto(BUCKET_FOTOS, ruta)
+    // Con R2, `subirFoto` devuelve la referencia "r2:..." (la clave la decide el
+    // servidor); con Supabase devuelve la misma `ruta`. La galería guarda la URL
+    // completa ya resuelta, como siempre.
+    const referencia = await subirFoto(BUCKET_FOTOS, ruta, nueva.blob)
+    const url = urlPublicaFoto(BUCKET_FOTOS, referencia)
+    subida.current = { blob: nueva.blob, url }
+    return url
   }
 
-  return { nueva, preview, procesando, error, elegir, subirSiHayNueva }
+  function olvidarSubida() {
+    subida.current = null
+  }
+
+  return { nueva, preview, procesando, error, elegir, subirSiHayNueva, olvidarSubida }
 }
 
 function CampoFoto({ etiqueta, foto, idInput }) {
@@ -121,11 +131,30 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
+  const idFilaNueva = useRef(null)
+  const operacionIncierta = useRef(false) // un guardado anterior terminó sin respuesta
+  // Mismo hecho, para pintar: mientras haya un guardado pendiente de confirmar el formulario se
+  // bloquea (fotos, título, orden, visibilidad) para que el reintento reconcilie EXACTAMENTE lo que se envió.
+  const [pendiente, setPendiente] = useState(false)
   const fotoAntes = useFoto(item?.antes_url)
   const fotoDespues = useFoto(item?.despues_url)
 
+  // Guarda de entrada: un segundo envío (clic doble, Enter) mientras el primero sigue
+  // en curso se ignora, aunque el estado `guardando` aún no se haya repintado.
+  const guardandoRef = useRef(false)
   async function guardar(evento) {
     evento.preventDefault()
+    if (guardandoRef.current) return
+    guardandoRef.current = true
+    try {
+      await guardarSinGuarda()
+    } finally {
+      guardandoRef.current = false
+      setGuardando(false) // se libera SOLO al terminar toda la operación (incluidas las lecturas de reconciliación)
+    }
+  }
+
+  async function guardarSinGuarda() {
 
     if (!esEdicion && !fotoAntes.nueva) {
       setError('Elige la foto de "antes".')
@@ -145,6 +174,11 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
       antesUrlSubida = await fotoAntes.subirSiHayNueva()
       despuesUrlSubida = await fotoDespues.subirSiHayNueva()
     } catch {
+      // Si «antes» ya se subió y «después» falló, no dejar «antes» sin referencia.
+      if (antesUrlSubida) {
+        await eliminarFoto(BUCKET_FOTOS, rutaEnBucket(antesUrlSubida))
+        fotoAntes.olvidarSubida()
+      }
       setGuardando(false)
       setError('No se pudo subir alguna de las fotos. Intenta de nuevo.')
       return
@@ -158,16 +192,58 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
       activo,
     }
 
-    const { error: errorGuardado } = esEdicion
-      ? await supabase.from('galeria_web').update(datos).eq('id', item.id)
-      : await supabase.from('galeria_web').insert(datos)
+    // Identidad de la fila nueva: se genera una vez y se reutiliza en los reintentos (ver resultadoBd.js).
+    if (!esEdicion && !idFilaNueva.current) idFilaNueva.current = crypto.randomUUID()
+    const idFila = esEdicion ? item.id : idFilaNueva.current
+    const fila = esEdicion ? datos : { id: idFila, ...datos }
 
-    setGuardando(false)
+    // `.select('id')`: un update que RLS deja en 0 filas no devuelve error y no
+    // debe contarse como guardado.
+    const resultado = esEdicion
+      ? await supabase.from('galeria_web').update(fila).eq('id', idFila).select('id')
+      : await supabase.from('galeria_web').insert(fila).select('id')
 
-    if (errorGuardado) {
+    let guardada = !resultado.error && (resultado.data ?? []).length === 1
+    let lectura = null // { estado, fila } si se leyó
+    const hayDuda = Boolean(resultado.error) && (resultado.error.code === '23505' || !esRechazoConfirmado(resultado))
+    if (!guardada && (operacionIncierta.current || hayDuda)) {
+      // Un 23505 dice que ESTE insert chocó con una fila existente (¿la de un intento anterior cuya
+      // respuesta se perdió?): no que sea ajena. Hay que LEERLA y comparar TODO lo enviado.
+      lectura = await estadoFila('galeria_web', idFila, datos)
+      guardada = lectura.estado === 'coincide'
+    }
+
+    if (!guardada) {
+      // Solo se limpian las fotos con un rechazo CONFIRMADO sin incertidumbre previa, o si una lectura
+      // exitosa prueba que la fila NO existe ('ausente'). Una fila que existe con otros valores
+      // ('difiere') usa archivos: NUNCA se borra ninguno. En cualquier duda se CONSERVAN fotos, id y referencia.
+      if (hayDuda || (operacionIncierta.current && lectura?.estado !== 'ausente')) {
+        operacionIncierta.current = true
+        setPendiente(true)
+        setError(
+          lectura?.estado === 'difiere'
+            ? 'Ya existe un guardado anterior con otros valores. Se conservaron todas las fotos: pulsa «Guardar cambios» para reintentar.'
+            : 'No se pudo confirmar si se guardó (conexión interrumpida). Se conservaron las fotos: pulsa «Guardar cambios» para reintentar.',
+        )
+        return
+      }
+      operacionIncierta.current = false
+      setPendiente(false)
+      if (antesUrlSubida) {
+        eliminarFoto(BUCKET_FOTOS, rutaEnBucket(antesUrlSubida))
+        fotoAntes.olvidarSubida()
+      }
+      if (despuesUrlSubida) {
+        eliminarFoto(BUCKET_FOTOS, rutaEnBucket(despuesUrlSubida))
+        fotoDespues.olvidarSubida()
+      }
       setError('No se pudo guardar. Intenta de nuevo.')
       return
     }
+
+    operacionIncierta.current = false
+    setPendiente(false)
+    setGuardando(false)
 
     if (antesUrlSubida && item?.antes_url) {
       const rutaVieja = rutaEnBucket(item.antes_url)
@@ -193,7 +269,13 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
           {esEdicion ? 'Editar foto de galería' : 'Nueva foto de galería'}
         </h2>
 
-        <div className="mt-4 space-y-3">
+        {pendiente && (
+          <p className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-ink" data-testid="galeria-guardado-pendiente">
+            Hay un guardado pendiente de confirmar. Los campos están bloqueados hasta resolverlo: pulsa «Guardar cambios» para reintentar o Cancelar.
+          </p>
+        )}
+
+        <fieldset disabled={pendiente} className="mt-4 min-w-0 space-y-3 border-0 p-0">
           <CampoFoto etiqueta="Foto de antes" foto={fotoAntes} idInput={`${idBase}-antes`} />
           <CampoFoto etiqueta="Foto de después" foto={fotoDespues} idInput={`${idBase}-despues`} />
 
@@ -231,7 +313,7 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
             <span className="text-sm text-ink">Visible en la Web</span>
             <Interruptor activado={activo} colorActivado="bg-azul-metal" />
           </button>
-        </div>
+        </fieldset>
 
         {error && (
           <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">{error}</p>

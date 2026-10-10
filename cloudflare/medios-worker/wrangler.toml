@@ -1,0 +1,24 @@
+# Worker de medios (Fase 3) — SOLO staging. Despliegue autorizado por el usuario el 2026-10-09
+# (únicamente pos-jaise-medios-staging, ligado al bucket de pruebas y al Supabase de staging).
+#
+# Los valores de [vars] son públicos (URL y anon key de Supabase son claves
+# públicas del frontend). NO guardar aquí service_role ni credenciales R2:
+# el acceso a R2 es solo el binding.
+name = "pos-jaise-medios-staging"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true           # endpoint de PRUEBAS en *.workers.dev (sin tocar DNS); la autenticación la exige el propio Worker
+preview_urls = false
+
+[vars]
+AMBIENTE = "staging"
+SUPABASE_URL = "https://tqkdtojnhgykmcbvwdmz.supabase.co"
+# SUPABASE_ANON_KEY: se pasa con --var / secret en el despliegue o con
+# .dev.vars en local (git-ignored). No se versiona.
+ORIGENES_PERMITIDOS = "http://localhost:5173,https://feat-cloudflare-pages.pos-jaise.pages.dev"
+SERVIR_LECTURA = "0"
+
+[[r2_buckets]]
+binding = "MEDIOS"
+bucket_name = "pos-jaise-medios-staging"
+# En local, wrangler usa un R2 simulado en disco: no toca la cuenta.

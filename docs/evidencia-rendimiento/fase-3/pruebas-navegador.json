@@ -1,0 +1,358 @@
+{
+  "fecha": "2026-10-10T03:15:35.116Z",
+  "entorno": "Vite dev + Worker local con R2 simulado + Supabase staging",
+  "total": 24,
+  "fallos": 0,
+  "pesosFotosReales": [
+    {
+      "foto": "/inicio-web/hero-antes-referencia.jpg",
+      "perfil": "producto (600 px, q0.8)",
+      "original": 99737,
+      "procesada": 8504,
+      "ancho": 600,
+      "alto": 337,
+      "bytesM": 3202,
+      "bytesG": 8504
+    },
+    {
+      "foto": "/inicio-web/hero-antes-referencia.jpg",
+      "perfil": "servicio (900 px, q0.85)",
+      "original": 99737,
+      "procesada": 17602,
+      "ancho": 900,
+      "alto": 506,
+      "bytesM": 3488,
+      "bytesG": 17602
+    },
+    {
+      "foto": "/inicio-web/hero-antes-referencia.jpg",
+      "perfil": "galería (1400 px, q0.85)",
+      "original": 99737,
+      "procesada": 30072,
+      "ancho": 1400,
+      "alto": 787,
+      "bytesM": 3624,
+      "bytesG": 30072
+    },
+    {
+      "foto": "/inicio-web/hero-despues-referencia.jpg",
+      "perfil": "producto (600 px, q0.8)",
+      "original": 104010,
+      "procesada": 9696,
+      "ancho": 600,
+      "alto": 337,
+      "bytesM": 3896,
+      "bytesG": 9696
+    },
+    {
+      "foto": "/inicio-web/hero-despues-referencia.jpg",
+      "perfil": "servicio (900 px, q0.85)",
+      "original": 104010,
+      "procesada": 19232,
+      "ancho": 900,
+      "alto": 506,
+      "bytesM": 4154,
+      "bytesG": 19232
+    },
+    {
+      "foto": "/inicio-web/hero-despues-referencia.jpg",
+      "perfil": "galería (1400 px, q0.85)",
+      "original": 104010,
+      "procesada": 31362,
+      "ancho": 1400,
+      "alto": 787,
+      "bytesM": 4268,
+      "bytesG": 31362
+    },
+    {
+      "foto": "/inicio-web/hero-despues-referencia2.jpg",
+      "perfil": "producto (600 px, q0.8)",
+      "original": 500645,
+      "procesada": 12216,
+      "ancho": 600,
+      "alto": 337,
+      "bytesM": 4114,
+      "bytesG": 12216
+    },
+    {
+      "foto": "/inicio-web/hero-despues-referencia2.jpg",
+      "perfil": "servicio (900 px, q0.85)",
+      "original": 500645,
+      "procesada": 27748,
+      "ancho": 900,
+      "alto": 505,
+      "bytesM": 4420,
+      "bytesG": 27748
+    },
+    {
+      "foto": "/inicio-web/hero-despues-referencia2.jpg",
+      "perfil": "galería (1400 px, q0.85)",
+      "original": 500645,
+      "procesada": 52232,
+      "ancho": 1400,
+      "alto": 786,
+      "bytesM": 4590,
+      "bytesG": 52232
+    },
+    {
+      "foto": "/inicio-web/antes-claro.webp",
+      "perfil": "producto (600 px, q0.8)",
+      "original": 102592,
+      "procesada": 22742,
+      "ancho": 600,
+      "alto": 337,
+      "bytesM": 8936,
+      "bytesG": 22742
+    },
+    {
+      "foto": "/inicio-web/antes-claro.webp",
+      "perfil": "servicio (900 px, q0.85)",
+      "original": 102592,
+      "procesada": 41492,
+      "ancho": 900,
+      "alto": 506,
+      "bytesM": 9140,
+      "bytesG": 41492
+    },
+    {
+      "foto": "/inicio-web/antes-claro.webp",
+      "perfil": "galería (1400 px, q0.85)",
+      "original": 102592,
+      "procesada": 74112,
+      "ancho": 1400,
+      "alto": 787,
+      "bytesM": 9370,
+      "bytesG": 74112
+    },
+    {
+      "foto": "/src/assets/login/foto-login.jpeg",
+      "perfil": "producto (600 px, q0.8)",
+      "original": 121254,
+      "procesada": 15896,
+      "ancho": 448,
+      "alto": 600,
+      "bytesM": 6896,
+      "bytesG": 15896
+    },
+    {
+      "foto": "/src/assets/login/foto-login.jpeg",
+      "perfil": "servicio (900 px, q0.85)",
+      "original": 121254,
+      "procesada": 31948,
+      "ancho": 673,
+      "alto": 900,
+      "bytesM": 7166,
+      "bytesG": 31948
+    },
+    {
+      "foto": "/src/assets/login/foto-login.jpeg",
+      "perfil": "galería (1400 px, q0.85)",
+      "original": 121254,
+      "procesada": 54372,
+      "ancho": 1046,
+      "alto": 1400,
+      "bytesM": 7408,
+      "bytesG": 54372
+    }
+  ],
+  "casos": [
+    {
+      "nombre": "procesarImagen existente sigue produciendo WebP ≤ 600 px",
+      "bytes": 2572,
+      "extension": "webp",
+      "tipo": "image/webp",
+      "ok": true
+    },
+    {
+      "nombre": "subirFoto devuelve referencia r2:fotos-servicios/<uuid>",
+      "ref": "r2:fotos-servicios/2d214a89-f63f-4f29-a5ec-34d463220341",
+      "ok": true
+    },
+    {
+      "nombre": "progreso informado (preparando → subiendo → listo)",
+      "fases": [
+        "preparando",
+        "subiendo",
+        "subiendo",
+        "listo"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "variante g: 200, image/webp, decodifica, cache immutable, ≤ 250 KiB",
+      "estado": 200,
+      "bytes": 2572,
+      "tipo": "image/webp",
+      "cache": "public, max-age=31536000, immutable",
+      "ancho": 600,
+      "alto": 600,
+      "ok": true
+    },
+    {
+      "nombre": "variante m: 320 px, ≤ 80 KiB y menor que g",
+      "estado": 200,
+      "bytes": 1410,
+      "tipo": "image/webp",
+      "cache": "public, max-age=31536000, immutable",
+      "ancho": 320,
+      "alto": 320,
+      "ok": true
+    },
+    {
+      "nombre": "galería: fila con URLs completas del dominio de medios guardada",
+      "error": null,
+      "ok": true
+    },
+    {
+      "nombre": "reemplazo: la anterior vive hasta guardar; luego se elimina; la nueva responde 200",
+      "antesDelUpdate": 200,
+      "errorUpdate": null,
+      "eliminada": true,
+      "vieja": 404,
+      "nueva": 200,
+      "nuevaUrl": "http://127.0.0.1:8789/fotos-galeria/0ae3d61b-5aee-4cba-a51a-e649300c7008/g.webp",
+      "ok": true
+    },
+    {
+      "nombre": "fallo de red en la variante g: la promesa se rechaza (sin éxito ficticio) tras reintentar",
+      "rechazada": true,
+      "mensaje": "Failed to fetch",
+      "intentos": 3,
+      "ok": true
+    },
+    {
+      "nombre": "503 transitorio: reintento visible y subida correcta",
+      "ref": "r2:fotos-servicios/7adde4d8-b825-493a-988b-7fa173b3ba16",
+      "fases": [
+        "preparando",
+        "subiendo",
+        "reintentando",
+        "subiendo",
+        "listo"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "foto antigua (sin prefijo): la URL es de Supabase Storage y el borrado usa el camino antiguo (no el Worker)",
+      "url": "https://tqkdtojnhgykmcbvwdmz.supabase.co/storage/v1/object/public/fotos-servicios/qa-legado.webp",
+      "borradosStorage": [
+        "{\"prefixes\":[\"qa-legado.webp\"]}"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "WebP va a R2; un JPEG (fallback del navegador) NO va a R2 y sigue por Supabase",
+      "webpEnR2": true,
+      "jpegEnR2": false,
+      "enR2": {
+        "fotos-productos": true,
+        "fotos-servicios": true,
+        "fotos-galeria": true,
+        "comprobantes-pedidos-web": false,
+        "comprobantes-citas-web": false,
+        "qr-pagos": false,
+        "fotos-clientes": false,
+        "fotos-usuarios": false,
+        "fotos-asistentes": false
+      },
+      "ok": true
+    },
+    {
+      "nombre": "solo productos/servicios/galería usan R2; comprobantes, QR, perfiles y equipo siguen en Supabase",
+      "fotos-productos": true,
+      "fotos-servicios": true,
+      "fotos-galeria": true,
+      "comprobantes-pedidos-web": false,
+      "comprobantes-citas-web": false,
+      "qr-pagos": false,
+      "fotos-clientes": false,
+      "fotos-usuarios": false,
+      "fotos-asistentes": false,
+      "ok": true
+    },
+    {
+      "nombre": "respuesta perdida tras guardar la variante m: el reintento recupera (200 reanudado), devuelve referencia válida, sin DELETE",
+      "ref": "r2:fotos-servicios/3492aaf4-ab1f-47a6-bc77-9aceb11c4fbc",
+      "estadoM": 200,
+      "estadoG": 200,
+      "borrados": 0,
+      "perdidas": 1,
+      "ok": true
+    },
+    {
+      "nombre": "respuesta perdida tras guardar la variante g: el reintento recupera (200 reanudado), devuelve referencia válida, sin DELETE",
+      "ref": "r2:fotos-servicios/28a99634-3fc2-49a4-b52a-d764fb1d7056",
+      "estadoM": 200,
+      "estadoG": 200,
+      "borrados": 0,
+      "perdidas": 1,
+      "ok": true
+    },
+    {
+      "nombre": "borrado fallido (503 persistente): devuelve false y queda anotado en el diario",
+      "resultado": false,
+      "pendientes": [
+        {
+          "ref": "r2:fotos-servicios/0dbe3ae0-faf8-419f-9005-f9e0893bc1f0",
+          "desde": "2026-10-10T03:15:05.428Z",
+          "intentos": 1,
+          "ultimoError": "temporal"
+        }
+      ],
+      "denegados": 3,
+      "ok": true
+    },
+    {
+      "nombre": "el objeto sigue existiendo mientras el borrado está pendiente; el reintento del diario lo elimina y lo vacía",
+      "eliminadas": 1,
+      "pendientes": [],
+      "antes": 200,
+      "despues": 404,
+      "ok": true
+    },
+    {
+      "nombre": "se procesaron y subieron las fotos reales de muestra",
+      "ok": true
+    },
+    {
+      "nombre": "fotos reales: ninguna supera los TOPES DUROS del Worker (m 96 KiB, g 512 KiB)",
+      "topesDuros": [],
+      "ok": true
+    },
+    {
+      "nombre": "fotos reales: objetivos de la guía (m ≤ 80 KiB, g ≤ 250 KiB) — 0 de 15 superan m, 0 de 15 superan g",
+      "excedenM": [],
+      "excedenG": [],
+      "ok": true
+    },
+    {
+      "nombre": "proveedor r2 sin API/URL pública: la subida FALLA con mensaje claro, sin tocar Supabase Storage ni el Worker",
+      "rechazada": true,
+      "mensaje": "Medios R2 mal configurados: falta VITE_MEDIOS_API_URL y VITE_MEDIOS_PUBLIC_URL.",
+      "peticionesStorage": [],
+      "ok": true
+    },
+    {
+      "nombre": "limpieza: fila y objetos de galería eliminados",
+      "despues": 404,
+      "ok": true
+    },
+    {
+      "nombre": "solo se contactó el Supabase de staging",
+      "hosts": [
+        "tqkdtojnhgykmcbvwdmz.supabase.co"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "NINGUNA escritura REST/Storage llegó a Supabase (todo lo escribible estaba simulado)",
+      "escriturasBloqueadas": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

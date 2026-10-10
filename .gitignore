@@ -74,3 +74,9 @@ headerYServicios.html
 # Preview de Cloudflare Pages (artefacto de scripts/build-preview-staging.mjs)
 dist-preview/
 dist-preview-*/
+
+# Fase 3: secretos locales y estado simulado del Worker de medios
+.dev.vars
+.wrangler/
+cloudflare/medios-worker/.estado-local/
+cloudflare/medios-worker/dist/

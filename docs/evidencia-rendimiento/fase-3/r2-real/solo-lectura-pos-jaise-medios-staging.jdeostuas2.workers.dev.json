@@ -1,0 +1,62 @@
+{
+  "fecha": "2026-10-10T04:28:00.976Z",
+  "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+  "publico": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+  "origenPages": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "escribio": false,
+  "advertencias": [
+    "El dominio público es r2.dev: la guía lo reserva para desarrollo; producción debe usar un dominio propio con caché de Cloudflare."
+  ],
+  "casos": [
+    {
+      "nombre": "A1 PUT sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "A2 inventario sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "A3 origen NO permitido → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "A4 preflight CORS del origen de Pages: 204 con el origen EXACTO, sin comodín",
+      "estado": 204,
+      "acao": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "ok": true
+    },
+    {
+      "nombre": "A5 preflight de un origen ajeno → 403 y sin Allow-Origin",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "A6 destino privado (comprobantes) → 400, nunca aceptado",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "A7 el dominio público NO sirve destinos privados → 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "A8 clave inexistente en el dominio público → 404",
+      "estado": 404,
+      "ok": true
+    }
+  ],
+  "mediciones": {},
+  "noMedibleDesdeAqui": {
+    "cpuDelWorker": "Panel de Cloudflare → Workers y Pages → (Worker) → Metrics → CPU time (p50/p99) y Errors. En plan Free el límite es 10 ms de CPU por petición; revisar p99 durante esta prueba.",
+    "costo": "Panel → Billing y R2 → Metrics: operaciones Clase A/B y almacenamiento. Ver docs/evidencia-rendimiento/fase-3/README.md §7.",
+    "navegadoresYMoviles": "Firefox, Safari/iOS y móvil físico: pasos manuales del runbook (R2-REAL-RUNBOOK.md §5)."
+  },
+  "omitido": "Fase B (escritura) no ejecutada: requiere --escribir y autorización del usuario.",
+  "total": 8,
+  "fallos": 0
+}

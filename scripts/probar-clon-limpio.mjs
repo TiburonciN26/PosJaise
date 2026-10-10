@@ -16,6 +16,14 @@ const envBuild = {
   CF_PAGES: '1', CF_PAGES_BRANCH: 'feat/cloudflare-pages', RAMA_PRODUCCION: 'cloudflare-produccion', CF_PAGES_COMMIT_SHA: '0123456789abcdef',
   VITE_SUPABASE_URL: envLocal.VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY: envLocal.VITE_SUPABASE_ANON_KEY, VITE_CULQI_PUBLIC_KEY: '',
 }
+// --medios: compila además con las tres variables R2 de Pages *Preview* (Fase 3), para validar el build tal como lo hará Cloudflare.
+if (process.argv.includes('--medios')) {
+  Object.assign(envBuild, {
+    VITE_MEDIOS_PROVEEDOR: 'r2',
+    VITE_MEDIOS_API_URL: 'https://pos-jaise-medios-staging.jdeostuas2.workers.dev',
+    VITE_MEDIOS_PUBLIC_URL: 'https://pub-b248edba3e19402382b557a35b33c674.r2.dev',
+  })
+}
 const EXCLUIR = [/^\.codex\//, /^tests\/e2e\/(results|artifacts)/]
 const lista = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { encoding: 'utf8', maxBuffer: 1 << 28 }).stdout.split('\0').filter(Boolean)
 const candidatos = lista.filter((f) => existsSync(f) && !EXCLUIR.some((re) => re.test(f)))

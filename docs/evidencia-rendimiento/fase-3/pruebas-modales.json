@@ -1,0 +1,329 @@
+{
+  "fecha": "2026-10-10T03:22:49.369Z",
+  "entorno": "Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión",
+  "total": 55,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "PRODUCTO feliz: se guarda, la foto principal nueva existe, la anterior se elimina, la galería suma una foto",
+      "guardados": 1,
+      "antes": 2,
+      "despues": 3,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO insert de galería rechazado (42501): NO se finge éxito, mensaje parcial visible, objeto subido limpiado, referencias intactas",
+      "guardados": 0,
+      "texto": "dido\" (inicio de Productos, Web)\n\nEl producto se guardó, pero la galería quedó incompleta: No se pudo guardar una foto de la galería. Pulsa «Guardar cambios» para reintentar.\n\nCancelar\nGuardar cambios",
+      "antes": 5,
+      "despues": 5,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO reintento tras el fallo: la foto de galería queda guardada una sola vez y el modal informa guardado",
+      "guardados": 1,
+      "filas": 2,
+      "antes": 5,
+      "despues": 6,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO falla el guardado en BD: la foto anterior se conserva, la nueva no queda huérfana, mensaje de error",
+      "antes": 7,
+      "despues": 7,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO reintento tras fallo de BD: la foto nueva se guarda y la anterior se elimina",
+      "foto": "r2:fotos-productos/f462d28b-fdd0-4ab2-b788-287c05f75346",
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO principal ya guardada + galería fallida: el reintento reutiliza la subida (sin duplicar ni dejar referencia rota)",
+      "tras1": 8,
+      "final": 9,
+      "filas": 1,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO quitar foto de galería — se elimina la fila y luego el objeto",
+      "filaSigue": false,
+      "objetoExiste": false,
+      "esperaMensaje": false,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO quitar foto de galería — el delete falla (HTTP 500): fila y objeto se conservan",
+      "filaSigue": true,
+      "objetoExiste": true,
+      "esperaMensaje": true,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO quitar foto de galería — el delete no afecta filas (RLS silencioso): el objeto NO se borra",
+      "filaSigue": true,
+      "objetoExiste": true,
+      "esperaMensaje": true,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO 2.ª foto de galería sin red: la 1.ª queda guardada, la 2.ª no deja huérfanos y se informa",
+      "filas": 1,
+      "antes": 11,
+      "despues": 12,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO reintento tras recuperar la red: queda 1 sola fila por foto (sin duplicar la 1.ª)",
+      "filas": 2,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO feliz: foto principal nueva + galería; la anterior se elimina",
+      "texto": "ón\nCuidados después de la cita\n+ Agregar indicación\nDestacar en \"Tendencias y lo más pedido\" (Web)\nSe puede hacer a domicilio\nCancelar\nGuardar cambios",
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO insert de galería rechazado: parcial claro, sin huérfano ni éxito ficticio",
+      "antes": 16,
+      "despues": 16,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO reintento: la foto queda guardada una vez",
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA alta feliz: se suben las dos fotos y se guarda una fila",
+      "filas": 1,
+      "antes": 17,
+      "despues": 19,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA falla la subida de «después»: la de «antes» NO queda huérfana, sin escritura en BD, error visible",
+      "antes": 19,
+      "despues": 19,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA falla el insert en BD: ambas fotos subidas se limpian",
+      "antes": 19,
+      "despues": 19,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA reemplazo de «antes» — update correcto",
+      "antes": 21,
+      "despues": 21,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA reemplazo de «antes» — update que RLS deja en 0 filas",
+      "antes": 23,
+      "despues": 23,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO insert de galería CONFIRMADO con respuesta perdida: una sola fila, ninguna referencia rota, éxito (se reconcilia)",
+      "filas": 1,
+      "antes": 23,
+      "despues": 24,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO insert de galería NO confirmado con respuesta perdida: el archivo se CONSERVA, se avisa de la incertidumbre y no se finge éxito",
+      "filas": 0,
+      "antes": 24,
+      "despues": 25,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO reintento tras la incertidumbre: una sola fila con la MISMA imagen, sin duplicar archivos ni dejar referencias rotas",
+      "filas": 1,
+      "tras1": 25,
+      "despues": 25,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO delete CONFIRMADO con respuesta perdida: se reconcilia (la fila ya no existe) y se elimina el archivo, sin bloqueo",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO delete NO aplicado con respuesta perdida: la fila sigue, el archivo se conserva y se informa",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO reintento del delete: se completa y se elimina el archivo (sin bloqueo permanente)",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO guardado de la foto principal CONFIRMADO con respuesta perdida: no se borra nada (ni la nueva ni la anterior) y se avisa",
+      "objetosNuevos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO reintento (la 1.ª ya estaba aplicada): la foto nueva queda referenciada una vez, la anterior se elimina recién ahora",
+      "total": 26,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO guardado de la foto principal NO aplicado con respuesta perdida: no se borra nada (ni la nueva ni la anterior) y se avisa",
+      "objetosNuevos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO reintento (la 1.ª no se aplicó): la foto nueva queda referenciada una vez, la anterior se elimina recién ahora",
+      "total": 27,
+      "ok": true
+    },
+    {
+      "nombre": "F3-08 SERVICIO con galería lenta: el botón queda bloqueado durante TODA la operación y los envíos repetidos se ignoran (1 foto, 1 fila, 1 evento)",
+      "botonBloqueado": true,
+      "filas": 1,
+      "objetos": 1,
+      "eventos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA alta CONFIRMADA con respuesta perdida: una fila y las dos fotos intactas (éxito por reconciliación)",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA alta NO confirmada con respuesta perdida: las 2 fotos se conservan y se avisa",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA reintento: una fila con las MISMAS fotos (sin subir copias ni dejar referencias rotas)",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA reemplazo CONFIRMADO con respuesta perdida: se reconcilia, la foto nueva queda referenciada y SOLO entonces se elimina la anterior",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO: INSERT confirmado + respuesta perdida + GET caído → conserva archivos, 1 fila, mensaje de incertidumbre, 0 éxitos",
+      "filas": 1,
+      "objetos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO: 3 reintentos con 23505 y GET aún inaccesible → NO se borra nada, misma identidad, sin duplicados, sin éxito falso",
+      "filas": 1,
+      "objetos": 1,
+      "eventos": 0,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO: al volver el GET → una sola fila, misma referencia, archivo existente y UN solo éxito",
+      "filas": 1,
+      "eventos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 SERVICIO: INSERT confirmado + respuesta perdida + GET caído → conserva archivos, 1 fila, mensaje de incertidumbre, 0 éxitos",
+      "filas": 1,
+      "objetos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 SERVICIO: 3 reintentos con 23505 y GET aún inaccesible → NO se borra nada, misma identidad, sin duplicados, sin éxito falso",
+      "filas": 1,
+      "objetos": 1,
+      "eventos": 0,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 SERVICIO: al volver el GET → una sola fila, misma referencia, archivo existente y UN solo éxito",
+      "filas": 1,
+      "eventos": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO: INSERT NO aplicado + respuesta perdida + GET caído → se conserva el archivo y el reintento inserta una sola fila válida",
+      "sinFilaTras1": true,
+      "filas": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA: INSERT confirmado + respuesta perdida + GET caído → 1 fila, las 2 fotos presentes, mensaje de incertidumbre, 0 éxitos",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA: 3 reintentos con 23505 y GET inaccesible → ambas fotos SIGUEN existiendo, la fila no cambia y no hay éxito falso",
+      "objetos": 2,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 GALERÍA: al volver el GET → una fila, mismas fotos existentes y UN solo éxito",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO foto principal: PATCH confirmado + respuesta perdida; el reintento recibe 403 con GET caído → NO se borra la foto referenciada",
+      "nuevaDistinta": true,
+      "bdEsNueva": true,
+      "nuevaExiste": true,
+      "viejaExiste": true,
+      "eventos": 0,
+      "texto": "No se pudo confirmar el estado del producto (conexión inestable). Se conservó la foto: pulsa «Guardar cambios» para reintentar.",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 PRODUCTO foto principal: al volver el GET → la foto nueva queda referenciada y existente, la anterior se elimina recién ahora, UN éxito",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 control: rechazo explícito (403) sin incertidumbre previa → se limpia la foto recién subida y la anterior se conserva",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07/V4 GALERÍA: con el guardado pendiente los campos (fotos, título, orden, visibilidad) están BLOQUEADOS y hay aviso; al resolverse se rehabilitan con un solo éxito",
+      "bloqueado": true,
+      "avisoVisible": true,
+      "rehabilitado": true,
+      "filas": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07/V4 GALERÍA: A/B incierto → cambiar solo «despues» por C → 403 → GET exitoso A/B → la fila A/B y AMBAS fotos siguen válidas (nada se borra)",
+      "antesExiste": true,
+      "despuesExiste": true,
+      "eventos": 0,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07/V4 GALERÍA: A/B incierto → cambiar solo «antes» por C → 403 → GET exitoso A/B → la fila A/B y AMBAS fotos siguen válidas (nada se borra)",
+      "antesExiste": true,
+      "despuesExiste": true,
+      "eventos": 0,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07/V4 GALERÍA (edición): update incierto A1/B0 → cambiar B → 403 → GET exitoso → la fila A1/B0 conserva sus fotos válidas y no hay éxito falso",
+      "a1": true,
+      "b0": true,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07/V4 control: rechazo explícito (403) sin incertidumbre previa → se limpian las dos fotos recién subidas y el formulario NO queda bloqueado",
+      "ok": true
+    },
+    {
+      "nombre": "F3-07/V4 PRODUCTO: etiqueta cambiada mientras el guardado estaba pendiente → una sola fila, la etiqueta nueva se aplica (UPDATE), la foto existe y hay un único éxito",
+      "filas": 1,
+      "etiqueta": "Textura",
+      "ok": true
+    },
+    {
+      "nombre": "aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "noSimuladas": [],
+      "supabaseNoAuth": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página en todo el recorrido",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

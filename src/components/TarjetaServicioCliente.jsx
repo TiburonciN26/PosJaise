@@ -14,7 +14,7 @@ const BUCKET_FOTOS = 'fotos-servicios'
 // ServiciosCliente (catálogo agrupado y grilla plana) y
 // DetalleServicioCliente ("También te puede interesar").
 export default function TarjetaServicioCliente({ servicio }) {
-  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, servicio.foto_url)
+  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, servicio.foto_url, 'm')
   const duracion = formatearDuracion(servicio.duracion_min)
 
   return (

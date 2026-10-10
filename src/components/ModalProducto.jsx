@@ -16,6 +16,8 @@ import {
   tipoDeImagenValido,
   urlPublicaFoto,
 } from '../lib/imagenes.js'
+import { esResultadoIncierto, estadoFila } from '../lib/resultadoBd.js'
+import { aplicarResultadoGaleria, mensajeGaleriaParcial, sincronizarGaleria } from '../lib/galeriaFotos.js'
 
 const BUCKET_FOTOS = 'fotos-productos'
 const STOCK_MINIMO_POR_DEFECTO = 3
@@ -147,6 +149,12 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   // pendiente de subir recién al guardar (así si el usuario cancela el
   // modal no queda un archivo huérfano en Storage).
   const [fotoActual] = useState(producto?.foto_url ?? null)
+  // Lo realmente guardado en BD para la foto principal (cambia tras un guardado
+  // parcial) y la subida ya hecha de la foto nueva: así reintentar tras un fallo
+  // de la galería no vuelve a subir ni borra la foto principal ya guardada.
+  const fotoPersistida = useRef(producto?.foto_url ?? null)
+  const subidaPrincipal = useRef(null) // { blob, ruta }
+  const principalIncierta = useRef(false) // un guardado anterior terminó sin respuesta
   const [fotoNueva, setFotoNueva] = useState(null) // { blob, extension, previewUrl } | null
   const [fotoEliminada, setFotoEliminada] = useState(false)
   const [procesandoFoto, setProcesandoFoto] = useState(false)
@@ -287,7 +295,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
       if (item.esNueva) {
         if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
       } else {
-        setIdsGaleriaEliminados((ids) => [...ids, item.id])
+        setIdsGaleriaEliminados((ids) => [...ids, { id: item.id, fotoUrl: item.fotoUrl }])
       }
       return anterior.filter((_, i) => i !== indice)
     })
@@ -319,8 +327,22 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
       ? [producto.categoria, ...categoriasExistentes]
       : categoriasExistentes
 
+  // Guarda de entrada: un segundo envío (clic doble, Enter) mientras el primero sigue
+  // en curso se ignora, aunque el estado `guardando` aún no se haya repintado.
+  const guardandoRef = useRef(false)
   async function guardar(evento) {
     evento.preventDefault()
+    if (guardandoRef.current) return
+    guardandoRef.current = true
+    try {
+      await guardarSinGuarda()
+    } finally {
+      guardandoRef.current = false
+      setGuardando(false) // se libera SOLO al terminar toda la operación (incluidas las lecturas de reconciliación)
+    }
+  }
+
+  async function guardarSinGuarda() {
 
     const mensajeError = validar(formulario, modo)
     if (mensajeError) {
@@ -340,17 +362,22 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
     // después, borramos el archivo recién subido para no dejar huérfanos.
     let rutaFotoSubida = null
     if (esWeb && fotoNueva) {
-      try {
-        const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
-        rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
-      } catch {
-        setGuardando(false)
-        setError('No se pudo subir la foto. Intenta de nuevo.')
-        return
+      if (subidaPrincipal.current?.blob === fotoNueva.blob) {
+        rutaFotoSubida = subidaPrincipal.current.ruta // reintento: ya estaba subida
+      } else {
+        try {
+          const ruta = `${crypto.randomUUID()}.${fotoNueva.extension}`
+          rutaFotoSubida = await subirFoto(BUCKET_FOTOS, ruta, fotoNueva.blob)
+          subidaPrincipal.current = { blob: fotoNueva.blob, ruta: rutaFotoSubida }
+        } catch {
+          setGuardando(false)
+          setError('No se pudo subir la foto. Intenta de nuevo.')
+          return
+        }
       }
     }
 
-    const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoActual
+    const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoPersistida.current
 
     // Sin .select(): si pidiéramos de vuelta la fila afectada, Postgres
     // rechazaría la columna "costo" para el rol authenticated (ver 03_rls.sql).
@@ -360,17 +387,40 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
     const datosWeb = datosWebProducto({ formulario, fotoFinal, especificaciones, modoUso, idealPara, tips, ingredientes, libreDe })
     const datos = esWeb ? datosWeb : datosPos
 
-    const { error: errorGuardado, data: filaGuardada } = esEdicion
+    const resultadoGuardado = esEdicion
       ? await supabase.from('productos').update(datos).eq('id', producto.id).select('id').single()
       : await supabase
           .from('productos')
           .insert({ ...datos, stock_minimo: STOCK_MINIMO_POR_DEFECTO })
           .select('id')
           .single()
+    const { error: errorGuardado, data: filaGuardada } = resultadoGuardado
 
     if (errorGuardado) {
-      setGuardando(false)
-      if (rutaFotoSubida) eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
+      // Error de transporte: el UPDATE pudo confirmarse sin que llegara la respuesta. NO se
+      // borra nada (la foto subida puede ser ya la referenciada); el reintento reutiliza la subida.
+      if (esResultadoIncierto(resultadoGuardado)) {
+        principalIncierta.current = true
+        setError('No se pudo confirmar si el producto se guardó (conexión interrumpida). Se conservó la foto: pulsa «Guardar cambios» para reintentar.')
+        return
+      }
+      // No borrar la foto si un guardado anterior ya la dejó referenciada.
+      if (rutaFotoSubida && rutaFotoSubida !== fotoPersistida.current) {
+        // Tras un guardado anterior INCIERTO, este rechazo no prueba que la foto no esté referenciada:
+        // solo una lectura que confirme que la fila NO la tiene (false) autoriza a borrarla.
+        if (principalIncierta.current && esEdicion) {
+          // Por REFERENCIA: solo se limpia si la lectura exitosa muestra que la fila NO usa esta foto.
+          const lectura = await estadoFila('productos', producto.id, { foto_url: rutaFotoSubida })
+          const noLaUsa = lectura.estado === 'ausente' || (lectura.estado === 'difiere' && lectura.fila.foto_url !== rutaFotoSubida)
+          if (!noLaUsa) {
+            setError('No se pudo confirmar el estado del producto (conexión inestable). Se conservó la foto: pulsa «Guardar cambios» para reintentar.')
+            return
+          }
+        }
+        eliminarFoto(BUCKET_FOTOS, rutaFotoSubida)
+        subidaPrincipal.current = null
+        principalIncierta.current = false
+      }
       if (errorGuardado.code === '23505') {
         setError('Ya existe un producto con ese código de barras.')
       } else {
@@ -381,33 +431,31 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
 
     // Best-effort: si se reemplazó o quitó una foto que ya existía, se
     // borra la anterior recién ahora que la BD ya quedó consistente.
-    if (esWeb && fotoActual && fotoActual !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoActual)
+    principalIncierta.current = false
+    const fotoAnterior = fotoPersistida.current
+    fotoPersistida.current = fotoFinal
+    if (esWeb && fotoAnterior && fotoAnterior !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoAnterior)
 
     // Galería (producto_fotos): se procesa DESPUÉS de que el producto ya
-    // tiene id real (necesario para uno nuevo). Si una foto puntual falla
-    // no se bloquea el guardado del producto, que ya quedó bien — se
-    // puede reintentar reabriendo el modal.
+    // tiene id real. Ningún error se ignora (ver lib/galeriaFotos.js): si algo
+    // falla el producto YA quedó guardado, el modal sigue abierto con un
+    // mensaje claro y «Guardar cambios» reintenta solo lo que falta.
     const productoId = esEdicion ? producto.id : filaGuardada.id
-    if (esWeb && idsGaleriaEliminados.length > 0) {
-      await supabase.from('producto_fotos').delete().in('id', idsGaleriaEliminados)
-    }
-    for (let indice = 0; esWeb && indice < fotosGaleria.length; indice += 1) {
-      const item = fotosGaleria[indice]
-      if (item.esNueva) {
-        try {
-          const ruta = `${crypto.randomUUID()}.${item.extension}`
-          const rutaSubida = await subirFoto(BUCKET_FOTOS, ruta, item.blob)
-          await supabase.from('producto_fotos').insert({
-            producto_id: productoId,
-            foto_url: rutaSubida,
-            etiqueta: item.etiqueta,
-            orden: indice,
-          })
-        } catch {
-          // ver comentario arriba
-        }
-      } else {
-        await supabase.from('producto_fotos').update({ etiqueta: item.etiqueta, orden: indice }).eq('id', item.id)
+    if (esWeb) {
+      const sincronizacion = await sincronizarGaleria({
+        tabla: 'producto_fotos',
+        columnaPadre: 'producto_id',
+        padreId: productoId,
+        bucket: BUCKET_FOTOS,
+        fotos: fotosGaleria,
+        eliminados: idsGaleriaEliminados,
+      })
+      setFotosGaleria((anterior) => aplicarResultadoGaleria(anterior, sincronizacion))
+      setIdsGaleriaEliminados((anterior) => anterior.filter((e) => !sincronizacion.eliminadosOk.includes(e.id)))
+      if (sincronizacion.fallos.length > 0) {
+        setGuardando(false)
+        setError(mensajeGaleriaParcial('producto', sincronizacion.fallos))
+        return
       }
     }
 

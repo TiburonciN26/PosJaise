@@ -1,0 +1,419 @@
+{
+  "fecha": "2026-10-10T03:40:14.306Z",
+  "api": "http://127.0.0.1:8792",
+  "publico": "http://127.0.0.1:8792",
+  "origenPages": "http://localhost:5199",
+  "escribio": true,
+  "advertencias": [
+    "Se usaron las fotos de referencia del repositorio, NO fotos de catálogo: el peso real del catálogo sigue sin medirse (use --fotos-dir)."
+  ],
+  "casos": [
+    {
+      "nombre": "A1 PUT sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "A2 inventario sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "A3 origen NO permitido → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "A4 preflight CORS del origen de Pages: 204 con el origen EXACTO, sin comodín",
+      "estado": 204,
+      "acao": "http://localhost:5199",
+      "ok": true
+    },
+    {
+      "nombre": "A5 preflight de un origen ajeno → 403 y sin Allow-Origin",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "A6 destino privado (comprobantes) → 400, nunca aceptado",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "A7 el dominio público NO sirve destinos privados → 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "A8 clave inexistente en el dominio público → 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "B1 cajera → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "B2 cliente → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (VP8X sin píxeles (30 bytes)) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (PNG declarado como WebP) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (HTML/JS) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (archivo truncado) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (exceso de bytes (600 KiB en g)) → 413",
+      "estado": 413,
+      "ok": true
+    },
+    {
+      "nombre": "B3 inválido (cuerpo vacío) → 400",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de hero-antes-referencia.jpg: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 370,
+      "msPutG": 370,
+      "ok": true
+    },
+    {
+      "nombre": "B5 hero-antes-referencia.jpg: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 200,
+      "ok": true
+    },
+    {
+      "nombre": "B6 hero-antes-referencia.jpg: dominio público 200, image/webp, cache-control immutable, nosniff, bytes idénticos",
+      "estado": 200,
+      "tipo": "image/webp",
+      "cache": "public, max-age=31536000, immutable",
+      "nosniff": "nosniff",
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de hero-despues-referencia.jpg: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 358,
+      "msPutG": 372,
+      "ok": true
+    },
+    {
+      "nombre": "B5 hero-despues-referencia.jpg: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 409,
+      "ok": true
+    },
+    {
+      "nombre": "B6 hero-despues-referencia.jpg: dominio público 200, image/webp, cache-control immutable, nosniff, bytes idénticos",
+      "estado": 200,
+      "tipo": "image/webp",
+      "cache": "public, max-age=31536000, immutable",
+      "nosniff": "nosniff",
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de antes-claro.webp: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 366,
+      "msPutG": 357,
+      "ok": true
+    },
+    {
+      "nombre": "B5 antes-claro.webp: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 409,
+      "ok": true
+    },
+    {
+      "nombre": "B6 antes-claro.webp: dominio público 200, image/webp, cache-control immutable, nosniff, bytes idénticos",
+      "estado": 200,
+      "tipo": "image/webp",
+      "cache": "public, max-age=31536000, immutable",
+      "nosniff": "nosniff",
+      "ok": true
+    },
+    {
+      "nombre": "B4 subida de foto-login.jpeg: m=201, g=201",
+      "m": 201,
+      "g": 201,
+      "msPutM": 360,
+      "msPutG": 362,
+      "ok": true
+    },
+    {
+      "nombre": "B5 foto-login.jpeg: reintento idéntico → 200 reanudado; contenido distinto → 409",
+      "repeticion": 200,
+      "distinto": 409,
+      "ok": true
+    },
+    {
+      "nombre": "B6 foto-login.jpeg: dominio público 200, image/webp, cache-control immutable, nosniff, bytes idénticos",
+      "estado": 200,
+      "tipo": "image/webp",
+      "cache": "public, max-age=31536000, immutable",
+      "nosniff": "nosniff",
+      "ok": true
+    },
+    {
+      "nombre": "B7 el inventario del Worker lista lo subido",
+      "ok": true
+    },
+    {
+      "nombre": "B8 los objetos creados por el script se eliminan (DELETE 200)",
+      "resultadosBorrado": [
+        {
+          "grupo": "fotos-productos/3e9df798-e8c9-42b5-a143-813acae39909",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        },
+        {
+          "grupo": "fotos-productos/2db16f72-d41c-48b6-9ccc-b207865aaf08",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        },
+        {
+          "grupo": "fotos-productos/4eb5f3fe-a96f-4bf7-8c06-7d70065661ea",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        },
+        {
+          "grupo": "fotos-productos/40fc2478-5357-45af-8aed-cfd28e781130",
+          "delete": 200,
+          "lecturaPublicaTrasBorrar": 404,
+          "cache": null
+        }
+      ],
+      "ok": true
+    }
+  ],
+  "mediciones": {
+    "inventarioInicial": 0,
+    "fotos": [
+      {
+        "foto": "hero-antes-referencia.jpg",
+        "originalKiB": 97.4,
+        "mKiB": 3.8,
+        "gKiB": 8.3,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 5,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 6,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          },
+          {
+            "estado": 200,
+            "ms": 5,
+            "cache": null,
+            "age": null,
+            "bytes": 3852
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 4
+        },
+        "msMediana": 5
+      },
+      {
+        "foto": "hero-despues-referencia.jpg",
+        "originalKiB": 101.6,
+        "mKiB": 4.4,
+        "gKiB": 9.5,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 4484
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 4
+        },
+        "msMediana": 4
+      },
+      {
+        "foto": "antes-claro.webp",
+        "originalKiB": 100.2,
+        "mKiB": 9.3,
+        "gKiB": 22.2,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 5,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 5,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 5,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 9540
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 4
+        },
+        "msMediana": 5
+      },
+      {
+        "foto": "foto-login.jpeg",
+        "originalKiB": 118.4,
+        "mKiB": 7.5,
+        "gKiB": 15.5,
+        "cumpleObjetivos": true,
+        "lecturasM": [
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 3,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          },
+          {
+            "estado": 200,
+            "ms": 4,
+            "cache": null,
+            "age": null,
+            "bytes": 7670
+          }
+        ],
+        "resumenCache": {
+          "sin-cabecera": 4
+        },
+        "msMediana": 4
+      }
+    ],
+    "nota": "HIT/MISS dependen del punto de presencia y del momento; se registran, no se exigen. Investigar si TODAS las lecturas repetidas son MISS (cache-control, regla de caché, dominio sin proxy).",
+    "borrado": [
+      {
+        "grupo": "fotos-productos/3e9df798-e8c9-42b5-a143-813acae39909",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/2db16f72-d41c-48b6-9ccc-b207865aaf08",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/4eb5f3fe-a96f-4bf7-8c06-7d70065661ea",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/40fc2478-5357-45af-8aed-cfd28e781130",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      }
+    ],
+    "cacheTrasBorrado": "Tras el DELETE todas las URLs respondieron distinto de 200."
+  },
+  "noMedibleDesdeAqui": {
+    "cpuDelWorker": "Panel de Cloudflare → Workers y Pages → (Worker) → Metrics → CPU time (p50/p99) y Errors. En plan Free el límite es 10 ms de CPU por petición; revisar p99 durante esta prueba.",
+    "costo": "Panel → Billing y R2 → Metrics: operaciones Clase A/B y almacenamiento. Ver docs/evidencia-rendimiento/fase-3/README.md §7.",
+    "navegadoresYMoviles": "Firefox, Safari/iOS y móvil físico: pasos manuales del runbook (R2-REAL-RUNBOOK.md §5)."
+  },
+  "total": 30,
+  "fallos": 0
+}

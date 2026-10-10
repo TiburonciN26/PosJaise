@@ -30,7 +30,7 @@ export function porcentajeDescuento(producto) {
 // agrupado y grilla plana), la cinta de Ofertas/Destacados y
 // DetalleProductoCliente ("También te puede interesar").
 export default function TarjetaProductoCliente({ producto }) {
-  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)
+  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url, 'm')
   const agotado = producto.stock_actual <= 0
   const descuento = porcentajeDescuento(producto)
 

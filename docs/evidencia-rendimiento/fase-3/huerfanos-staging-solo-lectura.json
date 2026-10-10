@@ -1,0 +1,16 @@
+{
+  "retencionDias": 14,
+  "aplicar": false,
+  "referenciados": 2,
+  "objetos": 0,
+  "totales": {
+    "referenciado": 0,
+    "protegido-reciente": 0,
+    "sin-fecha": 0,
+    "candidato": 0
+  },
+  "candidatos": [],
+  "eliminados": [],
+  "omitidos": [],
+  "errores": []
+}

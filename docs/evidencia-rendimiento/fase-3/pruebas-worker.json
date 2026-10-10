@@ -1,0 +1,189 @@
+{
+  "fecha": "2026-10-10T03:14:43.967Z",
+  "entorno": "R2 simulado (wrangler dev --local) + Supabase de staging",
+  "total": 33,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "fixtures reales: miniatura 320 / grande 600 dentro de los objetivos de peso",
+      "miniaturaBytes": 1494,
+      "grandeBytes": 3068,
+      "ok": true
+    },
+    {
+      "nombre": "sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "token inválido/alterado → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "cajera (rol no autorizado) → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "cliente (rol no autorizado) → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "cajera no puede eliminar → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "eliminar sin sesión → 401",
+      "estado": 401,
+      "ok": true
+    },
+    {
+      "nombre": "admin sube variante m → 201 con ref r2:",
+      "estado": 201,
+      "cuerpoM": {
+        "ok": true,
+        "ref": "r2:fotos-productos/ce75ff29-a10e-4e9b-bd65-737d7ea3e5b7",
+        "clave": "fotos-productos/ce75ff29-a10e-4e9b-bd65-737d7ea3e5b7/m.webp",
+        "bytes": 1494,
+        "ancho": 320,
+        "alto": 320
+      },
+      "ok": true
+    },
+    {
+      "nombre": "admin sube variante g → 201",
+      "estado": 201,
+      "ok": true
+    },
+    {
+      "nombre": "entrega: 200, image/webp, immutable 1 año, nosniff, ETag, bytes idénticos",
+      "cabeceras": {
+        "cache-control": "public, max-age=31536000, immutable",
+        "content-length": "1494",
+        "content-type": "image/webp",
+        "cross-origin-resource-policy": "cross-origin",
+        "etag": "\"cb6e2206f469f6991654db813c696e43\"",
+        "x-content-type-options": "nosniff"
+      },
+      "bytes": 1494,
+      "ok": true
+    },
+    {
+      "nombre": "entrega: revalidación con ETag → 304",
+      "estado": 304,
+      "ok": true
+    },
+    {
+      "nombre": "repetir la misma clave no sobrescribe (el objeto sigue intacto)",
+      "estadoRepeticion": 415,
+      "ok": true
+    },
+    {
+      "nombre": "repetir EXACTAMENTE lo mismo (respuesta perdida) → 200 reanudado, sin duplicar",
+      "estado": 200,
+      "ok": true
+    },
+    {
+      "nombre": "misma clave con contenido DISTINTO → 409 ya-existe",
+      "estado": 409,
+      "ok": true
+    },
+    {
+      "nombre": "tras el 409 el objeto original sigue intacto",
+      "ok": true
+    },
+    {
+      "nombre": "exceso de bytes (600 KiB en g) → 413",
+      "estado": 413,
+      "ok": true
+    },
+    {
+      "nombre": "imagen 600 px en variante m (tope 400 px / 96 KiB) → rechazada",
+      "estado": 422,
+      "ok": true
+    },
+    {
+      "nombre": "MIME falso: PNG declarado como image/webp → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "contenido activo (HTML/JS) → 415",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "dimensiones excesivas (2100x120) → 415/422",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "subida incompleta (archivo truncado) → 415, nada publicado",
+      "estado": 415,
+      "ok": true
+    },
+    {
+      "nombre": "cuerpo vacío → 400",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "destino no público (comprobantes) → 400",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "id con path traversal → 400/404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "variante inexistente → 400",
+      "estado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "origen no permitido → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "preflight CORS: origen exacto, sin comodín",
+      "estado": 204,
+      "acao": "http://localhost:5173",
+      "ok": true
+    },
+    {
+      "nombre": "preflight de origen ajeno → 403, sin Allow-Origin",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "admin elimina → 200",
+      "estado": 200,
+      "ok": true
+    },
+    {
+      "nombre": "tras eliminar la entrega responde 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "eliminar de nuevo es idempotente → 200",
+      "estado": 200,
+      "ok": true
+    },
+    {
+      "nombre": "lectura de un destino no público → 404",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "nombre": "el registro del Worker no contiene tokens, claves ni contraseñas",
+      "ok": true
+    }
+  ]
+}

@@ -1,4 +1,14 @@
 import { supabase } from './supabase.js'
+import {
+  ambientePideR2,
+  eliminarImagenR2,
+  errorDeConfiguracionMedios,
+  esReferenciaR2,
+  referenciaDeUrlR2,
+  subidasNuevasEnR2,
+  subirImagenR2,
+  urlPublicaR2,
+} from './medios.js'
 
 const LADO_MAXIMO = 600
 const CALIDAD_WEBP = 0.8
@@ -30,9 +40,11 @@ export async function procesarImagen(archivo, { ladoMaximo = LADO_MAXIMO, calida
 
   const blobWebp = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', calidad))
 
-  // Algún navegador viejo puede no soportar codificar WebP en canvas
-  // (toBlob resuelve null) — en ese caso caemos a JPEG en vez de fallar.
-  if (blobWebp) return { blob: blobWebp, extension: 'webp' }
+  // Algún navegador puede no soportar codificar WebP en canvas: toBlob resuelve
+  // null o, peor, un PNG (otro tipo) aunque se pidió WebP. Se comprueba el TIPO
+  // REAL del blob, no solo que exista: la extensión nunca debe mentir sobre el
+  // contenido. Si no es WebP caemos a JPEG en vez de fallar.
+  if (blobWebp && blobWebp.type === 'image/webp') return { blob: blobWebp, extension: 'webp' }
 
   const blobJpeg = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', calidad))
   return { blob: blobJpeg, extension: 'jpg' }
@@ -43,7 +55,19 @@ export async function procesarImagen(archivo, { ladoMaximo = LADO_MAXIMO, calida
 // 42_storage_fotos_productos.sql); perfil de usuario sube a
 // "fotos-usuarios/{uid}/archivo.webp" (cada quien solo puede escribir en
 // su propia carpeta, ver 46_foto_perfil_usuario.sql).
-export async function subirFoto(bucket, ruta, blob) {
+//
+// Fase 3: si el ambiente pide R2 y el bucket es público (productos, servicios,
+// galería), la subida va al Worker autenticado, `ruta` se ignora (el servidor
+// decide la clave) y el valor devuelto es la referencia "r2:<destino>/<id>",
+// que los llamadores guardan en foto_url igual que antes guardaban la ruta.
+export async function subirFoto(bucket, ruta, blob, opciones) {
+  if (ambientePideR2(bucket)) {
+    const faltante = errorDeConfiguracionMedios()
+    if (faltante) throw new Error(faltante) // no caer a Supabase en silencio
+    if (subidasNuevasEnR2(bucket, blob)) return subirImagenR2(bucket, blob, opciones)
+    console.warn(`Imagen ${blob.type || 'sin tipo'}: R2 solo admite WebP; esta subida usa Supabase Storage.`)
+  }
+
   const { error } = await supabase.storage.from(bucket).upload(ruta, blob, {
     contentType: blob.type,
     cacheControl: '31536000',
@@ -55,11 +79,15 @@ export async function subirFoto(bucket, ruta, blob) {
 
 export async function eliminarFoto(bucket, ruta) {
   if (!ruta) return
+  if (esReferenciaR2(ruta)) return eliminarImagenR2(ruta)
   await supabase.storage.from(bucket).remove([ruta])
 }
 
-export function urlPublicaFoto(bucket, ruta) {
+// `variante`: "g" (detalle, por defecto) o "m" (miniatura 320 px); solo
+// aplica a referencias R2. Las fotos antiguas de Supabase no tienen variantes.
+export function urlPublicaFoto(bucket, ruta, variante = 'g') {
   if (!ruta) return null
+  if (esReferenciaR2(ruta)) return urlPublicaR2(ruta, variante)
   return supabase.storage.from(bucket).getPublicUrl(ruta).data.publicUrl
 }
 
@@ -72,6 +100,17 @@ export function resolverUrlGaleria(url) {
   if (!url) return null
   if (/^https?:\/\//.test(url)) return url
   return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
+}
+
+// Ruta/referencia a eliminar a partir de la URL completa que guarda la galería:
+// "r2:..." si es de nuestro dominio de medios, la ruta dentro del bucket si es
+// una URL de Supabase Storage, y null si no es ninguna (p. ej. fotos de /public).
+export function rutaDeUrlGaleria(bucket, url) {
+  const referenciaR2 = referenciaDeUrlR2(url)
+  if (referenciaR2) return referenciaR2
+  const marcador = `/${bucket}/`
+  const indice = url?.indexOf(marcador) ?? -1
+  return indice === -1 ? null : url.slice(indice + marcador.length)
 }
 
 // Para buckets PRIVADOS (ej. comprobantes-pedidos-web) — getPublicUrl no
