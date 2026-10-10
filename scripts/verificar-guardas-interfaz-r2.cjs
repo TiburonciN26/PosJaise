@@ -337,6 +337,34 @@ function entorno(html) {
     assert.equal(sinBase.confirmada, false) // sin inventario inicial no se puede afirmar igualdad
   })
 
+  await prueba('Rollback de Galería: grupos propios bajo varias bases y limpieza con varios prefijos (solo los propios)', async () => {
+    const PAGES = `${G.ALIAS_APROBADO}/medios`
+    const a = '0f1e2d3c-4b5a-4968-8777-665544332211'
+    const d = '1f1e2d3c-4b5a-4968-8777-665544332211'
+    const fila = { antes_url: `${PAGES}/fotos-galeria/${a}/g.webp`, despues_url: `${G.PUBLICO_APROBADO}/fotos-galeria/${d}/g.webp` }
+    assert.deepEqual(G.gruposPropiosDeFila(fila, [PAGES, G.PUBLICO_APROBADO]).sort(), [`fotos-galeria/${a}`, `fotos-galeria/${d}`])
+    assert.deepEqual(G.gruposPropiosDeFila({ antes_url: `${PAGES}/fotos-galeria/${a}/g.webp`, despues_url: `${PAGES}/fotos-galeria/${a}/m.webp` }, [PAGES]), [`fotos-galeria/${a}`]) // sin duplicados
+    assert.deepEqual(G.gruposPropiosDeFila({ antes_url: `https://evil.com/fotos-galeria/${a}/g.webp` }, [PAGES, G.PUBLICO_APROBADO]), [])
+    const base = new Set(['fotos-galeria/ajeno/m.webp'])
+    const propios = [`fotos-galeria/${a}/m.webp`, `fotos-galeria/${a}/g.webp`, `fotos-galeria/${d}/m.webp`, `fotos-galeria/${d}/g.webp`]
+    let inv = new Set([...base, ...propios])
+    const borrados = []
+    const r = await G.limpiarObjetoPropio({
+      prefijo: [`fotos-galeria/${a}/`, `fotos-galeria/${d}/`], base,
+      leerInventario: async () => new Set(inv),
+      borrarObjeto: async (pre) => { borrados.push(pre); inv = new Set([...inv].filter((k) => !k.startsWith(pre))); return 200 },
+    })
+    assert.ok(r.confirmada && r.necesaria)
+    assert.deepEqual(borrados.sort(), [`fotos-galeria/${a}/`, `fotos-galeria/${d}/`])
+    assert.ok(inv.has('fotos-galeria/ajeno/m.webp')) // lo ajeno intacto
+    // un prefijo sin claves no se borra
+    inv = new Set([...base, ...propios.slice(0, 2)])
+    const solo = []
+    const r2 = await G.limpiarObjetoPropio({ prefijo: [`fotos-galeria/${a}/`, `fotos-galeria/${d}/`], base, leerInventario: async () => new Set(inv), borrarObjeto: async (pre) => { solo.push(pre); inv = new Set([...inv].filter((k) => !k.startsWith(pre))); return 200 } })
+    assert.ok(r2.confirmada)
+    assert.deepEqual(solo, [`fotos-galeria/${a}/`])
+  })
+
   const fallos = resultados.filter((r) => !r.ok)
   console.log(`\n${resultados.length} casos, ${fallos.length} fallos`)
   process.exitCode = fallos.length ? 1 : 0

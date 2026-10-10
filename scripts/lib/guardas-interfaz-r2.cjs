@@ -48,14 +48,18 @@ function validarConfiguracion(p) {
  * estado HTTP del DELETE del Worker. Devuelve { confirmada, necesaria, estadoBorrado, pendientes, igualAlInicial, errores }.
  */
 async function limpiarObjetoPropio({ prefijo, base, leerInventario, borrarObjeto }) {
-  const res = { confirmada: false, necesaria: false, estadoBorrado: null, pendientes: [], igualAlInicial: false, errores: [] }
-  const propias = (inv) => [...inv].filter((k) => typeof k === 'string' && k.startsWith(prefijo))
+  const res = { confirmada: false, necesaria: false, estadoBorrado: null, estadosBorrado: [], pendientes: [], igualAlInicial: false, errores: [] }
+  const prefijos = (Array.isArray(prefijo) ? prefijo : [prefijo]).filter((x) => typeof x === 'string' && x)
+  const propias = (inv) => [...inv].filter((k) => typeof k === 'string' && prefijos.some((pre) => k.startsWith(pre)))
   try {
     const antes = await leerInventario()
     const restantes = propias(antes)
     if (restantes.length) {
       res.necesaria = true
-      try { res.estadoBorrado = await borrarObjeto() } catch (e) { res.errores.push(`borrado: ${String(e.message ?? e).slice(0, 120)}`) }
+      // Se borra SOLO cada grupo propio que tiene claves, nunca otro prefijo.
+      for (const pre of prefijos.filter((pr) => restantes.some((k) => k.startsWith(pr)))) {
+        try { res.estadoBorrado = await borrarObjeto(pre); res.estadosBorrado.push(res.estadoBorrado) } catch (e) { res.errores.push(`borrado: ${String(e.message ?? e).slice(0, 120)}`) }
+      }
     }
     const fin = res.necesaria ? await leerInventario() : antes
     res.pendientes = propias(fin)
@@ -226,10 +230,13 @@ function planLimpiezaGaleria(filas, idPropio) {
 /** Grupos de objetos (destino/uuid) que referencia la fila PROPIA de galería_web en el dominio público aprobado; nada más. */
 function gruposPropiosDeFila(fila, publico = PUBLICO_APROBADO) {
   if (!fila) return []
-  return [fila.antes_url, fila.despues_url]
-    .filter((u) => typeof u === 'string' && u.startsWith(`${publico}/`))
-    .map((u) => u.slice(publico.length + 1).split('/').slice(0, 2).join('/'))
-    .filter((g) => /^fotos-galeria\/[0-9a-f-]{36}$/.test(g))
+  const bases = (Array.isArray(publico) ? publico : [publico]).filter((b) => typeof b === 'string' && b)
+  const grupos = [fila.antes_url, fila.despues_url].flatMap((u) => {
+    if (typeof u !== 'string') return []
+    const base = bases.find((b) => u.startsWith(`${b}/`))
+    return base ? [u.slice(base.length + 1).split('/').slice(0, 2).join('/')] : []
+  })
+  return [...new Set(grupos.filter((g) => /^fotos-galeria\/[0-9a-f-]{36}$/.test(g)))]
 }
 
 /**
