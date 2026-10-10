@@ -1,0 +1,69 @@
+{
+  "fecha": "2026-10-10T04:56:10.371Z",
+  "modo": "checkout exacto de ba07a32 (ba07a32a78bcbad12f594e9fc842b49640d42b61)",
+  "candidatos": 848,
+  "incluyeImagenLogin": true,
+  "archivosClon": 179,
+  "archivosArbol": 179,
+  "diferenciasExactas": 163,
+  "diferenciasSoloFinDeLinea": 9,
+  "ejemploSoloFinDeLinea": [
+    "diseñosPropios/Login.html",
+    "diseñosPropios/Niveles de Tarjeta Rewards.html",
+    "icons/chanchitoActivo.svg",
+    "icons/chanchitoBloqueado.svg",
+    "icons/efectivo.svg",
+    "icons/facebookColor.svg",
+    "icons/whatsappColor.svg",
+    "icons.svg",
+    "_headers"
+  ],
+  "diferenciasDeContenido": 154,
+  "ejemploDiferencias": [
+    "assets/AceptoTerminos-BDbEfKra.js",
+    "assets/Asistentes-DJaM3LsD.js",
+    "assets/Auditoria-LKEknDf9.js",
+    "assets/BarraBusqueda-BSdRcYKD.js",
+    "assets/BarraCatalogo-CIrqnrTE.js"
+  ],
+  "identico": false,
+  "explicacionDiferencias": {
+    "resumen": "El checkout limpio del commit exacto (lo que compila Cloudflare) construye bien. La comparación con el árbol de trabajo NO es idéntica solo por 2 reglas CSS (.row-1 y .row-2) que Tailwind v4 genera en el árbol al escanear informes sin versionar de .codex/ (texto de Codex que menciona esas clases); no existen en ningún archivo del commit (git grep vacío). El cambio de hash de index-*.css cascada en index-*.js y en los chunks que lo referencian.",
+    "prueba": {
+      "extraSoloEnArbol": [
+        ".row-1{grid-row:1}",
+        ".row-2{grid-row:2}"
+      ],
+      "extraSoloEnClon": [],
+      "archivosSinVersionarQueLasIntroducen": [
+        ".codex/VERIFICACION-FASE-3-V2.md",
+        ".codex/evidencia-fase3-codex-v2/casos-adicionales.json"
+      ],
+      "nombresDeAssetsEnComun": 148,
+      "chunksConNombreDistinto": [
+        "index-*.js",
+        "index-*.css y los que referencian el hash"
+      ]
+    },
+    "contenidoDelBuildDelCommit": {
+      "archivos": 179,
+      "404.html": false,
+      "urlWorkerStaging": true,
+      "urlR2dev": true,
+      "refSupabaseStaging": true,
+      "refSupabaseNegocio": false,
+      "supabaseLocal": false,
+      "sbSecretOServiceRole": false,
+      "credencialesR2S3": "sin coincidencias reales (1 falso positivo: base64 aleatorio dentro de una imagen incrustada en diseñosPropios/Login.html)"
+    },
+    "variablesUsadas": [
+      "VITE_SUPABASE_URL (staging)",
+      "VITE_SUPABASE_ANON_KEY (staging, pública)",
+      "VITE_CULQI_PUBLIC_KEY (vacía)",
+      "VITE_MEDIOS_PROVEEDOR=r2",
+      "VITE_MEDIOS_API_URL",
+      "VITE_MEDIOS_PUBLIC_URL"
+    ]
+  },
+  "conclusion": "VALIDADO: el commit ba07a32 compila desde un checkout limpio con npm ci y las variables de Preview (staging + R2), sin credenciales privilegiadas ni backend del negocio. La diferencia con el árbol es atribuible a archivos sin versionar, no al commit."
+}
