@@ -32,6 +32,7 @@ function esOrigenExacto(valor, aprobado) {
 function validarConfiguracion(p) {
   if (!/^[0-9a-f]{8}$/.test(p.buildId ?? '')) throw new Error('--build-id=<8 hex> es obligatorio (marca esperada del artefacto)')
   if (!esOrigenExacto(p.alias, ALIAS_APROBADO)) throw new Error('el alias no es el origen aprobado de Pages Preview')
+  if (!ENTREGAS.includes(p.entrega)) throw new Error(`--entrega debe ser una de: ${ENTREGAS.join(', ')}`)
   if (!esOrigenExacto(p.supabaseUrl, `https://${REF_STAGING}.supabase.co`)) throw new Error('VITE_SUPABASE_URL no es EXACTAMENTE el Supabase de staging')
   const c = p.clasificarClave(p.claveAnon, REF_STAGING)
   if (!c?.ok) throw new Error(`la clave pública no es válida: ${c?.motivo ?? 'desconocida'}`)
@@ -41,15 +42,88 @@ function validarConfiguracion(p) {
 }
 
 /**
- * Orden fijo: configuración → artefacto del alias → (solo entonces) el llamador puede autenticar.
- * `pedirHtml(url)` es la ÚNICA petición que sale aquí; nunca se llama a Supabase ni al Worker.
+ * CP-01: limpieza + comprobación final del objeto PROPIO de la prueba de caché. Toda excepción se convierte en un resultado NO
+ * confirmado (nunca en «éxito» ni en un inventario vacío) y solo se intenta borrar el grupo propio (`prefijo`).
+ * `leerInventario()` debe lanzar ante red caída, 5xx, respuesta malformada o cursor (lectura estricta); `borrarObjeto()` devuelve el
+ * estado HTTP del DELETE del Worker. Devuelve { confirmada, necesaria, estadoBorrado, pendientes, igualAlInicial, errores }.
  */
-async function preflight(p, pedirHtml) {
+async function limpiarObjetoPropio({ prefijo, base, leerInventario, borrarObjeto }) {
+  const res = { confirmada: false, necesaria: false, estadoBorrado: null, pendientes: [], igualAlInicial: false, errores: [] }
+  const propias = (inv) => [...inv].filter((k) => typeof k === 'string' && k.startsWith(prefijo))
+  try {
+    const antes = await leerInventario()
+    const restantes = propias(antes)
+    if (restantes.length) {
+      res.necesaria = true
+      try { res.estadoBorrado = await borrarObjeto() } catch (e) { res.errores.push(`borrado: ${String(e.message ?? e).slice(0, 120)}`) }
+    }
+    const fin = res.necesaria ? await leerInventario() : antes
+    res.pendientes = propias(fin)
+    res.igualAlInicial = !!base && fin.size === base.size && [...fin].every((k) => base.has(k))
+  } catch (e) {
+    res.errores.push(`lectura del inventario: ${String(e.message ?? e).slice(0, 120)}`)
+  }
+  res.confirmada = res.errores.length === 0 && res.pendientes.length === 0 && res.igualAlInicial
+  return res
+}
+
+// IP-P1: la MARCA no basta. Dos deployments del mismo commit (build-id idéntico) pueden tener una `VITE_MEDIOS_PUBLIC_URL`
+// distinta; el verificador debe comprobar la configuración EFECTIVA de medios del bundle servido antes de autenticar o escribir.
+// Se leen por ROL (no por mera presencia de las cadenas: el bundle de Pages contiene las dos): `publicUrl:` de la configuración
+// y el segundo argumento de `basesReconocidas(publicUrl, <extras>)`. Si el formato del bundle cambia y no se reconoce, se ABORTA.
+const ENTREGAS = ['r2dev', 'pages']
+const RE_CONFIG_MEDIOS = /proveedor:`(\w*)`,apiUrl:[\w$]+\(`([^`]*)`\),publicUrl:[\w$]+\(`([^`]*)`\)/g
+const RE_BASES_MEDIOS = /=>[\w$]+\([\w$]+\(\)\.publicUrl,`([^`]*)`\)/g
+
+function entregaEsperada(entrega) {
+  return entrega === 'pages'
+    ? { proveedor: 'r2', api: WORKER_APROBADO, publica: `${ALIAS_APROBADO}/medios`, extras: PUBLICO_APROBADO }
+    : { proveedor: 'r2', api: WORKER_APROBADO, publica: PUBLICO_APROBADO, extras: '' }
+}
+
+/** Configuración de medios que declara el texto de UN módulo JS compilado, o null si no la contiene. */
+function configuracionDeMediosEnBundle(texto) {
+  const configs = [...String(texto).matchAll(RE_CONFIG_MEDIOS)].map((m) => ({ proveedor: m[1], api: m[2], publica: m[3] }))
+  if (!configs.length) return null
+  const extras = [...String(texto).matchAll(RE_BASES_MEDIOS)].map((m) => m[1])
+  return { configs, extras }
+}
+
+/** Rutas relativas de los .js del precache del service worker (sin salir del alias: nada absoluto ni con `..`). */
+function scriptsDelSw(sw) {
+  return [...new Set([...String(sw).matchAll(/url:"([^"]+\.js)"/g)].map((m) => m[1]))].filter((r) => /^[\w./-]+$/.test(r) && !r.includes('..') && !r.startsWith('/'))
+}
+
+async function comprobarEntrega(p, pedirTexto) {
+  const esperado = entregaEsperada(p.entrega)
+  const scripts = scriptsDelSw(await pedirTexto(`${p.alias}/sw.js`))
+  if (!scripts.length) throw new Error('no se pudo leer el precache del service worker para comprobar la entrega de medios; no se autentica ni se escribe nada')
+  const hallazgos = []
+  for (let i = 0; i < scripts.length; i += 8) {
+    const lote = await Promise.all(scripts.slice(i, i + 8).map(async (r) => ({ r, c: configuracionDeMediosEnBundle(await pedirTexto(`${p.alias}/${r}`)) })))
+    hallazgos.push(...lote.filter((x) => x.c))
+  }
+  if (!hallazgos.length) throw new Error('no se encontró la configuración de medios en el bundle servido; no se autentica ni se escribe nada')
+  for (const { c } of hallazgos) {
+    const todas = c.configs
+    const ok = todas.length === 1 && todas[0].proveedor === esperado.proveedor && todas[0].api === esperado.api && todas[0].publica === esperado.publica
+      && (esperado.extras === '' ? c.extras.length <= 1 && c.extras.every((x) => x === '') : c.extras.length === 1 && c.extras[0] === esperado.extras)
+    if (!ok) throw new Error(`el bundle servido no tiene la entrega de medios "${p.entrega}" (publicUrl observada: ${todas.map((x) => x.publica).join(',') || 'ninguna'}; bases extra: ${c.extras.join(',') || 'ninguna'}); no se autentica ni se escribe nada`)
+  }
+  return { entrega: p.entrega, modulos: hallazgos.map((h) => h.r) }
+}
+
+/**
+ * Orden fijo: configuración → artefacto del alias (marca) → entrega de medios efectiva del bundle → (solo entonces) el
+ * llamador puede autenticar. `pedirTexto(url)` es la ÚNICA petición que sale aquí (GET al alias); nunca Supabase ni el Worker.
+ */
+async function preflight(p, pedirTexto) {
   validarConfiguracion(p)
-  const html = await pedirHtml(`${p.alias}/`)
+  const html = await pedirTexto(`${p.alias}/`)
   const marca = (String(html).match(/name="build-id" content="([^"]*)"/) ?? [])[1]
   if (marca !== p.buildId) throw new Error(`el artefacto del alias (${marca ?? 'sin marca'}) no es el esperado (${p.buildId}); no se autentica ni se escribe nada`)
-  return { buildId: marca }
+  const entrega = await comprobarEntrega(p, pedirTexto)
+  return { buildId: marca, ...entrega }
 }
 
 /** Clasifica un destino de red: 'permitido' | 'prohibido'. Lista cerrada por origen; lo desconocido de las familias sensibles se prohíbe. */
@@ -194,6 +268,8 @@ function galeriaConservada(antes, despues, clavesInventario) {
 }
 
 module.exports = {
+  limpiarObjetoPropio,
+  ENTREGAS, entregaEsperada, configuracionDeMediosEnBundle, scriptsDelSw,
   limpiarFilaPropia,
   gruposPropiosDeFila,
   REF_STAGING, REF_NEGOCIO, ALIAS_APROBADO, WORKER_APROBADO, PUBLICO_APROBADO, DOMINIO_CUENTAS_QA,

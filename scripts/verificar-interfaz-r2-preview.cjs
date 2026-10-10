@@ -1,11 +1,11 @@
 // Fase 3 · prueba de INTERFAZ REAL sobre el alias de Pages Preview (staging) con datos QA ficticios.
 //
-//   node scripts/verificar-interfaz-r2-preview.cjs --build-id=<8 hex del artefacto esperado> [--alias=<solo el alias aprobado>]
+//   node scripts/verificar-interfaz-r2-preview.cjs --build-id=<8 hex del artefacto esperado> [--alias=<solo el alias aprobado>] [--entrega=r2dev|pages] [--salida=<carpeta>]
 //
 // Qué hace: entra con la cuenta QA ADMIN en la web desplegada, usa los modales REALES de Producto, Servicio y
 // Galería (fotos nuevas, reemplazo, quitar), y verifica por canales independientes: la BD de staging (lectura REST con el
 // token QA), el inventario del Worker y las URLs públicas de r2.dev. Después comprueba con la cuenta QA CLIENTE que el portal
-// carga las fotos nuevas desde r2.dev.
+// carga las fotos nuevas desde el dominio público de medios.
 //
 // Salvaguardas (revisión IP-R1/IP-R2 de Codex; lógica en scripts/lib/guardas-interfaz-r2.cjs, probada SIN red por
 // scripts/verificar-guardas-interfaz-r2.cjs):
@@ -29,7 +29,12 @@ const argumento = (nombre) => (process.argv.find((a) => a.startsWith(`--${nombre
 const ALIAS = (argumento('alias') || G.ALIAS_APROBADO).replace(/\/+$/, '')
 const BUILD_ID = argumento('build-id')
 const WORKER = G.WORKER_APROBADO
-const PUBLICO = G.PUBLICO_APROBADO
+// --entrega=r2dev (por defecto: URL de desarrollo de r2.dev) | pages (Pages Function /medios del propio alias, tras configurar
+// el binding MEDIOS y VITE_MEDIOS_PUBLIC_URL en Preview). En `pages` la lectura puede ser un HIT positivo durante el TTL; los
+// borrados se comprueban contra el INVENTARIO del Worker (ausencia en R2), nunca con un 404 público inmediato.
+const ENTREGA = argumento('entrega') || 'r2dev'
+if (!['r2dev', 'pages'].includes(ENTREGA)) throw new Error('--entrega debe ser r2dev o pages')
+const PUBLICO = ENTREGA === 'pages' ? `${new URL(G.ALIAS_APROBADO).origin}/medios` : G.PUBLICO_APROBADO
 const REF_STAGING = G.REF_STAGING
 const PRODUCTO = '432a6610-67e5-4a7c-a979-eb891cc9263c' // «Agua San Luis 625ml» (ficticio, sin foto)
 const SERVICIO = '6265a7d1-80b3-4b72-9b34-7f6eca3d7873' // «Corte de cabello» (ficticio, sin foto)
@@ -56,7 +61,7 @@ const caso = (nombre, ok, detalle = {}) => {
 }
 const espera = (ms) => new Promise((r) => setTimeout(r, ms))
 
-const aprobados = new Set([new URL(G.ALIAS_APROBADO).origin, `https://${REF_STAGING}.supabase.co`, WORKER, PUBLICO])
+const aprobados = new Set([new URL(G.ALIAS_APROBADO).origin, `https://${REF_STAGING}.supabase.co`, WORKER, PUBLICO, G.PUBLICO_APROBADO])
 const seguro = G.crearFetchSeguro(aprobados, (...a) => fetch(...a)) // los fetch del propio script nunca salen a destinos no aprobados
 const bloqueadas = []
 const guardia = () => { if (bloqueadas.length) throw new Error(`tráfico a destinos no aprobados bloqueado: ${bloqueadas.join(' | ')}`) }
@@ -97,14 +102,17 @@ const grupoDe = (ref) => ref.replace(/^r2:/, '').split('/').slice(0, 2).join('/'
 const grupoUrl = (u) => u.replace(`${PUBLICO}/`, '').split('/').slice(0, 2).join('/')
 async function estadoPublico(grupo, v = 'm') {
   const r = await seguro(`${PUBLICO}/${grupo}/${v}.webp`)
-  return { estado: r.status, tipo: r.headers.get('content-type'), bytes: (await r.arrayBuffer()).byteLength }
+  return {
+    estado: r.status, tipo: r.headers.get('content-type'), bytes: (await r.arrayBuffer()).byteLength,
+    nosniff: r.headers.get('x-content-type-options'), cache: r.headers.get('cache-control'), medios: r.headers.get('x-medios-cache'),
+  }
 }
 
 ;(async () => {
   // ---------- IP-R1: destinos y artefacto validados ANTES de autenticar ----------
   const { clasificarClave } = await import('./lib/entornos-supabase.mjs')
   const { buildId } = await G.preflight(
-    { alias: ALIAS, buildId: BUILD_ID, supabaseUrl: env.VITE_SUPABASE_URL, claveAnon: env.VITE_SUPABASE_ANON_KEY, emails: [env.QA_ADMIN_EMAIL, env.QA_CLIENTE_EMAIL], clasificarClave },
+    { alias: ALIAS, buildId: BUILD_ID, entrega: ENTREGA, supabaseUrl: env.VITE_SUPABASE_URL, claveAnon: env.VITE_SUPABASE_ANON_KEY, emails: [env.QA_ADMIN_EMAIL, env.QA_CLIENTE_EMAIL], clasificarClave },
     async (url) => (await seguro(url)).text())
 
   tokenAdmin = await sesion(env.QA_ADMIN_EMAIL, env.QA_ADMIN_PASSWORD)
@@ -136,7 +144,8 @@ async function estadoPublico(grupo, v = 'm') {
   page.on('pageerror', (e) => erroresPagina.push(String(e)))
   observar(page)
 
-  const carpetaCapturas = path.join(raiz, 'docs/evidencia-rendimiento/fase-3/interfaz-preview')
+  // --salida=<carpeta>: capturas y corridas fuera de la evidencia del repo (p. ej. una carpeta propia de un revisor); sin ella, la de siempre.
+  const carpetaCapturas = argumento('salida') ? path.resolve(argumento('salida')) : path.join(raiz, 'docs/evidencia-rendimiento/fase-3/interfaz-preview')
   fs.mkdirSync(carpetaCapturas, { recursive: true })
   const captura = (nombre) => page.screenshot({ path: path.join(carpetaCapturas, nombre), fullPage: false }).catch(() => {})
 
@@ -192,7 +201,7 @@ async function estadoPublico(grupo, v = 'm') {
       subidasProducto.filter((s) => s.startsWith('PUT')).length === 4 && storageSupabase.length === 0, { subidas: subidasProducto, storageSupabase })
     const pubs = []
     for (const ref of [refP1, gal[0]?.foto_url].filter(Boolean)) for (const v of ['m', 'g']) pubs.push(await estadoPublico(grupoDe(ref), v))
-    caso('PRODUCTO: las 4 variantes responden 200 image/webp en el dominio público de pruebas', pubs.length === 4 && pubs.every((x) => x.estado === 200 && x.tipo === 'image/webp' && x.bytes > 500), { pubs })
+    caso('PRODUCTO: las 4 variantes responden 200 image/webp en el dominio público de pruebas', pubs.length === 4 && pubs.every((x) => x.estado === 200 && x.tipo === 'image/webp' && x.bytes > 500 && (ENTREGA !== 'pages' || (x.nosniff === 'nosniff' && x.cache === 'public, max-age=300' && ['HIT', 'MISS'].includes(x.medios)))), { pubs })
     caso('PRODUCTO: el inventario del Worker muestra exactamente 2 grupos nuevos', inv.size === antes.size + 2, { antes: antes.size, despues: inv.size })
 
     // 2b. reemplazo de la foto principal
@@ -229,7 +238,7 @@ async function estadoPublico(grupo, v = 'm') {
     caso('SERVICIO: foto principal + 1 de galería guardadas con referencia r2: y existentes',
       /^r2:fotos-servicios\//.test(refS ?? '') && galS.length === 1 && inv.has(grupoDe(refS)) && inv.has(grupoDe(galS[0].foto_url)) && inv.size === antes.size + 2, { principal: refS, galeria: galS.map((g) => g.foto_url) })
 
-    // 3b. vista del CLIENTE: las fotos nuevas se cargan desde r2.dev (miniatura en listado, detalle en la ficha)
+    // 3b. vista del CLIENTE: las fotos nuevas se cargan desde el dominio público de medios (miniatura en listado, detalle en la ficha)
     const ctxCliente = await navegador.newContext({ viewport: { width: 1280, height: 900 } })
     await G.instalarBloqueo(ctxCliente, 'CLIENTE', aprobados, bloqueadas)
     const cli = await ctxCliente.newPage()
@@ -242,16 +251,16 @@ async function estadoPublico(grupo, v = 'm') {
     await cli.waitForFunction(() => !location.pathname.endsWith('/login'), null, { timeout: 30000 })
     await cli.goto(`${ALIAS}/servicios`, { waitUntil: 'networkidle' })
     await espera(1500)
-    const listado = await cli.evaluate(() => [...document.images].filter((i) => i.src.includes('r2.dev')).map((i) => ({ src: i.src.split('/').slice(-2).join('/'), v: i.src.split('/').slice(-1)[0], ok: i.naturalWidth > 0 })))
+    const listado = await cli.evaluate((base) => [...document.images].filter((i) => i.src.startsWith(base)).map((i) => ({ src: i.src.split('/').slice(-2).join('/'), v: i.src.split('/').slice(-1)[0], ok: i.naturalWidth > 0 })), PUBLICO)
     const grupoPrincipal = refS.replace(/^r2:/, '')
     // Las tarjetas usan la miniatura m; la portada (hero, 300–600 px de alto) usa la variante de detalle g: ambas son correctas.
-    caso('CLIENTE: el listado de servicios carga la foto nueva desde r2.dev — tarjeta en miniatura m y portada en g — y todas decodifican',
+    caso('CLIENTE: el listado de servicios carga la foto nueva desde el dominio público de medios — tarjeta en miniatura m y portada en g — y todas decodifican',
       listado.some((x) => x.src === `${grupoPrincipal.split('/')[1]}/m.webp`) && listado.every((x) => ['m.webp', 'g.webp'].includes(x.v) && x.ok), { listado })
     await cli.goto(`${ALIAS}/servicios/${SERVICIO}`, { waitUntil: 'networkidle' })
     await espera(1500)
-    const detalle = await cli.evaluate(() => [...document.images].filter((i) => i.src.includes('r2.dev')).map((i) => ({ src: i.src.split('/').slice(-2).join('/'), v: i.src.split('/').slice(-1)[0], ok: i.naturalWidth > 0 })))
+    const detalle = await cli.evaluate((base) => [...document.images].filter((i) => i.src.startsWith(base)).map((i) => ({ src: i.src.split('/').slice(-2).join('/'), v: i.src.split('/').slice(-1)[0], ok: i.naturalWidth > 0 })), PUBLICO)
     // Con galería, el carrusel del detalle muestra SOLO las fotos de la galería (la principal no se duplica): aquí, la de la galería.
-    caso('CLIENTE: el detalle del servicio muestra la foto de la galería desde r2.dev (variante g) y decodifica',
+    caso('CLIENTE: el detalle del servicio muestra la foto de la galería desde el dominio público de medios (variante g) y decodifica',
       detalle.length >= 1 && detalle.every((x) => x.v === 'g.webp' && x.ok) && detalle.some((x) => x.src === `${galS[0].foto_url.replace(/^r2:/, '').split('/')[1]}/g.webp`), { detalle })
     await cli.screenshot({ path: path.join(carpetaCapturas, 'cliente-detalle-servicio.png') }).catch(() => {})
     await ctxCliente.close()
@@ -295,7 +304,7 @@ async function estadoPublico(grupo, v = 'm') {
     caso('GALERÍA: alta con dos fotos — la fila guarda URLs del dominio público de pruebas y ambos objetos existen',
       g && g.antes_url.startsWith(PUBLICO) && g.despues_url.startsWith(PUBLICO) && inv.has(grupoUrl(g.antes_url)) && inv.has(grupoUrl(g.despues_url)) && inv.size === antes.size + 2, { antes: g?.antes_url, despues: g?.despues_url })
     const visibleEnLista = await page.locator(`img[src^="${PUBLICO}"]`).count()
-    caso('GALERÍA: la lista del administrador muestra las dos miniaturas desde r2.dev', visibleEnLista >= 2, { imagenes: visibleEnLista })
+    caso('GALERÍA: la lista del administrador muestra las dos miniaturas desde el dominio público de medios', visibleEnLista >= 2, { imagenes: visibleEnLista })
     await captura('galeria-alta.png')
 
     const viejoAntes = g.antes_url
@@ -350,6 +359,7 @@ async function estadoPublico(grupo, v = 'm') {
           fila,
           borrarFila: (id) => rest(`galeria_web?id=eq.${id}`, { method: 'DELETE' }),
           releerFila: () => galeriaWeb(),
+          publico: PUBLICO,
           borrarGrupo: async (grupo) => (await seguro(`${WORKER}/v1/medios/${grupo}`, { method: 'DELETE', headers: { Authorization: `Bearer ${tokenAdmin}`, Origin: ALIAS } })).status,
         })
         limpieza = res
@@ -365,7 +375,7 @@ async function estadoPublico(grupo, v = 'm') {
   const fallos = casos.filter((c) => !c.ok)
   const carpetaCorridas = path.join(carpetaCapturas, 'corridas')
   fs.mkdirSync(carpetaCorridas, { recursive: true })
-  const informe = { fecha: new Date().toISOString(), version: 'guardas IP-R1/IP-R2 (IP-R1b/IP-R2b)', alias: ALIAS, buildId: BUILD_ID, idEjecucion: ID_EJECUCION, entorno: 'Pages Preview (staging) + Worker y bucket de pruebas; cuentas QA ficticias', completa: !errorCorrida, error: errorCorrida ? String(errorCorrida.message ?? errorCorrida) : null, limpieza, bloqueadas, total: casos.length, fallos: fallos.length, casos }
+  const informe = { fecha: new Date().toISOString(), version: 'guardas IP-R1/IP-R2 (IP-R1b/IP-R2b)', alias: ALIAS, entrega: ENTREGA, publico: PUBLICO, buildId: BUILD_ID, idEjecucion: ID_EJECUCION, entorno: 'Pages Preview (staging) + Worker y bucket de pruebas; cuentas QA ficticias', completa: !errorCorrida, error: errorCorrida ? String(errorCorrida.message ?? errorCorrida) : null, limpieza, bloqueadas, total: casos.length, fallos: fallos.length, casos }
   fs.writeFileSync(path.join(carpetaCorridas, `corrida-${ID_EJECUCION}.json`), JSON.stringify(informe, null, 2))
   console.log(`
 ${casos.length} casos, ${fallos.length} fallos${errorCorrida ? ' — CORRIDA INCOMPLETA' : ''}`)
