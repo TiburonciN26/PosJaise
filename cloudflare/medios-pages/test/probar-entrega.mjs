@@ -78,7 +78,7 @@ function entorno(opciones = {}) {
   return {
     r2, cache, ctx,
     pedir: async (ruta, init = {}) => {
-      const r = await manejarMedios(new Request(`${ORIGEN}${ruta}`, init), opciones.sinBinding ? {} : { MEDIOS: r2 }, ctx, { cache })
+      const r = await manejarMedios(new Request(`${ORIGEN}${ruta}`, init), opciones.sinBinding ? {} : { MEDIOS: r2 }, ctx, { cache, revocar: opciones.revocar })
       await Promise.all(pendientes.splice(0))
       return r
     },
@@ -163,11 +163,11 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
 }
 {
   // Borrado: una foto retirada de R2 sigue sirviéndose desde caché hasta que expire (contrato, no un defecto).
-  const e = entorno()
+  const e = entorno({ revocar: false })
   await e.pedir(RUTA)
   e.r2.borrar(`fotos-productos/${ID}/m.webp`)
   const caliente = await e.pedir(RUTA)
-  caso('tras borrar en R2 con la caché caliente: HIT 200 (retención acotada al TTL)', caliente.status === 200 && caliente.headers.get('X-Medios-Cache') === 'HIT')
+  caso('opción A (revocar:false): tras borrar en R2 con la caché caliente: HIT 200 (retención acotada al TTL)', caliente.status === 200 && caliente.headers.get('X-Medios-Cache') === 'HIT')
   e.cache.reloj += TTL_POSITIVO * 1000 + 1
   const fria = await e.pedir(RUTA)
   caso('al expirar el TTL el borrado se refleja: 404 y nada se cachea', fria.status === 404 && e.cache.tamano() === 0)
@@ -181,7 +181,7 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
   const g = await e.pedir(RUTA)
   caso('HEAD → GET: el GET posterior trae el cuerpo completo (no una entrada vacía)', g.status === 200 && new Uint8Array(await g.arrayBuffer()).join() === BYTES.join() && e.cache.tamano() === 1)
   const h2 = await e.pedir(RUTA, { method: 'HEAD' })
-  caso('GET → HEAD: HEAD desde HIT, sin cuerpo, sin tocar R2 otra vez', h2.status === 200 && (await h2.text()) === '' && h2.headers.get('X-Medios-Cache') === 'HIT' && e.r2.lecturas === 1 && e.r2.cabezas === 1)
+  caso('GET → HEAD: HEAD desde HIT, sin cuerpo, sin leer el cuerpo de R2 otra vez (B valida con un head)', h2.status === 200 && (await h2.text()) === '' && h2.headers.get('X-Medios-Cache') === 'HIT' && e.r2.lecturas === 1 && e.r2.cabezas === 2)
 }
 {
   // Binding sin `head`: se usa `get` pero NO se consume el cuerpo.
@@ -267,14 +267,14 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
 
 // ---- contrato de retirada: opción A (política separada) y opción B (revocación con R2, desactivada por defecto) ----
 {
-  caso('la opción B está DESACTIVADA por defecto', REVOCAR_CON_R2 === false)
-  const e = entorno()
+  caso('la opción B está ACTIVA por defecto (requisito: bloquear el enlace antiguo)', REVOCAR_CON_R2 === true)
+  const e = entorno({ revocar: false })
   const a = await e.pedir(RUTA)
   const guardada = await e.cache.match(new Request(`${ORIGEN}${RUTA}`))
   caso('A: navegador y copia almacenada usan políticas DISTINTAS (revalidar vs TTL del borde); sin Age/Date heredados', a.headers.get('Cache-Control') === NAVEGADOR && guardada.headers.get('Cache-Control') === 'public, max-age=300' && !a.headers.get('Age') && !a.headers.get('Date'))
   e.r2.borrar(`fotos-productos/${ID}/m.webp`)
   const b = await e.pedir(RUTA)
-  caso('A: tras borrar con caché caliente sigue el HIT (ventana documentada) y el navegador revalida', b.status === 200 && b.headers.get('X-Medios-Cache') === 'HIT' && b.headers.get('Cache-Control') === NAVEGADOR && e.r2.cabezas === 0)
+  caso('A (revocar:false): tras borrar con caché caliente sigue el HIT (ventana documentada) y el navegador revalida', b.status === 200 && b.headers.get('X-Medios-Cache') === 'HIT' && b.headers.get('Cache-Control') === NAVEGADOR && e.r2.cabezas === 0)
 }
 {
   const montar = (extra = {}) => {

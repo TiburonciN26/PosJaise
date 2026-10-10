@@ -15,7 +15,7 @@
 //      - copia ALMACENADA en el borde: `public, max-age=TTL_POSITIVO` (sustituye al `immutable` de un año de R2);
 //      - respuesta al NAVEGADOR: `public, max-age=0, must-revalidate` + ETag → una copia caducada obliga a revalidar: con If-None-Match coincidente → 304 sin cuerpo; con ETag distinto o sin condicional → 200.
 //    Errores: no-store (sin caché negativa).
-//  · Opción B (REVOCAR_CON_R2, DESACTIVADA por defecto): en HIT y antes de un 304 se comprueba el objeto en R2; ausente → 404 y
+//  · Opción B (REVOCAR_CON_R2, ACTIVA por defecto): en HIT y antes de un 304 se comprueba el objeto en R2; ausente → 404 y
 //    la Function deja de ENTREGARLO (no borra copias de otros centros de datos ni del navegador).
 //  · Fallo de binding ausente → 404; fallo de lectura de R2 → 503 sin detalles; fallo de la caché → se entrega igual.
 //  · X-Medios-Cache: HIT|MISS es DIAGNÓSTICO propio (cf-cache-status no refleja la Cache API).
@@ -25,8 +25,9 @@ export const TTL_POSITIVO = 300 // segundos; SOLO la copia del borde (Cache API 
 const RE_ID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 const RE_RUTA = new RegExp(`^/medios/(${DESTINOS.join('|')})/(${RE_ID})/(m|g)\\.webp$`)
 
-// Opción B: interruptor. Desactivado hasta medir CPU, latencia y cuota; se puede forzar por llamada (pruebas).
-export const REVOCAR_CON_R2 = false
+// Opción B (REQUISITO del proyecto, decisión del usuario 10-oct-2026: bloquear el enlace antiguo tras borrar). Activa por defecto;
+// `revocar:false` por llamada solo existe para probar la opción A. CPU, latencia y cuota con B siguen SIN medirse.
+export const REVOCAR_CON_R2 = true
 const CACHE_NAVEGADOR = 'public, max-age=0, must-revalidate'
 
 const COMUN = { 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex' }

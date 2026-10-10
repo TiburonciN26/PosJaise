@@ -1,5 +1,8 @@
 // Prueba REAL de la entrega de medios por Pages Functions (Cache API, head() del binding, ETag/304, HEAD, Range, TTL).
-//   node scripts/verificar-medios-pages-cache.cjs --build-id=<8 hex> [--sin-expiracion] [--salida=<carpeta>]
+//   node scripts/verificar-medios-pages-cache.cjs --build-id=<8 hex> --contrato=a|b [--sin-expiracion] [--salida=<carpeta>]
+//   --contrato=a (por defecto del CLI): contrato de retención, espera el TTL. --contrato=b: contrato de RETIRADA (aceptación del requisito
+//   «bloquear el enlace antiguo»): calienta m y g, compara el POP de cada comprobación posterior al DELETE con el de su copia caliente
+//   (scripts/lib/retirada-b.cjs); POP distinto/ausente o sin HIT → INCONCLUSA (corrida incompleta, exit 1). Un resultado A NO cierra B.
 //
 // ESCRIBE en STAGING (con autorización expresa del usuario): sube UN objeto ficticio (fotos-galeria/<uuid propio>, variantes m y g)
 // por el Worker autenticado con la cuenta QA ADMIN, lo lee por <alias>/medios/…, lo borra por el Worker y espera el TTL de 300 s para
@@ -13,7 +16,7 @@
 //    petición: por eso el HIT se busca con reintentos y se REGISTRA el número de intentos. Se registran el POP (de CF-Ray) del HIT y del
 //    404 posterior al TTL: solo si coinciden el 404 corresponde a la expiración de ESA copia (`expiracionDeLaMismaCopia`).
 //  · `head()` del binding no es observable desde fuera; se infiere que HEAD responde 200 con ETag sin cuerpo y sin poblar la caché.
-//  · Tras borrar el objeto de R2 puede haber un HIT positivo durante el TTL (contrato). La ausencia se prueba con el INVENTARIO del
+//  · [contrato A] Tras borrar el objeto de R2 puede haber un HIT positivo durante el TTL (contrato). [contrato B] No debe haberlo. La ausencia se prueba con el INVENTARIO del
 //    Worker; el 404 público solo se exige después de expirar el TTL. Los tiempos son de este cliente, no métricas de CPU/cuota.
 //  · CP-01: la limpieza y la comprobación final del estado SON parte del resultado: si fallan (lectura del inventario, DELETE,
 //    relectura, paginación) la corrida NO es completa y termina con código distinto de cero.
@@ -22,11 +25,17 @@ const path = require('node:path')
 const crypto = require('node:crypto')
 const { chromium } = require('playwright')
 const G = require('./lib/guardas-interfaz-r2.cjs')
+const R = require('./lib/retirada-b.cjs')
 
 const raiz = path.resolve(__dirname, '..')
 const argumento = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) ?? '').slice(n.length + 3)
 const BUILD_ID = argumento('build-id')
 const SIN_EXPIRACION = process.argv.includes('--sin-expiracion')
+// --contrato=a (por defecto): acepta el HIT retenido tras borrar (retención acotada por el TTL del borde).
+// --contrato=b: exige la RETIRADA del enlace antiguo (decisión del usuario): inmediatamente después del DELETE confirmado, GET (m y g),
+// HEAD y condicionales dan 404 no-store; no hay HIT retenido ni 304. Requiere un deployment con REVOCAR_CON_R2=true y un HIT previo.
+const CONTRATO = argumento('contrato') || 'a'
+if (!['a', 'b'].includes(CONTRATO)) { console.error('--contrato debe ser a o b'); process.exit(2) }
 // --salida=<carpeta>: dónde se escribe el informe (por defecto, la evidencia del repo; otros revisores pueden usar una carpeta propia).
 const SALIDA = argumento('salida') ? path.resolve(argumento('salida')) : path.join(raiz, 'docs/evidencia-rendimiento/fase-3/medios-pages')
 const ALIAS = G.ALIAS_APROBADO
@@ -106,7 +115,7 @@ async function fabricarWebp(lado) {
 }
 
 ;(async () => {
-  const informe = { fecha: new Date().toISOString(), buildId: BUILD_ID, alias: ALIAS, idEjecucion: ID_EJECUCION, objeto: `${DESTINO}/${ID}`, ttlSegundos: TTL_S, completa: false, estadoFinalConfirmado: false, error: null, casos, medidas, nota: 'HIT por centro de datos; head() inferido; tiempos del cliente, no CPU/cuota.' }
+  const informe = { fecha: new Date().toISOString(), buildId: BUILD_ID, contrato: CONTRATO, alias: ALIAS, idEjecucion: ID_EJECUCION, objeto: `${DESTINO}/${ID}`, ttlSegundos: TTL_S, completa: false, estadoFinalConfirmado: false, error: null, casos, medidas, nota: 'HIT por centro de datos; head() inferido; tiempos del cliente, no CPU/cuota.' }
   let subido = false
   let baseClaves = null
   try {
@@ -193,6 +202,21 @@ async function fabricarWebp(lado) {
     caso('/medios-extra sigue siendo la SPA (200 HTML)', spa.status === 200 && (await spa.text()).includes('build-id'))
 
     // ---- 7. borrado: ausencia en R2 (inventario) vs retención por TTL ----
+    // CB-01: copia CALIENTE por variante (HIT confirmado con bytes, ETag y POP) inmediatamente antes de borrar, dentro del TTL.
+    const calientes = { m: null, g: null }
+    if (CONTRATO === 'b') {
+      const esperados = { m, g }
+      for (const v of ['m', 'g']) {
+        for (let i = 0; i < 8 && !calientes[v]; i += 1) {
+          await espera(400 * (i + 1))
+          const r = await pedir(v)
+          const h = cabeceras(r)
+          const bytes = Buffer.from(await r.arrayBuffer())
+          if (r.status === 200 && h.medios === 'HIT' && igualesBytes(bytes, esperados[v])) calientes[v] = { hit: true, pop: pop(h), etag: h.etag, bytes: bytes.length, momento: new Date().toISOString(), intentos: i + 1 }
+        }
+        caso(`B: copia caliente de ${v} confirmada antes de borrar (HIT con bytes exactos y POP)`, !!calientes[v]?.pop, calientes[v] ?? {})
+      }
+    }
     const del = await seguro(`${WORKER}/v1/medios/${DESTINO}/${ID}`, { method: 'DELETE', headers: cab() })
     caso('borrado por el Worker (200)', del.status === 200, { estado: del.status })
     const t0 = Date.now()
@@ -201,13 +225,31 @@ async function fabricarWebp(lado) {
     const tras = await pedir('m')
     const th = cabeceras(tras)
     const retenido = tras.status === 200 && th.medios === 'HIT'
-    caso('tras borrar en R2: o HIT 200 retenido por el TTL (contrato) o 404; NUNCA un 200 MISS (que significaría que R2 aún lo sirve)', retenido || tras.status === 404, { estado: tras.status, ...th })
-    informe.retencionObservada = retenido ? 'HIT 200 durante el TTL (esperado por contrato)' : 'respuesta 404 inmediata (esta petición no tenía entrada en caché en su centro de datos)'
-    await tras.arrayBuffer()
+    if (CONTRATO === 'b') {
+      // CB-01: cada comprobación se compara con el HIT previo de SU variante y con el POP de ese HIT (lógica en scripts/lib/retirada-b.cjs).
+      const obs = (variante, metodo, r, cuerpoVacio) => { const h = cabeceras(r); return { variante, metodo, estado: r.status, cache: h.cache, nosniff: h.nosniff, robots: h.robots, pop: pop(h), cuerpoVacio } }
+      const despues = [obs('m', 'GET', tras)]
+      await tras.arrayBuffer()
+      const g404 = await pedir('g'); despues.push(obs('g', 'GET', g404)); await g404.arrayBuffer()
+      for (const v of ['m', 'g']) {
+        const hd = await pedir(v, { method: 'HEAD' }); despues.push(obs(v, 'HEAD', hd, (await hd.text()) === ''))
+        const cd = await pedir(v, { headers: { 'If-None-Match': calientes[v]?.etag ?? hh1.etag } }); despues.push(obs(v, 'COND', cd)); await cd.arrayBuffer()
+      }
+      const ev = R.evaluarRetirada({ calientes, despues })
+      for (const r of ev.resultados) caso(r.nombre, r.veredicto === 'ok', r)
+      informe.retirada = { conclusion: ev.conclusion, calientes, despues }
+      informe.retencionObservada = ev.conclusion === 'acreditada'
+        ? 'sin retención: 404 inmediato en el mismo POP que cada copia caliente (contrato B acreditado SOLO en los POP observados)'
+        : ev.conclusion === 'inconclusa' ? 'INCONCLUSA: no se acredita la retirada de una copia caliente (falta HIT previo o el POP no coincide)' : 'FALLIDA: tras el DELETE se entregó algo distinto de 404'
+    } else {
+      caso('tras borrar en R2: o HIT 200 retenido por el TTL (contrato) o 404; NUNCA un 200 MISS (que significaría que R2 aún lo sirve)', retenido || tras.status === 404, { estado: tras.status, ...th })
+      informe.retencionObservada = retenido ? 'HIT 200 durante el TTL (esperado por contrato)' : 'respuesta 404 inmediata (esta petición no tenía entrada en caché en su centro de datos)'
+      await tras.arrayBuffer()
+    }
 
     // ---- 8. expiración ----
-    if (SIN_EXPIRACION) {
-      console.log('(omitida la espera del TTL por --sin-expiracion; NO se prueba la expiración)')
+    if (SIN_EXPIRACION || CONTRATO === 'b') {
+      console.log(CONTRATO === 'b' ? '(contrato B: no hay retención que esperar, se omite la espera del TTL)' : '(omitida la espera del TTL por --sin-expiracion; NO se prueba la expiración)')
       informe.expiracionProbada = false
     } else {
       const restante = TTL_S * 1000 - (Date.now() - t0) + 15000
@@ -225,7 +267,7 @@ async function fabricarWebp(lado) {
       caso('pasado el TTL: también 404 en la variante g', exp2.status === 404)
       informe.expiracionProbada = true
     }
-    informe.completa = true
+    informe.completa = CONTRATO === 'b' ? informe.retirada?.conclusion === 'acreditada' : true
   } catch (e) {
     informe.error = String(e.message ?? e)
     console.log(`ERROR: ${informe.error}`)
