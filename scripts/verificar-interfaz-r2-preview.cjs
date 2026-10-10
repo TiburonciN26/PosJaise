@@ -256,6 +256,19 @@ async function estadoPublico(grupo, v = 'm') {
     await cli.screenshot({ path: path.join(carpetaCapturas, 'cliente-detalle-servicio.png') }).catch(() => {})
     await ctxCliente.close()
 
+    // 3b2. reemplazo de la foto principal del servicio (la galería no se toca)
+    const galSAntes = await galeriaDe('servicio_fotos', 'servicio_id', SERVICIO)
+    await abrirFicha('servicios', SERVICIO)
+    await elegir(0, FC)
+    await guardarModal()
+    s = await filaServicio()
+    galS = await galeriaDe('servicio_fotos', 'servicio_id', SERVICIO)
+    inv = await inventario()
+    const clavesS = await inventarioClaves()
+    const refS2 = s?.foto_url
+    caso('SERVICIO: reemplazo de la foto principal — tras guardar, la nueva existe, la anterior ya no está y la galería sigue idéntica (filas y variantes m/g; no prueba el orden temporal)',
+      /^r2:fotos-servicios\//.test(refS2 ?? '') && refS2 !== refS && inv.has(grupoDe(refS2)) && !inv.has(grupoDe(refS)) && galSAntes.length === 1 && G.galeriaConservada(galSAntes, galS, clavesS) && inv.size === antes.size + 2, { anterior: refS, nueva: refS2, galeriaAntes: galSAntes, galeriaDespues: galS })
+
     // 3c. devolver el servicio a su estado original
     await abrirFicha('servicios', SERVICIO)
     await page.getByRole('button', { name: 'Quitar foto de la galería' }).click()

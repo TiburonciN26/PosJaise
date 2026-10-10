@@ -219,6 +219,19 @@ function entorno(html) {
     assert.ok(!G.iguales(a, { ...a, galeriaWeb: [] }))
   })
 
+  await prueba('IP-S1: galería conservada — idéntica pasa; otra referencia, etiqueta/orden/id u objeto desaparecido fallan', () => {
+    const f = { id: 'g1', foto_url: 'r2:fotos-servicios/u1', etiqueta: 'a', orden: 0 }
+    const claves = ['fotos-servicios/u1/m.webp', 'fotos-servicios/u1/g.webp', 'fotos-servicios/u2/m.webp', 'fotos-servicios/u2/g.webp']
+    assert.ok(G.galeriaConservada([f], [{ ...f }], claves))
+    assert.ok(!G.galeriaConservada([f], [{ ...f, foto_url: 'r2:fotos-servicios/u2' }], claves))
+    assert.ok(!G.galeriaConservada([f], [{ ...f, etiqueta: 'b' }], claves))
+    assert.ok(!G.galeriaConservada([f], [{ ...f, orden: 1 }], claves))
+    assert.ok(!G.galeriaConservada([f], [{ ...f, id: 'g2' }], claves))
+    assert.ok(!G.galeriaConservada([f], [], claves))
+    assert.ok(!G.galeriaConservada([f], [f], ['fotos-servicios/u1/m.webp']))
+    assert.ok(!G.galeriaConservada([f], [f], ['fotos-servicios/u1/g.webp']))
+  })
+
   const fallos = resultados.filter((r) => !r.ok)
   console.log(`\n${resultados.length} casos, ${fallos.length} fallos`)
   process.exitCode = fallos.length ? 1 : 0

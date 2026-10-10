@@ -182,10 +182,21 @@ async function limpiarFilaPropia({ fila, borrarFila, releerFila, borrarGrupo, pu
   return r
 }
 
+// IP-S1: la galería de una ficha quedó EXACTAMENTE como antes (id, foto_url, etiqueta, orden) y cada una de sus referencias
+// `r2:` conserva en el inventario las dos variantes (m y g), no solo «el mismo número de grupos».
+function galeriaConservada(antes, despues, clavesInventario) {
+  if (!iguales(antes, despues)) return false
+  const claves = new Set(clavesInventario)
+  return antes.every((f) => {
+    const grupo = String(f.foto_url ?? '').replace(/^r2:/, '')
+    return /^r2:/.test(f.foto_url ?? '') && ['m', 'g'].every((v) => claves.has(`${grupo}/${v}.webp`))
+  })
+}
+
 module.exports = {
   limpiarFilaPropia,
   gruposPropiosDeFila,
   REF_STAGING, REF_NEGOCIO, ALIAS_APROBADO, WORKER_APROBADO, PUBLICO_APROBADO, DOMINIO_CUENTAS_QA,
   origenDe, esOrigenExacto, validarConfiguracion, preflight, clasificarDestino, instalarBloqueo, crearFetchSeguro,
-  tituloDeEjecucion, leerInventario, gruposDe, grupoDeClave, diferenciaInventario, precondicionFixtures, iguales, planLimpiezaGaleria,
+  tituloDeEjecucion, leerInventario, gruposDe, grupoDeClave, diferenciaInventario, precondicionFixtures, iguales, galeriaConservada, planLimpiezaGaleria,
 }
