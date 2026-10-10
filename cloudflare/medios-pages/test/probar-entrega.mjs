@@ -2,7 +2,7 @@
 //   node cloudflare/medios-pages/test/probar-entrega.mjs
 // R2 y la Cache API son dobles en memoria que CUENTAN las lecturas; la caché respeta max-age con un reloj simulado.
 // Nada sale de la máquina.
-import { manejarMedios, TTL_POSITIVO } from '../entrega.js'
+import { manejarMedios, TTL_POSITIVO, REVOCAR_CON_R2 } from '../entrega.js'
 import { onRequest as onRaiz } from '../../../functions/medios.js'
 import { onRequest as onRuta } from '../../../functions/medios/[[ruta]].js'
 
@@ -64,6 +64,7 @@ function doblesCache() {
       c.puts += 1
       almacen.set(req.url, { resp, buf: await resp.clone().arrayBuffer(), t: c.reloj })
     },
+    async delete(req) { return almacen.delete(req.url) },
     tamano: () => almacen.size,
   }
   return c
@@ -85,6 +86,7 @@ function entorno(opciones = {}) {
 }
 
 const RUTA = `/medios/fotos-productos/${ID}/m.webp`
+const NAVEGADOR = 'public, max-age=0, must-revalidate'
 const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' && r.headers.get('X-Robots-Tag') === 'noindex'
 
 // ---- ruta y método ----
@@ -93,7 +95,7 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
   const r = await e.pedir(RUTA)
   caso('GET válido: 200, image/webp, nosniff, noindex, ETag, MISS', r.status === 200 && r.headers.get('Content-Type') === 'image/webp' && sinFugas(r) && r.headers.get('ETag') === '"abc"' && r.headers.get('X-Medios-Cache') === 'MISS', Object.fromEntries(r.headers))
   caso('el cuerpo son los bytes del objeto', new Uint8Array(await r.arrayBuffer()).join() === BYTES.join())
-  caso('Cache-Control POSITIVO corto (no el immutable de un año de R2)', r.headers.get('Cache-Control') === `public, max-age=${TTL_POSITIVO}` && TTL_POSITIVO === 300)
+  caso('Cache-Control al NAVEGADOR: revalidar siempre (no el immutable de un año de R2 ni el TTL del borde)', r.headers.get('Cache-Control') === NAVEGADOR && TTL_POSITIVO === 300)
 }
 {
   const e = entorno()
@@ -144,7 +146,7 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
   const a = await e.pedir(RUTA)
   const b = await e.pedir(RUTA)
   caso('MISS → HIT: el segundo GET no vuelve a leer R2 (conteo del doble, no solo la cabecera)', a.headers.get('X-Medios-Cache') === 'MISS' && b.headers.get('X-Medios-Cache') === 'HIT' && e.r2.lecturas === 1, { lecturas: e.r2.lecturas })
-  caso('el HIT conserva cuerpo, ETag y Cache-Control corto, y recalcula su cabecera (no hereda la del MISS)', new Uint8Array(await b.arrayBuffer()).join() === BYTES.join() && b.headers.get('ETag') === '"abc"' && b.headers.get('Cache-Control') === 'public, max-age=300' && sinFugas(b))
+  caso('el HIT conserva cuerpo, ETag y Cache-Control corto, y recalcula su cabecera (no hereda la del MISS)', new Uint8Array(await b.arrayBuffer()).join() === BYTES.join() && b.headers.get('ETag') === '"abc"' && b.headers.get('Cache-Control') === NAVEGADOR && sinFugas(b))
   e.cache.reloj += (TTL_POSITIVO - 1) * 1000
   const c = await e.pedir(RUTA)
   caso(`dentro del TTL (${TTL_POSITIVO - 1} s) sigue siendo HIT`, c.headers.get('X-Medios-Cache') === 'HIT' && e.r2.lecturas === 1)
@@ -212,7 +214,7 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
       if (fase === 'HIT') await e2.pedir(RUTA)
       const r = await e2.pedir(RUTA, { headers: valor ? { 'If-None-Match': valor } : {} })
       const cuerpo = await r.text()
-      aprobadas.push([valor, fase, r.status, r.status === esperado && r.headers.get('X-Medios-Cache') === fase && (r.status !== 304 || (cuerpo === '' && r.headers.get('ETag') === '"abc"' && sinFugas(r) && r.headers.get('Cache-Control') === 'public, max-age=300'))])
+      aprobadas.push([valor, fase, r.status, r.status === esperado && r.headers.get('X-Medios-Cache') === fase && (r.status !== 304 || (cuerpo === '' && r.headers.get('ETag') === '"abc"' && sinFugas(r) && r.headers.get('Cache-Control') === NAVEGADOR))])
     }
   }
   caso('If-None-Match (coincidente, débil, no coincidente, lista, *, ausente) → 304/200 correcto en MISS y en HIT, con cabeceras en el 304', aprobadas.every((x) => x[3]), aprobadas.filter((x) => !x[3]))
@@ -261,6 +263,92 @@ const sinFugas = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' &&
   const e = entorno()
   const r = await manejarMedios(new Request(`${ORIGEN}${RUTA}`), { MEDIOS: e.r2 }, undefined, {})
   caso('sin Cache API disponible ni ctx → sigue sirviendo desde R2', r.status === 200)
+}
+
+// ---- contrato de retirada: opción A (política separada) y opción B (revocación con R2, desactivada por defecto) ----
+{
+  caso('la opción B está DESACTIVADA por defecto', REVOCAR_CON_R2 === false)
+  const e = entorno()
+  const a = await e.pedir(RUTA)
+  const guardada = await e.cache.match(new Request(`${ORIGEN}${RUTA}`))
+  caso('A: navegador y copia almacenada usan políticas DISTINTAS (revalidar vs TTL del borde); sin Age/Date heredados', a.headers.get('Cache-Control') === NAVEGADOR && guardada.headers.get('Cache-Control') === 'public, max-age=300' && !a.headers.get('Age') && !a.headers.get('Date'))
+  e.r2.borrar(`fotos-productos/${ID}/m.webp`)
+  const b = await e.pedir(RUTA)
+  caso('A: tras borrar con caché caliente sigue el HIT (ventana documentada) y el navegador revalida', b.status === 200 && b.headers.get('X-Medios-Cache') === 'HIT' && b.headers.get('Cache-Control') === NAVEGADOR && e.r2.cabezas === 0)
+}
+{
+  const montar = (extra = {}) => {
+    const e = entorno(extra)
+    const pedir = async (ruta, init = {}, revocar = true) => {
+      const r = await manejarMedios(new Request(`${ORIGEN}${ruta}`, init), { MEDIOS: e.r2 }, e.ctx, { cache: e.cache, revocar })
+      return r
+    }
+    return { e, pedir }
+  }
+  {
+    const { e, pedir } = montar()
+    await pedir(RUTA); await new Promise((r) => setTimeout(r, 0))
+    const hit = await pedir(RUTA)
+    caso('B: con el objeto presente el HIT se conserva (valida con head, sin leer el cuerpo)', hit.headers.get('X-Medios-Cache') === 'HIT' && e.r2.cabezas === 1 && e.r2.lecturas === 1, { cabezas: e.r2.cabezas, lecturas: e.r2.lecturas })
+    e.r2.borrar(`fotos-productos/${ID}/m.webp`)
+    const r = await pedir(RUTA)
+    caso('B: caché caliente + objeto borrado → 404 no-store y se elimina la copia local', r.status === 404 && r.headers.get('Cache-Control') === 'no-store' && sinFugas(r) && e.cache.tamano() === 0)
+  }
+  {
+    const { e, pedir } = montar()
+    await pedir(RUTA); await new Promise((r) => setTimeout(r, 0))
+    e.r2.borrar(`fotos-productos/${ID}/m.webp`)
+    const c = await pedir(RUTA, { headers: { 'If-None-Match': '"abc"' } })
+    caso('B: If-None-Match coincidente tras borrar → 404, nunca 304', c.status === 404)
+  }
+  {
+    const { e, pedir } = montar()
+    await pedir(RUTA); await new Promise((r) => setTimeout(r, 0))
+    e.r2.borrar(`fotos-productos/${ID}/m.webp`)
+    const h = await pedir(RUTA, { method: 'HEAD' })
+    caso('B: HEAD tras borrar → 404 sin cuerpo', h.status === 404 && (await h.text()) === '')
+  }
+  {
+    const { e, pedir } = montar()
+    await pedir(RUTA); await new Promise((r) => setTimeout(r, 0))
+    e.r2.fallaHead = true
+    const r = await pedir(RUTA)
+    caso('B: head falla → 503 no-store, NO se sirve la copia vieja', r.status === 503 && r.headers.get('Cache-Control') === 'no-store' && (await r.text()) === 'No disponible')
+  }
+  {
+    const { e, pedir } = montar({ r2: doblesR2({ [`fotos-productos/${ID}/m.webp`]: '"viejo"' }) })
+    await pedir(RUTA); await new Promise((r) => setTimeout(r, 0))
+    const cache = e.cache
+    // el objeto cambia de ETag en R2 (mismo doble, nueva versión)
+    const nuevo = doblesR2({ [`fotos-productos/${ID}/m.webp`]: '"nuevo"' })
+    const r = await manejarMedios(new Request(`${ORIGEN}${RUTA}`), { MEDIOS: nuevo }, e.ctx, { cache, revocar: true })
+    caso('B: ETag distinto entre copia y R2 → MISS con el ETag nuevo (reemplaza la copia)', r.status === 200 && r.headers.get('X-Medios-Cache') === 'MISS' && r.headers.get('ETag') === '"nuevo"' && nuevo.lecturas === 1)
+  }
+  {
+    // dos centros de datos = dos cachés: borrar en uno no afecta al otro; B retira en ambos al primer acceso
+    const r2 = doblesR2(); const c1 = doblesCache(); const c2 = doblesCache()
+    const en = (cache, revocar) => manejarMedios(new Request(`${ORIGEN}${RUTA}`), { MEDIOS: r2 }, { waitUntil: () => {} }, { cache, revocar })
+    await en(c1, false); await en(c2, false); await new Promise((r) => setTimeout(r, 0))
+    r2.borrar(`fotos-productos/${ID}/m.webp`)
+    const sinB = [(await en(c1, false)).status, (await en(c2, false)).status]
+    const conB = [(await en(c1, true)).status, (await en(c2, true)).status]
+    caso('dos POP simulados: sin B ambos siguen sirviendo; con B ambos devuelven 404', sinB.join() === '200,200' && conB.join() === '404,404', { sinB, conB })
+  }
+  {
+    // petición en vuelo: leyó el objeto antes del DELETE y guarda la copia después; con B el siguiente acceso la corrige
+    const r2 = doblesR2(); const cache = doblesCache()
+    const get0 = r2.get.bind(r2)
+    let soltar
+    const puerta = new Promise((r) => { soltar = r })
+    r2.get = async (clave) => { const o = await get0(clave); await puerta; return o }
+    const pend = []
+    const vuelo = manejarMedios(new Request(`${ORIGEN}${RUTA}`), { MEDIOS: r2 }, { waitUntil: (p) => pend.push(p) }, { cache, revocar: true })
+    await new Promise((r) => setTimeout(r, 0))
+    r2.borrar(`fotos-productos/${ID}/m.webp`); soltar()
+    await vuelo; await Promise.all(pend)
+    const despues = await manejarMedios(new Request(`${ORIGEN}${RUTA}`), { MEDIOS: r2 }, { waitUntil: () => {} }, { cache, revocar: true })
+    caso('B: petición en vuelo que repuebla la caché tras el DELETE → el siguiente acceso devuelve 404', cache.puts === 1 && despues.status === 404 && cache.tamano() === 0, { puts: cache.puts, tam: cache.tamano() })
+  }
 }
 
 // ---- envoltorios de Functions (rutas reales de Pages) ----

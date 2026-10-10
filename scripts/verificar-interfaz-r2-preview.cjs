@@ -201,7 +201,7 @@ async function estadoPublico(grupo, v = 'm') {
       subidasProducto.filter((s) => s.startsWith('PUT')).length === 4 && storageSupabase.length === 0, { subidas: subidasProducto, storageSupabase })
     const pubs = []
     for (const ref of [refP1, gal[0]?.foto_url].filter(Boolean)) for (const v of ['m', 'g']) pubs.push(await estadoPublico(grupoDe(ref), v))
-    caso('PRODUCTO: las 4 variantes responden 200 image/webp en el dominio público de pruebas', pubs.length === 4 && pubs.every((x) => x.estado === 200 && x.tipo === 'image/webp' && x.bytes > 500 && (ENTREGA !== 'pages' || (x.nosniff === 'nosniff' && x.cache === 'public, max-age=300' && ['HIT', 'MISS'].includes(x.medios)))), { pubs })
+    caso('PRODUCTO: las 4 variantes responden 200 image/webp en el dominio público de pruebas', pubs.length === 4 && pubs.every((x) => x.estado === 200 && x.tipo === 'image/webp' && x.bytes > 500 && (ENTREGA !== 'pages' || (x.nosniff === 'nosniff' && x.cache === 'public, max-age=0, must-revalidate' && ['HIT', 'MISS'].includes(x.medios)))), { pubs })
     caso('PRODUCTO: el inventario del Worker muestra exactamente 2 grupos nuevos', inv.size === antes.size + 2, { antes: antes.size, despues: inv.size })
 
     // 2b. reemplazo de la foto principal

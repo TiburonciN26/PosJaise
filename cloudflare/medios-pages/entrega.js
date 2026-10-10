@@ -11,15 +11,23 @@
 //  · Ruta EXACTA /medios/<destino>/<uuid>/<m|g>.webp con destino en la lista cerrada; todo lo demás → 404 no-store.
 //  · Clave de caché = GET canónico sin query. Range se ignora (200 completo). HEAD nunca guarda una respuesta vacía.
 //  · ETag = httpEtag de R2; If-None-Match (coincidente, lista, `*`, débil) → 304 tanto en MISS como en HIT.
-//  · Cache-Control POSITIVO corto (TTL_POSITIVO): sustituye al `immutable` de un año que traen los objetos de R2,
-//    en la respuesta enviada y en la copia almacenada. Errores: no-store (sin caché negativa).
+//  · Dos políticas (diseño de retirada: DISENO-CONTRATO-RETIRADA-MEDIOS.md, opción A):
+//      - copia ALMACENADA en el borde: `public, max-age=TTL_POSITIVO` (sustituye al `immutable` de un año de R2);
+//      - respuesta al NAVEGADOR: `public, max-age=0, must-revalidate` + ETag → una copia caducada obliga a revalidar: con If-None-Match coincidente → 304 sin cuerpo; con ETag distinto o sin condicional → 200.
+//    Errores: no-store (sin caché negativa).
+//  · Opción B (REVOCAR_CON_R2, DESACTIVADA por defecto): en HIT y antes de un 304 se comprueba el objeto en R2; ausente → 404 y
+//    la Function deja de ENTREGARLO (no borra copias de otros centros de datos ni del navegador).
 //  · Fallo de binding ausente → 404; fallo de lectura de R2 → 503 sin detalles; fallo de la caché → se entrega igual.
 //  · X-Medios-Cache: HIT|MISS es DIAGNÓSTICO propio (cf-cache-status no refleja la Cache API).
 
 export const DESTINOS = ['fotos-productos', 'fotos-servicios', 'fotos-galeria']
-export const TTL_POSITIVO = 300 // segundos; navegador y edge (Cache API respeta max-age). Valor de STAGING.
+export const TTL_POSITIVO = 300 // segundos; SOLO la copia del borde (Cache API respeta max-age). El navegador usa CACHE_NAVEGADOR. Valor de STAGING.
 const RE_ID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 const RE_RUTA = new RegExp(`^/medios/(${DESTINOS.join('|')})/(${RE_ID})/(m|g)\\.webp$`)
+
+// Opción B: interruptor. Desactivado hasta medir CPU, latencia y cuota; se puede forzar por llamada (pruebas).
+export const REVOCAR_CON_R2 = false
+const CACHE_NAVEGADOR = 'public, max-age=0, must-revalidate'
 
 const COMUN = { 'X-Content-Type-Options': 'nosniff', 'X-Robots-Tag': 'noindex' }
 const CACHE_POSITIVO = `public, max-age=${TTL_POSITIVO}`
@@ -39,11 +47,12 @@ function coincide(cabecera, etag) {
   return cabecera.split(',').some((v) => limpio(v) === limpio(etag))
 }
 
-function cabecerasDe(etag, diagnostico) {
+// `almacenada` = copia que se guarda en la Cache API (TTL del borde); si no, la respuesta que ve el navegador.
+function cabecerasDe(etag, diagnostico, almacenada = false) {
   return {
     ...COMUN,
     'Content-Type': 'image/webp',
-    'Cache-Control': CACHE_POSITIVO,
+    'Cache-Control': almacenada ? CACHE_POSITIVO : CACHE_NAVEGADOR,
     ...(etag ? { ETag: etag } : {}),
     'X-Medios-Cache': diagnostico,
   }
@@ -55,7 +64,7 @@ function responder(request, cuerpo, etag, diagnostico) {
   return new Response(request.method === 'HEAD' ? null : cuerpo, { status: 200, headers: cabeceras })
 }
 
-export async function manejarMedios(request, env, ctx, { cache } = {}) {
+export async function manejarMedios(request, env, ctx, { cache, revocar = REVOCAR_CON_R2 } = {}) {
   const metodo = request.method
   if (metodo !== 'GET' && metodo !== 'HEAD') return error(405, { Allow: 'GET, HEAD' })
   const url = new URL(request.url)
@@ -70,7 +79,20 @@ export async function manejarMedios(request, env, ctx, { cache } = {}) {
   try {
     const guardada = cache ? await cache.match(llave) : undefined
     if (guardada && guardada.status === 200) {
-      return responder(request, guardada.body, guardada.headers.get('ETag'), 'HIT')
+      if (!revocar) return responder(request, guardada.body, guardada.headers.get('ETag'), 'HIT')
+      // Opción B: la copia solo se entrega si el objeto sigue en R2 con el mismo ETag.
+      let actual
+      try {
+        actual = typeof env.MEDIOS.head === 'function' ? await env.MEDIOS.head(clave) : await env.MEDIOS.get(clave)
+      } catch {
+        return error(503, {}, metodo) // sin validar la retirada no se sirve la copia vieja
+      }
+      if (!actual) {
+        try { await cache.delete(llave) } catch { /* auxiliar: solo este centro de datos */ }
+        return error(404, {}, metodo)
+      }
+      if ((actual.httpEtag ?? null) === guardada.headers.get('ETag')) return responder(request, guardada.body, guardada.headers.get('ETag'), 'HIT')
+      // ETag distinto: la copia está desfasada → se lee de nuevo y se reemplaza (camino MISS)
     }
   } catch {
     // un fallo de la caché no impide entregar la imagen desde R2
@@ -96,7 +118,7 @@ export async function manejarMedios(request, env, ctx, { cache } = {}) {
     return error(503)
   }
   if (cache) {
-    const copia = new Response(cuerpo, { status: 200, headers: cabecerasDe(etag, 'HIT') })
+    const copia = new Response(cuerpo, { status: 200, headers: cabecerasDe(etag, 'HIT', true) })
     const guardar = Promise.resolve()
       .then(() => cache.put(llave, copia))
       .catch(() => {})

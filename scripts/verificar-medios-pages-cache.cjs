@@ -32,7 +32,8 @@ const SALIDA = argumento('salida') ? path.resolve(argumento('salida')) : path.jo
 const ALIAS = G.ALIAS_APROBADO
 const WORKER = G.WORKER_APROBADO
 const BASE = `${ALIAS}/medios`
-const TTL_S = 300
+const TTL_S = 300 // TTL INTERNO del borde (ensayo de expiración por POP); NO es la cabecera que ve el navegador
+const CACHE_NAVEGADOR = 'public, max-age=0, must-revalidate' // política al navegador desde el contrato de retirada (opción A)
 const DESTINO = 'fotos-galeria'
 const ID = crypto.randomUUID()
 const ID_EJECUCION = crypto.randomBytes(3).toString('hex')
@@ -139,7 +140,7 @@ async function fabricarWebp(lado) {
     // ---- 3. HEAD: metadatos sin cuerpo y sin poblar la caché ----
     const h1 = await medir('HEAD-1', () => pedir('m', { method: 'HEAD' }))
     const hh1 = cabeceras(h1)
-    caso('HEAD: 200 sin cuerpo, image/webp, ETag, max-age=300, nosniff/noindex', h1.status === 200 && (await h1.text()) === '' && hh1.tipo === 'image/webp' && !!hh1.etag && hh1.cache === `public, max-age=${TTL_S}` && comunes(hh1), hh1)
+    caso('HEAD: 200 sin cuerpo, image/webp, ETag, Cache-Control del navegador (revalidar), nosniff/noindex', h1.status === 200 && (await h1.text()) === '' && hh1.tipo === 'image/webp' && !!hh1.etag && hh1.cache === CACHE_NAVEGADOR && comunes(hh1), hh1)
     const h2 = cabeceras(await pedir('m', { method: 'HEAD' }))
     caso('HEAD no puebla la caché: un segundo HEAD sigue siendo MISS', hh1.medios === 'MISS' && h2.medios === 'MISS', { primero: hh1.medios, segundo: h2.medios })
 
@@ -147,7 +148,7 @@ async function fabricarWebp(lado) {
     const g1 = await medir('GET-MISS', () => pedir('m'))
     const gh1 = cabeceras(g1)
     const bytes1 = Buffer.from(await g1.arrayBuffer())
-    caso('GET: 200 image/webp con los bytes EXACTOS subidos, max-age=300, nosniff/noindex, ETag igual al de HEAD', g1.status === 200 && igualesBytes(bytes1, m) && gh1.tipo === 'image/webp' && gh1.cache === `public, max-age=${TTL_S}` && comunes(gh1) && gh1.etag === hh1.etag, { ...gh1, bytes: bytes1.length })
+    caso('GET: 200 image/webp con los bytes EXACTOS subidos, Cache-Control del navegador (revalidar), nosniff/noindex, ETag igual al de HEAD', g1.status === 200 && igualesBytes(bytes1, m) && gh1.tipo === 'image/webp' && gh1.cache === CACHE_NAVEGADOR && comunes(gh1) && gh1.etag === hh1.etag, { ...gh1, bytes: bytes1.length })
     caso('primer GET tras subir (sin entrada previa en este centro de datos) → X-Medios-Cache MISS', gh1.medios === 'MISS', gh1)
     let hit = null
     let intentos = 0
@@ -160,12 +161,12 @@ async function fabricarWebp(lado) {
     }
     informe.popHit = hit ? pop(hit.h) : null
     caso(`GET posterior → HIT (la escritura por waitUntil es asíncrona y por centro de datos: ${intentos} intento(s))`, !!hit, { intentos, pop: informe.popHit })
-    if (hit) caso('el HIT conserva bytes, ETag y max-age=300 y recalcula X-Medios-Cache', igualesBytes(hit.bytes, m) && hit.h.etag === hh1.etag && hit.h.cache === `public, max-age=${TTL_S}` && comunes(hit.h), hit.h)
+    if (hit) caso('el HIT conserva bytes, ETag y la política del navegador y recalcula X-Medios-Cache', igualesBytes(hit.bytes, m) && hit.h.etag === hh1.etag && hit.h.cache === CACHE_NAVEGADOR && comunes(hit.h), hit.h)
 
     // ---- 5. condicionales y Range ----
     const c304 = await pedir('m', { headers: { 'If-None-Match': hh1.etag } })
     const c304h = cabeceras(c304)
-    caso('If-None-Match coincidente → 304 sin cuerpo, con ETag, max-age=300 y nosniff/noindex', c304.status === 304 && (await c304.text()) === '' && c304h.etag === hh1.etag && c304h.cache === `public, max-age=${TTL_S}` && comunes(c304h), c304h)
+    caso('If-None-Match coincidente → 304 sin cuerpo, con ETag, política del navegador y nosniff/noindex', c304.status === 304 && (await c304.text()) === '' && c304h.etag === hh1.etag && c304h.cache === CACHE_NAVEGADOR && comunes(c304h), c304h)
     const cOtro = await pedir('m', { headers: { 'If-None-Match': '"otro"' } })
     caso('If-None-Match distinto → 200 completo', cOtro.status === 200 && Buffer.from(await cOtro.arrayBuffer()).length === m.length)
     const cStar = await pedir('m', { headers: { 'If-None-Match': '*' } })
