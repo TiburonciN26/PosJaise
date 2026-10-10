@@ -57,6 +57,10 @@ export default defineConfig(({ command, mode }) => {
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
           globIgnores: esRaiz ? ['**/404.html'] : [],
+          // Build de Cloudflare (base /): /medios y /medios/* los sirve una Pages Function (fotos), nunca la SPA.
+          // El SW no debe devolver index.html a una navegación a una foto. `/medios-extra` NO queda excluido.
+          // GitHub Pages (base /PosJaise/) no cambia.
+          ...(esRaiz ? { navigateFallbackDenylist: [/^\/medios(?:\/|$)/] } : {}),
         },
         manifest: {
           name: 'Pos Jaise Beauty Academy',

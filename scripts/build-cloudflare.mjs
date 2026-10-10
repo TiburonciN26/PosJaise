@@ -8,8 +8,9 @@
 //    Las VITE_* se incrustan al compilar: un build equivocado solo se corrige recompilando.
 // Variables VITE_SUPABASE_* las pone el entorno de build de Cloudflare (preview ≠ producción).
 import { spawnSync } from 'node:child_process'
-import { copyFileSync, existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { swExcluyeMedios } from './lib/sw-medios.mjs'
 import { entornoDeCloudflare, escanearTextoSalida, validarSupabase, REF_PRODUCCION, REF_STAGING } from './lib/entornos-supabase.mjs'
 
 const falla = (m) => { console.error('build-cloudflare: ' + m); process.exit(1) }
@@ -39,6 +40,9 @@ if (r.status !== 0) process.exit(r.status ?? 1)
 
 rmSync(resolve(salida, '404.html'), { force: true })
 copyFileSync(resolve('cloudflare/_headers'), resolve(salida, '_headers'))
+// Entrega de medios por Pages Functions (functions/medios*): SOLO /medios y /medios/* invocan Functions; el resto
+// (SPA, assets, sw.js) sigue siendo estático. Debe estar en la SALIDA (dist), no en la raíz del repo.
+writeFileSync(resolve(salida, '_routes.json'), JSON.stringify({ version: 1, include: ['/medios', '/medios/*'], exclude: [] }, null, 2) + '\n')
 
 // Comprobaciones de la salida: nada apuntando a /PosJaise/ ni a un 404.html precacheado, y ninguna clave privilegiada.
 if (existsSync(resolve(salida, '404.html'))) falla('404.html sigue en la salida')
@@ -53,4 +57,8 @@ for (const f of archivos(salida).filter((x) => /\.(js|html|json|webmanifest|css|
   const graves = refEsperado ? h : h.filter((x) => x === 'sb_secret_' || /role "service_role"|role "authenticated"/.test(x))
   if (graves.length) falla(`la salida contiene credenciales no permitidas (${graves[0]}) en ${f.replace(salida, '')}`)
 }
-console.log('build-cloudflare: OK (base /, sin 404.html, _headers copiado, sin credenciales privilegiadas)')
+const rutas = JSON.parse(readFileSync(resolve(salida, '_routes.json'), 'utf8'))
+if (rutas.version !== 1 || rutas.include.join() !== '/medios,/medios/*' || rutas.exclude.length) falla('_routes.json inesperado')
+const swSalida = readFileSync(resolve(salida, 'sw.js'), 'utf8')
+if (!swExcluyeMedios(swSalida)) falla('sw.js no excluye /medios/ de la navegación (navigateFallbackDenylist)')
+console.log('build-cloudflare: OK (base /, sin 404.html, _headers y _routes.json, SW sin fallback en /medios, sin credenciales privilegiadas)')

@@ -19,9 +19,10 @@
 // Aquí no hay credenciales de R2 ni SDK S3: solo `fetch` al Worker con el
 // token de sesión de Supabase.
 import { supabase } from './supabase.js'
+import { basesReconocidas, normalizarBase, referenciaDeUrl, DESTINOS_R2 as DESTINOS_URL } from './urlsMedios.js'
 
 export const PREFIJO_R2 = 'r2:'
-export const DESTINOS_R2 = ['fotos-productos', 'fotos-servicios', 'fotos-galeria']
+export const DESTINOS_R2 = DESTINOS_URL
 
 const LADO_MINIATURA = 320
 const CALIDAD_MINIATURA = 0.8
@@ -50,7 +51,10 @@ export function ambientePideR2(bucket) {
 export function errorDeConfiguracionMedios() {
   const { apiUrl, publicUrl } = configuracionMedios()
   const faltan = [!apiUrl && 'VITE_MEDIOS_API_URL', !publicUrl && 'VITE_MEDIOS_PUBLIC_URL'].filter(Boolean)
-  return faltan.length ? `Medios R2 mal configurados: falta ${faltan.join(' y ')}.` : null
+  if (faltan.length) return `Medios R2 mal configurados: falta ${faltan.join(' y ')}.`
+  // La URL pública debe ser ABSOLUTA (https; http solo en localhost): una relativa quedaría ambigua en Galería.
+  if (!normalizarBase(publicUrl)) return 'Medios R2 mal configurados: VITE_MEDIOS_PUBLIC_URL debe ser una URL absoluta https.'
+  return null
 }
 
 // Las subidas nuevas van a R2 solo si el ambiente lo pide, está completamente
@@ -72,15 +76,12 @@ export function urlPublicaR2(referencia, variante = 'g') {
   return `${publicUrl}/${referencia.slice(PREFIJO_R2.length)}/${variante}.webp`
 }
 
-// Galería guarda la URL completa. Si esa URL es de nuestro dominio de medios
-// devuelve la referencia "r2:..." (para poder eliminarla); si no, null.
-export function referenciaDeUrlR2(url) {
-  const { publicUrl } = configuracionMedios()
-  if (!publicUrl || typeof url !== 'string' || !url.startsWith(`${publicUrl}/`)) return null
-  const partes = url.slice(publicUrl.length + 1).split('/')
-  if (partes.length < 2 || !DESTINOS_R2.includes(partes[0])) return null
-  return `${PREFIJO_R2}${partes[0]}/${partes[1]}`
-}
+// Galería guarda la URL completa. Si esa URL es de nuestros medios devuelve la referencia "r2:..." (para
+// poder administrarla/eliminarla); si no, null. Reconoce la base configurada Y las aprobadas en
+// VITE_MEDIOS_BASES_RECONOCIDAS (lista cerrada, separada por comas) para convivir durante una transición de
+// entrega (r2.dev ↔ Pages /medios); valida origen, prefijo, destino, UUID y variante (ver urlsMedios.js).
+export const basesDeMedios = () => basesReconocidas(configuracionMedios().publicUrl, import.meta.env.VITE_MEDIOS_BASES_RECONOCIDAS)
+export const referenciaDeUrlR2 = (url) => referenciaDeUrl(url, basesDeMedios())
 
 async function tokenDeSesion() {
   const { data } = await supabase.auth.getSession()

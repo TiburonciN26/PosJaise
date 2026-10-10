@@ -1,14 +1,15 @@
 import { supabase } from './supabase.js'
 import {
   ambientePideR2,
+  basesDeMedios,
   eliminarImagenR2,
   errorDeConfiguracionMedios,
   esReferenciaR2,
-  referenciaDeUrlR2,
   subidasNuevasEnR2,
   subirImagenR2,
   urlPublicaR2,
 } from './medios.js'
+import { rutaDeUrlGaleriaPura } from './urlsMedios.js'
 
 const LADO_MAXIMO = 600
 const CALIDAD_WEBP = 0.8
@@ -102,15 +103,16 @@ export function resolverUrlGaleria(url) {
   return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
 }
 
-// Ruta/referencia a eliminar a partir de la URL completa que guarda la galería:
-// "r2:..." si es de nuestro dominio de medios, la ruta dentro del bucket si es
-// una URL de Supabase Storage, y null si no es ninguna (p. ej. fotos de /public).
+// Ruta/referencia a eliminar a partir de la URL completa que guarda la galería (ver urlsMedios.js):
+// "r2:..." si es de nuestros medios (cualquier base aprobada), la ruta dentro del bucket SOLO si la URL cuelga
+// del prefijo público de Supabase Storage de ESTE proyecto, y null en cualquier otro caso (host ajeno, fotos de
+// /public...). Una URL ajena nunca produce una eliminación, ni en R2 ni en Storage.
 export function rutaDeUrlGaleria(bucket, url) {
-  const referenciaR2 = referenciaDeUrlR2(url)
-  if (referenciaR2) return referenciaR2
-  const marcador = `/${bucket}/`
-  const indice = url?.indexOf(marcador) ?? -1
-  return indice === -1 ? null : url.slice(indice + marcador.length)
+  return rutaDeUrlGaleriaPura({
+    url,
+    bases: basesDeMedios(),
+    prefijoStorage: supabase.storage.from(bucket).getPublicUrl('').data.publicUrl,
+  })
 }
 
 // Para buckets PRIVADOS (ej. comprobantes-pedidos-web) — getPublicUrl no
