@@ -1,0 +1,190 @@
+{
+  "fecha": "2026-10-10T17:23:12.269Z",
+  "version": "guardas IP-R1/IP-R2 (IP-R1b/IP-R2b)",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "buildId": "c1693734",
+  "idEjecucion": "3f2497",
+  "entorno": "Pages Preview (staging) + Worker y bucket de pruebas; cuentas QA ficticias",
+  "completa": true,
+  "error": null,
+  "limpieza": null,
+  "bloqueadas": [],
+  "total": 22,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "el alias sirve el build-id esperado (c1693734); verificado ANTES de autenticar",
+      "buildId": "c1693734",
+      "ok": true
+    },
+    {
+      "nombre": "precondición: producto y servicio sin foto principal ni galería, y snapshot/inventario inicial leídos",
+      "clavesIniciales": 0,
+      "filasGaleriaWeb": 1,
+      "ok": true
+    },
+    {
+      "nombre": "login ADMIN QA en el alias de Pages",
+      "ruta": "/ventas",
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: foto principal y 1 foto de galería guardadas con referencia r2:",
+      "principal": "r2:fotos-productos/29df1982-522d-49b0-95e9-8600a9fb49b3",
+      "galeria": [
+        "r2:fotos-productos/463b2fdc-bc4d-4e8c-aee9-5d844b3d940b"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: la subida fue al Worker de staging (4 PUT: m y g de cada foto) y NO a Supabase Storage",
+      "subidas": [
+        "PUT m",
+        "PUT g",
+        "PUT m",
+        "PUT g"
+      ],
+      "storageSupabase": [],
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: las 4 variantes responden 200 image/webp en el dominio público de pruebas",
+      "pubs": [
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 3202
+        },
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 8504
+        },
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 3896
+        },
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 9696
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: el inventario del Worker muestra exactamente 2 grupos nuevos",
+      "antes": 0,
+      "despues": 2,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: reemplazo de la foto principal — tras guardar, la nueva existe y la anterior ya no está (estado final; no prueba el orden temporal)",
+      "anterior": "r2:fotos-productos/29df1982-522d-49b0-95e9-8600a9fb49b3",
+      "nueva": "r2:fotos-productos/685b84cb-f63d-4de8-b2e6-bc8b940d10e0",
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: quitar galería y foto principal — fila sin foto, 0 filas de galería, objetos eliminados (estado original)",
+      "foto": null,
+      "filas": 0,
+      "inv": 0,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO: foto principal + 1 de galería guardadas con referencia r2: y existentes",
+      "principal": "r2:fotos-servicios/62c1d40d-698b-4c09-9137-7c69107bae51",
+      "galeria": [
+        "r2:fotos-servicios/3bbc7398-7028-4d60-903b-8075bb82e918"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "CLIENTE: el listado de servicios carga la foto nueva desde r2.dev — tarjeta en miniatura m y portada en g — y todas decodifican",
+      "listado": [
+        {
+          "src": "62c1d40d-698b-4c09-9137-7c69107bae51/g.webp",
+          "v": "g.webp",
+          "ok": true
+        },
+        {
+          "src": "62c1d40d-698b-4c09-9137-7c69107bae51/m.webp",
+          "v": "m.webp",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "CLIENTE: el detalle del servicio muestra la foto de la galería desde r2.dev (variante g) y decodifica",
+      "detalle": [
+        {
+          "src": "3bbc7398-7028-4d60-903b-8075bb82e918/g.webp",
+          "v": "g.webp",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO: quitar galería y principal — fila sin foto, 0 filas de galería, objetos eliminados",
+      "foto": null,
+      "filas": 0,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: alta con dos fotos — la fila guarda URLs del dominio público de pruebas y ambos objetos existen",
+      "antes": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/dabc3077-6ea7-47fe-abde-5623d6c0fbc0/g.webp",
+      "despues": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/7464f942-f640-44ec-9f8f-c70065bd1ec6/g.webp",
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: la lista del administrador muestra las dos miniaturas desde r2.dev",
+      "imagenes": 2,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: reemplazo de «antes» — tras guardar, la nueva existe, la anterior ya no está y «después» conserva exactamente su URL anterior",
+      "nueva": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0047cc43-4e9f-40b8-81f8-e9d3b9b4444e/g.webp",
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: eliminar — la fila desaparece y ambos objetos se borran del almacenamiento",
+      "filas": 1,
+      "filasAntes": 1,
+      "ok": true
+    },
+    {
+      "nombre": "COMPATIBILIDAD: la fila antigua de la galería (ruta relativa de /public) sigue resolviéndose en el alias",
+      "ruta": "inicio-web/hero-antes-referencia.jpg",
+      "estado": 200,
+      "ok": true
+    },
+    {
+      "nombre": "tráfico de ambos contextos (ADMIN y CLIENTE) y del script: Supabase solo de STAGING y ninguna petición a destinos no aprobados (negocio, local, pasarelas, otro Worker/bucket)",
+      "hosts": [
+        "tqkdtojnhgykmcbvwdmz.supabase.co"
+      ],
+      "bloqueadas": [],
+      "ok": true
+    },
+    {
+      "nombre": "ninguna subida/borrado de las páginas ADMIN ni CLIENTE usó Supabase Storage (todo pasó por el Worker de staging)",
+      "storageSupabase": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página durante todo el recorrido",
+      "erroresPagina": [],
+      "ok": true
+    },
+    {
+      "nombre": "ESTADO FINAL: fotos, galerías y galería web idénticas al snapshot inicial, e inventario del Worker con las mismas claves (sin nuevas ni faltantes)",
+      "igualSnapshot": true,
+      "clavesNuevas": [],
+      "clavesFaltantes": [],
+      "ok": true
+    }
+  ]
+}
