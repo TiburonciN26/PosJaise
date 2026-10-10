@@ -2,7 +2,12 @@
 // Uso:
 //   node scripts/verificar-actualizacion-pwa-online.cjs --origen=https://<alias> --a=<idA> --b=<idB>
 //        [--estado=vacio|venta|ventana|atras|dos-dialogos] [--espera-min=30] [--publicar-cmd="<comando que publica B>"]
-//        [--permitir-origen=<host>] [--permitir-local] [--env-file=<archivo>] [--salida=archivo.json]
+//        [--permitir-origen=<host>] [--permitir-local] [--env-file=<archivo>] [--salida=archivo.json] [--entrega=pages|r2dev]
+//  · --entrega=pages|r2dev (solo con el alias aprobado de Pages Preview): ANTES de abrir el navegador o enviar credenciales comprueba, con el mismo
+//    preflight que los verificadores de medios (marca de A + configuración de medios efectiva del bundle servido), que A tiene esa entrega; tras
+//    «Actualizar» lo repite para B. Con `pages` añade, SIN escribir nada, comprobaciones de /medios bajo el control del SW en A y en B (404
+//    `no-store` con nosniff/noindex que NO es la SPA, navegación a /medios/ sin fallback del SW, /medios-extra sigue siendo la SPA) y registra el
+//    SHA-256 del sw.js de A y de B (deben ser distintos).
 //
 // SEGURIDAD (antes de enviar cualquier credencial):
 //  · El Supabase de .env.staging.local debe ser EXACTAMENTE el staging aprobado y la clave una anon/publishable válida
@@ -34,6 +39,7 @@ const estado = arg('estado') ?? 'venta'
 const esperaMin = Number(arg('espera-min') ?? 30)
 const publicarCmd = arg('publicar-cmd')
 const permitidos = process.argv.filter((a) => a.startsWith('--permitir-origen=')).map((a) => a.slice('--permitir-origen='.length).toLowerCase())
+const entrega = arg('entrega')
 const salida = path.resolve(arg('salida') ?? path.join(ROOT, 'docs/evidencia-rendimiento/fase-2/pwa-actualizacion-online.json'))
 const out = { origen, estado, idEsperadoA: idA, idEsperadoB: idB, fecha: new Date().toISOString(), pasos: [], bloqueadas: [], trafico: {}, publicadoB: false }
 const paso = (n, ok, d) => { out.pasos.push({ n, ok, d }); console.log(`${ok ? 'OK   ' : 'FALLA'} ${n}${d !== undefined ? ' → ' + JSON.stringify(d) : ''}`) }
@@ -42,7 +48,7 @@ function terminar(codigo, extra) {
   if (extra) out.motivo = extra
   fs.writeFileSync(salida, JSON.stringify(out, null, 2))
   console.log(`\nResultado: ${out.resultado}${extra ? ' — ' + extra : ''} → ${path.relative(ROOT, salida)}`)
-  process.exit(codigo)
+  process.exitCode = codigo // sin process.exit(): evita el assert de libuv en Windows con conexiones de fetch abiertas (código 127)
 }
 
 ;(async () => {
@@ -64,6 +70,25 @@ function terminar(codigo, extra) {
   const esPages = !!u && u.protocol === 'https:' && (u.hostname === 'pos-jaise-preview.pages.dev' || u.hostname.endsWith('.pos-jaise-preview.pages.dev'))
   const esExtra = !!u && u.protocol === 'https:' && permitidos.includes(u.hostname.toLowerCase())
   paso('preflight: origen QA permitido', esLocal || esPages || esExtra, u ? u.host : 'URL inválida')
+  // Entrega de medios (opcional): mismo preflight que los verificadores de medios; si falla, no se abre el navegador ni se envía nada.
+  const G = require('./lib/guardas-interfaz-r2.cjs')
+  const sha = (t) => require('crypto').createHash('sha256').update(t).digest('hex')
+  const fetchAlias = G.crearFetchSeguro(new Set([origen]), (...x) => fetch(...x))
+  const preflightEntrega = async (marca) => {
+    const { clasificarClave } = await import(require('url').pathToFileURL(path.join(__dirname, 'lib/entornos-supabase.mjs')).href)
+    return G.preflight({ alias: origen, buildId: marca, entrega, supabaseUrl: supa, claveAnon: env.VITE_SUPABASE_ANON_KEY, emails: [env.QA_ADMIN_EMAIL], clasificarClave }, async (u) => (await fetchAlias(u)).text())
+  }
+  if (entrega) {
+    paso('preflight: --entrega válida (pages|r2dev)', ['pages', 'r2dev'].includes(entrega), entrega)
+    if (out.pasos.every((p) => p.ok)) {
+      try {
+        const pf = await preflightEntrega(idA)
+        out.entrega = entrega
+        out.swA = sha(await (await fetchAlias(`${origen}/sw.js`)).text())
+        paso(`preflight: A sirve la marca ${idA} con la entrega de medios «${entrega}» efectiva (antes del navegador y de publicar B)`, true, { modulos: pf.modulos, swSha256: out.swA })
+      } catch (e) { paso(`preflight: A sirve la marca ${idA} con la entrega «${entrega}»`, false, String(e.message).slice(0, 200)) }
+    }
+  }
   if (out.pasos.some((p) => !p.ok)) return terminar(1, 'preflight fallido: no se abrió el navegador ni se envió ninguna credencial')
 
   const browser = await chromium.launch({ headless: true })
@@ -107,6 +132,35 @@ function terminar(codigo, extra) {
     const botonActualizar = () => page.getByRole('button', { name: 'Actualizar' })
     const exigirA = (n, ok, d) => { paso(n, ok, d); if (!ok) throw new Error(`A inválida (${n}): se aborta; NO se publica B`) }
 
+    // Comprobaciones SIN escritura de /medios bajo el control del SW (solo con --entrega=pages). Usan una segunda pestaña del mismo contexto
+    // para que sus 404 esperados no cuenten como «respuestas HTTP ≥ 400» de la pestaña principal.
+    const comprobarMedios = async (etiqueta) => {
+      const p2 = await ctx.newPage()
+      try {
+        await p2.goto(`${origen}/login`, { waitUntil: 'networkidle' })
+        const controlado = await p2.evaluate(async () => { await navigator.serviceWorker.ready; return !!navigator.serviceWorker.controller })
+        paso(`${etiqueta}: el service worker controla la pestaña auxiliar`, controlado)
+        const uuid = '00000000-0000-4000-8000-000000000000'
+        const lecturas = await p2.evaluate(async (u) => {
+          const salida = {}
+          for (const ruta of [`/medios/fotos-galeria/${u}/m.webp`, '/medios/', '/medios']) {
+            const r = await fetch(ruta, { cache: 'no-store' })
+            const t = await r.text()
+            salida[ruta] = { estado: r.status, cache: r.headers.get('cache-control'), nosniff: r.headers.get('x-content-type-options'), robots: r.headers.get('x-robots-tag'), texto: t.slice(0, 40), esSpa: t.includes('build-id') }
+          }
+          return salida
+        }, uuid)
+        const bien = Object.values(lecturas).every((x) => x.estado === 404 && x.cache === 'no-store' && x.nosniff === 'nosniff' && x.robots === 'noindex' && x.texto === 'No encontrado' && !x.esSpa)
+        paso(`${etiqueta}: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando`, bien, lecturas)
+        const nav = await p2.goto(`${origen}/medios/`, { waitUntil: 'load' })
+        const cuerpo = await p2.evaluate(() => ({ texto: document.body.innerText.slice(0, 40), spa: !!document.querySelector('meta[name="build-id"]') }))
+        paso(`${etiqueta}: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)`, nav?.status() === 404 && cuerpo.texto.trim() === 'No encontrado' && !cuerpo.spa, { estado: nav?.status(), ...cuerpo })
+        const extra = await p2.goto(`${origen}/medios-extra`, { waitUntil: 'load' })
+        const spa = await p2.evaluate(() => !!document.querySelector('meta[name="build-id"]'))
+        paso(`${etiqueta}: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)`, extra?.status() === 200 && spa, { estado: extra?.status() })
+      } finally { await p2.close() }
+    }
+
     await page.goto(`${origen}/login`, { waitUntil: 'networkidle' })
     await page.locator('input[type="email"]').first().fill(env.QA_ADMIN_EMAIL)
     await page.locator('input[type="password"]').first().fill(env.QA_ADMIN_PASSWORD)
@@ -122,6 +176,7 @@ function terminar(codigo, extra) {
     const s0 = await sesionAutenticada()
     exigirA('A: sesión autenticada (usuario propio + su fila en usuarios, a staging)', s0.ok, s0)
     exigirA('A: sin tráfico bloqueado hasta aquí', out.bloqueadas.length === 0, out.bloqueadas)
+    if (entrega === 'pages') { await comprobarMedios('A'); exigirA('A: las comprobaciones de /medios pasaron (si no, NO se publica B)', out.pasos.every((p) => p.ok)) }
 
     // Trabajo pendiente del POS según el estado a probar
     if (estado === 'venta') {
@@ -221,6 +276,15 @@ function terminar(codigo, extra) {
     const s1 = await sesionAutenticada()
     paso('B: sesión autenticada tras actualizar (usuario propio + su fila)', s1.ok, s1)
     paso('clave FICTICIA de localStorage conservada (no prueba borradores operativos)', (await page.evaluate(() => localStorage.getItem('qa-clave-ficticia-pwa'))) === 'conservar-esto')
+    if (entrega) {
+      try {
+        const pfB = await preflightEntrega(idB)
+        out.swB = sha(await (await fetchAlias(`${origen}/sw.js`)).text())
+        paso(`B: el alias sirve la marca ${idB} con la entrega de medios «${entrega}» efectiva`, true, { modulos: pfB.modulos, swSha256: out.swB })
+        paso('B: el service worker de B es distinto del de A (identidades exactas registradas)', !!out.swA && out.swB !== out.swA, { A: out.swA, B: out.swB })
+      } catch (e) { paso(`B: el alias sirve la marca ${idB} con la entrega «${entrega}»`, false, String(e.message).slice(0, 200)) }
+    }
+    if (entrega === 'pages') await comprobarMedios('B')
     await page.goto(`${origen}/productos`, { waitUntil: 'networkidle' })
     await page.reload({ waitUntil: 'networkidle' })
     paso('sin respuestas HTTP ≥ 400 del mismo origen', fallosHttp.length === 0, fallosHttp.slice(0, 3))
