@@ -1,0 +1,100 @@
+// Regresiones SIN red del comportamiento del build de REVERSIÓN con lectura mixta (VITE_MEDIOS_PROVEEDOR vacío), cargando el
+// cableado real (src/lib/medios.js + imagenes.js) con Vite SSR y variables ficticias. Supabase nunca recibe una petición.
+//   node scripts/verificar-lectura-mixta.mjs
+import assert from 'node:assert/strict'
+import { createServer } from 'vite'
+
+const resultados = []
+async function prueba(nombre, fn) {
+  try { await fn(); resultados.push({ nombre, ok: true }); console.log(`OK    ${nombre}`) } catch (e) { resultados.push({ nombre, ok: false }); console.log(`FALLA ${nombre}\n      ${String(e.message).split('\n')[0].slice(0, 300)}`) }
+}
+
+const R2DEV = 'https://pub-0000.r2.dev'
+const PAGES = 'https://staging.pages.dev/medios'
+const WORKER = 'https://worker.example.dev'
+const ID = '0f1e2d3c-4b5a-4968-8777-665544332211'
+const SUPA = 'https://abcdefghij.supabase.co'
+const PREFIJO_STORAGE = `${SUPA}/storage/v1/object/public/fotos-galeria/`
+
+// localStorage mínimo para el diario de borrados pendientes (solo lectura de lo anotado).
+const almacen = new Map()
+globalThis.localStorage = { getItem: (k) => almacen.get(k) ?? null, setItem: (k, v) => almacen.set(k, String(v)), removeItem: (k) => almacen.delete(k) }
+const silenciar = console.error
+console.error = () => {}
+
+const servidor = createServer({
+  configFile: false, envFile: false, logLevel: 'silent', appType: 'custom', server: { middlewareMode: true, hmr: false, watch: null },
+  optimizeDeps: { noDiscovery: true, include: [] },
+  define: {
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(SUPA), 'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify('anon-ficticia'),
+    'import.meta.env.VITE_MEDIOS_PROVEEDOR': JSON.stringify(''), 'import.meta.env.VITE_MEDIOS_API_URL': JSON.stringify(WORKER),
+    'import.meta.env.VITE_MEDIOS_PUBLIC_URL': JSON.stringify(PAGES), 'import.meta.env.VITE_MEDIOS_BASES_RECONOCIDAS': JSON.stringify(R2DEV),
+    'import.meta.env.BASE_URL': JSON.stringify('/'),
+  },
+})
+const s = await servidor
+try {
+  const medios = await s.ssrLoadModule('/src/lib/medios.js')
+  const imagenes = await s.ssrLoadModule('/src/lib/imagenes.js')
+
+  await prueba('proveedor efectivo = supabase: ningún destino pide R2 y no hay subidas nuevas a R2 (ni con WebP)', () => {
+    assert.equal(medios.configuracionMedios().proveedor, 'supabase')
+    for (const d of medios.DESTINOS_R2) {
+      assert.equal(medios.ambientePideR2(d), false, d)
+      assert.equal(medios.subidasNuevasEnR2(d, { type: 'image/webp' }), false, d)
+      assert.equal(medios.subidasNuevasEnR2(d), false, d)
+    }
+  })
+  await prueba('subirFoto REAL: con el proveedor supabase la subida va a Supabase Storage (no al Worker) — se detecta con un cliente que lanza al usar Storage', async () => {
+    let intentoStorage = false
+    const { supabase } = await s.ssrLoadModule('/src/lib/supabase.js')
+    const original = supabase.storage.from.bind(supabase.storage)
+    supabase.storage.from = (b) => { intentoStorage = b; return { upload: async () => ({ error: new Error('storage ficticio') }) } }
+    try {
+      await assert.rejects(() => imagenes.subirFoto('fotos-productos', 'x.webp', new Blob(['x'], { type: 'image/webp' })), /storage ficticio/)
+    } finally { supabase.storage.from = original }
+    assert.equal(intentoStorage, 'fotos-productos')
+  })
+  await prueba('la LECTURA de referencias r2: sigue por la Function (base Pages) con ambas variantes', () => {
+    assert.equal(medios.urlPublicaR2(`r2:fotos-productos/${ID}`, 'm'), `${PAGES}/fotos-productos/${ID}/m.webp`)
+    assert.equal(medios.urlPublicaR2(`r2:fotos-servicios/${ID}`, 'g'), `${PAGES}/fotos-servicios/${ID}/g.webp`)
+    assert.equal(imagenes.urlPublicaFoto('fotos-productos', `r2:fotos-productos/${ID}`, 'm'), `${PAGES}/fotos-productos/${ID}/m.webp`)
+    assert.equal(medios.urlPublicaR2('fotos-productos/antigua.webp', 'm'), null)
+  })
+  await prueba('Galería: las URLs ya guardadas (Pages y r2.dev) siguen reconociéndose y administrándose; Supabase y ajenas, como antes', () => {
+    assert.equal(imagenes.rutaDeUrlGaleria('fotos-galeria', `${PAGES}/fotos-galeria/${ID}/g.webp`), `r2:fotos-galeria/${ID}`)
+    assert.equal(imagenes.rutaDeUrlGaleria('fotos-galeria', `${R2DEV}/fotos-galeria/${ID}/g.webp`), `r2:fotos-galeria/${ID}`)
+    assert.equal(imagenes.rutaDeUrlGaleria('fotos-galeria', `${PREFIJO_STORAGE}foto.webp`), 'foto.webp')
+    assert.equal(imagenes.rutaDeUrlGaleria('fotos-galeria', `https://evil.com/fotos-galeria/${ID}/g.webp`), null)
+    assert.equal(imagenes.resolverUrlGaleria('fotos/antes.jpg'), '/fotos/antes.jpg')
+  })
+  await prueba('ML-03: una URL antigua de Galería en r2.dev se LEE por la Function (Pages, con B) conservando variante; ajenas/Supabase/relativas intactas', () => {
+    assert.equal(imagenes.resolverUrlGaleria(`${R2DEV}/fotos-galeria/${ID}/g.webp`), `${PAGES}/fotos-galeria/${ID}/g.webp`)
+    assert.equal(imagenes.resolverUrlGaleria(`${R2DEV}/fotos-galeria/${ID}/m.webp`), `${PAGES}/fotos-galeria/${ID}/m.webp`)
+    for (const u of [`${PAGES}/fotos-galeria/${ID}/g.webp`, `${PREFIJO_STORAGE}foto.webp`, 'https://evil.com/x.webp']) assert.equal(imagenes.resolverUrlGaleria(u), u)
+  })
+  await prueba('el borrado de una referencia r2: ya existente sigue yendo al Worker (hay API configurada: no falla por «Sin VITE_MEDIOS_API_URL»)', async () => {
+    almacen.clear()
+    const ok = await imagenes.eliminarFoto('fotos-productos', `r2:fotos-productos/${ID}`)
+    assert.equal(ok, false) // sin sesión real el borrado no se confirma: queda en el diario de pendientes
+    const diario = JSON.parse([...almacen.values()][0] ?? '[]')
+    assert.equal(diario.length, 1)
+    assert.equal(diario[0].ref, `r2:fotos-productos/${ID}`)
+    assert.ok(!/Sin VITE_MEDIOS_API_URL/.test(diario[0].ultimoError), diario[0].ultimoError)
+  })
+  await prueba('una foto antigua (ruta de Supabase) se sigue eliminando de Storage, no del Worker', async () => {
+    const { supabase } = await s.ssrLoadModule('/src/lib/supabase.js')
+    const original = supabase.storage.from.bind(supabase.storage)
+    let quitado = null
+    supabase.storage.from = (b) => ({ remove: async (r) => { quitado = [b, r]; return { error: null } } })
+    try { await imagenes.eliminarFoto('fotos-productos', 'antigua.webp') } finally { supabase.storage.from = original }
+    assert.deepEqual(quitado, ['fotos-productos', ['antigua.webp']])
+  })
+} finally {
+  await s.close()
+  console.error = silenciar
+}
+
+const fallos = resultados.filter((r) => !r.ok)
+console.log(`\n${resultados.length} casos, ${fallos.length} fallos`)
+process.exitCode = fallos.length ? 1 : 0

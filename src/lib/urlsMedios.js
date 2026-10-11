@@ -3,7 +3,8 @@
 //
 // Galería guarda la URL COMPLETA de cada foto, así que al cambiar de entrega (r2.dev ↔ Pages /medios) las
 // filas antiguas siguen apuntando a la base anterior. Hay dos garantías distintas:
-//   · LEER: `resolverUrlGaleria` devuelve cualquier URL http(s) tal cual (no depende de este módulo).
+//   · LEER: `resolverUrlGaleria` lee por la base configurada las URLs PROPIAS de otra base aprobada (`urlDeLecturaPropia`, más abajo)
+//     y devuelve tal cual cualquier otra URL http(s) (ajenas, de Supabase, ya de la base actual).
 //   · ADMINISTRAR/BORRAR: solo se reconoce una URL si su origen, prefijo, destino, UUID y variante coinciden
 //     con una base de la LISTA CERRADA de este build. Una URL ajena nunca produce un borrado, ni en R2 ni en Storage.
 
@@ -51,6 +52,16 @@ export function partesDeUrlMedios(url, bases) {
 export function referenciaDeUrl(url, bases) {
   const p = partesDeUrlMedios(url, bases)
   return p ? `r2:${p.destino}/${p.id}` : null
+}
+
+// URL de LECTURA para una URL completa de Galería: si es de nuestros medios (cualquier base aprobada) pero NO de la base
+// pública configurada, se lee por la configurada (conserva destino, UUID y variante). Así una fila antigua con r2.dev se sirve por
+// la Function (con su caché y la revocación B) sin migrar la fila. Ajenas, de Supabase, relativas o ya de la base actual → null.
+export function urlDeLecturaPropia(url, publicaConfigurada, bases) {
+  const actual = normalizarBase(publicaConfigurada)
+  const p = actual ? partesDeUrlMedios(url, bases) : null
+  if (!p || normalizarBase(p.base) === actual) return null
+  return `${actual}/${p.destino}/${p.id}/${p.variante}.webp`
 }
 
 // Qué eliminar a partir de la URL completa que guarda la galería:

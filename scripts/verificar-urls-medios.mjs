@@ -26,6 +26,13 @@ await prueba('normalizarBase: acepta https y localhost http; rechaza relativas, 
   assert.equal(U.normalizarBase('http://127.0.0.1:8789'), 'http://127.0.0.1:8789')
   for (const mala of ['', '/medios', 'medios', 'http://x.pages.dev/medios', 'https://u:p@x.pages.dev', 'https://x.pages.dev/m?x=1', 'https://x.pages.dev/m#h', 'ftp://x', null, undefined, 5]) assert.equal(U.normalizarBase(mala), '', String(mala))
 })
+await prueba('urlDeLecturaPropia (ML-03): solo URLs propias de OTRA base aprobada se reescriben a la configurada; el resto → null', () => {
+  assert.equal(U.urlDeLecturaPropia(`${R2DEV}/fotos-galeria/${ID}/g.webp`, PAGES, AMBAS), `${PAGES}/fotos-galeria/${ID}/g.webp`)
+  assert.equal(U.urlDeLecturaPropia(`${PAGES}/fotos-servicios/${ID}/m.webp`, R2DEV, AMBAS), `${R2DEV}/fotos-servicios/${ID}/m.webp`)
+  for (const u of [`${PAGES}/fotos-galeria/${ID}/g.webp`, 'https://evil.com/x.webp', 'fotos/antes.jpg', '', null, undefined]) assert.equal(U.urlDeLecturaPropia(u, PAGES, AMBAS), null, String(u))
+  assert.equal(U.urlDeLecturaPropia(`${R2DEV}/fotos-galeria/${ID}/g.webp`, '', AMBAS), null) // sin base configurada válida
+  assert.equal(U.urlDeLecturaPropia(`${R2DEV}/fotos-galeria/${ID}/g.webp`, PAGES, []), null)
+})
 await prueba('basesReconocidas: configurada + aprobadas (coma), sin duplicados ni inválidas', () => {
   assert.deepEqual(U.basesReconocidas(PAGES, `${R2DEV}, ${PAGES}, http://malo.com, /rel`), [PAGES, R2DEV])
   assert.deepEqual(U.basesReconocidas('', undefined), [])
@@ -120,8 +127,10 @@ try {
       assert.equal(imagenes.rutaDeUrlGaleria('fotos-galeria', u), null, u)
     }
   })
-  await prueba('B: lectura intacta — resolverUrlGaleria devuelve cualquier URL http(s) tal cual y antepone BASE_URL a las relativas', () => {
-    for (const u of [`${R2DEV}/fotos-galeria/${ID}/g.webp`, `${PAGES}/fotos-galeria/${ID}/g.webp`, 'https://evil.com/x.webp']) assert.equal(imagenes.resolverUrlGaleria(u), u)
+  await prueba('B: lectura — resolverUrlGaleria lee por la base configurada (Pages) las URLs PROPIAS de r2.dev conservando destino/UUID/variante; deja tal cual las ajenas, de Supabase y de la base actual, y antepone BASE_URL a las relativas', () => {
+    assert.equal(imagenes.resolverUrlGaleria(`${R2DEV}/fotos-galeria/${ID}/g.webp`), `${PAGES}/fotos-galeria/${ID}/g.webp`)
+    assert.equal(imagenes.resolverUrlGaleria(`${R2DEV}/fotos-galeria/${ID}/m.webp`), `${PAGES}/fotos-galeria/${ID}/m.webp`)
+    for (const u of [`${PAGES}/fotos-galeria/${ID}/g.webp`, 'https://evil.com/x.webp', `${PREFIJO_STORAGE}foto.webp`, `${R2DEV}/otro/${ID}/g.webp`, `${R2DEV}/fotos-galeria/${ID}/g.webp?x=1`, `https://pub-0000.r2.dev.evil.com/fotos-galeria/${ID}/g.webp`]) assert.equal(imagenes.resolverUrlGaleria(u), u)
     assert.equal(imagenes.resolverUrlGaleria('fotos/antes.jpg'), '/fotos/antes.jpg')
     assert.equal(imagenes.resolverUrlGaleria(null), null)
   })

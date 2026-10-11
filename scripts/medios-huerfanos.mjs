@@ -80,6 +80,8 @@ export async function crearFuentes({ api, supabaseUrl, anonKey, email, password 
         const condicion = columnas.map((c) => `${c}.eq.r2:${grupo},${c}.like.*/${grupo}/*`).join(',')
         const { count, error } = await supabase.from(tabla).select('id', { count: 'exact', head: true }).or(condicion)
         if (error) throw new Error(`Consulta puntual en ${tabla}: ${error.message}`)
+        // Solo un conteo entero y no negativo es una respuesta: null/ausente/NaN es una lectura INCIERTA, no «sin referencias».
+        if (!Number.isInteger(count) || count < 0) throw new Error(`Consulta puntual en ${tabla}: conteo inválido (${String(count)}); lectura incierta`)
         if (count > 0) return true
       }
       return false

@@ -2,6 +2,7 @@ import { supabase } from './supabase.js'
 import {
   ambientePideR2,
   basesDeMedios,
+  configuracionMedios,
   eliminarImagenR2,
   errorDeConfiguracionMedios,
   esReferenciaR2,
@@ -9,7 +10,7 @@ import {
   subirImagenR2,
   urlPublicaR2,
 } from './medios.js'
-import { rutaDeUrlGaleriaPura } from './urlsMedios.js'
+import { rutaDeUrlGaleriaPura, urlDeLecturaPropia } from './urlsMedios.js'
 
 const LADO_MAXIMO = 600
 const CALIDAD_WEBP = 0.8
@@ -99,7 +100,7 @@ export function urlPublicaFoto(bucket, ruta, variante = 'g') {
 // reusada por NosotrosCliente.jsx e InicioCliente.jsx).
 export function resolverUrlGaleria(url) {
   if (!url) return null
-  if (/^https?:\/\//.test(url)) return url
+  if (/^https?:\/\//.test(url)) return urlDeLecturaPropia(url, configuracionMedios().publicUrl, basesDeMedios()) ?? url
   return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
 }
 

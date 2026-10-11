@@ -75,11 +75,14 @@ async function limpiarObjetoPropio({ prefijo, base, leerInventario, borrarObjeto
 // distinta; el verificador debe comprobar la configuración EFECTIVA de medios del bundle servido antes de autenticar o escribir.
 // Se leen por ROL (no por mera presencia de las cadenas: el bundle de Pages contiene las dos): `publicUrl:` de la configuración
 // y el segundo argumento de `basesReconocidas(publicUrl, <extras>)`. Si el formato del bundle cambia y no se reconoce, se ABORTA.
-const ENTREGAS = ['r2dev', 'pages']
+const ENTREGAS = ['r2dev', 'pages', 'mixta']
 const RE_CONFIG_MEDIOS = /proveedor:`(\w*)`,apiUrl:[\w$]+\(`([^`]*)`\),publicUrl:[\w$]+\(`([^`]*)`\)/g
 const RE_BASES_MEDIOS = /=>[\w$]+\([\w$]+\(\)\.publicUrl,`([^`]*)`\)/g
 
 function entregaEsperada(entrega) {
+  // 'mixta' = build de reversión con lectura mixta: SIN subidas nuevas a R2 (proveedor supabase) pero con la lectura por la Function
+  // (base Pages /medios, con B) y el Worker para borrar lo ya existente; r2.dev solo como base reconocida de URLs de Galería ya guardadas.
+  if (entrega === 'mixta') return { proveedor: 'supabase', api: WORKER_APROBADO, publica: `${ALIAS_APROBADO}/medios`, extras: PUBLICO_APROBADO }
   return entrega === 'pages'
     ? { proveedor: 'r2', api: WORKER_APROBADO, publica: `${ALIAS_APROBADO}/medios`, extras: PUBLICO_APROBADO }
     : { proveedor: 'r2', api: WORKER_APROBADO, publica: PUBLICO_APROBADO, extras: '' }

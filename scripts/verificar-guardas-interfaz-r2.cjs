@@ -288,6 +288,15 @@ function entorno(html) {
     await assert.rejects(() => G.preflight({ ...buenos(), entrega: 'otra' }, sitio().pedirHtml))
     await assert.rejects(() => G.preflight({ ...buenos(), entrega: undefined }, sitio().pedirHtml))
   })
+  await prueba('entrega «mixta» (reversión): proveedor supabase + base Pages + r2.dev reconocida; el build de subidas a R2 (pages) y el de r2dev NO la satisfacen y viceversa', async () => {
+    const mixta = bundle({ proveedor: 'supabase', publica: PAGES_MEDIOS, extras: G.PUBLICO_APROBADO })
+    const pages = bundle({ publica: PAGES_MEDIOS, extras: G.PUBLICO_APROBADO })
+    const r = await G.preflight({ ...buenos(), entrega: 'mixta' }, sitio({ modulos: { 'assets/index-A.js': mixta } }).pedirHtml)
+    assert.equal(r.entrega, 'mixta')
+    for (const [entrega, mod] of [['mixta', pages], ['pages', mixta], ['mixta', bundle()], ['mixta', bundle({ proveedor: 'supabase', publica: G.PUBLICO_APROBADO })]]) {
+      await assert.rejects(() => G.preflight({ ...buenos(), entrega }, sitio({ modulos: { 'assets/index-A.js': mod } }).pedirHtml), entrega)
+    }
+  })
   await prueba('IP-P1: un build sin la variable de bases extra sigue siendo válido para r2dev (el binding no cambia el texto)', async () => {
     const sinVariable = 'function na(){return{proveedor:`r2`,apiUrl:ta(`' + G.WORKER_APROBADO + '`),publicUrl:ta(`' + G.PUBLICO_APROBADO + '`)}}var sa=()=>qi(na().publicUrl,void 0);'
     const r = await G.preflight({ ...buenos(), entrega: 'r2dev' }, sitio({ modulos: { 'assets/index-A.js': sinVariable } }).pedirHtml)
