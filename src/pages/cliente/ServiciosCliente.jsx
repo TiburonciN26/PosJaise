@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarPlus, HelpCircle, MapPin, MessageCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
-import { leerServicios } from '../../lib/buscarServicios.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { COLUMNAS_SERVICIO_TARJETA, GRUPOS_POR_VENTANA, POR_CATEGORIA, TAMANO_PAGINA_CATALOGO, cargarVentanaGrupos, cargarVitrinaServicios, leerPaginaCatalogo } from '../../lib/catalogoPublico.js'
+import { useCatalogoPublico } from '../../hooks/useCatalogoPublico.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
@@ -15,12 +17,13 @@ import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
 import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
 import BarraTuCitaFlotante from '../../components/BarraTuCitaFlotante.jsx'
 import BarraCatalogo from '../../components/BarraCatalogo.jsx'
+import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-servicios'
-const POR_FILA = 4
-// Cuántos servicios entran en el carrusel del hero.
-const MAX_HERO = 3
+const POR_FILA = POR_CATEGORIA
+// Constante estable (no se recrea en cada render): evita invalidar los useMemo que dependen de ella.
+const SIN_FILAS = []
 const INTERVALO_HERO_MS = 5000
 
 // Catálogo de servicios del rediseño (docs/diseno-servicios/README.md):
@@ -49,15 +52,27 @@ export default function ServiciosCliente() {
   const requerirSesion = useRequerirSesion()
   const [searchParams] = useSearchParams()
 
-  const [servicios, setServicios] = useState([])
-  const [masPedidoIds, setMasPedidoIds] = useState([])
+  const { usuario } = useAuth()
   const [contacto, setContacto] = useState(null)
   const [horario, setHorario] = useState(null)
-  const [cargando, setCargando] = useState(true)
-  const [busqueda, setBusqueda] = useState('')
-  const [categoriaActiva, setCategoriaActiva] = useState(() => searchParams.get('categoria') ?? 'todos')
   const [heroIdx, setHeroIdx] = useState(0)
   const [heroTick, setHeroTick] = useState(0)
+
+  // Fase 4: el catálogo ya no se descarga completo. «Todos» (sin búsqueda) sale de una vitrina acotada (categorías con su total,
+  // primeras tarjetas de cada una por «más pedidos» y héroe); una categoría o una búsqueda piden UNA página de hasta 40 tarjetas.
+  const {
+    vitrina, listado, listadoVigente, categoriaActiva, setCategoriaActiva, busqueda, setBusqueda, termino, agrupado,
+    pagina, totalPaginas, irAPagina, reintentarVitrina, reintentarListado,
+    gruposVisibles, paginaGrupos, totalPaginasGrupos, ventanaOcupada, ventanaConError, irAPaginaGrupos, reintentarVentana,
+  } = useCatalogoPublico({
+    clave: usuario?.id ?? 'anon',
+    categoriaInicial: searchParams.get('categoria') ?? 'todos',
+    cargarVitrina: ({ signal }) => cargarVitrinaServicios(supabase, { signal }),
+    cargarPagina: (parametros) => leerPaginaCatalogo(supabase, { tabla: 'servicios', columnas: COLUMNAS_SERVICIO_TARJETA, ...parametros }),
+    cargarGrupos: (parametros) => cargarVentanaGrupos(supabase, { tabla: 'servicios', ...parametros }),
+  })
+  const datos = vitrina.datos
+  const cargando = vitrina.estado === 'cargando'
   // Animación de entrada (docs/diseno-servicios/README.md, "Animación de
   // entrada" — patrón estándar de la Web de clientes, ver
   // docs/patrones/animacion-entrada.md): los retrasos de la tabla son
@@ -77,34 +92,6 @@ export default function ServiciosCliente() {
     : { eyebrow: 150, foto: 80, bloque: 200, botones: 280, catalogoLinea: 320, filtros: 380 }
   const ENTRADA_FILA = { fila: esDesktop ? 400 : 420, paso: 100, carta: 60, entre: 50 }
 
-  useEffect(() => {
-    let vigente = true
-
-    async function cargar() {
-      const [serviciosRes, masPedidoRes] = await Promise.all([
-        // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
-        leerServicios(supabase, {
-          columnas: 'id, nombre, categoria, precio, duracion_min, foto_url, descripcion, en_tendencia',
-          soloActivos: true,
-        }).then(
-          (data) => ({ data }),
-          () => ({ data: [] }),
-        ),
-        supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
-      ])
-
-      if (!vigente) return
-      setServicios(serviciosRes.data ?? [])
-      setMasPedidoIds((masPedidoRes.data ?? []).map((fila) => fila.servicio_id))
-      setCargando(false)
-    }
-
-    cargar()
-    return () => {
-      vigente = false
-    }
-  }, [])
-
   // QA-022: contacto/horario son secundarios: no bloquean la lista.
   useEffect(() => {
     let vigente = true
@@ -115,13 +102,7 @@ export default function ServiciosCliente() {
     }
   }, [])
 
-  const conteosCategoria = useMemo(() => {
-    const conteos = {}
-    for (const item of servicios) {
-      if (item.categoria) conteos[item.categoria] = (conteos[item.categoria] ?? 0) + 1
-    }
-    return conteos
-  }, [servicios])
+  const conteosCategoria = datos?.conteos ?? {}
 
   const listaRef = useRef(null)
   function elegirCategoria(categoria) {
@@ -130,30 +111,20 @@ export default function ServiciosCliente() {
     listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
   }
 
-  const categorias = useMemo(
-    () => ['todos', ...new Set(servicios.map((s) => s.categoria).filter(Boolean))],
-    [servicios],
-  )
+  function cambiarPaginaGrupos(n) {
+    irAPaginaGrupos(n)
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+  }
 
-  const heroServicios = useMemo(() => {
-    const conFoto = servicios.filter((s) => s.foto_url)
-    const elegidos = []
-    const vistos = new Set()
+  function cambiarPagina(n) {
+    irAPagina(n)
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+  }
 
-    function agregar(servicio, etiquetaHero) {
-      if (!servicio || vistos.has(servicio.id) || elegidos.length >= MAX_HERO) return
-      vistos.add(servicio.id)
-      elegidos.push({ ...servicio, etiquetaHero })
-    }
+  const categorias = useMemo(() => ['todos', ...(datos?.categorias ?? [])], [datos])
 
-    conFoto.filter((s) => s.en_tendencia).forEach((s) => agregar(s, 'En tendencia'))
-    masPedidoIds
-      .map((id) => conFoto.find((s) => s.id === id))
-      .forEach((s) => agregar(s, 'Lo más pedido'))
-    conFoto.forEach((s) => agregar(s, 'Recomendado'))
-
-    return elegidos
-  }, [servicios, masPedidoIds])
+  // Héroe (hasta 3, ya compuesto por el servidor con la misma prioridad: en tendencia → más pedidos → con foto).
+  const heroServicios = useMemo(() => datos?.hero ?? [], [datos])
   const heroIdxSeguro = heroServicios.length ? heroIdx % heroServicios.length : 0
   const heroActual = heroServicios[heroIdxSeguro]
 
@@ -180,39 +151,19 @@ export default function ServiciosCliente() {
     if (!yaEsta) await agregarServicio(heroActual.id)
   }
 
-  const terminoQ = busqueda.trim().toLowerCase()
-  const agrupado = categoriaActiva === 'todos' && !terminoQ
+  // Listado plano: solo las filas que pertenecen a la categoría+texto actuales (si no, se muestra «Buscando…», no resultados viejos).
+  const listaFiltrada = listadoVigente ? listado.filas : SIN_FILAS
+  const listadoOcupado = listado.estado === 'cargando'
 
-  const listaFiltrada = useMemo(
-    () =>
-      servicios.filter(
-        (s) =>
-          (categoriaActiva === 'todos' || s.categoria === categoriaActiva) &&
-          (!terminoQ || s.nombre.toLowerCase().includes(terminoQ)),
-      ),
-    [servicios, categoriaActiva, terminoQ],
+  // Vista «Todos»: una fila por categoría con su total real y las primeras tarjetas. Dentro de cada fila el servidor ordena por
+  // «más pedidos» (servicios_mas_pedidos, últimos 30 días) y luego por nombre, igual que hacía antes esta página en el navegador.
+  const grupos = useMemo(() => (agrupado ? gruposVisibles : SIN_FILAS), [agrupado, gruposVisibles])
+
+  // Lo que la página tiene en memoria: la barra de la cita pide por id lo que falte (ver BarraTuCitaFlotante).
+  const conocidos = useMemo(
+    () => [...heroServicios, ...grupos.flatMap((g) => g.primeros), ...listaFiltrada],
+    [heroServicios, grupos, listaFiltrada],
   )
-
-  // Orden dentro de cada fila de categoría: el README dejaba pendiente
-  // elegir entre un campo manual (servicios.orden) o "los más pedidos
-  // primero" — se optó por la segunda sin sumar una columna nueva,
-  // reutilizando el mismo ranking de servicios_mas_pedidos() que ya
-  // trajo el hero (masPedidoIds); el resto se ordena alfabético.
-  const grupos = useMemo(() => {
-    if (!agrupado) return []
-    const rango = new Map(masPedidoIds.map((id, indice) => [id, indice]))
-    return categorias
-      .slice(1)
-      .map((categoria) => {
-        const todos = [...servicios.filter((s) => s.categoria === categoria)].sort((a, b) => {
-          const rangoA = rango.has(a.id) ? rango.get(a.id) : Infinity
-          const rangoB = rango.has(b.id) ? rango.get(b.id) : Infinity
-          return rangoA !== rangoB ? rangoA - rangoB : a.nombre.localeCompare(b.nombre)
-        })
-        return { categoria, todos, primeros: todos.slice(0, POR_FILA) }
-      })
-      .filter((grupo) => grupo.todos.length > 0)
-  }, [agrupado, categorias, servicios, masPedidoIds])
 
   // Clasifica cada fila de categoría UNA sola vez en la vida de esta
   // instancia (hook genérico, ver docs/patrones/animacion-entrada.md):
@@ -233,7 +184,8 @@ export default function ServiciosCliente() {
   })
 
   const plural = (n) => `${n} ${n === 1 ? 'servicio' : 'servicios'}`
-  const precioDesde = servicios.length ? Math.min(...servicios.map((s) => Number(s.precio))) : null
+  const precioDesde = datos?.precioDesde ?? null
+  const totalVisible = agrupado ? (datos?.total ?? null) : listadoVigente && listado.estado === 'ok' ? listado.total : null
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
   const horarioTexto = horario
     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
@@ -243,6 +195,17 @@ export default function ServiciosCliente() {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
         <p className="font-mono text-sm text-white/50">Cargando...</p>
+      </div>
+    )
+  }
+
+  if (vitrina.estado === 'error') {
+    return (
+      <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-sm text-white/70">No se pudo cargar el catálogo de servicios.</p>
+        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+          Reintentar
+        </button>
       </div>
     )
   }
@@ -258,7 +221,7 @@ export default function ServiciosCliente() {
         busqueda={busqueda}
         onBusqueda={setBusqueda}
         placeholder="Buscar servicio…"
-        etiquetaTotal={plural(agrupado ? servicios.length : listaFiltrada.length)}
+        etiquetaTotal={totalVisible == null ? 'Buscando…' : plural(totalVisible)}
         className={reducirMovimiento ? '' : 'in-up'}
         style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
       />
@@ -393,7 +356,7 @@ export default function ServiciosCliente() {
             >
               <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
               <span>/</span>
-              <span className="font-medium text-[#e8e8ea]">{plural(servicios.length)}</span>
+              <span className="font-medium text-[#e8e8ea]">{plural(datos?.total ?? 0)}</span>
               {precioDesde != null && (
                 <>
                   <span>·</span>
@@ -461,7 +424,7 @@ export default function ServiciosCliente() {
       <div ref={listaRef} className="mx-auto w-full max-w-[1700px] scroll-mt-16 lw-gutter">
         {/* 3a. "Todos": una fila por categoría */}
         {agrupado && (
-          <div className="flex flex-col gap-10 pt-8">
+          <div aria-busy={ventanaOcupada} className={`flex flex-col gap-10 pt-8 transition-opacity ${ventanaOcupada ? 'opacity-60' : ''}`}>
             {grupos.map((grupo, gi) => {
               // Clasificación de esta fila (ver el efecto de arriba): sin
               // decisión todavía = pendiente (oculta, sin parpadeo);
@@ -487,14 +450,14 @@ export default function ServiciosCliente() {
                   >
                     <div className="flex min-w-0 flex-wrap items-baseline gap-3">
                       <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
-                      <span className="text-xs text-white/50">{plural(grupo.todos.length)}</span>
+                      <span className="text-xs text-white/50">{plural(grupo.total)}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setCategoriaActiva(grupo.categoria)}
                       className="flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)]"
                     >
-                      Ver todo ({grupo.todos.length}) <ArrowRight className="h-3.5 w-3.5" />
+                      Ver todo ({grupo.total}) <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
@@ -511,7 +474,7 @@ export default function ServiciosCliente() {
                         </div>
                       )
                     })}
-                    {grupo.todos.length > POR_FILA && (
+                    {grupo.total > POR_FILA && (
                       <button
                         type="button"
                         onClick={() => setCategoriaActiva(grupo.categoria)}
@@ -525,25 +488,34 @@ export default function ServiciosCliente() {
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
-                        Ver los {grupo.todos.length}
+                        Ver los {grupo.total}
                       </button>
                     )}
                   </div>
                 </section>
               )
             })}
+            {ventanaConError && (
+              <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
+                <p className="text-sm text-white/70">No se pudieron cargar las categorías.</p>
+                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                  Reintentar
+                </button>
+              </div>
+            )}
+            <PaginadorCatalogo pagina={paginaGrupos} totalPaginas={totalPaginasGrupos} total={categorias.length - 1} tam={GRUPOS_POR_VENTANA} ocupado={ventanaOcupada} onPagina={cambiarPaginaGrupos} etiqueta="categorías" />
           </div>
         )}
 
-        {/* 3b. Una categoría o una búsqueda: grilla completa */}
+        {/* 3b. Una categoría o una búsqueda: UNA página (hasta 40 tarjetas) del listado del servidor */}
         {!agrupado && (
           <div className="flex flex-col gap-4 pt-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div className="flex items-baseline gap-3">
                 <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">
-                  {terminoQ ? 'Resultados' : categoriaActiva}
+                  {termino ? 'Resultados' : categoriaActiva}
                 </h2>
-                <span className="text-xs text-white/50">{plural(listaFiltrada.length)}</span>
+                {totalVisible != null && <span className="text-xs text-white/50">{plural(totalVisible)}</span>}
               </div>
               {categoriaActiva !== 'todos' && (
                 <button
@@ -555,14 +527,29 @@ export default function ServiciosCliente() {
                 </button>
               )}
             </div>
-            {listaFiltrada.length === 0 ? (
-              <p className="py-10 text-center text-sm text-white/50">Sin resultados para "{busqueda}".</p>
+            {listado.estado === 'error' ? (
+              <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
+                <p className="text-sm text-white/70">No se pudieron cargar los servicios.</p>
+                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                  Reintentar
+                </button>
+              </div>
+            ) : !listadoVigente ? (
+              <p role="status" className="py-10 text-center text-sm text-white/50">Buscando…</p>
+            ) : listaFiltrada.length === 0 && listado.estado === 'ok' ? (
+              <p className="py-10 text-center text-sm text-white/50">{termino ? `Sin resultados para "${termino}".` : 'No hay servicios en esta categoría.'}</p>
             ) : (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8">
+              <div
+                aria-busy={listadoOcupado}
+                className={`grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8 ${listadoOcupado ? 'opacity-60' : ''}`}
+              >
                 {listaFiltrada.map((s) => (
                   <TarjetaServicioCliente key={s.id} servicio={s} />
                 ))}
               </div>
+            )}
+            {listadoVigente && listado.estado !== 'error' && (
+              <PaginadorCatalogo pagina={pagina} totalPaginas={totalPaginas} total={listado.total} tam={TAMANO_PAGINA_CATALOGO} ocupado={listadoOcupado} onPagina={cambiarPagina} etiqueta="servicios" />
             )}
           </div>
         )}
@@ -672,7 +659,7 @@ export default function ServiciosCliente() {
 
       <PieClienteWeb />
 
-      <BarraTuCitaFlotante servicios={servicios} />
+      <BarraTuCitaFlotante servicios={conocidos} />
     </div>
   )
 }

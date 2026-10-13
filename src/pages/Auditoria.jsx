@@ -8,6 +8,7 @@ import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const TABLA_LABELS = {
   usuarios: 'Usuarios',
@@ -131,8 +132,8 @@ function descripcionEntrada(entrada) {
 }
 
 export default function Auditoria({ activo = true }) {
-  const [filtro, setFiltro] = useState('hoy')
-  const [personalizado, setPersonalizado] = useState(() => {
+  const [filtro, setFiltro] = useEstadoVista('/auditoria:filtro', 'hoy')
+  const [personalizado, setPersonalizado] = useEstadoVista('/auditoria:personalizado', () => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
   })
@@ -142,8 +143,8 @@ export default function Auditoria({ activo = true }) {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
-  const [tablaFiltro, setTablaFiltro] = useState(OPCION_TODAS_TABLAS)
+  const [busqueda, setBusqueda] = useEstadoVista('/auditoria:busqueda', '')
+  const [tablaFiltro, setTablaFiltro] = useEstadoVista('/auditoria:tablaFiltro', OPCION_TODAS_TABLAS)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que

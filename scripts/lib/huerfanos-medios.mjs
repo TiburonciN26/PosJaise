@@ -171,3 +171,13 @@ export async function recolectar({ fuentes, aplicar = false, retencionDias = 14,
   }
   return informe
 }
+
+// Código de salida del CLI según el informe: 0 = lectura/aplicación completa; 1 = hubo errores de borrado o un aborto por lectura incierta.
+// El informe (con los resultados parciales ya eliminados) se imprime y se guarda igual; esto solo decide el código para que una
+// automatización no tome por buena una corrida incompleta. Un «omitido» por referencia tardía NO es fallo: es el resultado seguro
+// (el objeto se conservó porque alguien lo referenció justo antes de borrar) y queda visible en el informe.
+export function codigoSalida(informe) {
+  if (!informe || typeof informe !== 'object') return 1
+  const hayErrores = Array.isArray(informe.errores) ? informe.errores.length > 0 : true
+  return hayErrores || Boolean(informe.abortado) ? 1 : 0
+}

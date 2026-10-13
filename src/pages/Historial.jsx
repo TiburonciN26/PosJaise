@@ -16,6 +16,7 @@ import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCIONES_ORDEN = [
   { id: 'fecha-desc', label: 'Más recientes primero' },
@@ -314,8 +315,8 @@ export default function Historial({ activo = true }) {
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
 
-  const [filtro, setFiltro] = useState('mes')
-  const [personalizado, setPersonalizado] = useState(() => {
+  const [filtro, setFiltro] = useEstadoVista('/historial:filtro', 'mes')
+  const [personalizado, setPersonalizado] = useEstadoVista('/historial:personalizado', () => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
   })
@@ -326,9 +327,9 @@ export default function Historial({ activo = true }) {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
-  const [orden, setOrden] = useState('fecha-desc')
-  const [filtroMetodo, setFiltroMetodo] = useState('todos')
+  const [busqueda, setBusqueda] = useEstadoVista('/historial:busqueda', '')
+  const [orden, setOrden] = useEstadoVista('/historial:orden', 'fecha-desc')
+  const [filtroMetodo, setFiltroMetodo] = useEstadoVista('/historial:filtroMetodo', 'todos')
 
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [detalles, setDetalles] = useState({})

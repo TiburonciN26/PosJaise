@@ -17,6 +17,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import ModalProducto from '../components/ModalProducto.jsx'
 import ModalServicio from '../components/ModalServicio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 // Web → Catálogo → Productos / Servicios — solo ADMINISTRADOR (la ruta y el backend lo exigen; no se cambió ningún permiso).
 // Edita el contenido EDITORIAL y de configuración Web de las MISMAS fichas que el POS (no duplica productos, servicios
@@ -94,7 +95,7 @@ export default function CatalogoWeb({ activo = true }) {
   const desdeParam = params.get('desde')
   const desde = desdeParam && ORIGENES[desdeParam] ? desdeParam : null
 
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/catalogo-web:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
   const [filas, setFilas] = useState([])
   const [hayMas, setHayMas] = useState(false)

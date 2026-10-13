@@ -19,6 +19,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -98,10 +99,10 @@ export default function Inventario({ activo = true }) {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/inventario:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
-  const [orden, setOrden] = useState('nombre-asc')
-  const [filtroStock, setFiltroStock] = useState('todos') // 'todos' | 'bajo' | 'sin_stock'
+  const [orden, setOrden] = useEstadoVista('/inventario:orden', 'nombre-asc')
+  const [filtroStock, setFiltroStock] = useEstadoVista('/inventario:filtroStock', 'todos') // 'todos' | 'bajo' | 'sin_stock'
   const [modalProducto, setModalProducto] = useState(null) // null | 'nuevo' | producto
   const [productoAEliminar, setProductoAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)

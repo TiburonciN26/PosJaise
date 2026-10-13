@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Pencil, Trash2, Plus, Ticket, Calendar, ArrowBigDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -7,6 +7,9 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { nivelDeCupon } from '../lib/cupones.js'
+import { leerPromociones } from '../lib/listasAdmin.js'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { useListaPaginada } from '../hooks/useListaPaginada.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
@@ -15,6 +18,8 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import PaginadorLista from '../components/PaginadorLista.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 // Acabado rojo «Especial» de los cupones de promoción en la web de clientes.
 const NIVEL_CUPON = nivelDeCupon({ origen: 'PROMOCION' })
@@ -43,43 +48,23 @@ function formatearVigencia(promocion) {
 export default function Promociones({ activo = true }) {
   const { mostrarToast } = useToast()
 
-  const [promociones, setPromociones] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/promociones:busqueda', '')
+  const termino = useDebounce(busqueda.trim(), 300)
   const [modalPromocion, setModalPromocion] = useState(null) // null | 'nuevo' | promocion
   const [promocionAEliminar, setPromocionAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [abiertos, setAbiertos] = useState(() => new Set())
-  const primeraCargaHecha = useRef(false)
   const panelEliminarRef = useRef(null)
 
   useCerrarConEscape(() => setPromocionAEliminar(null), Boolean(promocionAEliminar))
   useModalA11y(panelEliminarRef, Boolean(promocionAEliminar))
 
-  async function cargarPromociones(silencioso = false) {
-    if (!silencioso) setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('promociones')
-      .select('id, titulo, descripcion, tipo_descuento, valor, vigente_desde, vigente_hasta, activo')
-      .order('creado_en', { ascending: false })
-
-    if (errorConsulta) {
-      setError('No se pudo cargar las promociones.')
-    } else {
-      setError(null)
-      setPromociones(data ?? [])
-    }
-    setCargando(false)
-  }
-
-  useEffect(() => {
-    if (!activo) return
-    const silencioso = primeraCargaHecha.current
-    primeraCargaHecha.current = true
-    cargarPromociones(silencioso)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activo])
+  // Fase 5: hasta 40 promociones por página, con búsqueda por título en el servidor y el total exacto de todo el conjunto.
+  const lista = useListaPaginada({
+    activo,
+    clave: termino,
+    leer: ({ desde, hasta }) => leerPromociones(supabase, { termino, desde, hasta }),
+  })
 
   function alternarAbierto(id) {
     setAbiertos((anterior) => {
@@ -106,12 +91,8 @@ export default function Promociones({ activo = true }) {
     }
 
     mostrarToast('Promoción eliminada.', 'exito')
-    cargarPromociones()
+    lista.recargar()
   }
-
-  const filtradas = busqueda.trim()
-    ? promociones.filter((p) => p.titulo.toLowerCase().includes(busqueda.trim().toLowerCase()))
-    : promociones
 
   return (
     <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
@@ -133,23 +114,26 @@ export default function Promociones({ activo = true }) {
         </button>
       </div>
 
-      {error && (
-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
-          {error}
+      {lista.fallo && (
+        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+          No se pudo cargar las promociones.{' '}
+          <button type="button" onClick={lista.recargar} className="underline">
+            Reintentar
+          </button>
         </p>
       )}
 
-      {cargando ? (
+      {lista.cargando ? (
         <EsqueletoLista columnas={3} />
-      ) : filtradas.length === 0 ? (
+      ) : lista.error ? null : lista.filas.length === 0 ? (
         <EstadoVacio
           icono={Ticket}
-          mensaje="No hay promociones registradas."
+          mensaje={termino ? 'Ninguna promoción coincide con la búsqueda.' : 'No hay promociones registradas.'}
           accion={{ label: '+ Nueva promoción', onClick: () => setModalPromocion('nuevo') }}
         />
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtradas.map((promocion) => {
+        <div className={`mt-4 grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((promocion) => {
             const abierta = abiertos.has(promocion.id)
             return (
               <EnvolturaCupon key={promocion.id} nivel={NIVEL_CUPON} apagada={!promocion.activo}>
@@ -174,7 +158,7 @@ export default function Promociones({ activo = true }) {
                   />
                 </div>
 
-                <CampoColapsable abierto={abierta}>
+                <CampoColapsable abierto={abierta} diferido>
                   <div className="relative mx-2.5 mb-2.5 border border-white/10 bg-black/25 p-3">
                     {promocion.descripcion && (
                       <p className="text-sm text-white/70">{promocion.descripcion}</p>
@@ -206,6 +190,18 @@ export default function Promociones({ activo = true }) {
         </div>
       )}
 
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista
+          pagina={lista.pagina}
+          totalPaginas={lista.totalPaginas}
+          total={lista.total}
+          tam={lista.tam}
+          ocupado={lista.ocupado}
+          onPagina={lista.irA}
+          etiqueta="promociones"
+        />
+      )}
+
       <BotonFlotanteAgregar
         onClick={() => setModalPromocion('nuevo')}
         color="rojo"
@@ -220,7 +216,7 @@ export default function Promociones({ activo = true }) {
             const esNueva = modalPromocion === 'nuevo'
             setModalPromocion(null)
             mostrarToast(esNueva ? 'Promoción creada.' : 'Promoción actualizada.', 'exito')
-            cargarPromociones()
+            lista.recargar()
           }}
         />
       )}

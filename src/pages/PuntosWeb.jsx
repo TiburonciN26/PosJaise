@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import GuiaPestana from '../components/GuiaPestana.jsx'
 import { PiggyBank } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
 
@@ -52,6 +53,7 @@ export default function PuntosWeb() {
 
   async function guardar(evento) {
     evento.preventDefault()
+    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
 
     const umbralPremium = parseInt(formulario.umbralPremium, 10)
     const umbralVip = parseInt(formulario.umbralVip, 10)
@@ -79,6 +81,7 @@ export default function PuntosWeb() {
       return
     }
 
+    confirmarGuardado(envio)
     mostrarToast('Configuración de puntos actualizada.', 'exito')
   }
 

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 
@@ -118,7 +118,7 @@ export function AuthProvider({ children }) {
   // alcanzara a echarlo — eso se vivía como "entra un segundo y lo bota".
   // Haciendo el chequeo ACÁ, en el único lugar que decide setUsuario, no
   // hay ventana en la que la app llegue a mostrarse.
-  const cargarPerfil = useCallback(async (userId, esNuevoLogin = false) => {
+  const cargarPerfilSinCompartir = useCallback(async (userId, esNuevoLogin = false) => {
     const { data, error } = await supabase
       .from('usuarios')
       .select('id, email, nombre_completo, rol, activo, foto_url')
@@ -173,6 +173,24 @@ export function AuthProvider({ children }) {
     setBloqueoLogin(null)
     setUsuario(data)
   }, [cargarPerfilCliente])
+
+  // Fase 5: al restaurar una sesión, getSession() y el evento INITIAL_SESSION de onAuthStateChange pedían el MISMO perfil a la vez
+  // (dos lecturas de «usuarios», y de «clientes_web» para una clienta). Mientras una lectura del mismo usuario siga en curso, las
+  // demás llamadas esperan ESA misma promesa. Un login recién hecho (SIGNED_IN) sí necesita su propia lectura si la que vuela
+  // no es de login, porque es la que aplica el bloqueo de «negocio cerrado».
+  const perfilesEnCurso = useRef(new Map())
+  const cargarPerfil = useCallback(
+    (userId, esNuevoLogin = false) => {
+      const previa = perfilesEnCurso.current.get(userId)
+      if (previa && (!esNuevoLogin || previa.esNuevoLogin)) return previa.promesa
+      const promesa = cargarPerfilSinCompartir(userId, esNuevoLogin).finally(() => {
+        if (perfilesEnCurso.current.get(userId)?.promesa === promesa) perfilesEnCurso.current.delete(userId)
+      })
+      perfilesEnCurso.current.set(userId, { promesa, esNuevoLogin })
+      return promesa
+    },
+    [cargarPerfilSinCompartir],
+  )
 
   const reintentarPerfil = useCallback(async () => {
     const { data: { session: sesionActual } } = await supabase.auth.getSession()

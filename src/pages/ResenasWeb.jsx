@@ -1,12 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowBigDown, MessageCircle, Star } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { contarResenasPorEstado, ESTADOS_RESENA, leerResenas } from '../lib/listasAdmin.js'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { useListaPaginada } from '../hooks/useListaPaginada.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
+import PaginadorLista from '../components/PaginadorLista.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const ETIQUETAS_ESTADO = {
   PENDIENTE: { texto: 'Pendiente', clase: 'bg-amber/15 text-amber' },
@@ -52,52 +58,35 @@ const TABLA_POR_ORIGEN = {
 export default function ResenasWeb({ activo = true }) {
   const { mostrarToast } = useToast()
 
-  const [resenas, setResenas] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/resenas-web:busqueda', '')
+  const termino = useDebounce(busqueda.trim(), 300)
+  const [estadoFiltro, setEstadoFiltro] = useEstadoVista('/resenas-web:estadoFiltro', null)
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [actualizando, setActualizando] = useState(null)
-  const primeraCargaHecha = useRef(false)
 
-  async function cargarResenas(silencioso = false) {
-    if (!silencioso) setCargando(true)
-    const [generales, deProducto, deServicio] = await Promise.all([
-      supabase
-        .from('resenas')
-        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono)')
-        .order('creado_en', { ascending: false }),
-      supabase
-        .from('resenas_producto')
-        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), productos(nombre)')
-        .order('creado_en', { ascending: false }),
-      supabase
-        .from('resenas_servicio')
-        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), servicios(nombre)')
-        .order('creado_en', { ascending: false }),
-    ])
+  // Fase 5: las tres tablas (general, producto y servicio) se leen juntas, ya ordenadas por fecha, desde la vista
+  // resenas_moderacion: hasta 40 reseñas por página, búsqueda por clienta / producto / servicio en el servidor y total exacto.
+  const lista = useListaPaginada({
+    activo,
+    clave: `${termino}|${estadoFiltro ?? ''}`,
+    leer: ({ desde, hasta }) => leerResenas(supabase, { termino, estado: estadoFiltro, desde, hasta }),
+  })
 
-    if (generales.error || deProducto.error || deServicio.error) {
-      setError('No se pudo cargar las reseñas.')
-    } else {
-      setError(null)
-      const todas = [
-        ...(generales.data ?? []).map((r) => ({ ...r, origen: 'GENERAL' })),
-        ...(deProducto.data ?? []).map((r) => ({ ...r, origen: 'PRODUCTO' })),
-        ...(deServicio.data ?? []).map((r) => ({ ...r, origen: 'SERVICIO' })),
-      ].sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
-      setResenas(todas)
+  // Contadores GLOBALES por estado (p. ej. cuántas faltan por moderar en TODA la tabla, no solo en la página).
+  const [conteos, setConteos] = useState(null)
+  const generacionConteos = useRef(0)
+  const refrescarConteos = useCallback(async () => {
+    const gen = (generacionConteos.current += 1)
+    try {
+      const nuevos = await contarResenasPorEstado(supabase)
+      if (gen === generacionConteos.current) setConteos(nuevos)
+    } catch {
+      if (gen === generacionConteos.current) setConteos(null)
     }
-    setCargando(false)
-  }
-
+  }, [])
   useEffect(() => {
-    if (!activo) return
-    const silencioso = primeraCargaHecha.current
-    primeraCargaHecha.current = true
-    cargarResenas(silencioso)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activo])
+    if (activo) refrescarConteos()
+  }, [activo, refrescarConteos])
 
   function alternarAbierto(id) {
     setAbiertos((anterior) => {
@@ -122,19 +111,9 @@ export default function ResenasWeb({ activo = true }) {
     }
 
     mostrarToast(estado === 'APROBADA' ? 'Reseña publicada.' : 'Reseña rechazada.', 'exito')
-    cargarResenas(true)
+    lista.recargar()
+    refrescarConteos()
   }
-
-  const filtradas = busqueda.trim()
-    ? resenas.filter((r) => {
-        const termino = busqueda.trim().toLowerCase()
-        return (
-          (r.clientes?.nombre ?? '').toLowerCase().includes(termino) ||
-          (r.productos?.nombre ?? '').toLowerCase().includes(termino) ||
-          (r.servicios?.nombre ?? '').toLowerCase().includes(termino)
-        )
-      })
-    : resenas
 
   return (
     <div
@@ -151,19 +130,30 @@ export default function ResenasWeb({ activo = true }) {
         />
       </div>
 
-      {error && (
-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
-          {error}
+      <FiltroEstadoContadores
+        etiqueta="Filtrar reseñas por estado"
+        opciones={ESTADOS_RESENA.map((id) => ({ id, label: ETIQUETAS_ESTADO[id].texto }))}
+        valor={estadoFiltro}
+        onCambiar={setEstadoFiltro}
+        conteos={conteos}
+      />
+
+      {lista.fallo && (
+        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+          No se pudo cargar las reseñas.{' '}
+          <button type="button" onClick={lista.recargar} className="underline">
+            Reintentar
+          </button>
         </p>
       )}
 
-      {cargando ? (
+      {lista.cargando ? (
         <EsqueletoLista columnas={3} />
-      ) : filtradas.length === 0 ? (
-        <EstadoVacio icono={Star} mensaje="No hay reseñas todavía." />
+      ) : lista.error ? null : lista.filas.length === 0 ? (
+        <EstadoVacio icono={Star} mensaje={termino || estadoFiltro ? 'Ninguna reseña coincide con la búsqueda o el filtro.' : 'No hay reseñas todavía.'} />
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtradas.map((resena) => {
+        <div className={`mt-4 grid grid-cols-1 gap-3 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((resena) => {
             const abierto = abiertos.has(`${resena.origen}-${resena.id}`)
             const etiqueta = ETIQUETAS_ESTADO[resena.estado] ?? ETIQUETAS_ESTADO.PENDIENTE
 
@@ -182,13 +172,13 @@ export default function ResenasWeb({ activo = true }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-ink">
-                      {resena.clientes?.nombre ?? 'Cliente'}
+                      {resena.cliente_nombre ?? 'Cliente'}
                     </p>
                     <p className="truncate text-[11px] text-ink/60">
                       {resena.origen === 'PRODUCTO'
-                        ? `Producto: ${resena.productos?.nombre ?? 'eliminado'}`
+                        ? `Producto: ${resena.item_nombre ?? 'eliminado'}`
                         : resena.origen === 'SERVICIO'
-                          ? `Servicio: ${resena.servicios?.nombre ?? 'eliminado'}`
+                          ? `Servicio: ${resena.item_nombre ?? 'eliminado'}`
                           : 'Reseña general'}
                     </p>
                     <div className="flex gap-0.5">
@@ -212,7 +202,7 @@ export default function ResenasWeb({ activo = true }) {
                   />
                 </div>
 
-                <CampoColapsable abierto={abierto}>
+                <CampoColapsable abierto={abierto} diferido>
                   <div className="border-t border-border p-3">
                     <p className="font-mono text-xs text-ink/50">
                       {formatoFecha.format(new Date(resena.creado_en))}
@@ -221,9 +211,9 @@ export default function ResenasWeb({ activo = true }) {
                       <p className="mt-2 text-sm text-ink/80">"{resena.comentario}"</p>
                     )}
 
-                    {resena.clientes?.telefono && (
+                    {resena.cliente_telefono && (
                       <a
-                        href={`https://wa.me/${numeroWhatsapp(resena.clientes.telefono)}`}
+                        href={`https://wa.me/${numeroWhatsapp(resena.cliente_telefono)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-3 flex items-center gap-1.5 text-xs text-green"
@@ -269,6 +259,18 @@ export default function ResenasWeb({ activo = true }) {
             )
           })}
         </div>
+      )}
+
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista
+          pagina={lista.pagina}
+          totalPaginas={lista.totalPaginas}
+          total={lista.total}
+          tam={lista.tam}
+          ocupado={lista.ocupado}
+          onPagina={lista.irA}
+          etiqueta="reseñas"
+        />
       )}
     </div>
   )

@@ -13,6 +13,7 @@ import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
 import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/finanzas.js'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import { EsqueletoResumen } from '../components/Esqueleto.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const CLASE_METODO_PAGO = {
   Efectivo: 'bg-green',
@@ -212,8 +213,8 @@ function GraficoTendencia({ dias }) {
 }
 
 export default function Estadisticas({ activo = true }) {
-  const [filtro, setFiltro] = useState('mes')
-  const [personalizado, setPersonalizado] = useState(() => {
+  const [filtro, setFiltro] = useEstadoVista('/estadisticas:filtro', 'mes')
+  const [personalizado, setPersonalizado] = useEstadoVista('/estadisticas:personalizado', () => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
   })

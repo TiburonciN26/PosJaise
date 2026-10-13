@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Ticket, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
-import { leerServicios } from '../../lib/buscarServicios.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
+import { COLUMNAS_SERVICIO_TARJETA } from '../../lib/catalogoPublico.js'
+import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useTemaWeb } from '../../context/TemaWebContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
+import { useLectura } from '../../hooks/useLectura.js'
 import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { useSecuenciaScroll } from '../../hooks/useSecuenciaScroll.js'
 import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
@@ -20,6 +22,7 @@ import { resolverUrlGaleria } from '../../lib/imagenes.js'
 import { nombrePublico } from '../../lib/resenas.js'
 import Estrellas from '../../components/Estrellas.jsx'
 import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
+import MapaDiferido from '../../components/MapaDiferido.jsx'
 import ShinyText from '../../components/ShinyText.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
@@ -32,6 +35,17 @@ const FOTO_ANTES = `${import.meta.env.BASE_URL}inicio-web/hero-antes-referencia.
 // Tema claro del portal: mismas tomas con fondo blanco.
 const FOTO_DESPUES_CLARA = `${import.meta.env.BASE_URL}inicio-web/despues-claro.webp`
 const FOTO_ANTES_CLARA = `${import.meta.env.BASE_URL}inicio-web/antes-claro.webp`
+// Fase 8 (PERF-11): el hero se sirve en WebP responsivo (640/960/1280/1680 px; scripts/generar-hero-responsivo.mjs). El `src` conserva el
+// original de 1680×944 como reserva para navegadores sin srcset. La imagen «después» es el candidato LCP (prioridad alta); la «antes» es el
+// overlay del efecto y no compite por el ancho de banda inicial.
+const BASE_HERO = `${import.meta.env.BASE_URL}inicio-web/`
+const srcSetHero = (nombre, con1680) =>
+  [640, 960, 1280].map((w) => `${BASE_HERO}${nombre}-${w}.webp ${w}w`).concat(con1680).join(', ')
+const SRCSET_DESPUES = srcSetHero('hero-despues-referencia', `${BASE_HERO}hero-despues-referencia-1680.webp 1680w`)
+const SRCSET_ANTES = srcSetHero('hero-antes-referencia', `${BASE_HERO}hero-antes-referencia-1680.webp 1680w`)
+const SRCSET_DESPUES_CLARA = srcSetHero('despues-claro', `${BASE_HERO}despues-claro.webp 1680w`)
+const SRCSET_ANTES_CLARA = srcSetHero('antes-claro', `${BASE_HERO}antes-claro.webp 1680w`)
+const SIZES_HERO = '(min-width: 1800px) 1800px, 100vw'
 const RADIO_REVELADO = 340
 
 // Revela la foto "antes" bajo el cursor sin re-renderizar React en cada
@@ -62,8 +76,13 @@ function useRevelarAntes() {
     const suave = { x: objetivo.x, y: objetivo.y }
     let activo = 0
     let destino = 0
-    let animId
+    let animId = 0
 
+    // Fase 6: el bucle SOLO corre mientras la máscara se mueve. Cuando el radio ya llegó a su destino (revelada o escondida) y el
+    // punto suave alcanzó al cursor, se detiene (sin rAF pendiente); un movimiento del puntero lo vuelve a despertar.
+    function despertar() {
+      if (!animId && !document.hidden) animId = requestAnimationFrame(tick)
+    }
     function moverA(clienteX, clienteY) {
       const rect = contenedor.getBoundingClientRect()
       objetivo.x = clienteX - rect.left
@@ -80,13 +99,16 @@ function useRevelarAntes() {
       if (esTactil(evento)) return
       moverA(evento.clientX, evento.clientY)
       destino = 1
+      despertar()
     }
     function alSoltar(evento) {
       if (esTactil(evento)) return
       destino = 0
+      despertar()
     }
 
     function tick() {
+      animId = 0
       suave.x += (objetivo.x - suave.x) * 0.12
       suave.y += (objetivo.y - suave.y) * 0.12
       activo += (destino - activo) * 0.12
@@ -99,8 +121,26 @@ function useRevelarAntes() {
           : `radial-gradient(circle ${radio}px at ${x}px ${y}px, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%)`
       imagenAntes.style.maskImage = mascara
       imagenAntes.style.webkitMaskImage = mascara
+      const enReposo =
+        Math.abs(destino - activo) < 0.003 && Math.abs(objetivo.x - suave.x) < 0.3 && Math.abs(objetivo.y - suave.y) < 0.3
+      if (enReposo) {
+        // Último cuadro exacto y el bucle se duerme.
+        activo = destino
+        suave.x = objetivo.x
+        suave.y = objetivo.y
+        return
+      }
       animId = requestAnimationFrame(tick)
     }
+    const alVisibilidad = () => {
+      if (document.hidden) {
+        if (animId) cancelAnimationFrame(animId)
+        animId = 0
+      } else {
+        despertar()
+      }
+    }
+    // Primer cuadro: deja la máscara en su estado inicial (escondida) y, al estar en reposo, el bucle no sigue.
     animId = requestAnimationFrame(tick)
 
     contenedor.addEventListener('pointermove', alMover)
@@ -108,13 +148,15 @@ function useRevelarAntes() {
     contenedor.addEventListener('pointerup', alSoltar)
     contenedor.addEventListener('pointerleave', alSoltar)
     contenedor.addEventListener('pointercancel', alSoltar)
+    document.addEventListener('visibilitychange', alVisibilidad)
     return () => {
-      cancelAnimationFrame(animId)
+      if (animId) cancelAnimationFrame(animId)
       contenedor.removeEventListener('pointermove', alMover)
       contenedor.removeEventListener('pointerdown', alMover)
       contenedor.removeEventListener('pointerup', alSoltar)
       contenedor.removeEventListener('pointerleave', alSoltar)
       contenedor.removeEventListener('pointercancel', alSoltar)
+      document.removeEventListener('visibilitychange', alVisibilidad)
     }
   }, [contenedor, imagenAntes])
 
@@ -206,6 +248,91 @@ const CHISPAS_PROMO = [
   { bottom: '-7px', left: '30%', size: 9, delay: '-2.4s' },
 ]
 
+// Fase 5: Inicio pide SOLO lo que muestra, cada cosa por su cuenta (useLectura): ya no se descarga el catálogo completo de servicios
+// para escoger cuatro, ni todas las reseñas y la galería para mostrar tres. Límites de diseño explícitos:
+const DESTACADOS_INICIO = 4 // «Lo más pedido»
+const CANDIDATOS_DESTACADOS = 12 // del ranking se consideran los primeros; basta para saltar los inactivos
+const GALERIA_INICIO = 3 // parejas antes/después
+const TARJETAS_RESENAS_INICIO = 3 // tarjetas de reseñas
+
+async function leerTopServicios() {
+  const { data: ranking, error } = await supabase.rpc('servicios_mas_pedidos', { dias: 30 }).limit(CANDIDATOS_DESTACADOS)
+  if (error) throw error
+  const ids = (ranking ?? []).map((fila) => fila.servicio_id)
+  if (ids.length === 0) return []
+  const { data, error: errorServicios } = await supabase.from('servicios').select(COLUMNAS_SERVICIO_TARJETA).in('id', ids).eq('activo', true)
+  if (errorServicios) throw errorServicios
+  const porId = new Map((data ?? []).map((servicio) => [servicio.id, servicio]))
+  return ids.map((id) => porId.get(id)).filter(Boolean).slice(0, DESTACADOS_INICIO)
+}
+
+// Visitante: sin cita ni consulta alguna. Con sesión, solo la próxima cita pendiente o confirmada de ESTA clienta.
+async function leerProximaCita(usuarioId) {
+  if (!usuarioId) return null
+  const miId = await obtenerMiClienteId()
+  if (!miId) return null
+  const { data, error } = await supabase
+    .from('citas')
+    .select('id, fecha_hora, cita_servicios(servicios(nombre))')
+    .eq('cliente_id', miId)
+    .gte('fecha_hora', new Date().toISOString())
+    .in('estado', ['PENDIENTE', 'CONFIRMADA'])
+    .order('fecha_hora')
+    .limit(1)
+  if (error) throw error
+  return data?.[0] ?? null
+}
+
+async function leerMisPuntos(usuarioId) {
+  if (!usuarioId) return null
+  const { data, error } = await supabase.rpc('mis_puntos')
+  if (error) throw error
+  return data?.[0] ?? null
+}
+
+// La promoción vigente es una sola (la que vence primero; RLS ya filtra activa y en fecha). Si la clienta ya la reclamó se
+// averigua con un filtro por esa promoción (no se baja toda su lista de cupones).
+async function leerPromocionActiva(usuarioId) {
+  const { data, error } = await supabase
+    .from('promociones')
+    .select('id, titulo, descripcion, tipo_descuento, valor, vigente_hasta')
+    .order('vigente_hasta', { ascending: true, nullsFirst: false })
+    .limit(1)
+  if (error) throw error
+  const promo = data?.[0] ?? null
+  if (!promo || !usuarioId) return { promo, cupon: null }
+  // promocion_id solo existe en mis_cupones() desde 127_reclamar_cupon_promocion.sql: sin ese esquema la consulta falla y
+  // el botón parte en «Reclamar cupón», como antes.
+  const { data: cupones } = await supabase.rpc('mis_cupones').eq('promocion_id', promo.id).limit(1)
+  return { promo, cupon: cupones?.[0] ?? null }
+}
+
+// Reseñas: el total y el promedio salen de las calificaciones (una columna entera por reseña aprobada, con conteo exacto del
+// servidor; el servidor entrega como máximo max_rows = 1000, las más recientes) y las tarjetas son solo las 3 últimas con su
+// servicio. Si resenas_inicio() aún no existe en la base, se cae a las reseñas generales (sin servicio).
+async function leerResumenResenas() {
+  const [generales, tarjetas] = await Promise.all([
+    supabase.rpc('resenas_publicas', {}, { count: 'exact' }).select('calificacion'),
+    supabase.rpc('resenas_inicio').limit(TARJETAS_RESENAS_INICIO),
+  ])
+  if (generales.error) throw generales.error
+  let filasTarjetas = tarjetas.data ?? []
+  if (tarjetas.error) {
+    const respaldo = await supabase.rpc('resenas_publicas').limit(TARJETAS_RESENAS_INICIO)
+    filasTarjetas = respaldo.data ?? []
+  }
+  const calificaciones = (generales.data ?? []).map((fila) => fila.calificacion)
+  // Sin conteo exacto del servidor el total NO se presenta como exacto: se marca como «al menos» lo recibido.
+  const exacto = Number.isSafeInteger(generales.count)
+  return { total: exacto ? generales.count : calificaciones.length, exacto, calificaciones, tarjetas: filasTarjetas }
+}
+
+async function leerGaleriaInicio() {
+  const { data, error } = await supabase.rpc('galeria_para_web').limit(GALERIA_INICIO)
+  if (error) throw error
+  return data ?? []
+}
+
 export default function InicioCliente() {
   const { mostrarToast } = useToast()
   const { perfil } = usePerfilCliente()
@@ -217,124 +344,51 @@ export default function InicioCliente() {
   const contenedorRef = useRef(null)
   const { contenedorHeroRef, imagenAntesRef } = useRevelarAntes()
 
-  const [cargando, setCargando] = useState(true)
-  const [topServicios, setTopServicios] = useState([])
-  const [proximaCita, setProximaCita] = useState(null)
-  const [puntosCliente, setPuntosCliente] = useState(null)
   const { session, usuario } = useAuth()
   const usuarioId = usuario?.id ?? null
   const requerirSesion = useRequerirSesion()
   // Con el programa activo mis_puntos().puntos es el saldo GASTABLE: aquí se muestra como monedas, con su propio nombre.
   const programa = useProgramaRecompensas(session?.user?.id ?? null)
   const saldoProg = programa.saldo.estado === 'ok' ? programa.saldo.datos : null
-  const [promocion, setPromocion] = useState(null)
-  const [cuponPromocion, setCuponPromocion] = useState(null)
   const [reclamando, setReclamando] = useState(false)
-  const [resenas, setResenas] = useState([])
-  // Tarjetas de "Lo que dicen nuestras clientas": reseñas con fecha y servicio.
-  const [resenasTarjetas, setResenasTarjetas] = useState([])
-  const [galeria, setGaleria] = useState([])
-  const [contacto, setContacto] = useState(null)
-  const [horario, setHorario] = useState(null)
+  // Cupón que la clienta acaba de reclamar en esta pantalla (atado a su cuenta: no sobrevive a un cambio de usuario).
+  const [reclamado, setReclamado] = useState({ dueno: null, cupon: null })
 
-  useEffect(() => {
-    let vigente = true
+  // Fase 5: lecturas independientes. El hero y la tira se pintan de inmediato; cada sección aparece cuando llega lo suyo y una
+  // dependencia lenta o caída solo oculta su propia sección. Visitante: nada personal se consulta.
+  const topRes = useLectura(leerTopServicios)
+  const citaRes = useLectura(() => leerProximaCita(usuarioId), usuarioId)
+  const puntosRes = useLectura(() => leerMisPuntos(usuarioId), usuarioId)
+  const promoRes = useLectura(() => leerPromocionActiva(usuarioId), usuarioId)
+  const resenasRes = useLectura(leerResumenResenas)
+  const galeriaRes = useLectura(leerGaleriaInicio)
+  // Contacto y horario: lecturas COMPARTIDAS con el pie de página y las demás pantallas (caché de vida corta, sin duplicados).
+  const contactoRes = useLectura(obtenerContacto)
+  const horarioRes = useLectura(obtenerHorario)
 
-    async function cargar() {
-      const ahoraIso = new Date().toISOString()
-      // Visitante: solo contenido público. Nada de lo personal (próxima cita, puntos,
-      // cupones) se consulta sin sesión.
-      const miId = usuarioId ? await obtenerMiClienteId() : null
-      const [
-        serviciosRes,
-        masPedidoRes,
-        proximaCitaRes,
-        puntosRes,
-        promocionesRes,
-        cuponesRes,
-        resenasRes,
-        resenasInicioRes,
-        galeriaRes,
-        contactoRes,
-        horarioRes,
-      ] = await Promise.all([
-        leerServicios(supabase, { columnas: 'id, nombre, categoria, precio, duracion_min, foto_url', soloActivos: true }).then(
-          (data) => ({ data }),
-          () => ({ data: [] }),
-        ),
-        supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
-        miId
-          ? supabase
-              .from('citas')
-              .select('id, fecha_hora, cita_servicios(servicios(nombre))')
-              .eq('cliente_id', miId)
-              .gte('fecha_hora', ahoraIso)
-              .in('estado', ['PENDIENTE', 'CONFIRMADA'])
-              .order('fecha_hora')
-              .limit(1)
-          : Promise.resolve({ data: [] }),
-        usuarioId ? supabase.rpc('mis_puntos') : Promise.resolve({ data: [] }),
-        supabase
-          .from('promociones')
-          .select('id, titulo, descripcion, tipo_descuento, valor, vigente_hasta')
-          .order('vigente_hasta', { ascending: true, nullsFirst: false }),
-        usuarioId ? supabase.rpc('mis_cupones') : Promise.resolve({ data: [] }),
-        supabase.rpc('resenas_publicas'),
-        supabase.rpc('resenas_inicio'),
-        supabase.rpc('galeria_para_web'),
-        supabase.rpc('datos_contacto'),
-        supabase.rpc('horario_atencion'),
-      ])
-
-      if (!vigente) return
-
-      const servicios = serviciosRes.data ?? []
-      const masPedidoIds = (masPedidoRes.data ?? []).map((fila) => fila.servicio_id)
-      setTopServicios(
-        masPedidoIds
-          .map((id) => servicios.find((s) => s.id === id))
-          .filter(Boolean)
-          .slice(0, 4),
-      )
-
-      setProximaCita(proximaCitaRes.data?.[0] ?? null)
-      setPuntosCliente(puntosRes.data?.[0] ?? null)
-
-      const promocionActiva = promocionesRes.data?.[0] ?? null
-      setPromocion(promocionActiva)
-      if (promocionActiva) {
-        // promocion_id todavía no existe en mis_cupones() hasta aplicar
-        // 127_reclamar_cupon_promocion.sql — hasta entonces esto no
-        // encuentra nada y el botón siempre parte en "Reclamar cupón".
-        const cuponExistente = (cuponesRes.data ?? []).find((c) => c.promocion_id === promocionActiva.id)
-        setCuponPromocion(cuponExistente ?? null)
-      }
-
-      setResenas(resenasRes.data ?? [])
-      // Si resenas_inicio() aún no está aplicada en la base, se cae a las
-      // reseñas generales (sin servicio) en vez de dejar la sección vacía.
-      setResenasTarjetas(resenasInicioRes.error ? (resenasRes.data ?? []) : (resenasInicioRes.data ?? []))
-      // El diseño aprobado son 3 parejas (tope acá), pero el negocio las
-      // está cargando de a poco en Galería Web — se muestran las que ya
-      // existan (mínimo 1) en vez de exigir las 3 completas.
-      setGaleria((galeriaRes.data ?? []).slice(0, 3))
-      setContacto(contactoRes.data?.[0] ?? null)
-      setHorario(horarioRes.data?.[0] ?? null)
-      setCargando(false)
-    }
-
-    cargar()
-    return () => {
-      vigente = false
-    }
-  }, [usuarioId])
+  const topServicios = topRes.datos ?? []
+  const proximaCita = citaRes.datos
+  const citaCargando = citaRes.estado === 'cargando'
+  const puntosCliente = puntosRes.datos
+  const promocion = promoRes.datos?.promo ?? null
+  const cuponPromocion = (reclamado.dueno === usuarioId ? reclamado.cupon : null) ?? promoRes.datos?.cupon ?? null
+  const calificaciones = resenasRes.datos?.calificaciones ?? []
+  const totalResenas = resenasRes.datos?.total ?? 0
+  const totalExacto = resenasRes.datos?.exacto ?? true
+  // El servidor entrega como máximo max_rows calificaciones: con más reseñas aprobadas el promedio es el de las más recientes.
+  const promedioParcial = calificaciones.length < totalResenas
+  const resenasTarjetas = resenasRes.datos?.tarjetas ?? []
+  const galeria = galeriaRes.datos ?? []
+  const galeriaLista = galeriaRes.estado === 'ok'
+  const contacto = contactoRes.datos
+  const horario = horarioRes.datos
 
   const ENTRADA_FIJA = esDesktop
     ? { foto: 200, eyebrow: 150, titulo: 300, subtitulo: 420, botones: 540, confianza: 680, tira: 850, promo: 950 }
     : { foto: 100, eyebrow: 350, titulo: 480, subtitulo: 560, botones: 650, confianza: 780, tira: 900, promo: 1000 }
 
   const { primeraFotoRef, filaRef, estadoFoto, claseSacudida, enCurso, puntos } = useSecuenciaScroll({
-    activo: !cargando && galeria.length > 0,
+    activo: galeriaLista && galeria.length > 0,
     reducirMovimiento,
     totalFotos: galeria.length * 2,
   })
@@ -346,7 +400,7 @@ export default function InicioCliente() {
   // contenedores tienen alto fijo y fondo, así que no hay salto de diseño.
   const [galeriaCerca, setGaleriaCerca] = useState(false)
   useEffect(() => {
-    if (galeriaCerca || cargando || galeria.length === 0) return undefined
+    if (galeriaCerca || !galeriaLista || galeria.length === 0) return undefined
     const fila = filaRef.current
     if (!fila) return undefined
     const observador = new IntersectionObserver(
@@ -360,7 +414,7 @@ export default function InicioCliente() {
     )
     observador.observe(fila)
     return () => observador.disconnect()
-  }, [galeriaCerca, cargando, galeria.length, filaRef])
+  }, [galeriaCerca, galeriaLista, galeria.length, filaRef])
 
   async function reclamarCupon() {
     if (!promocion || reclamando) return
@@ -372,22 +426,14 @@ export default function InicioCliente() {
       mostrarToast(error.message || 'No se pudo reclamar el cupón. Intenta de nuevo.', 'error')
       return
     }
-    setCuponPromocion(data?.[0] ?? null)
+    setReclamado({ dueno: usuarioId, cupon: data?.[0] ?? null })
     mostrarToast('Cupón guardado en Mis cupones.', 'exito')
-  }
-
-  if (cargando) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-6">
-        <p className="font-mono text-sm text-white/50">Cargando...</p>
-      </div>
-    )
   }
 
   const nombreCliente = perfil?.nombre ? perfil.nombre.trim().split(/\s+/)[0] : null
   const destinoReservar = serviciosCarrito.size > 0 ? '/citas/carrito' : '/servicios'
 
-  const promedioResenas = resenas.length ? resenas.reduce((suma, r) => suma + r.calificacion, 0) / resenas.length : null
+  const promedioResenas = calificaciones.length ? calificaciones.reduce((suma, c) => suma + c, 0) / calificaciones.length : null
   const horarioTexto = horario
     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}${
         horario.bloque2_inicio ? ` · ${formatearHora(horario.bloque2_inicio)}-${formatearHora(horario.bloque2_fin)}` : ''
@@ -413,12 +459,24 @@ export default function InicioCliente() {
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <img
             src={esClaro ? FOTO_DESPUES_CLARA : FOTO_DESPUES}
+            srcSet={esClaro ? SRCSET_DESPUES_CLARA : SRCSET_DESPUES}
+            sizes={SIZES_HERO}
+            width={1680}
+            height={944}
+            fetchPriority="high"
+            decoding="async"
             alt="Resultado después del servicio"
             className="absolute inset-0 h-full w-full object-cover object-[right_center]"
           />
           <img
             ref={imagenAntesRef}
             src={esClaro ? FOTO_ANTES_CLARA : FOTO_ANTES}
+            srcSet={esClaro ? SRCSET_ANTES_CLARA : SRCSET_ANTES}
+            sizes={SIZES_HERO}
+            width={1680}
+            height={944}
+            fetchPriority="low"
+            decoding="async"
             alt=""
             aria-hidden="true"
             style={{ filter: 'grayscale(0.35) brightness(0.97)' }}
@@ -427,13 +485,17 @@ export default function InicioCliente() {
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-[1700px] flex-1 flex-col justify-center gap-[clamp(10px,1.8vw,20px)] py-[clamp(16px,3vw,40px)]">
+          {/* En celular (< sm) los botones salen del flujo (absolute, al pie
+              del hero, en fila y centrados) y el horario se oculta, así el
+              título queda solo en la columna y centrado verticalmente
+              respecto de la foto completa, no del espacio sobre los botones. */}
           <div className="flex flex-col items-start gap-[clamp(10px,1.8vw,20px)] md:max-w-3xl">
             <div
               className={`flex flex-col items-start gap-2 ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.titulo}ms` }}
             >
               <EsquinaBracket />
-              <h1 className="lw-titulo-kunaroh text-[clamp(38px,6vw,90px)] leading-[1.03] text-white">
+              <h1 className="lw-titulo-kunaroh text-[clamp(38px,6vw,90px)] leading-[1.03] text-white max-sm:text-[clamp(20px,6vw,26px)]">
                 <span className="block">Belleza</span>
                 <span className="block">que</span>
                 <span className="block">transforma</span>
@@ -442,24 +504,24 @@ export default function InicioCliente() {
             </div>
 
             <div
-              className={`flex flex-col gap-2.5 sm:flex-row sm:items-center ${reducirMovimiento ? '' : 'in-left'}`}
+              className={`flex flex-row items-center gap-2.5 max-sm:absolute max-sm:inset-x-0 max-sm:bottom-3 max-sm:justify-start ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.botones}ms` }}
             >
-              <Link to="/citas" className="lw-cta-hero">
+              {/* OCULTO a pedido (display:none inline, porque .lw-cta-hero define su propio display): se conserva para poder volver a mostrarlo — quitar el style. */}
+              <Link to="/citas" className="lw-cta-hero" style={{ display: 'none' }}>
                 <ShinyText text="Reserva tu cita" speed={3} delay={1.5} className="lw-cta-shiny" />
                 <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
               </Link>
-              <Link
-                to="/servicios"
-                className="rounded-full border border-white/15 px-6 py-3.5 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white hover:bg-white hover:text-black"
-              >
-                Ver servicios
+              {/* Mismo acabado que "Reserva tu cita" (pedido del usuario). */}
+              <Link to="/servicios" className="lw-cta-hero">
+                <ShinyText text="Ver servicios" speed={3} delay={1.5} className="lw-cta-shiny" />
+                <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
               </Link>
             </div>
 
             {hayLineaConfianza && (
               <div
-                className={`flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-4 text-[13px] text-[#a6a6a6] ${
+                className={`hidden flex-wrap items-center gap-x-5 gap-y-2 border-t sm:flex border-white/10 pt-4 text-[13px] text-[#a6a6a6] ${
                   reducirMovimiento ? '' : 'in-left'
                 }`}
                 style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.confianza}ms` }}
@@ -488,20 +550,26 @@ export default function InicioCliente() {
           mismo padding lateral) que el resto de secciones de la página;
           el padding de la propia <section> es el respiro INTERNO de la
           caja, no el margen contra el borde de pantalla. */}
-      <div className="mx-auto mt-8 w-full max-w-[1700px] lw-gutter">
+      <div className="mx-auto mt-8 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
         <section
-          className={`flex flex-col gap-4 rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:gap-7 sm:p-[22px_28px] ${
+          className={`flex flex-col gap-4 max-sm:grid max-sm:grid-cols-[auto_minmax(0,1fr)_auto] max-sm:items-center max-sm:gap-x-[3px] max-sm:gap-y-[3px] rounded-[10px] border border-white/10 bg-[#111113] px-4 py-5 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:gap-7 sm:p-[22px_28px] ${
             reducirMovimiento ? '' : 'in-up'
           }`}
           style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.tira}ms` }}
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1b2230] text-[var(--lw-gold)]">
+          {/* En celular (grilla de 3 columnas): fila 1 = descripción (arriba del
+              ícono); fila 2 = ícono · "Hola, Nombre" · botón al extremo derecho;
+              puntos/monedas al final. El bloque de texto es `contents` en
+              celular para que Hola y la descripción sean celdas sueltas. */}
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1b2230] text-[var(--lw-gold)] max-sm:col-start-1 max-sm:row-span-2 max-sm:row-start-1 max-sm:self-center">
             <CalendarPlus className="h-5 w-5" />
           </span>
-          <div className="flex flex-1 flex-col gap-1">
-            <span className="text-base font-semibold text-white">Hola{nombreCliente ? `, ${nombreCliente}` : ''}</span>
-            {proximaCita ? (
-              <span className="text-[13.5px] text-[#a6a6a6]">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 max-sm:contents">
+            <span className="text-base font-semibold text-white max-sm:col-start-2 max-sm:row-start-2">Hola{nombreCliente ? `, ${nombreCliente}` : ''}</span>
+            {citaCargando ? (
+              <span className="invisible text-[13.5px] max-sm:col-span-2 max-sm:col-start-2 max-sm:row-start-1" aria-hidden="true">Revisando tus citas…</span>
+            ) : proximaCita ? (
+              <span className="text-[13.5px] text-[#a6a6a6] max-sm:col-span-2 max-sm:col-start-2 max-sm:row-start-1">
                 Tu próxima cita:{' '}
                 <b className="font-semibold text-white">
                   {(esDesktop ? formatoFechaCitaLarga : formatoFechaCitaCorta).format(new Date(proximaCita.fecha_hora))} ·{' '}
@@ -511,32 +579,34 @@ export default function InicioCliente() {
                   ` · ${proximaCita.cita_servicios.map((cs) => cs.servicios?.nombre).filter(Boolean).join(', ')}`}
               </span>
             ) : (
-              <span className="text-[13.5px] text-[#a6a6a6]">No tienes citas pendientes. ¿Agendamos la próxima?</span>
+              <span className="text-[13.5px] text-[#a6a6a6] max-sm:col-span-2 max-sm:col-start-2 max-sm:row-start-1">No tienes citas. ¿Agendamos la próxima?</span>
             )}
           </div>
           {programa.activo === false && puntosCliente && (
-            <div className="flex items-center gap-1.5 border-white/10 sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
+            <div className="flex items-center gap-1.5 border-white/10 max-sm:hidden sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
               <span className="text-xl font-bold text-white">{puntosCliente.puntos}</span>
               <span className="text-[11px] uppercase tracking-widest text-[#a6a6a6]">Mis puntos</span>
             </div>
           )}
           {programa.activo === true && saldoProg && (
-            <div className="flex items-center gap-1.5 border-white/10 sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
+            <div className="flex items-center gap-1.5 border-white/10 max-sm:hidden sm:flex-col sm:items-end sm:gap-0.5 sm:border-l sm:px-6">
               <span className="text-xl font-bold text-white">{formatearCantidad(saldoProg.monedas)}</span>
               <span className="text-[11px] uppercase tracking-widest text-[#a6a6a6]">Mis monedas</span>
             </div>
           )}
-          {proximaCita ? (
+          {citaCargando ? (
+            <span className="invisible shrink-0 justify-self-end max-sm:col-start-3 max-sm:row-start-2 rounded-full px-[22px] py-3 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-sm" aria-hidden="true">Reservar</span>
+          ) : proximaCita ? (
             <Link
               to="/citas"
-              className="shrink-0 rounded-full border border-white/15 px-[22px] py-3 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+              className="shrink-0 justify-self-end max-sm:col-start-3 max-sm:row-start-2 rounded-full border border-white/15 px-[22px] py-3 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
             >
               Ver mi cita
             </Link>
           ) : (
             <Link
               to={destinoReservar}
-              className="shrink-0 rounded-full bg-[var(--lw-gold)] px-[22px] py-3 text-center text-sm font-semibold text-black"
+              className="shrink-0 justify-self-end max-sm:col-start-3 max-sm:row-start-2 rounded-full bg-[var(--lw-gold)] px-[22px] py-3 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-center text-sm font-semibold text-black"
             >
               Reservar
             </Link>
@@ -547,7 +617,7 @@ export default function InicioCliente() {
       {/* 2b. PROMOCIÓN ACTIVA — solo si hay una vigente (RLS de
           promociones ya filtra activo/vigente_desde/vigente_hasta). */}
       {promocion && (
-        <div className="mx-auto mt-4 w-full max-w-[1700px] lw-gutter">
+        <div className="mx-auto mt-4 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
         {/* La entrada (in-up) va en este contenedor y NO en la <section>:
             .cupon-rojo define su propio `animation` infinito (glow) y, si
             compartiera elemento con .in-up, heredaba su iteration-count
@@ -570,7 +640,7 @@ export default function InicioCliente() {
           </svg>
         ))}
         <section className={`cupon-tarjeta cupon-rojo grid rounded-[10px] lg:grid-cols-[220px_minmax(0,1fr)_auto] ${cuponPromocion ? 'cupon-rojo-canjeado' : ''}`}>
-          <div className="flex items-center gap-4 border-b border-dashed border-[#ff2d3f]/40 bg-[#ff2d3f]/[0.07] px-5 py-4 lg:flex-col lg:justify-center lg:gap-1 lg:border-b-0 lg:border-r lg:py-6">
+          <div className="flex items-center gap-4 border-b border-dashed border-[#ff2d3f]/40 bg-[#ff2d3f]/[0.07] px-5 py-4 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) lg:flex-col lg:justify-center lg:gap-1 lg:border-b-0 lg:border-r lg:py-6">
             <span
               className={`lw-titulo-heavitas cupon-texto-rojo whitespace-nowrap leading-none ${
                 promocion.tipo_descuento === 'PORCENTAJE' ? 'text-[34px] lg:text-[44px]' : 'text-[26px] lg:text-[32px]'
@@ -581,7 +651,7 @@ export default function InicioCliente() {
             <span className="text-[11px] uppercase tracking-[0.2em] text-[#a6a6a6]">de descuento</span>
           </div>
 
-          <div className="flex flex-col justify-center gap-2 px-5 py-4 lg:px-8">
+          <div className="flex flex-col justify-center gap-2 px-5 py-4 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) lg:px-8">
             <span className="inline-flex w-fit items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[#a6a6a6]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
               Promoción activa
@@ -598,7 +668,7 @@ export default function InicioCliente() {
                   type="button"
                   onClick={reclamarCupon}
                   disabled={reclamando}
-                  className="flex items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-[#ff2d3f] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_0_18px_-2px_rgba(255,45,63,0.6)] transition-[filter] hover:brightness-110 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap rounded-full bg-[#ff2d3f] px-6 py-3.5 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-sm font-semibold text-white shadow-[0_0_18px_-2px_rgba(255,45,63,0.6)] transition-[filter] hover:brightness-110 disabled:opacity-60"
                 >
                   <Ticket className="h-[17px] w-[17px]" />
                   {reclamando ? 'Reclamando...' : 'Reclamar cupón'}
@@ -626,7 +696,7 @@ export default function InicioCliente() {
 
       {/* 3. LO MÁS PEDIDO */}
       {topServicios.length > 0 && (
-        <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
+        <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
           <div className="mb-7 flex items-end justify-between gap-3">
             <div className="flex flex-col gap-2.5">
               <h2 className="lw-titulo-heavitas text-2xl text-white sm:text-[40px]">Lo más pedido</h2>
@@ -652,7 +722,7 @@ export default function InicioCliente() {
           contenido esa animación se siente como una foto rota, no como
           un efecto. */}
       {galeria.length > 0 && (
-        <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
+        <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
           <div className="mb-7 flex items-end justify-between gap-3">
             <div className="flex flex-col gap-2.5">
               <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Trabajos hechos en el salón</span>
@@ -715,8 +785,8 @@ export default function InicioCliente() {
       )}
 
       {/* 6. RESEÑAS — oculta con menos de 3 aprobadas. */}
-      {resenas.length >= 3 && (
-        <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
+      {totalResenas >= 3 && promedioResenas !== null && (
+        <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
           <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
             <div className="flex flex-col gap-3.5">
               <h2 className="lw-titulo-heavitas text-[26px] leading-[1.1] text-white sm:text-[34px]">
@@ -729,7 +799,7 @@ export default function InicioCliente() {
                 <div className="flex flex-col gap-1.5">
                   <Estrellas calificacion={Math.round(promedioResenas)} className="h-[15px] w-[15px]" />
                   <span className="text-[13px] text-[#a6a6a6]">
-                    {resenas.length} reseñas de clientas que ya vinieron
+                    {totalExacto ? totalResenas : `Al menos ${totalResenas}`} reseñas de clientas que ya vinieron{promedioParcial ? ` (promedio de las ${calificaciones.length} más recientes)` : ''}
                   </span>
                 </div>
               </div>
@@ -770,7 +840,7 @@ export default function InicioCliente() {
 
       {/* 7. SOBRE NOSOTROS — un solo bloque (reemplaza las 3 secciones de
           video/filosofía anteriores). */}
-      <section className="mx-auto mt-24 grid w-full max-w-[1700px] items-center gap-10 lw-gutter lg:grid-cols-2 lg:gap-14">
+      <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) grid w-full max-w-[1700px] items-center gap-10 lw-gutter lw-gutter-sep lg:grid-cols-2 lg:gap-14">
         <div className="flex h-[260px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#151517] text-white/25 lg:h-[480px]">
           <Users className="h-10 w-10" />
         </div>
@@ -804,7 +874,7 @@ export default function InicioCliente() {
 
       {/* 8. VISÍTANOS */}
       {hayVisitanos && (
-        <section className="mx-auto mt-24 grid w-full max-w-[1700px] gap-5 lw-gutter lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) grid w-full max-w-[1700px] gap-5 lw-gutter lw-gutter-sep lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div className="flex flex-col gap-5 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-9">
             <h2 className="lw-titulo-heavitas text-[26px] text-white sm:text-[34px]">Visítanos</h2>
             <div className="flex flex-col gap-3.5 text-[14.5px] text-[#d9d9dc]">
@@ -845,7 +915,7 @@ export default function InicioCliente() {
                   href={`https://wa.me/${whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2.5 rounded-full bg-[var(--lw-gold)] px-[22px] py-3.5 text-sm font-semibold text-black"
+                  className="flex items-center justify-center gap-2.5 rounded-full bg-[var(--lw-gold)] px-[22px] py-3.5 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-sm font-semibold text-black"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Escríbenos por WhatsApp
@@ -856,7 +926,7 @@ export default function InicioCliente() {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contacto.direccion)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center rounded-full border border-white/15 px-[22px] py-3.5 text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+                  className="flex items-center justify-center rounded-full border border-white/15 px-[22px] py-3.5 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
                 >
                   Cómo llegar
                 </a>
@@ -864,19 +934,7 @@ export default function InicioCliente() {
             </div>
           </div>
           <div className="min-h-[220px] overflow-hidden rounded-[10px] border border-white/10 bg-[#151517] lg:min-h-[380px]">
-            {contacto?.direccion ? (
-              <iframe
-                title="Ubicación en el mapa"
-                src={`https://www.google.com/maps?q=${encodeURIComponent(contacto.direccion)}&output=embed`}
-                className="h-full w-full border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-white/25">
-                <MapPin className="h-8 w-8" />
-              </div>
-            )}
+            <MapaDiferido direccion={contacto?.direccion} />
           </div>
         </section>
       )}

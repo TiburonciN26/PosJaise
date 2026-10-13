@@ -14,6 +14,7 @@ import ModalDeuda from '../components/ModalDeuda.jsx'
 import ModalPagoDeuda from '../components/ModalPagoDeuda.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCIONES_FILTRO = [
   { id: 'todas', label: 'Todas' },
@@ -61,9 +62,9 @@ export default function Deudas({ activo = true }) {
   const [deudas, setDeudas] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/deudas:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
-  const [filtroEstado, setFiltroEstado] = useState('todas')
+  const [filtroEstado, setFiltroEstado] = useEstadoVista('/deudas:filtroEstado', 'todas')
   const [modalDeuda, setModalDeuda] = useState(null) // null | 'nuevo' | deuda
   const [deudaAEliminar, setDeudaAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)

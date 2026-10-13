@@ -30,6 +30,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalAsistente from '../components/ModalAsistente.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const CAMPOS_OPCIONALES = [
   'telefono',
@@ -126,8 +127,8 @@ export default function Asistentes({ activo = true }) {
   const [usuariosAsistente, setUsuariosAsistente] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
-  const [orden, setOrden] = useState('nombre-asc')
+  const [busqueda, setBusqueda] = useEstadoVista('/asistentes:busqueda', '')
+  const [orden, setOrden] = useEstadoVista('/asistentes:orden', 'nombre-asc')
   const [modalAsistente, setModalAsistente] = useState(null) // null | 'nuevo' | asistente
   const [asistenteAEliminar, setAsistenteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)

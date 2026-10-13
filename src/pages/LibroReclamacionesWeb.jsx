@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowBigDown, BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   day: 'numeric',
@@ -40,7 +42,7 @@ export default function LibroReclamacionesWeb({ activo = true }) {
   const [reclamos, setReclamos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [filtro, setFiltro] = useState('PENDIENTE')
+  const [filtro, setFiltro] = useEstadoVista('/libro-reclamaciones-web:filtro', 'PENDIENTE')
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [respuestas, setRespuestas] = useState({})
   const [respondiendo, setRespondiendo] = useState(null)
@@ -84,6 +86,7 @@ export default function LibroReclamacionesWeb({ activo = true }) {
 
   async function guardarProveedor(evento) {
     evento.preventDefault()
+    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
     const ruc = proveedor.ruc.trim()
     if (ruc && !/^\d{11}$/.test(ruc)) {
       mostrarToast('El RUC debe tener 11 dígitos.', 'error')
@@ -99,6 +102,7 @@ export default function LibroReclamacionesWeb({ activo = true }) {
       mostrarToast('No se pudo guardar los datos del proveedor.', 'error')
       return
     }
+    confirmarGuardado(envio)
     mostrarToast('Datos del proveedor guardados.', 'exito')
   }
 

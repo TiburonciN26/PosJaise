@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
+import { usePaginaActiva, useProtegerPantalla } from '../context/PaginaActivaContext.jsx'
 import { limpiarPendiente, marcarPendiente } from '../lib/trabajoPendiente.js'
 
 // B5 de la 4ª auditoría: con modales apilados (ej. Gastos -> Plantillas ->
@@ -63,4 +63,8 @@ export function useCerrarConEscape(onCerrar, activoSolicitado = true, { trabajoP
     marcarPendiente(id, 'una ventana o formulario abierto')
     return () => limpiarPendiente(id)
   }, [activoSolicitado, trabajoPendiente])
+
+  // Fase 6: una pantalla con un diálogo abierto (borrador a medias) no se puede descartar de la caché de pestañas mientras siga
+  // abierto, esté o no a la vista. Los menús (`trabajoPendiente: false`) no protegen nada.
+  useProtegerPantalla(activoSolicitado && trabajoPendiente)
 }

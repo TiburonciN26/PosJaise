@@ -19,6 +19,7 @@ import ModalServicio from '../components/ModalServicio.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCIONES_ORDEN = [
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
@@ -42,13 +43,13 @@ export default function Servicios({ activo = true }) {
   const [servicios, setServicios] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/servicios:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
   const [hayMas, setHayMas] = useState(false)
   const [cargandoMas, setCargandoMas] = useState(false)
   const [categoriasExistentes, setCategoriasExistentes] = useState([])
   const vigenteRef = useRef({ actual: true })
-  const [orden, setOrden] = useState('nombre-asc')
+  const [orden, setOrden] = useEstadoVista('/servicios:orden', 'nombre-asc')
   const [modalServicio, setModalServicio] = useState(null) // null | 'nuevo' | servicio
   const [servicioAEliminar, setServicioAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)

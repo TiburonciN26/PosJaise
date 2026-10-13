@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
@@ -23,10 +23,14 @@ import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
 import { boletaRequiereDni, comprobanteCompleto } from '../lib/comprobante.js'
+import { useEstadoVista } from '../lib/estadoVista.js'
+import { componenteDiferido } from '../lib/moduloDiferido.js'
+import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
 
 // El lector de códigos de barras (@zxing) pesa varios cientos de KB;
 // se carga solo cuando se abre el escáner, no en el bundle principal.
-const ModalEscanerCodigoBarras = lazy(() => import('../components/ModalEscanerCodigoBarras.jsx'))
+// F8-01: reintentable; si su código no llega (sin red o versión retirada) el fallo queda en su ventana, no en Ventas.
+const ModalEscanerCodigoBarras = componenteDiferido(() => import('../components/ModalEscanerCodigoBarras.jsx'), 'ModalEscanerCodigoBarras')
 
 // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
 const DURACION_SALIDA = 300
@@ -321,7 +325,7 @@ export default function Ventas({ activo = true }) {
   const [cuponPreview, setCuponPreview] = useState(null)
   const [cuponError, setCuponError] = useState('')
   const [buscandoCupon, setBuscandoCupon] = useState(false)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/ventas:busqueda', '')
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
   const [indiceActivo, setIndiceActivo] = useState(-1)
   // Tocar el cabezal del carrito (móvil) empuja fuera de vista el panel de
@@ -1608,19 +1612,25 @@ export default function Ventas({ activo = true }) {
       )}
 
       {modalEscanerAbierto && (
-        <Suspense
-          fallback={
-            <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
-              <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
-            </div>
-          }
+        <LimiteCargaDiferida
+          variante="ventana"
+          onReintentar={ModalEscanerCodigoBarras.reintentar}
+          onCerrar={() => setModalEscanerAbierto(false)}
         >
-          <ModalEscanerCodigoBarras
-            buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
-            onProductoEncontrado={agregarProducto}
-            onCerrar={() => setModalEscanerAbierto(false)}
-          />
-        </Suspense>
+          <Suspense
+            fallback={
+              <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
+                <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
+              </div>
+            }
+          >
+            <ModalEscanerCodigoBarras
+              buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
+              onProductoEncontrado={agregarProducto}
+              onCerrar={() => setModalEscanerAbierto(false)}
+            />
+          </Suspense>
+        </LimiteCargaDiferida>
       )}
 
       {modalComprobante && (

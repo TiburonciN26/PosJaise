@@ -44,6 +44,7 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import ModalCita from '../components/ModalCita.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const DIAS_CORTOS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
 const MESES = [
@@ -244,7 +245,7 @@ export default function Citas({ activo = true }) {
   const { usuario, rol } = useAuth()
   const { mostrarToast } = useToast()
 
-  const [fechaCursor, setFechaCursor] = useState(() => new Date())
+  const [fechaCursor, setFechaCursor] = useEstadoVista('/citas:fechaCursor', () => new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState(() => new Date())
   const [asistentes, setAsistentes] = useState([])
   const [asistenteFiltro, setAsistenteFiltro] = useState('todas')

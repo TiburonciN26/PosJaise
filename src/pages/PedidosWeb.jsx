@@ -1,14 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowBigDown, Bike, Image, MapPin, Phone, Receipt, ShieldCheck, ShoppingBag, Store, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { urlFirmadaFoto } from '../lib/imagenes.js'
+import { contarPedidosPorEstado, ESTADOS_PEDIDO, leerItemsPedido, leerPedidos } from '../lib/listasAdmin.js'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { useListaPaginada } from '../hooks/useListaPaginada.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
+import PaginadorLista from '../components/PaginadorLista.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
 
@@ -50,51 +56,63 @@ function numeroWhatsapp(telefono) {
 export default function PedidosWeb({ activo = true }) {
   const { mostrarToast } = useToast()
 
-  const [pedidos, setPedidos] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/pedidos-web:busqueda', '')
+  const termino = useDebounce(busqueda.trim(), 300)
+  const [estadoFiltro, setEstadoFiltro] = useEstadoVista('/pedidos-web:estadoFiltro', null)
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [actualizando, setActualizando] = useState(null)
   const [abriendoComprobante, setAbriendoComprobante] = useState(null)
-  const primeraCargaHecha = useRef(false)
 
-  async function cargarPedidos(silencioso = false) {
-    if (!silencioso) setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('pedidos_web')
-      .select(
-        'id, tipo_entrega, direccion_entrega, celular_entrega, costo_delivery, subtotal, descuento_cupon, total, estado, creado_en, ' +
-          'metodo_pago, comprobante_url, cupon_codigo, tipo_comprobante, ruc, razon_social, pago_verificado, ' +
-          'clientes(nombre, telefono), zonas_delivery(nombre), ' +
-          'pedidos_web_items(id, nombre_producto, cantidad, precio_unitario, subtotal)',
-      )
-      .order('creado_en', { ascending: false })
+  // Fase 5: hasta 40 pedidos por página, con búsqueda y filtro de estado en el servidor y el total exacto. La lista NO trae los
+  // ítems de cada pedido: se piden al expandirlo (ver `items`).
+  const lista = useListaPaginada({
+    activo,
+    clave: `${termino}|${estadoFiltro ?? ''}`,
+    leer: ({ desde, hasta }) => leerPedidos(supabase, { termino, estado: estadoFiltro, desde, hasta }),
+  })
 
-    if (errorConsulta) {
-      setError('No se pudo cargar los pedidos.')
-    } else {
-      setError(null)
-      setPedidos(data ?? [])
+  // Contadores GLOBALES por estado (toda la tabla, no la página). Se refrescan al volver a la pestaña y tras cada cambio.
+  const [conteos, setConteos] = useState(null)
+  const generacionConteos = useRef(0)
+  const refrescarConteos = useCallback(async () => {
+    const gen = (generacionConteos.current += 1)
+    try {
+      const nuevos = await contarPedidosPorEstado(supabase)
+      if (gen === generacionConteos.current) setConteos(nuevos)
+    } catch {
+      if (gen === generacionConteos.current) setConteos(null)
     }
-    setCargando(false)
-  }
-
+  }, [])
   useEffect(() => {
-    if (!activo) return
-    const silencioso = primeraCargaHecha.current
-    primeraCargaHecha.current = true
-    cargarPedidos(silencioso)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activo])
+    if (activo) refrescarConteos()
+  }, [activo, refrescarConteos])
+
+  // Detalle por pedido (ítems), pedido al expandir y conservado mientras la pestaña viva. Un error se reintenta al reabrir.
+  const [items, setItems] = useState({})
+  const pidiendo = useRef(new Set())
+  const cargarItems = useCallback(async (id) => {
+    if (pidiendo.current.has(id)) return
+    pidiendo.current.add(id)
+    setItems((a) => ({ ...a, [id]: { estado: 'cargando', datos: [] } }))
+    try {
+      const datos = await leerItemsPedido(supabase, id)
+      setItems((a) => ({ ...a, [id]: { estado: 'ok', datos } }))
+    } catch {
+      setItems((a) => ({ ...a, [id]: { estado: 'error', datos: [] } }))
+    } finally {
+      pidiendo.current.delete(id)
+    }
+  }, [])
 
   function alternarAbierto(id) {
+    const abriendo = !abiertos.has(id)
     setAbiertos((anterior) => {
       const siguiente = new Set(anterior)
       if (siguiente.has(id)) siguiente.delete(id)
       else siguiente.add(id)
       return siguiente
     })
+    if (abriendo && items[id]?.estado !== 'ok') cargarItems(id)
   }
 
   async function cambiarEstado(pedido, estado) {
@@ -109,12 +127,14 @@ export default function PedidosWeb({ activo = true }) {
       // QA-027: el backend rechaza entregar un pedido cuya venta se anuló
       // (pestaña desactualizada); se muestra su motivo y se refresca el estado.
       mostrarToast(errorActualizar.message || 'No se pudo actualizar el pedido.', 'error')
-      cargarPedidos(true)
+      lista.recargar()
+      refrescarConteos()
       return
     }
 
     mostrarToast('Pedido actualizado.', 'exito')
-    cargarPedidos(true)
+    lista.recargar()
+    refrescarConteos()
   }
 
   // Único camino real para Pendiente → Listo: verificar_pago_pedido_web()
@@ -134,7 +154,8 @@ export default function PedidosWeb({ activo = true }) {
     }
 
     mostrarToast('Pago verificado — pedido listo.', 'exito')
-    cargarPedidos(true)
+    lista.recargar()
+    refrescarConteos()
   }
 
   // El bucket es privado (RLS: cada clienta solo ve las suyas, el admin
@@ -152,12 +173,6 @@ export default function PedidosWeb({ activo = true }) {
     }
   }
 
-  const filtrados = busqueda.trim()
-    ? pedidos.filter((p) =>
-        (p.clientes?.nombre ?? '').toLowerCase().includes(busqueda.trim().toLowerCase()),
-      )
-    : pedidos
-
   return (
     <div
       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
@@ -173,19 +188,30 @@ export default function PedidosWeb({ activo = true }) {
         />
       </div>
 
-      {error && (
-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
-          {error}
+      <FiltroEstadoContadores
+        etiqueta="Filtrar pedidos por estado"
+        opciones={ESTADOS_PEDIDO.map((id) => ({ id, label: ETIQUETAS_ESTADO[id].texto }))}
+        valor={estadoFiltro}
+        onCambiar={setEstadoFiltro}
+        conteos={conteos}
+      />
+
+      {lista.fallo && (
+        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+          No se pudo cargar los pedidos.{' '}
+          <button type="button" onClick={lista.recargar} className="underline">
+            Reintentar
+          </button>
         </p>
       )}
 
-      {cargando ? (
+      {lista.cargando ? (
         <EsqueletoLista columnas={3} />
-      ) : filtrados.length === 0 ? (
-        <EstadoVacio icono={ShoppingBag} mensaje="No hay pedidos todavía." />
+      ) : lista.error ? null : lista.filas.length === 0 ? (
+        <EstadoVacio icono={ShoppingBag} mensaje={termino || estadoFiltro ? 'Ningún pedido coincide con la búsqueda o el filtro.' : 'No hay pedidos todavía.'} />
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtrados.map((pedido) => {
+        <div className={`mt-4 grid grid-cols-1 gap-3 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((pedido) => {
             const abierto = abiertos.has(pedido.id)
             const etiqueta = ETIQUETAS_ESTADO[pedido.estado] ?? ETIQUETAS_ESTADO.PENDIENTE
 
@@ -222,14 +248,25 @@ export default function PedidosWeb({ activo = true }) {
                   />
                 </div>
 
-                <CampoColapsable abierto={abierto}>
+                <CampoColapsable abierto={abierto} diferido>
                   <div className="border-t border-border p-3">
                     <p className="font-mono text-xs text-ink/50">
                       {formatoFecha.format(new Date(pedido.creado_en))}
                     </p>
 
-                    <div className="mt-2 space-y-1">
-                      {pedido.pedidos_web_items.map((item) => (
+                    <div className="mt-2 space-y-1" aria-busy={items[pedido.id]?.estado === 'cargando'}>
+                      {(!items[pedido.id] || items[pedido.id].estado === 'cargando') && (
+                        <p className="font-mono text-xs text-ink/50">Cargando productos…</p>
+                      )}
+                      {items[pedido.id]?.estado === 'error' && (
+                        <p role="alert" className="text-xs text-red">
+                          No se pudieron cargar los productos.{' '}
+                          <button type="button" onClick={() => cargarItems(pedido.id)} className="underline">
+                            Reintentar
+                          </button>
+                        </p>
+                      )}
+                      {items[pedido.id]?.datos.map((item) => (
                         <div key={item.id} className="flex items-center justify-between text-sm">
                           <span className="min-w-0 truncate text-ink/80">
                             {item.cantidad}× {item.nombre_producto}
@@ -362,6 +399,18 @@ export default function PedidosWeb({ activo = true }) {
             )
           })}
         </div>
+      )}
+
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista
+          pagina={lista.pagina}
+          totalPaginas={lista.totalPaginas}
+          total={lista.total}
+          tam={lista.tam}
+          ocupado={lista.ocupado}
+          onPagina={lista.irA}
+          etiqueta="pedidos"
+        />
       )}
     </div>
   )

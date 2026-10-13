@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
@@ -36,6 +36,27 @@ function PuertaSesion() {
   )
 }
 
+// Fase 5: recursos personales que necesita cada subpestaña (se piden al entrar, no todos al abrir la pantalla). «Cómo funciona»
+// y el catálogo público no leen nada personal. Mis sellos depende de si el programa nuevo está activo (saldo): con él lee el
+// catálogo y los movimientos de sellos; apagado, la tarjeta heredada (fidelizacion, historial y el % del cupón).
+function recursosDeSeccion(clave, programaReal) {
+  switch (clave) {
+    case 'tarjeta':
+      return ['puntos', 'saldo']
+    case 'canje':
+      return ['puntos', 'saldo', 'catalogoMonedas']
+    case 'sellos':
+      if (programaReal === null) return ['saldo']
+      return programaReal ? ['saldo', 'catalogoSellos', 'sellosMovs'] : ['saldo', 'fidelizacion', 'historial', 'cuponSellos']
+    case 'cupones':
+      return ['saldo', 'cupones', 'promociones']
+    case 'movimientos':
+      return programaReal ? ['saldo', 'movimientos'] : ['saldo']
+    default:
+      return []
+  }
+}
+
 const idTab = (clave) => `recompensas-tab-${clave}`
 const idPanel = (clave) => `recompensas-panel-${clave}`
 
@@ -71,9 +92,7 @@ export default function RecompensasCliente({ publico = false }) {
 
   const userId = publico ? null : (session?.user?.id ?? null)
   const sesion = Boolean(userId)
-  const { recursos, cargar } = useRecursosRecompensas(userId)
-  // Catálogo público (QA-037): solo sin sesión; nunca se consulta nada personal.
-  const { catalogoPublico, recargarCatalogoPublico } = useCatalogoPublico(!sesion)
+  const { recursos, cargar, asegurar } = useRecursosRecompensas(userId)
   // Reglas vigentes (pública y mínima): «Cómo funciona» y los textos que dependen del programa. Con sesión se lee además el saldo
   // propio, pero esta pantalla ya lo carga con sus recursos (saldo), así que aquí solo importan las reglas.
   const programa = useProgramaRecompensas(null)
@@ -84,6 +103,8 @@ export default function RecompensasCliente({ publico = false }) {
     SECCIONES.findIndex((s) => s.clave === claveParam),
   )
   const seccion = SECCIONES[indiceActivo]
+  // Catálogo público (QA-037): solo sin sesión y solo al entrar a «Canjear puntos»; nunca se consulta nada personal.
+  const { catalogoPublico, recargarCatalogoPublico } = useCatalogoPublico(!sesion && seccion.clave === 'canje')
 
   async function generarCupon() {
     setGenerando(true)
@@ -142,6 +163,15 @@ export default function RecompensasCliente({ publico = false }) {
     irA(SECCIONES[destino].clave)
     tabsRef.current[destino]?.focus()
   }
+
+  // null = todavía no se sabe si el programa nuevo está activo (el saldo no llegó); true / false cuando ya se leyó.
+  const programaReal = recursos.saldo.estado === 'ok' ? Boolean(recursos.saldo.datos?.activo) : null
+  useEffect(() => {
+    if (seccion.personal && !sesion) return
+    asegurar(recursosDeSeccion(seccion.clave, programaReal))
+  // `userId` en las dependencias: si la identidad cambia con la pantalla montada (otra pestaña cierra sesión y entra otra clienta), el
+  // hook olvida lo pedido por la cuenta anterior y esto vuelve a pedir los recursos de la subpestaña a nombre de la nueva.
+  }, [seccion.clave, seccion.personal, sesion, userId, programaReal, asegurar])
 
   let contenido
   const { puntos, fidelizacion, historial, cupones, promociones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs, cuponSellos } = recursos

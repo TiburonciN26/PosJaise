@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
 import { rutaInicialPara } from './config/navegacion.js'
@@ -8,10 +8,14 @@ import RutaProtegida from './components/RutaProtegida.jsx'
 import RutaPrivada from './components/RutaPrivada.jsx'
 import Layout from './components/Layout.jsx'
 import PestanasCacheadas from './components/PestanasCacheadas.jsx'
+import LimiteCargaDiferida from './components/LimiteCargaDiferida.jsx'
+import { componenteDiferido } from './lib/moduloDiferido.js'
 
 // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
 // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
-const Login = lazy(() => import('./pages/Login.jsx'))
+// Fase 8 V2 (F8-01): reintentable y con límite local (Login no está en el precaché: la primera vez sin red no abre, pero
+// lo dice y se reintenta solo al volver la conexión, en vez de mostrar el «Algo salió mal» global).
+const Login = componenteDiferido(() => import('./pages/Login.jsx'), 'Login')
 
 // QA-021: el portal cliente (PortalCliente + ~20 páginas) viajaba en el bundle
 // inicial de TODOS los roles, incluido el POS que jamás lo usa. Ahora cada página
@@ -54,9 +58,13 @@ function App() {
   // El portal (y la página de la URL actual) se descargan ANTES de montarlo, con
   // el mismo "Cargando..." de siempre: así React no muestra ni estrangula un
   // fallback de Suspense (~300 ms medidos) y los POS no descargan nada de esto.
+  //
+  // Fase 5: mientras la autenticación sigue resolviendo (`cargando`) `usuario` es null aunque exista una sesión de personal
+  // guardada, y `vistaCliente` salía verdadero: cada recarga del POS descargaba el portal y Inicio sin necesitarlos. Ahora la
+  // precarga espera a conocer el rol; un visitante (sin sesión) no tiene perfil que leer, así que esa espera es inmediata.
   const [portalListo, setPortalListo] = useState(false)
   useEffect(() => {
-    if (!vistaCliente) return undefined
+    if (cargando || !vistaCliente) return undefined
     let vigente = true
     precargarPortalYRuta()
       .catch(() => {})
@@ -64,7 +72,7 @@ function App() {
     return () => {
       vigente = false
     }
-  }, [vistaCliente])
+  }, [cargando, vistaCliente])
 
   if (cargando) {
     return <CargandoPantalla />
@@ -97,9 +105,11 @@ function App() {
         <Route
           path="/login"
           element={
-            <Suspense fallback={<CargandoPantalla />}>
-              <Login />
-            </Suspense>
+            <LimiteCargaDiferida onReintentar={Login.reintentar}>
+              <Suspense fallback={<CargandoPantalla />}>
+                <Login />
+              </Suspense>
+            </LimiteCargaDiferida>
           }
         />
 
@@ -112,9 +122,11 @@ function App() {
           <Route
             element={
               portalListo ? (
-                <Suspense fallback={<CargandoPantalla />}>
-                  <PortalCliente />
-                </Suspense>
+                <LimiteCargaDiferida onReintentar={PortalCliente.reintentar}>
+                  <Suspense fallback={<CargandoPantalla />}>
+                    <PortalCliente />
+                  </Suspense>
+                </LimiteCargaDiferida>
               ) : (
                 <CargandoPantalla />
               )

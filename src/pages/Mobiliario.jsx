@@ -33,6 +33,7 @@ import ModalMobiliario, { OPCIONES_CONDICION } from '../components/ModalMobiliar
 import ModalCompraMobiliario from '../components/ModalCompraMobiliario.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const CAMPOS_OPCIONALES = [
   'marca',
@@ -198,8 +199,8 @@ export default function Mobiliario({ activo = true }) {
   const [muebles, setMuebles] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
-  const [orden, setOrden] = useState('nombre-asc')
+  const [busqueda, setBusqueda] = useEstadoVista('/mobiliario:busqueda', '')
+  const [orden, setOrden] = useEstadoVista('/mobiliario:orden', 'nombre-asc')
   const [abiertos, setAbiertos] = useState(() => new Set())
 
   const [modalMueble, setModalMueble] = useState(null) // null | 'nuevo' | mueble

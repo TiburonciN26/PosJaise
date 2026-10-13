@@ -340,6 +340,11 @@
      arriba/abajo, `vertical` = izquierda/derecha (misma convención). */
   --separador-horizontal-secundario: 12px;
   --separador-vertical-secundario: 12px;
+  /* Padding interno de BOTONES (celular): `verical` = arriba/abajo, `horizontal` = laterales
+     (mismos nombres que se pidieron, con la errata incluida). Se aplican con
+     `max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton)`. */
+  --pading-verical-boton: 3px;
+  --pading-horizontal-boton: 7px;
 }
 /* En lg+ (PC) se mantienen los 0.75rem originales; los 10px son solo móvil. */
 @media (min-width: 64rem) {
@@ -1083,6 +1088,14 @@ input[type='search']::-webkit-search-decoration {
   padding-inline: var(--lw-gutter);
 }
 
+/* Inicio (celular): los bloques bajo el hero usan el padding lateral global
+   de las pestañas (--separador-vertical) en vez del gutter fluido. */
+@media (max-width: 639px) {
+  .landing-web .lw-gutter.lw-gutter-sep {
+    padding-inline: var(--separador-vertical);
+  }
+}
+
 /* Detalle de servicio/producto: margen lateral más corto que el resto del portal. */
 .landing-web .lw-gutter-detalle {
   padding-inline: clamp(1rem, 2.5vw, 3rem);
@@ -1592,10 +1605,27 @@ input[type='search']::-webkit-search-decoration {
   font-weight: 800;
   letter-spacing: 8px;
 }
+/* Fase 6: brillo y destello se mueven con TRANSFORM (compuesto), no con `left` ni reescribiendo el gradiente en cada cuadro (antes
+   forzaba layout y repintado continuos). El gradiente del brillo es fijo y vive en ::before (el doble de grande para poder
+   desplazarlo); TarjetaPuntos.jsx / FondoNivel.jsx solo actualizan --gx / --gy y el transform del destello. */
 .tp-glare {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   mix-blend-mode: soft-light;
+  --gx: 0px;
+  --gy: 0px;
+}
+.tp-glare::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 248, 220, 0.7), rgba(255, 248, 220, 0) 24%);
+  transform: translate(var(--gx), var(--gy));
+  will-change: transform;
 }
 .tp-sheen {
   position: absolute;
@@ -1607,9 +1637,10 @@ input[type='search']::-webkit-search-decoration {
     100deg,
     rgba(255, 255, 255, 0) 0%,
     rgba(255, 255, 255, 0.9) 50%,
-    rgba(255, 255, 255, 0) 100%
+    rgba(255, 255, 255, 0)  100%
   );
-  transform: rotate(18deg);
+  transform: translateX(0) rotate(18deg);
+  will-change: transform;
   mix-blend-mode: overlay;
 }
 .tp-pista {
@@ -1782,13 +1813,17 @@ input[type='search']::-webkit-search-decoration {
   line-height: 1;
 }
 
+/* Fase 10A: el destello recorre la tarjeta con transform (compositor), no con `left`. Animar `left` forzaba layout en cada
+   cuadro y el navegador lo contaba como desplazamiento de diseño: CLS 0,2–0,4 en Inicio con la promoción visible. Mismo
+   recorrido que antes (de -45% a 130% del ancho de la tarjeta = 175% ÷ 34% de ancho propio ≈ 515%), igual que
+   cupon-sheen-pasada de los cupones metálicos (Fase 1). */
 @keyframes cupon-sheen {
   0% {
-    left: -45%;
+    transform: translateX(0) skewX(-20deg);
   }
   55%,
   100% {
-    left: 130%;
+    transform: translateX(515%) skewX(-20deg);
   }
 }
 
@@ -1994,7 +2029,7 @@ input[type='search']::-webkit-search-decoration {
 @media (max-width: 640px) {
   .lw-cta-hero {
     gap: 6px;
-    padding: 8px 14px;
+    padding: var(--pading-verical-boton) var(--pading-horizontal-boton);
     font-size: 10px;
   }
 }
@@ -2218,6 +2253,13 @@ input[type='search']::-webkit-search-decoration {
 }
 .shiny-text.disabled {
   animation: none;
+}
+/* Fase 10A: con movimiento reducido el brillo no recorre el texto (era la única animación infinita que seguía en Inicio
+   bajo prefers-reduced-motion: reduce); el texto queda estático con su color. */
+@media (prefers-reduced-motion: reduce) {
+  .shiny-text {
+    animation: none;
+  }
 }
 
 /* Variante para "Reserva tu cita" (hero de Inicio, pedido del usuario:

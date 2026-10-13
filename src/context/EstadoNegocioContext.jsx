@@ -36,12 +36,20 @@ export function EstadoNegocioProvider({ children }) {
   const [cancelacionPlazoHoras, setCancelacionPlazoHoras] = useState(null)
   const [cargando, setCargando] = useState(true)
 
+  // Fase 5: el efecto depende del ID de la cuenta, no del objeto `session`. Supabase entrega un objeto nuevo en cada
+  // TOKEN_REFRESHED (cada hora y al volver a la pestaña): con él como dependencia se cerraba y reabría el canal Realtime y se
+  // repetía la lectura de estado_negocio sin que nada hubiera cambiado.
+  const usuarioId = session?.user?.id ?? null
+  // «Esperando» solo importa para el visitante: con una cuenta ya identificada el efecto no debe reiniciarse cuando la auth
+  // termina de cargar el perfil (eso repetía la lectura y el canal Realtime sin que nada hubiera cambiado).
+  const esperandoVisitante = !usuarioId && cargandoAuth
+
   useEffect(() => {
-    if (!session) {
+    if (!usuarioId) {
       // QA-029: sin sesión AÚN (la auth sigue resolviendo la sesión guardada) no
       // es "sin configuración": marcarlo como cargado haría que el detalle del
       // servicio mostrara el texto de "no configurado" antes de que llegue la fila.
-      if (cargandoAuth) return undefined
+      if (esperandoVisitante) return undefined
 
       // Visitante (web pública): solo lo que la ficha del servicio anuncia —adelanto
       // mínimo y plazo de cancelación— por una función que NO devuelve cuentas de
@@ -111,7 +119,7 @@ export function EstadoNegocioProvider({ children }) {
       vigente = false
       supabase.removeChannel(canal)
     }
-  }, [session, cargandoAuth])
+  }, [usuarioId, esperandoVisitante])
 
   // El servidor decide quién puede llamar esto (RLS admin-only) — acá no
   // se repite ese chequeo, solo se propaga el error si Supabase lo rechaza.

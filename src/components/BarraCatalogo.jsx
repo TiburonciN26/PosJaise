@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowBigDown, Search, X } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 
@@ -8,6 +8,12 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 // elegir una categoría la lista se pliega con la misma animación y la
 // elegida queda marcada al lado de "Todos".
 // `categorias` incluye 'todos' primero; `conteos` es { categoria: n }.
+//
+// El texto de búsqueda vive AQUÍ mientras se escribe: teclear solo vuelve a pintar esta barra, no toda la página del catálogo
+// (héroe, cintas, filas), que en un móvil lento costaba cientos de ms por tecla. La página recibe `onBusqueda` recién tras una
+// pausa (RETARDO_BUSQUEDA_MS), una petición por pausa y no por tecla; vaciar el campo avisa al instante para volver a «Todos».
+const RETARDO_BUSQUEDA_MS = 250
+
 export default function BarraCatalogo({
   categorias,
   conteos,
@@ -22,6 +28,30 @@ export default function BarraCatalogo({
 }) {
   const [abierto, setAbierto] = useState(false)
   const barraRef = useRef(null)
+  const [texto, setTexto] = useState(busqueda)
+  const ultimoEnviado = useRef(busqueda)
+
+  // Si la página cambia el texto por su cuenta (no es el eco de lo que enviamos), la caja lo sigue.
+  useEffect(() => {
+    if (busqueda !== ultimoEnviado.current) {
+      ultimoEnviado.current = busqueda
+      setTexto(busqueda)
+    }
+  }, [busqueda])
+
+  useEffect(() => {
+    if (texto === ultimoEnviado.current) return undefined
+    const enviar = () => {
+      ultimoEnviado.current = texto
+      startTransition(() => onBusqueda(texto)) // la página reacomoda su contenido en rebanadas, sin bloquear la caja
+    }
+    if (!texto.trim()) {
+      enviar()
+      return undefined
+    }
+    const id = setTimeout(enviar, RETARDO_BUSQUEDA_MS)
+    return () => clearTimeout(id)
+  }, [texto, onBusqueda])
 
   useCerrarConEscape(() => setAbierto(false), abierto, { trabajoPendiente: false })
 
@@ -89,14 +119,14 @@ export default function BarraCatalogo({
           <Search className="h-[15px] w-[15px] shrink-0" />
           <input
             type="text"
-            value={busqueda}
-            onChange={(evento) => onBusqueda(evento.target.value)}
+            value={texto}
+            onChange={(evento) => setTexto(evento.target.value)}
             placeholder={placeholder}
             aria-label={placeholder.replace('…', '')}
             className="w-full min-w-0 bg-transparent text-[13px] text-white outline-none placeholder:text-white/40"
           />
-          {busqueda && (
-            <button type="button" onClick={() => onBusqueda('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
+          {texto && (
+            <button type="button" onClick={() => setTexto('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
               <X className="h-3.5 w-3.5" />
             </button>
           )}

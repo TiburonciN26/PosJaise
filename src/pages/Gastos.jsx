@@ -19,6 +19,7 @@ import ModalGasto, { MESES } from '../components/ModalGasto.jsx'
 import ModalPlantillasGasto from '../components/ModalPlantillasGasto.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const MAX_NOMBRES_VISIBLES = 3
 
@@ -102,8 +103,8 @@ export default function Gastos({ activo = true }) {
   // auditoría) — el resto de la app ya deriva el período con anioMesEnLima.
   const { anio: anioLima, mes: mesLimaIndice } = anioMesEnLima(new Date())
 
-  const [mes, setMes] = useState(mesLimaIndice + 1)
-  const [anio, setAnio] = useState(anioLima)
+  const [mes, setMes] = useEstadoVista('/gastos:mes', mesLimaIndice + 1)
+  const [anio, setAnio] = useEstadoVista('/gastos:anio', anioLima)
   // B9 de la 3ª auditoría: texto del input separado del año numérico — antes
   // el input escribía directo sobre "anio" y, al borrar el campo para
   // escribir uno nuevo, el fallback (parseInt(...) || anioLima) saltaba al

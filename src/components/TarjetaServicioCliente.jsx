@@ -1,3 +1,4 @@
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Sparkles } from 'lucide-react'
 import { urlPublicaFoto } from '../lib/imagenes.js'
@@ -13,9 +14,12 @@ const BUCKET_FOTOS = 'fotos-servicios'
 // tarjeta (foto y nombre) es un solo link a /servicios/:id. La usan
 // ServiciosCliente (catálogo agrupado y grilla plana) y
 // DetalleServicioCliente ("También te puede interesar").
-export default function TarjetaServicioCliente({ servicio }) {
+// memo: el carrusel del héroe repinta la página entera cada 5 s; sin esto repintaba también hasta 40 tarjetas sin necesidad.
+export default memo(function TarjetaServicioCliente({ servicio }) {
   const urlFoto = urlPublicaFoto(BUCKET_FOTOS, servicio.foto_url, 'm')
   const duracion = formatearDuracion(servicio.duracion_min)
+  // Si la foto no carga (borrada, sin red) se muestra el degradado de siempre en vez de una imagen rota.
+  const [urlFallida, setUrlFallida] = useState(null)
 
   return (
     <article className="flex min-w-0 flex-col gap-2.5">
@@ -23,11 +27,13 @@ export default function TarjetaServicioCliente({ servicio }) {
         to={`/servicios/${servicio.id}`}
         className="group relative block aspect-square overflow-hidden rounded-[10px] bg-[#151517]"
       >
-        {urlFoto ? (
+        {urlFoto && urlFoto !== urlFallida ? (
           <img
             src={urlFoto}
             alt=""
             loading="lazy"
+            decoding="async"
+            onError={() => setUrlFallida(urlFoto)}
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]"
           />
         ) : (
@@ -59,4 +65,4 @@ export default function TarjetaServicioCliente({ servicio }) {
       {duracion && <span className="-mt-1.5 text-xs text-white/50">{duracion}</span>}
     </article>
   )
-}
+})

@@ -61,4 +61,8 @@ const rutas = JSON.parse(readFileSync(resolve(salida, '_routes.json'), 'utf8'))
 if (rutas.version !== 1 || rutas.include.join() !== '/medios,/medios/*' || rutas.exclude.length) falla('_routes.json inesperado')
 const swSalida = readFileSync(resolve(salida, 'sw.js'), 'utf8')
 if (!swExcluyeMedios(swSalida)) falla('sw.js no excluye /medios/ de la navegación (navigateFallbackDenylist)')
-console.log('build-cloudflare: OK (base /, sin 404.html, _headers y _routes.json, SW sin fallback en /medios, sin credenciales privilegiadas)')
+// Fase 8 V2 (F8-02): las reglas de caché por uso viven en sw-reglas-cache.js; sin él el SW no se instala (falla cerrado),
+// pero el build no debe publicarse así.
+if (!/importScripts\(\s*"sw-reglas-cache\.js"\s*\)/.test(swSalida) || !existsSync(resolve(salida, 'sw-reglas-cache.js'))) falla('sw.js no importa sw-reglas-cache.js o falta en la salida')
+if (/sameOrigin\s*&&/.test(swSalida)) falla('sw.js conserva una regla de caché por «mismo origen» (F8-02)')
+console.log('build-cloudflare: OK (base /, sin 404.html, _headers y _routes.json, SW sin fallback en /medios, reglas de caché por uso, sin credenciales privilegiadas)')

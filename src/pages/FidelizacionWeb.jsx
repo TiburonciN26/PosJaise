@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import AyudaCampo from '../components/AyudaCampo.jsx'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import { ListFilter, Stamp, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { formatearValorCupon, nivelDeCupon } from '../lib/cupones.js'
 import Etiqueta from '../components/Etiqueta.jsx'
 import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import PaginadorLista from '../components/PaginadorLista.jsx'
+import { useCuponesAdmin } from '../hooks/useCuponesAdmin.js'
 
 const formularioVacio = {
   porcentajeRecompensa: '20',
@@ -20,6 +23,9 @@ const ETIQUETAS_ESTADO = {
   ANULADO: { texto: 'Anulado', clase: 'bg-ink/10 text-ink/50' },
 }
 
+// Orígenes que lista esta pantalla (los de Referidos tienen la suya en Referidos Web).
+const ORIGENES_FIDELIZACION = ['FIDELIZACION']
+
 // Acabado verde de los cupones de fidelización en la web de clientes.
 const NIVEL_CUPON = nivelDeCupon({ origen: 'FIDELIZACION' })
 
@@ -29,9 +35,6 @@ const OPCIONES_FILTRO = [
   { id: 'CANJEADO', label: 'Canjeados' },
 ]
 
-const normalizar = (texto) =>
-  (texto ?? '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
-
 // Panel administrativo de "Fidelización Web" (cuelga de /web como
 // "padre", admin-only, mismo patrón que Puntos Web/Referidos Web) —
 // configura el % de descuento del cupón que se genera al completar una
@@ -40,46 +43,25 @@ const normalizar = (texto) =>
 // no aplica acá, es la tarjeta de puntos — esto es la tarjeta de sellos)
 // se sigue viendo solo desde el lado del cliente (FidelizacionCliente.jsx);
 // acá solo el % y la trazabilidad de lo ya generado.
-export default function FidelizacionWeb() {
+export default function FidelizacionWeb({ activo = true }) {
   const { mostrarToast } = useToast()
   const [formulario, setFormulario] = useState(formularioVacio)
-  const [cupones, setCupones] = useState([])
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
-  const [filtro, setFiltro] = useState('RECIENTES')
-  const [busqueda, setBusqueda] = useState('')
-
-  // La consulta ya llega ordenada por creado_en desc, así que "Más recientes"
-  // es el orden base y los otros filtros solo recortan por estado.
-  const cuponesVisibles = useMemo(() => {
-    const consulta = normalizar(busqueda)
-    return cupones.filter((cupon) => {
-      if (filtro !== 'RECIENTES' && cupon.estado !== filtro) return false
-      if (!consulta) return true
-      return normalizar(cupon.codigo).includes(consulta) || normalizar(cupon.cliente?.nombre).includes(consulta)
-    })
-  }, [cupones, filtro, busqueda])
+  // Fase 5: los cupones emitidos se leen paginados (hasta 40 por página) con filtro, búsqueda y contadores globales del
+  // servidor; la configuración (% del cupón) es una sola fila y se lee aparte.
+  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_FIDELIZACION, activo, claveVista: '/fidelizacion-web' })
 
   useEffect(() => {
-    Promise.all([
-      supabase.from('config_fidelizacion').select('porcentaje_recompensa').eq('id', 1).single(),
-      // "clientes!cliente_id" desambigua: cupones tiene DOS FK a
-      // clientes (cliente_id y referido_id) — mismo hint que ya usa
-      // ReferidosWeb.jsx, sin él PostgREST no sabe cuál usar.
-      // origen=FIDELIZACION: esta pantalla es solo de ESTOS cupones,
-      // los de Referidos tienen su propia lista en Referidos Web.
-      supabase
-        .from('cupones')
-        .select('codigo, valor, tipo_descuento, estado, creado_en, cliente:clientes!cliente_id(nombre)')
-        .eq('origen', 'FIDELIZACION')
-        .order('creado_en', { ascending: false }),
-    ]).then(([configRes, cuponesRes]) => {
-      if (configRes.data) {
-        setFormulario({ porcentajeRecompensa: String(configRes.data.porcentaje_recompensa) })
-      }
-      setCupones(cuponesRes.data ?? [])
-      setCargando(false)
-    })
+    supabase
+      .from('config_fidelizacion')
+      .select('porcentaje_recompensa')
+      .eq('id', 1)
+      .single()
+      .then((configRes) => {
+        if (configRes.data) setFormulario({ porcentajeRecompensa: String(configRes.data.porcentaje_recompensa) })
+        setCargando(false)
+      })
   }, [])
 
   function actualizarCampo(campo, valor) {
@@ -88,6 +70,7 @@ export default function FidelizacionWeb() {
 
   async function guardar(evento) {
     evento.preventDefault()
+    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
 
     const porcentaje = parseFloat(formulario.porcentajeRecompensa)
     if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
@@ -108,6 +91,7 @@ export default function FidelizacionWeb() {
       return
     }
 
+    confirmarGuardado(envio)
     mostrarToast('Configuración de fidelización actualizada.', 'exito')
   }
 
@@ -172,21 +156,39 @@ export default function FidelizacionWeb() {
         />
       </div>
 
-      {cupones.length === 0 ? (
+      {conteos && (
+        <p className="mt-1 font-mono text-xs text-ink/60" data-conteos>
+          {conteos.DISPONIBLE + conteos.CANJEADO + conteos.ANULADO} emitidos · {conteos.DISPONIBLE} disponibles · {conteos.CANJEADO} canjeados
+          {conteos.ANULADO > 0 ? ` · ${conteos.ANULADO} anulados` : ''}
+        </p>
+      )}
+
+      {lista.fallo && (
+        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+          No se pudo cargar los cupones.{' '}
+          <button type="button" onClick={lista.recargar} className="underline">
+            Reintentar
+          </button>
+        </p>
+      )}
+
+      {lista.cargando ? (
+        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>
+      ) : lista.error ? null : lista.total === 0 && !termino && !estado ? (
         <EstadoVacio icono={Stamp} mensaje="Todavía no se generó ningún cupón de fidelización." />
-      ) : cuponesVisibles.length === 0 ? (
+      ) : lista.filas.length === 0 ? (
         <EstadoVacio icono={Stamp} mensaje="Ningún cupón coincide con la búsqueda o el filtro." />
       ) : (
-        <div className="mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)]">
-          {cuponesVisibles.map((cupon) => {
+        <div className={`mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)] transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((cupon) => {
             const etiquetaEstado = ETIQUETAS_ESTADO[cupon.estado] ?? ETIQUETAS_ESTADO.DISPONIBLE
             return (
-              <EnvolturaCupon key={cupon.codigo} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
+              <EnvolturaCupon key={cupon.id} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
                 <div className="relative flex items-center gap-3 p-3">
                   <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
                   <div className="min-w-0 flex-1">
                     <p className={`font-mono text-base font-semibold tracking-widest ${NIVEL_CUPON.claseTexto}`}>{cupon.codigo}</p>
-                    <p className="truncate text-xs text-white/50">{cupon.cliente?.nombre ?? '—'}</p>
+                    <p className="truncate text-xs text-white/50">{cupon.cliente_nombre ?? '—'}</p>
                   </div>
                   <div className="shrink-0 text-right">
                     <p className={`font-semibold ${NIVEL_CUPON.claseTexto}`}>{formatearValorCupon(cupon)}</p>
@@ -197,6 +199,18 @@ export default function FidelizacionWeb() {
             )
           })}
         </div>
+      )}
+
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista
+          pagina={lista.pagina}
+          totalPaginas={lista.totalPaginas}
+          total={lista.total}
+          tam={lista.tam}
+          ocupado={lista.ocupado}
+          onPagina={lista.irA}
+          etiqueta="cupones"
+        />
       )}
     </div>
   )

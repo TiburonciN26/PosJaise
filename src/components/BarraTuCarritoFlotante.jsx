@@ -1,26 +1,34 @@
+import { useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { useCarritoCliente } from '../context/CarritoClienteContext.jsx'
-import { formatearSoles } from '../lib/moneda.js'
+import { usePreciosSeleccion } from '../hooks/usePreciosSeleccion.js'
+import { formatearSoles, redondear2 } from '../lib/moneda.js'
 
 // Barra flotante "Tu carrito" de Productos y su Detalle
 // (docs/diseno-productos/README.md, sección 6/11) — mismo patrón que
 // BarraTuCitaFlotante.jsx (cita de servicios), pero sobre
 // `productosCarrito` (Map id → cantidad) en vez de `serviciosCarrito`.
-// `productos` es el catálogo que ya cargó la página, para sacar
-// nombre/precio de cada id sin una consulta aparte.
+// `productos` son los que la página ya tiene en memoria (no el catálogo completo: desde la Fase 4 los catálogos se leen por
+// páginas). El precio del resto se resuelve por id con usePreciosSeleccion (ver ese hook: caché por sesión, reconciliada con lo que
+// muestra la página y con vigencia). La cantidad cuenta TODO lo seleccionado aunque aún no se conozca su precio; mientras falte alguno
+// el total NO se presenta como completo: dice «calculando…» o, si la lectura falló, ofrece reintentar.
 export default function BarraTuCarritoFlotante({ productos }) {
   const { productosCarrito } = useCarritoCliente()
+  const ids = useMemo(() => [...productosCarrito.keys()].sort(), [productosCarrito])
+  const refrescarCon = useMemo(() => [...productosCarrito].sort().join('|'), [productosCarrito])
+  const { precioDe, estado, reintentar } = usePreciosSeleccion({ tabla: 'productos', ids, conocidos: productos, refrescarCon })
 
-  const porId = new Map(productos.map((p) => [p.id, p]))
   let cantidadTotal = 0
   let total = 0
+  let pendiente = false
   for (const [id, cantidad] of productosCarrito) {
-    const producto = porId.get(id)
-    if (!producto) continue
+    const precio = precioDe(id)
+    if (precio === null) continue // la lectura funcionó y ese producto ya no está disponible
     cantidadTotal += cantidad
-    total += Number(producto.precio) * cantidad
+    if (precio === undefined) pendiente = true
+    else total += precio * cantidad
   }
   if (cantidadTotal === 0) return null
 
@@ -31,7 +39,15 @@ export default function BarraTuCarritoFlotante({ productos }) {
       <div className="lw-barra-flotante pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
         <span className="text-sm text-white">
           <b className="font-semibold">{cantidadTotal}</b> <span className="text-white/60">{plural} en tu carrito ·</span>{' '}
-          <b className="font-semibold">{formatearSoles(total)}</b>
+          {!pendiente ? (
+            <b className="font-semibold">{formatearSoles(redondear2(total))}</b>
+          ) : estado === 'error' ? (
+            <button type="button" onClick={reintentar} className="font-semibold text-[var(--lw-gold)] underline underline-offset-2">
+              Total no disponible · Reintentar
+            </button>
+          ) : (
+            <span className="text-white/60">calculando total…</span>
+          )}
         </span>
         <Link
           to="/carrito"

@@ -62,15 +62,16 @@ const CLAVES = Object.keys(FUENTES)
 const PENDIENTE = { estado: 'cargando', datos: null }
 const RECURSOS_INICIALES = Object.fromEntries(CLAVES.map((clave) => [clave, PENDIENTE]))
 
-// Carga los recursos de la clienta `userId` (null = sin sesión: no se
-// consulta nada). Cada recurso se carga y se reintenta por separado, así
-// que uno fallido no bloquea a los demás. Los datos quedan atados a la
-// cuenta que los pidió: si cambia el usuario, lo anterior deja de verse
-// de inmediato y una respuesta tardía de la cuenta previa se descarta.
+// Recursos de la clienta `userId` (null = sin sesión: no se consulta nada). Fase 5: NO se piden todos al abrir la pantalla; cada
+// subpestaña pide los suyos al entrar (`asegurar`), una sola vez por cuenta, y lo ya leído se conserva al cambiar de subpestaña
+// (los reintentos y las actualizaciones tras un canje usan `cargar`). Cada recurso se carga y se reintenta por separado, así que
+// uno fallido no bloquea a los demás. Los datos quedan atados a la cuenta que los pidió: si cambia el usuario, lo anterior deja de
+// verse de inmediato y una respuesta tardía de la cuenta previa se descarta.
 export function useRecursosRecompensas(userId) {
   const [almacen, setAlmacen] = useState({ dueno: null, recursos: RECURSOS_INICIALES })
   const generacion = useRef(0)
   const duenoActual = useRef(userId)
+  const pedidas = useRef(new Set())
   duenoActual.current = userId
 
   const recursos = almacen.dueno === userId ? almacen.recursos : RECURSOS_INICIALES
@@ -78,6 +79,7 @@ export function useRecursosRecompensas(userId) {
   const cargar = useCallback(async (clave, { silencioso = false } = {}) => {
     const dueno = duenoActual.current
     if (!dueno) return false
+    pedidas.current.add(clave)
     const gen = generacion.current
 
     const guardar = (valor) =>
@@ -107,15 +109,25 @@ export function useRecursosRecompensas(userId) {
     return true
   }, [])
 
+  // Al cambiar de cuenta (o al montar) se invalida lo que volaba y se olvida qué recursos se habían pedido.
   useEffect(() => {
     generacion.current += 1
-    if (userId) CLAVES.forEach((clave) => cargar(clave))
+    pedidas.current = new Set()
     return () => {
       generacion.current += 1
     }
-  }, [userId, cargar])
+  }, [userId])
 
-  return { recursos, cargar }
+  // Pide los recursos de la subpestaña actual que esta cuenta todavía no pidió.
+  const asegurar = useCallback(
+    (claves) => {
+      if (!duenoActual.current) return
+      for (const clave of claves) if (!pedidas.current.has(clave)) cargar(clave)
+    },
+    [cargar],
+  )
+
+  return { recursos, cargar, asegurar }
 }
 
 // Catálogo PÚBLICO (QA-037): sin sesión, solo lo publicado, sin datos personales ni
@@ -123,6 +135,7 @@ export function useRecursosRecompensas(userId) {
 export function useCatalogoPublico(activo) {
   const [estado, setEstado] = useState({ estado: 'cargando', datos: null })
   const generacion = useRef(0)
+  const terminado = useRef(false)
 
   const cargar = useCallback(async () => {
     const gen = ++generacion.current
@@ -134,11 +147,15 @@ export function useCatalogoPublico(activo) {
       r = { error }
     }
     if (gen !== generacion.current) return
+    terminado.current = !r.error
     setEstado(r.error ? { estado: 'error', datos: null } : { estado: 'ok', datos: r.data ?? [] })
   }, [])
 
+  // Solo se vuelve a leer si la lectura anterior NO terminó bien: volver a «Canjear puntos» con el catálogo ya leído no repite la
+  // consulta. Se decide por «terminó», no por «se pidió»: el replay de efectos de StrictMode (desarrollo) invalida la primera
+  // respuesta con el cleanup y la segunda ejecución debe poder volver a pedir.
   useEffect(() => {
-    if (activo) cargar()
+    if (activo && !terminado.current) cargar()
     return () => {
       generacion.current += 1
     }

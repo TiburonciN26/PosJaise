@@ -1,3 +1,4 @@
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Package } from 'lucide-react'
 import { urlPublicaFoto } from '../lib/imagenes.js'
@@ -29,8 +30,11 @@ export function porcentajeDescuento(producto) {
 // por si algo más las sigue usando). La usan ProductosCliente (catálogo
 // agrupado y grilla plana), la cinta de Ofertas/Destacados y
 // DetalleProductoCliente ("También te puede interesar").
-export default function TarjetaProductoCliente({ producto }) {
+// memo: el carrusel del héroe repinta la página entera cada 5 s; sin esto repintaba también hasta 40 tarjetas sin necesidad.
+export default memo(function TarjetaProductoCliente({ producto }) {
   const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url, 'm')
+  // Si la foto no carga (borrada, sin red) se muestra el degradado de siempre en vez de una imagen rota.
+  const [urlFallida, setUrlFallida] = useState(null)
   const agotado = producto.stock_actual <= 0
   const descuento = porcentajeDescuento(producto)
 
@@ -40,11 +44,13 @@ export default function TarjetaProductoCliente({ producto }) {
         to={`/productos/${producto.id}`}
         className="group relative block aspect-square overflow-hidden rounded-[10px] bg-[#151517]"
       >
-        {urlFoto ? (
+        {urlFoto && urlFoto !== urlFallida ? (
           <img
             src={urlFoto}
             alt=""
             loading="lazy"
+            decoding="async"
+            onError={() => setUrlFallida(urlFoto)}
             className={`h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045] ${agotado ? 'opacity-45' : ''}`}
           />
         ) : (
@@ -91,4 +97,4 @@ export default function TarjetaProductoCliente({ producto }) {
       <span className="-mt-1.5 text-xs text-white/50">{stockTexto(producto)}</span>
     </article>
   )
-}
+})

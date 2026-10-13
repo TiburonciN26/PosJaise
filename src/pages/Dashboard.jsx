@@ -7,6 +7,7 @@ import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/fina
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import { EsqueletoResumen } from '../components/Esqueleto.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const METRICAS_VACIAS = {
   ingresoProductos: 0,
@@ -186,8 +187,8 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
 }
 
 export default function Dashboard({ activo = true }) {
-  const [filtro, setFiltro] = useState('mes')
-  const [personalizado, setPersonalizado] = useState(() => {
+  const [filtro, setFiltro] = useEstadoVista('/dashboard:filtro', 'mes')
+  const [personalizado, setPersonalizado] = useEstadoVista('/dashboard:personalizado', () => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
   })

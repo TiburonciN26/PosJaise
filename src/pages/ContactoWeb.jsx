@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import GuiaPestana from '../components/GuiaPestana.jsx'
 import { CalendarDays, ImagePlus, MapPin, Phone, Wallet, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
 import AyudaCampo from '../components/AyudaCampo.jsx'
@@ -282,6 +283,7 @@ export default function ContactoWeb() {
 
   async function guardar(evento) {
     evento.preventDefault()
+    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
 
     const primerInvalido = telefonoIncompleto
       ? 'contacto-telefono'
@@ -376,6 +378,7 @@ export default function ContactoWeb() {
     setPlinQrNueva(null)
     setPlinQrEliminada(false)
 
+    confirmarGuardado(envio)
     mostrarToast('Datos de contacto actualizados.', 'exito')
   }
 

@@ -32,6 +32,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCION_TODOS = 'todos'
 const TAMANO_PAGINA = 50
@@ -110,8 +111,8 @@ export default function MiPanel({ activo = true }) {
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
 
-  const [filtro, setFiltro] = useState('mes')
-  const [personalizado, setPersonalizado] = useState(() => {
+  const [filtro, setFiltro] = useEstadoVista('/mi-panel:filtro', 'mes')
+  const [personalizado, setPersonalizado] = useEstadoVista('/mi-panel:personalizado', () => {
     const hoyStr = formatearFechaISO(new Date())
     return { desde: hoyStr, hasta: hoyStr }
   })
@@ -122,7 +123,7 @@ export default function MiPanel({ activo = true }) {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/mi-panel:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
 
   const [asistentesUsuarios, setAsistentesUsuarios] = useState([])

@@ -8,6 +8,7 @@ import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 // QA-050: cuántas tarjetas se pintan a la vez. Los datos siguen COMPLETOS en memoria (lectura por bloques, QA-046) y la
 // búsqueda y el orden recorren todo el catálogo; solo el DOM se acota.
@@ -232,8 +233,8 @@ export default function Porcentajes({ activo = true }) {
   const [porcentajes, setPorcentajes] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
-  const [orden, setOrden] = useState('nombre-asc')
+  const [busqueda, setBusqueda] = useEstadoVista('/porcentajes:busqueda', '')
+  const [orden, setOrden] = useEstadoVista('/porcentajes:orden', 'nombre-asc')
   const [ventana, setVentana] = useState({ clave: '', n: TAMANO_VENTANA })
   const primeraCargaHecha = useRef(false)
   const numColumnas = useNumeroColumnas()

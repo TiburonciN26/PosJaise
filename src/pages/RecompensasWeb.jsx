@@ -1,13 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Coins, Plus, Stamp, ShieldCheck, ShoppingBag, Settings2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { leerServicios } from '../lib/buscarServicios.js'
+import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+import { buscarServicios, servicioPorId } from '../lib/buscarServicios.js'
 import { patronIlike } from '../lib/buscarClientes.js'
 import { useToast } from '../context/ToastContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { useProtegerPantalla } from '../context/PaginaActivaContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
+import { useDebounce } from '../hooks/useDebounce.js'
+import { useListaPaginada } from '../hooks/useListaPaginada.js'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
+import PaginadorLista from '../components/PaginadorLista.jsx'
 
 // Administración de Recompensas (Fase 2) — cuelga de /web, solo ADMINISTRADOR.
 // Las escrituras las limita el backend (RLS es_admin() en recompensas_catalogo,
@@ -168,10 +175,65 @@ function AvisoError({ mensaje, onReintentar }) {
   )
 }
 
+// Selector del servicio del premio (Fase 5): busca en el servidor y muestra como máximo 40 opciones (más la elegida). Antes el
+// modal montaba un <option> por cada servicio de la tabla (miles) con solo abrirlo.
+function CampoServicioPremio({ id, valor, onCambiar }) {
+  const [texto, setTexto] = useState('')
+  const termino = useDebounce(texto.trim(), 250)
+  const [opciones, setOpciones] = useState([])
+  const [elegido, setElegido] = useState(null)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    let vigente = true
+    buscarServicios(supabase, termino, { limite: 40, columnas: 'id, nombre' }).then(
+      (filas) => {
+        if (!vigente) return
+        setOpciones(filas)
+        setError(false)
+      },
+      () => vigente && setError(true),
+    )
+    return () => {
+      vigente = false
+    }
+  }, [termino])
+
+  // La opción elegida puede quedar fuera de los resultados de la búsqueda (o venir de un premio ya guardado): se pide por id.
+  useEffect(() => {
+    if (!valor) return undefined
+    let vigente = true
+    servicioPorId(supabase, valor, 'id, nombre').then(
+      (fila) => vigente && setElegido(fila),
+      () => {},
+    )
+    return () => {
+      vigente = false
+    }
+  }, [valor])
+
+  const visibles = elegido && valor === elegido.id && !opciones.some((o) => o.id === elegido.id) ? [elegido, ...opciones] : opciones
+  return (
+    <div className="space-y-2">
+      <input aria-label="Buscar servicio del premio" placeholder="Buscar servicio…" value={texto} onChange={(e) => setTexto(e.target.value)} className={CLASE_INPUT} />
+      <select id={id} className={CLASE_INPUT} value={valor} onChange={(e) => onCambiar(e.target.value)}>
+        <option value="">Elige…</option>
+        {visibles.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.nombre}
+          </option>
+        ))}
+      </select>
+      {error && <p role="alert" className="text-xs text-red">No se pudieron buscar servicios.</p>}
+      {opciones.length === 40 && <p className="text-xs text-ink/50">Se muestran los primeros 40: escribe para acotar.</p>}
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Modal de premio
 // ---------------------------------------------------------------------------
-function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onGuardado }) {
+function ModalPremio({ premio, origen, sellosPorPremio, onCerrar, onGuardado }) {
   const { mostrarToast } = useToast()
   const [f, setF] = useState(() => (premio ? premioAFormulario(premio) : premioVacio(origen)))
   const [guardando, setGuardando] = useState(false)
@@ -246,14 +308,7 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
               </Campo>
             ) : (
               <Campo id={`${idBase}-serv`} etiqueta="Servicio" obligatorio>
-                <select id={`${idBase}-serv`} className={CLASE_INPUT} value={f.servicioId} onChange={(e) => set('servicioId', e.target.value)}>
-                  <option value="">Elige…</option>
-                  {servicios.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nombre}
-                    </option>
-                  ))}
-                </select>
+                <CampoServicioPremio id={`${idBase}-serv`} valor={f.servicioId} onCambiar={(id) => set('servicioId', id)} />
               </Campo>
             )}
           </div>
@@ -400,9 +455,85 @@ function resumenCondiciones(p) {
   return partes.join(' · ')
 }
 
-function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
+// Detalle de un premio (se monta solo al expandirlo): condiciones completas y cuántas veces se reclamó. El conteo de canjes se
+// pide al abrir —un conteo exacto de ESE premio—, en vez de descargar todos los canjes al entrar a la pestaña.
+function DetallePremio({ premio: p, origen, sellosPorPremio, canje, pedirCanje, onEditar }) {
+  useEffect(() => {
+    if (!canje) pedirCanje(p.id)
+  }, [canje, p.id, pedirCanje])
+  const usados = canje?.estado === 'ok' ? canje.n : null
+
+  return (
+    <div className="border-t border-border px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+      <p className="font-mono text-xs text-ink/70">
+        {origen === 'MONEDAS'
+          ? `Costo: ${p.costo_basico ?? '—'} / ${p.costo_premium ?? p.costo_basico ?? '—'} / ${p.costo_vip ?? p.costo_premium ?? p.costo_basico ?? '—'} (Básico / Premium / VIP)`
+          : `Costo: ${sellosPorPremio} sellos`}
+      </p>
+      <p className="font-mono text-xs text-ink/60" aria-busy={canje?.estado === 'cargando' || !canje}>
+        {usados === null ? (
+          canje?.estado === 'error' ? (
+            <>
+              Reclamados: no disponible{' '}
+              <button type="button" onClick={() => pedirCanje(p.id)} className="underline">
+                Reintentar
+              </button>
+            </>
+          ) : (
+            'Reclamados: …'
+          )
+        ) : (
+          <>
+            Reclamados: {usados}
+            {p.cupo_global !== null ? ` · restantes: ${Math.max(p.cupo_global - usados, 0)} de ${p.cupo_global}` : ' · sin cupo global'}
+          </>
+        )}
+        {p.limite_por_clienta !== null ? ` · máx. ${p.limite_por_clienta} por clienta` : ''}
+      </p>
+      <p className="font-mono text-xs text-ink/60">
+        Reclamo: {p.reclamo_desde || p.reclamo_hasta ? `${p.reclamo_desde ? new Date(p.reclamo_desde).toLocaleDateString('es-PE') : '…'} – ${p.reclamo_hasta ? new Date(p.reclamo_hasta).toLocaleDateString('es-PE') : '…'}` : 'siempre'}
+        {' · '}Cupón: {p.cupon_vigencia_dias || p.cupon_vence_el ? `${p.cupon_vigencia_dias ? `${p.cupon_vigencia_dias} días` : ''}${p.cupon_vigencia_dias && p.cupon_vence_el ? ' / ' : ''}${p.cupon_vence_el ? `hasta ${new Date(p.cupon_vence_el).toLocaleDateString('es-PE')}` : ''}` : 'indefinido'}
+      </p>
+      <button type="button" onClick={() => onEditar(p)} className="mt-2 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink hover:border-azul-metal hover:text-azul-metal">
+        Editar
+      </button>
+    </div>
+  )
+}
+
+// Fase 5: el catálogo se lee paginado (hasta 40 premios por página) y SOLO al entrar a esta subpestaña; el detalle de cada premio
+// se monta y se consulta al expandirlo.
+function Catalogo({ origen, activo, sellosPorPremio }) {
   const [editando, setEditando] = useState(null) // null | 'nuevo' | premio
-  const lista = useMemo(() => estado.premios.filter((p) => p.origen === origen), [estado.premios, origen])
+  const [abiertos, setAbiertos] = useState(() => new Set())
+  const [canjes, setCanjes] = useState({}) // id → { estado: 'cargando' | 'ok' | 'error', n }
+  const lista = useListaPaginada({
+    activo,
+    clave: origen,
+    leer: ({ desde, hasta }) =>
+      supabase
+        .from('recompensas_catalogo')
+        .select('*', { count: 'exact' })
+        .eq('origen', origen)
+        .order('creado_en', { ascending: false })
+        .order('id', { ascending: false })
+        .range(desde, hasta),
+  })
+
+  const pedirCanje = useCallback(async (id) => {
+    setCanjes((a) => ({ ...a, [id]: { estado: 'cargando' } }))
+    const { count, error } = await supabase.from('recompensas_canjes').select('id', { count: 'exact', head: true }).eq('catalogo_id', id)
+    setCanjes((a) => ({ ...a, [id]: error || !Number.isSafeInteger(count) ? { estado: 'error' } : { estado: 'ok', n: count } }))
+  }, [])
+
+  function alternar(id) {
+    setAbiertos((a) => {
+      const siguiente = new Set(a)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
+      return siguiente
+    })
+  }
 
   return (
     <div>
@@ -418,58 +549,59 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
         </button>
       </div>
 
-      {lista.length === 0 ? (
+      {lista.fallo && <AvisoError mensaje="No se pudo cargar el catálogo." onReintentar={lista.recargar} />}
+      {lista.cargando && <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>}
+
+      {!lista.cargando && !lista.error && lista.total === 0 && (
         <p className="mt-6 text-center text-sm text-ink/60">
           Todavía no hay premios. El catálogo no trae ejemplos: crea y revisa cada uno antes de publicarlo.
         </p>
-      ) : (
-        <ul className="mt-4 space-y-2">
-          {lista.map((p) => {
-            const usados = estado.canjes[p.id] ?? 0
+      )}
+
+      {!lista.cargando && !lista.error && lista.total > 0 && (
+        <ul className={`mt-4 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((p) => {
+            const abierto = abiertos.has(p.id)
             return (
-              <li key={p.id} className="rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{p.nombre}</p>
-                    <p className="font-mono text-xs text-ink/60">{resumenCondiciones(p)}</p>
-                  </div>
+              <li key={p.id} className="rounded-lg border border-border bg-surface">
+                <button
+                  type="button"
+                  aria-expanded={abierto}
+                  onClick={() => alternar(p.id)}
+                  className="flex w-full items-start justify-between gap-2 px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) text-left"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-ink">{p.nombre}</span>
+                    <span className="block font-mono text-xs text-ink/60">{resumenCondiciones(p)}</span>
+                  </span>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${p.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'}`}>
                     {p.activo ? 'Publicado' : 'Sin publicar'}
                   </span>
-                </div>
-                <p className="mt-1 font-mono text-xs text-ink/70">
-                  {origen === 'MONEDAS'
-                    ? `Costo: ${p.costo_basico ?? '—'} / ${p.costo_premium ?? p.costo_basico ?? '—'} / ${p.costo_vip ?? p.costo_premium ?? p.costo_basico ?? '—'} (Básico / Premium / VIP)`
-                    : `Costo: ${sellosPorPremio} sellos`}
-                </p>
-                <p className="font-mono text-xs text-ink/60">
-                  Reclamados: {usados}
-                  {p.cupo_global !== null ? ` · restantes: ${Math.max(p.cupo_global - usados, 0)} de ${p.cupo_global}` : ' · sin cupo global'}
-                  {p.limite_por_clienta !== null ? ` · máx. ${p.limite_por_clienta} por clienta` : ''}
-                </p>
-                <p className="font-mono text-xs text-ink/60">
-                  Reclamo: {p.reclamo_desde || p.reclamo_hasta ? `${p.reclamo_desde ? new Date(p.reclamo_desde).toLocaleDateString('es-PE') : '…'} – ${p.reclamo_hasta ? new Date(p.reclamo_hasta).toLocaleDateString('es-PE') : '…'}` : 'siempre'}
-                  {' · '}Cupón: {p.cupon_vigencia_dias || p.cupon_vence_el ? `${p.cupon_vigencia_dias ? `${p.cupon_vigencia_dias} días` : ''}${p.cupon_vigencia_dias && p.cupon_vence_el ? ' / ' : ''}${p.cupon_vence_el ? `hasta ${new Date(p.cupon_vence_el).toLocaleDateString('es-PE')}` : ''}` : 'indefinido'}
-                </p>
-                <button type="button" onClick={() => setEditando(p)} className="mt-2 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink hover:border-azul-metal hover:text-azul-metal">
-                  Editar
                 </button>
+                <CampoColapsable abierto={abierto} diferido>
+                  <DetallePremio premio={p} origen={origen} sellosPorPremio={sellosPorPremio} canje={canjes[p.id]} pedirCanje={pedirCanje} onEditar={setEditando} />
+                </CampoColapsable>
               </li>
             )
           })}
         </ul>
       )}
 
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista pagina={lista.pagina} totalPaginas={lista.totalPaginas} total={lista.total} tam={lista.tam} ocupado={lista.ocupado} onPagina={lista.irA} etiqueta="premios" />
+      )}
+
       {editando && (
         <ModalPremio
           premio={editando === 'nuevo' ? null : editando}
           origen={origen}
-          servicios={servicios}
           sellosPorPremio={sellosPorPremio}
           onCerrar={() => setEditando(null)}
           onGuardado={() => {
+            const id = editando === 'nuevo' ? null : editando.id
             setEditando(null)
-            recargar()
+            if (id) setCanjes((a) => Object.fromEntries(Object.entries(a).filter(([k]) => k !== id)))
+            lista.recargar()
           }}
         />
       )}
@@ -480,26 +612,30 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
 // ---------------------------------------------------------------------------
 // Protección por servicio
 // ---------------------------------------------------------------------------
-function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
-  const { mostrarToast } = useToast()
-  const [abierto, setAbierto] = useState(Boolean(destacado))
-  // Porcentaje protegido de asistente (estimación). Una protección ANTIGUA (importe fijo en S/) tiene asistente_pct nulo:
-  // conserva su importe y se muestra como pendiente de actualización; nunca se convierte sola en porcentaje.
+// Fase 5: los servicios se leen paginados (hasta 40 por página) con búsqueda en el servidor, y solo al entrar a esta subpestaña.
+// Los BORRADORES de cada fila (lo que la administradora escribió y aún no guardó) viven en el padre, por id de servicio: así
+// sobreviven a plegar la fila, cambiar de página y buscar, aunque el detalle de las filas cerradas ya no esté en el DOM.
+const valoresDeProteccion = (prot) => {
   const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
-  const [v, setV] = useState({
+  return {
     materiales: prot ? String(prot.materiales) : '',
     pct: prot && !pendiente ? String(prot.asistente_pct) : '',
     otros: prot ? String(prot.otros) : '',
-  })
+  }
+}
+
+function FilaProteccion({ servicio, prot, valores, abierto, destacado, onAlternar, onCambiar, onGuardado, onLimpiarBorrador }) {
+  const { mostrarToast } = useToast()
+  // Porcentaje protegido de asistente (estimación). Una protección ANTIGUA (importe fijo en S/) tiene asistente_pct nulo:
+  // conserva su importe y se muestra como pendiente de actualización; nunca se convierte sola en porcentaje.
+  const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
+  const v = valores
   const [guardando, setGuardando] = useState(false)
   const ref = useRef(null)
   const idBase = useRef(`pt-${servicio.id.slice(0, 8)}`).current
 
   useEffect(() => {
-    if (destacado) {
-      setAbierto(true)
-      ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    }
+    if (destacado) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [destacado])
 
   const n = (x) => (x === '' ? 0 : Number(x))
@@ -528,6 +664,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
       return
     }
     mostrarToast('Protección guardada.', 'exito')
+    onLimpiarBorrador(servicio.id)
     onGuardado()
   }
 
@@ -539,14 +676,14 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
       mostrarToast('No se pudo quitar la configuración.', 'error')
       return
     }
-    setV({ materiales: '', pct: '', otros: '' })
     mostrarToast('Servicio sin configurar.', 'exito')
+    onLimpiarBorrador(servicio.id)
     onGuardado()
   }
 
   return (
     <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
-      <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
+      <button type="button" aria-expanded={abierto} onClick={() => onAlternar(servicio.id)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-ink">{servicio.nombre}</span>
           <span className="block font-mono text-xs text-ink/60">Precio {soles(servicio.precio)}</span>
@@ -559,13 +696,13 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
         <div className="border-t border-border p-3">
           <div className="grid grid-cols-3 gap-2">
             <Campo id={`${idBase}-m`} etiqueta="Materiales protegidos (S/)">
-              <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => setV((a) => ({ ...a, materiales: e.target.value }))} />
+              <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => onCambiar(servicio.id, { ...v, materiales: e.target.value })} />
             </Campo>
             <Campo id={`${idBase}-a`} etiqueta="Porcentaje protegido de asistente (%)">
-              <input id={`${idBase}-a`} type="number" min="0" max="100" step="0.01" className={CLASE_INPUT} value={v.pct} placeholder={pendiente ? 'Sin actualizar' : ''} onChange={(e) => setV((a) => ({ ...a, pct: e.target.value }))} />
+              <input id={`${idBase}-a`} type="number" min="0" max="100" step="0.01" className={CLASE_INPUT} value={v.pct} placeholder={pendiente ? 'Sin actualizar' : ''} onChange={(e) => onCambiar(servicio.id, { ...v, pct: e.target.value })} />
             </Campo>
             <Campo id={`${idBase}-o`} etiqueta="Otros costos directos (S/)">
-              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => setV((a) => ({ ...a, otros: e.target.value }))} />
+              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => onCambiar(servicio.id, { ...v, otros: e.target.value })} />
             </Campo>
           </div>
           {pendiente && (
@@ -606,23 +743,21 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
 // El costo de compra NO se copia ni se edita aquí: se lee de Inventario (productos.costo, visible solo para el
 // administrador mediante productos_vista). El transporte de abastecimiento es distinto del envío cobrado a la clienta.
 // Un costo 0 sin confirmar es DESCONOCIDO: bloquea el uso de cupones hasta que el administrador lo confirme.
-function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
+const valoresDeProteccionProducto = (prot) => ({
+  transporte: prot ? String(prot.transporte) : '',
+  otros: prot ? String(prot.otros) : '',
+  confirmado: Boolean(prot?.costo_confirmado),
+})
+
+function FilaProteccionProducto({ producto, prot, valores, abierto, destacado, onAlternar, onCambiar, onGuardado, onLimpiarBorrador }) {
   const { mostrarToast } = useToast()
-  const [abierto, setAbierto] = useState(Boolean(destacado))
-  const [v, setV] = useState({
-    transporte: prot ? String(prot.transporte) : '',
-    otros: prot ? String(prot.otros) : '',
-    confirmado: Boolean(prot?.costo_confirmado),
-  })
+  const v = valores
   const [guardando, setGuardando] = useState(false)
   const ref = useRef(null)
   const idBase = useRef(`pp-${producto.id.slice(0, 8)}`).current
 
   useEffect(() => {
-    if (destacado) {
-      setAbierto(true)
-      ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-    }
+    if (destacado) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [destacado])
 
   const n = (x) => (x === '' ? 0 : Number(x))
@@ -648,6 +783,7 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
       return
     }
     mostrarToast('Protección del producto guardada.', 'exito')
+    onLimpiarBorrador(producto.id)
     onGuardado()
   }
 
@@ -659,14 +795,14 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
       mostrarToast('No se pudo quitar la configuración.', 'error')
       return
     }
-    setV({ transporte: '', otros: '', confirmado: false })
     mostrarToast('Producto sin importes adicionales.', 'exito')
+    onLimpiarBorrador(producto.id)
     onGuardado()
   }
 
   return (
     <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
-      <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
+      <button type="button" aria-expanded={abierto} onClick={() => onAlternar(producto.id)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-ink">{producto.nombre}</span>
           <span className="block font-mono text-xs text-ink/60">Precio {soles(producto.precio)} · Costo registrado {soles(costo)}</span>
@@ -682,15 +818,15 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <Campo id={`${idBase}-t`} etiqueta="Transporte de abastecimiento por unidad (S/)">
-              <input id={`${idBase}-t`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.transporte} onChange={(e) => setV((a) => ({ ...a, transporte: e.target.value }))} />
+              <input id={`${idBase}-t`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.transporte} onChange={(e) => onCambiar(producto.id, { ...v, transporte: e.target.value })} />
             </Campo>
             <Campo id={`${idBase}-o`} etiqueta="Otros importes protegidos por unidad (S/)">
-              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => setV((a) => ({ ...a, otros: e.target.value }))} />
+              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => onCambiar(producto.id, { ...v, otros: e.target.value })} />
             </Campo>
           </div>
           {costo === 0 && (
             <label className="mt-3 flex items-start gap-2 text-sm text-ink">
-              <input type="checkbox" className="mt-1" checked={v.confirmado} onChange={(e) => setV((a) => ({ ...a, confirmado: e.target.checked }))} />
+              <input type="checkbox" className="mt-1" checked={v.confirmado} onChange={(e) => onCambiar(producto.id, { ...v, confirmado: e.target.checked })} />
               <span>Confirmo que el costo de compra de este producto es realmente S/ 0,00. Sin esta confirmación el costo se considera desconocido y los cupones no se podrán usar en compras que lo incluyan.</span>
             </label>
           )}
@@ -719,46 +855,74 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
   )
 }
 
-function ProteccionProductos({ productoFoco }) {
-  const [filtro, setFiltro] = useState('')
-  const [estado, setEstado] = useState({ cargando: true, error: false, productos: [], prot: {} })
-  const [version, setVersion] = useState(0)
+// Almacén de BORRADORES de toda la pantalla (lo escrito y aún no guardado): vive en RecompensasWeb, que sigue montada al cambiar de
+// subpestaña, así que un borrador sobrevive a plegar, paginar, buscar Y a ir a otra subpestaña y volver. Claves tipo + id. Está atado
+// a la cuenta: si cambia el usuario, lo anterior deja de verse (y se descarta) en ese mismo render.
+const SIN_BORRADORES = {}
+function useAlmacenBorradores(duenoId) {
+  const [almacen, setAlmacen] = useState({ dueno: duenoId, datos: {} })
+  // Si la identidad cambia con la pantalla montada, el almacén se REINICIA (no solo se oculta): el borrador de la cuenta anterior
+  // no reaparece ni siquiera si luego vuelve esa cuenta. (Ajuste de estado durante el render, patrón documentado de React.)
+  if (almacen.dueno !== duenoId) setAlmacen({ dueno: duenoId, datos: {} })
+  const datos = almacen.dueno === duenoId ? almacen.datos : SIN_BORRADORES
+  const leer = useCallback((tipo, id) => datos[`${tipo}:${id}`], [datos])
+  const escribir = useCallback(
+    (tipo, id, valores) => setAlmacen((a) => ({ dueno: duenoId, datos: { ...(a.dueno === duenoId ? a.datos : {}), [`${tipo}:${id}`]: valores } })),
+    [duenoId],
+  )
+  const borrar = useCallback(
+    (tipo, id) => setAlmacen((a) => ({ dueno: duenoId, datos: Object.fromEntries(Object.entries(a.dueno === duenoId ? a.datos : {}).filter(([k]) => k !== `${tipo}:${id}`)) })),
+    [duenoId],
+  )
+  // Fase 6: mientras haya borradores sin guardar, la caché de pestañas no descarta esta pantalla.
+  useProtegerPantalla(Object.keys(datos).length > 0)
+  return { leer, escribir, borrar }
+}
 
-  useEffect(() => {
-    let vigente = true
-    const t = setTimeout(async () => {
-      // Búsqueda y límite en el SERVIDOR (el catálogo puede superar las 1000 filas de max_rows).
-      const base = supabase.from('productos_vista').select('id, nombre, precio, costo')
+// Estado común de las dos listas de protección: filas abiertas (locales) y borradores por id (en el almacén de la pantalla).
+function useBorradoresPorId(valoresDe, tipo, almacen) {
+  const [abiertas, setAbiertas] = useState(() => new Set())
+  const alternar = useCallback((id) => setAbiertas((a) => { const s = new Set(a); if (s.has(id)) s.delete(id); else s.add(id); return s }), [])
+  const abrir = useCallback((id) => setAbiertas((a) => (a.has(id) ? a : new Set(a).add(id))), [])
+  const { leer, escribir, borrar } = almacen
+  const cambiar = useCallback((id, valores) => escribir(tipo, id, valores), [escribir, tipo])
+  const limpiar = useCallback((id) => borrar(tipo, id), [borrar, tipo])
+  const valoresDeFila = (id, prot) => leer(tipo, id) ?? valoresDe(prot)
+  return { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila }
+}
+
+function ProteccionProductos({ productoFoco, activo, almacen }) {
+  const [filtro, setFiltro] = useState('')
+  const termino = useDebounce(filtro.trim(), 250)
+  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeProteccionProducto, 'producto', almacen)
+
+  // Búsqueda, orden y límite en el SERVIDOR (el catálogo supera las 1000 filas de max_rows); hasta 40 por página con total exacto.
+  const lista = useListaPaginada({
+    activo,
+    clave: `${termino}|${productoFoco ?? ''}`,
+    leer: async ({ desde, hasta }) => {
+      const base = supabase.from('productos_vista').select('id, nombre, precio, costo', { count: 'exact' })
       const consulta =
-        productoFoco && !filtro.trim()
+        productoFoco && !termino
           ? base.eq('id', productoFoco)
-          : filtro.trim()
-            ? base.ilike('nombre', patronIlike(filtro)).order('nombre').order('id').limit(40)
-            : base.order('nombre').order('id').limit(40)
-      const res = await consulta
-      if (!vigente) return
-      if (res.error) {
-        setEstado({ cargando: false, error: true, productos: [], prot: {} })
-        return
-      }
+          : termino
+            ? base.ilike('nombre', patronIlike(termino)).order('nombre').order('id')
+            : base.order('nombre').order('id')
+      const res = await consulta.range(desde, hasta)
+      if (res.error) return res
       const ids = res.data.map((p) => p.id)
       const pr = ids.length
         ? await supabase.from('productos_proteccion').select('producto_id, transporte, otros, costo_confirmado, actualizado_en').in('producto_id', ids)
         : { data: [], error: null }
-      if (!vigente) return
-      if (pr.error) {
-        setEstado({ cargando: false, error: true, productos: [], prot: {} })
-        return
-      }
-      const prot = {}
-      for (const p of pr.data) prot[p.producto_id] = p
-      setEstado({ cargando: false, error: false, productos: res.data, prot })
-    }, 250)
-    return () => {
-      vigente = false
-      clearTimeout(t)
-    }
-  }, [filtro, productoFoco, version])
+      if (pr.error) return { data: null, count: null, error: pr.error }
+      const mapa = Object.fromEntries(pr.data.map((p) => [p.producto_id, p]))
+      return { ...res, data: res.data.map((p) => ({ ...p, prot: mapa[p.id] ?? null })) }
+    },
+  })
+
+  useEffect(() => {
+    if (productoFoco) abrir(productoFoco)
+  }, [productoFoco, abrir])
 
   return (
     <div>
@@ -774,24 +938,66 @@ function ProteccionProductos({ productoFoco }) {
         onChange={(e) => setFiltro(e.target.value)}
         className={`${CLASE_INPUT} mt-3`}
       />
-      {estado.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
-      {estado.error && <AvisoError mensaje="No se pudo cargar la protección de productos." onReintentar={() => setVersion((x) => x + 1)} />}
-      {!estado.cargando && !estado.error && (
-        <ul className="mt-3 space-y-2">
-          {estado.productos.map((p) => (
-            <FilaProteccionProducto key={`${p.id}-${estado.prot[p.id]?.actualizado_en ?? 'x'}`} producto={p} prot={estado.prot[p.id]} destacado={productoFoco === p.id} onGuardado={() => setVersion((x) => x + 1)} />
+      {lista.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
+      {lista.fallo && <AvisoError mensaje="No se pudo cargar la protección de productos." onReintentar={lista.recargar} />}
+      {!lista.cargando && !lista.error && (
+        <ul className={`mt-3 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((p) => (
+            <FilaProteccionProducto
+              key={p.id}
+              producto={p}
+              prot={p.prot}
+              valores={valoresDeFila(p.id, p.prot)}
+              abierto={abiertas.has(p.id)}
+              destacado={productoFoco === p.id}
+              onAlternar={alternar}
+              onCambiar={cambiar}
+              onLimpiarBorrador={limpiar}
+              onGuardado={lista.recargar}
+            />
           ))}
-          {estado.productos.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
-          {estado.productos.length === 40 && <li className="text-center text-xs text-ink/50">Se muestran los primeros 40: usa el buscador para acotar.</li>}
+          {lista.filas.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
         </ul>
+      )}
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista pagina={lista.pagina} totalPaginas={lista.totalPaginas} total={lista.total} tam={lista.tam} ocupado={lista.ocupado} onPagina={lista.irA} etiqueta="productos" />
       )}
     </div>
   )
 }
 
-function Proteccion({ estado, servicios, servicioFoco, recargar }) {
+function Proteccion({ servicioFoco, activo, almacen }) {
   const [filtro, setFiltro] = useState('')
-  const lista = servicios.filter((s) => s.nombre.toLowerCase().includes(filtro.trim().toLowerCase()))
+  const termino = useDebounce(filtro.trim(), 250)
+  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeProteccion, 'servicio', almacen)
+
+  const lista = useListaPaginada({
+    activo,
+    clave: `${termino}|${servicioFoco ?? ''}`,
+    leer: async ({ desde, hasta }) => {
+      const base = supabase.from('servicios').select('id, nombre, precio, activo', { count: 'exact' })
+      const consulta =
+        servicioFoco && !termino
+          ? base.eq('id', servicioFoco)
+          : termino
+            ? base.ilike('nombre', patronIlike(termino)).order('nombre').order('id')
+            : base.order('nombre').order('id')
+      const res = await consulta.range(desde, hasta)
+      if (res.error) return res
+      const ids = res.data.map((s) => s.id)
+      const pr = ids.length
+        ? await supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en').in('servicio_id', ids)
+        : { data: [], error: null }
+      if (pr.error) return { data: null, count: null, error: pr.error }
+      const mapa = Object.fromEntries(pr.data.map((p) => [p.servicio_id, p]))
+      return { ...res, data: res.data.map((s) => ({ ...s, prot: mapa[s.id] ?? null })) }
+    },
+  })
+
+  useEffect(() => {
+    if (servicioFoco) abrir(servicioFoco)
+  }, [servicioFoco, abrir])
+
   return (
     <div>
       <p className="mt-3 text-sm text-ink/60">
@@ -805,12 +1011,30 @@ function Proteccion({ estado, servicios, servicioFoco, recargar }) {
         onChange={(e) => setFiltro(e.target.value)}
         className={`${CLASE_INPUT} mt-3`}
       />
-      <ul className="mt-3 space-y-2">
-        {lista.map((s) => (
-          <FilaProteccion key={`${s.id}-${estado.proteccion[s.id]?.actualizado_en ?? 'x'}`} servicio={s} prot={estado.proteccion[s.id]} destacado={servicioFoco === s.id} onGuardado={recargar} />
-        ))}
-        {lista.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
-      </ul>
+      {lista.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
+      {lista.fallo && <AvisoError mensaje="No se pudo cargar la protección de servicios." onReintentar={lista.recargar} />}
+      {!lista.cargando && !lista.error && (
+        <ul className={`mt-3 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
+          {lista.filas.map((s) => (
+            <FilaProteccion
+              key={s.id}
+              servicio={s}
+              prot={s.prot}
+              valores={valoresDeFila(s.id, s.prot)}
+              abierto={abiertas.has(s.id)}
+              destacado={servicioFoco === s.id}
+              onAlternar={alternar}
+              onCambiar={cambiar}
+              onLimpiarBorrador={limpiar}
+              onGuardado={lista.recargar}
+            />
+          ))}
+          {lista.filas.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
+        </ul>
+      )}
+      {!lista.cargando && !lista.error && (
+        <PaginadorLista pagina={lista.pagina} totalPaginas={lista.totalPaginas} total={lista.total} tam={lista.tam} ocupado={lista.ocupado} onPagina={lista.irA} etiqueta="servicios" />
+      )}
     </div>
   )
 }
@@ -818,12 +1042,12 @@ function Proteccion({ estado, servicios, servicioFoco, recargar }) {
 // ---------------------------------------------------------------------------
 // Programa (activación, tasas, umbrales)
 // ---------------------------------------------------------------------------
-function Programa({ estado, recargar }) {
+function Programa({ config, recargar, almacen }) {
   const { mostrarToast } = useToast()
-  const c = estado.config
+  const c = config
   // Sin apertura ejecutada el servidor rechaza activar (migración 20261008000002): no se ofrece una acción que terminaría en error.
   const activacionBloqueada = !c.activo && !c.apertura_ejecutada_en
-  const [f, setF] = useState({
+  const [f, setFLocal] = useState(() => almacen.leer('programa', 'config') ?? {
     tasaServMonedas: String(c.tasa_serv_monedas),
     tasaServSoles: String(c.tasa_serv_soles),
     tasaProdMonedas: String(c.tasa_prod_monedas),
@@ -831,11 +1055,18 @@ function Programa({ estado, recargar }) {
     umbralPremium: String(c.umbral_premium),
     umbralVip: String(c.umbral_vip),
   })
+  // Cada cambio también se guarda en el almacén de la pantalla: sobrevive a ir a otra subpestaña y volver.
+  const setF = (actualizar) => {
+    const siguiente = typeof actualizar === 'function' ? actualizar(f) : actualizar
+    setFLocal(siguiente)
+    almacen.escribir('programa', 'config', siguiente)
+  }
   const [guardando, setGuardando] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
 
   async function guardar(e) {
     e.preventDefault()
+    const envio = envioDe(e.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
     const num = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, Number(v)]))
     if (Object.values(num).some((x) => !(x > 0))) {
       mostrarToast('Todas las tasas y umbrales deben ser mayores a 0.', 'error')
@@ -863,7 +1094,9 @@ function Programa({ estado, recargar }) {
       mostrarToast('No se pudo guardar la configuración.', 'error')
       return
     }
+    confirmarGuardado(envio)
     mostrarToast('Configuración guardada. Las tasas nuevas aplican a ventas futuras.', 'exito')
+    almacen.borrar('programa', 'config')
     recargar()
   }
 
@@ -954,7 +1187,7 @@ function Programa({ estado, recargar }) {
 // ---------------------------------------------------------------------------
 // Página
 // ---------------------------------------------------------------------------
-export default function RecompensasWeb() {
+export default function RecompensasWeb({ activo = true }) {
   const [params, setParams] = useSearchParams()
   const pestana = PESTANAS.some((p) => p.id === params.get('tab')) ? params.get('tab') : 'monedas'
   const servicioFoco = params.get('servicio')
@@ -963,36 +1196,23 @@ export default function RecompensasWeb() {
   const desdeParam = params.get('desde')
   const desde = desdeParam && /^\/[a-z-]+$/.test(desdeParam) ? desdeParam : null
 
-  const [estado, setEstado] = useState(null)
-  const [servicios, setServicios] = useState([])
+  // Fase 5: al abrir solo se lee la configuración mínima del programa (una fila). Cada subpestaña pide sus datos al entrar:
+  // catálogo de monedas / sellos, protección de servicios y de productos paginados, y los canjes de cada premio al expandirlo.
+  const { usuario } = useAuth()
+  const almacen = useAlmacenBorradores(usuario?.id ?? null)
+  const [config, setConfig] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
   const cargar = useCallback(async () => {
-    const [cat, prot, canj, cfg, serv] = await Promise.all([
-      supabase.from('recompensas_catalogo').select('*').order('creado_en', { ascending: false }),
-      supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en'),
-      supabase.from('recompensas_canjes').select('catalogo_id'),
-      supabase.from('recompensas_config').select('*').eq('id', 1).single(),
-      // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
-      leerServicios(supabase, { columnas: 'id, nombre, precio, activo' }).then(
-        (data) => ({ data, error: null }),
-        (error) => ({ data: null, error }),
-      ),
-    ])
-    const falla = [cat, prot, canj, cfg, serv].find((r) => r.error)
-    if (falla) {
+    const cfg = await supabase.from('recompensas_config').select('*').eq('id', 1).single()
+    if (cfg.error) {
       // Un error nunca se presenta como lista vacía o valor 0.
       setError('No se pudo cargar la administración de Recompensas.')
       setCargando(false)
       return
     }
-    const canjes = {}
-    for (const c of canj.data) canjes[c.catalogo_id] = (canjes[c.catalogo_id] ?? 0) + 1
-    const proteccion = {}
-    for (const p of prot.data) proteccion[p.servicio_id] = p
-    setServicios(serv.data)
-    setEstado({ premios: cat.data, canjes, proteccion, config: cfg.data })
+    setConfig(cfg.data)
     setError(null)
     setCargando(false)
   }, [])
@@ -1040,22 +1260,19 @@ export default function RecompensasWeb() {
       {cargando && <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>}
       {!cargando && error && <AvisoError mensaje={error} onReintentar={() => { setCargando(true); cargar() }} />}
 
-      {!cargando && !error && estado && (
-        <div role="tabpanel" aria-label={PESTANAS.find((p) => p.id === pestana).label}>
+      {!cargando && !error && config && (
+        <div key={usuario?.id ?? 'sin-cuenta'} role="tabpanel" aria-label={PESTANAS.find((p) => p.id === pestana).label}>
           {(pestana === 'monedas' || pestana === 'sellos') && (
             <Catalogo
+              key={pestana}
               origen={pestana === 'monedas' ? 'MONEDAS' : 'SELLOS'}
-              estado={estado}
-              servicios={servicios}
-              sellosPorPremio={estado.config.sellos_por_premio}
-              recargar={cargar}
+              activo={activo}
+              sellosPorPremio={config.sellos_por_premio}
             />
           )}
-          {pestana === 'proteccion' && (
-            <Proteccion estado={estado} servicios={servicios} servicioFoco={servicioFoco} recargar={cargar} />
-          )}
-          {pestana === 'proteccion-productos' && <ProteccionProductos productoFoco={productoFoco} />}
-          {pestana === 'programa' && <Programa key={estado.config.actualizado_en} estado={estado} recargar={cargar} />}
+          {pestana === 'proteccion' && <Proteccion servicioFoco={servicioFoco} activo={activo} almacen={almacen} />}
+          {pestana === 'proteccion-productos' && <ProteccionProductos productoFoco={productoFoco} activo={activo} almacen={almacen} />}
+          {pestana === 'programa' && <Programa key={`${usuario?.id ?? 'sin-cuenta'}-${config.actualizado_en}`} config={config} recargar={cargar} almacen={almacen} />}
         </div>
       )}
     </div>

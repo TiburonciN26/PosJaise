@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { NIVELES_PUNTOS } from '../lib/nivelesPuntos.js'
+import { crearBucle } from '../lib/bucleAnimacion.js'
 
 // Superficie metálica de un nivel (Básico plata / Premium dorado /
 // VIP diamante azul hielo) — la misma paleta (--tp-*) y las mismas capas (.tp-iri,
@@ -8,7 +9,10 @@ import { NIVELES_PUNTOS } from '../lib/nivelesPuntos.js'
 // mismo ritmo que el idle de la tarjeta (`despl` es la misma fórmula).
 // Lo usan las tres tarjetas "Beneficios por nivel" de Recompensas.
 //
-// Con `prefers-reduced-motion` no hay movimiento, solo el color.
+// Fase 6: el movimiento corre SOLO mientras la tarjeta está en pantalla y la pestaña del navegador visible (crearBucle: sin rAF
+// pendiente en cuanto sale del viewport), con referencias de capas buscadas una vez y desplazamiento por transform (sin layout ni
+// repintado de gradientes). Con `prefers-reduced-motion` no hay movimiento, solo el color (brillo fijo); si la preferencia cambia
+// en el sistema, la tarjeta reacciona.
 export default function FondoNivel({ nivel, destacada = false, className = '', style, children }) {
   const ref = useRef(null)
   const config = NIVELES_PUNTOS[nivel] ?? NIVELES_PUNTOS.BASICO
@@ -17,33 +21,51 @@ export default function FondoNivel({ nivel, destacada = false, className = '', s
     const el = ref.current
     if (!el) return undefined
 
-    const glares = el.querySelectorAll('.tp-glare')
-    const sheens = el.querySelectorAll('.tp-sheen')
+    const glares = [...el.querySelectorAll('.tp-glare')]
+    const sheens = [...el.querySelectorAll('.tp-sheen')]
+    const consulta = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let ancho = el.clientWidth || 1
+    let alto = el.clientHeight || 1
+    const observador = new ResizeObserver(() => {
+      ancho = el.clientWidth || 1
+      alto = el.clientHeight || 1
+    })
+    observador.observe(el)
+
     const pintarGlare = (k) => {
-      const fondo = `radial-gradient(circle at ${50 + k * 40}% 40%, rgba(255,248,220,.7), rgba(255,248,220,0) 45%)`
-      glares.forEach((g) => {
-        g.style.background = fondo
-      })
+      const gx = `${(k * 0.4 * ancho).toFixed(1)}px`
+      const gy = `${(-0.1 * alto).toFixed(1)}px`
+      for (const g of glares) {
+        g.style.setProperty('--gx', gx)
+        g.style.setProperty('--gy', gy)
+      }
     }
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      pintarGlare(0.4)
-      return undefined
-    }
-
-    const t0 = performance.now()
-    let raf
-    function loop(now) {
-      const t = (now - t0) / 1000
+    const cuadro = (t) => {
       pintarGlare(Math.sin(t * 0.6) * 0.8)
       const despl = ((t * 0.28) % 1.6) - 0.3
-      sheens.forEach((s) => {
-        s.style.left = `${despl * 160 - 60}%`
-      })
-      raf = requestAnimationFrame(loop)
+      const transformacion = `translateX(${(despl * 1.6 * ancho).toFixed(1)}px) rotate(18deg)`
+      for (const s of sheens) s.style.transform = transformacion
+      return true
     }
-    raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
+
+    const bucle = crearBucle(el, cuadro)
+    const aplicar = () => {
+      if (consulta.matches) {
+        bucle.querer(false)
+        pintarGlare(0.4)
+        for (const s of sheens) s.style.transform = 'translateX(0) rotate(18deg)'
+      } else {
+        bucle.querer(true)
+      }
+    }
+    aplicar()
+    consulta.addEventListener('change', aplicar)
+
+    return () => {
+      consulta.removeEventListener('change', aplicar)
+      observador.disconnect()
+      bucle.destruir()
+    }
   }, [])
 
   return (

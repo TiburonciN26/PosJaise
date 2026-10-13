@@ -34,6 +34,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalCliente from '../components/ModalCliente.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import { useEstadoVista } from '../lib/estadoVista.js'
 
 // Datos que suman a la barra de "datos completos": ocasionales como notas
 // no cuentan (casi nadie los llena y no dice nada de qué tan bien se conoce
@@ -216,10 +217,10 @@ export default function Clientes({ activo = true }) {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useEstadoVista('/clientes:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
-  const [orden, setOrden] = useState('nombre-asc')
-  const [filtroSexo, setFiltroSexo] = useState('todos')
+  const [orden, setOrden] = useEstadoVista('/clientes:orden', 'nombre-asc')
+  const [filtroSexo, setFiltroSexo] = useEstadoVista('/clientes:filtroSexo', 'todos')
   const [modalCliente, setModalCliente] = useState(null) // null | 'nuevo' | cliente
   const [clienteAEliminar, setClienteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)

@@ -21,6 +21,9 @@
 /sw.js
   Cache-Control: no-cache
 
+/sw-reglas-cache.js
+  Cache-Control: no-cache
+
 /registerSW.js
   Cache-Control: no-cache
 

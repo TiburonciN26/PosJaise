@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, ShoppingBag, Sparkles } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { COLUMNAS_PRODUCTO_TARJETA, GRUPOS_POR_VENTANA, POR_CATEGORIA, TAMANO_PAGINA_CATALOGO, cargarVentanaGrupos, cargarVitrinaProductos, leerPaginaCatalogo } from '../../lib/catalogoPublico.js'
+import { useCatalogoPublico } from '../../hooks/useCatalogoPublico.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
@@ -16,11 +19,16 @@ import { useCintaContinua } from '../../hooks/useCintaContinua.js'
 import TarjetaProductoCliente, { porcentajeDescuento } from '../../components/TarjetaProductoCliente.jsx'
 import BarraTuCarritoFlotante from '../../components/BarraTuCarritoFlotante.jsx'
 import BarraCatalogo from '../../components/BarraCatalogo.jsx'
+import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const BUCKET_FOTOS = 'fotos-productos'
-const POR_FILA = 4
-const MAX_HERO = 5
+const POR_FILA = POR_CATEGORIA
+// Constantes estables (no se recrean en cada render): evitan invalidar los useMemo que dependen de ellas.
+const SIN_FILAS = []
+const CINTA_VACIA = { filas: SIN_FILAS, total: 0 }
+const etiquetaOferta = (p) => `Oferta −${porcentajeDescuento(p)}%`
+const etiquetaDestacado = () => 'Destacado'
 const INTERVALO_HERO_MS = 5000
 // Cuántas tarjetas DISTINTAS mínimo debe tener una cinta antes de
 // duplicarla — si hay pocas ofertas, la lista se repite para llenar el
@@ -59,14 +67,26 @@ export default function ProductosCliente() {
   const requerirSesion = useRequerirSesion()
   const { mostrarToast } = useToast()
 
-  const [productos, setProductos] = useState([])
+  const { usuario } = useAuth()
   const [contacto, setContacto] = useState(null)
   const [horario, setHorario] = useState(null)
-  const [cargando, setCargando] = useState(true)
-  const [busqueda, setBusqueda] = useState('')
-  const [categoriaActiva, setCategoriaActiva] = useState('todos')
   const [heroIdx, setHeroIdx] = useState(0)
   const [heroTick, setHeroTick] = useState(0)
+
+  // Fase 4: el catálogo ya no se descarga completo. «Todos» (sin búsqueda) sale de una vitrina acotada (categorías con su total,
+  // primeras tarjetas de cada una, héroe y cintas); una categoría o una búsqueda piden UNA página de hasta 40 tarjetas al servidor.
+  const {
+    vitrina, listado, listadoVigente, categoriaActiva, setCategoriaActiva, busqueda, setBusqueda, termino, agrupado,
+    pagina, totalPaginas, irAPagina, reintentarVitrina, reintentarListado,
+    gruposVisibles, paginaGrupos, totalPaginasGrupos, ventanaOcupada, ventanaConError, irAPaginaGrupos, reintentarVentana,
+  } = useCatalogoPublico({
+    clave: usuario?.id ?? 'anon',
+    cargarVitrina: ({ signal }) => cargarVitrinaProductos(supabase, { signal }),
+    cargarPagina: (parametros) => leerPaginaCatalogo(supabase, { tabla: 'productos', columnas: COLUMNAS_PRODUCTO_TARJETA, ...parametros }),
+    cargarGrupos: (parametros) => cargarVentanaGrupos(supabase, { tabla: 'productos', ...parametros }),
+  })
+  const datos = vitrina.datos
+  const cargando = vitrina.estado === 'cargando'
 
   // Animación de entrada — mismo patrón que ServiciosCliente.jsx (ver
   // docs/patrones/animacion-entrada.md), tabla de retrasos propia de
@@ -85,27 +105,6 @@ export default function ProductosCliente() {
   const cintaMedidas = esDesktop ? CINTA_MEDIDAS.desktop : CINTA_MEDIDAS.movil
   const cintaPasoPx = cintaMedidas.ancho + cintaMedidas.separacion
 
-  useEffect(() => {
-    let vigente = true
-
-    async function cargar() {
-      const productosRes = await supabase
-        .from('productos')
-        .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url, descripcion, destacado, nuevo, en_inicio')
-        .eq('activo', true)
-        .order('nombre')
-
-      if (!vigente) return
-      setProductos(productosRes.data ?? [])
-      setCargando(false)
-    }
-
-    cargar()
-    return () => {
-      vigente = false
-    }
-  }, [])
-
   // QA-022: contacto/horario son secundarios: no bloquean la lista.
   useEffect(() => {
     let vigente = true
@@ -116,13 +115,7 @@ export default function ProductosCliente() {
     }
   }, [])
 
-  const conteosCategoria = useMemo(() => {
-    const conteos = {}
-    for (const item of productos) {
-      if (item.categoria) conteos[item.categoria] = (conteos[item.categoria] ?? 0) + 1
-    }
-    return conteos
-  }, [productos])
+  const conteosCategoria = datos?.conteos ?? {}
 
   const listaRef = useRef(null)
   function elegirCategoria(categoria) {
@@ -131,16 +124,20 @@ export default function ProductosCliente() {
     listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
   }
 
-  const categorias = useMemo(
-    () => ['todos', ...new Set(productos.map((p) => p.categoria).filter(Boolean))],
-    [productos],
-  )
+  function cambiarPaginaGrupos(n) {
+    irAPaginaGrupos(n)
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+  }
 
-  // Inicio: productos marcados a mano (productos.en_inicio) con stock.
-  const heroProductos = useMemo(
-    () => productos.filter((p) => p.en_inicio && p.stock_actual > 0).slice(0, MAX_HERO),
-    [productos],
-  )
+  function cambiarPagina(n) {
+    irAPagina(n)
+    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+  }
+
+  const categorias = useMemo(() => ['todos', ...(datos?.categorias ?? [])], [datos])
+
+  // Inicio: productos marcados a mano (productos.en_inicio) con stock (hasta 5, ya acotados por el servidor).
+  const heroProductos = useMemo(() => datos?.hero ?? [], [datos])
   const heroIdxSeguro = heroProductos.length ? heroIdx % heroProductos.length : 0
   const heroActual = heroProductos[heroIdxSeguro]
 
@@ -164,32 +161,22 @@ export default function ProductosCliente() {
     mostrarToast(agregado > 0 ? 'Agregado al carrito.' : 'No se pudo agregar — ya no hay stock disponible.', agregado > 0 ? 'exito' : 'error')
   }
 
-  const ofertas = useMemo(() => productos.filter((p) => p.precio_antes && p.stock_actual > 0), [productos])
-  const destacados = useMemo(() => productos.filter((p) => p.destacado && p.stock_actual > 0), [productos])
+  // Cintas: hasta 12 tarjetas cada una (orden nombre, id) y el total real de ofertas/destacados para el rótulo.
+  const ofertas = datos?.ofertas ?? CINTA_VACIA
+  const destacados = datos?.destacados ?? CINTA_VACIA
 
-  const terminoQ = busqueda.trim().toLowerCase()
-  const agrupado = categoriaActiva === 'todos' && !terminoQ
+  // Listado plano: solo las filas que pertenecen a la categoría+texto actuales (si no, se muestra «Buscando…», no resultados viejos).
+  const listaFiltrada = listadoVigente ? listado.filas : SIN_FILAS
+  const listadoOcupado = listado.estado === 'cargando'
 
-  const listaFiltrada = useMemo(
-    () =>
-      productos.filter(
-        (p) =>
-          (categoriaActiva === 'todos' || p.categoria === categoriaActiva) &&
-          (!terminoQ || p.nombre.toLowerCase().includes(terminoQ)),
-      ),
-    [productos, categoriaActiva, terminoQ],
+  // Vista «Todos»: una fila por categoría con su total real y las primeras tarjetas.
+  const grupos = useMemo(() => (agrupado ? gruposVisibles : SIN_FILAS), [agrupado, gruposVisibles])
+
+  // Lo que la página tiene en memoria: la barra del carrito pide por id lo que falte (ver BarraTuCarritoFlotante).
+  const conocidos = useMemo(
+    () => [...heroProductos, ...ofertas.filas, ...destacados.filas, ...grupos.flatMap((g) => g.primeros), ...listaFiltrada],
+    [heroProductos, ofertas, destacados, grupos, listaFiltrada],
   )
-
-  const grupos = useMemo(() => {
-    if (!agrupado) return []
-    return categorias
-      .slice(1)
-      .map((categoria) => {
-        const todos = productos.filter((p) => p.categoria === categoria)
-        return { categoria, todos, primeros: todos.slice(0, POR_FILA) }
-      })
-      .filter((grupo) => grupo.todos.length > 0)
-  }, [agrupado, categorias, productos])
 
   const clavesFilas = useMemo(() => grupos.map((grupo) => grupo.categoria), [grupos])
   const { contenedorRef, refFila, estadoFila } = useRevelarEnPantalla({
@@ -200,6 +187,7 @@ export default function ProductosCliente() {
   })
 
   const plural = (n) => `${n} ${n === 1 ? 'producto' : 'productos'}`
+  const totalVisible = agrupado ? (datos?.total ?? null) : listadoVigente && listado.estado === 'ok' ? listado.total : null
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
   const horarioTexto = horario
     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
@@ -209,6 +197,17 @@ export default function ProductosCliente() {
     return (
       <div className="flex flex-1 items-center justify-center p-6">
         <p className="font-mono text-sm text-white/50">Cargando...</p>
+      </div>
+    )
+  }
+
+  if (vitrina.estado === 'error') {
+    return (
+      <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-sm text-white/70">No se pudo cargar el catálogo de productos.</p>
+        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+          Reintentar
+        </button>
       </div>
     )
   }
@@ -224,7 +223,7 @@ export default function ProductosCliente() {
         busqueda={busqueda}
         onBusqueda={setBusqueda}
         placeholder="Buscar producto…"
-        etiquetaTotal={plural(agrupado ? productos.length : listaFiltrada.length)}
+        etiquetaTotal={totalVisible == null ? 'Buscando…' : plural(totalVisible)}
         className={reducirMovimiento ? '' : 'in-up'}
         style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
       />
@@ -336,7 +335,7 @@ export default function ProductosCliente() {
             >
               <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
               <span>/</span>
-              <span className="font-medium text-[#e8e8ea]">{plural(productos.length)}</span>
+              <span className="font-medium text-[#e8e8ea]">{plural(datos?.total ?? 0)}</span>
               <span>·</span>
               <span>Recojo en el local</span>
               <span>·</span>
@@ -350,7 +349,10 @@ export default function ProductosCliente() {
           >
             <div className="relative h-[300px] overflow-hidden rounded-[16px] bg-[#050505] sm:h-[420px]">
               {heroProductos.map((p, i) => {
-                const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
+                // Solo se piden las fotos del activo y sus vecinos (anterior/siguiente): las demás se piden cuando les toca.
+                const distancia = Math.abs(i - heroIdxSeguro)
+                const cerca = distancia <= 1 || distancia === heroProductos.length - 1
+                const urlFoto = cerca ? urlPublicaFoto(BUCKET_FOTOS, p.foto_url) : null
                 return (
                   <div key={p.id} className="absolute inset-0" style={{ opacity: i === heroIdxSeguro ? 1 : 0, transition: 'opacity 1.1s ease' }}>
                     {urlFoto ? (
@@ -402,7 +404,7 @@ export default function ProductosCliente() {
                 {[1, 2, 3].map((j) => {
                   const t = (heroIdxSeguro + j) % heroProductos.length
                   const p = heroProductos[t]
-                  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
+                  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url, 'm')
                   return (
                     <button
                       key={j}
@@ -428,7 +430,7 @@ export default function ProductosCliente() {
       )}
 
       {/* 1. OFERTAS Y DESTACADOS: dos cintas en movimiento continuo. */}
-      {(ofertas.length > 0 || destacados.length > 0) && (
+      {(ofertas.filas.length > 0 || destacados.filas.length > 0) && (
         <section className="flex flex-col gap-9 py-10">
           <p
             className={`mx-auto w-full max-w-[1700px] lw-gutter text-[15px] leading-relaxed text-[#d9d9dc] ${reducirMovimiento ? '' : 'in-left'}`}
@@ -436,12 +438,13 @@ export default function ProductosCliente() {
           >
             Los mismos productos que usamos en el salón, para que tu resultado dure en casa.
           </p>
-          {ofertas.length > 0 && (
+          {ofertas.filas.length > 0 && (
             <FilaCintaProductos
               titulo="Ofertas"
               derecha
-              etiqueta={(p) => `Oferta −${porcentajeDescuento(p)}%`}
-              productos={ofertas}
+              etiqueta={etiquetaOferta}
+              productos={ofertas.filas}
+              total={ofertas.total}
               pasoPx={cintaPasoPx}
               medidas={cintaMedidas}
               velocidadPxS={cintaMedidas.velocidad}
@@ -450,12 +453,13 @@ export default function ProductosCliente() {
               delayEntrada={ENTRADA_FIJA.filaOfertas}
             />
           )}
-          {destacados.length > 0 && (
+          {destacados.filas.length > 0 && (
             <FilaCintaProductos
               titulo="Destacados"
               derecha={false}
-              etiqueta={() => 'Destacado'}
-              productos={destacados}
+              etiqueta={etiquetaDestacado}
+              productos={destacados.filas}
+              total={destacados.total}
               pasoPx={cintaPasoPx}
               medidas={cintaMedidas}
               velocidadPxS={cintaMedidas.velocidad}
@@ -470,7 +474,7 @@ export default function ProductosCliente() {
       <div ref={listaRef} className="mx-auto w-full max-w-[1700px] scroll-mt-16 lw-gutter">
         {/* 3a. "Todos": una fila por categoría */}
         {agrupado && (
-          <div className="flex flex-col gap-10 pt-8">
+          <div aria-busy={ventanaOcupada} className={`flex flex-col gap-10 pt-8 transition-opacity ${ventanaOcupada ? 'opacity-60' : ''}`}>
             {grupos.map((grupo, gi) => {
               const decision = reducirMovimiento ? null : estadoFila(grupo.categoria)
               const pendiente = !reducirMovimiento && !decision
@@ -490,14 +494,14 @@ export default function ProductosCliente() {
                   >
                     <div className="flex min-w-0 flex-wrap items-baseline gap-3">
                       <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
-                      <span className="text-xs text-white/50">{plural(grupo.todos.length)}</span>
+                      <span className="text-xs text-white/50">{plural(grupo.total)}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setCategoriaActiva(grupo.categoria)}
                       className="flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)]"
                     >
-                      Ver todo ({grupo.todos.length}) <ArrowRight className="h-3.5 w-3.5" />
+                      Ver todo ({grupo.total}) <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
@@ -510,7 +514,7 @@ export default function ProductosCliente() {
                         </div>
                       )
                     })}
-                    {grupo.todos.length > POR_FILA && (
+                    {grupo.total > POR_FILA && (
                       <button
                         type="button"
                         onClick={() => setCategoriaActiva(grupo.categoria)}
@@ -520,23 +524,32 @@ export default function ProductosCliente() {
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
                           <ArrowRight className="h-3.5 w-3.5" />
                         </span>
-                        Ver los {grupo.todos.length}
+                        Ver los {grupo.total}
                       </button>
                     )}
                   </div>
                 </section>
               )
             })}
+            {ventanaConError && (
+              <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
+                <p className="text-sm text-white/70">No se pudieron cargar las categorías.</p>
+                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                  Reintentar
+                </button>
+              </div>
+            )}
+            <PaginadorCatalogo pagina={paginaGrupos} totalPaginas={totalPaginasGrupos} total={categorias.length - 1} tam={GRUPOS_POR_VENTANA} ocupado={ventanaOcupada} onPagina={cambiarPaginaGrupos} etiqueta="categorías" />
           </div>
         )}
 
-        {/* 3b. Una categoría o una búsqueda: grilla completa */}
+        {/* 3b. Una categoría o una búsqueda: UNA página (hasta 40 tarjetas) del listado del servidor */}
         {!agrupado && (
           <div className="flex flex-col gap-4 pt-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div className="flex items-baseline gap-3">
-                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{terminoQ ? 'Resultados' : categoriaActiva}</h2>
-                <span className="text-xs text-white/50">{plural(listaFiltrada.length)}</span>
+                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{termino ? 'Resultados' : categoriaActiva}</h2>
+                {totalVisible != null && <span className="text-xs text-white/50">{plural(totalVisible)}</span>}
               </div>
               {categoriaActiva !== 'todos' && (
                 <button
@@ -548,14 +561,29 @@ export default function ProductosCliente() {
                 </button>
               )}
             </div>
-            {listaFiltrada.length === 0 ? (
-              <p className="py-10 text-center text-sm text-white/50">Sin resultados para "{busqueda}".</p>
+            {listado.estado === 'error' ? (
+              <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
+                <p className="text-sm text-white/70">No se pudieron cargar los productos.</p>
+                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                  Reintentar
+                </button>
+              </div>
+            ) : !listadoVigente ? (
+              <p role="status" className="py-10 text-center text-sm text-white/50">Buscando…</p>
+            ) : listaFiltrada.length === 0 && listado.estado === 'ok' ? (
+              <p className="py-10 text-center text-sm text-white/50">{termino ? `Sin resultados para "${termino}".` : 'No hay productos en esta categoría.'}</p>
             ) : (
-              <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8">
+              <div
+                aria-busy={listadoOcupado}
+                className={`grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8 ${listadoOcupado ? 'opacity-60' : ''}`}
+              >
                 {listaFiltrada.map((p) => (
                   <TarjetaProductoCliente key={p.id} producto={p} />
                 ))}
               </div>
+            )}
+            {listadoVigente && listado.estado !== 'error' && (
+              <PaginadorCatalogo pagina={pagina} totalPaginas={totalPaginas} total={listado.total} tam={TAMANO_PAGINA_CATALOGO} ocupado={listadoOcupado} onPagina={cambiarPagina} etiqueta="productos" />
             )}
           </div>
         )}
@@ -644,7 +672,7 @@ export default function ProductosCliente() {
 
       <PieClienteWeb />
 
-      <BarraTuCarritoFlotante productos={productos} />
+      <BarraTuCarritoFlotante productos={conocidos} />
     </div>
   )
 }
@@ -653,7 +681,7 @@ export default function ProductosCliente() {
 // useCintaContinua.js para el mecanismo de desplazamiento. Encapsulada
 // acá porque necesita su propio par de refs de hover/foco para pausar
 // SOLO esta fila, sin afectar a la otra.
-function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medidas, velocidadPxS, activo, claseEntrada, delayEntrada }) {
+const FilaCintaProductos = memo(function FilaCintaProductos({ titulo, derecha, etiqueta, productos, total, pasoPx, medidas, velocidadPxS, activo, claseEntrada, delayEntrada }) {
   const n = productos.length
   const k = Math.max(1, Math.ceil(MIN_CINTA / n))
   const base = useMemo(() => Array.from({ length: k }, () => productos).flat(), [productos, k])
@@ -679,7 +707,7 @@ function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medi
     <div className={`flex flex-col ${claseEntrada}`} style={claseEntrada ? { animationDelay: `${delayEntrada}ms` } : undefined}>
       <div className={`mx-auto flex w-full max-w-[1700px] items-baseline gap-3 lw-gutter ${derecha ? 'justify-start' : 'justify-end'}`}>
         <h2 className="lw-titulo-heavitas text-xl uppercase sm:text-[30px]">{titulo}</h2>
-        <span className="text-xs text-white/50">{plural(n)}</span>
+        <span className="text-xs text-white/50">{plural(total ?? n)}</span>
       </div>
 
       <div className="lw-cinta-mask my-6 overflow-hidden" onMouseOver={alEntrar} onMouseOut={alSalir} onFocus={alEntrar} onBlur={alSalir}>
@@ -742,7 +770,7 @@ function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medi
       </div>
     </div>
   )
-}
+})
 
 function plural(n) {
   return `${n} ${n === 1 ? 'producto' : 'productos'}`

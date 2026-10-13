@@ -12,7 +12,7 @@
 // salvo --permitir-produccion.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
-import { grupoDeReferencia, leerTodasLasFilas, parsearArgumentos, recolectar } from './lib/huerfanos-medios.mjs'
+import { codigoSalida, grupoDeReferencia, leerTodasLasFilas, parsearArgumentos, recolectar } from './lib/huerfanos-medios.mjs'
 import { REF_PRODUCCION } from './lib/entornos-supabase.mjs'
 
 function leerEnv(ruta) {
@@ -127,7 +127,9 @@ async function principal() {
   const texto = JSON.stringify(informe, null, 2)
   if (argumentos.salida) writeFileSync(argumentos.salida, texto)
   console.log(texto)
-  process.exit(0) // el cliente de Supabase mantiene un temporizador de sesión que impide terminar solo
+  // Salida explícita (el cliente de Supabase mantiene un temporizador de sesión que impide terminar solo), con código no cero si el
+  // informe trae errores de borrado o un aborto: el informe y los resultados parciales ya se imprimieron/guardaron arriba.
+  process.exit(codigoSalida(informe))
 }
 
 if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/')}` || process.argv[1]?.endsWith('medios-huerfanos.mjs')) {

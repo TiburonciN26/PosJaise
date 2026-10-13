@@ -1,4 +1,4 @@
-import { createElement, use } from 'react'
+import { componenteDiferido } from '../lib/moduloDiferido.js'
 
 // QA-021: el portal cliente (PortalCliente + ~20 páginas) ya no viaja en el
 // bundle inicial de todos los roles: cada página es un chunk.
@@ -10,36 +10,11 @@ import { createElement, use } from 'react'
 // página es un componente que lee el import con `use()` sobre una promesa a la
 // que se le registra su estado (status/value, el mecanismo que React usa para
 // resolver de forma síncrona): tras precargar no hay fallback ni espera.
-const promesas = new Map()
-
-function cargar(clave, importar) {
-  let promesa = promesas.get(clave)
-  if (!promesa) {
-    promesa = importar()
-    promesa.then(
-      (modulo) => {
-        promesa.status = 'fulfilled'
-        promesa.value = modulo
-      },
-      (error) => {
-        promesa.status = 'rejected'
-        promesa.reason = error
-        promesas.delete(clave)
-      },
-    )
-    promesas.set(clave, promesa)
-  }
-  return promesa
-}
-
-export function paginaPrecargable(clave, importar) {
-  function Pagina(props) {
-    const modulo = use(cargar(clave, importar))
-    return createElement(modulo.default, props)
-  }
-  Pagina.displayName = clave
-  return Pagina
-}
+//
+// Fase 8 V2 (F8-01): ese mecanismo vive ahora en lib/moduloDiferido.js (lo comparte el POS). Antes, una página cuya
+// descarga fallaba se borraba del registro y el siguiente render la volvía a pedir: sin red eso es un bucle de descargas
+// fallidas. Ahora el fallo se conserva hasta reintentarlo explícitamente (reintentarPaginasFallidas, que llama el límite de
+// error local de PortalCliente al pulsar «Reintentar», al volver la red o al cambiar de ruta).
 
 export const importadores = {
   PortalCliente: () => import('../pages/PortalCliente.jsx'),
@@ -69,10 +44,16 @@ export const importadores = {
 }
 
 export const pagina = Object.fromEntries(
-  Object.entries(importadores).map(([clave, importar]) => [clave, paginaPrecargable(clave, importar)]),
+  Object.entries(importadores).map(([clave, importar]) => [clave, componenteDiferido(importar, clave)]),
 )
 
-const precargar = (clave) => cargar(clave, importadores[clave])
+// Resuelve true/false (nunca rechaza): una precarga fallida no deja la página rota, se vuelve a pedir al abrirla.
+const precargar = (clave) => pagina[clave].precargar()
+
+/** Descarta los fallos de descarga guardados: el próximo render vuelve a pedir esas páginas. */
+export function reintentarPaginasFallidas() {
+  for (const Pagina of Object.values(pagina)) Pagina.reintentar()
+}
 
 const RUTAS = [
   [/^\/(inicio)?\/?$/, 'InicioCliente'],
@@ -129,7 +110,15 @@ const PRINCIPALES = [
   'ServiciosCliente', 'ProductosCliente', 'CitasCliente', 'NosotrosCliente',
   'DetalleServicioCliente', 'DetalleProductoCliente', 'RecompensasCliente', 'CarritoCliente',
 ]
+// Fase 8: con «ahorrar datos» (Save-Data) o una conexión 2G no se precargan en reposo las 8 pestañas (~330 kB de JS que quizá no se usen);
+// cada una se descarga al navegar a ella, como siempre ocurría con las demás páginas del portal. Con una conexión normal no cambia nada.
+function conexionLimitada() {
+  const c = typeof navigator !== 'undefined' ? navigator.connection : undefined
+  return c?.saveData === true || /(^|-)2g$/.test(c?.effectiveType ?? '')
+}
+
 export function precargarPestanasPrincipales() {
+  if (conexionLimitada()) return
   const lanzar = () => PRINCIPALES.forEach((nombre) => precargar(nombre).catch(() => {}))
   if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 4000 })
   else setTimeout(lanzar, 1500)

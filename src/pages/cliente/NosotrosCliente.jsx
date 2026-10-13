@@ -11,6 +11,7 @@ import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contacto
 import { nombrePublico } from '../../lib/resenas.js'
 import ComparadorAntesDespues from '../../components/ComparadorAntesDespues.jsx'
 import Estrellas from '../../components/Estrellas.jsx'
+import MapaDiferido from '../../components/MapaDiferido.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
@@ -537,13 +538,7 @@ function SeccionContacto() {
 
         {contacto?.direccion && (
           <div className="mt-4 h-52 overflow-hidden border border-white/10 bg-[#151517]">
-            <iframe
-              title="Ubicación en el mapa"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(contacto.direccion)}&output=embed`}
-              className="h-full w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            <MapaDiferido direccion={contacto.direccion} />
           </div>
         )}
 

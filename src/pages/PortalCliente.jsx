@@ -7,7 +7,8 @@ import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
 import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
 import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
-import { precargarPestanasPrincipales } from '../config/paginasCliente.js'
+import { precargarPestanasPrincipales, reintentarPaginasFallidas } from '../config/paginasCliente.js'
+import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
 import AccionesVisitante from '../components/AccionesVisitante.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
@@ -488,15 +489,19 @@ function PortalClienteContenido() {
               className="relative flex flex-1 flex-col overflow-hidden pt-12 sm:pt-[72px]"
             >
               <main className="flex flex-1 flex-col overflow-hidden">
-                <Suspense
-                  fallback={
-                    <div className="flex flex-1 items-center justify-center p-6">
-                      <p className="font-mono text-sm text-white/50">Cargando...</p>
-                    </div>
-                  }
-                >
-                  <Outlet />
-                </Suspense>
+                {/* F8-01: una página cuyo código no llega (sin red, versión retirada) falla AQUÍ, con el header, el menú y
+                    los providers de la clienta montados; al cambiar de ruta o volver la red se reintenta. */}
+                <LimiteCargaDiferida tono="portal" clave={location.pathname} onReintentar={reintentarPaginasFallidas}>
+                  <Suspense
+                    fallback={
+                      <div className="flex flex-1 items-center justify-center p-6">
+                        <p className="font-mono text-sm text-white/50">Cargando...</p>
+                      </div>
+                    }
+                  >
+                    <Outlet />
+                  </Suspense>
+                </LimiteCargaDiferida>
               </main>
               <MenuLateralCliente abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
             </div>

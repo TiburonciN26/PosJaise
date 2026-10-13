@@ -9,18 +9,24 @@ import { ToastProvider } from './context/ToastContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import AvisoActualizacionPWA from './components/AvisoActualizacionPWA.jsx'
 
+// Fase 8 V2 (F8-01): el aviso de versión nueva queda FUERA del límite de error de la app. Antes compartía el ErrorBoundary
+// global: un error que llegaba hasta ahí desmontaba también el aviso, y desaparecía el único botón «Actualizar» (el que respeta
+// el trabajo pendiente). Las pantallas y ventanas que se cargan aparte tienen además su propio límite local
+// (LimiteCargaDiferida): un fallo de descarga ya no llega a este nivel.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>
         <AvisoActualizacionPWA />
-        <AuthProvider>
-          <EstadoNegocioProvider>
-            <ToastProvider>
-              <App />
-            </ToastProvider>
-          </EstadoNegocioProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <EstadoNegocioProvider>
+              <ToastProvider>
+                <App />
+              </ToastProvider>
+            </EstadoNegocioProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </ThemeProvider>
     </ErrorBoundary>
   </StrictMode>,
