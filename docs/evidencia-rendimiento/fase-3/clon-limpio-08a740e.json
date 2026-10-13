@@ -1,0 +1,26 @@
+{
+  "fecha": "2026-10-10T21:58:41.872Z",
+  "modo": "checkout exacto de HEAD (08a740e9ff39646161ea9c45ea2fe37866d5758f)",
+  "candidatos": 889,
+  "incluyeImagenLogin": true,
+  "archivosClon": 180,
+  "archivosArbol": 180,
+  "diferenciasExactas": 11,
+  "diferenciasSoloFinDeLinea": 11,
+  "ejemploSoloFinDeLinea": [
+    "diseñosPropios/Login.html",
+    "diseñosPropios/Niveles de Tarjeta Rewards.html",
+    "icons/chanchitoActivo.svg",
+    "icons/chanchitoBloqueado.svg",
+    "icons/efectivo.svg",
+    "icons/facebookColor.svg",
+    "icons/whatsappColor.svg",
+    "icons.svg",
+    "index.html",
+    "sw.js",
+    "_headers"
+  ],
+  "diferenciasDeContenido": 0,
+  "ejemploDiferencias": [],
+  "identico": true
+}
