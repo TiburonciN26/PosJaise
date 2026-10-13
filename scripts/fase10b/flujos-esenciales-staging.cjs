@@ -45,9 +45,10 @@ async function main() {
   const APP = arg('app')
   const cuentas = S.cuentasStaging()
   const pre = await S.preflight(APP, arg('build-id'))
-  const { origen } = S.validarApp(APP)
-  casos.push({ nombre: 'Preflight: Preview aprobado, build-id y backend = staging', ok: true, detalle: pre })
-  console.log('OK    Preflight: Preview aprobado, build-id y backend = staging')
+  const { origen, base } = S.validarApp(APP)
+  const raiz = `${origen}${base}`
+  casos.push({ nombre: 'Preflight: app aprobada (Preview con build-id, o build en loopback) y backend efectivo = staging', ok: true, detalle: pre })
+  console.log('OK    Preflight: app aprobada (Preview con build-id, o build en loopback) y backend efectivo = staging')
   const run = crypto.randomBytes(3).toString('hex')
   const navegador = await chromium.launch({ headless: true })
   const guardas = []
@@ -68,7 +69,7 @@ async function main() {
       const stockAntes = Number(uno(`select stock_actual from productos where nombre = '${producto}';`))
       let venta = null
       await caso(`venta: la CAJERA vende 1 «${producto}» con Yape → confirmar_venta OK y el stock baja en 1`, async () => {
-        await page.goto(`${origen}/ventas`)
+        await page.goto(`${raiz}/ventas`)
         await page.getByRole('searchbox').first().fill('Agua San Luis')
         await page.getByRole('button', { name: new RegExp(producto) }).first().click()
         await vb(page, 'Yape').click()
@@ -83,7 +84,7 @@ async function main() {
       })
       await caso('venta: la CAJERA la anula en Historial → venta ANULADA y stock restituido', async () => {
         if (!venta) throw new Error('sin venta')
-        await page.goto(`${origen}/historial`)
+        await page.goto(`${raiz}/historial`)
         await page.getByPlaceholder('Buscar por código o cliente...').fill(venta.codigo)
         await page.getByText(venta.codigo.replace(/^VEN/, 'V'), { exact: true }).filter({ visible: true }).first().click()
         await vb(page, 'Anular venta').click()
@@ -106,7 +107,7 @@ async function main() {
       if (!tiene()) {
         const { ctx, page } = await sesion(cuentas.clienta)
         await caso('perfil: la CLIENTA QA completa su perfil en Mi perfil → vincular_o_crear_cliente_web OK', async () => {
-          await page.goto(`${origen}/mi-perfil`)
+          await page.goto(`${raiz}/mi-perfil`)
           await vb(page, 'Editar').click()
           await page.getByPlaceholder('Nombre completo').fill('TEST QA Clienta Staging')
           await page.locator('#perfil-telefono').fill('900000001')
@@ -129,16 +130,16 @@ async function main() {
       const enCarrito = () => Number(uno(`select coalesce(sum(cp.cantidad),0) from carrito_productos cp join clientes_web cw on cw.id = cp.cliente_web_id where cw.email = '${cuentas.clienta.email}' and cp.producto_id = '${idProd}';`))
       let pedidoId = null
       await caso('carrito: la CLIENTA agrega el producto desde su ficha, lo quita en el carrito y lo vuelve a agregar', async () => {
-        await page.goto(`${origen}/productos/${idProd}`)
+        await page.goto(`${raiz}/productos/${idProd}`)
         await page.getByRole('button', { name: /^Agregar al carrito/ }).first().click()
         await page.waitForTimeout(1500)
         const a = enCarrito()
-        await page.goto(`${origen}/carrito`)
+        await page.goto(`${raiz}/carrito`)
         await page.getByRole('heading', { name: 'Tu carrito', exact: true }).waitFor()
         await page.getByRole('button', { name: `Quitar ${producto} del carrito` }).first().click()
         await page.waitForTimeout(1500)
         const b = enCarrito()
-        await page.goto(`${origen}/productos/${idProd}`)
+        await page.goto(`${raiz}/productos/${idProd}`)
         await page.getByRole('button', { name: /^Agregar al carrito/ }).first().click()
         await page.waitForTimeout(1500)
         const c = enCarrito()
@@ -146,7 +147,7 @@ async function main() {
         return { tras: { agregar: a, quitar: b, reagregar: c } }
       })
       await caso('carrito: confirma un pedido (recojo, Yape, captura generada; sin pago real) → confirmar_pedido_productos OK', async () => {
-        await page.goto(`${origen}/carrito`)
+        await page.goto(`${raiz}/carrito`)
         await vb(page, 'Recojo en tienda').click()
         await vb(page, 'Elige el día').click()
         const dias = page.getByRole('button', { name: /^\d{1,2}$/ }).filter({ visible: true })
@@ -171,7 +172,7 @@ async function main() {
       })
       await caso('carrito: la CLIENTA cancela el pedido en «Mis pedidos» → cancelar_mi_pedido_web OK y el stock queda como antes', async () => {
         if (!pedidoId) throw new Error('sin pedido')
-        await page.goto(`${origen}/mi-perfil/pedidos`)
+        await page.goto(`${raiz}/mi-perfil/pedidos`)
         await vb(page, 'Cancelar pedido').first().click()
         const resp = esperarResp(page, (r) => r.url().includes('/rpc/cancelar_mi_pedido_web'))
         await vb(page, 'Sí, cancelar').click()
@@ -192,7 +193,7 @@ async function main() {
       const { ctx, page } = await sesion(cuentas.clienta)
       let citaId = null
       await caso('cita: la CLIENTA reserva un servicio con la asistente de prueba (horario disponible, captura generada) → agendar_cita_web OK', async () => {
-        await page.goto(`${origen}/servicios/${idServicio}`)
+        await page.goto(`${raiz}/servicios/${idServicio}`)
         await vb(page, 'Reservar ahora').click()
         await page.waitForURL(/\/citas$/)
         await page.getByRole('link', { name: 'Agendar cita', exact: true }).first().click()
