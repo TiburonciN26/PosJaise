@@ -165,11 +165,22 @@ $r = Aplicar (Nueva-Corrida) $e
 Caso 'Comprobacion final con una deuda incoherente -> DETENIDO, sin COMPLETO' (-not $r.completo -and -not $r.logCompleto -and $r.detenido -match 'incoherentes=1') @{ detenido = $r.detenido }
 
 # ===================== F10B-04: inventario =====================
-function Inventario([scriptblock]$ej) {
-    $sal = Join-Path $tmp ('inv-' + [guid]::NewGuid().ToString('N').Substring(0, 6) + '.txt')
+# $ej nulo = adaptador ORIGINAL (docker/psql del script). $sal permite sembrar antes un informe anterior en esa ruta.
+function Inventario([scriptblock]$ej, [string]$sal) {
+    if (-not $sal) { $sal = Join-Path (Join-Path $tmp ('inv-' + [guid]::NewGuid().ToString('N').Substring(0, 6))) 'inventario.txt' }
     $msg = $null; $ok = $false
-    try { & $inventario -HostDb 'qa.invalid' -Salida $sal -EjecutorPsql $ej *> $null; $ok = $true } catch { $msg = "$($_.Exception.Message)" }
-    return @{ ok = $ok; error = $msg; primera = $(if (Test-Path $sal) { (Get-Content $sal -TotalCount 1) } else { $null }); texto = $(if (Test-Path $sal) { Get-Content $sal -Raw } else { '' }) }
+    try {
+        if ($ej) { & $inventario -HostDb 'qa.invalid' -Salida $sal -EjecutorPsql $ej *> $null } else { & $inventario -HostDb 'qa.invalid' -Salida $sal *> $null }
+        $ok = $true
+    } catch { $msg = "$($_.Exception.Message)" }
+    $lin = @(if (Test-Path $sal) { Get-Content $sal -TotalCount 2 })
+    return @{ ok = $ok; error = $msg; primera = $(if ($lin.Count) { $lin[0] } else { $null }); corrida = $(if ($lin.Count -gt 1) { $lin[1] } else { $null })
+        texto = $(if (Test-Path $sal) { Get-Content $sal -Raw } else { '' }); historico = @(Get-ChildItem (Join-Path (Split-Path $sal) 'historico') -File -ErrorAction SilentlyContinue) }
+}
+function Sembrar-Completo([string]$sal) {
+    New-Item -ItemType Directory -Force -Path (Split-Path $sal) | Out-Null
+    @('ESTADO|COMPLETO', 'CORRIDA|20261001T000000Z-anteri', 'servidor|17.6', 'fin|ok') | Out-File -Encoding utf8 $sal
+    return (Get-FileHash $sal -Algorithm SHA256).Hash
 }
 $completa = @('servidor|17.6', 'solo_lectura|on', 'migraciones_total|25', 'objeto|public.deuda_pagos|false', 'funcion|guardar_cita_pos|true', 'trigger_deudas|(ninguno)',
     'deudas|3|cobradas=1|pendientes=2', 'deuda_pagos|sin tabla', 'deudas_incoherentes|sin tabla', 'cobradas_sin_pagos|sin tabla', 'recompensas_activo|false', 'conteo|productos|5', 'fotos_productos|supabase=3|r2=0', 'fin|ok') -join "`n"
@@ -181,11 +192,37 @@ foreach ($c in @(
     @{ n = 'sesion no declarada de solo lectura'; ej = { param($s, $x) @{ Codigo = 0; Salida = ($completa -replace 'solo_lectura\|on', 'solo_lectura|off') } } }
 )) {
     $r = Inventario $c.ej
-    $incompleto = (-not $r.ok) -and ($r.primera -eq 'ESTADO|INCOMPLETO' -or $c.n -eq 'proceso inexistente')
+    $incompleto = (-not $r.ok) -and $r.primera -eq 'ESTADO|INCOMPLETO' -and $r.corrida -match '^CORRIDA\|'
     Caso "F10B-04: $($c.n) -> INCOMPLETO y error (sin COMPLETO)" $incompleto @{ error = $r.error; primera = $r.primera }
 }
 $r = Inventario { param($s, $x) @{ Codigo = 0; Salida = $completa } }
-Caso 'F10B-04 control: salida completa -> ESTADO|COMPLETO, sin error' ($r.ok -and $r.primera -eq 'ESTADO|COMPLETO') @{ error = $r.error }
+Caso 'F10B-04 control: salida completa -> ESTADO|COMPLETO, sin error' ($r.ok -and $r.primera -eq 'ESTADO|COMPLETO' -and $r.corrida -match '^CORRIDA\|') @{ error = $r.error }
+
+# ---- F10B-04b: un arranque fallido nunca deja a la vista un COMPLETO de otra corrida ----
+# Adaptador ORIGINAL con "docker" apuntando a un ejecutable inexistente (alias temporal): no se lanza Docker ni hay conexion.
+$secreto = 'clave-ficticia-qa-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+function Arranque-Fallido([string]$sal) {
+    $env:PGPASSWORD = $secreto
+    Set-Alias -Name docker -Value (Join-Path $tmp 'no-existe\docker.exe') -Scope Global
+    try { return (Inventario $null $sal) } finally { Remove-Item Alias:docker -Force -ErrorAction SilentlyContinue; $env:PGPASSWORD = $null }
+}
+$sal = Join-Path (Join-Path $tmp 'inv-sembrado') 'inventario.txt'; $hashAnterior = Sembrar-Completo $sal
+$r = Arranque-Fallido $sal
+$hist = @($r.historico | Where-Object { $_.Name -match '\.anterior-' -and (Get-FileHash $_.FullName -Algorithm SHA256).Hash -eq $hashAnterior })
+Caso 'F10B-04b: COMPLETO anterior + docker inexistente (adaptador original) -> error, la corrida actual queda INCOMPLETO con su id y el anterior pasa intacto a historico\*.anterior-*' ((-not $r.ok) -and $r.primera -eq 'ESTADO|INCOMPLETO' -and $r.corrida -match '^CORRIDA\|' -and $r.corrida -ne 'CORRIDA|20261001T000000Z-anteri' -and $hist.Count -eq 1 -and $r.texto -notmatch [regex]::Escape($secreto)) @{ error = $r.error; primera = $r.primera; corrida = $r.corrida; historico = @($r.historico | ForEach-Object Name) }
+$sal = Join-Path (Join-Path $tmp 'inv-sin-previo') 'inventario.txt'
+$r = Arranque-Fallido $sal
+Caso 'F10B-04b: sin informe anterior + docker inexistente -> error e INCOMPLETO de la corrida actual, sin historico' ((-not $r.ok) -and $r.primera -eq 'ESTADO|INCOMPLETO' -and $r.corrida -match '^CORRIDA\|' -and $r.historico.Count -eq 0 -and $r.texto -notmatch [regex]::Escape($secreto)) @{ error = $r.error; primera = $r.primera }
+$sal = Join-Path (Join-Path $tmp 'inv-excepcion') 'inventario.txt'; $null = Sembrar-Completo $sal
+$env:PGPASSWORD = $secreto
+try { $r = Inventario { param($s, $x) throw "fallo ficticio que menciona $env:PGPASSWORD" } $sal } finally { $env:PGPASSWORD = $null }
+Caso 'F10B-04b: COMPLETO anterior + excepcion del ejecutor (con la clave en el mensaje) -> INCOMPLETO actual, clave ocultada en el informe' ((-not $r.ok) -and $r.primera -eq 'ESTADO|INCOMPLETO' -and $r.texto -match '\*\*\*' -and $r.texto -notmatch [regex]::Escape($secreto) -and $r.historico.Count -eq 1) @{ error = $r.error; primera = $r.primera }
+$sal = Join-Path (Join-Path $tmp 'inv-psql-error') 'inventario.txt'; $null = Sembrar-Completo $sal
+$r = Inventario { param($s, $x) @{ Codigo = 2; Salida = 'psql: error: FATAL: fallo de conexion ficticio' } } $sal
+Caso 'F10B-04b: COMPLETO anterior + error de psql -> INCOMPLETO actual, anterior en historico' ((-not $r.ok) -and $r.primera -eq 'ESTADO|INCOMPLETO' -and $r.historico.Count -eq 1) @{ error = $r.error; primera = $r.primera }
+$sal = Join-Path (Join-Path $tmp 'inv-sano') 'inventario.txt'; $null = Sembrar-Completo $sal
+$r = Inventario { param($s, $x) @{ Codigo = 0; Salida = $completa } } $sal
+Caso 'F10B-04b control: COMPLETO anterior + corrida sana -> COMPLETO con un id de corrida NUEVO, anterior en historico' ($r.ok -and $r.primera -eq 'ESTADO|COMPLETO' -and $r.corrida -match '^CORRIDA\|' -and $r.corrida -ne 'CORRIDA|20261001T000000Z-anteri' -and $r.historico.Count -eq 1) @{ error = $r.error; corrida = $r.corrida }
 
 if ($ConLocal) {
     $local = { param($s, $x) $o = $s | docker exec -i -e 'PGOPTIONS=-c default_transaction_read_only=on' supabase_db_WedJaiseReact psql -U postgres -d postgres -X -At -v ON_ERROR_STOP=1 2>&1 | ForEach-Object { "$_" }; @{ Codigo = $LASTEXITCODE; Salida = ($o -join "`n") } }

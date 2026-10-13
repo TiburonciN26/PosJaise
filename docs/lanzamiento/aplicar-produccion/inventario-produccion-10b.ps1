@@ -9,6 +9,8 @@
 # termina con codigo 0, la sesion es de solo lectura y estan todas las secciones obligatorias y el cierre "fin|ok". Si no, se
 # conserva el diagnostico, NO se presentan las ausencias como datos y el script termina con error. Las tablas opcionales se
 # consultan sin referenciarlas antes de comprobar que existen (query_to_xml dentro de un CASE).
+# V2.1 (F10B-04b): la segunda linea es "CORRIDA|<id>". El informe anterior se mueve a historico\ y el de la corrida actual
+# empieza como INCOMPLETO "en curso", asi que un arranque fallido nunca deja a la vista un COMPLETO de otra corrida.
 param(
     [string]$HostDb, [int]$Puerto = 5432, [string]$Usuario = 'postgres.cmkelllerzjqjbsqsylc', [string]$SslMode = 'require',
     [string]$Salida,
@@ -21,7 +23,32 @@ $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 if (-not $Salida) { $Salida = Join-Path $repo '.codex\evidencia-fase10b\inventario-produccion.txt' }
 New-Item -ItemType Directory -Force -Path (Split-Path $Salida) | Out-Null
 
-if ($Usuario -notmatch '\.cmkelllerzjqjbsqsylc$') { throw 'El usuario no corresponde al proyecto de produccion (cmkelllerzjqjbsqsylc).' }
+# F10B-04b de Codex: el archivo de salida es SIEMPRE el de esta corrida. Un informe anterior se mueve al historico (con
+# "anterior" en el nombre) y, antes de cualquier otro paso, se escribe un INCOMPLETO "en curso" con el id de la corrida. Si el
+# arranque o la ejecucion fallan (Docker ausente, excepcion, Ctrl+C), el archivo nunca conserva un COMPLETO de otra corrida.
+$corrida = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 6)
+if (Test-Path $Salida) {
+    $historico = Join-Path (Split-Path $Salida) 'historico'
+    New-Item -ItemType Directory -Force -Path $historico | Out-Null
+    $base = [IO.Path]::GetFileNameWithoutExtension($Salida)
+    $marca = (Get-Item $Salida).LastWriteTimeUtc.ToString('yyyyMMddTHHmmssZ')
+    Move-Item -Force $Salida (Join-Path $historico "$base.anterior-$marca-$($corrida.Substring(17)).txt")
+}
+function Escribir-Incompleto([string[]]$motivos, [string[]]$recibido = @()) {
+    $t = @('ESTADO|INCOMPLETO', "CORRIDA|$corrida", "# Inventario de produccion (solo lectura) - UTC $((Get-Date).ToUniversalTime().ToString('o'))",
+        '# INCOMPLETO: las ausencias de este informe NO son datos confirmados. Diagnostico:')
+    $t += ($motivos | ForEach-Object { "# - $_" })
+    if ($recibido.Count) { $t += '# Salida recibida (diagnostico):'; $t += ($recibido | ForEach-Object { "#   $_" }) }
+    $t | Out-File -Encoding utf8 $Salida
+}
+# Nunca escribir la contrasena en un diagnostico, aunque un mensaje de error la incluyera.
+function Sin-Secretos([string]$s) { if ($env:PGPASSWORD) { return $s.Replace($env:PGPASSWORD, '***') } else { return $s } }
+Escribir-Incompleto @('corrida en curso o interrumpida antes de terminar')
+
+if ($Usuario -notmatch '\.cmkelllerzjqjbsqsylc$') {
+    Escribir-Incompleto @('el usuario no corresponde al proyecto de produccion')
+    throw 'El usuario no corresponde al proyecto de produccion (cmkelllerzjqjbsqsylc).'
+}
 # Valor de una tabla opcional SIN referenciarla si no existe: query_to_xml solo se evalua en la rama del CASE que aplica.
 function Opcional([string]$tabla, [string]$sql) {
     return "coalesce(case when to_regclass('public.$tabla') is null then 'sin tabla' else (xpath('/row/v/text()', query_to_xml(`$q`$$sql`$q`$, false, true, '')))[1]::text end, 'sin fila')"
@@ -66,7 +93,12 @@ if (-not $EjecutorPsql) {
     }
 }
 try {
-    $r = Ejecutar $consulta
+    try { $r = Ejecutar $consulta } catch {
+        $m = Sin-Secretos "$($_.Exception.Message)"
+        Escribir-Incompleto @("no se pudo iniciar o ejecutar psql: $m")
+        Write-Host "INVENTARIO INCOMPLETO: no se pudo iniciar o ejecutar psql. Diagnostico en $Salida" -ForegroundColor Red
+        throw "INVENTARIO INCOMPLETO: no se pudo iniciar o ejecutar psql: $m"
+    }
     $lineas = @("$($r.Salida)" -split "`r?`n" | Where-Object { $_ -ne '' })
     $secciones = @($lineas | ForEach-Object { ($_ -split '\|')[0] } | Select-Object -Unique)
     $problemas = @()
@@ -74,20 +106,17 @@ try {
     foreach ($o in $OBLIGATORIAS) { if ($secciones -notcontains $o) { $problemas += "falta la seccion obligatoria '$o'" } }
     if ($lineas.Count -and $lineas[-1] -ne 'fin|ok') { $problemas += 'la salida no termina en "fin|ok" (corte o error intermedio)' }
     if (@($lineas | Where-Object { $_ -eq 'solo_lectura|on' }).Count -ne 1) { $problemas += 'la sesion no se declaro de solo lectura (solo_lectura|on)' }
-    $estado = if ($problemas.Count) { 'INCOMPLETO' } else { 'COMPLETO' }
-    $texto = @("ESTADO|$estado", "# Inventario de produccion (solo lectura) - UTC $((Get-Date).ToUniversalTime().ToString('o'))")
     if ($problemas.Count) {
-        $texto += '# INCOMPLETO: las ausencias de este informe NO son datos confirmados. Diagnostico:'
-        $texto += ($problemas | ForEach-Object { "# - $_" })
-        $texto += '# Salida recibida (diagnostico):'
-        $texto += ($lineas | ForEach-Object { "#   $_" })
-    } else { $texto += $lineas }
-    $texto | Out-File -Encoding utf8 $Salida
+        Escribir-Incompleto $problemas @($lineas | ForEach-Object { Sin-Secretos $_ })
+    } else {
+        @('ESTADO|COMPLETO', "CORRIDA|$corrida", "# Inventario de produccion (solo lectura) - UTC $((Get-Date).ToUniversalTime().ToString('o'))") + $lineas |
+            Out-File -Encoding utf8 $Salida
+    }
     if ($problemas.Count) {
         Write-Host "INVENTARIO INCOMPLETO: $($problemas -join '; '). Diagnostico en $Salida" -ForegroundColor Red
         throw "INVENTARIO INCOMPLETO: $($problemas -join '; ')"
     }
-    Write-Host "Inventario COMPLETO: $Salida ($($lineas.Count) lineas). Avise a Claude para que lo lea." -ForegroundColor Green
+    Write-Host "Inventario COMPLETO (corrida $corrida): $Salida ($($lineas.Count) lineas). Avise a Claude para que lo lea." -ForegroundColor Green
 } finally {
     if (-not $EjecutorPsql) { $env:PGPASSWORD = $null }
 }
