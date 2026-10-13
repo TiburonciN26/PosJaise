@@ -53,7 +53,11 @@ if ($Usuario -notmatch '\.cmkelllerzjqjbsqsylc$') {
 function Opcional([string]$tabla, [string]$sql) {
     return "coalesce(case when to_regclass('public.$tabla') is null then 'sin tabla' else (xpath('/row/v/text()', query_to_xml(`$q`$$sql`$q`$, false, true, '')))[1]::text end, 'sin fila')"
 }
+# V2.2: el Session pooler (Supavisor) NO reenvia PGOPTIONS, asi que la solo lectura se impone en el propio SQL: todo va en una
+# transaccion READ ONLY que termina en ROLLBACK (QUIET evita las lineas BEGIN/ROLLBACK). PGOPTIONS se mantiene como refuerzo.
 $consulta = @"
+\set QUIET 1
+begin transaction read only;
 select 'servidor|' || current_setting('server_version');
 select 'solo_lectura|' || current_setting('transaction_read_only');
 select 'migracion|' || version || '|' || coalesce(name, '') from supabase_migrations.schema_migrations where version >= '20261001000000' order by version;
@@ -73,6 +77,7 @@ select 'conteo|' || t || '|' || (xpath('/row/c/text()', query_to_xml(format('sel
   from unnest(array['productos','servicios','clientes','ventas','citas','pedidos_web','usuarios','asistentes','galeria_web']) t where to_regclass('public.' || t) is not null;
 select 'fotos_productos|supabase=' || count(*) filter (where foto_url like '%supabase.co/storage%') || '|r2=' || count(*) filter (where foto_url like 'r2:%') from public.productos;
 select 'fin|ok';
+rollback;
 "@
 $OBLIGATORIAS = @('servidor', 'solo_lectura', 'migraciones_total', 'objeto', 'funcion', 'trigger_deudas', 'deudas', 'deuda_pagos', 'deudas_incoherentes', 'recompensas_activo', 'conteo', 'fotos_productos', 'fin')
 

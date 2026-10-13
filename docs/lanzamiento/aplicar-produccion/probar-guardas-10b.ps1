@@ -4,7 +4,8 @@
 # simulada: nunca se lanza Docker contra una base remota, nunca se abre una conexion y el host es qa.invalid. Los respaldos son
 # corridas ficticias creadas en una carpeta temporal con la MISMA estructura que produce docs\lanzamiento\respaldo-real.
 # -ConLocal anade dos casos del inventario contra el Supabase LOCAL (solo lectura): esquema actual y una base temporal con un
-# esquema antiguo minimo (se crea y se borra en el contenedor local).
+# esquema antiguo minimo (se crea y se borra en el contenedor local). Sin PGOPTIONS, como el Session pooler (que no lo reenvia):
+# la solo lectura debe venir del propio SQL del inventario.
 param([string]$Salida, [switch]$ConLocal)
 $ErrorActionPreference = 'Stop'
 $dir = $PSScriptRoot
@@ -195,7 +196,10 @@ foreach ($c in @(
     $incompleto = (-not $r.ok) -and $r.primera -eq 'ESTADO|INCOMPLETO' -and $r.corrida -match '^CORRIDA\|'
     Caso "F10B-04: $($c.n) -> INCOMPLETO y error (sin COMPLETO)" $incompleto @{ error = $r.error; primera = $r.primera }
 }
-$r = Inventario { param($s, $x) @{ Codigo = 0; Salida = $completa } }
+$global:sqlInventario = $null
+$r = Inventario { param($s, $x) $global:sqlInventario = $s; @{ Codigo = 0; Salida = $completa } }
+$lsql = @($global:sqlInventario -split "`r?`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+Caso 'Solo lectura en el SQL (el pooler ignora PGOPTIONS): \set QUIET 1, begin transaction read only ... rollback' ($lsql.Count -gt 3 -and $lsql[0] -eq '\set QUIET 1' -and $lsql[1] -eq 'begin transaction read only;' -and $lsql[-1] -eq 'rollback;' -and @($lsql | Where-Object { $_ -match '^(commit|end)\b' }).Count -eq 0) @{ primeras = @($lsql | Select-Object -First 2); ultima = $(if ($lsql.Count) { $lsql[-1] }) }
 Caso 'F10B-04 control: salida completa -> ESTADO|COMPLETO, sin error' ($r.ok -and $r.primera -eq 'ESTADO|COMPLETO' -and $r.corrida -match '^CORRIDA\|') @{ error = $r.error }
 
 # ---- F10B-04b: un arranque fallido nunca deja a la vista un COMPLETO de otra corrida ----
@@ -225,7 +229,7 @@ $r = Inventario { param($s, $x) @{ Codigo = 0; Salida = $completa } } $sal
 Caso 'F10B-04b control: COMPLETO anterior + corrida sana -> COMPLETO con un id de corrida NUEVO, anterior en historico' ($r.ok -and $r.primera -eq 'ESTADO|COMPLETO' -and $r.corrida -match '^CORRIDA\|' -and $r.corrida -ne 'CORRIDA|20261001T000000Z-anteri' -and $r.historico.Count -eq 1) @{ error = $r.error; corrida = $r.corrida }
 
 if ($ConLocal) {
-    $local = { param($s, $x) $o = $s | docker exec -i -e 'PGOPTIONS=-c default_transaction_read_only=on' supabase_db_WedJaiseReact psql -U postgres -d postgres -X -At -v ON_ERROR_STOP=1 2>&1 | ForEach-Object { "$_" }; @{ Codigo = $LASTEXITCODE; Salida = ($o -join "`n") } }
+    $local = { param($s, $x) $o = $s | docker exec -i supabase_db_WedJaiseReact psql -U postgres -d postgres -X -At -v ON_ERROR_STOP=1 2>&1 | ForEach-Object { "$_" }; @{ Codigo = $LASTEXITCODE; Salida = ($o -join "`n") } }
     $r = Inventario $local
     Caso 'F10B-04 Local: esquema actual (real, solo lectura) -> COMPLETO con deuda_pagos, compatibilidad y funciones nuevas presentes' ($r.ok -and $r.primera -eq 'ESTADO|COMPLETO' -and $r.texto -match 'funcion\|productos_vitrina_publica\|true' -and $r.texto -match 'funcion\|registrar_reclamo\|true' -and $r.texto -match 'trigger_deudas\|deudas_compat_antes,deudas_compat_despues' -and $r.texto -match 'deudas_incoherentes\|0') @{ error = $r.error; primera = $r.primera }
     $ErrorActionPreference = 'Continue'
@@ -234,7 +238,7 @@ if ($ConLocal) {
     "create schema supabase_migrations; create table supabase_migrations.schema_migrations(version text primary key, name text); insert into supabase_migrations.schema_migrations values ('20261002000001','x');
      create table public.deudas(id uuid primary key default gen_random_uuid(), estado text, monto numeric); insert into public.deudas(estado, monto) values ('COBRADA', 10), ('PENDIENTE', 5);
      create table public.productos(id int, foto_url text); insert into public.productos values (1, 'https://x.supabase.co/storage/v1/a.png');" | docker exec -i supabase_db_WedJaiseReact psql -U postgres -d qa_inventario_antiguo -X -q *> $null
-    $antiguo = { param($s, $x) $o = $s | docker exec -i -e 'PGOPTIONS=-c default_transaction_read_only=on' supabase_db_WedJaiseReact psql -U postgres -d qa_inventario_antiguo -X -At -v ON_ERROR_STOP=1 2>&1 | ForEach-Object { "$_" }; @{ Codigo = $LASTEXITCODE; Salida = ($o -join "`n") } }
+    $antiguo = { param($s, $x) $o = $s | docker exec -i supabase_db_WedJaiseReact psql -U postgres -d qa_inventario_antiguo -X -At -v ON_ERROR_STOP=1 2>&1 | ForEach-Object { "$_" }; @{ Codigo = $LASTEXITCODE; Salida = ($o -join "`n") } }
     $r = Inventario $antiguo
     docker exec -i supabase_db_WedJaiseReact psql -U postgres -d postgres -X -q -c 'drop database if exists qa_inventario_antiguo' *> $null
     $ErrorActionPreference = 'Stop'
