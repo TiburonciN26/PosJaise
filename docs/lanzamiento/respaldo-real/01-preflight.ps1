@@ -62,6 +62,11 @@ $tablas = (Select-String -Path $f -Pattern '^CREATE TABLE ' -AllMatches).Count
 if ($tablas -lt 10) { Detener "El pre-vuelo contiene solo $tablas tablas: algo no esta bien." }
 Ok "pg_dump --schema-only: codigo 0, $((Get-Item $f).Length) bytes, $tablas tablas"
 
-Poner-Estado 'paso1' @{ ok = $true; version_servidor = $v['version_servidor']; preflight = $v; preflight_schema_only_bytes = (Get-Item $f).Length; tablas_en_preflight = $tablas }
+# 10B (F10B-01): identidad del proyecto respaldado, tomada del usuario del pooler (postgres.<ref>). El aplicador del lote la exige.
+$proyecto = ($global:JaiseConn.Usuario -replace '^postgres\.', '')
+if ($proyecto -ne $Ref) { Detener "El usuario no es del proyecto de produccion ($Ref): $proyecto" }
+Ok "Proyecto respaldado: $proyecto"
+
+Poner-Estado 'paso1' @{ ok = $true; proyecto = $proyecto; version_servidor = $v['version_servidor']; preflight = $v; preflight_schema_only_bytes = (Get-Item $f).Length; tablas_en_preflight = $tablas }
 Write-Host ''
 Write-Host 'PASO 1 COMPLETO. Siga con 02-respaldo-base.ps1' -ForegroundColor Green

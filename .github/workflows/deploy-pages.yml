@@ -4,9 +4,13 @@ name: Desplegar a GitHub Pages
 # gratis en GitHub Pages (repo público). El anon key de Supabase va en el
 # bundle a propósito — es la clave pensada para el navegador, la seguridad
 # real la da RLS en la base de datos, no ocultar esta clave.
+#
+# Fase 10B (transición a Cloudflare Pages): SOLO MANUAL. El push a main del lanzamiento NO debe redesplegar GitHub Pages:
+# github.io conserva el build anterior (main 0dc629e, deployment 6922311389, index.html SHA-256 9ade57fe…, bundle
+# assets/index-BYFcUGaT.js) durante la transición y como reversión del frontend. Republicar aquí solo con decisión expresa
+# (p. ej. el build de redirección de la retirada de github.io). Para volver a publicar el build anterior desde este workflow,
+# ejecutarlo a mano sobre una ref de 0dc629e (su versión del workflow conserva workflow_dispatch).
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
