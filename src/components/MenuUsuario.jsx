@@ -212,7 +212,7 @@ export default function MenuUsuario() {
 
           <div className="mt-2 flex gap-2">
             <label
-              className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border-strong px-2 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber ${
+              className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg px-2 py-1.5 text-xs text-ink transition-colors hover:border-amber ${
                 subiendoFoto ? 'pointer-events-none opacity-40' : ''
               }`}
             >
@@ -230,7 +230,7 @@ export default function MenuUsuario() {
               type="button"
               onClick={() => setMostrarCamara(true)}
               disabled={subiendoFoto}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong px-2 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg px-2 py-1.5 text-xs text-ink transition-colors hover:border-amber disabled:opacity-40"
             >
               <Camera className="h-3.5 w-3.5" />
               Tomar foto
@@ -246,7 +246,7 @@ export default function MenuUsuario() {
               <button
                 type="button"
                 onClick={() => setConfirmando(true)}
-                className="flex w-full items-center justify-between rounded-lg border border-border-strong px-3 py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+                className="flex w-full items-center justify-between rounded-lg border border-border-strong bg-bg px-3 py-2 text-sm text-ink transition-colors hover:border-amber"
               >
                 <span className="flex items-center gap-2">
                   <span
@@ -281,7 +281,7 @@ export default function MenuUsuario() {
             type="button"
             onClick={irAModoCliente}
             disabled={entrandoComoClienta}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber disabled:opacity-40"
           >
             <User className="h-3.5 w-3.5" />
             {entrandoComoClienta ? 'Abriendo...' : 'Mi perfil de clienta'}
@@ -290,7 +290,7 @@ export default function MenuUsuario() {
           <button
             type="button"
             onClick={() => setConfirmandoSalir(true)}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-red hover:text-red"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-red"
           >
             <LogOut className="h-3.5 w-3.5" />
             Cerrar sesión
@@ -325,7 +325,7 @@ export default function MenuUsuario() {
                 type="button"
                 onClick={() => setConfirmando(false)}
                 disabled={cambiandoEstado}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                className="flex-1 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber disabled:opacity-40"
               >
                 Cancelar
               </button>
@@ -355,7 +355,7 @@ export default function MenuUsuario() {
               <button
                 type="button"
                 onClick={() => setConfirmandoSalir(false)}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+                className="flex-1 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber"
               >
                 Cancelar
               </button>
