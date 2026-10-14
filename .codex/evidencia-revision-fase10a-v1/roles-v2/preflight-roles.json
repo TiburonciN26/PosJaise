@@ -1,0 +1,10 @@
+{
+  "fecha": "2026-10-13T05:30:37.906Z",
+  "dist": "C:/Users/jdeos/AppData/Local/Temp/claude/c--WedJaiseReact/11cf04d8-3d08-4875-b1f5-84eda8bf65da/scratchpad/f10a/dist-cf",
+  "indexSha256": "2d83ebf7b6416d4a4be7cc1c6f87018f420bb2dd99eaa59f7303cb8abad68ea9",
+  "api": "http://127.0.0.1:54321",
+  "ocurrenciasLocal": 1,
+  "refsRemotos": [],
+  "cuentasQA": true,
+  "nota": "No recompilé ni cambié el proyecto. Copia externa del verificador con una guarda de red más estricta y WebSockets cerrados. Solo provisiona su ASISTENTE ficticio Local; negocios en lectura."
+}

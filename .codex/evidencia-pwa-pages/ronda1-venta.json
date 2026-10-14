@@ -1,0 +1,281 @@
+{
+  "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "estado": "venta",
+  "idEsperadoA": "9bb13306",
+  "idEsperadoB": "c8923709",
+  "fecha": "2026-10-10T21:02:43.246Z",
+  "pasos": [
+    {
+      "n": "preflight: Supabase de .env.staging.local = staging aprobado y clave anon/publishable válida",
+      "ok": true
+    },
+    {
+      "n": "preflight: cuenta QA ficticia (@staging.test)",
+      "ok": true
+    },
+    {
+      "n": "preflight: origen QA permitido",
+      "ok": true,
+      "d": "feat-cloudflare-pages.pos-jaise.pages.dev"
+    },
+    {
+      "n": "preflight: --entrega válida (pages|r2dev)",
+      "ok": true,
+      "d": "pages"
+    },
+    {
+      "n": "preflight: A sirve la marca 9bb13306 con la entrega de medios «pages» efectiva (antes del navegador y de publicar B)",
+      "ok": true,
+      "d": {
+        "modulos": [
+          "assets/index-DGsWTpdi.js"
+        ],
+        "swSha256": "8018435f8d905900582e119857e3e5bae8e70ce62a74239aabd16d4d92bf9071"
+      }
+    },
+    {
+      "n": "A: el documento tiene EXACTAMENTE la marca esperada",
+      "ok": true,
+      "d": {
+        "observada": "9bb13306",
+        "esperada": "9bb13306"
+      }
+    },
+    {
+      "n": "A: el service worker controla la pestaña",
+      "ok": true
+    },
+    {
+      "n": "A: sesión autenticada (usuario propio + su fila en usuarios, a staging)",
+      "ok": true,
+      "d": {
+        "ok": true,
+        "auth": 200,
+        "lectura": 200,
+        "rol": "ADMINISTRADOR"
+      }
+    },
+    {
+      "n": "A: sin tráfico bloqueado hasta aquí",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "A: el service worker controla la pestaña auxiliar",
+      "ok": true
+    },
+    {
+      "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+      "ok": true,
+      "d": {
+        "/medios/fotos-galeria/00000000-0000-4000-8000-000000000000/m.webp": {
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "texto": "No encontrado",
+          "esSpa": false
+        },
+        "/medios/": {
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "texto": "No encontrado",
+          "esSpa": false
+        },
+        "/medios": {
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "texto": "No encontrado",
+          "esSpa": false
+        }
+      }
+    },
+    {
+      "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+      "ok": true,
+      "d": {
+        "estado": 404,
+        "texto": "No encontrado",
+        "spa": false
+      }
+    },
+    {
+      "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+      "ok": true,
+      "d": {
+        "estado": 200
+      }
+    },
+    {
+      "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+      "ok": true
+    },
+    {
+      "n": "A: la caja tiene un producto en el carrito (sin cobrar)",
+      "ok": true
+    },
+    {
+      "n": "publicación de B por el comando indicado",
+      "ok": true,
+      "d": 0
+    },
+    {
+      "n": "aparece el aviso «Hay una versión nueva de la app.»",
+      "ok": true
+    },
+    {
+      "n": "mientras espera, la pestaña sigue en A EXACTA (sin actualización silenciosa)",
+      "ok": true
+    },
+    {
+      "n": "con trabajo pendiente: «Actualizar» DESHABILITADO",
+      "ok": true
+    },
+    {
+      "n": "con trabajo pendiente: mensaje visible que explica el bloqueo",
+      "ok": true
+    },
+    {
+      "n": "intentar pulsar no recarga: sigue la misma pestaña en A con su trabajo",
+      "ok": true
+    },
+    {
+      "n": "el carrito NO se perdió mientras estaba bloqueado",
+      "ok": true
+    },
+    {
+      "n": "al terminar/cancelar el trabajo, «Actualizar» se habilita solo",
+      "ok": true
+    },
+    {
+      "n": "tras «Actualizar» el documento tiene EXACTAMENTE la marca B",
+      "ok": true,
+      "d": {
+        "observada": "c8923709",
+        "esperada": "c8923709"
+      }
+    },
+    {
+      "n": "B: sesión autenticada tras actualizar (usuario propio + su fila)",
+      "ok": true,
+      "d": {
+        "ok": true,
+        "auth": 200,
+        "lectura": 200,
+        "rol": "ADMINISTRADOR"
+      }
+    },
+    {
+      "n": "clave FICTICIA de localStorage conservada (no prueba borradores operativos)",
+      "ok": true
+    },
+    {
+      "n": "B: el alias sirve la marca c8923709 con la entrega de medios «pages» efectiva",
+      "ok": true,
+      "d": {
+        "modulos": [
+          "assets/index-DGsWTpdi.js"
+        ],
+        "swSha256": "fb28df6670866474774a3049ce442d5188146896c8258faeaaad6fe8cf0308a4"
+      }
+    },
+    {
+      "n": "B: el service worker de B es distinto del de A (identidades exactas registradas)",
+      "ok": true,
+      "d": {
+        "A": "8018435f8d905900582e119857e3e5bae8e70ce62a74239aabd16d4d92bf9071",
+        "B": "fb28df6670866474774a3049ce442d5188146896c8258faeaaad6fe8cf0308a4"
+      }
+    },
+    {
+      "n": "B: el service worker controla la pestaña auxiliar",
+      "ok": true
+    },
+    {
+      "n": "B: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+      "ok": true,
+      "d": {
+        "/medios/fotos-galeria/00000000-0000-4000-8000-000000000000/m.webp": {
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "texto": "No encontrado",
+          "esSpa": false
+        },
+        "/medios/": {
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "texto": "No encontrado",
+          "esSpa": false
+        },
+        "/medios": {
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "texto": "No encontrado",
+          "esSpa": false
+        }
+      }
+    },
+    {
+      "n": "B: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+      "ok": true,
+      "d": {
+        "estado": 404,
+        "texto": "No encontrado",
+        "spa": false
+      }
+    },
+    {
+      "n": "B: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+      "ok": true,
+      "d": {
+        "estado": 200
+      }
+    },
+    {
+      "n": "sin respuestas HTTP ≥ 400 del mismo origen",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "sin requestfailed (salvo abortadas/bloqueadas)",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "sin pageerror",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "ninguna petición bloqueada (otro backend, Supabase local o pasarela)",
+      "ok": true,
+      "d": []
+    },
+    {
+      "n": "tráfico Supabase solo al staging aprobado",
+      "ok": true,
+      "d": {
+        "tqkdtojnhgykmcbvwdmz.supabase.co": 39
+      }
+    }
+  ],
+  "bloqueadas": [],
+  "trafico": {
+    "tqkdtojnhgykmcbvwdmz.supabase.co": 39
+  },
+  "publicadoB": true,
+  "entrega": "pages",
+  "swA": "8018435f8d905900582e119857e3e5bae8e70ce62a74239aabd16d4d92bf9071",
+  "swB": "fb28df6670866474774a3049ce442d5188146896c8258faeaaad6fe8cf0308a4",
+  "resultado": "OK"
+}

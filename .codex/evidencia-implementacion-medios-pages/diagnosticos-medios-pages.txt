@@ -1,0 +1,44 @@
+import { manejarMedios } from 'file:///C:/WedJaiseReact/cloudflare/medios-pages/entrega.js'
+import { createHash } from 'node:crypto'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
+const ruta = 'https://staging.pages.dev/medios/fotos-productos/00000000-0000-4000-8000-000000000001/g.webp'
+const resultados = []
+for (const method of ['GET', 'HEAD']) {
+  let lecturasCuerpo = 0
+  const env = { MEDIOS: { get: async () => ({ httpEtag: '"ficticio"', arrayBuffer: async () => { lecturasCuerpo++; throw new Error('fallo ficticio leyendo cuerpo') } }) } }
+  try {
+    const r = await manejarMedios(new Request(ruta, { method }), env, {}, {})
+    resultados.push({ caso: 'get resuelve, arrayBuffer rechaza', method, status: r.status, cabeceras: Object.fromEntries(r.headers), lecturasCuerpo })
+  } catch (e) {
+    resultados.push({ caso: 'get resuelve, arrayBuffer rechaza', method, promesaRechazada: true, error: e.message, lecturasCuerpo })
+  }
+}
+
+let bytesLeidos = 0
+let lecturasCuerpo = 0
+const envHead = { MEDIOS: { get: async () => ({ httpEtag: '"ficticio"', arrayBuffer: async () => { lecturasCuerpo++; bytesLeidos += 128 * 1024; return new ArrayBuffer(128 * 1024) } }) } }
+const head = await manejarMedios(new Request(ruta, { method: 'HEAD' }), envHead, {}, {})
+resultados.push({ caso: 'HEAD sano sin cache', status: head.status, bytesLeidosR2Simulado: bytesLeidos, lecturasCuerpo, bytesRespuesta: (await head.arrayBuffer()).byteLength })
+
+for (const caso of ['sin binding', 'objeto ausente', 'get rechaza']) {
+  const env = caso === 'sin binding' ? {} : { MEDIOS: { get: async () => { if (caso === 'get rechaza') throw new Error('fallo ficticio R2'); return null } } }
+  const r = await manejarMedios(new Request(ruta, { method: 'HEAD' }), env, {}, {})
+  resultados.push({ caso, method: 'HEAD', status: r.status, bytesResponseEnInvocacionDirecta: (await r.arrayBuffer()).byteLength, cabeceras: Object.fromEntries(r.headers) })
+}
+
+const archivos = [
+  'cloudflare/medios-pages/entrega.js', 'cloudflare/medios-pages/test/probar-entrega.mjs',
+  'functions/medios.js', 'functions/medios/[[ruta]].js', 'src/lib/urlsMedios.js',
+  'src/lib/medios.js', 'src/lib/imagenes.js', 'scripts/verificar-urls-medios.mjs',
+  'scripts/build-cloudflare.mjs', 'vite.config.js',
+]
+const informe = {
+  fecha: '2026-10-10', metodo: 'Funciones reales con dobles en memoria; sin red ni datos externos; no se modifica codigo',
+  suitesRepetidas: { entrega: { casos: 30, fallos: 0 }, urls: { casos: 14, fallos: 0 }, guardas: { casos: 42, fallos: 0 }, lintDirigido: { archivos: 10, exitCode: 0 } },
+  resultados,
+  sha256Fuentes: Object.fromEntries(archivos.map((f) => [f, createHash('sha256').update(readFileSync(`C:/WedJaiseReact/${f}`)).digest('hex')])),
+}
+writeFileSync(fileURLToPath(new URL('./diagnosticos-medios-pages.json', import.meta.url)), JSON.stringify(informe, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ resultados, evidencia: 'diagnosticos-medios-pages.json' }, null, 2))

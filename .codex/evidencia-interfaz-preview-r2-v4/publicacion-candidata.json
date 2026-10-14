@@ -1,0 +1,69 @@
+{
+  "fecha": "2026-10-10T17:05:13.523Z",
+  "total": 11,
+  "listaExplicita": true,
+  "nota": "Escaneo de adiciones de documentos modificados y contenido íntegro de textos nuevos; coincidencias sin valores. PNG revisados visualmente en la sesión. No es garantía universal de ausencia de secretos.",
+  "hallazgos": [],
+  "archivos": [
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/R2-REAL-RUNBOOK.md",
+      "bytes": 29790,
+      "sha256": "0eb5d1be855c55897881747a81a71a55f2e0b93c4ca11032a73cd4e977b61e63"
+    },
+    {
+      "archivo": "implementacionesWed.md",
+      "bytes": 434869,
+      "sha256": "6ae9d92230d0b457e898fe935dc494f86683539c7f9b7c630f5465fbb0067a30"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/clon-limpio-commit.json",
+      "bytes": 2810,
+      "sha256": "8f8363975fd631cdf76a14aa138dfd27445ddc660733c8b3df6a4fc081471148"
+    },
+    {
+      "archivo": "scripts/verificar-interfaz-r2-preview.cjs",
+      "bytes": 24801,
+      "sha256": "e1e58464aa63b8cebe051604dd42c0ccbbcf2480b9e79f6f6f729abe5d6c0849"
+    },
+    {
+      "archivo": "scripts/lib/guardas-interfaz-r2.cjs",
+      "bytes": 11210,
+      "sha256": "44ccbffc461b9f0c03bd9b655275444baf48350d2ba6bba18099e666f7f2d22f"
+    },
+    {
+      "archivo": "scripts/verificar-guardas-interfaz-r2.cjs",
+      "bytes": 16664,
+      "sha256": "4ad32cd1953c19b1b0ce5dc6fcf4bf46f2b02e6006f6d82c967428a339d68e6d"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/resultados.json",
+      "bytes": 5664,
+      "sha256": "72d96690ca175121aedb8a74cd6e28977cac77f6874c61dfbaf36e789a9440b7"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/corridas/corrida-652b14.json",
+      "bytes": 6240,
+      "sha256": "aba325d04143b534b23118a098d16b0502cfc9c4b380e124cd6a188f34484181"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/producto-antes-de-guardar.png",
+      "bytes": 126582,
+      "sha256": "7885879580b5529b205d0c22d22c549005e5f8ec15d287b62627d47cd6d3c961"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/galeria-alta.png",
+      "bytes": 36534,
+      "sha256": "37c162b31a1d1be8020b5319baf9866deed96cfdcb0f895e54031640ce9ff6bd"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/cliente-detalle-servicio.png",
+      "bytes": 110225,
+      "sha256": "fcb69aa853f3e6de3afc777128938428289a800a9987f3b801152e3e9d71519c"
+    }
+  ],
+  "excluidos": [
+    ".codex/**",
+    "docs/evidencia-rendimiento/fase-1/capturas/*.png no versionados",
+    ".env*"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "fecha": "2026-10-10T17:41:17.803Z",
+  "rondas": [
+    {
+      "archivo": "pwa-entre-builds-venta.json",
+      "estado": "venta",
+      "A": "c1693734",
+      "B": "31787852",
+      "pasos": 24,
+      "fallos": 0,
+      "resultado": "OK",
+      "bloqueadas": [],
+      "trafico": {
+        "tqkdtojnhgykmcbvwdmz.supabase.co": 31
+      },
+      "marcasObservadas": [
+        {
+          "paso": "A: el documento tiene EXACTAMENTE la marca esperada",
+          "observada": "c1693734",
+          "esperada": "c1693734"
+        },
+        {
+          "paso": "tras «Actualizar» el documento tiene EXACTAMENTE la marca B",
+          "observada": "31787852",
+          "esperada": "31787852"
+        }
+      ],
+      "sha256": "219a06a3ec4ed30249eec16ab00c5ea2983deb969e69433c38d24d42035ec482"
+    },
+    {
+      "archivo": "pwa-entre-builds-vacio.json",
+      "estado": "vacio",
+      "A": "31787852",
+      "B": "e2293968",
+      "pasos": 19,
+      "fallos": 0,
+      "resultado": "OK",
+      "bloqueadas": [],
+      "trafico": {
+        "tqkdtojnhgykmcbvwdmz.supabase.co": 29
+      },
+      "marcasObservadas": [
+        {
+          "paso": "A: el documento tiene EXACTAMENTE la marca esperada",
+          "observada": "31787852",
+          "esperada": "31787852"
+        },
+        {
+          "paso": "tras «Actualizar» el documento tiene EXACTAMENTE la marca B",
+          "observada": "e2293968",
+          "esperada": "e2293968"
+        }
+      ],
+      "sha256": "f45846e57a4a04ba070e8fd94acbb16cf00672a1a1ae85caeaf1c5a0fb1fee1b"
+    }
+  ],
+  "hallazgosFormatosSecretos": [],
+  "totalPasos": 43
+}

@@ -1,0 +1,7 @@
+// Build B de prueba: el mismo código con TODAS las URLs de assets distintas (sufijo -b), para simular una publicación real
+// en la que los archivos de A ya no existen. Solo para el arnés; no forma parte del repo.
+import { mergeConfig } from 'file:///C:/WedJaiseReact/node_modules/vite/dist/node/index.js'
+import base from 'file:///C:/WedJaiseReact/vite.config.js'
+export default (env) => mergeConfig(base(env), {
+  build: { rollupOptions: { output: { entryFileNames: 'assets/[name]-[hash]-b.js', chunkFileNames: 'assets/[name]-[hash]-b.js', assetFileNames: 'assets/[name]-[hash]-b[extname]' } } },
+})

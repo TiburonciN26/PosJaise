@@ -1,0 +1,324 @@
+{
+  "fecha": "2026-10-10T22:51:44.701Z",
+  "buildId": "d16d816f",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "idEjecucion": "e9af38",
+  "objeto": "fotos-galeria/931dd645-a4b1-4a24-b3a4-d7502e88b4fe",
+  "ttlSegundos": 300,
+  "completa": true,
+  "estadoFinalConfirmado": true,
+  "error": null,
+  "casos": [
+    {
+      "nombre": "preflight: el alias sirve d16d816f con la entrega de medios «pages» efectiva (antes de autenticar)",
+      "ok": true,
+      "detalle": {
+        "buildId": "d16d816f",
+        "entrega": "pages",
+        "modulos": [
+          "assets/index-DGsWTpdi.js"
+        ]
+      }
+    },
+    {
+      "nombre": "inventario inicial de fotos-galeria leído (lectura estricta, sin cursor)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "WebP de prueba fabricados (m 64 px, g 128 px)",
+      "ok": true,
+      "detalle": {
+        "m": 646,
+        "g": 788
+      }
+    },
+    {
+      "nombre": "objeto inexistente → 404 no-store con nosniff/noindex (el 404 no se cachea)",
+      "ok": true,
+      "detalle": {
+        "estado": 404,
+        "tipo": "text/plain; charset=utf-8",
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": null,
+        "etag": null,
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4893128c9399676-MIA"
+      }
+    },
+    {
+      "nombre": "subida de la variante m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida de la variante g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "el inventario del Worker muestra exactamente las 2 claves propias nuevas",
+      "ok": true,
+      "detalle": {
+        "nuevas": [
+          "fotos-galeria/931dd645-a4b1-4a24-b3a4-d7502e88b4fe/g.webp",
+          "fotos-galeria/931dd645-a4b1-4a24-b3a4-d7502e88b4fe/m.webp"
+        ]
+      }
+    },
+    {
+      "nombre": "HEAD: 200 sin cuerpo, image/webp, ETag, Cache-Control del navegador (revalidar), nosniff/noindex",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48931386d099676-MIA"
+      }
+    },
+    {
+      "nombre": "HEAD no puebla la caché: un segundo HEAD sigue siendo MISS",
+      "ok": true,
+      "detalle": {
+        "primero": "MISS",
+        "segundo": "MISS"
+      }
+    },
+    {
+      "nombre": "GET: 200 image/webp con los bytes EXACTOS subidos, Cache-Control del navegador (revalidar), nosniff/noindex, ETag igual al de HEAD",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a489313c7dd58d9d-MIA",
+        "bytes": 646
+      }
+    },
+    {
+      "nombre": "primer GET tras subir (sin entrada previa en este centro de datos) → X-Medios-Cache MISS",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a489313c7dd58d9d-MIA"
+      }
+    },
+    {
+      "nombre": "GET posterior → HIT (la escritura por waitUntil es asíncrona y por centro de datos: 1 intento(s))",
+      "ok": true,
+      "detalle": {
+        "intentos": 1,
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "el HIT conserva bytes, ETag y la política del navegador y recalcula X-Medios-Cache",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4893142287de74a-MIA"
+      }
+    },
+    {
+      "nombre": "If-None-Match coincidente → 304 sin cuerpo, con ETag, política del navegador y nosniff/noindex",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4893143aec6516d-MIA"
+      }
+    },
+    {
+      "nombre": "If-None-Match distinto → 200 completo",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "If-None-Match: * → 304",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Range se ignora: 200 completo, sin Content-Range",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48931454aefe74a-MIA"
+      }
+    },
+    {
+      "nombre": "la variante g se sirve con sus bytes exactos",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "POST → 405 con Allow: GET, HEAD, no-store",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "rutas inválidas → 404 no-store con nosniff/noindex (no la SPA)",
+      "ok": true,
+      "detalle": []
+    },
+    {
+      "nombre": "/medios-extra sigue siendo la SPA (200 HTML)",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "borrado por el Worker (200)",
+      "ok": true,
+      "detalle": {
+        "estado": 200
+      }
+    },
+    {
+      "nombre": "R2: el inventario del Worker ya NO contiene las claves propias (ausencia en R2 confirmada)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "tras borrar en R2: o HIT 200 retenido por el TTL (contrato) o 404; NUNCA un 200 MISS (que significaría que R2 aún lo sirve)",
+      "ok": true,
+      "detalle": {
+        "estado": 200,
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a489315169d0e74a-MIA"
+      }
+    },
+    {
+      "nombre": "pasado el TTL: se OBSERVA un 404 no-store (R2 ya no lo tiene)",
+      "ok": true,
+      "detalle": {
+        "estado": 404,
+        "popHit": "MIA",
+        "popExpiracion": "MIA",
+        "tipo": "text/plain; charset=utf-8",
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": null,
+        "etag": null,
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48939019a727454-MIA"
+      }
+    },
+    {
+      "nombre": "pasado el TTL: también 404 en la variante g",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+      "ok": true,
+      "detalle": {
+        "confirmada": true,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "estadosBorrado": [],
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      }
+    }
+  ],
+  "medidas": [
+    {
+      "etiqueta": "HEAD-1",
+      "ms": 147
+    },
+    {
+      "etiqueta": "GET-MISS",
+      "ms": 412
+    },
+    {
+      "etiqueta": "GET-intento-1",
+      "ms": 249
+    }
+  ],
+  "nota": "HIT por centro de datos; head() inferido; tiempos del cliente, no CPU/cuota.",
+  "popHit": "MIA",
+  "retencionObservada": "HIT 200 durante el TTL (esperado por contrato)",
+  "popExpiracion": "MIA",
+  "expiracionDeLaMismaCopia": true,
+  "expiracionProbada": true,
+  "limpieza": {
+    "confirmada": true,
+    "necesaria": false,
+    "estadoBorrado": null,
+    "estadosBorrado": [],
+    "pendientes": [],
+    "igualAlInicial": true,
+    "errores": []
+  },
+  "resumen": {
+    "casos": 27,
+    "fallos": 0
+  }
+}

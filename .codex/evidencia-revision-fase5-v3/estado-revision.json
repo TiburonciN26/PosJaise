@@ -1,0 +1,79 @@
+{
+  "fechaCliente": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "src/hooks/useListaPaginada.js": "a8694b2b2c5a9a4a2ebcdbaa4fdc8b548a5ac65b4c45cfae94dd82474cdeed70",
+    "src/lib/listasAdmin.js": "21f41ad095f3ae291b42a069c8351f72ffff9ee330f4b30455abf277c8a2a370",
+    "src/pages/RecompensasWeb.jsx": "afc1825e2914e6a6ddc761391744047997dafd072748a78db44977eb223b6ed0",
+    "src/pages/cliente/RecompensasCliente.jsx": "b5c12370bd06ac6094cd16da6606460aea67670582e38ae144f765e4ed7499c1",
+    "src/pages/cliente/recompensas/useRecursosRecompensas.js": "a982ea98c1614d61c315f92ba6a813a5866faf843eaab96b4f1d11543d1c570c",
+    "src/pages/cliente/InicioCliente.jsx": "cc0b96be5fa2ef50fcb8e8ac006dabd5395b7ef61ff763bf9729eec58ceb7da5",
+    "supabase/migrations/20261011000002_vistas_listas_admin.sql": "02933a1fa7925c43bca3c2c4dbb826098509f42445d4a69db13c43a59be72b83"
+  },
+  "local": {
+    "vistas": [
+      {
+        "nombre": "cupones_gestion",
+        "opciones": [
+          "security_invoker=true"
+        ],
+        "anonSelect": false,
+        "authSelect": true
+      },
+      {
+        "nombre": "resenas_moderacion",
+        "opciones": [
+          "security_invoker=true"
+        ],
+        "anonSelect": false,
+        "authSelect": true
+      }
+    ],
+    "normalizador": {
+      "securityDefiner": false,
+      "volatilidad": "i",
+      "config": [
+        "search_path=pg_catalog"
+      ],
+      "anonExecute": true,
+      "authenticatedExecute": true,
+      "acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ]
+    },
+    "busquedaInstalada": true,
+    "conteos": {
+      "pedidos": 429,
+      "promociones": 208
+    },
+    "qaF5": {
+      "clientes": 0,
+      "promociones": 0,
+      "cupones": 0,
+      "resenas": 0
+    }
+  },
+  "suiteClaude": {
+    "casos": 34,
+    "fallos": 0,
+    "falloGlobal": null,
+    "nota": "Auditoría del informe, NO nueva ejecución de la siembra SQL por Codex"
+  },
+  "rollback": {
+    "archivos": 13,
+    "hunksSoloFase5": true,
+    "comprobacionInversa": "git apply -R --check pasó; nunca aplicado"
+  },
+  "lint": {
+    "alcance": [
+      "src/pages/RecompensasWeb.jsx",
+      "src/lib/listasAdmin.js",
+      "src/hooks/useListaPaginada.js"
+    ],
+    "exit": 0,
+    "diagnosticos": 0
+  }
+}

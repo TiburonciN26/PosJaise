@@ -1,0 +1,92 @@
+{
+  "fecha": "2026-10-13T15:11:40.295Z",
+  "casos": [
+    {
+      "id": "redireccion-runtime",
+      "controlDirecto": {
+        "error": "Failed to fetch"
+      },
+      "hitsAntesDeRebote": 0,
+      "respuestaRedirect": {
+        "status": 200
+      },
+      "peticionesSenuelo": [
+        {
+          "method": "GET",
+          "path": "/recibido?prueba=CLAVE_INVENTADA_10A",
+          "claveInventadaEnUrl": true
+        }
+      ],
+      "violaciones": [
+        "evento GET http://127.0.0.1:56149/directo",
+        "peticion GET http://127.0.0.1:56149/directo",
+        "redireccion GET http://127.0.0.1:56149/recibido"
+      ],
+      "defectoReproducido": true,
+      "limite": "Guarda real de contextoSeguro, navegador real y dos servidores propios en loopback. Solo una clave inventada; sin Supabase, cuentas ni red externa."
+    },
+    {
+      "id": "control-sano",
+      "exit": 0,
+      "total": 46,
+      "fallos": 0,
+      "problemas": [],
+      "veredicto": "CUMPLE",
+      "defectoReproducido": false,
+      "limite": "Fixtures sintéticos de evaluación, derivados del formato real. Manifiesto y hashes coherentes; no son mediciones de rendimiento."
+    },
+    {
+      "id": "muestras-invalidas-mixtas",
+      "exit": 0,
+      "total": 46,
+      "fallos": 0,
+      "problemas": [],
+      "veredicto": "CUMPLE",
+      "defectoReproducido": true,
+      "limite": "Fixtures sintéticos de evaluación, derivados del formato real. Manifiesto y hashes coherentes; no son mediciones de rendimiento."
+    },
+    {
+      "id": "muestras-con-pageerror",
+      "exit": 0,
+      "total": 46,
+      "fallos": 0,
+      "problemas": [],
+      "veredicto": "CUMPLE",
+      "defectoReproducido": true,
+      "limite": "Fixtures sintéticos de evaluación, derivados del formato real. Manifiesto y hashes coherentes; no son mediciones de rendimiento."
+    },
+    {
+      "id": "sin-huella-final",
+      "exit": 0,
+      "total": 46,
+      "fallos": 0,
+      "problemas": [],
+      "veredicto": "CUMPLE",
+      "defectoReproducido": true,
+      "limite": "Fixtures sintéticos de evaluación, derivados del formato real. Manifiesto y hashes coherentes; no son mediciones de rendimiento."
+    },
+    {
+      "id": "sin-artefactos",
+      "exit": 0,
+      "total": 46,
+      "fallos": 0,
+      "problemas": [],
+      "veredicto": "CUMPLE",
+      "defectoReproducido": true,
+      "limite": "Fixtures sintéticos de evaluación, derivados del formato real. Manifiesto y hashes coherentes; no son mediciones de rendimiento."
+    },
+    {
+      "id": "fallback-sin-ruta-real",
+      "directo": {
+        "status": 403,
+        "marcaAjena": false
+      },
+      "fallback": {
+        "status": 200,
+        "marcaAjena": true
+      },
+      "defectoReproducido": true,
+      "limite": "Raíz QA propia reemplazada por junction a otra carpeta QA después del arranque. No se tocaron archivos del repo ni archivos privados."
+    }
+  ]
+}

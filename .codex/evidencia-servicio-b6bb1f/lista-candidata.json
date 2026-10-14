@@ -1,0 +1,38 @@
+{
+  "fecha": "2026-10-10T17:50:28.764Z",
+  "total": 6,
+  "hallazgos": [],
+  "archivos": [
+    {
+      "archivo": "scripts/verificar-interfaz-r2-preview.cjs",
+      "bytes": 25536,
+      "sha256": "86af351e1ef8ae511eb9e4b6c1a75d99973c7e306700d39314bacec9a75637b9"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/R2-REAL-RUNBOOK.md",
+      "bytes": 31990,
+      "sha256": "4f940c0d99dfbb3ced9a1c52e4b2124bab3c6f9ce6464eb184021a7c6aa9e40c"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/corridas/corrida-b6bb1f.json",
+      "bytes": 6612,
+      "sha256": "377c8f2a3ff081e2eecff9411858946629a217a0ab38b2802ecfa645aeba82bd"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/galeria-alta-b6bb1f.png",
+      "bytes": 36349,
+      "sha256": "4b020e60459ebaad4d114b660e31de47f89d0b7bc1ee52dd0f75f5df2e1c975e"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/producto-antes-de-guardar-b6bb1f.png",
+      "bytes": 126595,
+      "sha256": "d9cb482e661bb88482b559a8851caa257947f212aa445e3b412a5f296d48562f"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/pwa-entre-builds-vacio.json",
+      "bytes": 2835,
+      "sha256": "f45846e57a4a04ba070e8fd94acbb16cf00672a1a1ae85caeaf1c5a0fb1fee1b"
+    }
+  ],
+  "nota": "Lista actual, escaneo sin valores sensibles y PNG inspeccionados visualmente; revisar de nuevo si cambian los candidatos. Excluir .codex, .env y capturas antiguas ajenas."
+}

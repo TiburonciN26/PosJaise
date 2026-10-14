@@ -1,0 +1,337 @@
+{
+ "fecha": "2026-10-13T15:11:41.213Z",
+ "presupuestos": "scripts/fase10a/presupuestos-rendimiento.json",
+ "ejecucion": "f632f39a-9bb8-4014-8137-946b50cf9ba2",
+ "alcance": [
+  "vitales"
+ ],
+ "global": false,
+ "veredicto": "CUMPLE",
+ "total": 46,
+ "fallos": 0,
+ "problemas": [],
+ "filas": [
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · LCP (ms)",
+   "valor": 1800,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · CLS",
+   "valor": 0.02,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-inicio · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-inicio · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-promociones · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-promociones · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-referidos-web · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-referidos-web · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  }
+ ]
+}

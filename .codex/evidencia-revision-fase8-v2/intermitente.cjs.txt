@@ -1,0 +1,402 @@
+// Fase 8 V2 · regresiones de las correcciones F8-01 (fallo de carga de una pantalla/ventana sin red o tras publicar otra versión)
+// y F8-02 (caché por uso del service worker limitada a estáticos públicos del build). Chromium + Supabase LOCAL.
+//
+// Uso: node scripts/verificar-fase8-v2.cjs --a=<dist A> --b=<dist B> --cuentas=<json> [--v1=<dist V1>] [--salida=ruta.json] [--etiqueta=texto] [--capturas=carpeta] [--solo=texto]
+//   A y B: VITE_BASE_PATH=/ y sin 404.html (como Cloudflare Pages), con VITE_BUILD_ID distinto y TODAS las URLs de assets distintas
+//   (B se compila con nombres `[name]-[hash]-b`): ningún archivo de A existe en B. Publicar B REEMPLAZA la raíz servida: los
+//   archivos de A dejan de existir y, como en Pages, una ruta inexistente recibe el index.html con 200 (fallback de SPA).
+//   --v1: build anterior a la corrección; habilita el caso de retirada de entradas indebidas (V1 → A).
+// Seguridad: cuenta QA ficticia (qa-…@test.local) y producto de prueba de Local; el carrito vive en memoria y NUNCA se confirma.
+// Las escrituras de negocio hacia Supabase quedan bloqueadas por el arnés (se registran); solo pasan el login y lecturas.
+// Los endpoints «privados» son fixtures de este servidor, nunca archivos reales.
+const assert = require('node:assert/strict')
+const { execFileSync } = require('node:child_process')
+const fs = require('node:fs')
+const http = require('node:http')
+const path = require('node:path')
+const { chromium } = require('C:/WedJaiseReact/node_modules/playwright')
+
+const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) ?? '').split('=').slice(1).join('=')
+const A = path.resolve(arg('a')), B = path.resolve(arg('b')), V1 = arg('v1') ? path.resolve(arg('v1')) : null
+const CUENTAS = JSON.parse(fs.readFileSync(arg('cuentas'), 'utf8'))
+const SALIDA = arg('salida'), ETIQUETA = arg('etiqueta') || path.basename(A)
+const CAPTURAS = arg('capturas') // opcional: carpeta para capturas de los avisos locales
+const SUPABASE = 'http://127.0.0.1:54321'
+if (!/^qa[^@]*@test\.local$/i.test(CUENTAS.admin.email)) throw new Error('La cuenta de administración no es una cuenta QA ficticia')
+for (const d of [A, B, V1].filter(Boolean)) {
+  const js = fs.readdirSync(path.join(d, 'assets')).filter((n) => n.endsWith('.js')).map((n) => fs.readFileSync(path.join(d, 'assets', n), 'utf8')).join('\n')
+  if (!js.includes(SUPABASE) || /https:\/\/[a-z]{20}\.supabase\.co/.test(js)) throw new Error(`${d} no apunta solo al Supabase Local`)
+}
+const nombresA = new Set(fs.readdirSync(path.join(A, 'assets'))), nombresB = new Set(fs.readdirSync(path.join(B, 'assets')))
+const comunes = [...nombresA].filter((n) => nombresB.has(n))
+if (comunes.length) throw new Error(`A y B comparten ${comunes.length} archivos de assets: B debe compilarse con otros nombres`)
+const meta = (d) => fs.readFileSync(path.join(d, 'index.html'), 'utf8').match(/name="build-id" content="([^"]+)"/)?.[1]
+const META_A = meta(A), META_B = meta(B)
+const chunk = (d, prefijo) => fs.readdirSync(path.join(d, 'assets')).find((n) => n.startsWith(`${prefijo}-`) && n.endsWith('.js'))
+const CITAS_A = chunk(A, 'Citas'), ESCANER_A = chunk(A, 'ModalEscanerCodigoBarras')
+const PRODUCTO = execFileSync('docker', ['exec', '-i', 'supabase_db_WedJaiseReact', 'psql', '-U', 'postgres', '-d', 'postgres', '-At'], {
+  input: "begin read only; select nombre from productos where activo and stock_actual > 0 and nombre ~ '^(TEST|ZZZ TEST|QA)' and nombre !~ '[%_]' order by nombre limit 1; rollback;",
+  encoding: 'utf8',
+}).split('\n').find((l) => l && !['BEGIN', 'ROLLBACK'].includes(l))
+if (!PRODUCTO) throw new Error('No hay producto de prueba (TEST/QA) en Local')
+
+// ---------------- Servidor: dist intercambiable + fixtures del «proxy» de Supabase en el mismo origen ----------------
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.ico': 'image/x-icon' }
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9u8AAAAASUVORK5CYII=', 'base64')
+const estado = { raiz: A, privadaPermitida: true, lecturasJson: 0, pedidosDeA: [] }
+const servidor = http.createServer((req, res) => {
+  const u = new URL(req.url, 'http://x'), p = decodeURIComponent(u.pathname)
+  if (p.startsWith('/__supabase/storage/v1/object/sign/')) {
+    res.writeHead(estado.privadaPermitida ? 200 : 401, { 'Content-Type': estado.privadaPermitida ? 'image/png' : 'application/json', 'Cache-Control': 'private, no-store' })
+    return res.end(estado.privadaPermitida ? PNG : '{"error":"revocado (fixture)"}')
+  }
+  if (p.startsWith('/__supabase/storage/v1/object/public/')) { res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=60' }); return res.end(PNG) }
+  if (p === '/__supabase/rest/v1/productos') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ lectura: ++estado.lecturasJson })) }
+  if (p.startsWith('/medios/')) { res.writeHead(200, { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=0, must-revalidate' }); return res.end(PNG) }
+  if (p === '/inicio-web/error-404.webp') { res.writeHead(404, { 'Content-Type': 'image/webp' }); return res.end() }
+  if (p.startsWith('/assets/') && nombresA.has(path.basename(p)) && estado.raiz !== A) estado.pedidosDeA.push(path.basename(p))
+  const raiz = estado.raiz
+  let f = path.resolve(raiz, '.' + p)
+  if (!f.startsWith(raiz + path.sep) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) f = path.join(raiz, 'index.html') // fallback de SPA (Pages)
+  res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] ?? 'application/octet-stream', 'Cache-Control': /\/assets\//.test(p) ? 'public, max-age=31536000, immutable' : 'no-cache' })
+  res.end(fs.readFileSync(f))
+})
+// Otro origen (como el Supabase absoluto de Local/producción): una imagen pública con CORS.
+const otroOrigen = http.createServer((req, res) => { res.writeHead(200, { 'Content-Type': 'image/png', 'Access-Control-Allow-Origin': '*' }); res.end(PNG) })
+const APP = 'http://127.0.0.1:5361', OTRO = 'http://127.0.0.1:5362'
+const publicar = (dir) => { estado.raiz = dir }
+const pedirAlServidor = (ruta) => new Promise((ok, mal) => http.get(APP + ruta, (r) => { let n = 0; r.on('data', (c) => (n += c.length)); r.on('end', () => ok({ status: r.statusCode, tipo: r.headers['content-type'], bytes: n })) }).on('error', mal))
+
+// ---------------- Utilidades de navegador ----------------
+const casos = []
+const ESPERA = (ms) => new Promise((r) => setTimeout(r, ms))
+const SOLO = arg('solo') // opcional: solo los casos cuyo nombre contenga este texto
+async function caso(nombre, fn) {
+  if (SOLO && !nombre.includes(SOLO)) return
+  const t0 = Date.now()
+  try { const detalle = await fn(); casos.push({ nombre, ok: true, ms: Date.now() - t0, detalle }); console.log(`OK    ${nombre}`) } catch (e) {
+    const d = String(e.message).split('\n').filter(Boolean).slice(0, 6).join(' | ').slice(0, 900)
+    const diagnostico=[];for(const c of browser.contexts())for(const p of c.pages())diagnostico.push({ruta:new URL(p.url()).pathname,cuerpo:(await p.locator('body').innerText().catch(()=>'' )).slice(0,1000),fallos:p.__fallosQA});
+    casos.push({ nombre, ok: false, error: d, ms: Date.now() - t0,diagnostico }); console.log(`FALLA ${nombre}\n      ${d}`)
+  }
+}
+let browser
+const ESCRITURA_RPC = /^(confirmar|guardar|crear|registrar|actualizar|eliminar|borrar|anular|cancelar|canjear|insertar|cerrar|abrir|marcar|aplicar|asignar|reabrir|reponer|ajustar|pagar|cobrar)_/
+async function contexto({ sw = true } = {}) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', serviceWorkers: sw ? 'allow' : 'block' })
+  const bloqueadas = []
+  await ctx.route('**/*', r => {
+ const u=new URL(r.request().url()),m=r.request().method();
+ if([APP,OTRO].includes(u.origin)) return r.continue();
+ if(u.origin===SUPABASE){
+ if(['GET','HEAD','OPTIONS'].includes(m)||(m==='POST'&&u.pathname==='/auth/v1/token'))return r.continue();
+ if(m==='POST'&&/^\/rest\/v1\/rpc\/(politicas_cita_publicas|usuarios_para_citas|datos_contacto|horario_atencion|servicios_mas_pedidos|productos_categorias_publicas|productos_vitrina_publica|servicios_categorias_publicas|servicios_vitrina_publica|resenas_publicas|resenas_inicio|galeria_para_web|recompensas_reglas_publicas|mi_perfil_cliente|mi_cliente_id|mis_puntos|mis_cupones)$/.test(u.pathname))return r.continue();
+ bloqueadas.push(m+' '+u.pathname);
+ }
+ return r.abort();
+ });
+ if(ctx.routeWebSocket)await ctx.routeWebSocket(/.*/,ws=>ws.close());
+  const page = await ctx.newPage()
+  page.setDefaultTimeout(20000)
+  const errores = []
+  const solicitudesFallidas=[];page.on('requestfailed',r=>solicitudesFallidas.push({ruta:new URL(r.url()).pathname,error:r.failure()?.errorText}));page.__fallosQA=solicitudesFallidas;
+  page.on('pageerror', (e) => errores.push(e.message))
+  return { ctx, page, bloqueadas, errores }
+}
+async function login(page) {
+  await page.goto(`${APP}/login`, { waitUntil: 'load' })
+  await page.fill('#email', CUENTAS.admin.email); await page.fill('#password', CUENTAS.admin.password)
+  await page.click('button[type=submit]')
+  await page.waitForFunction(() => location.pathname === '/ventas', null, { timeout: 30000 })
+  await page.locator('[data-ruta="/ventas"] input').first().waitFor()
+}
+async function controladaPorSW(page) {
+  await page.evaluate(() => navigator.serviceWorker.ready); await ESPERA(1500)
+  await page.reload({ waitUntil: 'load' })
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 20000 })
+}
+const regexProducto = new RegExp(PRODUCTO.slice(0, 10).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+async function agregarProducto(page) {
+  await page.locator('[data-ruta="/ventas"] input').first().fill(PRODUCTO.slice(0, 10))
+  await page.locator('[data-ruta="/ventas"]').getByRole('button', { name: regexProducto }).first().click()
+  await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor()
+}
+// Productos en el carrito, contando el DOM aunque Ventas esté oculta (pestaña cacheada con display:none).
+const enCarrito = (page) => page.locator('[data-ruta="/ventas"] button[aria-label="Quitar"]').count()
+async function irA(page, ruta) {
+  await page.getByRole('button', { name: 'Abrir menú', exact: true }).click()
+  await page.locator(`a[href="${ruta}"]`).first().click()
+  await page.waitForFunction((r) => location.pathname === r, ruta)
+}
+// Pantalla cargada: su contenedor existe, sin «Cargando...» ni aviso de fallo, con contenido real.
+const pantallaLista = (page, ruta, timeout = 20000) => page.waitForFunction((r) => {
+  const c = document.querySelector(`[data-ruta="${r}"]`)
+  return c && !c.querySelector('[data-carga-fallida]') && !/^\s*Cargando\.\.\.\s*$/.test(c.innerText) && c.innerText.trim().length > 40
+}, ruta, { timeout })
+const errorGlobal = (page) => page.getByText('Algo salió mal', { exact: true }).count()
+// Abre una pestaña del POS y espera su desenlace: lista, aviso local de fallo o límite global («Algo salió mal»).
+async function abrirPantalla(page, ruta) {
+  await irA(page, ruta)
+  await page.waitForFunction((r) => {
+    if (document.body.innerText.includes('Algo salió mal')) return true
+    const c = document.querySelector(`[data-ruta="${r}"]`)
+    return c && (c.querySelector('[data-carga-fallida]') || (!/^\s*Cargando\.\.\.\s*$/.test(c.innerText) && c.innerText.trim().length > 40))
+  }, ruta, { timeout: 20000 })
+  return { errorGlobal: await errorGlobal(page), avisoFallo: await page.locator(`[data-ruta="${ruta}"] [data-carga-fallida]`).count(), carrito: await enCarrito(page) }
+}
+// ¿Se descargó ya (precarga en reposo) el chunk? true/false: su ausencia se comprueba DESPUÉS de la propiedad principal, para
+// que contra una versión sin la corrección el caso falle mostrando el efecto real (límite global, venta perdida).
+const recursoPedido = (page, prefijo) => page.waitForFunction((p) => performance.getEntriesByType('resource').some((e) => new RegExp(`/assets/${p}-[^/]+\\.js$`).test(e.name)), prefijo, { timeout: 15000 }).then(() => true, () => false)
+async function contenidoCaches(page) {
+  return page.evaluate(async () => { const o = {}; for (const n of await caches.keys()) { const c = await caches.open(n); o[n] = await Promise.all((await c.keys()).map(async (k) => { const r = await c.match(k); return { url: k.url, tipo: r.headers.get('content-type') } })) } return o })
+}
+const urlsEnCaches = (cs) => Object.values(cs).flat().map((e) => e.url)
+async function vaciarCarrito(page) {
+  if (!(await page.evaluate(() => location.pathname === '/ventas'))) await irA(page, '/ventas')
+  while (await page.getByRole('button', { name: 'Quitar', exact: true }).count()) { await page.getByRole('button', { name: 'Quitar', exact: true }).first().click(); await ESPERA(300) }
+}
+
+;(async () => {
+  await new Promise((r) => servidor.listen(5361, '127.0.0.1', r))
+  await new Promise((r) => otroOrigen.listen(5362, '127.0.0.1', r))
+  browser = await chromium.launch()
+  console.log(`[${ETIQUETA}] A=${META_A} B=${META_B} Citas A=${CITAS_A} producto de prueba=${PRODUCTO}`)
+
+  // ---------------- F8-01 ----------------
+  await caso('F8-01 · Sin red y Citas NUNCA descargada: el fallo queda en su pestaña; la venta y el menú siguen; al volver la red abre', async () => {
+    publicar(A)
+    const { ctx, page, bloqueadas } = await contexto({ sw: false })
+    const reintentos = []
+    page.on('request', (r) => { if (/[?&]reintento=/.test(r.url())) reintentos.push(new URL(r.url()).pathname + new URL(r.url()).search) })
+    // La precarga en reposo NO debe alcanzar Citas en este caso: se aborta su descarga hasta cortar la red.
+    const bloquearCitas = (r) => r.abort()
+    await ctx.route(/\/assets\/Citas-[^/]+\.js$/, bloquearCitas)
+    await login(page); await agregarProducto(page); await ESPERA(4000)
+    await ctx.setOffline(true); await ctx.unroute(/\/assets\/Citas-[^/]+\.js$/, bloquearCitas)
+    const apertura = await abrirPantalla(page, '/citas')
+    assert.equal(apertura.errorGlobal, 0, 'no debe aparecer «Algo salió mal» (límite global)')
+    await page.locator('[data-ruta="/citas"] [data-carga-fallida="pantalla"]').waitFor()
+    if (CAPTURAS) await page.screenshot({ path: path.join(CAPTURAS, `${ETIQUETA}-pos-pantalla-sin-red.png`) })
+    const d = { errorGlobal: await errorGlobal(page), carrito: await enCarrito(page), menu: await page.getByRole('button', { name: 'Abrir menú', exact: true }).count(), trabajoConservado: await page.getByTestId('carga-fallida-trabajo-conservado').isVisible(), recargarVisible: await page.getByRole('button', { name: 'Recargar la página' }).count() }
+    assert.equal(d.errorGlobal, 0, 'no debe aparecer el límite global'); assert.equal(d.carrito, 1, 'la venta sigue en memoria'); assert.equal(d.menu, 1)
+    assert.ok(d.trabajoConservado, 'el aviso dice que el trabajo se conserva'); assert.equal(d.recargarVisible, 0, 'con venta pendiente no se ofrece recargar')
+    await page.getByRole('link', { name: 'Ir a Ventas' }).click()
+    await page.waitForFunction(() => location.pathname === '/ventas')
+    await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor({ timeout: 5000 }).catch(() => null)
+    assert.equal(await page.getByRole('button', { name: 'Quitar', exact: true }).count(), 1, 'de vuelta en Ventas, el producto sigue')
+    await ctx.setOffline(false); await ESPERA(500)
+    await irA(page, '/citas'); await pantallaLista(page, '/citas')
+    d.citasTrasVolverLaRed = true; d.reintentos = reintentos
+    assert.ok(reintentos.some((u) => /^\/assets\/Citas-[^/]+\.js\?reintento=\d+$/.test(u)), `el reintento debe pedir Citas con otra URL: ${reintentos}`)
+    await irA(page, '/ventas'); d.carritoFinal = await enCarrito(page)
+    assert.equal(d.carritoFinal, 1)
+    await vaciarCarrito(page); d.bloqueadas = bloqueadas
+    await ctx.close()
+    return d
+  })
+
+  await caso('F8-01 · Sin red DESPUÉS de la precarga en reposo: Citas abre desde memoria y la venta sigue', async () => {
+    publicar(A)
+    const { ctx, page, bloqueadas } = await contexto({ sw: false })
+    await login(page); await agregarProducto(page)
+    const precargada = await recursoPedido(page, 'Citas'); await ESPERA(1500)
+    await ctx.setOffline(true)
+    const d = { precargada, citas: await abrirPantalla(page, '/citas') }
+    assert.equal(d.citas.errorGlobal, 0, 'no debe aparecer «Algo salió mal»'); assert.equal(d.citas.carrito, 1, 'la venta sigue en memoria')
+    assert.ok(precargada, 'Citas debe haberse precargado en reposo'); assert.equal(d.citas.avisoFallo, 0, 'Citas abre desde memoria')
+    await irA(page, '/ventas'); await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor({ timeout: 5000 }).catch(() => null)
+    d.carrito = await page.getByRole('button', { name: 'Quitar', exact: true }).count()
+    assert.equal(d.carrito, 1)
+    await ctx.setOffline(false); await vaciarCarrito(page); d.bloqueadas = bloqueadas
+    await ctx.close()
+    return d
+  })
+
+  await caso('F8-01 · A→B real (URLs JS distintas, archivos de A retirados) con venta en curso: Citas abre, el escáner falla en su ventana, la venta se conserva; al cancelarla actualiza a B', async () => {
+    publicar(A)
+    const { ctx, page, bloqueadas, errores } = await contexto()
+    await login(page); await controladaPorSW(page); await page.locator('[data-ruta="/ventas"] input').first().waitFor()
+    const precargada = await recursoPedido(page, 'Citas'); await ESPERA(1500)
+    await agregarProducto(page)
+    publicar(B)
+    const citasAEnServidor = await pedirAlServidor(`/assets/${CITAS_A}`)
+    assert.match(citasAEnServidor.tipo, /text\/html/, 'tras publicar B, el chunk de Citas de A ya no existe en el servidor (fallback HTML)')
+    await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+    await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+    const d = { citasAEnServidor, meta: await page.locator('meta[name="build-id"]').getAttribute('content'), actualizarBloqueado: await page.getByRole('button', { name: 'Actualizar', exact: true }).isDisabled() }
+    assert.equal(d.meta, META_A); assert.equal(d.actualizarBloqueado, true)
+    // Pantalla de A no visitada en esta sesión: se abre con el código ya precargado en memoria.
+    d.citas = await abrirPantalla(page, '/citas'); d.precargada = precargada
+    assert.equal(d.citas.errorGlobal, 0, 'no debe aparecer «Algo salió mal»'); assert.equal(d.citas.carrito, 1, 'la venta sigue en memoria')
+    assert.ok(precargada, 'Citas debe haberse precargado en reposo'); assert.equal(d.citas.avisoFallo, 0, 'Citas abre con el código en memoria')
+    // Ventana diferida de A no precargada (escáner): su archivo ya no existe → fallo LOCAL en la ventana.
+    await irA(page, '/ventas')
+    await page.getByRole('button', { name: 'Escanear código de barras con la cámara' }).click()
+    await page.locator('[data-carga-fallida="ventana"]').waitFor()
+    if (CAPTURAS) await page.screenshot({ path: path.join(CAPTURAS, `${ETIQUETA}-pos-ventana-escaner-retirado.png`) })
+    d.escaner = { errorGlobal: await errorGlobal(page), carritoVisible: await page.getByRole('button', { name: 'Quitar', exact: true }).count() }
+    assert.equal(d.escaner.errorGlobal, 0); assert.equal(d.escaner.carritoVisible, 1)
+    await page.keyboard.press('Escape')
+    await page.locator('[data-carga-fallida="ventana"]').waitFor({ state: 'detached' })
+    // El index.html del fallback NO quedó guardado como si fuera el chunk del escáner.
+    const cs = await contenidoCaches(page)
+    d.escanerEnCache = urlsEnCaches(cs).filter((u) => u.endsWith(`/${ESCANER_A}`))
+    assert.deepEqual(d.escanerEnCache, [], 'el HTML de fallback no debe guardarse como chunk')
+    // Panel de cobro: los íconos de método de pago están disponibles (precaché) aunque el servidor ya sea B.
+    d.iconosCobro = await page.evaluate(() => [...document.querySelectorAll('[data-ruta="/ventas"] img[src*="/icons/"]')].map((i) => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })))
+    assert.ok(d.iconosCobro.length >= 3 && d.iconosCobro.every((i) => i.ok), JSON.stringify(d.iconosCobro))
+    // Cancelar la operación (quitar el producto) habilita «Actualizar» → B.
+    await vaciarCarrito(page)
+    await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Actualizar'); return b && !b.disabled }, null, { timeout: 15000 })
+    await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => null), page.getByRole('button', { name: 'Actualizar', exact: true }).click()])
+    await page.waitForFunction((m) => document.querySelector('meta[name="build-id"]')?.content === m, META_B, { timeout: 30000 })
+    await page.locator('[data-ruta="/ventas"] input').first().waitFor()
+    await irA(page, '/citas'); await pantallaLista(page, '/citas')
+    d.trasActualizar = { meta: META_B, citas: true, errorGlobal: await errorGlobal(page) }
+    d.bloqueadas = bloqueadas; d.erroresNoCapturados = errores
+    await ctx.close()
+    return d
+  })
+
+  await caso('F8-01 · Retención: tras publicar B, recargar A (sin trabajo pendiente) sigue funcionando con su código guardado por el SW', async () => {
+    publicar(A)
+    const { ctx, page, bloqueadas } = await contexto()
+    await login(page); await controladaPorSW(page); await page.locator('[data-ruta="/ventas"] input').first().waitFor()
+    const precargada = await recursoPedido(page, 'Citas')
+    const enCacheSW = await page.waitForFunction((n) => caches.keys().then((ns) => Promise.all(ns.map((x) => caches.open(x).then((c) => c.keys())))).then((ls) => ls.flat().some((k) => k.url.endsWith('/' + n))), CITAS_A, { timeout: 15000 }).then(() => true, () => false)
+    publicar(B)
+    await page.reload({ waitUntil: 'load' }); await page.locator('[data-ruta="/ventas"] input').first().waitFor()
+    const d = { meta: await page.locator('meta[name="build-id"]').getAttribute('content') }
+    assert.equal(d.meta, META_A, 'sigue en A (B no se activa solo)')
+    d.citas = await abrirPantalla(page, '/citas'); d.precargada = precargada; d.citasEnCacheSW = enCacheSW
+    assert.equal(d.citas.errorGlobal, 0, 'no debe aparecer «Algo salió mal»')
+    assert.equal(d.citas.avisoFallo, 0, 'Citas de A abre con su código guardado aunque el servidor ya no lo tenga'); assert.ok(enCacheSW)
+    d.pedidosDeAalServidor = [...new Set(estado.pedidosDeA)].length; d.bloqueadas = bloqueadas
+    await ctx.close()
+    return d
+  })
+
+  await caso('F8-01 · Portal sin red: una página pública no descargada falla dentro del portal (cabecera y menú intactos) y abre al volver la red', async () => {
+    publicar(A)
+    const { ctx, page } = await contexto({ sw: false })
+    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await ESPERA(5000)
+    const enlace = page.locator('a[href="/terminos-y-condiciones"]').first()
+    await ctx.setOffline(true)
+    await enlace.scrollIntoViewIfNeeded(); await enlace.click()
+    await page.waitForFunction(() => document.body.innerText.includes('Algo salió mal') || !!document.querySelector('[data-carga-fallida="pantalla"]'), null, { timeout: 20000 })
+    if (CAPTURAS) await page.screenshot({ path: path.join(CAPTURAS, `${ETIQUETA}-portal-sin-red.png`) })
+    const d = { errorGlobal: await errorGlobal(page), cabecera: await page.locator('.landing-web header').count() }
+    assert.equal(d.errorGlobal, 0, 'no debe aparecer «Algo salió mal» (límite global)'); assert.ok(d.cabecera >= 1, 'la cabecera del portal sigue montada')
+    // Al volver la red se reintenta solo. En el portal se conserva el modulepreload (rendimiento), así que una dependencia que
+    // falló sin red puede seguir marcada como fallida en este documento: entonces el aviso local ofrece «Recargar la página»
+    // (allí no hay trabajo en memoria que perder) y la recarga abre la página. Cualquiera de los dos desenlaces es el contrato.
+    await ctx.setOffline(false)
+    const terminos = () => /t[ée]rminos/i.test(document.querySelector('main')?.innerText ?? '') && !document.querySelector('[data-carga-fallida]')
+    await page.waitForFunction((f) => new Function(`return (${f})()`)() || [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Recargar la página'), terminos.toString(), { timeout: 20000 })
+    d.abreSinRecargar = await page.evaluate((f) => new Function(`return (${f})()`)(), terminos.toString())
+    if (!d.abreSinRecargar) {
+      d.trabajoPendienteEnAviso = await page.getByTestId('carga-fallida-trabajo-conservado').count()
+      assert.equal(d.trabajoPendienteEnAviso, 0)
+      await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), page.getByRole('button', { name: 'Recargar la página' }).click()])
+      await page.waitForFunction((f) => new Function(`return (${f})()`)(), terminos.toString(), { timeout: 20000 })
+    }
+    d.abreAlVolverLaRed = true
+    await ctx.close()
+    return d
+  })
+
+  await caso('F8-01 · Cliente nuevo de B: Inicio, login y Citas sin errores', async () => {
+    publicar(B)
+    const { ctx, page, bloqueadas } = await contexto()
+    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1')
+    await login(page)
+    await irA(page, '/citas'); await pantallaLista(page, '/citas')
+    const d = { meta: await page.locator('meta[name="build-id"]').getAttribute('content'), errorGlobal: await errorGlobal(page), bloqueadas }
+    assert.equal(d.meta, META_B); assert.equal(d.errorGlobal, 0)
+    await ctx.close()
+    return d
+  })
+
+  await caso('F8-01 · Caso vacío: sin trabajo pendiente, «Actualizar» está disponible de inmediato', async () => {
+    publicar(A)
+    const { ctx, page } = await contexto()
+    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await controladaPorSW(page)
+    publicar(B)
+    await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+    await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+    assert.equal(await page.getByRole('button', { name: 'Actualizar', exact: true }).isDisabled(), false)
+    await ctx.close()
+  })
+
+  // ---------------- F8-02 ----------------
+  await caso('F8-02 · Caché por uso: solo estáticos públicos del build; nunca Storage/datos del proxy, firmados, /medios, otro origen ni errores', async () => {
+    publicar(A); estado.privadaPermitida = true; estado.lecturasJson = 0
+    const { ctx, page } = await contexto()
+    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await controladaPorSW(page); await ESPERA(3000)
+    const pedir = (u) => page.evaluate(async (x) => { try { const r = await fetch(x); return { status: r.status, bytes: (await r.arrayBuffer()).byteLength } } catch (e) { return { error: String(e) } } }, u)
+    const privada = '/__supabase/storage/v1/object/sign/comprobantes-pedidos-web/qa-f8.png?token=ficticio'
+    const d = { privadaAntes: await pedir(privada) }
+    await ESPERA(300); estado.privadaPermitida = false
+    d.privadaTrasRevocar = await pedir(privada)
+    d.publicaProxy = await pedir('/__supabase/storage/v1/object/public/bucket/qa.png')
+    await pedir('/__supabase/rest/v1/productos'); await pedir('/__supabase/rest/v1/productos')
+    d.lecturasJson = estado.lecturasJson
+    d.otroOrigen = await pedir(`${OTRO}/storage/v1/object/public/bucket/qa.png`)
+    d.medios = await pedir('/medios/fotos-galeria/00000000-0000-4000-8000-000000000008/g.webp')
+    d.imagenInexistente = await pedir('/inicio-web/no-existe.webp') // fallback HTML 200
+    d.imagen404 = await pedir('/inicio-web/error-404.webp')
+    d.chunkInexistente = await pedir('/assets/no-existe-zzz.js') // fallback HTML 200
+    const algunChunk = [...nombresA].find((n) => /^Historial-.*\.js$/.test(n))
+    d.chunkConQuery = await pedir(`/assets/${algunChunk}?token=1`)
+    d.iconoSinPrecache = await pedir('/icons/whatsappColor.svg')
+    await ESPERA(1500)
+    const cs = await contenidoCaches(page), todas = urlsEnCaches(cs)
+    d.caches = Object.fromEntries(Object.entries(cs).map(([n, l]) => [n, l.length]))
+    assert.equal(d.privadaAntes.status, 200); assert.equal(d.privadaTrasRevocar.status, 401, 'tras revocar, el SW no debe devolver la copia privada')
+    assert.equal(estado.lecturasJson, 2, 'los datos del proxy siempre van a la red')
+    const indebidas = todas.filter((u) => /__supabase|\/storage\/v1|\/rest\/v1|\/medios\/|no-existe|error-404|\?token=|:5362/.test(u))
+    assert.deepEqual(indebidas, [], 'entradas indebidas en Cache Storage')
+    const html = Object.values(cs).flat().filter((e) => /\/assets\//.test(e.url) && /text\/html/.test(e.tipo ?? ''))
+    assert.deepEqual(html, [], 'ningún HTML guardado como asset')
+    // Positivos: hero e ícono público (imagenes-del-sitio), chunks (assets-por-uso), íconos de cobro (precaché).
+    assert.ok((cs['imagenes-del-sitio'] ?? []).some((e) => /\/inicio-web\/.+\.webp$/.test(e.url)), 'el hero se guarda')
+    assert.ok((cs['imagenes-del-sitio'] ?? []).some((e) => e.url.endsWith('/icons/whatsappColor.svg')), 'un ícono público se guarda')
+    assert.ok((cs['assets-por-uso'] ?? []).some((e) => /\/assets\/.+\.js$/.test(e.url)), 'los chunks por uso se guardan')
+    assert.ok(todas.some((u) => /\/icons\/yape\.svg/.test(u)), 'íconos de cobro en el precaché')
+    await ctx.close()
+    return d
+  })
+
+  if (V1) {
+    await caso('F8-02 · Al activarse la versión corregida se retiran las entradas indebidas que guardó V1, sin borrar las válidas', async () => {
+      publicar(V1); estado.privadaPermitida = true
+      const { ctx, page } = await contexto()
+      await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await controladaPorSW(page); await ESPERA(3000)
+      const privada = '/__supabase/storage/v1/object/sign/comprobantes-pedidos-web/qa-f8-v1.png?token=ficticio'
+      await page.evaluate(async (u) => { await fetch(u); await fetch('/assets/no-existe-v1.js').catch(() => null) }, privada)
+      await ESPERA(1500)
+      const antes = await contenidoCaches(page)
+      const indebidasAntes = urlsEnCaches(antes).filter((u) => /__supabase|no-existe-v1/.test(u))
+      const validasAntes = [...(antes['assets-por-uso'] ?? []), ...(antes['imagenes-del-sitio'] ?? [])].filter((e) => !/__supabase|no-existe-v1/.test(e.url)).map((e) => e.url)
+      assert.ok(indebidasAntes.length >= 2, `V1 debería haber guardado las entradas indebidas (estado QA a limpiar): ${indebidasAntes}`)
+      assert.ok(validasAntes.length > 3)
+      publicar(A)
+      await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+      await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+      await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => null), page.getByRole('button', { name: 'Actualizar', exact: true }).click()])
+      await page.waitForFunction((m) => document.querySelector('meta[name="build-id"]')?.content === m, META_A, { timeout: 30000 }); await ESPERA(2000)
+      const despues = await contenidoCaches(page), urls = new Set(urlsEnCaches(despues))
+      const d = { indebidasAntes, indebidasDespues: urlsEnCaches(despues).filter((u) => /__supabase|no-existe-v1/.test(u)), validasAntes: validasAntes.length, validasConservadas: validasAntes.filter((u) => urls.has(u)).length }
+      assert.deepEqual(d.indebidasDespues, []); assert.equal(d.validasConservadas, d.validasAntes, 'las entradas válidas (código de la versión anterior, hero) se conservan')
+      await ctx.close()
+      return d
+    })
+  }
+
+  await browser.close(); servidor.close(); otroOrigen.close()
+  const fallos = casos.filter((c) => !c.ok)
+  const informe = { fecha: new Date().toISOString(), etiqueta: ETIQUETA, a: { dir: A, meta: META_A, citas: CITAS_A }, b: { dir: B, meta: META_B }, archivosComunesAB: comunes.length, producto: PRODUCTO, total: casos.length, correctos: casos.length - fallos.length, fallos: fallos.length, casos }
+  if (SALIDA) fs.writeFileSync(SALIDA, JSON.stringify(informe, null, 1))
+  console.log(`\n[${ETIQUETA}] ${informe.correctos}/${informe.total} correctos`)
+  process.exit(fallos.length ? 1 : 0)
+})().catch(async (e) => { console.error(e); try { await browser?.close() } catch {} process.exit(2) })

@@ -1,0 +1,520 @@
+{
+ "version": 1,
+ "ambiente": "127.0.0.1:54321",
+ "creado": "2026-10-12T16:45:40.043Z",
+ "publica": "http://127.0.0.1:8799",
+ "entradas": [
+  {
+   "id": "4ec33e3b-2489-5c39-a3f3-e9a397064dcd",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "d59326fc-22a0-48bd-b4bf-1c2da272f7e4.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/d59326fc-22a0-48bd-b4bf-1c2da272f7e4.webp",
+    "bytes": 36108,
+    "mime": "image/webp",
+    "sha256": "a6bad30098ca2ccb4f10092ab30dce5639c296b68c0ead301abd391e327c8716",
+    "ancho": 1024,
+    "alto": 1024,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/4ec33e3b-2489-5c39-a3f3-e9a397064dcd",
+   "variantes": {
+    "m": {
+     "bytes": 8580,
+     "sha256": "0254cd4636eb80e0ad22d6896ef6c01462fde8dca26abe39e23e9074b949874d",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 36108,
+     "sha256": "a6bad30098ca2ccb4f10092ab30dce5639c296b68c0ead301abd391e327c8716",
+     "ancho": 1024,
+     "alto": 1024,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "antes_url",
+     "fila": "0e426a40-91b6-4b6f-9530-ae2e797e2a18",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/d59326fc-22a0-48bd-b4bf-1c2da272f7e4.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/4ec33e3b-2489-5c39-a3f3-e9a397064dcd/g.webp",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.155Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "b995cd75-79b5-5580-982e-819484302087",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "ce0950a0-9e3b-4214-9c79-a6243dd431a4.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/ce0950a0-9e3b-4214-9c79-a6243dd431a4.webp",
+    "bytes": 120906,
+    "mime": "image/webp",
+    "sha256": "dbaf4c4a2e1305cc81f5eb30e6bdeff0672c8bfe4315cb217cf5177a2f545a65",
+    "ancho": 1024,
+    "alto": 1024,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/b995cd75-79b5-5580-982e-819484302087",
+   "variantes": {
+    "m": {
+     "bytes": 9480,
+     "sha256": "5a86022fea61b46bf3981e0c33fad0d344560d28150aae7301ae0a96c0fbf9c2",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 120906,
+     "sha256": "dbaf4c4a2e1305cc81f5eb30e6bdeff0672c8bfe4315cb217cf5177a2f545a65",
+     "ancho": 1024,
+     "alto": 1024,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "antes_url",
+     "fila": "af02ca09-8190-4606-a187-695c397fc26e",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/ce0950a0-9e3b-4214-9c79-a6243dd431a4.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/b995cd75-79b5-5580-982e-819484302087/g.webp",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.234Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "8331139f-8afc-56a6-aba1-befe38b8877c",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "75560750-c6d5-44a9-861f-afaf41141b24.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/75560750-c6d5-44a9-861f-afaf41141b24.webp",
+    "bytes": 83804,
+    "mime": "image/webp",
+    "sha256": "d783dac1bfda2008e2e4c6085cecb4742bb8ca4778824b6089aa4d0f5c131729",
+    "ancho": 1050,
+    "alto": 1400,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/8331139f-8afc-56a6-aba1-befe38b8877c",
+   "variantes": {
+    "m": {
+     "bytes": 7198,
+     "sha256": "c9fd14f797c8f5e5b2f7ff78bc0437b9ce064e80975b17a10e1ce1eab55471b7",
+     "ancho": 240,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 83804,
+     "sha256": "d783dac1bfda2008e2e4c6085cecb4742bb8ca4778824b6089aa4d0f5c131729",
+     "ancho": 1050,
+     "alto": 1400,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "antes_url",
+     "fila": "d98fe5fa-8f21-4fc5-85b7-092eb5be3c9f",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/75560750-c6d5-44a9-861f-afaf41141b24.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/8331139f-8afc-56a6-aba1-befe38b8877c/g.webp",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.310Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "b6a792ea-e62f-5de6-b817-057f3e6fd957",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "77247612-7b2a-4861-b3a9-73559aed8097.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/77247612-7b2a-4861-b3a9-73559aed8097.webp",
+    "bytes": 28712,
+    "mime": "image/webp",
+    "sha256": "9d4147e2d1c3744c7a5742ec612b3f7d495266e83b7fad578638c8d8c5f1d7b3",
+    "ancho": 1024,
+    "alto": 1024,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/b6a792ea-e62f-5de6-b817-057f3e6fd957",
+   "variantes": {
+    "m": {
+     "bytes": 6742,
+     "sha256": "a38750d6de81142d6e87c1f5c4b9fb6decdb0520970ab16b80fadaebf948681c",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 28712,
+     "sha256": "9d4147e2d1c3744c7a5742ec612b3f7d495266e83b7fad578638c8d8c5f1d7b3",
+     "ancho": 1024,
+     "alto": 1024,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "despues_url",
+     "fila": "0e426a40-91b6-4b6f-9530-ae2e797e2a18",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/77247612-7b2a-4861-b3a9-73559aed8097.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/b6a792ea-e62f-5de6-b817-057f3e6fd957/g.webp",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.369Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "f75afb51-4918-5036-9e88-6b989d724c2a",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "7e8c89d7-2f33-4e92-82e5-4917f667e961.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/7e8c89d7-2f33-4e92-82e5-4917f667e961.webp",
+    "bytes": 107162,
+    "mime": "image/webp",
+    "sha256": "93ecbf9775854dfa8ba908991c10aaf19acb37e53825ef677e316af258b27dee",
+    "ancho": 1024,
+    "alto": 1024,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/f75afb51-4918-5036-9e88-6b989d724c2a",
+   "variantes": {
+    "m": {
+     "bytes": 7748,
+     "sha256": "c9906894d88699b09148b57e0364423179ce7aa089d0e7008534c8f4bc57d68c",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 107162,
+     "sha256": "93ecbf9775854dfa8ba908991c10aaf19acb37e53825ef677e316af258b27dee",
+     "ancho": 1024,
+     "alto": 1024,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "despues_url",
+     "fila": "af02ca09-8190-4606-a187-695c397fc26e",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/7e8c89d7-2f33-4e92-82e5-4917f667e961.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/f75afb51-4918-5036-9e88-6b989d724c2a/g.webp",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.426Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "86a9d2a3-e1e8-5ae5-817e-063ad3479fa1",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "4842bfde-11a4-4982-96f1-503330714032.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/4842bfde-11a4-4982-96f1-503330714032.webp",
+    "bytes": 20812,
+    "mime": "image/webp",
+    "sha256": "85282982c5955bad51762fbf2756b3246f13233e20ccb498cd27f2b6943b7b7e",
+    "ancho": 1050,
+    "alto": 1400,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/86a9d2a3-e1e8-5ae5-817e-063ad3479fa1",
+   "variantes": {
+    "m": {
+     "bytes": 2674,
+     "sha256": "e8898541f837ec6d20af28c14d7ac2a7d95e86255da3a7439d8956e074d033fc",
+     "ancho": 240,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 20812,
+     "sha256": "85282982c5955bad51762fbf2756b3246f13233e20ccb498cd27f2b6943b7b7e",
+     "ancho": 1050,
+     "alto": 1400,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "despues_url",
+     "fila": "d98fe5fa-8f21-4fc5-85b7-092eb5be3c9f",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/4842bfde-11a4-4982-96f1-503330714032.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/86a9d2a3-e1e8-5ae5-817e-063ad3479fa1/g.webp",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.498Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "13aee6b1-7906-539c-acdb-bfcee6f0e6a3",
+   "destino": "fotos-productos",
+   "origen": {
+    "bucket": "fotos-productos",
+    "ruta": "5f1c335d-a5b4-4800-9ba9-3697e06bbc1e.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-productos/5f1c335d-a5b4-4800-9ba9-3697e06bbc1e.webp",
+    "bytes": 78016,
+    "mime": "image/webp",
+    "sha256": "8c3e8796f67dc1d8552b13827aa21b6b1f5603aca06eb5d321e4e8120ca6264f",
+    "ancho": 600,
+    "alto": 450,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-productos/13aee6b1-7906-539c-acdb-bfcee6f0e6a3",
+   "variantes": {
+    "m": {
+     "bytes": 13906,
+     "sha256": "ef28c190277a844e6a18e4ae10ae624b1649502a8cd81d18b1fbb29c80798884",
+     "ancho": 320,
+     "alto": 240,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 78016,
+     "sha256": "8c3e8796f67dc1d8552b13827aa21b6b1f5603aca06eb5d321e4e8120ca6264f",
+     "ancho": 600,
+     "alto": 450,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "productos",
+     "columna": "foto_url",
+     "fila": "7f3ea894-7739-4b2f-a069-b7eb5d9dc4f3",
+     "original": "5f1c335d-a5b4-4800-9ba9-3697e06bbc1e.webp",
+     "nuevo": "r2:fotos-productos/13aee6b1-7906-539c-acdb-bfcee6f0e6a3",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.553Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "78502842-3f5e-5575-8d47-66208210ee31",
+   "destino": "fotos-servicios",
+   "origen": {
+    "bucket": "fotos-servicios",
+    "ruta": "8eb77ffc-3e16-4739-b600-51bf553cd996.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-servicios/8eb77ffc-3e16-4739-b600-51bf553cd996.webp",
+    "bytes": 71300,
+    "mime": "image/webp",
+    "sha256": "9e4a307c5ebac30a8e7b23a14a54db57d127d027761b43af8df15b77ea310c10",
+    "ancho": 733,
+    "alto": 441,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-servicios/78502842-3f5e-5575-8d47-66208210ee31",
+   "variantes": {
+    "m": {
+     "bytes": 12818,
+     "sha256": "edc389fd44a2ac66da3c169b4be589129b986fb143bdb5563412c74cb1a0dae6",
+     "ancho": 320,
+     "alto": 193,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 71300,
+     "sha256": "9e4a307c5ebac30a8e7b23a14a54db57d127d027761b43af8df15b77ea310c10",
+     "ancho": 733,
+     "alto": 441,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "servicio_fotos",
+     "columna": "foto_url",
+     "fila": "32807a38-5e48-4b50-81c9-05295f91600f",
+     "original": "8eb77ffc-3e16-4739-b600-51bf553cd996.webp",
+     "nuevo": "r2:fotos-servicios/78502842-3f5e-5575-8d47-66208210ee31",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.603Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "7c16d3ab-b8c1-53c0-8856-311691367098",
+   "destino": "fotos-servicios",
+   "origen": {
+    "bucket": "fotos-servicios",
+    "ruta": "0e5360c2-2603-4820-8950-c10f6b76c9c8.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-servicios/0e5360c2-2603-4820-8950-c10f6b76c9c8.webp",
+    "bytes": 1946,
+    "mime": "image/webp",
+    "sha256": "36bdb87b6c33268291cecbc7e6d846aca48b5445eac45e475bf6764d47c16f9a",
+    "ancho": 90,
+    "alto": 91,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-servicios/7c16d3ab-b8c1-53c0-8856-311691367098",
+   "variantes": {
+    "m": {
+     "bytes": 1266,
+     "sha256": "c10f1000fa2f2ab147f08e6a791b2d5aaf53e0cd3a7fa8b2618afee3fbdda943",
+     "ancho": 90,
+     "alto": 91,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 1946,
+     "sha256": "36bdb87b6c33268291cecbc7e6d846aca48b5445eac45e475bf6764d47c16f9a",
+     "ancho": 90,
+     "alto": 91,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "servicio_fotos",
+     "columna": "foto_url",
+     "fila": "b85e6334-2218-4131-858c-ca93d8710f2f",
+     "original": "0e5360c2-2603-4820-8950-c10f6b76c9c8.webp",
+     "nuevo": "r2:fotos-servicios/7c16d3ab-b8c1-53c0-8856-311691367098",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.640Z",
+     "estado": "planificada"
+    }
+   ]
+  },
+  {
+   "id": "aaa2e288-1fab-59c4-b1a1-5e58d1561230",
+   "destino": "fotos-servicios",
+   "origen": {
+    "bucket": "fotos-servicios",
+    "ruta": "e4788f8b-d188-4467-8ab7-5aeea33b3810.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-servicios/e4788f8b-d188-4467-8ab7-5aeea33b3810.webp",
+    "bytes": 49282,
+    "mime": "image/webp",
+    "sha256": "182b7805752372af8d0cf36c74b7c6987a75ae2f63f2f14ead5ca4e3d164365d",
+    "ancho": 427,
+    "alto": 640,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-servicios/aaa2e288-1fab-59c4-b1a1-5e58d1561230",
+   "variantes": {
+    "m": {
+     "bytes": 10638,
+     "sha256": "73a92c0726e933e659fb8c90292c456a0ef91cb0ffa2be64e74c253e69310c25",
+     "ancho": 214,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 49282,
+     "sha256": "182b7805752372af8d0cf36c74b7c6987a75ae2f63f2f14ead5ca4e3d164365d",
+     "ancho": 427,
+     "alto": 640,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "planificada",
+   "referencias": [
+    {
+     "tabla": "servicios",
+     "columna": "foto_url",
+     "fila": "2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+     "original": "e4788f8b-d188-4467-8ab7-5aeea33b3810.webp",
+     "nuevo": "r2:fotos-servicios/aaa2e288-1fab-59c4-b1a1-5e58d1561230",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T16:45:40.689Z",
+     "estado": "planificada"
+    }
+   ]
+  }
+ ],
+ "eventos": [],
+ "ffmpeg": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+}

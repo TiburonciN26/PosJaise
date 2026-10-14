@@ -1,0 +1,63 @@
+{
+  "fecha": "2026-10-11T00:24:47.682Z",
+  "commit": "ec2a3b64b4fe7ad96e29d43bf9aef61ea2aa1c04",
+  "frontend": {
+    "archivos": 180,
+    "swSha256": "fb19ee995ca5219bedfe6872c4aa8a38973d75180f4b5143897f097f748e371d",
+    "swCoincide": true,
+    "swExcluyeMedios": true,
+    "configuracionMixtaCorrecta": true,
+    "cfg": [
+      {
+        "archivo": "dist\\assets\\index-sVDesZvw.js",
+        "config": {
+          "configs": [
+            {
+              "proveedor": "supabase",
+              "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+              "publica": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios"
+            }
+          ],
+          "extras": [
+            "https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+          ]
+        }
+      }
+    ],
+    "hallazgos": [],
+    "rutas": {
+      "version": 1,
+      "include": [
+        "/medios",
+        "/medios/*"
+      ],
+      "exclude": []
+    },
+    "sin404": true
+  },
+  "servidor": {
+    "sources": [
+      {
+        "archivo": "functions/medios/[[ruta]].js",
+        "shaManifiesto": "e04293be6dd628f18d5827e775982e9f9bf9d3a1feb8e619e3f09117bc51f97c",
+        "shaCommit": "64fe96159bcd4203c6a37cbd16d556c1f006b745129983568a208f6a94c98d87",
+        "incluidoEnPaquete": false
+      },
+      {
+        "archivo": "functions/medios.js",
+        "shaManifiesto": "db4dcd5f8cc789043f7184bf72dcf8ae33978202cd83fdfced0e0d1e555b7d6c",
+        "shaCommit": "960af9ad8c67cdcd1a934a7ae1463e85a52d913131fd61166ed2ef0e3fec4eff",
+        "incluidoEnPaquete": false
+      },
+      {
+        "archivo": "cloudflare/medios-pages/entrega.js",
+        "shaManifiesto": "8302759d8eedfab797731e8c5f695a6297ac977284ebb0deb9d7ab1e34ccf3db",
+        "shaCommit": "8f2e452eadc33283485156bdf5ed05a9a0dad4005b53cc6473817801c3acbcf4",
+        "incluidoEnPaquete": false
+      }
+    ],
+    "tieneWorkerCompilado": false,
+    "faltaPayload": true
+  },
+  "nota": "Lectura de artefacto existente y git show; sin construir, instalar ni desplegar. Los hashes de fuentes declaradas no sustituyen esos archivos ausentes."
+}

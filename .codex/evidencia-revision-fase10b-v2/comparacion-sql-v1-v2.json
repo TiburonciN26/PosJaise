@@ -1,0 +1,57 @@
+[
+  {
+    "nombre": "01_20261009000001_web_publica_visitantes.sql",
+    "sha256": "19f7b446505e03447f45b012470241ac20fca64859c2dfadab06d9eeb99ca64a",
+    "identicoV1": true
+  },
+  {
+    "nombre": "02_20261009000002_pasarela_tarjeta.sql",
+    "sha256": "776a91cb07232da24d38670e1f5b70f62435b9574446ac28ca1bbfc99eb33d19",
+    "identicoV1": true
+  },
+  {
+    "nombre": "03_20261009000003_confirmar_pago_pasarela.sql",
+    "sha256": "82535c8fb82b49e05d129faebb1c9dfe24a8d91e108c712bda99472f42a8ed01",
+    "identicoV1": true
+  },
+  {
+    "nombre": "04_20261009000004_libro_reclamaciones.sql",
+    "sha256": "b3a67f36e135ebd70e41da279ccf234e8568d00995ad331ac4fafd072da307d3",
+    "identicoV1": true
+  },
+  {
+    "nombre": "05_20261009000005_confirmar_pedido_tarjeta.sql",
+    "sha256": "be497cd0be1cb9fbb67cec02e78f5b9a741a4701279af976c76e364546405d3a",
+    "identicoV1": true
+  },
+  {
+    "nombre": "06_20261010000001_deuda_pagos.sql+20261013000001_deudas_compatibilidad_convivencia.sql",
+    "sha256": "4382c4e55830cd2eeb621e5f89cb6ce11c5000bbc7d79152026053f0a4f27aad",
+    "identicoV1": true
+  },
+  {
+    "nombre": "07_20261011000001_catalogo_publico_vitrina.sql",
+    "sha256": "d3d472b52cdcd02c509a9917a1ed8ec0a945634dcfa8abf637e7c1a3fc116e38",
+    "identicoV1": true
+  },
+  {
+    "nombre": "08_20261011000002_vistas_listas_admin.sql",
+    "sha256": "673f3af217b116707ca818e792d73aae21ba05cfd9cf3a0f1f4cc73f3b425a54",
+    "identicoV1": true
+  },
+  {
+    "nombre": "09_20261012000001_rls_helpers_una_vez_por_consulta.sql",
+    "sha256": "45e82c0da7fd8faf7e62aa9740e6a689c93e791e91cd1a5fa26a1a22f1a9fd5a",
+    "identicoV1": true
+  },
+  {
+    "nombre": "10_20261012000002_indices_listas_medidos.sql",
+    "sha256": "8afaf9f5fbdd68545db1ab5a2d6316df4ff9a48c04acf815961dc94fc20d4a76",
+    "identicoV1": true
+  },
+  {
+    "nombre": "11_20261012000003_migracion_medios_cambio_con_plazo.sql",
+    "sha256": "8277ef6c0a18ac8dd179d246aeea5e8e39e0ca9563593ffc23e9e07c11c454f8",
+    "identicoV1": true
+  }
+]

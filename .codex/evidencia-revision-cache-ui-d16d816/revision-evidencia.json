@@ -1,0 +1,169 @@
+{
+  "fecha": "2026-10-10T23:01:54.873Z",
+  "nota": "Auditoría de evidencias de Claude + comprobaciones independientes actuales. No se repiten las subidas/borrados/UI; un login QA y luego GET públicos/protegidos. No se afirma haber presenciado las corridas originales.",
+  "inputs": {
+    "cache": {
+      "ruta": "C:/WedJaiseReact/.codex/evidencia-cache-d16d816/cache-e9af38.json",
+      "sha256": "163c0e1f7b57102a9a60ee9d5b78debab4bf8b2cc7a4c05328ae343e991269f4"
+    },
+    "ui": {
+      "ruta": "C:/WedJaiseReact/.codex/evidencia-interfaz-d16d816/corridas/corrida-56f5e8.json",
+      "sha256": "184afe5c08bc3bb8dde31db858a59c8b2408836ad0b630ce6ef6b47815b88aaf"
+    }
+  },
+  "fuentes": {
+    "scripts/verificar-medios-pages-cache.cjs": "88c95dc3f1dc858b6dcf7011fd527f10db1bd468c1edc5701e5afd1bcf59244b",
+    "scripts/lib/guardas-interfaz-r2.cjs": "0f0d96c9b291a04cb33b4b10b2a141b12a9fa406445a65ce267310fdc3d4966d",
+    "scripts/verificar-interfaz-r2-preview.cjs": "13d86750335177dfda7336d1393405c14b4ea1bdd6468c1d864da7ca34c90c20"
+  },
+  "checks": [
+    {
+      "nombre": "cache: recuento real 27/0 y resultado completo",
+      "ok": true
+    },
+    {
+      "nombre": "cache: limpieza sin pendientes y comparación final",
+      "ok": true
+    },
+    {
+      "nombre": "cache: POP coincidente y respuesta 404",
+      "ok": true
+    },
+    {
+      "nombre": "UI: recuento real 23/0 y recorrido completo",
+      "ok": true
+    },
+    {
+      "nombre": "UI: estado final sin claves nuevas/faltantes",
+      "ok": true
+    },
+    {
+      "nombre": "ambas evidencias: alias/marca esperados",
+      "ok": true
+    },
+    {
+      "nombre": "Servicio: galería idéntica en los valores registrados",
+      "ok": true
+    },
+    {
+      "nombre": "fuente idéntica a paquete aprobado: scripts/verificar-medios-pages-cache.cjs",
+      "ok": true
+    },
+    {
+      "nombre": "fuente idéntica a paquete aprobado: scripts/lib/guardas-interfaz-r2.cjs",
+      "ok": true
+    },
+    {
+      "nombre": "fuente idéntica a paquete aprobado: scripts/verificar-interfaz-r2-preview.cjs",
+      "ok": true
+    },
+    {
+      "nombre": "Referencia del objeto de caché válida y acotada",
+      "ok": true
+    },
+    {
+      "nombre": "Informe caché: cabecera nueva en HEAD/MISS/HIT/304",
+      "ok": true
+    },
+    {
+      "nombre": "Informe caché: ETag idéntico en HEAD/MISS/HIT/304",
+      "ok": true
+    },
+    {
+      "nombre": "Informe UI: 4 variantes con nueva política, tipo y bytes",
+      "ok": true
+    },
+    {
+      "nombre": "Informe caché: TTL de borde 300 y lectura posterior a DELETE retenida como HIT",
+      "ok": true
+    },
+    {
+      "nombre": "SW actual idéntico al deployment 2d701280 aprobado",
+      "ok": true,
+      "detalle": {
+        "swHash": "41175d82c3da80bafa992061d13dfba23ea5a429887af884e15cbbf4e9cd4174",
+        "preflight": {
+          "buildId": "d16d816f",
+          "entrega": "pages",
+          "modulos": [
+            "assets/index-DGsWTpdi.js"
+          ]
+        }
+      }
+    },
+    {
+      "nombre": "Estado actual: fixtures sin foto ni galería",
+      "ok": true
+    },
+    {
+      "nombre": "Estado actual: única Galería antigua esperada, sin fila de ejecución",
+      "ok": true
+    },
+    {
+      "nombre": "Estado actual: inventario completo y vacío en los tres destinos",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "Objeto de caché probado: actualmente 404 no-store, ambas variantes",
+      "ok": true,
+      "detalle": [
+        {
+          "variante": "m",
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "ray": "a4893fedce4dd484-MIA"
+        },
+        {
+          "variante": "g",
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "ray": "a4893fef0fe0de19-MIA"
+        }
+      ]
+    },
+    {
+      "nombre": "Ninguna escritura de datos de esta verificación",
+      "ok": true,
+      "detalle": {
+        "GET": 151,
+        "POST_Auth": 1
+      }
+    }
+  ],
+  "resumen": {
+    "comprobaciones": 21,
+    "fallos": 0
+  },
+  "estadoActual": {
+    "producto": [
+      {
+        "id": "432a6610-67e5-4a7c-a979-eb891cc9263c",
+        "foto_url": null
+      }
+    ],
+    "servicio": [
+      {
+        "id": "6265a7d1-80b3-4b72-9b34-7f6eca3d7873",
+        "foto_url": null
+      }
+    ],
+    "galeriaProducto": 0,
+    "galeriaServicio": 0,
+    "galeriaWeb": [
+      {
+        "id": "4ab5c994-9bb1-40bf-b5ff-186d45603781",
+        "titulo": "Foto de prueba (Inicio)",
+        "antes_url": "inicio-web/hero-antes-referencia.jpg",
+        "despues_url": "inicio-web/hero-despues-referencia.jpg"
+      }
+    ],
+    "inventarioClaves": 0
+  }
+}

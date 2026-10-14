@@ -1,0 +1,3553 @@
+{
+  "fecha": "2026-10-10T23:11:08.176Z",
+  "nota": "30 capturas de pantalla arbitrarias, muestra de distintos pesos; solo Chromium local, sin subidas. Funciones extraídas sin cambios del proyecto. No son fotos de catálogo ni tiempos móviles.",
+  "carpeta": "C:/Users/jdeos/OneDrive/Pictures/MINECRAFT",
+  "archivosDisponibles": 46,
+  "archivosProbados": 30,
+  "solicitudesExternas": 0,
+  "fuentes": {
+    "imagenes": "04dacae6aeb3ef1e6349d3604ae16034c2c9461e710721c3db0ea332be84a916",
+    "medios": "407bac3710025a9c23eea20cb250f5d1a8dcfd13fed35bfcdf8e510444057bca"
+  },
+  "resumen": {
+    "Producto": {
+      "combinaciones": 30,
+      "maxDetalleKiB": 42.287109375,
+      "maxMiniaturaKiB": 14.669921875,
+      "detallesSobre250KiB": 0,
+      "miniaturasSobre80KiB": 0,
+      "maxProcesamientoMs": 59.5,
+      "formatoCorrecto": true
+    },
+    "Servicio": {
+      "combinaciones": 30,
+      "maxDetalleKiB": 87.248046875,
+      "maxMiniaturaKiB": 15.466796875,
+      "detallesSobre250KiB": 0,
+      "miniaturasSobre80KiB": 0,
+      "maxProcesamientoMs": 91.30000001192093,
+      "formatoCorrecto": true
+    },
+    "Galeria": {
+      "combinaciones": 30,
+      "maxDetalleKiB": 141.798828125,
+      "maxMiniaturaKiB": 16.1484375,
+      "detallesSobre250KiB": 0,
+      "miniaturasSobre80KiB": 0,
+      "maxProcesamientoMs": 146.79999999701977,
+      "formatoCorrecto": true
+    }
+  },
+  "resultados": [
+    {
+      "id": "muestra-01",
+      "archivo": "Captura de pantalla 2026-03-03 111952.png",
+      "bytesOriginal": 7463,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 90,
+        "alto": 91
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 1752,
+        "ancho": 90,
+        "alto": 91
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 1674,
+        "ancho": 90,
+        "alto": 91
+      },
+      "ms": 31.899999991059303,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 90,
+          "alto": 91,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 90,
+          "alto": 91,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-01",
+      "archivo": "Captura de pantalla 2026-03-03 111952.png",
+      "bytesOriginal": 7463,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 90,
+        "alto": 91
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 1946,
+        "ancho": 90,
+        "alto": 91
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 1674,
+        "ancho": 90,
+        "alto": 91
+      },
+      "ms": 5.5999999940395355,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 90,
+          "alto": 91,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 90,
+          "alto": 91,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-01",
+      "archivo": "Captura de pantalla 2026-03-03 111952.png",
+      "bytesOriginal": 7463,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 90,
+        "alto": 91
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 1946,
+        "ancho": 90,
+        "alto": 91
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 1674,
+        "ancho": 90,
+        "alto": 91
+      },
+      "ms": 4.700000002980232,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 90,
+          "alto": 91,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 90,
+          "alto": 91,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-02",
+      "archivo": "Captura de pantalla 2026-03-10 185931.png",
+      "bytesOriginal": 11268,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 200,
+        "alto": 119
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 1422,
+        "ancho": 200,
+        "alto": 119
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 1394,
+        "ancho": 200,
+        "alto": 119
+      },
+      "ms": 7.4000000059604645,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 200,
+          "alto": 119,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 200,
+          "alto": 119,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-02",
+      "archivo": "Captura de pantalla 2026-03-10 185931.png",
+      "bytesOriginal": 11268,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 200,
+        "alto": 119
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 1600,
+        "ancho": 200,
+        "alto": 119
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 1466,
+        "ancho": 200,
+        "alto": 119
+      },
+      "ms": 5.100000008940697,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 200,
+          "alto": 119,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 200,
+          "alto": 119,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-02",
+      "archivo": "Captura de pantalla 2026-03-10 185931.png",
+      "bytesOriginal": 11268,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 200,
+        "alto": 119
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 1600,
+        "ancho": 200,
+        "alto": 119
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 1466,
+        "ancho": 200,
+        "alto": 119
+      },
+      "ms": 5.5999999940395355,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 200,
+          "alto": 119,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 200,
+          "alto": 119,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-03",
+      "archivo": "Captura de pantalla 2026-09-24 160625.png",
+      "bytesOriginal": 19813,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 488,
+        "alto": 109
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 10490,
+        "ancho": 488,
+        "alto": 109
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5486,
+        "ancho": 320,
+        "alto": 71
+      },
+      "ms": 13.299999997019768,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 488,
+          "alto": 109,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 71,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-03",
+      "archivo": "Captura de pantalla 2026-09-24 160625.png",
+      "bytesOriginal": 19813,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 488,
+        "alto": 109
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 11868,
+        "ancho": 488,
+        "alto": 109
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5522,
+        "ancho": 320,
+        "alto": 71
+      },
+      "ms": 13.300000011920929,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 488,
+          "alto": 109,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 71,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-03",
+      "archivo": "Captura de pantalla 2026-09-24 160625.png",
+      "bytesOriginal": 19813,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 488,
+        "alto": 109
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 11868,
+        "ancho": 488,
+        "alto": 109
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5522,
+        "ancho": 320,
+        "alto": 71
+      },
+      "ms": 11.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 488,
+          "alto": 109,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 71,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-04",
+      "archivo": "Captura de pantalla 2026-03-19 165534.png",
+      "bytesOriginal": 35370,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 253,
+        "alto": 165
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 3112,
+        "ancho": 253,
+        "alto": 165
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2984,
+        "ancho": 253,
+        "alto": 165
+      },
+      "ms": 11.200000002980232,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 253,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 253,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-04",
+      "archivo": "Captura de pantalla 2026-03-19 165534.png",
+      "bytesOriginal": 35370,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 253,
+        "alto": 165
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 3664,
+        "ancho": 253,
+        "alto": 165
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 3190,
+        "ancho": 253,
+        "alto": 165
+      },
+      "ms": 13.800000011920929,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 253,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 253,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-04",
+      "archivo": "Captura de pantalla 2026-03-19 165534.png",
+      "bytesOriginal": 35370,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 253,
+        "alto": 165
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 3664,
+        "ancho": 253,
+        "alto": 165
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 3190,
+        "ancho": 253,
+        "alto": 165
+      },
+      "ms": 12.199999988079071,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 253,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 253,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-05",
+      "archivo": "Captura de pantalla 2026-03-09 151641.png",
+      "bytesOriginal": 46818,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 395,
+        "alto": 756
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 11404,
+        "ancho": 313,
+        "alto": 600
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5038,
+        "ancho": 167,
+        "alto": 320
+      },
+      "ms": 25.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 313,
+          "alto": 600,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 167,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-05",
+      "archivo": "Captura de pantalla 2026-03-09 151641.png",
+      "bytesOriginal": 46818,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 395,
+        "alto": 756
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17922,
+        "ancho": 395,
+        "alto": 756
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5438,
+        "ancho": 167,
+        "alto": 320
+      },
+      "ms": 32.400000005960464,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 395,
+          "alto": 756,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 167,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-05",
+      "archivo": "Captura de pantalla 2026-03-09 151641.png",
+      "bytesOriginal": 46818,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 395,
+        "alto": 756
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17922,
+        "ancho": 395,
+        "alto": 756
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5438,
+        "ancho": 167,
+        "alto": 320
+      },
+      "ms": 42,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 395,
+          "alto": 756,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 167,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-06",
+      "archivo": "Captura de pantalla 2026-03-10 143423.png",
+      "bytesOriginal": 66012,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 433,
+        "alto": 324
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 3582,
+        "ancho": 433,
+        "alto": 324
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2600,
+        "ancho": 320,
+        "alto": 239
+      },
+      "ms": 23.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 433,
+          "alto": 324,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 239,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-06",
+      "archivo": "Captura de pantalla 2026-03-10 143423.png",
+      "bytesOriginal": 66012,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 433,
+        "alto": 324
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 4226,
+        "ancho": 433,
+        "alto": 324
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2544,
+        "ancho": 320,
+        "alto": 239
+      },
+      "ms": 17,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 433,
+          "alto": 324,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 239,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-06",
+      "archivo": "Captura de pantalla 2026-03-10 143423.png",
+      "bytesOriginal": 66012,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 433,
+        "alto": 324
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 4226,
+        "ancho": 433,
+        "alto": 324
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2544,
+        "ancho": 320,
+        "alto": 239
+      },
+      "ms": 16.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 433,
+          "alto": 324,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 239,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-07",
+      "archivo": "Captura de pantalla 2026-03-09 204921.png",
+      "bytesOriginal": 67522,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1122,
+        "alto": 728
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17966,
+        "ancho": 600,
+        "alto": 389
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6458,
+        "ancho": 320,
+        "alto": 207
+      },
+      "ms": 28.600000008940697,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 389,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 207,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-07",
+      "archivo": "Captura de pantalla 2026-03-09 204921.png",
+      "bytesOriginal": 67522,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1122,
+        "alto": 728
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 36086,
+        "ancho": 900,
+        "alto": 584
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6384,
+        "ancho": 320,
+        "alto": 208
+      },
+      "ms": 53.1000000089407,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 584,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 208,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-07",
+      "archivo": "Captura de pantalla 2026-03-09 204921.png",
+      "bytesOriginal": 67522,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1122,
+        "alto": 728
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 54372,
+        "ancho": 1122,
+        "alto": 728
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6620,
+        "ancho": 320,
+        "alto": 208
+      },
+      "ms": 68.70000000298023,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1122,
+          "alto": 728,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 208,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-08",
+      "archivo": "Captura de pantalla 2026-03-10 182637.png",
+      "bytesOriginal": 77650,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 846,
+        "alto": 511
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 18586,
+        "ancho": 600,
+        "alto": 362
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7340,
+        "ancho": 320,
+        "alto": 193
+      },
+      "ms": 26.700000002980232,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 362,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 193,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-08",
+      "archivo": "Captura de pantalla 2026-03-10 182637.png",
+      "bytesOriginal": 77650,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 846,
+        "alto": 511
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 33692,
+        "ancho": 846,
+        "alto": 511
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7788,
+        "ancho": 320,
+        "alto": 193
+      },
+      "ms": 43.6000000089407,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 846,
+          "alto": 511,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 193,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-08",
+      "archivo": "Captura de pantalla 2026-03-10 182637.png",
+      "bytesOriginal": 77650,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 846,
+        "alto": 511
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 33692,
+        "ancho": 846,
+        "alto": 511
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7788,
+        "ancho": 320,
+        "alto": 193
+      },
+      "ms": 43.099999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 846,
+          "alto": 511,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 193,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-09",
+      "archivo": "Captura de pantalla 2026-03-10 185022.png",
+      "bytesOriginal": 78855,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 330,
+        "alto": 334
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 5310,
+        "ancho": 330,
+        "alto": 334
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4596,
+        "ancho": 316,
+        "alto": 320
+      },
+      "ms": 19.399999991059303,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 330,
+          "alto": 334,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 316,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-09",
+      "archivo": "Captura de pantalla 2026-03-10 185022.png",
+      "bytesOriginal": 78855,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 330,
+        "alto": 334
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6190,
+        "ancho": 330,
+        "alto": 334
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4576,
+        "ancho": 316,
+        "alto": 320
+      },
+      "ms": 17.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 330,
+          "alto": 334,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 316,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-09",
+      "archivo": "Captura de pantalla 2026-03-10 185022.png",
+      "bytesOriginal": 78855,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 330,
+        "alto": 334
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6190,
+        "ancho": 330,
+        "alto": 334
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4576,
+        "ancho": 316,
+        "alto": 320
+      },
+      "ms": 19.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 330,
+          "alto": 334,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 316,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-10",
+      "archivo": "Captura de pantalla 2026-03-10 143452.png",
+      "bytesOriginal": 89082,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 547,
+        "alto": 439
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 5680,
+        "ancho": 547,
+        "alto": 439
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2884,
+        "ancho": 320,
+        "alto": 257
+      },
+      "ms": 25.399999991059303,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 547,
+          "alto": 439,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 257,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-10",
+      "archivo": "Captura de pantalla 2026-03-10 143452.png",
+      "bytesOriginal": 89082,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 547,
+        "alto": 439
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6898,
+        "ancho": 547,
+        "alto": 439
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2924,
+        "ancho": 320,
+        "alto": 257
+      },
+      "ms": 25.099999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 547,
+          "alto": 439,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 257,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-10",
+      "archivo": "Captura de pantalla 2026-03-10 143452.png",
+      "bytesOriginal": 89082,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 547,
+        "alto": 439
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6898,
+        "ancho": 547,
+        "alto": 439
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2924,
+        "ancho": 320,
+        "alto": 257
+      },
+      "ms": 26.200000002980232,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 547,
+          "alto": 439,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 257,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-11",
+      "archivo": "Captura de pantalla 2026-05-21 121932.png",
+      "bytesOriginal": 96072,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 329,
+        "alto": 451
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 13340,
+        "ancho": 329,
+        "alto": 451
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8432,
+        "ancho": 233,
+        "alto": 320
+      },
+      "ms": 21.899999991059303,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 329,
+          "alto": 451,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 233,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-11",
+      "archivo": "Captura de pantalla 2026-05-21 121932.png",
+      "bytesOriginal": 96072,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 329,
+        "alto": 451
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 15148,
+        "ancho": 329,
+        "alto": 451
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8420,
+        "ancho": 233,
+        "alto": 320
+      },
+      "ms": 21.900000005960464,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 329,
+          "alto": 451,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 233,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-11",
+      "archivo": "Captura de pantalla 2026-05-21 121932.png",
+      "bytesOriginal": 96072,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 329,
+        "alto": 451
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 15148,
+        "ancho": 329,
+        "alto": 451
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8420,
+        "ancho": 233,
+        "alto": 320
+      },
+      "ms": 20.099999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 329,
+          "alto": 451,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 233,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-12",
+      "archivo": "Captura de pantalla 2026-03-10 143413.png",
+      "bytesOriginal": 101595,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 665,
+        "alto": 412
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 4118,
+        "ancho": 600,
+        "alto": 372
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2448,
+        "ancho": 320,
+        "alto": 198
+      },
+      "ms": 25.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 372,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 198,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-12",
+      "archivo": "Captura de pantalla 2026-03-10 143413.png",
+      "bytesOriginal": 101595,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 665,
+        "alto": 412
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6262,
+        "ancho": 665,
+        "alto": 412
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2628,
+        "ancho": 320,
+        "alto": 198
+      },
+      "ms": 26,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 665,
+          "alto": 412,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 198,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-12",
+      "archivo": "Captura de pantalla 2026-03-10 143413.png",
+      "bytesOriginal": 101595,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 665,
+        "alto": 412
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6262,
+        "ancho": 665,
+        "alto": 412
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2628,
+        "ancho": 320,
+        "alto": 198
+      },
+      "ms": 25,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 665,
+          "alto": 412,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 198,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-13",
+      "archivo": "Captura de pantalla 2026-06-05 150355.png",
+      "bytesOriginal": 120294,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 390,
+        "alto": 477
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 11722,
+        "ancho": 390,
+        "alto": 477
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8104,
+        "ancho": 262,
+        "alto": 320
+      },
+      "ms": 24,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 390,
+          "alto": 477,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 262,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-13",
+      "archivo": "Captura de pantalla 2026-06-05 150355.png",
+      "bytesOriginal": 120294,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 390,
+        "alto": 477
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 13594,
+        "ancho": 390,
+        "alto": 477
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8026,
+        "ancho": 262,
+        "alto": 320
+      },
+      "ms": 27.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 390,
+          "alto": 477,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 262,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-13",
+      "archivo": "Captura de pantalla 2026-06-05 150355.png",
+      "bytesOriginal": 120294,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 390,
+        "alto": 477
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 13594,
+        "ancho": 390,
+        "alto": 477
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8026,
+        "ancho": 262,
+        "alto": 320
+      },
+      "ms": 24.299999997019768,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 390,
+          "alto": 477,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 262,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-14",
+      "archivo": "Captura de pantalla 2026-03-09 230556.png",
+      "bytesOriginal": 144410,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 493,
+        "alto": 411
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 14738,
+        "ancho": 493,
+        "alto": 411
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8586,
+        "ancho": 320,
+        "alto": 267
+      },
+      "ms": 29.900000005960464,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 493,
+          "alto": 411,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 267,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-14",
+      "archivo": "Captura de pantalla 2026-03-09 230556.png",
+      "bytesOriginal": 144410,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 493,
+        "alto": 411
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17124,
+        "ancho": 493,
+        "alto": 411
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8612,
+        "ancho": 320,
+        "alto": 267
+      },
+      "ms": 29.299999997019768,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 493,
+          "alto": 411,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 267,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-14",
+      "archivo": "Captura de pantalla 2026-03-09 230556.png",
+      "bytesOriginal": 144410,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 493,
+        "alto": 411
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17124,
+        "ancho": 493,
+        "alto": 411
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8612,
+        "ancho": 320,
+        "alto": 267
+      },
+      "ms": 27.799999997019768,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 493,
+          "alto": 411,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 267,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-15",
+      "archivo": "Captura de pantalla 2026-03-19 174057.png",
+      "bytesOriginal": 178547,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 595,
+        "alto": 789
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 31018,
+        "ancho": 452,
+        "alto": 600
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8980,
+        "ancho": 241,
+        "alto": 320
+      },
+      "ms": 41.1000000089407,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 452,
+          "alto": 600,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 241,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-15",
+      "archivo": "Captura de pantalla 2026-03-19 174057.png",
+      "bytesOriginal": 178547,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 595,
+        "alto": 789
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 67658,
+        "ancho": 595,
+        "alto": 789
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 11016,
+        "ancho": 241,
+        "alto": 320
+      },
+      "ms": 61,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 595,
+          "alto": 789,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 241,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-15",
+      "archivo": "Captura de pantalla 2026-03-19 174057.png",
+      "bytesOriginal": 178547,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 595,
+        "alto": 789
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 67658,
+        "ancho": 595,
+        "alto": 789
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 11016,
+        "ancho": 241,
+        "alto": 320
+      },
+      "ms": 56.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 595,
+          "alto": 789,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 241,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-16",
+      "archivo": "Captura de pantalla 2026-03-09 230027.png",
+      "bytesOriginal": 181801,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 338,
+        "alto": 354
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 14694,
+        "ancho": 338,
+        "alto": 354
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10386,
+        "ancho": 306,
+        "alto": 320
+      },
+      "ms": 27.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 338,
+          "alto": 354,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 306,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-16",
+      "archivo": "Captura de pantalla 2026-03-09 230027.png",
+      "bytesOriginal": 181801,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 338,
+        "alto": 354
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 18282,
+        "ancho": 338,
+        "alto": 354
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10518,
+        "ancho": 306,
+        "alto": 320
+      },
+      "ms": 27.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 338,
+          "alto": 354,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 306,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-16",
+      "archivo": "Captura de pantalla 2026-03-09 230027.png",
+      "bytesOriginal": 181801,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 338,
+        "alto": 354
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 18282,
+        "ancho": 338,
+        "alto": 354
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10518,
+        "ancho": 306,
+        "alto": 320
+      },
+      "ms": 29.600000008940697,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 338,
+          "alto": 354,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 306,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-17",
+      "archivo": "Captura de pantalla 2026-03-09 210023.png",
+      "bytesOriginal": 189932,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 300,
+        "alto": 672
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 4830,
+        "ancho": 268,
+        "alto": 600
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2666,
+        "ancho": 143,
+        "alto": 320
+      },
+      "ms": 20.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 268,
+          "alto": 600,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 143,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-17",
+      "archivo": "Captura de pantalla 2026-03-09 210023.png",
+      "bytesOriginal": 189932,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 300,
+        "alto": 672
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6926,
+        "ancho": 300,
+        "alto": 672
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2742,
+        "ancho": 143,
+        "alto": 320
+      },
+      "ms": 22.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 300,
+          "alto": 672,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 143,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-17",
+      "archivo": "Captura de pantalla 2026-03-09 210023.png",
+      "bytesOriginal": 189932,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 300,
+        "alto": 672
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 6926,
+        "ancho": 300,
+        "alto": 672
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 2742,
+        "ancho": 143,
+        "alto": 320
+      },
+      "ms": 24.200000002980232,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 300,
+          "alto": 672,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 143,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-18",
+      "archivo": "Captura de pantalla 2026-03-19 171658.png",
+      "bytesOriginal": 230852,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1191,
+        "alto": 492
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 21710,
+        "ancho": 600,
+        "alto": 248
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8436,
+        "ancho": 320,
+        "alto": 132
+      },
+      "ms": 25.400000005960464,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 248,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 132,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-18",
+      "archivo": "Captura de pantalla 2026-03-19 171658.png",
+      "bytesOriginal": 230852,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1191,
+        "alto": 492
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 43134,
+        "ancho": 900,
+        "alto": 372
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8710,
+        "ancho": 320,
+        "alto": 132
+      },
+      "ms": 54.29999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 372,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 132,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-18",
+      "archivo": "Captura de pantalla 2026-03-19 171658.png",
+      "bytesOriginal": 230852,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1191,
+        "alto": 492
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 65898,
+        "ancho": 1191,
+        "alto": 492
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 9182,
+        "ancho": 320,
+        "alto": 132
+      },
+      "ms": 68.59999999403954,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1191,
+          "alto": 492,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 132,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-19",
+      "archivo": "Captura de pantalla 2026-03-10 184511.png",
+      "bytesOriginal": 248667,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 800,
+        "alto": 671
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 15166,
+        "ancho": 600,
+        "alto": 503
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6904,
+        "ancho": 320,
+        "alto": 268
+      },
+      "ms": 34.6000000089407,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 503,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 268,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-19",
+      "archivo": "Captura de pantalla 2026-03-10 184511.png",
+      "bytesOriginal": 248667,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 800,
+        "alto": 671
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 26230,
+        "ancho": 800,
+        "alto": 671
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7240,
+        "ancho": 320,
+        "alto": 268
+      },
+      "ms": 45.400000005960464,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 800,
+          "alto": 671,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 268,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-19",
+      "archivo": "Captura de pantalla 2026-03-10 184511.png",
+      "bytesOriginal": 248667,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 800,
+        "alto": 671
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 26230,
+        "ancho": 800,
+        "alto": 671
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7240,
+        "ancho": 320,
+        "alto": 268
+      },
+      "ms": 45.8999999910593,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 800,
+          "alto": 671,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 268,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-20",
+      "archivo": "Captura de pantalla 2026-03-09 230654.png",
+      "bytesOriginal": 277072,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1133,
+        "alto": 584
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 11798,
+        "ancho": 600,
+        "alto": 309
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4800,
+        "ancho": 320,
+        "alto": 165
+      },
+      "ms": 23.899999991059303,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 309,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-20",
+      "archivo": "Captura de pantalla 2026-03-09 230654.png",
+      "bytesOriginal": 277072,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1133,
+        "alto": 584
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 21390,
+        "ancho": 900,
+        "alto": 464
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5106,
+        "ancho": 320,
+        "alto": 165
+      },
+      "ms": 42.6000000089407,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 464,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-20",
+      "archivo": "Captura de pantalla 2026-03-09 230654.png",
+      "bytesOriginal": 277072,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1133,
+        "alto": 584
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 30492,
+        "ancho": 1133,
+        "alto": 584
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5336,
+        "ancho": 320,
+        "alto": 165
+      },
+      "ms": 62,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1133,
+          "alto": 584,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 165,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-21",
+      "archivo": "Captura de pantalla 2026-03-23 113728.png",
+      "bytesOriginal": 293792,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 662,
+        "alto": 366
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 15354,
+        "ancho": 600,
+        "alto": 332
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5734,
+        "ancho": 320,
+        "alto": 177
+      },
+      "ms": 28.80000001192093,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 332,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 177,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-21",
+      "archivo": "Captura de pantalla 2026-03-23 113728.png",
+      "bytesOriginal": 293792,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 662,
+        "alto": 366
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 27462,
+        "ancho": 662,
+        "alto": 366
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6612,
+        "ancho": 320,
+        "alto": 177
+      },
+      "ms": 62.099999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 662,
+          "alto": 366,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 177,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-21",
+      "archivo": "Captura de pantalla 2026-03-23 113728.png",
+      "bytesOriginal": 293792,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 662,
+        "alto": 366
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 27462,
+        "ancho": 662,
+        "alto": 366
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6612,
+        "ancho": 320,
+        "alto": 177
+      },
+      "ms": 37.400000005960464,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 662,
+          "alto": 366,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 177,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-22",
+      "archivo": "Captura de pantalla 2026-03-23 102727.png",
+      "bytesOriginal": 307159,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 777,
+        "alto": 550
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17432,
+        "ancho": 600,
+        "alto": 425
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7240,
+        "ancho": 320,
+        "alto": 227
+      },
+      "ms": 31.600000008940697,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 425,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 227,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-22",
+      "archivo": "Captura de pantalla 2026-03-23 102727.png",
+      "bytesOriginal": 307159,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 777,
+        "alto": 550
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 32952,
+        "ancho": 777,
+        "alto": 550
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8038,
+        "ancho": 320,
+        "alto": 227
+      },
+      "ms": 50.79999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 777,
+          "alto": 550,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 227,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-22",
+      "archivo": "Captura de pantalla 2026-03-23 102727.png",
+      "bytesOriginal": 307159,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 777,
+        "alto": 550
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 32952,
+        "ancho": 777,
+        "alto": 550
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 8038,
+        "ancho": 320,
+        "alto": 227
+      },
+      "ms": 52.69999998807907,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 777,
+          "alto": 550,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 227,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-23",
+      "archivo": "Captura de pantalla 2026-03-19 162412.png",
+      "bytesOriginal": 334138,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 622,
+        "alto": 436
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 24976,
+        "ancho": 600,
+        "alto": 421
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10596,
+        "ancho": 320,
+        "alto": 225
+      },
+      "ms": 38.29999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 421,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 225,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-23",
+      "archivo": "Captura de pantalla 2026-03-19 162412.png",
+      "bytesOriginal": 334138,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 622,
+        "alto": 436
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 36726,
+        "ancho": 622,
+        "alto": 436
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 11454,
+        "ancho": 320,
+        "alto": 224
+      },
+      "ms": 38.20000000298023,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 622,
+          "alto": 436,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 224,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-23",
+      "archivo": "Captura de pantalla 2026-03-19 162412.png",
+      "bytesOriginal": 334138,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 622,
+        "alto": 436
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 36726,
+        "ancho": 622,
+        "alto": 436
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 11454,
+        "ancho": 320,
+        "alto": 224
+      },
+      "ms": 39.3999999910593,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 622,
+          "alto": 436,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 224,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-24",
+      "archivo": "Captura de pantalla 2026-03-19 162729.png",
+      "bytesOriginal": 390985,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 644,
+        "alto": 760
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 24462,
+        "ancho": 508,
+        "alto": 600
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 9980,
+        "ancho": 271,
+        "alto": 320
+      },
+      "ms": 37.099999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 508,
+          "alto": 600,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 271,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-24",
+      "archivo": "Captura de pantalla 2026-03-19 162729.png",
+      "bytesOriginal": 390985,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 644,
+        "alto": 760
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 44558,
+        "ancho": 644,
+        "alto": 760
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10788,
+        "ancho": 271,
+        "alto": 320
+      },
+      "ms": 52.30000001192093,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 644,
+          "alto": 760,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 271,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-24",
+      "archivo": "Captura de pantalla 2026-03-19 162729.png",
+      "bytesOriginal": 390985,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 644,
+        "alto": 760
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 44558,
+        "ancho": 644,
+        "alto": 760
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10788,
+        "ancho": 271,
+        "alto": 320
+      },
+      "ms": 53.79999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 644,
+          "alto": 760,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 271,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-25",
+      "archivo": "Captura de pantalla 2026-03-23 111402.png",
+      "bytesOriginal": 404752,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1259,
+        "alto": 708
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 18134,
+        "ancho": 600,
+        "alto": 337
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6872,
+        "ancho": 320,
+        "alto": 180
+      },
+      "ms": 31.099999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 337,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 180,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-25",
+      "archivo": "Captura de pantalla 2026-03-23 111402.png",
+      "bytesOriginal": 404752,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1259,
+        "alto": 708
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 36576,
+        "ancho": 900,
+        "alto": 506
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7298,
+        "ancho": 320,
+        "alto": 180
+      },
+      "ms": 52.79999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 506,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 180,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-25",
+      "archivo": "Captura de pantalla 2026-03-23 111402.png",
+      "bytesOriginal": 404752,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1259,
+        "alto": 708
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 61940,
+        "ancho": 1259,
+        "alto": 708
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 7518,
+        "ancho": 320,
+        "alto": 180
+      },
+      "ms": 84.40000000596046,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1259,
+          "alto": 708,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 180,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-26",
+      "archivo": "Captura de pantalla 2026-03-23 111417.png",
+      "bytesOriginal": 743450,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1262,
+        "alto": 738
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 26446,
+        "ancho": 600,
+        "alto": 351
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 9690,
+        "ancho": 320,
+        "alto": 187
+      },
+      "ms": 37,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 351,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 187,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-26",
+      "archivo": "Captura de pantalla 2026-03-23 111417.png",
+      "bytesOriginal": 743450,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1262,
+        "alto": 738
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 52844,
+        "ancho": 900,
+        "alto": 526
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10086,
+        "ancho": 320,
+        "alto": 187
+      },
+      "ms": 64.8999999910593,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 526,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 187,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-26",
+      "archivo": "Captura de pantalla 2026-03-23 111417.png",
+      "bytesOriginal": 743450,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1262,
+        "alto": 738
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 89458,
+        "ancho": 1262,
+        "alto": 738
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 10634,
+        "ancho": 320,
+        "alto": 187
+      },
+      "ms": 102.20000000298023,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1262,
+          "alto": 738,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 187,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-27",
+      "archivo": "Captura de pantalla 2026-03-08 134609.png",
+      "bytesOriginal": 935484,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1829,
+        "alto": 1023
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 13480,
+        "ancho": 600,
+        "alto": 336
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5392,
+        "ancho": 320,
+        "alto": 179
+      },
+      "ms": 37.3999999910593,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 336,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 179,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-27",
+      "archivo": "Captura de pantalla 2026-03-08 134609.png",
+      "bytesOriginal": 935484,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1829,
+        "alto": 1023
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 26178,
+        "ancho": 900,
+        "alto": 503
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5408,
+        "ancho": 320,
+        "alto": 179
+      },
+      "ms": 61.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 503,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 179,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-27",
+      "archivo": "Captura de pantalla 2026-03-08 134609.png",
+      "bytesOriginal": 935484,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1829,
+        "alto": 1023
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 43918,
+        "ancho": 1400,
+        "alto": 783
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5614,
+        "ancho": 320,
+        "alto": 179
+      },
+      "ms": 116.29999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1400,
+          "alto": 783,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 179,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-28",
+      "archivo": "Granja polvora.png",
+      "bytesOriginal": 977306,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 2555,
+        "alto": 1439
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 14546,
+        "ancho": 600,
+        "alto": 338
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 5760,
+        "ancho": 320,
+        "alto": 180
+      },
+      "ms": 42.79999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 338,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 180,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-28",
+      "archivo": "Granja polvora.png",
+      "bytesOriginal": 977306,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 2555,
+        "alto": 1439
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 30094,
+        "ancho": 900,
+        "alto": 507
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6124,
+        "ancho": 320,
+        "alto": 180
+      },
+      "ms": 63.79999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 507,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 180,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-28",
+      "archivo": "Granja polvora.png",
+      "bytesOriginal": 977306,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 2555,
+        "alto": 1439
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 51452,
+        "ancho": 1400,
+        "alto": 788
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 6274,
+        "ancho": 320,
+        "alto": 180
+      },
+      "ms": 114.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1400,
+          "alto": 788,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 180,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-29",
+      "archivo": "Captura de pantalla 2026-03-09 210047.png",
+      "bytesOriginal": 1119932,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 1331,
+        "alto": 889
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 9192,
+        "ancho": 600,
+        "alto": 401
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4234,
+        "ancho": 320,
+        "alto": 214
+      },
+      "ms": 39.6000000089407,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 600,
+          "alto": 401,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 214,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-29",
+      "archivo": "Captura de pantalla 2026-03-09 210047.png",
+      "bytesOriginal": 1119932,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 1331,
+        "alto": 889
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 17308,
+        "ancho": 900,
+        "alto": 601
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4414,
+        "ancho": 320,
+        "alto": 214
+      },
+      "ms": 60.599999994039536,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 900,
+          "alto": 601,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 214,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-29",
+      "archivo": "Captura de pantalla 2026-03-09 210047.png",
+      "bytesOriginal": 1119932,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 1331,
+        "alto": 889
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 29152,
+        "ancho": 1331,
+        "alto": 889
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 4458,
+        "ancho": 320,
+        "alto": 214
+      },
+      "ms": 106.20000000298023,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 1331,
+          "alto": 889,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 320,
+          "alto": 214,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-30",
+      "archivo": "Captura de pantalla 2026-03-22 221650.png",
+      "bytesOriginal": 1361468,
+      "flujo": "Producto",
+      "original": {
+        "ancho": 798,
+        "alto": 1131
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 43302,
+        "ancho": 423,
+        "alto": 600
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 15022,
+        "ancho": 226,
+        "alto": 320
+      },
+      "ms": 59.5,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 423,
+          "alto": 600,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 226,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-30",
+      "archivo": "Captura de pantalla 2026-03-22 221650.png",
+      "bytesOriginal": 1361468,
+      "flujo": "Servicio",
+      "original": {
+        "ancho": 798,
+        "alto": 1131
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 89342,
+        "ancho": 635,
+        "alto": 900
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 15838,
+        "ancho": 226,
+        "alto": 320
+      },
+      "ms": 91.30000001192093,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 635,
+          "alto": 900,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 226,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    },
+    {
+      "id": "muestra-30",
+      "archivo": "Captura de pantalla 2026-03-22 221650.png",
+      "bytesOriginal": 1361468,
+      "flujo": "Galeria",
+      "original": {
+        "ancho": 798,
+        "alto": 1131
+      },
+      "detalle": {
+        "tipo": "image/webp",
+        "bytes": 145202,
+        "ancho": 798,
+        "alto": 1131
+      },
+      "miniatura": {
+        "tipo": "image/webp",
+        "bytes": 16536,
+        "ancho": 226,
+        "alto": 320
+      },
+      "ms": 146.79999999701977,
+      "validaciones": {
+        "detalle": {
+          "ok": true,
+          "ancho": 798,
+          "alto": 1131,
+          "codec": "VP8",
+          "alfa": false
+        },
+        "miniatura": {
+          "ok": true,
+          "ancho": 226,
+          "alto": 320,
+          "codec": "VP8",
+          "alfa": false
+        }
+      }
+    }
+  ]
+}

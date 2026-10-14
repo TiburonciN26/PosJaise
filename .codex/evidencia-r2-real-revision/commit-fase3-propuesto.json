@@ -1,0 +1,289 @@
+{
+  "fecha": "2026-10-10T04:34:44.749Z",
+  "head": "940510543f629df11ce80d558399c7ef32bebb68",
+  "main": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "branch": "feat/cloudflare-pages",
+  "tracked": 9,
+  "newPhase3": 29,
+  "candidateCount": 38,
+  "candidates": [
+    ".gitignore",
+    "cloudflare/medios-worker/package-lock.json",
+    "cloudflare/medios-worker/package.json",
+    "cloudflare/medios-worker/src/index.js",
+    "cloudflare/medios-worker/src/validar-imagen.js",
+    "cloudflare/medios-worker/test/probar-unitario.mjs",
+    "cloudflare/medios-worker/test/probar-worker.mjs",
+    "cloudflare/medios-worker/wrangler.toml",
+    "docs/evidencia-rendimiento/fase-3/R2-REAL-RUNBOOK.md",
+    "docs/evidencia-rendimiento/fase-3/README.md",
+    "docs/evidencia-rendimiento/fase-3/huerfanos-staging-solo-lectura.json",
+    "docs/evidencia-rendimiento/fase-3/pruebas-modales.json",
+    "docs/evidencia-rendimiento/fase-3/pruebas-navegador.json",
+    "docs/evidencia-rendimiento/fase-3/pruebas-unitarias.json",
+    "docs/evidencia-rendimiento/fase-3/pruebas-worker.json",
+    "docs/evidencia-rendimiento/fase-3/r2-real/con-escritura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+    "docs/evidencia-rendimiento/fase-3/r2-real/humo-local/humo-local-con-escritura.json",
+    "docs/evidencia-rendimiento/fase-3/r2-real/solo-lectura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+    "docs/evidencia-rendimiento/fase-3/rollback/fase-3-archivos-modificados.patch",
+    "docs/evidencia-rendimiento/fase-3/rollback/fase-3-archivos-nuevos.txt",
+    "implementacionesWed.md",
+    "scripts/lib/huerfanos-medios.mjs",
+    "scripts/medios-huerfanos.mjs",
+    "scripts/verificar-medios-r2-fase3.cjs",
+    "scripts/verificar-modales-fase3.cjs",
+    "scripts/verificar-r2-real-fase3.mjs",
+    "src/components/ModalGaleriaWeb.jsx",
+    "src/components/ModalProducto.jsx",
+    "src/components/ModalServicio.jsx",
+    "src/components/TarjetaProductoCliente.jsx",
+    "src/components/TarjetaServicioCliente.jsx",
+    "src/lib/galeriaFotos.js",
+    "src/lib/imagenes.js",
+    "src/lib/medios.js",
+    "src/lib/resultadoBd.js",
+    "src/pages/GaleriaWeb.jsx",
+    "tests/harness/modales-fase3.html",
+    "tests/harness/modales-fase3.jsx"
+  ],
+  "findings": [],
+  "excluded": [
+    ".codex/AUDITORIA-RENDIMIENTO.md",
+    ".codex/FASES-RENDIMIENTO-CLOUDFLARE.md",
+    ".codex/PAGES-CREADO-PARA-CLAUDE.md",
+    ".codex/PAGES-GIT-CREADO-PARA-CLAUDE.md",
+    ".codex/PAGES-PUBLICADO-PARA-CLAUDE.md",
+    ".codex/R2-BUCKET-STAGING-CREADO.md",
+    ".codex/R2-URL-PRUEBAS-HABILITADA.md",
+    ".codex/VERIFICACION-FASE-2B-V2.md",
+    ".codex/VERIFICACION-FASE-2B-V3-1.md",
+    ".codex/VERIFICACION-FASE-2B-V3.md",
+    ".codex/VERIFICACION-FASE-3-V2.md",
+    ".codex/VERIFICACION-FASE-3-V3.md",
+    ".codex/VERIFICACION-FASE-3-V4.md",
+    ".codex/VERIFICACION-FASE-3-V5.md",
+    ".codex/VERIFICACION-FASE-3.md",
+    ".codex/VERIFICACION-FORMAL-FASE-2.md",
+    ".codex/VERIFICACION-O1-ONLINE.md",
+    ".codex/VERIFICACION-PREPARACION-FASE-2B.md",
+    ".codex/WORKER-MEDIOS-STAGING-PUBLICADO.md",
+    ".codex/evidencia-fase3-codex-v2/casos-adicionales.json",
+    ".codex/evidencia-fase3-codex-v2/casos-adicionales.mjs",
+    ".codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs",
+    ".codex/evidencia-fase3-codex-v2/metadatos.json",
+    ".codex/evidencia-fase3-codex-v2/pruebas-modales.json",
+    ".codex/evidencia-fase3-codex-v2/pruebas-navegador.json",
+    ".codex/evidencia-fase3-codex-v2/pruebas-unitarias.json",
+    ".codex/evidencia-fase3-codex-v2/servicio-lento.json",
+    ".codex/evidencia-fase3-codex-v2/verificar-medios-r2-fase3.cjs",
+    ".codex/evidencia-fase3-codex-v2/verificar-modales-fase3.cjs",
+    ".codex/evidencia-fase3-codex-v2/vite-diagnostico.mjs",
+    ".codex/evidencia-fase3-codex-v3/diagnosticar-reconciliacion.cjs.txt",
+    ".codex/evidencia-fase3-codex-v3/metadatos.json",
+    ".codex/evidencia-fase3-codex-v3/preparar-suites.cjs.txt",
+    ".codex/evidencia-fase3-codex-v3/pruebas-modales.json",
+    ".codex/evidencia-fase3-codex-v3/pruebas-navegador.json",
+    ".codex/evidencia-fase3-codex-v3/pruebas-unitarias.json",
+    ".codex/evidencia-fase3-codex-v3/reconciliacion-inaccesible.json",
+    ".codex/evidencia-fase3-codex-v3/regresiones-independientes.json",
+    ".codex/evidencia-fase3-codex-v3/regresiones-independientes.mjs.txt",
+    ".codex/evidencia-fase3-codex-v3/repetir-suites.cjs.txt",
+    ".codex/evidencia-fase3-codex-v3/suites-repetidas.json",
+    ".codex/evidencia-fase3-codex-v4/diagnosticar-parcial.cjs.txt",
+    ".codex/evidencia-fase3-codex-v4/diagnosticar-reconciliacion.cjs.txt",
+    ".codex/evidencia-fase3-codex-v4/metadatos.json",
+    ".codex/evidencia-fase3-codex-v4/preparar-suites.cjs.txt",
+    ".codex/evidencia-fase3-codex-v4/pruebas-modales.json",
+    ".codex/evidencia-fase3-codex-v4/pruebas-navegador.json",
+    ".codex/evidencia-fase3-codex-v4/pruebas-unitarias.json",
+    ".codex/evidencia-fase3-codex-v4/pruebas-worker.json",
+    ".codex/evidencia-fase3-codex-v4/reconciliacion-inaccesible.json",
+    ".codex/evidencia-fase3-codex-v4/reconciliacion-parcial.json",
+    ".codex/evidencia-fase3-codex-v4/repetir-suites.cjs.txt",
+    ".codex/evidencia-fase3-codex-v4/suites-repetidas.json",
+    ".codex/evidencia-fase3-codex-v5/diagnosticar-cierre.cjs.txt",
+    ".codex/evidencia-fase3-codex-v5/metadatos.json",
+    ".codex/evidencia-fase3-codex-v5/preparar-diagnostico.cjs.txt",
+    ".codex/evidencia-fase3-codex-v5/preparar-suites.cjs.txt",
+    ".codex/evidencia-fase3-codex-v5/pruebas-modales.json",
+    ".codex/evidencia-fase3-codex-v5/pruebas-navegador.json",
+    ".codex/evidencia-fase3-codex-v5/pruebas-unitarias.json",
+    ".codex/evidencia-fase3-codex-v5/pruebas-worker.json",
+    ".codex/evidencia-fase3-codex-v5/regresiones-independientes.json",
+    ".codex/evidencia-fase3-codex-v5/repetir-suites.cjs.txt",
+    ".codex/evidencia-fase3-codex-v5/suites-repetidas.json",
+    ".codex/evidencia-fase3-codex/fallos-guardado.json",
+    ".codex/evidencia-fase3-codex/validacion-y-reintentos.json",
+    ".codex/evidencia-fase3-codex/worker-33-codex.json",
+    ".codex/evidencia-o1-codex/http-y-artefacto.json",
+    ".codex/evidencia-o1-codex/negativo-independiente.json",
+    ".codex/evidencia-o1-codex/qa-online-codex.json",
+    ".codex/evidencia-o1-codex/ventas-preview.png",
+    ".codex/evidencia-r2-bucket-creado/captura.jpg",
+    ".codex/evidencia-r2-url-pruebas/captura.jpg",
+    ".codex/evidencia-worker-medios-staging/configuracion.jpg",
+    ".codex/evidencia-worker-medios-staging/roles-solo-lectura.json",
+    ".codex/evidencia-worker-medios-staging/solo-lectura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+    ".codex/evidencia-worker-medios-staging/verificar-r2-real-fase3.mjs.txt",
+    ".codex/evidencia-worker-medios-staging/verificar-roles-lectura.mjs.txt",
+    ".codex/evidencia-worker-medios-staging/worker-publicado.jpg",
+    "docs/evidencia-rendimiento/fase-1/capturas/antes-referidos-oscuro.png",
+    "docs/evidencia-rendimiento/fase-1/capturas/despues-referidos-claro.png",
+    "docs/evidencia-rendimiento/fase-1/capturas/despues-referidos-oscuro.png"
+  ],
+  "hashes": [
+    {
+      "file": ".gitignore",
+      "sha256": "1f11dfaeb5388cc2991181aa5be23e10dd5d0defef8593805fb1e74af7a0144e"
+    },
+    {
+      "file": "cloudflare/medios-worker/package-lock.json",
+      "sha256": "761d2398fdcebec82f46609e04bfe3a34e32e19e36dfa66d8a39fdddff80406c"
+    },
+    {
+      "file": "cloudflare/medios-worker/package.json",
+      "sha256": "8a7d84a7de3a19f8c7dc67a8029de2aec1698efd9127f83bc418d7dad520adec"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/index.js",
+      "sha256": "11363e0cc62e25c5423f39f5c5a765583a1c16596c8cf20f3b5866655a7dc1f5"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/validar-imagen.js",
+      "sha256": "c0df152ebcd22845615cd7f1bd6cc5322942d751143e916ab5256be60b2eb3fa"
+    },
+    {
+      "file": "cloudflare/medios-worker/test/probar-unitario.mjs",
+      "sha256": "141c60b29940c12293606a4b2a91cfca802a45e5717696fdb50b2371d7bc58ab"
+    },
+    {
+      "file": "cloudflare/medios-worker/test/probar-worker.mjs",
+      "sha256": "a29623882392f81402f5bed2361258f355a5cc71b6a9b6375bfda29489eb6754"
+    },
+    {
+      "file": "cloudflare/medios-worker/wrangler.toml",
+      "sha256": "1aaec85be6a4de38df5f2b096744d2adc27284fd8391d55715c0eb9e10170a28"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/R2-REAL-RUNBOOK.md",
+      "sha256": "f45414ed48ee709208ae9b91daa98495dec485f2b6bd92bf3de33a25b61ae81c"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/README.md",
+      "sha256": "99e1693cae0caef18194941d35ccd6fe4f36bc74ed430af2349e19c36d5eac1b"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/huerfanos-staging-solo-lectura.json",
+      "sha256": "20dd11bd16249db62f8a1ae52d83884da0276a757841a720ec0400c06ed50bca"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/pruebas-modales.json",
+      "sha256": "bcc1856ae93ac957ebeb250cc9fc2af93d99ecd1127e7c284befef671a1871ad"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/pruebas-navegador.json",
+      "sha256": "a12b9cea018d730004d655a858668ea93b75f5ec4965c8f0f80f6504b4b42371"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/pruebas-unitarias.json",
+      "sha256": "53be7297bbdc432a2baf99e4424dd5d6c6396bd1f878e1c1318abf885aedae6c"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/pruebas-worker.json",
+      "sha256": "9c16b66f38512e595ba53f24babdba117619bb016eb97b7e1b94dfdad3917948"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/r2-real/con-escritura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+      "sha256": "823f483c465f0c1f156a31cfcdf695e0de6a2607f6a602dfca59cae2fe1ecf4c"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/r2-real/humo-local/humo-local-con-escritura.json",
+      "sha256": "7380d02bacd037284f5826b89d10f728701079d3b6570ee9e770702743fc862e"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/r2-real/solo-lectura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+      "sha256": "12589a9302a82ff8aa41a7922e0357bbc3b21653196d82eb828216aed1217006"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/rollback/fase-3-archivos-modificados.patch",
+      "sha256": "d36f217956f87e3e137a3a79f099133e5d26c1d31eb370e541c16852c0a409d1"
+    },
+    {
+      "file": "docs/evidencia-rendimiento/fase-3/rollback/fase-3-archivos-nuevos.txt",
+      "sha256": "5344290b3030141fbc40829a30b3b403ddbb70d6a99c12854406973e512b5da4"
+    },
+    {
+      "file": "implementacionesWed.md",
+      "sha256": "55551ed05bf3d0bb6a390a9261785cca14adc1569d333307a6ec258f1f7a5e6d"
+    },
+    {
+      "file": "scripts/lib/huerfanos-medios.mjs",
+      "sha256": "885712e507509347a9427663c19e85a95f6a410052b5d05fff68cfa2c6693182"
+    },
+    {
+      "file": "scripts/medios-huerfanos.mjs",
+      "sha256": "d03b1e7206405c6c90e7d49b40531570b17209565ff3b82cec72b18a0eaa7ade"
+    },
+    {
+      "file": "scripts/verificar-medios-r2-fase3.cjs",
+      "sha256": "f97d199b2a6f856d00e5cb80fba58fcf953f851af7cbbead02173d61114d0fb4"
+    },
+    {
+      "file": "scripts/verificar-modales-fase3.cjs",
+      "sha256": "21da097440eadd9d98db7c26d154a1838d864b8f3038426059b3a6066878222a"
+    },
+    {
+      "file": "scripts/verificar-r2-real-fase3.mjs",
+      "sha256": "28b648f8fe5d2574e80e72cf18cac732c28d5b985f616dded182ce90c442e215"
+    },
+    {
+      "file": "src/components/ModalGaleriaWeb.jsx",
+      "sha256": "ebd7989930579fa537e5fe4740fc18edf3bfc2e4782cb9917b786604bbae45de"
+    },
+    {
+      "file": "src/components/ModalProducto.jsx",
+      "sha256": "b3ad1a288cdb7f220bf94e0d1462dc1fa5efe0609f7105f5bc075c7100beaa9b"
+    },
+    {
+      "file": "src/components/ModalServicio.jsx",
+      "sha256": "8d124f54a9fbef0b2dea74100b9d39fc7a0312626ea0f39a6ef9063bf31f0bc6"
+    },
+    {
+      "file": "src/components/TarjetaProductoCliente.jsx",
+      "sha256": "085aade8436e45147c85e54995f55f5f810ef36ef31be05fa038c4dd26ef4488"
+    },
+    {
+      "file": "src/components/TarjetaServicioCliente.jsx",
+      "sha256": "b97242ae32e9a6e63b7c0a38a537fc5ca295e3a814ba97c3c54c738e3f74183b"
+    },
+    {
+      "file": "src/lib/galeriaFotos.js",
+      "sha256": "d618052037eaf94ddb2e0c07c1c8283f67a7ee0394c098fc448cc1be03b143f4"
+    },
+    {
+      "file": "src/lib/imagenes.js",
+      "sha256": "811a02110bc6796f3bc523431999d6aac4a2bce19b9d757850e2aff0f84cf234"
+    },
+    {
+      "file": "src/lib/medios.js",
+      "sha256": "abd8586e8399f0f2c3983000ff52a54d21d0daac9480688ff1647371f0f1a1f6"
+    },
+    {
+      "file": "src/lib/resultadoBd.js",
+      "sha256": "79e0f2fdd12b7a86a540950f0a198e512783f582fe4465c8338706965cdeaaa8"
+    },
+    {
+      "file": "src/pages/GaleriaWeb.jsx",
+      "sha256": "8230b92916761c8186a312c16a8d683f1ce3d22e58028d72a9dc5af8c9ff6947"
+    },
+    {
+      "file": "tests/harness/modales-fase3.html",
+      "sha256": "24ae2d30af61c458afc1b6d709ba75aa8f9555ce11f54ea0183856c62f4dae23"
+    },
+    {
+      "file": "tests/harness/modales-fase3.jsx",
+      "sha256": "8dc9815764a9ff35fce96e8bc20b1bec1cf8a41a7d3293a453d1749e625b2a26"
+    }
+  ],
+  "deltasDesdeV5": []
+}

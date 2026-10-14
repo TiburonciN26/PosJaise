@@ -1,0 +1,975 @@
+diff --git a/scripts/migracion-medios/lib.mjs b/scripts/migracion-medios/lib.mjs
+index fad143b..99ab82a 100644
+--- a/scripts/migracion-medios/lib.mjs
++++ b/scripts/migracion-medios/lib.mjs
+@@ -84,11 +84,26 @@ export function rutaSegura(ruta) {
+ const prefijoPublico = (supabaseUrl, bucket) => `${supabaseUrl.replace(/\/+$/, '')}/storage/v1/object/public/${bucket}/`
+ export const urlPublicaSupabase = (supabaseUrl, bucket, ruta) => prefijoPublico(supabaseUrl, bucket) + ruta.split('/').map(encodeURIComponent).join('/')
+ 
++// Identidad canónica de una base (Supabase, Worker o lectura de medios): esquema + host (sin puerto por defecto) + ruta sin
++// barras finales. Incluye la ruta para distinguir bases detrás de un proxy con prefijo. Rechaza credenciales, query y hash.
++export function normalizarBase(url) {
++  let u
++  try { u = new URL(String(url ?? '')) } catch { throw new Error(`URL inválida: ${url}`) }
++  if (!['http:', 'https:'].includes(u.protocol)) throw new Error(`${u.origin}: solo http/https`)
++  if (u.username || u.password || u.search || u.hash) throw new Error(`${u.host}: la base no puede llevar credenciales, query ni hash`)
++  return `${u.protocol}//${u.host}${u.pathname.replace(/\/+$/, '')}`
++}
++
++// Un endpoint de Storage dentro de una URL: /storage/v1/object/<public|sign|authenticated>/<bucket>/<resto>.
++const RE_STORAGE = /\/storage\/v1\/object\/(public|sign|authenticated)\/([^/]+)\/(.*)$/
++
+ // Clasifica UN valor de una columna. ctx: { supabaseUrl, basesMedios: [..], existeAssetBuild(ruta) }.
+-// Devuelve { formato, bucket, ruta?, detalle? }. Formatos:
++// Devuelve { formato, bucket, ruta?, detalle?, privacidad? }. Formatos:
+ //   vacia · r2 · r2-url (URL completa de medios propios) · supabase-ruta · supabase-url (este proyecto) ·
+-//   supabase-url-ajena (Storage de OTRO proyecto, p. ej. una fila copiada de producción) · asset-build (ruta relativa de
+-//   /public, solo galería) · externa · invalida
++//   supabase-url-firmada (endpoint sign/authenticated de este proyecto) · supabase-url-ajena (Storage de OTRO proyecto,
++//   p. ej. una fila copiada de producción) · asset-build (ruta relativa de /public, solo galería) · externa · invalida
++// En las URL de Storage manda el bucket REAL de la URL, no el que declara la columna: una URL de galería que apunte a un
++// bucket privado, a un endpoint firmado/autenticado o a un bucket desconocido se clasifica `privacidad: 'privado'` (F9-05).
+ export function clasificarValor(columna, valor, ctx) {
+   if (valor === null || valor === undefined || valor === '') return { formato: 'vacia', bucket: columna.bucket }
+   if (typeof valor !== 'string') return { formato: 'invalida', bucket: columna.bucket, detalle: 'no es texto' }
+@@ -98,6 +113,8 @@ export function clasificarValor(columna, valor, ctx) {
+     return { formato: ok ? 'r2' : 'invalida', bucket: columna.bucket, detalle: ok ? undefined : 'referencia r2 mal formada' }
+   }
+   if (/^https?:\/\//i.test(valor)) {
++    let u
++    try { u = new URL(valor) } catch { return { formato: 'invalida', bucket: columna.bucket, privacidad: 'privado', detalle: 'URL ilegible' } }
+     const supa = (ctx.supabaseUrl ?? '').replace(/\/+$/, '')
+     for (const bucket of Object.keys(PRIVACIDAD)) {
+       const pref = supa ? prefijoPublico(supa, bucket) : null
+@@ -107,10 +124,18 @@ export function clasificarValor(columna, valor, ctx) {
+         return rutaSegura(ruta) ? { formato: 'supabase-url', bucket, ruta } : { formato: 'invalida', bucket, detalle: 'ruta insegura' }
+       }
+     }
++    const st = u.pathname.match(RE_STORAGE)
++    if (st) {
++      let bucket
++      try { bucket = decodeURIComponent(st[2]) } catch { bucket = null }
++      const propio = Boolean(supa) && valor.startsWith(`${supa}/storage/v1/object/`)
++      const sensible = st[1] !== 'public' || !bucket || !(bucket in PRIVACIDAD) || PRIVACIDAD[bucket] === 'privado'
++      const formato = propio ? (st[1] === 'public' ? 'invalida' : 'supabase-url-firmada') : 'supabase-url-ajena'
++      return { formato, bucket: bucket in PRIVACIDAD ? bucket : null, ...(sensible ? { privacidad: 'privado' } : {}), detalle: propio && st[1] === 'public' ? 'bucket desconocido' : undefined }
++    }
+     for (const base of ctx.basesMedios ?? []) {
+       if (valor.startsWith(`${base.replace(/\/+$/, '')}/`)) return { formato: 'r2-url', bucket: columna.bucket }
+     }
+-    if (/\/storage\/v1\/object\/(public|sign|authenticated)\//.test(valor)) return { formato: 'supabase-url-ajena', bucket: columna.bucket }
+     return { formato: 'externa', bucket: columna.bucket }
+   }
+   if (columna.forma === 'directa') return { formato: 'externa', bucket: null, detalle: 'valor directo no URL' }
+@@ -124,7 +149,7 @@ export function clasificarValor(columna, valor, ctx) {
+ 
+ // Decide si una referencia (ya clasificada y cruzada con el objeto de Storage) entra en la migración, y por qué no.
+ export function decidirAlcance(clasif, objeto) {
+-  const privacidad = clasif.bucket ? (PRIVACIDAD[clasif.bucket] ?? 'desconocida') : 'sin-bucket'
++  const privacidad = clasif.privacidad ?? (clasif.bucket ? (PRIVACIDAD[clasif.bucket] ?? 'desconocida') : 'sin-bucket')
+   const base = { privacidad }
+   if (privacidad === 'privado') return { ...base, migrar: false, motivo: 'privado: excluido siempre' }
+   if (clasif.formato === 'vacia') return { ...base, migrar: false, motivo: 'vacía' }
+@@ -150,20 +175,59 @@ export function valorNuevo(columna, destino, id, publicUrl) {
+   throw new Error(`Columna ${columna.tabla}.${columna.columna} no admite migración`)
+ }
+ 
+-// Guarda de ambiente: lo local (loopback) se permite; remoto exige --permitir-remoto=<host exacto>; producción además
+-// --permitir-produccion. Devuelve null si se permite o el motivo del rechazo.
+-export function rechazoDeAmbiente({ url, permitirRemoto, permitirProduccion, refProduccion }) {
++// Valor que puede aparecer en un informe: exacto si se migra (es el «original» del UPDATE condicional y nunca lleva query),
++// nulo si es privado o sensible y, en el resto de URL, sin credenciales, query ni hash (pueden llevar tokens). F9-05.
++export function valorParaInforme(valor, alcance) {
++  if (alcance.privacidad === 'privado') return null
++  if (alcance.migrar || typeof valor !== 'string' || !/^https?:\/\//i.test(valor)) return valor
++  try {
++    const u = new URL(valor)
++    if (!u.search && !u.hash && !u.username && !u.password) return valor
++    u.search = ''; u.hash = ''; u.username = ''; u.password = ''
++    return `${u.href}?<omitido>`
++  } catch { return null }
++}
++
++// Permisos de destino POR FUNCIÓN (F9-06): Supabase, Worker de escritura y base de lectura de medios son hosts distintos en
++// la arquitectura real; cada uno exige su propia opción con el host exacto. No hay comodines ni un permiso «remoto» general.
++export const ROLES_DESTINO = { supabase: 'permitir-supabase', worker: 'permitir-worker', lectura: 'permitir-lectura' }
++
++// Guarda de ambiente: lo local (loopback) se permite; un remoto exige https y --permitir-<rol>=<host exacto>; el Supabase de
++// producción exige además --permitir-produccion (con cualquier rol). Devuelve null si se permite o el motivo del rechazo.
++export function rechazoDeAmbiente({ url, rol = 'supabase', permitido, permitirProduccion, refProduccion }) {
+   let u
+   try { u = new URL(url) } catch { return `URL inválida: ${url}` }
+   if (['127.0.0.1', 'localhost', '::1', '[::1]'].includes(u.hostname)) return null
+   if (u.protocol !== 'https:') return `${u.origin}: un destino remoto debe ser https`
+-  if (permitirRemoto !== u.host) return `${u.host} es remoto: exige --permitir-remoto=${u.host} (y autorización explícita del usuario)`
++  const opcion = ROLES_DESTINO[rol]
++  if (!opcion) return `rol de destino desconocido: ${rol}`
++  if (permitido !== u.host) return `${u.host} es remoto: exige --${opcion}=${u.host} (y autorización explícita del usuario)`
+   if (refProduccion && u.hostname === `${refProduccion}.supabase.co` && !permitirProduccion) return 'Supabase de PRODUCCIÓN: exige además --permitir-produccion'
+   return null
+ }
+ 
++// Vínculo manifiesto ↔ ambiente (F9-02). Antes de autenticar, copiar, escribir o verificar: el manifiesto debe ser de la
++// versión actual y de EXACTAMENTE el Supabase seleccionado; si ya fija Worker o base de lectura, también deben coincidir.
++// Devuelve la lista de motivos (vacía si corresponde).
++export function rechazoDeVinculo(m, { supabase, api, lectura } = {}) {
++  const motivos = []
++  if (m.version !== VERSION_MANIFIESTO) motivos.push(`manifiesto versión ${m.version ?? '¿?'}: esta herramienta exige la ${VERSION_MANIFIESTO} (vuelva a planificar)`)
++  if (supabase !== undefined && m.ambiente !== supabase) motivos.push(`el manifiesto es de ${m.ambiente}, no de ${supabase}`)
++  if (api !== undefined && m.api && m.api !== api) motivos.push(`el manifiesto ya se copió por el Worker ${m.api}, no por ${api}`)
++  if (lectura !== undefined) {
++    if (m.lectura && m.lectura !== lectura) motivos.push(`el manifiesto se verificó en la base de lectura ${m.lectura}, no en ${lectura}`)
++    if (m.publica && normalizarBase(m.publica) !== lectura) motivos.push(`la base de lectura ${lectura} no es la base pública ${m.publica} que guardan las referencias de galería`)
++  }
++  // Cada original se lee (y se comprueba al verificar) en EL Supabase del manifiesto: nunca en un host que traiga el archivo.
++  for (const e of m.entradas ?? []) {
++    if (e.origen?.url !== urlPublicaSupabase(m.ambiente ?? '', e.origen?.bucket ?? '', e.origen?.ruta ?? '')) { motivos.push(`${e.id}: la URL del original no es la de ${m.ambiente}`); break }
++  }
++  return motivos
++}
++export const VERSION_MANIFIESTO = 2
++
+ // Argumentos estrictos (mismo criterio que scripts/lib/huerfanos-medios.mjs): flags sin valor, números validados, opciones
+-// desconocidas rechazadas, todo antes de tocar la red.
++// desconocidas o repetidas rechazadas, todo antes de tocar la red.
+ export function parsearArgumentos(argv, { flags = [], textos = [], numeros = {} } = {}) {
+   const [comando, ...resto] = argv
+   if (!comando || comando.startsWith('--')) throw new Error('Falta el subcomando')
+@@ -173,6 +237,7 @@ export function parsearArgumentos(argv, { flags = [], textos = [], numeros = {}
+     const igual = crudo.indexOf('=')
+     const nombre = crudo.slice(2, igual === -1 ? undefined : igual)
+     const valor = igual === -1 ? null : crudo.slice(igual + 1)
++    if (Object.hasOwn(r, nombre)) throw new Error(`--${nombre} repetida: cada opción se indica una sola vez`)
+     if (flags.includes(nombre)) {
+       if (valor !== null) throw new Error(`--${nombre} no admite valor (recibió «${valor}»)`)
+       r[nombre] = true
+@@ -192,16 +257,23 @@ export function parsearArgumentos(argv, { flags = [], textos = [], numeros = {}
+ 
+ // Estados del manifiesto. Entrada (un objeto de origen): planificada → copiada → verificada | error.
+ // Referencia: pendiente → actualizada | conflicto ; actualizada → revertida | conflicto-reversion.
++// Además, una referencia puede tener una `operacion` ABIERTA (F9-03): la intención se guarda ANTES del UPDATE y se cierra al
++// conocer el resultado. «en-curso» = la ejecución se interrumpió sin saberlo; «incierta» = el UPDATE pudo confirmarse pero
++// la respuesta y la lectura de reconciliación fallaron. Toda operación abierta se reconcilia con una lectura antes de seguir.
+ export const ESTADOS_ENTRADA = ['planificada', 'copiada', 'verificada', 'error']
+ export const ESTADOS_REFERENCIA = ['pendiente', 'actualizada', 'conflicto', 'revertida', 'conflicto-reversion']
++export const ESTADOS_OPERACION = ['en-curso', 'incierta']
+ 
+ export function resumenManifiesto(m) {
+-  const r = { entradas: m.entradas.length, porEstado: {}, referencias: 0, refsPorEstado: {}, bytesOrigen: 0, bytesVariantes: 0 }
++  const r = { entradas: m.entradas.length, porEstado: {}, referencias: 0, refsPorEstado: {}, operacionesAbiertas: 0, bytesOrigen: 0, bytesVariantes: 0 }
+   for (const e of m.entradas) {
+     r.porEstado[e.estado] = (r.porEstado[e.estado] ?? 0) + 1
+     r.bytesOrigen += e.origen.bytes ?? 0
+     r.bytesVariantes += (e.variantes?.m?.bytes ?? 0) + (e.variantes?.g?.bytes ?? 0)
+-    for (const ref of e.referencias) { r.referencias += 1; r.refsPorEstado[ref.estado] = (r.refsPorEstado[ref.estado] ?? 0) + 1 }
++    for (const ref of e.referencias) {
++      r.referencias += 1; r.refsPorEstado[ref.estado] = (r.refsPorEstado[ref.estado] ?? 0) + 1
++      if (ref.operacion) r.operacionesAbiertas += 1
++    }
+   }
+   return r
+ }
+@@ -221,6 +293,11 @@ export function validarManifiesto(m) {
+     for (const ref of e.referencias) {
+       if (!COLUMNAS.some((c) => c.tabla === ref.tabla && c.columna === ref.columna && c.bucket === e.origen.bucket)) errores.push(`${ref.tabla}.${ref.columna}: columna no corresponde al bucket`)
+       if (!ESTADOS_REFERENCIA.includes(ref.estado)) errores.push(`${ref.tabla}/${ref.fila}: estado ${ref.estado}`)
++      const op = ref.operacion
++      if (op !== undefined) {
++        const esperado = op?.modo === 'actualizar' ? [ref.original, ref.nuevo] : op?.modo === 'revertir' ? [ref.nuevo, ref.original] : null
++        if (!esperado || !ESTADOS_OPERACION.includes(op.estado) || op.de !== esperado[0] || op.a !== esperado[1]) errores.push(`${ref.tabla}/${ref.fila}: operación abierta mal formada`)
++      }
+     }
+   }
+   return errores
+diff --git a/scripts/migracion-medios/medios-migracion.mjs b/scripts/migracion-medios/medios-migracion.mjs
+index 8a621fa..cc049a5 100644
+--- a/scripts/migracion-medios/medios-migracion.mjs
++++ b/scripts/migracion-medios/medios-migracion.mjs
+@@ -8,14 +8,17 @@
+ //   copiar       genera las variantes m/g (ffmpeg + el validador del Worker) y, con --aplicar, las sube por el Worker
+ //                autenticado (solo crea; nunca sobrescribe) y verifica por lectura que los bytes servidos coinciden.
+ //   actualizar   con --aplicar, cambia las referencias en lotes con UPDATE CONDICIONAL al valor anterior (si alguien cambió
+-//                la fila entretanto, queda en «conflicto» y no se toca). Cada cambio queda en el manifiesto (diario de reversión).
+-//   verificar    reconcilia manifiesto ↔ base ↔ R2 ↔ originales de Supabase.
++//                la fila entretanto, queda en «conflicto» y no se toca). La INTENCIÓN se guarda en el manifiesto antes de cada
++//                UPDATE y el resultado después; un resultado incierto queda abierto y se reconcilia con una lectura.
++//   verificar    reconcilia manifiesto ↔ base ↔ R2 ↔ originales de Supabase (exige la base de lectura si hay copias).
+ //   revertir     con --aplicar, devuelve cada referencia actualizada a su valor original, también condicional.
+ //
+ // Sin --aplicar ningún comando escribe nada fuera del manifiesto y la caché local. NINGÚN comando borra: ni originales de
+ // Supabase ni copias en R2 (los borrados de huérfanos los decide el recolector con retención, fuera de esta herramienta).
+-// Destinos remotos: exigen --permitir-remoto=<host> (y --permitir-produccion para el Supabase del negocio).
++// Destinos remotos: cada función exige su host exacto (--permitir-supabase, --permitir-worker, --permitir-lectura) y el
++// Supabase del negocio además --permitir-produccion. El manifiesto queda ligado a su Supabase, Worker y base de lectura.
+ import { spawnSync, execFileSync } from 'node:child_process'
++import { randomUUID } from 'node:crypto'
+ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, openSync, closeSync } from 'node:fs'
+ import { dirname, join, resolve } from 'node:path'
+ import { fileURLToPath } from 'node:url'
+@@ -23,8 +26,9 @@ import { createClient } from '@supabase/supabase-js'
+ import { inspeccionarWebp } from '../../cloudflare/medios-worker/src/validar-imagen.js'
+ import { REF_PRODUCCION } from '../lib/entornos-supabase.mjs'
+ import {
+-  BUCKETS_PRIVADOS, CALIDADES, COLUMNAS, DESTINOS_R2, PRIVACIDAD, VARIANTES, clasificarValor, decidirAlcance, idDeFuente,
+-  parsearArgumentos, rechazoDeAmbiente, resumenManifiesto, sha256, urlPublicaSupabase, validarManifiesto, valorNuevo,
++  BUCKETS_PRIVADOS, CALIDADES, COLUMNAS, DESTINOS_R2, PRIVACIDAD, ROLES_DESTINO, VARIANTES, VERSION_MANIFIESTO, clasificarValor,
++  decidirAlcance, idDeFuente, normalizarBase, parsearArgumentos, rechazoDeAmbiente, rechazoDeVinculo, resumenManifiesto, sha256,
++  urlPublicaSupabase, validarManifiesto, valorNuevo, valorParaInforme,
+ } from './lib.mjs'
+ 
+ const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
+@@ -56,15 +60,25 @@ function bloquear(manifiesto) {
+   process.on('exit', soltar)
+   return soltar
+ }
+-function guardarAmbiente({ url, opciones, que }) {
+-  const motivo = rechazoDeAmbiente({ url, permitirRemoto: opciones['permitir-remoto'], permitirProduccion: opciones['permitir-produccion'], refProduccion: REF_PRODUCCION })
+-  if (motivo) throw new Error(`${que}: ${motivo}`)
++const NOMBRE_ROL = { supabase: 'Supabase', worker: 'Worker de medios', lectura: 'Lectura de medios' }
++// Guarda de destino por función; devuelve la base normalizada (identidad canónica) para usarla y para el vínculo.
++function guardarAmbiente({ url, opciones, rol }) {
++  if (!url) throw new Error(`${NOMBRE_ROL[rol]}: falta la URL`)
++  let base
++  try { base = normalizarBase(url) } catch (e) { throw new Error(`${NOMBRE_ROL[rol]}: ${e.message}`) }
++  const motivo = rechazoDeAmbiente({ url: base, rol, permitido: opciones[ROLES_DESTINO[rol]], permitirProduccion: opciones['permitir-produccion'], refProduccion: REF_PRODUCCION })
++  if (motivo) throw new Error(`${NOMBRE_ROL[rol]}: ${motivo}`)
++  return base
++}
++function exigirVinculo(m, destinos) {
++  const motivos = rechazoDeVinculo(m, destinos)
++  if (motivos.length) throw new Error(`Manifiesto de otro ambiente: ${motivos.join('; ')}. No se autentica ni se escribe nada.`)
+ }
+ function configuracion(opciones) {
+   const env = leerEnv(resolve(opciones['env-file'] ?? '.env.local'))
+-  const supabaseUrl = env.VITE_SUPABASE_URL?.replace(/\/+$/, '')
+-  if (!supabaseUrl || !env.VITE_SUPABASE_ANON_KEY) throw new Error('El archivo de entorno no tiene VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY')
+-  return { supabaseUrl, anon: env.VITE_SUPABASE_ANON_KEY }
++  if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY) throw new Error('El archivo de entorno no tiene VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY')
++  // supabaseUrl es la identidad canónica del ambiente (esquema, host y ruta): la que fija y exige el manifiesto.
++  return { supabaseUrl: normalizarBase(env.VITE_SUPABASE_URL), anon: env.VITE_SUPABASE_ANON_KEY }
+ }
+ async function sesionAdmin({ supabaseUrl, anon }) {
+   const email = process.env.MIGRACION_EMAIL, password = process.env.MIGRACION_PASSWORD
+@@ -156,8 +170,9 @@ function inventariar(opciones) {
+     const privado = alcance.privacidad === 'privado'
+     filas.push({
+       tabla: ref.tabla, columna: ref.columna, fila: ref.fila,
+-      // De lo privado no se copian valores ni rutas al informe: solo su clasificación.
+-      valor: privado ? null : ref.valor,
++      // De lo privado (o sensible: URL firmada, bucket privado o desconocido) no se copian valores ni rutas al informe;
++      // de las demás URL no migrables se omite la query (puede llevar tokens).
++      valor: valorParaInforme(ref.valor, alcance),
+       formato: clasif.formato, bucket: clasif.bucket, ruta: privado ? null : clasif.ruta ?? null,
+       objeto: objeto ? { bytes: objeto.bytes, mime: objeto.mime } : null,
+       ...alcance, detalle: clasif.detalle,
+@@ -181,7 +196,7 @@ function inventariar(opciones) {
+   }
+   const objetosMigrables = new Set(filas.filter((f) => f.migrar).map((f) => `${f.bucket}/${f.ruta}`))
+   const informe = {
+-    generado: new Date().toISOString(), origen: crudo.generado, supabase: new URL(supabaseUrl).host,
++    generado: new Date().toISOString(), origen: crudo.generado, supabase: supabaseUrl,
+     columnas: crudo.columnas, buckets: crudo.buckets, porBucket, resumenPorColumna: resumen,
+     totales: {
+       referencias: filas.length, migrables: filas.filter((f) => f.migrar).length, objetosMigrables: objetosMigrables.size,
+@@ -199,15 +214,16 @@ function inventariar(opciones) {
+ // ---------------- planificar ----------------
+ async function planificar(opciones) {
+   const { supabaseUrl } = configuracion(opciones)
+-  guardarAmbiente({ url: supabaseUrl, opciones, que: 'Supabase de origen' }) // incluso la lectura de un remoto exige el permiso
++  guardarAmbiente({ url: supabaseUrl, opciones, rol: 'supabase' }) // incluso la lectura de un remoto exige el permiso
+   const inv = leerJson(opciones.inventario)
+-  if (inv.supabase !== new URL(supabaseUrl).host) throw new Error(`El inventario es de ${inv.supabase}, no de ${new URL(supabaseUrl).host}`)
++  if (inv.supabase !== supabaseUrl) throw new Error(`El inventario es de ${inv.supabase}, no de ${supabaseUrl}`)
++  const publica = opciones.publica ? normalizarBase(opciones.publica) : null
+   const soltar = bloquear(opciones.manifiesto)
+   const cache = resolve(opciones.cache); mkdirSync(cache, { recursive: true })
+-  const m = existsSync(opciones.manifiesto) ? leerJson(opciones.manifiesto) : { version: 1, ambiente: inv.supabase, creado: new Date().toISOString(), publica: opciones.publica ?? null, entradas: [], eventos: [] }
+-  if (m.ambiente !== inv.supabase) throw new Error('El manifiesto es de otro ambiente')
+-  if (opciones.publica && m.publica && opciones.publica !== m.publica) throw new Error('El manifiesto ya fija otra base pública de medios')
+-  m.publica ??= opciones.publica ?? null
++  const m = existsSync(opciones.manifiesto) ? leerJson(opciones.manifiesto) : { version: VERSION_MANIFIESTO, ambiente: inv.supabase, creado: new Date().toISOString(), publica, api: null, lectura: null, entradas: [], eventos: [] }
++  exigirVinculo(m, { supabase: inv.supabase })
++  if (publica && m.publica && publica !== m.publica) throw new Error('El manifiesto ya fija otra base pública de medios')
++  m.publica ??= publica
+   const filtro = opciones.filas ? new Set(leerJson(opciones.filas).map((f) => `${f.tabla}:${f.fila}`)) : null
+   const grupos = new Map()
+   for (const f of inv.referencias.filter((r) => r.migrar)) {
+@@ -253,17 +269,18 @@ async function planificar(opciones) {
+ async function copiar(opciones) {
+   const { supabaseUrl, anon } = configuracion(opciones)
+   const aplicar = Boolean(opciones.aplicar)
+-  if (aplicar) {
+-    guardarAmbiente({ url: opciones.api, opciones, que: 'Worker de medios' })
+-    guardarAmbiente({ url: opciones.lectura, opciones, que: 'Lectura de medios' })
+-    guardarAmbiente({ url: supabaseUrl, opciones, que: 'Supabase (autenticación)' })
+-  }
++  // Con --aplicar, cada destino pasa su guarda por función ANTES de leer el manifiesto o autenticar.
++  const api = aplicar ? guardarAmbiente({ url: opciones.api, opciones, rol: 'worker' }) : normalizarBase(opciones.api)
++  const lectura = aplicar ? guardarAmbiente({ url: opciones.lectura, opciones, rol: 'lectura' }) : normalizarBase(opciones.lectura)
++  if (aplicar) guardarAmbiente({ url: supabaseUrl, opciones, rol: 'supabase' })
+   const soltar = bloquear(opciones.manifiesto)
+   const m = leerJson(opciones.manifiesto)
+   const errs = validarManifiesto(m); if (errs.length) throw new Error(`Manifiesto inválido: ${errs.slice(0, 5).join('; ')}`)
++  exigirVinculo(m, aplicar ? { supabase: supabaseUrl, api, lectura } : { supabase: supabaseUrl })
+   const cache = resolve(opciones.cache)
+   m.ffmpeg ??= versionFfmpeg()
+   const cliente = aplicar ? await sesionAdmin({ supabaseUrl, anon }) : null
++  if (aplicar && (!m.api || !m.lectura)) { m.api ??= api; m.lectura ??= lectura; escribirJson(opciones.manifiesto, m) } // la primera copia fija los destinos
+   const lote = m.entradas.filter((e) => e.estado === 'planificada' || e.estado === 'copiada' || (e.estado === 'error' && opciones['reintentar-errores'])).slice(0, opciones.lote ?? 50)
+   const res = { preparadas: 0, subidas: 0, reanudadas: 0, existentesPropias: 0, verificadas: 0, errores: 0, simulado: !aplicar }
+   let transitoriosSeguidos = 0
+@@ -287,11 +304,11 @@ async function copiar(opciones) {
+       // 2) subida por el Worker (solo crear). 201 = creado, 200 = misma operación repetida; 409 = ya existe: se compara por lectura.
+       for (const v of ['m', 'g']) {
+         const bytes = readFileSync(archivoV(v))
+-        const r = await fetch(`${opciones.api}/v1/medios/${e.destino}/${e.id}/${v}`, { method: 'PUT', headers: { Authorization: `Bearer ${await token(cliente)}`, 'Content-Type': 'image/webp' }, body: bytes })
++        const r = await fetch(`${api}/v1/medios/${e.destino}/${e.id}/${v}`, { method: 'PUT', headers: { Authorization: `Bearer ${await token(cliente)}`, 'Content-Type': 'image/webp' }, body: bytes })
+         if (r.status === 201) res.subidas += 1
+         else if (r.status === 200) res.reanudadas += 1
+         else if (r.status === 409) {
+-          const ex = await descargar(`${opciones.lectura}/${e.destino}/${e.id}/${v}.webp`)
++          const ex = await descargar(`${lectura}/${e.destino}/${e.id}/${v}.webp`)
+           if (!ex.bytes || sha256(ex.bytes) !== e.variantes[v].sha256) throw new Error(`conflicto: ${e.destino}/${e.id}/${v} ya existe con OTRO contenido`)
+           res.existentesPropias += 1
+         } else if (r.status >= 500 || r.status === 429) {
+@@ -304,7 +321,7 @@ async function copiar(opciones) {
+       escribirJson(opciones.manifiesto, m)
+       // 3) verificación por lectura: lo que sirve la base pública debe ser byte a byte lo generado.
+       for (const v of ['m', 'g']) {
+-        const l = await descargar(`${opciones.lectura}/${e.destino}/${e.id}/${v}.webp`)
++        const l = await descargar(`${lectura}/${e.destino}/${e.id}/${v}.webp`)
+         if (!l.bytes) throw Object.assign(new Error(`lectura de ${v}: HTTP ${l.estado}`), { transitorio: true })
+         if (!/^image\/webp/.test(l.tipo ?? '')) throw new Error(`lectura de ${v}: tipo ${l.tipo}`)
+         if (sha256(l.bytes) !== e.variantes[v].sha256) throw new Error(`lectura de ${v}: el SHA-256 servido no coincide`)
+@@ -329,100 +346,192 @@ async function copiar(opciones) {
+ }
+ 
+ // ---------------- actualizar / revertir ----------------
++// Lectura ESTRICTA de la referencia: un error lanza (nunca se interpreta como «no existe» ni como «sin cambios»).
+ async function leerValor(cliente, ref) {
+   const { data, error } = await cliente.from(ref.tabla).select(`id,${ref.columna}`).eq('id', ref.fila).maybeSingle()
+   if (error) throw new Error(`lectura ${ref.tabla}/${ref.fila}: ${error.message}`)
+   return data ? { existe: true, valor: data[ref.columna] } : { existe: false }
+ }
+-// UPDATE … WHERE id = fila AND columna = esperado. Si no afecta filas, se relee: si ya tiene el valor de destino la operación
+-// se había hecho (respuesta perdida); si tiene otro valor, alguien la cambió → conflicto, no se toca.
++// ¿El fallo del UPDATE es un rechazo DEFINITIVO (PostgREST respondió 4xx: la sentencia no se confirmó) o un resultado
++// INCIERTO (red, 5xx, 408/429 de un intermediario: pudo confirmarse sin que llegara la respuesta)?
++const esRechazoDefinitivo = (status) => status >= 400 && status < 500 && status !== 408 && status !== 429
++
++// UPDATE … WHERE id = fila AND columna = de. Si la respuesta no es un «1 fila», se reconcilia con una lectura estricta:
++//   valor = a   → 'hecho' (la respuesta se perdió después de confirmarse)
++//   valor = de  → 'rechazado' si el fallo es definitivo o el UPDATE respondió 0 filas (permisos/RLS); si es incierto, 'incierto'
++//   otro valor  → 'conflicto' (alguien la editó; no se toca) · sin fila → 'fila-inexistente'
++//   lectura caída → 'incierto': la duda se conserva en el manifiesto y nunca se da por resuelta.
+ async function cambiarCondicional(cliente, ref, de, a) {
+-  const { data, error } = await cliente.from(ref.tabla).update({ [ref.columna]: a }).eq('id', ref.fila).eq(ref.columna, de).select('id')
+-  if (error) throw new Error(`update ${ref.tabla}/${ref.fila}: ${error.message}`)
+-  if (data.length === 1) return 'hecho'
+-  const actual = await leerValor(cliente, ref)
+-  if (actual.existe && actual.valor === a) return 'hecho'
+-  return actual.existe ? 'conflicto' : 'fila-inexistente'
++  const { data, error, status } = await cliente.from(ref.tabla).update({ [ref.columna]: a }).eq('id', ref.fila).eq(ref.columna, de).select('id')
++  if (!error && data.length === 1) return { resultado: 'hecho' }
++  const fallo = error ? `UPDATE HTTP ${status || 'sin respuesta'}: ${error.message}` : 'el UPDATE no afectó ninguna fila'
++  const definitivo = !error || esRechazoDefinitivo(status)
++  let actual
++  try { actual = await leerValor(cliente, ref) } catch (e) { return { resultado: 'incierto', detalle: `${fallo}; reconciliación: ${e.message}` } }
++  if (actual.existe && actual.valor === a) return { resultado: 'hecho', detalle: error ? `confirmado por lectura tras ${fallo}` : 'ya tenía el valor de destino' }
++  if (!actual.existe) return { resultado: 'fila-inexistente', detalle: fallo }
++  if (actual.valor === de) return { resultado: definitivo ? 'rechazado' : 'incierto', detalle: fallo }
++  return { resultado: 'conflicto', detalle: fallo }
++}
++// Reconciliación de una operación ABIERTA (intención guardada, resultado desconocido). Solo lee; nunca escribe.
++async function reconciliar(cliente, ref) {
++  const op = ref.operacion
++  let actual
++  try { actual = await leerValor(cliente, ref) } catch (e) { return { resultado: 'incierto', detalle: `reconciliación: ${e.message}` } }
++  if (actual.existe && actual.valor === op.a) return { resultado: 'hecho', detalle: 'operación abierta confirmada por lectura' }
++  if (actual.existe && actual.valor === op.de) return { resultado: 'no-aplicada' }
++  return { resultado: actual.existe ? 'conflicto' : 'fila-inexistente', detalle: 'operación abierta: la fila tiene otro valor' }
++}
++// Cierra (o conserva abierta) la operación de una referencia según su resultado. `modo` es el de LA OPERACIÓN.
++function cerrarOperacion(ref, modo, r, res, contador = 'hechas') {
++  const ahora = new Date().toISOString()
++  if (r.resultado === 'incierto') {
++    ref.operacion = { ...ref.operacion, estado: 'incierta', ultimoIntento: ahora, detalle: r.detalle }
++    res.inciertas += 1
++    return
++  }
++  delete ref.operacion
++  if (r.resultado === 'hecho') {
++    ref.estado = modo === 'actualizar' ? 'actualizada' : 'revertida'
++    ref[modo === 'actualizar' ? 'actualizadaEn' : 'revertidaEn'] = ahora
++    if (r.detalle) ref.nota = r.detalle
++    res[contador] += 1
++  } else if (r.resultado === 'no-aplicada') {
++    res.noAplicadas += 1 // la fila conserva el valor anterior: vuelve a ser candidata
++  } else if (r.resultado === 'rechazado') {
++    ref.rechazo = { en: ahora, modo, motivo: r.detalle }
++    res.rechazadas += 1
++  } else {
++    ref.estado = modo === 'actualizar' ? 'conflicto' : 'conflicto-reversion'
++    ref.conflicto = { en: ahora, motivo: r.resultado, detalle: r.detalle }
++    res.conflictos += 1
++  }
+ }
+ async function escribirReferencias(opciones, modo) {
+   const { supabaseUrl, anon } = configuracion(opciones)
+   const aplicar = Boolean(opciones.aplicar)
+-  if (aplicar) guardarAmbiente({ url: supabaseUrl, opciones, que: 'Supabase' })
++  if (aplicar) guardarAmbiente({ url: supabaseUrl, opciones, rol: 'supabase' })
+   const soltar = bloquear(opciones.manifiesto)
+   const m = leerJson(opciones.manifiesto)
+   const errs = validarManifiesto(m); if (errs.length) throw new Error(`Manifiesto inválido: ${errs.slice(0, 5).join('; ')}`)
+-  const pendientes = []
+-  for (const e of m.entradas) {
+-    for (const ref of e.referencias) {
+-      if (modo === 'actualizar' && e.estado === 'verificada' && ref.estado === 'pendiente') pendientes.push(ref)
+-      if (modo === 'revertir' && ref.estado === 'actualizada') pendientes.push(ref)
+-    }
++  exigirVinculo(m, { supabase: supabaseUrl }) // antes de autenticar: un manifiesto de otro ambiente nunca escribe aquí
++  const refs = m.entradas.flatMap((e) => e.referencias.map((ref) => ({ e, ref })))
++  const abiertas = refs.filter(({ ref }) => ref.operacion)
++  const candidatas = () => refs.filter(({ e, ref }) => !ref.operacion && (modo === 'actualizar' ? e.estado === 'verificada' && ref.estado === 'pendiente' : ref.estado === 'actualizada'))
++  if (!aplicar) {
++    const lote = candidatas().slice(0, opciones.lote ?? 25)
++    soltar()
++    console.log(JSON.stringify({ modo, simulado: true, operacionesAbiertas: abiertas.length, candidatas: candidatas().length, enEsteLote: lote.length, muestra: lote.slice(0, 5).map(({ ref: r }) => ({ tabla: r.tabla, fila: r.fila, de: modo === 'actualizar' ? r.original : r.nuevo, a: modo === 'actualizar' ? r.nuevo : r.original })) }, null, 1))
++    return
+   }
+-  const lote = pendientes.slice(0, opciones.lote ?? 25)
+-  const res = { modo, candidatas: pendientes.length, enEsteLote: lote.length, hechas: 0, conflictos: 0, simulado: !aplicar }
+-  if (!aplicar) { soltar(); console.log(JSON.stringify({ ...res, muestra: lote.slice(0, 5).map((r) => ({ tabla: r.tabla, fila: r.fila, de: modo === 'actualizar' ? r.original : r.nuevo, a: modo === 'actualizar' ? r.nuevo : r.original })) }, null, 1)); return }
+   const cliente = await sesionAdmin({ supabaseUrl, anon })
+-  for (const ref of lote) {
+-    const [de, a] = modo === 'actualizar' ? [ref.original, ref.nuevo] : [ref.nuevo, ref.original]
+-    const r = await cambiarCondicional(cliente, ref, de, a)
+-    const ahora = new Date().toISOString()
+-    if (r === 'hecho') { ref.estado = modo === 'actualizar' ? 'actualizada' : 'revertida'; ref[modo === 'actualizar' ? 'actualizadaEn' : 'revertidaEn'] = ahora; res.hechas += 1 }
+-    else { ref.estado = modo === 'actualizar' ? 'conflicto' : 'conflicto-reversion'; ref.conflicto = { en: ahora, motivo: r }; res.conflictos += 1 }
+-    escribirJson(opciones.manifiesto, m) // después de CADA fila: el diario de reversión nunca queda atrás de la base
+-    if (opciones['pausa-ms']) await ESPERA(opciones['pausa-ms'])
++  const res = { modo, simulado: false, reconciliadas: 0, hechas: 0, conflictos: 0, rechazadas: 0, inciertas: 0, noAplicadas: 0, candidatas: 0, enEsteLote: 0 }
++  // 1) Antes de escribir nada nuevo, se reconcilian las operaciones abiertas (ejecución interrumpida tras el UPDATE, o
++  //    respuesta y lectura caídas). Así una reversión también recoge lo que una actualización incierta pudo confirmar.
++  for (const { ref } of abiertas) {
++    cerrarOperacion(ref, ref.operacion.modo, await reconciliar(cliente, ref), res, 'reconciliadas')
++    escribirJson(opciones.manifiesto, m)
+   }
++  // 2) Lote nuevo, solo si no quedó ninguna duda abierta (con el backend en duda no se acumulan más operaciones inciertas).
++  if (!res.inciertas) {
++    const pendientes = candidatas()
++    const lote = pendientes.slice(0, opciones.lote ?? 25)
++    res.candidatas = pendientes.length; res.enEsteLote = lote.length
++    for (const { ref } of lote) {
++      const [de, a] = modo === 'actualizar' ? [ref.original, ref.nuevo] : [ref.nuevo, ref.original]
++      ref.operacion = { id: randomUUID(), modo, de, a, estado: 'en-curso', inicio: new Date().toISOString() }
++      escribirJson(opciones.manifiesto, m) // la INTENCIÓN queda en el diario ANTES del UPDATE
++      const r = await cambiarCondicional(cliente, ref, de, a)
++      cerrarOperacion(ref, modo, r, res)
++      escribirJson(opciones.manifiesto, m) // y el resultado, después de CADA fila
++      if (r.resultado === 'incierto') { m.eventos.push({ en: new Date().toISOString(), tipo: 'parada', motivo: `resultado incierto en ${ref.tabla}/${ref.fila}` }); escribirJson(opciones.manifiesto, m); break }
++      if (opciones['pausa-ms']) await ESPERA(opciones['pausa-ms'])
++    }
++  }
++  const resumen = resumenManifiesto(m)
++  res.operacionesAbiertas = resumen.operacionesAbiertas
++  res.restantes = candidatas().length
++  // «completo» solo si no queda ninguna operación en duda, ningún rechazo y nada por procesar de este modo.
++  res.completo = res.operacionesAbiertas === 0 && res.rechazadas === 0 && res.restantes === 0
+   soltar()
+-  console.log(JSON.stringify({ ...res, resumen: resumenManifiesto(m) }, null, 1))
++  console.log(JSON.stringify({ ...res, resumen }, null, 1))
++  if (res.operacionesAbiertas || res.rechazadas) process.exitCode = 3
+ }
+ 
+ // ---------------- verificar ----------------
++// Reconciliación COMPLETA manifiesto ↔ base ↔ R2 ↔ originales. No hay verificación parcial: si hay copias en R2, exige la base
++// de lectura; «ok» exige que cada original, cada variante esperada y cada referencia se hayan comprobado y coincidan.
+ async function verificar(opciones) {
+   const { supabaseUrl, anon } = configuracion(opciones)
+-  guardarAmbiente({ url: supabaseUrl, opciones, que: 'Supabase' })
++  guardarAmbiente({ url: supabaseUrl, opciones, rol: 'supabase' })
+   const m = leerJson(opciones.manifiesto)
+-  const cliente = await sesionAdmin({ supabaseUrl, anon })
++  const conCopia = new Set(m.entradas.filter((e) => ['copiada', 'verificada'].includes(e.estado)))
++  if (conCopia.size && !opciones.lectura) throw new Error(`hay ${conCopia.size} entradas con copia en R2: verificar exige --lectura=<base de lectura aprobada> (no se emite una verificación sin R2)`)
++  const lectura = opciones.lectura ? guardarAmbiente({ url: opciones.lectura, opciones, rol: 'lectura' }) : undefined
++  exigirVinculo(m, { supabase: supabaseUrl, lectura })
+   const problemas = []
+-  const res = { entradas: m.entradas.length, refsComprobadas: 0, r2Comprobados: 0, originalesComprobados: 0 }
+   const errs = validarManifiesto(m); for (const x of errs) problemas.push({ tipo: 'manifiesto', detalle: x })
++  const res = {
++    entradas: m.entradas.length, originalesEsperados: m.entradas.length, originalesCoinciden: 0, r2Esperados: 2 * conCopia.size, r2Coinciden: 0,
++    refsEsperadas: m.entradas.reduce((n, e) => n + e.referencias.length, 0), refsComprobadas: 0, operacionesAbiertas: resumenManifiesto(m).operacionesAbiertas,
++  }
++  if (!m.entradas.length) {
++    // Caso explícito: un manifiesto sin entradas no tiene nada que reconciliar. No se inventan objetos esperados.
++    const informe = { generado: new Date().toISOString(), ...res, cobertura: 'vacia', problemas, ok: problemas.length === 0, aviso: 'manifiesto sin entradas' }
++    if (opciones.salida) escribirJson(opciones.salida, informe)
++    console.log(JSON.stringify(informe, null, 1))
++    if (!informe.ok) process.exitCode = 1
++    return
++  }
++  const cliente = await sesionAdmin({ supabaseUrl, anon })
++  const leer = async (url) => { try { return await descargar(url) } catch (e) { return { estado: `red: ${e.message}`, bytes: null } } }
+   for (const e of m.entradas) {
+     if (BUCKETS_PRIVADOS.includes(e.origen.bucket) || !DESTINOS_R2.includes(e.destino)) problemas.push({ tipo: 'privado-o-destino', id: e.id })
+     // El original sigue en Supabase, intacto (mismo SHA-256): la reversión siempre tiene a dónde volver.
+-    const o = await descargar(e.origen.url)
+-    res.originalesComprobados += 1
+-    if (!o.bytes || sha256(o.bytes) !== e.origen.sha256) problemas.push({ tipo: 'original-alterado-o-ausente', id: e.id, estado: o.estado })
+-    if (['copiada', 'verificada'].includes(e.estado) && opciones.lectura) {
++    const o = await leer(e.origen.url)
++    if (o.bytes && sha256(o.bytes) === e.origen.sha256) res.originalesCoinciden += 1
++    else problemas.push({ tipo: 'original-alterado-o-ausente', id: e.id, estado: o.estado })
++    if (conCopia.has(e)) {
+       for (const v of ['m', 'g']) {
+-        const l = await descargar(`${opciones.lectura}/${e.destino}/${e.id}/${v}.webp`)
+-        res.r2Comprobados += 1
+-        if (!l.bytes || sha256(l.bytes) !== e.variantes[v].sha256) problemas.push({ tipo: 'r2-no-coincide', id: e.id, variante: v, estado: l.estado })
++        const l = await leer(`${lectura}/${e.destino}/${e.id}/${v}.webp`)
++        if (l.bytes && /^image\/webp/.test(l.tipo ?? '') && sha256(l.bytes) === e.variantes?.[v]?.sha256) res.r2Coinciden += 1
++        else problemas.push({ tipo: 'r2-no-coincide', id: e.id, variante: v, estado: l.estado })
+       }
+     }
+     for (const ref of e.referencias) {
+-      const actual = await leerValor(cliente, ref)
++      if (ref.operacion) problemas.push({ tipo: 'operacion-abierta', tabla: ref.tabla, fila: ref.fila, operacion: ref.operacion.modo, estado: ref.operacion.estado })
++      let actual
++      try { actual = await leerValor(cliente, ref) } catch (err) { problemas.push({ tipo: 'referencia-ilegible', tabla: ref.tabla, fila: ref.fila, error: err.message }); continue }
+       res.refsComprobadas += 1
+       const esperado = { pendiente: ref.original, actualizada: ref.nuevo, revertida: ref.original }[ref.estado]
+       if (esperado !== undefined && actual.valor !== esperado) problemas.push({ tipo: 'referencia-no-coincide', tabla: ref.tabla, fila: ref.fila, estado: ref.estado })
+       if (ref.estado === 'actualizada' && e.estado !== 'verificada') problemas.push({ tipo: 'referencia-a-copia-no-verificada', tabla: ref.tabla, fila: ref.fila })
+     }
+   }
+-  const informe = { generado: new Date().toISOString(), ...res, resumen: resumenManifiesto(m), problemas, ok: problemas.length === 0 }
++  const completa = res.originalesCoinciden === res.originalesEsperados && res.r2Coinciden === res.r2Esperados && res.refsComprobadas === res.refsEsperadas
++  if (!completa && !problemas.length) problemas.push({ tipo: 'cobertura-incompleta' })
++  const informe = { generado: new Date().toISOString(), ...res, cobertura: completa ? 'completa' : 'incompleta', resumen: resumenManifiesto(m), problemas, ok: completa && problemas.length === 0 }
+   if (opciones.salida) escribirJson(opciones.salida, informe)
+-  console.log(JSON.stringify({ ok: informe.ok, ...res, problemas: problemas.slice(0, 10) }, null, 1))
++  console.log(JSON.stringify({ ok: informe.ok, cobertura: informe.cobertura, ...res, problemas: problemas.slice(0, 10) }, null, 1))
+   if (!informe.ok) process.exitCode = 1
+ }
+ 
+ // ---------------- entrada ----------------
+ const ESPEC = {
+   flags: ['aplicar', 'permitir-produccion', 'reintentar-errores'],
+-  textos: ['env-file', 'salida', 'desde-json', 'publica', 'bases-reconocidas', 'contenedor', 'inventario', 'manifiesto', 'cache', 'api', 'lectura', 'permitir-remoto', 'filas'],
++  textos: ['env-file', 'salida', 'desde-json', 'publica', 'bases-reconocidas', 'contenedor', 'inventario', 'manifiesto', 'cache', 'api', 'lectura', 'filas', ...Object.values(ROLES_DESTINO)],
+   numeros: { lote: [1, 500], limite: [1, 100000], 'pausa-ms': [0, 60000] },
+ }
+ const REQUERIDOS = {
+   inventariar: ['salida'], planificar: ['inventario', 'manifiesto', 'cache'], copiar: ['manifiesto', 'cache', 'api', 'lectura'],
+   actualizar: ['manifiesto'], revertir: ['manifiesto'], verificar: ['manifiesto'],
+ }
++// Códigos de salida: 0 correcto · 1 verificación con problemas · 2 error o rechazo antes de actuar · 3 resultado incompleto
++// (operación incierta abierta o rechazada: revisar y volver a ejecutar; nunca se da por terminado).
+ try {
+-  const opciones = parsearArgumentos(process.argv.slice(2), ESPEC)
++  const argv = process.argv.slice(2)
++  if (argv.some((a) => a.startsWith('--permitir-remoto'))) throw new Error('--permitir-remoto ya no existe: use --permitir-supabase, --permitir-worker y --permitir-lectura con el host exacto de cada destino')
++  const opciones = parsearArgumentos(argv, ESPEC)
+   if (!REQUERIDOS[opciones.comando]) throw new Error(`Subcomando desconocido: ${opciones.comando}`)
+   for (const r of REQUERIDOS[opciones.comando]) if (!opciones[r]) throw new Error(`${opciones.comando} requiere --${r}`)
+   const acciones = { inventariar, planificar, copiar, actualizar: (o) => escribirReferencias(o, 'actualizar'), revertir: (o) => escribirReferencias(o, 'revertir'), verificar }
+diff --git a/scripts/migracion-medios/simular-fase9.mjs b/scripts/migracion-medios/simular-fase9.mjs
+index 04e2eeb..1339744 100644
+--- a/scripts/migracion-medios/simular-fase9.mjs
++++ b/scripts/migracion-medios/simular-fase9.mjs
+@@ -8,27 +8,37 @@
+ // lectura) se ejecutan además sobre TODO el dataset de Local. Una huella de los valores de medios de las filas preexistentes
+ // se compara antes/después: deben quedar idénticos.
+ //
+-// Uso: node scripts/migracion-medios/simular-fase9.mjs --cuentas=<json con admin y adminB> --trabajo=<carpeta temporal>
+-//      [--evidencia=.codex/evidencia-fase9] [--conservar]
++// Uso: node scripts/migracion-medios/simular-fase9.mjs --cuentas=<json con admin y adminB>
++//      --trabajo=<carpeta temporal dedicada: %TEMP%/sim-f9-<sufijo>> [--evidencia=.codex/evidencia-fase9-v2] [--conservar]
++// --trabajo se valida ANTES de nada (F9-01, trabajo-seguro.mjs): solo una carpeta sim-f9* dentro del temporal del sistema,
++// nueva o con la marca de propiedad; entre corridas solo se vacía su subcarpeta `corrida/`.
+ import assert from 'node:assert/strict'
+ import { execFileSync, spawn, spawnSync } from 'node:child_process'
+ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+-import { join, resolve } from 'node:path'
++import { dirname, join, resolve } from 'node:path'
++import { fileURLToPath } from 'node:url'
+ import { createClient } from '@supabase/supabase-js'
+ import { chromium } from 'playwright'
+ import { sha256 } from './lib.mjs'
++import { SUBCARPETA, prepararTrabajo, validarTrabajo } from './trabajo-seguro.mjs'
+ 
+ const arg = (n) => process.argv.find((a) => a.startsWith(`--${n}=`))?.slice(n.length + 3)
++const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
++// Primero de todo: la carpeta de trabajo. Ningún borrado, carpeta, lectura de cuentas, Docker ni red antes de validarla.
++const VALIDACION_TRABAJO = validarTrabajo({ ruta: arg('trabajo'), raiz: RAIZ })
++if (!VALIDACION_TRABAJO.ok) {
++  console.error(`simular-fase9: --trabajo rechazado: ${VALIDACION_TRABAJO.motivo}`)
++  process.exit(2)
++}
+ const CUENTAS = JSON.parse(readFileSync(arg('cuentas'), 'utf8'))
+-const TRABAJO = resolve(arg('trabajo'))
+-const EVIDENCIA = resolve(arg('evidencia') ?? '.codex/evidencia-fase9')
++const TRABAJO = join(VALIDACION_TRABAJO.carpeta, SUBCARPETA) // se crea/vacía en prepararTrabajo, ya dentro de la ejecución
++const EVIDENCIA = resolve(RAIZ, arg('evidencia') ?? '.codex/evidencia-fase9-v2')
+ const CONSERVAR = process.argv.includes('--conservar')
+-const RAIZ = resolve('.')
+ const SUPA = 'http://127.0.0.1:54321'
+ const PUERTO_WORKER = 8799, WORKER = `http://127.0.0.1:${PUERTO_WORKER}`
+ const PUERTO_APP = 5391, APP = `http://127.0.0.1:${PUERTO_APP}`
+ const ESPERA = (ms) => new Promise((r) => setTimeout(r, ms))
+-const ENV = Object.fromEntries(readFileSync('.env.local', 'utf8').split(/\r?\n/).map((l) => l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/)).filter(Boolean).map((m) => [m[1], m[2].replace(/^['"]|['"]$/g, '')]))
++const ENV = Object.fromEntries(readFileSync(join(RAIZ, '.env.local'), 'utf8').split(/\r?\n/).map((l) => l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/)).filter(Boolean).map((m) => [m[1], m[2].replace(/^['"]|['"]$/g, '')]))
+ for (const c of [CUENTAS.admin, CUENTAS.adminB]) if (!/^qa[^@]*@test\.local$/i.test(c?.email ?? '')) throw new Error('Se requieren cuentas QA ficticias admin y adminB')
+ if (ENV.VITE_SUPABASE_URL !== SUPA) throw new Error('.env.local no apunta al Supabase Local')
+ if (!/:54321->8000/.test(execFileSync('docker', ['ps', '--filter', 'name=^supabase_kong_WedJaiseReact$', '--format', '{{.Ports}}'], { encoding: 'utf8' }))) throw new Error('Supabase Local no verificado en 54321')
+@@ -44,7 +54,7 @@ async function caso(nombre, fn) {
+ }
+ const psql = (sql) => execFileSync('docker', ['exec', '-i', 'supabase_db_WedJaiseReact', 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-v', 'ON_ERROR_STOP=1'], { input: sql, encoding: 'utf8' }).trim()
+ function herramienta(args, { cuenta = CUENTAS.admin, esperarFallo = false } = {}) {
+-  const r = spawnSync(process.execPath, [join(RAIZ, 'scripts/migracion-medios/medios-migracion.mjs'), ...args], { encoding: 'utf8', env: { ...process.env, MIGRACION_EMAIL: cuenta.email, MIGRACION_PASSWORD: cuenta.password } })
++  const r = spawnSync(process.execPath, [join(RAIZ, 'scripts/migracion-medios/medios-migracion.mjs'), ...args], { cwd: RAIZ, encoding: 'utf8', env: { ...process.env, MIGRACION_EMAIL: cuenta.email, MIGRACION_PASSWORD: cuenta.password } })
+   pasos.push({ args: args.map((a) => a.replace(TRABAJO, '<trabajo>')), estado: r.status, salida: (r.stdout || r.stderr).slice(0, 4000) })
+   if (!esperarFallo && r.status !== 0) throw new Error(`herramienta ${args[0]} terminó con ${r.status}: ${r.stderr.slice(0, 500)}`)
+   if (esperarFallo) return { estado: r.status, error: r.stderr }
+@@ -192,7 +202,7 @@ const aUrl = (valor, bucket) => valor.startsWith('r2:') ? `${WORKER}/${valor.sli
+ 
+ // ---------------- ejecución ----------------
+ ;(async () => {
+-  rmSync(TRABAJO, { recursive: true, force: true }); mkdirSync(TRABAJO, { recursive: true }); mkdirSync(EVIDENCIA, { recursive: true })
++  assert.equal(prepararTrabajo(VALIDACION_TRABAJO), TRABAJO); mkdirSync(EVIDENCIA, { recursive: true })
+   const admin = createClient(SUPA, ENV.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+   const { error: eLogin } = await admin.auth.signInWithPassword({ email: CUENTAS.admin.email, password: CUENTAS.admin.password })
+   if (eLogin) throw eLogin
+@@ -263,13 +273,23 @@ const aUrl = (valor, bucket) => valor.startsWith('r2:') ? `${WORKER}/${valor.sli
+       assert.notEqual(r.estado, 0); assert.match(r.error, /en uso/)
+     })
+ 
+-    await caso('Guardas: destinos remotos y producción se rechazan antes de autenticar', async () => {
+-      const r1 = herramienta(['copiar', `--manifiesto=${MANIF}`, `--cache=${CACHE}`, '--api=https://pos-jaise-medios.workers.dev', `--lectura=${WORKER}`, '--aplicar'], { esperarFallo: true })
+-      assert.match(r1.error, /permitir-remoto/)
++    await caso('Guardas: remoto sin el permiso de SU función, producción y manifiesto de otro ambiente se rechazan antes de autenticar', async () => {
++      const remoto = 'https://pos-jaise-medios.workers.dev'
++      const r1 = herramienta(['copiar', `--manifiesto=${MANIF}`, `--cache=${CACHE}`, `--api=${remoto}`, `--lectura=${WORKER}`, '--aplicar'], { esperarFallo: true })
++      assert.match(r1.error, /permitir-worker=pos-jaise-medios\.workers\.dev/)
++      // El permiso de OTRA función (lectura) no habilita ese host como Worker.
++      const r1b = herramienta(['copiar', `--manifiesto=${MANIF}`, `--cache=${CACHE}`, `--api=${remoto}`, `--lectura=${WORKER}`, '--aplicar', '--permitir-lectura=pos-jaise-medios.workers.dev'], { esperarFallo: true })
++      assert.match(r1b.error, /permitir-worker/)
+       writeFileSync(join(TRABAJO, 'env-prod'), 'VITE_SUPABASE_URL=https://cmkelllerzjqjbsqsylc.supabase.co\nVITE_SUPABASE_ANON_KEY=x\n')
+-      const r2 = herramienta(['actualizar', `--manifiesto=${MANIF}`, `--env-file=${join(TRABAJO, 'env-prod')}`, '--aplicar', '--permitir-remoto=cmkelllerzjqjbsqsylc.supabase.co'], { esperarFallo: true })
++      const r2 = herramienta(['actualizar', `--manifiesto=${MANIF}`, `--env-file=${join(TRABAJO, 'env-prod')}`, '--aplicar', '--permitir-supabase=cmkelllerzjqjbsqsylc.supabase.co'], { esperarFallo: true })
+       assert.match(r2.error, /PRODUCCIÓN/)
+-      return { remoto: r1.error.trim(), produccion: r2.error.trim() }
++      // El manifiesto de este Local contra OTRO Supabase (otro puerto, nada escuchando): se rechaza por el vínculo, sin login.
++      writeFileSync(join(TRABAJO, 'env-otro'), 'VITE_SUPABASE_URL=http://127.0.0.1:54399\nVITE_SUPABASE_ANON_KEY=x\n')
++      const r3 = herramienta(['actualizar', `--manifiesto=${MANIF}`, `--env-file=${join(TRABAJO, 'env-otro')}`, '--aplicar'], { esperarFallo: true })
++      assert.equal(r3.estado, 2); assert.match(r3.error, /otro ambiente/)
++      const r4 = herramienta(['actualizar', `--manifiesto=${MANIF}`, '--aplicar', '--permitir-remoto=x.dev'], { esperarFallo: true })
++      assert.match(r4.error, /ya no existe/)
++      return { remoto: r1.error.trim(), otraFuncion: r1b.error.trim(), produccion: r2.error.trim(), otroAmbiente: r3.error.trim() }
+     })
+ 
+     const antesApp = {}
+@@ -346,9 +366,13 @@ const aUrl = (valor, bucket) => valor.startsWith('r2:') ? `${WORKER}/${valor.sli
+     })
+ 
+     await caso('Verificar tras actualizar: referencias = manifiesto, R2 = SHA-256 de las variantes, originales intactos en Supabase', async () => {
++      // Sin base de lectura no hay verificación de R2: falla cerrado, sin emitir un «ok».
++      const sin = herramienta(['verificar', `--manifiesto=${MANIF}`], { esperarFallo: true })
++      assert.equal(sin.estado, 2); assert.match(sin.error, /exige --lectura/)
+       const r = herramienta(['verificar', `--manifiesto=${MANIF}`, `--lectura=${WORKER}`, `--salida=${join(TRABAJO, 'verificacion-tras-actualizar.json')}`])
+       assert.equal(r.ok, true, JSON.stringify(r.problemas))
+-      return r
++      assert.equal(r.cobertura, 'completa'); assert.ok(r.r2Esperados > 0); assert.equal(r.r2Coinciden, r.r2Esperados); assert.equal(r.refsComprobadas, r.refsEsperadas)
++      return { ...r, sinLectura: sin.error.trim() }
+     })
+ 
+     await caso('App DESPUÉS: lectura mixta — producto y servicio desde R2 simulado, galería con su URL completa, rota/corrupta sin romper la página', async () => {
+diff --git a/scripts/migracion-medios/probar-lib.mjs b/scripts/migracion-medios/probar-lib.mjs
+index 7bf1cda..fe95b1e 100644
+--- a/scripts/migracion-medios/probar-lib.mjs
++++ b/scripts/migracion-medios/probar-lib.mjs
+@@ -5,9 +5,10 @@ import { readFileSync, writeFileSync } from 'node:fs'
+ import { dirname, join } from 'node:path'
+ import { fileURLToPath } from 'node:url'
+ import {
+-  COLUMNAS, DESTINOS_R2, PRIVACIDAD, clasificarValor, decidirAlcance, idDeFuente, parsearArgumentos, rechazoDeAmbiente,
+-  rutaSegura, uuidV5, validarManifiesto, valorNuevo,
++  COLUMNAS, DESTINOS_R2, PRIVACIDAD, VERSION_MANIFIESTO, clasificarValor, decidirAlcance, idDeFuente, normalizarBase,
++  parsearArgumentos, rechazoDeAmbiente, rechazoDeVinculo, rutaSegura, uuidV5, validarManifiesto, valorNuevo, valorParaInforme,
+ } from './lib.mjs'
++import { MARCA_TRABAJO, TIPO_MARCA, prepararTrabajo, validarTrabajo } from './trabajo-seguro.mjs'
+ 
+ const aqui = dirname(fileURLToPath(import.meta.url))
+ const casos = []
+@@ -72,13 +73,107 @@ caso('Valor nuevo: «r2:…» en columnas de ruta y URL completa de la variante
+ })
+ caso('Guarda de ambiente: local libre; remoto exige host exacto; producción exige además su permiso', () => {
+   assert.equal(rechazoDeAmbiente({ url: 'http://127.0.0.1:54321' }), null)
+-  assert.match(rechazoDeAmbiente({ url: 'https://x.workers.dev' }), /permitir-remoto=x\.workers\.dev/)
++  assert.match(rechazoDeAmbiente({ url: 'https://x.workers.dev', rol: 'worker' }), /permitir-worker=x\.workers\.dev/)
+   assert.match(rechazoDeAmbiente({ url: 'http://x.dev' }), /https/)
+-  assert.equal(rechazoDeAmbiente({ url: 'https://x.workers.dev', permitirRemoto: 'x.workers.dev' }), null)
+-  assert.match(rechazoDeAmbiente({ url: 'https://x.workers.dev', permitirRemoto: 'y.workers.dev' }), /exige/)
++  assert.equal(rechazoDeAmbiente({ url: 'https://x.workers.dev', rol: 'worker', permitido: 'x.workers.dev' }), null)
++  assert.match(rechazoDeAmbiente({ url: 'https://x.workers.dev', rol: 'worker', permitido: 'y.workers.dev' }), /exige/)
+   const prod = 'https://cmkelllerzjqjbsqsylc.supabase.co'
+-  assert.match(rechazoDeAmbiente({ url: prod, permitirRemoto: 'cmkelllerzjqjbsqsylc.supabase.co', refProduccion: 'cmkelllerzjqjbsqsylc' }), /PRODUCCIÓN/)
+-  assert.equal(rechazoDeAmbiente({ url: prod, permitirRemoto: 'cmkelllerzjqjbsqsylc.supabase.co', permitirProduccion: true, refProduccion: 'cmkelllerzjqjbsqsylc' }), null)
++  assert.match(rechazoDeAmbiente({ url: prod, permitido: 'cmkelllerzjqjbsqsylc.supabase.co', refProduccion: 'cmkelllerzjqjbsqsylc' }), /PRODUCCIÓN/)
++  assert.equal(rechazoDeAmbiente({ url: prod, permitido: 'cmkelllerzjqjbsqsylc.supabase.co', permitirProduccion: true, refProduccion: 'cmkelllerzjqjbsqsylc' }), null)
++})
++caso('F9-06 · Permisos por función: tres hosts distintos se autorizan a la vez; intercambio de roles y rol desconocido fallan', () => {
++  const H = { supabase: 'db.qa.invalid', worker: 'worker.qa.invalid', lectura: 'pages.qa.invalid' }
++  for (const [rol, host] of Object.entries(H)) assert.equal(rechazoDeAmbiente({ url: `https://${host}`, rol, permitido: host }), null, rol)
++  // Cada host solo con el permiso de SU función: con el de cualquier otra, rechazo.
++  for (const [rol, host] of Object.entries(H)) for (const [otro, permitido] of Object.entries(H)) if (otro !== rol) assert.match(rechazoDeAmbiente({ url: `https://${host}`, rol, permitido }), new RegExp(`permitir-${rol}=`))
++  assert.match(rechazoDeAmbiente({ url: 'https://x.dev', rol: 'remoto', permitido: 'x.dev' }), /rol de destino desconocido/)
++  // Producción exige su permiso adicional aunque llegue por otro rol.
++  assert.match(rechazoDeAmbiente({ url: 'https://cmkelllerzjqjbsqsylc.supabase.co', rol: 'lectura', permitido: 'cmkelllerzjqjbsqsylc.supabase.co', refProduccion: 'cmkelllerzjqjbsqsylc' }), /PRODUCCIÓN/)
++})
++caso('F9-02 · Identidad canónica y vínculo manifiesto ↔ ambiente (Supabase, Worker y base de lectura)', () => {
++  assert.equal(normalizarBase('HTTPS://Proyecto.Supabase.co:443/'), 'https://proyecto.supabase.co')
++  assert.equal(normalizarBase('http://127.0.0.1:54321'), 'http://127.0.0.1:54321')
++  assert.notEqual(normalizarBase('https://proxy.x/a'), normalizarBase('https://proxy.x/b'), 'el prefijo de ruta distingue bases detrás de un proxy')
++  for (const malo of ['https://u:p@x.dev', 'https://x.dev/?a=1', 'https://x.dev/#h', 'ftp://x.dev', 'no-url']) assert.throws(() => normalizarBase(malo), malo)
++  const m = { version: VERSION_MANIFIESTO, ambiente: 'http://127.0.0.1:54321', publica: 'http://127.0.0.1:8799', api: 'http://127.0.0.1:8799', lectura: 'http://127.0.0.1:8799' }
++  assert.deepEqual(rechazoDeVinculo(m, { supabase: 'http://127.0.0.1:54321', api: 'http://127.0.0.1:8799', lectura: 'http://127.0.0.1:8799' }), [])
++  assert.match(rechazoDeVinculo(m, { supabase: 'http://127.0.0.1:1' }).join(), /es de http:\/\/127\.0\.0\.1:54321/)
++  assert.match(rechazoDeVinculo(m, { supabase: m.ambiente, api: 'http://127.0.0.1:9999' }).join(), /Worker/)
++  assert.match(rechazoDeVinculo(m, { supabase: m.ambiente, lectura: 'http://127.0.0.1:9999' }).join(), /lectura/)
++  assert.match(rechazoDeVinculo({ ...m, version: 1, ambiente: '127.0.0.1:54321' }, { supabase: m.ambiente }).join(), /versión 1/)
++  // Un manifiesto que aún no fija Worker ni lectura solo exige que la lectura sea la base pública de la galería.
++  assert.deepEqual(rechazoDeVinculo({ ...m, api: null, lectura: null }, { supabase: m.ambiente, api: 'http://127.0.0.1:1', lectura: 'http://127.0.0.1:8799' }), [])
++  assert.match(rechazoDeVinculo({ ...m, api: null, lectura: null }, { supabase: m.ambiente, lectura: 'http://127.0.0.1:1' }).join(), /base pública/)
++})
++caso('F9-05 · URLs de Storage: manda el bucket REAL; firmadas/autenticadas, privadas o desconocidas son privadas y no salen al informe', () => {
++  const columnas = [col('galeria_web', 'antes_url'), col('pedidos_web', 'comprobante_url'), col('productos', 'foto_url')]
++  const TOKEN = 'eyJTOKENFICTICIO.QA.F9'
++  for (const origen of [SUPA, 'https://otro-proyecto.qa.invalid', 'https://proxy.qa.invalid/prefijo']) {
++    for (const endpoint of ['sign', 'authenticated', 'public']) {
++      for (const bucket of ['comprobantes-pedidos-web', 'comprobantes-citas-web', 'bucket-desconocido']) {
++        const valor = `${origen}/storage/v1/object/${endpoint}/${bucket}/qa-sensible/foto.png?token=${TOKEN}`
++        for (const c of columnas) {
++          const cl = clasificarValor(c, valor, ctx); const al = decidirAlcance(cl, OBJ)
++          assert.equal(al.privacidad, 'privado', `${origen} ${endpoint} ${bucket} ${c.tabla}`); assert.equal(al.migrar, false)
++          assert.equal(valorParaInforme(valor, al), null)
++          assert.ok(!JSON.stringify({ cl, al }).includes('qa-sensible') && !JSON.stringify({ cl, al }).includes(TOKEN), 'la clasificación no arrastra ruta ni token')
++        }
++      }
++    }
++    // Endpoints firmados de un bucket PÚBLICO también se tratan como privados (llevan token).
++    assert.equal(decidirAlcance(clasificarValor(col('galeria_web', 'antes_url'), `${origen}/storage/v1/object/sign/fotos-galeria/x.webp?token=${TOKEN}`, ctx), OBJ).privacidad, 'privado')
++  }
++  // Las públicas normales de catálogo siguen igual: propia migrable, ajena a revisión manual (con su bucket real).
++  const g = col('galeria_web', 'antes_url')
++  assert.deepEqual(clasificarValor(g, `${SUPA}/storage/v1/object/public/fotos-galeria/a.webp`, ctx), { formato: 'supabase-url', bucket: 'fotos-galeria', ruta: 'a.webp' })
++  const ajena = clasificarValor(g, 'https://otro.qa.invalid/storage/v1/object/public/fotos-productos/a.webp', ctx)
++  assert.deepEqual([ajena.formato, ajena.bucket, decidirAlcance(ajena, OBJ).privacidad], ['supabase-url-ajena', 'fotos-productos', 'publico-catalogo'])
++  // Otras URL no migrables pierden la query en el informe; las migrables quedan exactas (son el «original» del UPDATE).
++  assert.equal(valorParaInforme('https://otro.sitio/f.jpg?firma=abc#x', { privacidad: 'sin-bucket', migrar: false }), 'https://otro.sitio/f.jpg?<omitido>')
++  assert.equal(valorParaInforme('https://otro.sitio/f.jpg', { privacidad: 'sin-bucket', migrar: false }), 'https://otro.sitio/f.jpg')
++  assert.equal(valorParaInforme('a/b.webp', { privacidad: 'publico-catalogo', migrar: true }), 'a/b.webp')
++})
++caso('F9-01 · Carpeta de trabajo: raíz, ancestro, proyecto, .codex, src, ajena, alias y enlace se rechazan con CERO borrados', () => {
++  // Sistema de archivos ficticio (Windows): nada real se toca. Cada operación con efecto se registra y falla.
++  const RAIZ = 'C:\\WedJaiseReact', TMP = 'C:\\Users\\qa\\AppData\\Local\\Temp'
++  const existentes = new Map([
++    ['c:\\', 'dir'], ['c:\\users', 'dir'], ['c:\\users\\qa', 'dir'], ['c:\\users\\qa\\appdata', 'dir'], ['c:\\users\\qa\\appdata\\local', 'dir'], [TMP.toLowerCase(), 'dir'],
++    [RAIZ.toLowerCase(), 'dir'], ['c:\\wedjaisereact\\src', 'dir'], ['c:\\wedjaisereact\\.codex', 'dir'],
++    [`${TMP}\\sim-f9-ajena`.toLowerCase(), 'dir'], [`${TMP}\\sim-f9-propia`.toLowerCase(), 'dir'], [`${TMP}\\sim-f9-propia\\corrida`.toLowerCase(), 'dir'],
++    [`${TMP}\\sim-f9-enlace`.toLowerCase(), 'enlace'], [`${TMP}\\sim-f9-archivo`.toLowerCase(), 'archivo'],
++  ])
++  const reales = new Map([[`${TMP}\\sim-f9-junction`.toLowerCase(), 'C:\\WedJaiseReact\\src']]) // junction en tmp → src del proyecto
++  existentes.set(`${TMP}\\sim-f9-junction`.toLowerCase(), 'dir')
++  const llamadas = []
++  const fs = {
++    existe: (r) => existentes.has(r.toLowerCase()),
++    lstat: (r) => { const t = existentes.get(r.toLowerCase()); return { isSymbolicLink: () => t === 'enlace', isDirectory: () => t === 'dir' } },
++    realpath: (r) => reales.get(r.toLowerCase()) ?? r,
++    leerMarca: (r) => (r.toLowerCase() === `${TMP}\\sim-f9-propia\\${MARCA_TRABAJO}`.toLowerCase() ? { tipo: TIPO_MARCA } : null),
++    crearCarpeta: (r) => { llamadas.push(['crear', r]); throw new Error('doble: no crea') },
++    escribirMarca: (r) => { llamadas.push(['marca', r]); throw new Error('doble: no escribe') },
++    borrarRecursivo: (r) => { llamadas.push(['borrar', r]); throw new Error('doble: no borra') },
++  }
++  const v = (ruta) => validarTrabajo({ ruta, raiz: RAIZ, tmp: TMP, fs, plataforma: 'win32' })
++  const rechazos = {
++    'raíz de unidad': 'C:\\', ancestro: 'C:\\Users', proyecto: RAIZ, 'proyecto en minúsculas': 'c:\\wedjaisereact', '.codex': `${RAIZ}\\.codex`,
++    src: `${RAIZ}\\src`, 'src con otra capitalización': 'c:\\WEDJAISEREACT\\SRC', 'nueva dentro del proyecto': `${RAIZ}\\sim-f9-x`,
++    'el temporal mismo': TMP, 'nombre no dedicado en tmp': `${TMP}\\otra`, 'existente ajena (sin marca)': `${TMP}\\sim-f9-ajena`,
++    'enlace en tmp': `${TMP}\\sim-f9-enlace`, 'archivo en tmp': `${TMP}\\sim-f9-archivo`, 'junction en tmp hacia src': `${TMP}\\sim-f9-junction`, vacía: '',
++  }
++  const motivos = {}
++  for (const [nombre, ruta] of Object.entries(rechazos)) {
++    const r = v(ruta); assert.equal(r.ok, false, nombre); motivos[nombre] = r.motivo
++    assert.throws(() => prepararTrabajo(r, fs), /validación correcta/, `${nombre}: prepararTrabajo no actúa sin validación correcta`)
++  }
++  assert.deepEqual(llamadas, [], 'cero creaciones y cero borrados en todos los rechazos')
++  // Aceptadas: carpeta propia existente (solo se vacía corrida/) y carpeta nueva dedicada (se crea con su marca).
++  const propia = v(`${TMP}\\sim-f9-propia`); assert.deepEqual([propia.ok, propia.nueva], [true, false])
++  const nueva = v(`${TMP}\\sim-f9-nueva`); assert.deepEqual([nueva.ok, nueva.nueva], [true, true])
++  const permisivo = { ...fs, crearCarpeta: (r) => llamadas.push(['crear', r]), escribirMarca: (r) => llamadas.push(['marca', r]), borrarRecursivo: (r) => llamadas.push(['borrar', r]) }
++  prepararTrabajo(propia, permisivo)
++  assert.deepEqual(llamadas, [['borrar', `${TMP}\\sim-f9-propia\\corrida`], ['crear', `${TMP}\\sim-f9-propia\\corrida`]], 'solo su hijo conocido')
++  return motivos
+ })
+ caso('Argumentos estrictos: --aplicar sin valor, números validados, opciones desconocidas rechazadas', () => {
+   const esp = { flags: ['aplicar'], textos: ['manifiesto'], numeros: { lote: [1, 500] } }
+@@ -88,6 +183,9 @@ caso('Argumentos estrictos: --aplicar sin valor, números validados, opciones de
+   assert.throws(() => parsearArgumentos(['copiar', '--lote=-1'], esp), /entero/)
+   assert.throws(() => parsearArgumentos(['copiar', '--borrar'], esp), /desconocida/)
+   assert.throws(() => parsearArgumentos(['--aplicar'], esp), /subcomando/)
++  // F9-06: repetir una opción no crea una lista ni gana la última: se rechaza.
++  assert.throws(() => parsearArgumentos(['copiar', '--manifiesto=a', '--manifiesto=b'], esp), /repetida/)
++  assert.throws(() => parsearArgumentos(['copiar', '--aplicar', '--aplicar'], esp), /repetida/)
+ })
+ caso('Rutas seguras dentro de un bucket', () => {
+   for (const r of ['a.webp', 'uid/x.webp', 'ruta/p.webp']) assert.equal(rutaSegura(r), true, r)
+@@ -113,6 +211,18 @@ caso('Garantía estática: la herramienta no tiene operaciones de borrado (Stora
+     assert.doesNotMatch(s, /\.remove\(|method:\s*['"]DELETE['"]|\.delete\(\)|storage\.from\([^)]*\)\.(remove|move|update)/, f)
+   }
+ })
++caso('F9-01 · Garantía estática del harness: valida --trabajo antes de cualquier efecto y nunca borra la carpeta entera', () => {
++  const s = readFileSync(join(aqui, 'simular-fase9.mjs'), 'utf8')
++  const cuerpo = s.split('\n').filter((l) => !/^import /.test(l)).join('\n').replace(/\/\/.*$/gm, '')
++  const guarda = cuerpo.indexOf('validarTrabajo(')
++  assert.ok(guarda > 0, 'el harness llama a validarTrabajo')
++  for (const efecto of ['readFileSync(', 'execFileSync(', 'rmSync(', 'mkdirSync(', 'writeFileSync(', 'spawn(', 'spawnSync(', 'createClient(', 'fetch(']) {
++    const i = cuerpo.indexOf(efecto)
++    assert.ok(i === -1 || i > guarda, `${efecto} aparece antes de la guarda`)
++  }
++  assert.match(cuerpo.slice(guarda, guarda + 400), /process\.exit\(2\)/, 'un rechazo termina el proceso')
++  assert.doesNotMatch(cuerpo, /rmSync\(TRABAJO\b/, 'nunca rmSync de la carpeta de trabajo entera')
++})
+ caso('Garantía estática: las escrituras de referencias son condicionales al valor esperado', () => {
+   const s = readFileSync(join(aqui, 'medios-migracion.mjs'), 'utf8')
+   assert.match(s, /\.update\(\{ \[ref\.columna\]: a \}\)\.eq\('id', ref\.fila\)\.eq\(ref\.columna, de\)/)
+diff --git a/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md b/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md
+index cc3c784..a4617f7 100644
+--- a/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md
++++ b/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md
+@@ -1,6 +1,6 @@
+ # Diseño de la migración de medios existentes · Fase 9
+ 
+-Fecha: 2026-10-12. Estado: **diseño, herramientas y simulación LOCAL**. No se migró ningún dato real, no se tocó ningún recurso remoto (Supabase de staging o del negocio, R2, Worker, Pages, DNS) y no hubo commit ni push. Herramienta: `scripts/migracion-medios/`. Inventario: [INVENTARIO-MEDIOS-FASE9.md](INVENTARIO-MEDIOS-FASE9.md). Plan del cambio público: [PLAN-CAMBIO-PUBLICO-FASE9.md](PLAN-CAMBIO-PUBLICO-FASE9.md).
++Fecha: 2026-10-12. **V2** (correcciones F9-01…F9-06 de `REVISION-FASE9-MEDIOS-V1.md`; entrega en `ENTREGA-FASE9-CORRECCIONES-V2.md`). Estado: **diseño, herramientas y simulación LOCAL**. No se migró ningún dato real, no se tocó ningún recurso remoto (Supabase de staging o del negocio, R2, Worker, Pages, DNS) y no hubo commit ni push. Herramienta: `scripts/migracion-medios/`. Inventario: [INVENTARIO-MEDIOS-FASE9.md](INVENTARIO-MEDIOS-FASE9.md). Plan del cambio público: [PLAN-CAMBIO-PUBLICO-FASE9.md](PLAN-CAMBIO-PUBLICO-FASE9.md).
+ 
+ ## 1. Alcance
+ 
+@@ -25,11 +25,13 @@ La galería **fija la base pública vigente al migrar**. Un cambio posterior de
+ 
+ ## 3. Manifiesto
+ 
+-Un JSON por ambiente, reanudable, que se reescribe de forma **atómica** (archivo temporal + rename) después de cada objeto y de cada fila. Un `.lock` impide dos ejecuciones sobre el mismo manifiesto.
++Un JSON por ambiente, reanudable, que se reescribe de forma **atómica** (archivo temporal + rename) después de cada objeto y de cada fila. Un `.lock` impide dos ejecuciones sobre el mismo manifiesto. El rename atómico evita un JSON truncado, pero **no** hace atómica la pareja base + archivo (ver §5).
++
++- **Vínculo con el ambiente (V2, F9-02).** Versión `2`. `ambiente` es la identidad canónica del Supabase (`esquema://host[:puerto]/ruta`, sin barra final; la ruta distingue bases detrás de un proxy con prefijo), no solo el host. La primera copia con `--aplicar` fija `api` (Worker) y `lectura` (base de lectura), y la base de lectura debe ser la `publica` que guardan las referencias de galería. Cada `origen.url` debe ser la URL pública de **ese** Supabase. `copiar`, `actualizar`, `revertir` y `verificar` lo comprueban **antes de autenticar**: un manifiesto de otro ambiente (aunque coincidan ids y valores) o de la versión 1 se rechaza sin login, PUT ni PATCH.
+ 
+ - **Entrada** (un objeto de origen): `id` (UUID v5), `destino`, `origen` (bucket, ruta, URL, **bytes descargados**, tipo, **SHA-256 de los bytes**, ancho, alto, códec), `ref` nueva, `variantes` m/g (bytes, SHA-256, medidas, calidad, si se recodificó), `estado` e `historial` con fechas.
+ - **Referencia** (cada fila que usa ese objeto): tabla, columna, fila, `original`, `nuevo`, `estado` y fechas. Es el **diario de reversión**.
+-- **Estados.** Entrada: `planificada → copiada → verificada | error`. Referencia: `pendiente → actualizada | conflicto`, y `actualizada → revertida | conflicto-reversion`.
++- **Estados.** Entrada: `planificada → copiada → verificada | error`. Referencia: `pendiente → actualizada | conflicto`, y `actualizada → revertida | conflicto-reversion`. Además, una referencia puede llevar una **operación abierta** (`operacion`: id, modo, de, a, `en-curso | incierta`) mientras su resultado no se conozca (§5).
+ - **Checksum confiable:** SHA-256 de los bytes descargados. El `eTag` de Storage solo se guarda como dato informativo (en multipart no es un hash del contenido). Si el tamaño descargado difiere del declarado, se registra un evento.
+ - **Sin duplicados:** varias filas que usan el mismo objeto comparten **una** entrada y una sola copia (en la simulación, 3 filas → 1 copia). El id es `UUIDv5(ambiente | bucket | ruta | SHA-256)`: repetir o reanudar produce el mismo id, y el Worker responde 200 «reanudado» a la misma cuenta con los mismos bytes.
+ 
+@@ -47,7 +49,14 @@ Un JSON por ambiente, reanudable, que se reescribe de forma **atómica** (archiv
+ ## 5. Actualización de referencias y reversión
+ 
+ - `UPDATE <tabla> SET <col> = nuevo WHERE id = fila AND <col> = original` (PostgREST con la sesión de administración; RLS y GRANTs como en la app). Si no afecta filas se relee: si ya tiene el valor nuevo cuenta como hecho (respuesta perdida); si tiene otro valor queda en **conflicto** y no se toca, porque alguien la editó entretanto.
+-- Lotes (`--lote`, `--pausa-ms`). El manifiesto se guarda **después de cada fila**: el diario de reversión nunca queda por detrás de la base.
++- Lotes (`--lote`, `--pausa-ms`).
++- **Diario e incertidumbre (V2, F9-03).** Corrige la afirmación V1 «el diario nunca queda por detrás de la base», que era falsa: base y archivo no se confirman juntos. Ahora:
++  1. **Antes** de cada UPDATE se guarda en el manifiesto la intención (`operacion` con id, modo, valor de y valor a, `en-curso`); **después**, el resultado. Si la ejecución se corta entre el commit y el guardado, la intención queda en el diario.
++  2. Una respuesta que no es «1 fila» se reconcilia con una **lectura estricta**: valor = destino → hecho (respuesta perdida); otro valor → conflicto; valor anterior → **rechazado** si el fallo fue definitivo (4xx de PostgREST, o 0 filas por permisos/RLS) o **incierto** si fue de red/5xx/408/429.
++  3. Incierto (o lectura caída): la operación queda **abierta** (`incierta`, mismo id), el lote se detiene y el comando termina con **código 3** y `completo: false`.
++  4. Toda ejecución con `--aplicar`, **antes** de escribir nada nuevo, reconcilia las operaciones abiertas solo leyendo (de cualquier modo: una reversión recoge lo que una actualización incierta pudo confirmar). Si alguna sigue en duda, no envía UPDATE nuevos.
++  5. `completo: true` solo sin operaciones abiertas, sin rechazos y sin candidatas restantes. Una reversión **nunca** informa éxito con una fila que una operación suya pudo haber migrado.
++  Límite que se mantiene: si una lectura muestra el valor anterior tras un fallo incierto, la siguiente ejecución lo trata como «no aplicada» y repite el UPDATE condicional (que solo puede aplicarse sobre ese mismo valor). Conviene que entre ambas pase más que el tiempo máximo de una sentencia.
+ - **Reversión** (`revertir --aplicar`): el mismo UPDATE condicional en sentido inverso (`= original WHERE <col> = nuevo`). Una fila editada después de migrar queda `conflicto-reversion` y no se pisa. **Ni los originales de Supabase ni las copias en R2 se borran**: revertir solo cambia referencias. Una copia en R2 que quede sin referencia la recoge, si se decide, el recolector de huérfanos con retención (`scripts/medios-huerfanos.mjs`), fuera de esta herramienta.
+ - `productos` y `servicios` tienen triggers de auditoría: cada cambio de referencia deja una fila en `auditoria` a nombre de la cuenta que ejecuta.
+ 
+@@ -55,21 +64,24 @@ Un JSON por ambiente, reanudable, que se reescribe de forma **atómica** (archiv
+ 
+ 1. **Sin borrados:** la herramienta no contiene `storage.remove`, `DELETE` al Worker ni `delete` de filas (comprobado por una prueba estática). Hay un solo punto de `UPDATE` y es condicional (también comprobado).
+ 2. **Privados excluidos tres veces:** al clasificar, en las invariantes del manifiesto (solo buckets públicos de catálogo) y en `planificar`. Los informes no copian valores ni rutas de comprobantes, solo conteos.
+-3. **Ambiente:** lo local (loopback) se permite. Un destino remoto exige `--permitir-remoto=<host exacto>` y https; el Supabase del negocio exige además `--permitir-produccion`. Todo se rechaza **antes** de autenticar.
++3. **Ambiente (V2, F9-06):** lo local (loopback) se permite. Un destino remoto exige https y el permiso **de su función** con el host exacto: `--permitir-supabase`, `--permitir-worker` y `--permitir-lectura` (en la arquitectura real son tres hosts distintos). El permiso de una función no habilita otra; no hay comodines; `--permitir-remoto` se retiró y repetir una opción se rechaza. El Supabase del negocio exige además `--permitir-produccion`, llegue por el rol que llegue. Todo se rechaza **antes** de autenticar.
+ 4. **Simulación por defecto:** sin `--aplicar`, `copiar` solo prepara variantes y `actualizar`/`revertir` solo muestran lo que harían.
+-5. Argumentos estrictos: flags sin valor, números con rango y opciones desconocidas rechazadas.
++5. Argumentos estrictos: flags sin valor, números con rango y opciones desconocidas o repetidas rechazadas.
++6. **Verificación completa (V2, F9-04):** si hay copias en R2, `verificar` exige `--lectura` (fallo cerrado, código 2, sin informe). `ok` exige que coincidan **todos** los originales, **todas** las variantes esperadas (2 por entrada copiada; tipo `image/webp` y SHA-256) y **todas** las referencias, sin operaciones abiertas; si no, `cobertura: incompleta`. Un manifiesto vacío es un caso explícito (`cobertura: vacia`), sin objetos inventados ni login.
++7. **Privacidad de URLs (V2, F9-05):** en una URL de Storage manda el bucket **real** de la URL, no el de la columna. Endpoints `sign`/`authenticated`, buckets privados y buckets desconocidos se clasifican `privado` (propio, ajeno o tras proxy): no se migran ni salen al informe (ni valor, ni ruta, ni token). En las demás URL no migrables, el informe omite la query (`?<omitido>`).
++8. **Carpeta de trabajo de la simulación (V2, F9-01):** `simular-fase9.mjs` valida `--trabajo` antes de cualquier borrado, carpeta, Docker o red (`trabajo-seguro.mjs`): solo `sim-f9` o `sim-f9-<sufijo>` dentro del temporal del sistema, con identidad real (mayúsculas, 8.3, enlaces y junctions resueltos), nunca el proyecto, un ancestro ni algo dentro de él; una carpeta existente solo si lleva la marca de propiedad y no es un enlace. Entre corridas solo se vacía su hijo `corrida/`.
+ 
+ ## 7. Procedimiento para la migración real (NO autorizado en esta fase)
+ 
+ Cada paso requiere autorización explícita del usuario con su alcance. Codex revisa antes de cualquier escritura remota.
+ 
+-0. **Puerta de compatibilidad (bloqueante).** Todo frontend que lea los datos de ese ambiente debe entender `r2:` y tener `VITE_MEDIOS_PUBLIC_URL`. Hoy **no se cumple en producción**: `main` (lo que publica GitHub Pages) no tiene `lib/medios.js` y pediría `…/object/public/fotos-productos/r2:fotos-productos/<id>`, que responde **400** (`evidencia-fase9/compatibilidad-main-r2.txt`). Las PWA instaladas con bundles viejos tampoco lo entienden. Consecuencia: **las referencias de producción se actualizan solo después de la Fase 10B** (frontend nuevo publicado y observado, GitHub Pages redirigido o reconstruido con lectura de R2). La copia a R2 (pasos 3–4) sí puede adelantarse sin efecto visible.
++0. **Puerta de compatibilidad (bloqueante).** Todo frontend que lea los datos de ese ambiente debe entender `r2:` y tener `VITE_MEDIOS_PUBLIC_URL`. Hoy **no se cumple en producción**: `main` (lo que publica GitHub Pages) no tiene `lib/medios.js` y pediría `…/object/public/fotos-productos/r2:fotos-productos/<id>`, que responde **400** (`evidencia-fase9/compatibilidad-main-r2.txt`). Las PWA instaladas con bundles viejos tampoco lo entienden, y un plazo de observación **no demuestra** que todas se hayan actualizado (observación O1 de Codex): 10A/10B deben incluir el tratamiento de clientes instalados (`PLAN-CAMBIO-PUBLICO-FASE9.md` §3 y §7). Consecuencia: **las referencias de producción se actualizan solo después de la Fase 10B** (frontend nuevo publicado y observado, GitHub Pages redirigido o reconstruido con lectura de R2). La copia a R2 (pasos 3–4) sí puede adelantarse sin efecto visible.
+ 1. Infraestructura de producción aprobada: bucket R2, Worker y Function `/medios` con revocación B (Fase 3/10). Nada de esto existe hoy en producción.
+ 2. `inventariar --desde-json=<salida de inventario.sql>`: el SQL es de solo lectura y lo ejecuta, con autorización, quien tenga acceso al SQL del ambiente. Revisar las clasificaciones.
+-3. `planificar` con `--permitir-remoto` (solo lectura HTTP de objetos públicos); revisar el manifiesto, los eventos y una **muestra visual estratificada** (por bucket, tipo y tamaño).
+-4. `copiar` sin `--aplicar` (variantes) → revisión de muestra → `copiar --aplicar` en lotes pequeños.
+-5. `verificar`: R2 = SHA-256 y originales intactos.
+-6. Tras la puerta 0: `actualizar --aplicar` en lotes (empezando por un lote piloto), `verificar` después de cada tanda y control visual.
++3. `planificar` con `--permitir-supabase=<host>` (solo lectura HTTP de objetos públicos); revisar el manifiesto, los eventos y una **muestra visual estratificada** (por bucket, tipo y tamaño).
++4. `copiar` sin `--aplicar` (variantes) → revisión de muestra → `copiar --aplicar` en lotes pequeños, con `--permitir-supabase`, `--permitir-worker` y `--permitir-lectura` (cada uno con su host exacto). La primera copia fija Worker y lectura en el manifiesto.
++5. `verificar --lectura=<base pública>`: R2 = SHA-256 y originales intactos, cobertura completa.
++6. Tras la puerta 0: `actualizar --aplicar` en lotes (empezando por un lote piloto), `verificar` después de cada tanda y control visual. Un código de salida 3 (operación incierta o rechazada) detiene el procedimiento hasta reconciliarla.
+ 7. **Periodo de reversión.** Originales y referencias anteriores se conservan durante el periodo que **decida el usuario** (propuesta: al menos 30 días desde que termine la actualización de referencias, y nunca antes de cerrar la observación de la Fase 10B). Durante ese tiempo `revertir --aplicar` devuelve todo a Supabase.
+ 
+ **Staging primero:** el mismo procedimiento debe ensayarse completo en staging, con fixtures propios, antes del negocio (lo pide la verificación de Codex: «rollback ejecutable en staging»). No se hizo en esta fase porque la autorización excluye cambios remotos.
+diff --git a/.codex/PLAN-CAMBIO-PUBLICO-FASE9.md b/.codex/PLAN-CAMBIO-PUBLICO-FASE9.md
+index a35a58d..5ea23e8 100644
+--- a/.codex/PLAN-CAMBIO-PUBLICO-FASE9.md
++++ b/.codex/PLAN-CAMBIO-PUBLICO-FASE9.md
+@@ -1,6 +1,6 @@
+ # Plan del cambio público · Fase 9
+ 
+-Fecha: 2026-10-12. **Solo plan: no se cambió hosting, DNS, Auth, GitHub Pages ni ningún recurso remoto.** El dominio propio sigue siendo futuro (decisión vigente del usuario). GitHub Pages sigue disponible hasta que se apruebe el cambio. La ejecución corresponde a la Fase 10 (10A aprobación y 10B publicación), con autorización explícita de cada paso.
++Fecha: 2026-10-12, **V2** con las reservas O1–O3 de `REVISION-FASE9-MEDIOS-V1.md` (§9). **Solo plan: no se cambió hosting, DNS, Auth, GitHub Pages ni ningún recurso remoto.** El dominio propio sigue siendo futuro (decisión vigente del usuario). GitHub Pages sigue disponible hasta que se apruebe el cambio. La ejecución corresponde a la Fase 10 (10A aprobación y 10B publicación), con autorización explícita de cada paso.
+ 
+ ## 0. Hechos comprobados en el código
+ 
+@@ -24,7 +24,7 @@ Fecha: 2026-10-12. **Solo plan: no se cambió hosting, DNS, Auth, GitHub Pages n
+ 4. **Observación** (periodo a acordar). Solo entonces se **actualizan las referencias** de medios (puerta 0 del diseño). Antes, cualquier bundle viejo (GitHub Pages o una PWA desactualizada) rompería las fotos migradas.
+ 5. Al cerrar el periodo de reversión, y si el usuario lo decide: retirar GitHub Pages y limpiar originales/huérfanos con retención.
+ 
+-**Decisión pendiente del usuario:** publicar sobre `*.pages.dev` mientras no haya dominio propio, o esperar al dominio. Publicar antes implica **dos** cambios de origen (pages.dev y luego el dominio): dos inicios de sesión, dos instalaciones de la PWA y la base de medios de galería en transición. Recomendación: un solo cambio público, con el dominio definitivo.
++**Decisión pendiente del usuario:** publicar sobre `*.pages.dev` mientras no haya dominio propio, o esperar al dominio. El dominio propio es **opcional y futuro**: no es requisito de esta preparación, y `pages.dev` es una alternativa válida. Publicar antes implica **dos** cambios de origen (pages.dev y luego el dominio): dos inicios de sesión, dos instalaciones de la PWA y la base de medios de galería en transición. Si se elige pages.dev, el segundo cambio de origen se documentará y ensayará igual que este (redirección, Auth, PWA, base de medios). Preferencia técnica: un solo cambio público, pero la decisión es del usuario.
+ 
+ ## 2. Dominio, DNS y TLS (cuando exista el dominio)
+ 
+@@ -40,7 +40,10 @@ Límites: `github.io` es de GitHub. No hay control de DNS ni de cabeceras, ni re
+ Propuesta: un **build de redirección** para GitHub Pages, publicado por el mismo workflow solo cuando se apruebe el cambio:
+ 
+ - `index.html` y `404.html` calculan el destino conservando la ruta, la query y el hash (`/PosJaise/productos/x?y#z` → `https://<dominio>/productos/x?y#z`) y hacen `location.replace`. Llevan `<meta http-equiv="refresh">` de respaldo, `<link rel="canonical">` al dominio nuevo y `noindex`.
+-- **`sw.js` de retiro** para las PWA instaladas en github.io: se activa de inmediato, borra las cachés y se **des-registra**, **sin forzar la navegación**. Así una venta abierta en ese momento no se pierde; la siguiente recarga ya cae en la redirección. Probarlo antes en un repositorio de prueba con una PWA instalada.
++- **Retiro de las PWA instaladas en github.io: SIN DISEÑAR NI PROBAR (reserva O2 de Codex).** La idea V1 («`sw.js` que se activa, borra cachés y se des-registra sin forzar la navegación, así la venta no se pierde») **no es una garantía**: `main` tiene pantallas con `React.lazy`; si se retiran sus archivos o cachés, abrir una pantalla o ventana no visitada en una PWA antigua puede caer en el límite de error global y perder la venta en memoria. `unregister()` termina el registro, pero no conserva el estado de React. Antes de ejecutar cualquier retiro hay que:
++  - diseñar una transición que **mantenga disponibles** los recursos que necesitan los clientes ya abiertos (p. ej. conservar publicados los chunks del build viejo durante la transición, en vez de borrar cachés);
++  - ensayar, con una PWA instalada en un repositorio de prueba: venta pendiente en la PWA antigua → llega el retiro → apertura de una pantalla y de una ventana **no visitadas** → continuidad de la venta → recarga segura que aterriza en la redirección.
++  Hasta entonces, la redirección de §3 aplica solo a navegaciones nuevas; las PWA abiertas siguen con su build.
+ - Mantenerlo publicado **indefinidamente**: no cuesta y conserva enlaces viejos, accesos directos e iconos instalados.
+ - Reversión: volver a publicar el build normal de `main` desde el workflow (§7).
+ 
+@@ -61,6 +64,7 @@ Las rutas del POS no se indexan. Las fichas de producto y servicio son dinámica
+   - cambiar la **Site URL** en el momento del cambio;
+   - mantener el origen de github.io en la lista durante la transición, por correos de confirmación ya enviados.
+   - Comprobar si la confirmación de correo está activa: si lo está, sus enlaces llevan la Site URL.
++  - Antes de publicar, revisar Site URL y Redirect URLs **con el flujo real de confirmación** (registro → correo → enlace → sesión) en el origen nuevo: sin `redirectTo` en el código, la Site URL es el destino por defecto ([Supabase · Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)). Esta preparación no cambió ninguna configuración de Auth.
+ - Culqi: sigue pendiente (llaves 401, cuenta sin validar). Al activarlo, registrar el dominio final si Culqi lo exige y probar en sandbox; sin cobros reales para QA.
+ 
+ ## 6. Sesiones, carritos y comunicación
+@@ -82,3 +86,9 @@ Las rutas del POS no se indexan. Las fichas de producto y servicio son dinámica
+ 2. Periodo de reversión de los medios (propuesta: al menos 30 días tras actualizar referencias y nunca antes de cerrar la observación de 10B).
+ 3. Perfiles (usuarios, clientas, equipo) y QR: ¿se migran más adelante o se quedan en Supabase?
+ 4. Horario y comunicación del cambio para el personal.
++
++## 9. Reservas de la revisión de Codex (V1) incorporadas
++
++- **O1 · Compatibilidad de `main` y clientes instalados.** Se conserva la puerta: copiar objetos puede adelantarse; cambiar referencias, no, hasta publicar lectores compatibles. Un plazo de observación **no demuestra** que todas las PWA antiguas se hayan actualizado: 10A/10B deben incluir el tratamiento explícito de clientes instalados (cómo se detectan, qué ven con una referencia `r2:`, cómo se fuerza una actualización segura) y la estrategia de compatibilidad durante la transición. Una alternativa a evaluar en 10A: publicar en GitHub Pages, antes de cambiar referencias, un build que **lea R2** (el de reversión de §7), para que las PWA viejas que se actualicen ya entiendan `r2:`.
++- **O2 · Retiro del SW.** Registrado en §3: no hay garantía de conservar una venta abierta; requiere diseño y el ensayo descrito antes de ejecutarse.
++- **O3 · Dominio y Auth.** El dominio propio sigue siendo opcional y futuro (§1); `pages.dev` es alternativa válida. Para un dominio futuro: apex requiere la zona en Cloudflare y subdominio un CNAME ([Cloudflare Pages · dominios personalizados](https://developers.cloudflare.com/pages/configuration/custom-domains/)). Site URL y Redirect URLs se revisan con el flujo real de confirmación antes de publicar (§5).

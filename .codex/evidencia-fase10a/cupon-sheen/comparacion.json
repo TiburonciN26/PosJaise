@@ -1,0 +1,27 @@
+{
+ "0": {
+  "pixeles_distintos_mayor_16": 0,
+  "total": 141360,
+  "diferencia_maxima": 6
+ },
+ "600": {
+  "pixeles_distintos_mayor_16": 0,
+  "total": 141360,
+  "diferencia_maxima": 6
+ },
+ "1200": {
+  "pixeles_distintos_mayor_16": 11,
+  "total": 141360,
+  "diferencia_maxima": 79
+ },
+ "1800": {
+  "pixeles_distintos_mayor_16": 11,
+  "total": 141360,
+  "diferencia_maxima": 79
+ },
+ "2400": {
+  "pixeles_distintos_mayor_16": 11,
+  "total": 141360,
+  "diferencia_maxima": 79
+ }
+}

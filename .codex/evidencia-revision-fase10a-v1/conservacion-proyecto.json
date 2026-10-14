@@ -1,0 +1,77 @@
+{
+  "fecha": "2026-10-13T00:46:22.2229950-05:00",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": [
+    {
+      "path": "C:\\WedJaiseReact\\src\\index.css",
+      "hashInicial": "98E5F3EE8FBBBFAEF86B1B7C7754315643AFA11D69FE49F0C4E3DAFA5872B97F",
+      "hashFinal": "98E5F3EE8FBBBFAEF86B1B7C7754315643AFA11D69FE49F0C4E3DAFA5872B97F",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\.oxlintrc.json",
+      "hashInicial": "25D339E66A7E3FDA5D21F491EAF72F1629C4DE7211D6EACC3FD130F9DE8F9CAD",
+      "hashFinal": "25D339E66A7E3FDA5D21F491EAF72F1629C4DE7211D6EACC3FD130F9DE8F9CAD",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\verificar-catalogos-fotos-sesion.cjs",
+      "hashInicial": "8E9418BDD769688CACD4AED335D67051BBC45C917AE13C595B5F895BF39DAEF3",
+      "hashFinal": "8E9418BDD769688CACD4AED335D67051BBC45C917AE13C595B5F895BF39DAEF3",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\verificar-fase6.cjs",
+      "hashInicial": "569D79B6F100363F9B87AB85402B9A103910446D79B41830835DB1B4C1A12C5B",
+      "hashFinal": "569D79B6F100363F9B87AB85402B9A103910446D79B41830835DB1B4C1A12C5B",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\supabase\\migrations\\20261012000003_migracion_medios_cambio_con_plazo.sql",
+      "hashInicial": "764C50B24F30435877A5C46219A487B61F9A9B7D451C960A2B049AEEAE1C26D8",
+      "hashFinal": "764C50B24F30435877A5C46219A487B61F9A9B7D451C960A2B049AEEAE1C26D8",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\fase10a\\bateria-10a.mjs",
+      "hashInicial": "040B43C72CFA28D998B9D76523827EC8B8DE5AB6A77FF58618D689AE8F16C503",
+      "hashFinal": "040B43C72CFA28D998B9D76523827EC8B8DE5AB6A77FF58618D689AE8F16C503",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\fase10a\\medir-rendimiento-10a.mjs",
+      "hashInicial": "9A1CDC6A1BF0EA915D28061B025DA0013244E14EE632DD761960A6E352A595B7",
+      "hashFinal": "9A1CDC6A1BF0EA915D28061B025DA0013244E14EE632DD761960A6E352A595B7",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\fase10a\\medir-vitales-10a.cjs",
+      "hashInicial": "51B7BBB5C9A71424883EF0C822FDFE5C94E0095DA9943D53026948BE8C5C4D29",
+      "hashFinal": "51B7BBB5C9A71424883EF0C822FDFE5C94E0095DA9943D53026948BE8C5C4D29",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\fase10a\\presupuestos-rendimiento.json",
+      "hashInicial": "5F5223F68800291F919480C872136813AAF81D6DBE5455A6E4AB1196C676BDDE",
+      "hashFinal": "5F5223F68800291F919480C872136813AAF81D6DBE5455A6E4AB1196C676BDDE",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\fase10a\\servir-como-pages.cjs",
+      "hashInicial": "9198302B66E8049406ED660CACB8B22F5CC5871AD48D528114C7C964527DE298",
+      "hashFinal": "9198302B66E8049406ED660CACB8B22F5CC5871AD48D528114C7C964527DE298",
+      "igual": true
+    },
+    {
+      "path": "C:\\WedJaiseReact\\scripts\\fase10a\\verificar-roles-rutas.cjs",
+      "hashInicial": "B723B6C8270A625625F54296BF5AF1F081E61F06BB2B7A0E3561F85B80035C94",
+      "hashFinal": "B723B6C8270A625625F54296BF5AF1F081E61F06BB2B7A0E3561F85B80035C94",
+      "igual": true
+    }
+  ],
+  "archivosCambioContenido": 0,
+  "gitStatusIgual": true,
+  "entradasIniciales": 347,
+  "entradasFinales": 347,
+  "bloqueosRolesV2": 0
+}

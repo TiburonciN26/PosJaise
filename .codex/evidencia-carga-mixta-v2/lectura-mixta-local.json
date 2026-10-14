@@ -1,0 +1,43 @@
+{
+  "fecha": "2026-10-11T00:16:16.420Z",
+  "sinRed": true,
+  "regresiones": [
+    {
+      "nombre": "proveedor efectivo = supabase: ningún destino pide R2 y no hay subidas nuevas a R2 (ni con WebP)",
+      "ok": true
+    },
+    {
+      "nombre": "subirFoto REAL: con el proveedor supabase la subida va a Supabase Storage (no al Worker) — se detecta con un cliente que lanza al usar Storage",
+      "ok": true
+    },
+    {
+      "nombre": "la LECTURA de referencias r2: sigue por la Function (base Pages) con ambas variantes",
+      "ok": true
+    },
+    {
+      "nombre": "Galería: las URLs ya guardadas (Pages y r2.dev) siguen reconociéndose y administrándose; Supabase y ajenas, como antes",
+      "ok": true
+    },
+    {
+      "nombre": "el borrado de una referencia r2: ya existente sigue yendo al Worker (hay API configurada: no falla por «Sin VITE_MEDIOS_API_URL»)",
+      "ok": true
+    },
+    {
+      "nombre": "una foto antigua (ruta de Supabase) se sigue eliminando de Storage, no del Worker",
+      "ok": true
+    }
+  ],
+  "urlAntigua": "https://pub-0000.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332211/g.webp",
+  "esperadaPages": "https://staging.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332211/g.webp",
+  "sigueLeyendoR2dev": true,
+  "borradoConSesionFicticia": {
+    "confirmado": true,
+    "envios": [
+      {
+        "url": "https://worker.example.dev/v1/medios/fotos-productos/0f1e2d3c-4b5a-4968-8777-665544332211",
+        "method": "DELETE"
+      }
+    ]
+  },
+  "intentosRedBloqueados": 0
+}

@@ -1,0 +1,79 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "PestanasCacheadas y hooks reales; pantallas de relleno simuladas salvo PuntosWeb y Dashboard. Auth/Supabase simulados; cero mutaciones reales.",
+  "casos": [
+    {
+      "name": "Cancelaciones repetidas: GC de formularios sin recorte",
+      "data": {
+        "series": [
+          {
+            "cancelaciones": 0,
+            "vivas": 0,
+            "desconectadas": 0,
+            "formsDOM": 0,
+            "montadas": [
+              "/promociones"
+            ],
+            "pendientes": [],
+            "contadores": {
+              "documents": 2,
+              "nodes": 61,
+              "jsEventListeners": 177
+            }
+          },
+          {
+            "cancelaciones": 10,
+            "vivas": 0,
+            "desconectadas": 0,
+            "formsDOM": 0,
+            "montadas": [
+              "/promociones"
+            ],
+            "pendientes": [],
+            "contadores": {
+              "documents": 2,
+              "nodes": 61,
+              "jsEventListeners": 177
+            }
+          },
+          {
+            "cancelaciones": 20,
+            "vivas": 0,
+            "desconectadas": 0,
+            "formsDOM": 0,
+            "montadas": [
+              "/promociones"
+            ],
+            "pendientes": [],
+            "contadores": {
+              "documents": 2,
+              "nodes": 61,
+              "jsEventListeners": 177
+            }
+          }
+        ],
+        "trasRecorte": {
+          "vivas": 0,
+          "desconectadas": 0,
+          "formsDOM": 0,
+          "montadas": [
+            "/historial",
+            "/servicios",
+            "/mi-panel",
+            "/citas",
+            "/estadisticas",
+            "/clientes"
+          ],
+          "pendientes": [],
+          "contadores": {
+            "documents": 2,
+            "nodes": 61,
+            "jsEventListeners": 178
+          }
+        },
+        "alcance": "Veinte formularios reales observados mediante WeakRef; sin referencias fuertes del diagnóstico. Una sola pantalla antes del recorte. GC doble de CDP. No mide heap de producción."
+      },
+      "errors": []
+    }
+  ]
+}

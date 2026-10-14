@@ -1,0 +1,200 @@
+{
+  "alcance": "SELECT de constantes, ninguna fila creada/editada; comparación del normalizador real contra expresión exacta de la migración",
+  "caracteresOrigen": 48,
+  "caracteresDestino": 48,
+  "casos": [
+    {
+      "entrada": "María",
+      "codepoints": [
+        "4d",
+        "61",
+        "72",
+        "ed",
+        "61"
+      ],
+      "cliente": "maria",
+      "servidor": "maria",
+      "encuentra": true,
+      "coincide": true
+    },
+    {
+      "entrada": "María",
+      "codepoints": [
+        "4d",
+        "61",
+        "72",
+        "69",
+        "301",
+        "61"
+      ],
+      "cliente": "maria",
+      "servidor": "maría",
+      "encuentra": false,
+      "coincide": false
+    },
+    {
+      "entrada": "José Perez",
+      "codepoints": [
+        "4a",
+        "6f",
+        "73",
+        "e9",
+        "20",
+        "50",
+        "65",
+        "72",
+        "65",
+        "7a"
+      ],
+      "cliente": "jose perez",
+      "servidor": "jose perez",
+      "encuentra": true,
+      "coincide": true
+    },
+    {
+      "entrada": "José Perez",
+      "codepoints": [
+        "4a",
+        "6f",
+        "73",
+        "65",
+        "301",
+        "20",
+        "50",
+        "65",
+        "72",
+        "65",
+        "7a"
+      ],
+      "cliente": "jose perez",
+      "servidor": "josé perez",
+      "encuentra": false,
+      "coincide": false
+    },
+    {
+      "entrada": "José",
+      "codepoints": [
+        "4a",
+        "6f",
+        "73",
+        "e9"
+      ],
+      "cliente": "jose",
+      "servidor": "jose",
+      "encuentra": true,
+      "coincide": true
+    },
+    {
+      "entrada": "José",
+      "codepoints": [
+        "4a",
+        "6f",
+        "73",
+        "65",
+        "301"
+      ],
+      "cliente": "jose",
+      "servidor": "josé",
+      "encuentra": true,
+      "coincide": false
+    },
+    {
+      "entrada": "Peña",
+      "codepoints": [
+        "50",
+        "65",
+        "f1",
+        "61"
+      ],
+      "cliente": "pena",
+      "servidor": "pena",
+      "encuentra": true,
+      "coincide": true
+    },
+    {
+      "entrada": "Peña",
+      "codepoints": [
+        "50",
+        "65",
+        "6e",
+        "303",
+        "61"
+      ],
+      "cliente": "pena",
+      "servidor": "peña",
+      "encuentra": false,
+      "coincide": false
+    },
+    {
+      "entrada": "ÁÉÍÓÚüÑÇ",
+      "codepoints": [
+        "c1",
+        "c9",
+        "cd",
+        "d3",
+        "da",
+        "fc",
+        "d1",
+        "c7"
+      ],
+      "cliente": "aeiouunc",
+      "servidor": "aeiouunc",
+      "encuentra": true,
+      "coincide": true
+    },
+    {
+      "entrada": "ÁÉÍÓÚüÑÇ",
+      "codepoints": [
+        "41",
+        "301",
+        "45",
+        "301",
+        "49",
+        "301",
+        "4f",
+        "301",
+        "55",
+        "301",
+        "75",
+        "308",
+        "4e",
+        "303",
+        "43",
+        "327"
+      ],
+      "cliente": "aeiouunc",
+      "servidor": "áéíóúüñç",
+      "encuentra": false,
+      "coincide": false
+    },
+    {
+      "entrada": "Ångela",
+      "codepoints": [
+        "c5",
+        "6e",
+        "67",
+        "65",
+        "6c",
+        "61"
+      ],
+      "cliente": "angela",
+      "servidor": "ångela",
+      "encuentra": false,
+      "coincide": false
+    },
+    {
+      "entrada": "Łucía",
+      "codepoints": [
+        "141",
+        "75",
+        "63",
+        "ed",
+        "61"
+      ],
+      "cliente": "łucia",
+      "servidor": "łucia",
+      "encuentra": true,
+      "coincide": true
+    }
+  ]
+}

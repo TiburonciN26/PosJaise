@@ -1,0 +1,63 @@
+{
+  "fecha": "2026-10-11T02:36:38.726Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "commit": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "mainLocal": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "casosDistintosDeSuites": 65,
+  "suites": [
+    {
+      "nombre": "harness recolector",
+      "casos": 24,
+      "fallos": 0
+    },
+    {
+      "nombre": "fuentes SDK real + fetch ficticio",
+      "casos": 9,
+      "fallos": 0
+    },
+    {
+      "nombre": "salida segura",
+      "casos": 9,
+      "fallos": 0
+    },
+    {
+      "nombre": "URLs y cableado real",
+      "casos": 16,
+      "fallos": 0
+    },
+    {
+      "nombre": "lectura mixta SSR real",
+      "casos": 7,
+      "fallos": 0
+    }
+  ],
+  "diagnosticosIndependientes": {
+    "casos": 6,
+    "fallos": 0,
+    "nota": "Se repitieron las dos reproducciones de flujo, el conteo ausente y las tres rutas de la revisión V3. La repetición de 24 no se suma como casos adicionales."
+  },
+  "oxlint": "Sin diagnósticos en los archivos revisados",
+  "sintaxis": "Constructor y CLI recolector, correctos",
+  "fuentesSha256": {
+    "scripts/lib/ensayo-recolector.mjs": "0dfd168fc9ff0af7376607a0e13eabdb9d3fba5c449aa9fc752b8e0cf033294b",
+    "scripts/ensayo-recolector-medios.mjs": "244f00acd4bed99d4cef503d64c40e4f4ad44d2f5c8aa394d31cad77dd2d258e",
+    "scripts/verificar-ensayo-recolector.mjs": "3c61f692860c3f5227bb30ecfdd371bf81b4954a9342879167a4d4baa457b3bf",
+    "scripts/medios-huerfanos.mjs": "903ad4b147d72c9abd80238948810731639b7ded64c9ae31305029f9c96204ba",
+    "scripts/verificar-fuentes-huerfanos.mjs": "1b8a2375fde0353b1158893f65776524e4ce83456c7669c271698b72599c487a",
+    "scripts/lib/salida-segura.mjs": "2d5c3e5f42861dfe223288711dc2a6f74d8537ce323fc70d87eccab27a53d251",
+    "scripts/verificar-salida-segura.mjs": "901d960e41c22f7aacf4a2c90440bf8ddd67687d5430700659dfa4a9099af325",
+    "src/lib/urlsMedios.js": "4068136e303366ee3de357f6bcda3d75f7a603b13da38627e00f15a6b851a688",
+    "src/lib/imagenes.js": "918ae4561b38be0b54e58ad087cbd60a7c03737edd17d0a5de33baa1f48d6f04",
+    "scripts/construir-lectura-mixta.mjs": "745bb16d809bb47b512cf2f6f94d6d66c657423d0ed0805d351e05a08989e68f"
+  },
+  "lecturaPublica": {
+    "deployment": "c5effd38-500b-4006-9d85-798296a879e5",
+    "buildId": "6929c619",
+    "status": "success",
+    "duracionSegundos": 42
+  },
+  "sinEscriturasRemotas": true,
+  "sinLoginReal": true,
+  "sinCambiosDeImplementacion": true
+}

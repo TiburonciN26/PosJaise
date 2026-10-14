@@ -1,0 +1,74 @@
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+import { escanearTextoSalida } from 'file:///C:/WedJaiseReact/scripts/lib/entornos-supabase.mjs'
+import { swExcluyeMedios } from 'file:///C:/WedJaiseReact/scripts/lib/sw-medios.mjs'
+
+const origin = 'https://feat-cloudflare-pages.pos-jaise.pages.dev'
+const stage = 'tqkdtojnhgykmcbvwdmz'
+const worker = 'https://pos-jaise-medios-staging.jdeostuas2.workers.dev'
+const r2dev = 'https://pub-b248edba3e19402382b557a35b33c674.r2.dev'
+const publicPages = origin + '/medios'
+const commit = 'd16d816f4d64cde80c230092126ed8204c6ce0e9'
+
+async function read(url, method = 'GET') {
+  const r = await fetch(url, { method, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(25000) })
+  return { status: r.status, text: await r.text(), headers: Object.fromEntries(r.headers) }
+}
+const html = await read(origin + '/')
+const sw = await read(origin + '/sw.js')
+if (html.status !== 200 || sw.status !== 200) throw new Error('HTML o SW no responde 200')
+const urls = new Set([...sw.text.matchAll(/["']?url["']?\s*:\s*["']([^"']+\.js(?:\?[^"']*)?)["']/g)].map((m) => m[1]))
+for (const m of html.text.matchAll(/src=["']([^"']+\.js)["']/g)) urls.add(m[1])
+if (urls.size < 100) throw new Error('No se encontro un listado suficiente de scripts precacheados')
+const assets = [...urls]
+const loaded = []
+const failures = []
+let next = 0
+await Promise.all(Array.from({ length: 8 }, async () => {
+  while (next < assets.length) {
+    const file = assets[next++]
+    const url = new URL(file, origin + '/')
+    if (url.origin !== origin) throw new Error('Asset precacheado apunta fuera del alias')
+    const r = await read(url)
+    if (r.status !== 200) failures.push({ file, status: r.status })
+    loaded.push({ file, text: r.text, status: r.status, sha256: crypto.createHash('sha256').update(r.text).digest('hex') })
+  }
+}))
+const texts = [{ file: 'index.html', text: html.text }, { file: 'sw.js', text: sw.text }, ...loaded]
+const findings = texts.flatMap((x) => escanearTextoSalida(x.text, stage).map((tipo) => ({ file: x.file, tipo })))
+const all = texts.map((x) => x.text).join('\n')
+const manifest = await read(origin + '/manifest.webmanifest')
+const ventas = await read(origin + '/ventas')
+const mediosExtra = await read(origin + '/medios-extra')
+const production = await read('https://pos-jaise.pages.dev/')
+const paths = ['/medios', '/medios/', '/medios/fotos-productos/00000000-0000-4000-8000-000000000001/g.webp', '/medios/destino-privado/00000000-0000-4000-8000-000000000001/g.webp']
+const mediaResults = []
+for (const path of paths) {
+  for (const method of ['GET', 'HEAD']) {
+    const r = await read(origin + path, method)
+    mediaResults.push({ path, method, status: r.status, cacheControl: r.headers['cache-control'], nosniff: r.headers['x-content-type-options'], robots: r.headers['x-robots-tag'], contentType: r.headers['content-type'], bytesBody: Buffer.byteLength(r.text), bodyExpected: method === 'HEAD' ? r.text === '' : r.text === 'No encontrado' })
+  }
+}
+const configFiles = loaded.filter((x) => x.text.includes(worker) && x.text.includes(r2dev))
+const providerR2 = configFiles.some((x) => /proveedor\s*:\s*(["'`])r2\1/.test(x.text))
+const checks = {
+  publicPagesConfigured: configFiles.some(x => [...x.text.matchAll(/publicUrl\s*:\s*([^,}]+)/g)].some(m => m[1].includes(publicPages))),
+  oldR2devRecognized: configFiles.some(x => [...x.text.matchAll(/\.publicUrl\s*,\s*([^)]*)/g)].some(m => m[1].includes(r2dev))),
+  buildId: html.text.match(/name=["']build-id["'][^>]*content=["']([^"']+)/)?.[1] ?? null,
+  workerStagingPresente: all.includes(worker), r2devPresente: all.includes(r2dev), proveedorR2: providerR2,
+  backendStaging: all.includes(stage), backendNegocioAusente: !all.includes('cmkelllerzjqjbsqsylc'), supabaseLocalAusente: !all.includes('127.0.0.1:54321'),
+  ventasSPA: ventas.status === 200 && ventas.text.includes('name="build-id"'), mediosExtraSPA: mediosExtra.status === 200 && mediosExtra.text.includes('name="build-id"'), produccionHTTP: production.status,
+  manifestRaiz: manifest.status === 200 && JSON.parse(manifest.text).scope === '/' && JSON.parse(manifest.text).start_url === '/',
+  sin404EnPrecache: !sw.text.includes('404.html'), swExcluyeMedios: swExcluyeMedios(sw.text),
+  medios404ConCabeceras: mediaResults.every((r) => r.status === 404 && r.cacheControl === 'no-store' && r.nosniff === 'nosniff' && r.robots === 'noindex' && r.bodyExpected),
+}
+const passed = checks.publicPagesConfigured && checks.oldR2devRecognized && checks.buildId === 'd16d816f' && checks.workerStagingPresente && checks.r2devPresente && checks.proveedorR2 && checks.backendStaging && checks.backendNegocioAusente && checks.supabaseLocalAusente && checks.ventasSPA && checks.mediosExtraSPA && checks.produccionHTTP === 404 && checks.manifestRaiz && checks.sin404EnPrecache && checks.swExcluyeMedios && checks.medios404ConCabeceras && findings.length === 0 && failures.length === 0
+const oldSW = await read('https://2bb69dd0.pos-jaise.pages.dev/sw.js')
+const immutableSW = await read('https://2d701280.pos-jaise.pages.dev/sw.js')
+const digest = s => crypto.createHash('sha256').update(s).digest('hex')
+const swIdentity = {old: digest(oldSW.text), alias: digest(sw.text), immutable: digest(immutableSW.text), oldHTTP:oldSW.status, immutableHTTP:immutableSW.status, changed:digest(oldSW.text)!==digest(sw.text), aliasMatchesImmutable:digest(sw.text)===digest(immutableSW.text)}
+const result = { swIdentity, fecha: new Date().toISOString(), origin, commit, deployment: '2d701280-e72e-45da-9833-39bc25b5debe', scriptCount: loaded.length, checks, mediaResults, headers: { html: html.headers['cache-control'], sw: sw.headers['cache-control'], robots: html.headers['x-robots-tag'] }, findings, failures, passed: passed && swIdentity.aliasMatchesImmutable && swIdentity.changed, assets: loaded.map(({ file, status, sha256 }) => ({ file, status, sha256 })), nota: 'Solo GET/HEAD publicos; sin login, cookies, escrituras ni acceso al dashboard. El 404 en una ruta valida es compatible con binding ausente, pero no certifica la configuracion del panel.' }
+fs.writeFileSync(new URL('./verificacion-entrega-pages.json', import.meta.url), JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ ...result, assets: undefined }, null, 2))
+process.exitCode = result.passed ? 0 : 1
+

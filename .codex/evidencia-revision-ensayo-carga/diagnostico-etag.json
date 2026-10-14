@@ -1,0 +1,54 @@
+{
+  "fecha": "2026-10-11T00:00:13.432Z",
+  "sinRed": true,
+  "alcance": "Adaptador real de lectura del CLI y núcleo real, aislados con respuestas HTTP simuladas; no CLI completo ni autenticación",
+  "hallazgo": "EC-01: ETag ausente no detiene la carga pese a existir un ETag de referencia válido",
+  "reproducido": true,
+  "results": [
+    {
+      "modo": "sano",
+      "anomaliaInyectada": false,
+      "completa": true,
+      "parada": null,
+      "lecturas": 302,
+      "maxSimultaneas": 10,
+      "erroresServidor": 0
+    },
+    {
+      "modo": "GET-sin-etag",
+      "anomaliaInyectada": true,
+      "completa": true,
+      "parada": null,
+      "lecturas": 302,
+      "maxSimultaneas": 10,
+      "erroresServidor": 0
+    },
+    {
+      "modo": "HEAD-sin-etag",
+      "anomaliaInyectada": true,
+      "completa": true,
+      "parada": null,
+      "lecturas": 302,
+      "maxSimultaneas": 10,
+      "erroresServidor": 0
+    },
+    {
+      "modo": "COND-sin-etag",
+      "anomaliaInyectada": true,
+      "completa": true,
+      "parada": null,
+      "lecturas": 302,
+      "maxSimultaneas": 10,
+      "erroresServidor": 0
+    },
+    {
+      "modo": "GET-etag-distinto",
+      "anomaliaInyectada": true,
+      "completa": false,
+      "parada": "ETag inesperado en GET-m",
+      "lecturas": 1,
+      "maxSimultaneas": 1,
+      "erroresServidor": 0
+    }
+  ]
+}

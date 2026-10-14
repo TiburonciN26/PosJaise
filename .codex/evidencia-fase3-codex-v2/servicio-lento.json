@@ -1,0 +1,38 @@
+{
+  "fecha": "2026-10-10T01:04:12.381Z",
+  "entorno": "Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión",
+  "total": 3,
+  "fallos": 1,
+  "casos": [
+    {
+      "nombre": "SERVICIO lento: Guardar debe permanecer bloqueado hasta terminar la galeria y no duplicar filas",
+      "enabledDuringUpload": true,
+      "rowsBeforeRelease": 0,
+      "putsBeforeRelease": 2,
+      "rows": [
+        {
+          "id": "id-1",
+          "foto_url": "r2:fotos-servicios/d394dc6c-ddc6-4fa4-96a3-588fbcc924bb"
+        },
+        {
+          "id": "id-2",
+          "foto_url": "r2:fotos-servicios/2d46b600-bb71-488e-b2fd-f0f3ab8f1526"
+        }
+      ],
+      "guardados": 2,
+      "iniciadas": 4,
+      "ok": false
+    },
+    {
+      "nombre": "aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "noSimuladas": [],
+      "supabaseNoAuth": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página en todo el recorrido",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

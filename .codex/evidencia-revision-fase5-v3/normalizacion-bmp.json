@@ -1,0 +1,49 @@
+{
+  "total": 63456,
+  "iguales": 63448,
+  "diferencias": [
+    {
+      "codigo": "U+1C89",
+      "servidor": "xᲉy",
+      "cliente": "xᲊy"
+    },
+    {
+      "codigo": "U+A7CB",
+      "servidor": "xꟋy",
+      "cliente": "xɤy"
+    },
+    {
+      "codigo": "U+A7CC",
+      "servidor": "xꟌy",
+      "cliente": "xꟍy"
+    },
+    {
+      "codigo": "U+A7CE",
+      "servidor": "x꟎y",
+      "cliente": "x꟏y"
+    },
+    {
+      "codigo": "U+A7D2",
+      "servidor": "x꟒y",
+      "cliente": "xꟓy"
+    },
+    {
+      "codigo": "U+A7D4",
+      "servidor": "x꟔y",
+      "cliente": "xꟕy"
+    },
+    {
+      "codigo": "U+A7DA",
+      "servidor": "xꟚy",
+      "cliente": "xꟛy"
+    },
+    {
+      "codigo": "U+A7DC",
+      "servidor": "xꟜy",
+      "cliente": "xƛy"
+    }
+  ],
+  "node": "v24.14.1",
+  "unicodeNode": "17.0",
+  "alcance": "SELECT exhaustivo de constantes BMP 32–65535 sin sustitutos, x+c+Y; no valida trim en bordes ni caracteres suplementarios"
+}

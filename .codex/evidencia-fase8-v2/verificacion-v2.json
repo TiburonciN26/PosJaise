@@ -1,0 +1,211 @@
+{
+ "fecha": "2026-10-12T15:44:35.917Z",
+ "etiqueta": "v2",
+ "a": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-a",
+  "meta": "f8v2-a",
+  "citas": "Citas-76JL_qn4.js"
+ },
+ "b": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-b",
+  "meta": "f8v2-b"
+ },
+ "archivosComunesAB": 0,
+ "producto": "TEST E2E Stock 10 a 8 - 20260930",
+ "total": 9,
+ "correctos": 9,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "F8-01 · Sin red y Citas NUNCA descargada: el fallo queda en su pestaña; la venta y el menú siguen; al volver la red abre",
+   "ok": true,
+   "ms": 7340,
+   "detalle": {
+    "errorGlobal": 0,
+    "carrito": 1,
+    "menu": 1,
+    "trabajoConservado": true,
+    "recargarVisible": 0,
+    "citasTrasVolverLaRed": true,
+    "reintentos": [
+     "/assets/Citas-76JL_qn4.js?reintento=1",
+     "/assets/Citas-76JL_qn4.js?reintento=2"
+    ],
+    "carritoFinal": 1,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Sin red DESPUÉS de la precarga en reposo: Citas abre desde memoria y la venta sigue",
+   "ok": true,
+   "ms": 3251,
+   "detalle": {
+    "precargada": true,
+    "citas": {
+     "errorGlobal": 0,
+     "avisoFallo": 0,
+     "carrito": 1
+    },
+    "carrito": 1,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · A→B real (URLs JS distintas, archivos de A retirados) con venta en curso: Citas abre, el escáner falla en su ventana, la venta se conserva; al cancelarla actualiza a B",
+   "ok": true,
+   "ms": 8301,
+   "detalle": {
+    "citasAEnServidor": {
+     "status": 200,
+     "tipo": "text/html",
+     "bytes": 5699
+    },
+    "meta": "f8v2-a",
+    "actualizarBloqueado": true,
+    "citas": {
+     "errorGlobal": 0,
+     "avisoFallo": 0,
+     "carrito": 1
+    },
+    "precargada": true,
+    "escaner": {
+     "errorGlobal": 0,
+     "carritoVisible": 1
+    },
+    "escanerEnCache": [],
+    "iconosCobro": [
+     {
+      "src": "/icons/efectivo.svg",
+      "ok": true
+     },
+     {
+      "src": "/icons/transferencia.svg",
+      "ok": true
+     },
+     {
+      "src": "/icons/yape.svg",
+      "ok": true
+     }
+    ],
+    "trasActualizar": {
+     "meta": "f8v2-b",
+     "citas": true,
+     "errorGlobal": 0
+    },
+    "bloqueadas": [],
+    "erroresNoCapturados": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Retención: tras publicar B, recargar A (sin trabajo pendiente) sigue funcionando con su código guardado por el SW",
+   "ok": true,
+   "ms": 2739,
+   "detalle": {
+    "meta": "f8v2-a",
+    "citas": {
+     "errorGlobal": 0,
+     "avisoFallo": 0,
+     "carrito": 0
+    },
+    "precargada": true,
+    "citasEnCacheSW": true,
+    "pedidosDeAalServidor": 21,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Portal sin red: una página pública no descargada falla dentro del portal (cabecera y menú intactos) y abre al volver la red",
+   "ok": true,
+   "ms": 6232,
+   "detalle": {
+    "errorGlobal": 0,
+    "cabecera": 1,
+    "abreSinRecargar": false,
+    "trabajoPendienteEnAviso": 0,
+    "abreAlVolverLaRed": true
+   }
+  },
+  {
+   "nombre": "F8-01 · Cliente nuevo de B: Inicio, login y Citas sin errores",
+   "ok": true,
+   "ms": 1045,
+   "detalle": {
+    "meta": "f8v2-b",
+    "errorGlobal": 0,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Caso vacío: sin trabajo pendiente, «Actualizar» está disponible de inmediato",
+   "ok": true,
+   "ms": 2818
+  },
+  {
+   "nombre": "F8-02 · Caché por uso: solo estáticos públicos del build; nunca Storage/datos del proxy, firmados, /medios, otro origen ni errores",
+   "ok": true,
+   "ms": 6834,
+   "detalle": {
+    "privadaAntes": {
+     "status": 200,
+     "bytes": 68
+    },
+    "privadaTrasRevocar": {
+     "status": 401,
+     "bytes": 30
+    },
+    "publicaProxy": {
+     "status": 200,
+     "bytes": 68
+    },
+    "lecturasJson": 2,
+    "otroOrigen": {
+     "status": 200,
+     "bytes": 68
+    },
+    "medios": {
+     "status": 200,
+     "bytes": 68
+    },
+    "imagenInexistente": {
+     "status": 200,
+     "bytes": 5687
+    },
+    "imagen404": {
+     "status": 404,
+     "bytes": 0
+    },
+    "chunkInexistente": {
+     "status": 200,
+     "bytes": 5687
+    },
+    "chunkConQuery": {
+     "status": 200,
+     "bytes": 19379
+    },
+    "iconoSinPrecache": {
+     "status": 200,
+     "bytes": 2478
+    },
+    "caches": {
+     "workbox-precache-v2-http://127.0.0.1:5361/": 37,
+     "assets-por-uso": 42,
+     "imagenes-del-sitio": 3
+    }
+   }
+  },
+  {
+   "nombre": "F8-02 · Al activarse la versión corregida se retiran las entradas indebidas que guardó V1, sin borrar las válidas",
+   "ok": true,
+   "ms": 10026,
+   "detalle": {
+    "indebidasAntes": [
+     "http://127.0.0.1:5361/assets/no-existe-v1.js",
+     "http://127.0.0.1:5361/__supabase/storage/v1/object/sign/comprobantes-pedidos-web/qa-f8-v1.png?token=ficticio"
+    ],
+    "indebidasDespues": [],
+    "validasAntes": 44,
+    "validasConservadas": 44
+   }
+  }
+ ]
+}

@@ -1,0 +1,72 @@
+const fs=require('node:fs'),path=require('node:path');const base=__dirname;
+let s=fs.readFileSync(path.join(base,'diagnosticar-reconciliacion.cjs'),'utf8').replaceAll('fase3-verificacion-v4','fase3-verificacion-v5');
+const cfg=path.join(base,'vite-independiente.mjs');
+fs.writeFileSync(cfg,"import original from 'file:///C:/WedJaiseReact/vite.config.js';\nexport default async args=>({...await original(args),root:'C:/WedJaiseReact',cacheDir:"+JSON.stringify(path.join(base,'cache-independiente'))+"});");
+s=s.replace('fase3-verificacion-v5\\\\vite-diagnostico.mjs','fase3-verificacion-v5\\\\vite-independiente.mjs');
+const start=s.indexOf("    for(const tipo of ['producto','servicio','galeria'])"),end=s.indexOf('    // ---------- aislamiento ----------',start);
+if(start<0||end<0)throw new Error('Marcadores faltantes');
+const body=String.raw`
+    const grupoUrl=u=>u.replace(API+'/','').split('/').slice(0,2).join('/');
+    const urlR2=ref=>API+'/'+ref.replace(/^r2:/,'')+'/g.webp';
+    const leerEstado=(id,campos)=>page.evaluate(async ([id,campos])=>{
+      const {estadoFila}=await import('/src/lib/resultadoBd.js');
+      return estadoFila('galeria_web',id,campos);
+    },[id,campos]);
+    sim.reiniciar();sim.sembrar('galeria_web',[{id:'cuatro-estados',titulo:'QA original'}]);
+    for(const [id,campos,expected] of [['cuatro-estados',{titulo:'QA original'},'coincide'],['cuatro-estados',{titulo:'QA distinto'},'difiere'],['no-existe',{titulo:'QA'},'ausente']]){
+      const resultado=await leerEstado(id,campos);
+      caso('estadoFila distingue '+expected,resultado.estado===expected,{resultado});
+    }
+    sim.fallar('galeria_web','GET',{transporte:true,veces:20});
+    const desconocido=await leerEstado('cuatro-estados',{titulo:'QA original'});
+    caso('estadoFila: GET fallido es desconocido, no ausente',desconocido.estado==='desconocido',{resultado:desconocido});
+
+    // Verificación sin saltarse el bloqueo: todos los campos permanecen deshabilitados.
+    sim.reiniciar();await abrir('galeria',{item:null});await eligir(0);await eligir(1);
+    sim.fallar('galeria_web','POST',{transporte:true,commit:true});sim.fallar('galeria_web','GET',{transporte:true,veces:20});
+    await guardar();
+    const blocked=await page.locator('fieldset').evaluate(e=>Array.from(e.querySelectorAll('input,button')).map(x=>({type:x.type,disabled:x.matches(':disabled')})));
+    const pendingEvents=await guardados(),notice=await page.getByTestId('galeria-guardado-pendiente').isVisible();
+    const original=JSON.parse(JSON.stringify(sim.db.galeria_web[0]));
+    sim.limpiarFallas();await guardar();
+    const enabled=await page.locator('fieldset').evaluate(e=>Array.from(e.querySelectorAll('input,button')).every(x=>!x.matches(':disabled')));
+    const currentInv=await inventario();
+    caso('GALERÍA: bloqueo de las dos fotos, título, orden y visibilidad; recuperación habilita todo y emite un solo éxito',blocked.length===5&&blocked.every(x=>x.disabled)&&notice&&pendingEvents===0&&enabled&&await guardados()===1&&JSON.stringify(sim.db.galeria_web[0])===JSON.stringify(original)&&[original.antes_url,original.despues_url].every(u=>currentInv.has(grupoUrl(u))),{blocked,notice,pendingEvents,enabled,events:await guardados()});
+
+    // Reproducción V4 + simétrica + edición: saltar DOM disabled solamente en el diagnóstico
+    // comprueba que la lógica conserva los archivos aun si se elude la barrera de UI.
+    for(const modo of ['despues','antes','edicion']){
+      sim.reiniciar();let item=null;
+      if(modo==='edicion'){
+        item={id:'fila-existente',titulo:'QA',antes_url:urlR2(await sembrarR2('fotos-galeria')),despues_url:urlR2(await sembrarR2('fotos-galeria')),orden:1,activo:true};
+        sim.sembrar('galeria_web',[{...item}]);
+      }
+      await abrir('galeria',{item});
+      if(item){await eligir(0);}else{await eligir(0);await eligir(1);}
+      const method=item?'PATCH':'POST';
+      sim.fallar('galeria_web',method,{transporte:true,commit:true});sim.fallar('galeria_web','GET',{transporte:true,veces:20});
+      await guardar();const originalFila=JSON.parse(JSON.stringify(sim.db.galeria_web[0]));
+      const blockedBefore=await page.locator('input[type=file]').first().isDisabled();
+      await page.locator('fieldset').evaluate(e=>e.removeAttribute('disabled'));
+      await eligir(modo==='antes'?0:1,Buffer.from((await generar(950)).png));
+      sim.limpiarFallas();sim.fallar('galeria_web',method,{status:403});
+      await guardar();const inventory=await inventario();
+      const http=[await fetch(originalFila.antes_url).then(r=>r.status),await fetch(originalFila.despues_url).then(r=>r.status)];
+      const detalle={blockedBefore,rows:sim.db.galeria_web.length,dbUnchanged:JSON.stringify(sim.db.galeria_web[0])===JSON.stringify(originalFila),photosRetained:[originalFila.antes_url,originalFila.despues_url].map(u=>inventory.has(grupoUrl(u))),http,events:await guardados(),message:/otros valores/.test(await textoModal())};
+      caso('F3-07 parcial '+modo+': fila existente conserva ambas referencias tras rechazo y cambio de una foto',detalle.blockedBefore&&detalle.rows===1&&detalle.dbUnchanged&&detalle.photosRetained.every(Boolean)&&http.every(x=>x===200)&&detalle.events===0&&detalle.message,detalle);
+    }
+
+    // La corrección compartida no pierde la etiqueta de SERVICIO cambiada durante la duda.
+    sim.reiniciar();sim.sembrar('servicios',[{id:'s1',nombre:'Servicio QA ficticio',precio:40,foto_url:null}]);
+    await abrir('servicio',{modo:'web',servicio:servicio({foto_url:null}),categoriasExistentes:['Corte']});await eligir(1);
+    sim.fallar('servicio_fotos','POST',{transporte:true,commit:true});sim.fallar('servicio_fotos','GET',{transporte:true,veces:20});
+    await guardar();const refServicio=sim.db.servicio_fotos[0].foto_url;
+    await page.locator('select:has(option[value="Antes"])').first().selectOption('Antes');
+    sim.limpiarFallas();await guardar();const invServicio=await inventario();
+    const servicioResultado={rows:sim.db.servicio_fotos.length,refUnchanged:sim.db.servicio_fotos[0].foto_url===refServicio,etiqueta:sim.db.servicio_fotos[0].etiqueta,photoExists:invServicio.has(grupoDe(refServicio)),events:await guardados(),updateCalls:sim.registro.llamadas.filter(c=>c==='PATCH servicio_fotos').length};
+    caso('SERVICIO: etiqueta cambiada durante la duda se aplica por UPDATE a la misma fila/foto',servicioResultado.rows===1&&servicioResultado.refUnchanged&&servicioResultado.etiqueta==='Antes'&&servicioResultado.photoExists&&servicioResultado.events===1&&servicioResultado.updateCalls>=1,servicioResultado);
+`;
+s=s.slice(0,start)+body+s.slice(end);
+s=s.replace("'reconciliacion-inaccesible.json'", "'regresiones-independientes.json'");
+fs.writeFileSync(path.join(base,'diagnosticar-cierre.cjs'),s);
+console.log('Diagnóstico de cuatro estados y regresiones preparado fuera del proyecto.');

@@ -1,0 +1,54 @@
+{
+  "sdkReal": true,
+  "redSimulada": true,
+  "resultados": [
+    {
+      "modo": "completo",
+      "llamadas": 3,
+      "rechazada": false,
+      "filas": 1001,
+      "totalRealSimulado": 1001
+    },
+    {
+      "modo": "sin-conteo-inicial",
+      "llamadas": 1,
+      "rechazada": false,
+      "filas": 500,
+      "totalRealSimulado": 1001
+    },
+    {
+      "modo": "sin-conteo-segundo",
+      "llamadas": 2,
+      "rechazada": false,
+      "filas": 1000,
+      "totalRealSimulado": 1001
+    },
+    {
+      "modo": "total-desconocido",
+      "llamadas": 1,
+      "rechazada": false,
+      "filas": 500,
+      "totalRealSimulado": 1001
+    },
+    {
+      "modo": "conteo-malformado",
+      "llamadas": 1,
+      "rechazada": false,
+      "filas": 500,
+      "totalRealSimulado": 1001
+    },
+    {
+      "modo": "conteo-negativo",
+      "llamadas": 1,
+      "rechazada": false,
+      "filas": 500,
+      "totalRealSimulado": 1001
+    },
+    {
+      "modo": "tramo-vacio",
+      "llamadas": 2,
+      "rechazada": true,
+      "error": "Categorías incompletas: 500 de 1001"
+    }
+  ]
+}

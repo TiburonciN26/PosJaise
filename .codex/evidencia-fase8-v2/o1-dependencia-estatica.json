@@ -1,0 +1,42 @@
+{
+ "fecha": "2026-10-12T16:22:54.766Z",
+ "etiqueta": "o1",
+ "a": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-a",
+  "meta": "f8v2-a",
+  "citas": "Citas-76JL_qn4.js"
+ },
+ "b": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-b",
+  "meta": "f8v2-b"
+ },
+ "archivosComunesAB": 0,
+ "producto": "TEST E2E Stock 10 a 8 - 20260930",
+ "total": 1,
+ "correctos": 1,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "F8-01 · O1 (límite): falla una dependencia estática de Citas → el aviso persiste aunque haya red, la venta se conserva; recargar solo tras cancelarla abre Citas",
+   "ok": true,
+   "ms": 10406,
+   "detalle": {
+    "dependencia": "ModalRegistroAtencion-FSTkVtWV.js",
+    "apertura": {
+     "errorGlobal": 0,
+     "avisoFallo": 1,
+     "carrito": 1
+    },
+    "trasReintentar": {
+     "avisoFallo": 1,
+     "recargar": 0,
+     "carrito": 1
+    },
+    "pedidosDependencia": 1,
+    "carritoEnVentas": 1,
+    "citasTrasRecargaSegura": true,
+    "bloqueadas": []
+   }
+  }
+ ]
+}

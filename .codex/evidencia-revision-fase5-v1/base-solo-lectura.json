@@ -1,0 +1,32 @@
+{
+  "vistas": [
+    {
+      "nombre": "cupones_gestion",
+      "opciones": [
+        "security_invoker=true"
+      ],
+      "anonSelect": false,
+      "authenticatedSelect": true
+    },
+    {
+      "nombre": "resenas_moderacion",
+      "opciones": [
+        "security_invoker=true"
+      ],
+      "anonSelect": false,
+      "authenticatedSelect": true
+    }
+  ],
+  "conteos": {
+    "pedidos": 429,
+    "promociones": 208,
+    "resenas": 218,
+    "cupones": 3067
+  },
+  "qaF5": {
+    "clientes": 0,
+    "promociones": 0,
+    "cupones": 0,
+    "resenas": 0
+  }
+}

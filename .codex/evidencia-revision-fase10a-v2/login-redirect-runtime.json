@@ -1,0 +1,30 @@
+{
+  "fecha": "2026-10-13T15:19:19.506Z",
+  "cliReal": "scripts/fase10a/medir-vitales-10a.cjs",
+  "exit": 2,
+  "preflight": {
+    "app": "http://127.0.0.1:61382",
+    "api": "http://127.0.0.1:54321",
+    "indexSha256": "039bfbb6b68eaef3cde6ac673bf7a1c616120eb51edb8305aecf2d13ffa054f9",
+    "modulosRevisados": 1,
+    "configuraciones": 1,
+    "cuentas": [
+      "admin",
+      "clienteA"
+    ]
+  },
+  "violaciones": [
+    "redireccion GET http://127.0.0.1:61381/captura"
+  ],
+  "completo": false,
+  "peticionesSenuelo": [
+    {
+      "method": "GET",
+      "path": "/captura",
+      "recibioClaveInventada": true,
+      "recibioCorreoQAFicticio": true
+    }
+  ],
+  "defectoReproducido": true,
+  "limite": "CLI original sin modificar. Contraseña inventada, correos/ids QA Local y dos servidores señuelo de loopback. Solo lecturas de Docker/psql; no autenticación real, alta de usuarios ni red externa. El código 2 se produce después de que el señuelo haya recibido la clave inventada."
+}

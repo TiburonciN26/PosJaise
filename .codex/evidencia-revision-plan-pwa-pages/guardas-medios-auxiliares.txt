@@ -1,0 +1,24 @@
+const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');const assert=require('node:assert/strict');const crypto=require('node:crypto');
+const original=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-actualizacion-pwa-online.cjs','utf8');
+const ini=original.indexOf('const comprobarMedios = async (etiqueta) => {'),fin=original.indexOf('    await page.goto(`${origen}/login`',ini);assert.ok(ini>0&&fin>ini);
+const funcion=original.slice(ini,fin);
+const gate=original.split('\n').find(l=>l.includes("if (entrega === 'pages') { await comprobarMedios('A'); exigirA"));assert.ok(gate);
+const bloque=original.slice(original.indexOf('    if (publicarCmd) {',fin),original.indexOf('    const limite =',fin));assert.ok(bloque.includes('cp.spawnSync'));
+(async()=>{
+const casos=[];
+for(const fallo of [null,'sin-controlador','404-SPA','cabecera-incorrecta','navegacion-SPA','medios-extra-404','fetch-caido']){
+ let evaluaciones=0,publicaciones=0,cerrada=0;const out={pasos:[],publicadoB:false};
+ const paso=(n,ok,d)=>out.pasos.push({n,ok:Boolean(ok),d});
+ const pagina={goto:async(u)=>({status:()=>u.endsWith('/medios/')?(fallo==='navegacion-SPA'?200:404):u.endsWith('/medios-extra')?(fallo==='medios-extra-404'?404:200):200}),evaluate:async()=>{
+  evaluaciones++;if(evaluaciones===1)return fallo!=='sin-controlador';
+  if(evaluaciones===2){if(fallo==='fetch-caido')throw new Error('fetch ficticio caído');return {'/medios/x':{estado:fallo==='404-SPA'?200:404,cache:fallo==='cabecera-incorrecta'?'public':'no-store',nosniff:'nosniff',robots:'noindex',texto:fallo==='404-SPA'?'<html>':'No encontrado',esSpa:fallo==='404-SPA'}};}
+  if(evaluaciones===3)return {texto:fallo==='navegacion-SPA'?'<html>':'No encontrado',spa:fallo==='navegacion-SPA'};
+  return fallo!=='medios-extra-404';
+ },close:async()=>{cerrada++;}};
+ const ctx={ctx:{newPage:async()=>pagina},origen:'https://feat-cloudflare-pages.pos-jaise.pages.dev',out,entrega:'pages',paso,exigirA:(n,ok)=>{paso(n,ok);if(!ok)throw new Error('A inválida ficticia');},publicarCmd:'DOBLE-PUBLICACION-NO-GIT',cp:{spawnSync:()=>{publicaciones++;return{status:0}}},console:{log:()=>{}},esperaMin:0};
+ let error;try{await vm.runInNewContext(`(async()=>{${funcion}\n${gate}\n${bloque}})()`,ctx);}catch(e){error=e.message;}
+ assert.equal(publicaciones,fallo?0:1);assert.equal(cerrada,1);if(fallo)assert.ok(error);
+ casos.push({fallo:fallo||'control-sano',publicacionesFicticias:publicaciones,auxiliarCerrada:cerrada,error:error||null,pasos:out.pasos});
+}
+const result={nota:'Helper, gate A y bloque de publicación extraídos del script actual. Pestaña/HTTP/publicador ficticios; sin navegador, red ni Git reales. La prueba evalúa los fallos de medios, no toda la red del contexto.',sha256Script:crypto.createHash('sha256').update(original).digest('hex'),casos};fs.writeFileSync(path.join(__dirname,'guardas-medios-auxiliares.json'),JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify(casos.map(c=>({fallo:c.fallo,publicacionesFicticias:c.publicacionesFicticias,auxiliarCerrada:c.auxiliarCerrada})),null,2));
+})().catch(e=>{console.error(e);process.exitCode=1});

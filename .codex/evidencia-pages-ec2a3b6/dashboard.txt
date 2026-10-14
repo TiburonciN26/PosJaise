@@ -1,0 +1,48 @@
+
+  - generic: Preview
+  - heading "Deployment details" [level=1]
+  - paragraph: "Deployment ID: 8c3771da-74a9-4ffc-ae2a-c8a217985eb3"
+  - paragraph:
+    - text: "Deployment URL:"
+    - link "https://8c3771da.pos-jaise.pages.dev":
+      - /url: https://8c3771da.pos-jaise.pages.dev
+  - generic: "Aliases:"
+  - list:
+    - link "feat-cloudflare-pages.pos-jaise.pages.dev":
+      - /url: https://feat-cloudflare-pages.pos-jaise.pages.dev
+  - button "Manage deployment":
+    - generic: Manage deployment
+  - generic: "Repository:"
+  - link "TiburonciN26/PosJaise":
+    - /url: https://github.com/TiburonciN26/PosJaise
+    - generic: TiburonciN26/PosJaise
+  - generic: "Branch:"
+  - generic: feat/cloudflare-pages
+  - link "ec2a3b6":
+    - /url: https://github.com/TiburonciN26/PosJaise/commit/ec2a3b64b4fe7ad96e29d43bf9aef61ea2aa1c04
+  - generic: "Fase 3: B (revocación con R2) activa por defecto y verificador de retirada con POP por variante (CB-01) Decisión del usuario: bloquear el enlace antiguo tras el borrado. REVOCAR_CON_R2=true; revocar:false solo para probar la opción A. El verificador de caché añade --contrato=b: calienta m y g, compara el POP de cada comprobación posterior al DELETE con el de su copia caliente y declara INCONCLUSA si no coincide. Pruebas locales: Function 48/48, retirada 13/13. Sin ejecución real todavía. Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  - generic: "Status:"
+  - generic: success
+  - time: 6:48PM October 10, 2026
+  - generic: "Duration:"
+  - generic: 47s
+  - generic "Build settings 7":
+    - generic: ›
+    - generic: Build settings
+    - generic: "7"
+  - link "Build log":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/8c3771da-74a9-4ffc-ae2a-c8a217985eb3
+    - generic: Build log
+  - link "Assets uploaded":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/8c3771da-74a9-4ffc-ae2a-c8a217985eb3/files
+    - generic: Assets uploaded
+  - link "Functions":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/8c3771da-74a9-4ffc-ae2a-c8a217985eb3/functions
+    - generic: Functions
+  - link "Redirects":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/8c3771da-74a9-4ffc-ae2a-c8a217985eb3/redirects
+    - generic: Redirects
+  - link "Headers":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/8c3771da-74a9-4ffc-ae2a-c8a217985eb3/headers
+    - generic: Headers
+  

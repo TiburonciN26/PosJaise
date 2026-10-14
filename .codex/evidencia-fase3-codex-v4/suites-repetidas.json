@@ -1,0 +1,46 @@
+[
+  {
+    "file": "worker-clon/test/probar-unitario.mjs",
+    "exit": 0,
+    "error": null,
+    "tail": [
+      "OK    recolector: cero referencias con objetos existentes → se niega a borrar",
+      "OK    recolector: un borrado que falla se informa y no detiene los demás",
+      "",
+      "54 casos, 0 fallos"
+    ]
+  },
+  {
+    "file": "worker-clon/test/probar-worker.mjs",
+    "exit": 0,
+    "error": null,
+    "tail": [
+      "OK    lectura de un destino no público → 404",
+      "OK    el registro del Worker no contiene tokens, claves ni contraseñas",
+      "",
+      "33 casos, 0 fallos"
+    ]
+  },
+  {
+    "file": "verificar-medios-r2-fase3.cjs",
+    "exit": 0,
+    "error": null,
+    "tail": [
+      "OK    NINGUNA escritura REST/Storage llegó a Supabase (todo lo escribible estaba simulado)",
+      "OK    sin errores de página",
+      "",
+      "24 casos, 0 fallos"
+    ]
+  },
+  {
+    "file": "verificar-modales-fase3.cjs",
+    "exit": 0,
+    "error": null,
+    "tail": [
+      "OK    aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "OK    sin errores de página en todo el recorrido",
+      "",
+      "49 casos, 0 fallos"
+    ]
+  }
+]

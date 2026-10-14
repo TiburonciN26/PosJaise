@@ -1,0 +1,459 @@
+{
+  "fecha": "2026-10-12",
+  "alcance": "24 SELECTs con CTE ficticias sin INSERT; 16 lecturas SQL con claims admin, usando el constructor nuevo y filtros de la solicitud real de leerPedidos serializada por SDK. HTTP de SDK simulado, no repetición de PostgREST autenticado. Cuatro guardas DO ejecutadas contra catálogo simulado dentro de READ ONLY. No se ejecuta lineaBase completa ni rollback/migración.",
+  "mini": [
+    {
+      "estado": null,
+      "termino": null,
+      "key": "null/null",
+      "conteo": 3,
+      "pagina": 3,
+      "ok": true
+    },
+    {
+      "estado": null,
+      "termino": "zzqf7",
+      "key": "null/zzqf7",
+      "conteo": 3,
+      "pagina": 3,
+      "ok": true
+    },
+    {
+      "estado": null,
+      "termino": "zzqf7 maria",
+      "key": "null/zzqf7 maria",
+      "conteo": 2,
+      "pagina": 2,
+      "ok": true
+    },
+    {
+      "estado": null,
+      "termino": "maria",
+      "key": "null/maria",
+      "conteo": 2,
+      "pagina": 2,
+      "ok": true
+    },
+    {
+      "estado": null,
+      "termino": "ana",
+      "key": "null/ana",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": null,
+      "termino": "noexistexyz",
+      "key": "null/noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": null,
+      "key": "ENTREGADO/null",
+      "conteo": 2,
+      "pagina": 2,
+      "ok": true
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "zzqf7",
+      "key": "ENTREGADO/zzqf7",
+      "conteo": 2,
+      "pagina": 2,
+      "ok": true
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "zzqf7 maria",
+      "key": "ENTREGADO/zzqf7 maria",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "maria",
+      "key": "ENTREGADO/maria",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "ana",
+      "key": "ENTREGADO/ana",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "noexistexyz",
+      "key": "ENTREGADO/noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "LISTO",
+      "termino": null,
+      "key": "LISTO/null",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "LISTO",
+      "termino": "zzqf7",
+      "key": "LISTO/zzqf7",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "LISTO",
+      "termino": "zzqf7 maria",
+      "key": "LISTO/zzqf7 maria",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "LISTO",
+      "termino": "maria",
+      "key": "LISTO/maria",
+      "conteo": 1,
+      "pagina": 1,
+      "ok": true
+    },
+    {
+      "estado": "LISTO",
+      "termino": "ana",
+      "key": "LISTO/ana",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "LISTO",
+      "termino": "noexistexyz",
+      "key": "LISTO/noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": null,
+      "key": "PENDIENTE/null",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "zzqf7",
+      "key": "PENDIENTE/zzqf7",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "zzqf7 maria",
+      "key": "PENDIENTE/zzqf7 maria",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "maria",
+      "key": "PENDIENTE/maria",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "ana",
+      "key": "PENDIENTE/ana",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "noexistexyz",
+      "key": "PENDIENTE/noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "ok": true
+    }
+  ],
+  "negative": {
+    "conteoAntiguo": 2,
+    "conteoCorrecto": 1,
+    "detectado": true
+  },
+  "actual": [
+    {
+      "estado": null,
+      "termino": null,
+      "conteo": 429,
+      "pagina": 429,
+      "esperadoDesdeSolicitudApp": 429,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes(nombre,telefono)",
+        "estado": null,
+        "nombre": null,
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": null,
+      "termino": "TEST",
+      "conteo": 429,
+      "pagina": 429,
+      "esperadoDesdeSolicitudApp": 429,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": null,
+        "nombre": "ilike.%TEST%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": null,
+      "termino": "clienteWebTest01",
+      "conteo": 2,
+      "pagina": 2,
+      "esperadoDesdeSolicitudApp": 2,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": null,
+        "nombre": "ilike.%clienteWebTest01%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": null,
+      "termino": "noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "esperadoDesdeSolicitudApp": 0,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": null,
+        "nombre": "ilike.%noexistexyz%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": null,
+      "conteo": 90,
+      "pagina": 90,
+      "esperadoDesdeSolicitudApp": 90,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes(nombre,telefono)",
+        "estado": "eq.ENTREGADO",
+        "nombre": null,
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "TEST",
+      "conteo": 90,
+      "pagina": 90,
+      "esperadoDesdeSolicitudApp": 90,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.ENTREGADO",
+        "nombre": "ilike.%TEST%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "clienteWebTest01",
+      "conteo": 0,
+      "pagina": 0,
+      "esperadoDesdeSolicitudApp": 0,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.ENTREGADO",
+        "nombre": "ilike.%clienteWebTest01%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "ENTREGADO",
+      "termino": "noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "esperadoDesdeSolicitudApp": 0,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.ENTREGADO",
+        "nombre": "ilike.%noexistexyz%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "LISTO",
+      "termino": null,
+      "conteo": 84,
+      "pagina": 84,
+      "esperadoDesdeSolicitudApp": 84,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes(nombre,telefono)",
+        "estado": "eq.LISTO",
+        "nombre": null,
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "LISTO",
+      "termino": "TEST",
+      "conteo": 84,
+      "pagina": 84,
+      "esperadoDesdeSolicitudApp": 84,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.LISTO",
+        "nombre": "ilike.%TEST%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "LISTO",
+      "termino": "clienteWebTest01",
+      "conteo": 0,
+      "pagina": 0,
+      "esperadoDesdeSolicitudApp": 0,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.LISTO",
+        "nombre": "ilike.%clienteWebTest01%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "LISTO",
+      "termino": "noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "esperadoDesdeSolicitudApp": 0,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.LISTO",
+        "nombre": "ilike.%noexistexyz%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": null,
+      "conteo": 44,
+      "pagina": 44,
+      "esperadoDesdeSolicitudApp": 44,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes(nombre,telefono)",
+        "estado": "eq.PENDIENTE",
+        "nombre": null,
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "TEST",
+      "conteo": 44,
+      "pagina": 44,
+      "esperadoDesdeSolicitudApp": 44,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.PENDIENTE",
+        "nombre": "ilike.%TEST%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "clienteWebTest01",
+      "conteo": 1,
+      "pagina": 1,
+      "esperadoDesdeSolicitudApp": 1,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.PENDIENTE",
+        "nombre": "ilike.%clienteWebTest01%",
+        "prefer": "count=exact"
+      }
+    },
+    {
+      "estado": "PENDIENTE",
+      "termino": "noexistexyz",
+      "conteo": 0,
+      "pagina": 0,
+      "esperadoDesdeSolicitudApp": 0,
+      "ok": true,
+      "appSolicitud": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.PENDIENTE",
+        "nombre": "ilike.%noexistexyz%",
+        "prefer": "count=exact"
+      }
+    }
+  ],
+  "guards": [
+    {
+      "policyEnvuelta": false,
+      "idx": 0,
+      "accepted": true,
+      "expected": true,
+      "ok": true
+    },
+    {
+      "policyEnvuelta": true,
+      "idx": 0,
+      "accepted": false,
+      "expected": false,
+      "ok": true
+    },
+    {
+      "policyEnvuelta": false,
+      "idx": 3,
+      "accepted": false,
+      "expected": false,
+      "ok": true
+    },
+    {
+      "policyEnvuelta": true,
+      "idx": 3,
+      "accepted": false,
+      "expected": false,
+      "ok": true
+    }
+  ]
+}

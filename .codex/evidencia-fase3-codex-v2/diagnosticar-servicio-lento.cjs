@@ -1,0 +1,279 @@
+// Fase 3 · pruebas de los MODALES REALES (Producto, Servicio, Galería) con fallos inyectados.
+//
+// Aislamiento:
+//   - Datos de negocio: las llamadas REST de Supabase (productos, servicios, producto_fotos,
+//     servicio_fotos, galeria_web) las responde un simulador en memoria dentro de este script;
+//     NO se escribe ni se lee ninguna tabla remota. Cualquier otra petición REST/Storage a
+//     Supabase se bloquea y hace fallar la prueba.
+//   - Imágenes: Worker de medios local con R2 SIMULADO (wrangler dev --local).
+//   - Supabase de STAGING solo se usa para iniciar sesión con la cuenta QA ADMIN (que el
+//     Worker valida contra /auth/v1/user y es_admin): son lecturas de autenticación.
+//   - Los modales se montan con el arnés tests/harness/modales-fase3.jsx (solo desarrollo).
+//
+//   node scripts/verificar-modales-fase3.cjs
+const { spawn, execSync } = require('node:child_process')
+const fs = require('node:fs')
+const path = require('node:path')
+const { chromium } = require('C:/WedJaiseReact/node_modules/playwright')
+
+const raiz = 'C:/WedJaiseReact'
+const carpetaWorker = "C:\\Users\\jdeos\\.codex\\visualizations\\2026\\10\\09\\01a11ea8-be2a-7611-8e67-4ded5cca3f25\\fase3-verificacion-v2\\worker-clon"
+const estado = path.join(carpetaWorker, ".estado-5522")
+const borrarOriginal = fs.rmSync; fs.rmSync=()=>{}
+const PUERTO_W = 5552
+const PUERTO_V = 5562
+const API = `http://127.0.0.1:${PUERTO_W}`
+const ORIGEN = `http://localhost:${PUERTO_V}`
+const REF_STAGING = 'tqkdtojnhgykmcbvwdmz'
+
+function leerEnv(ruta) {
+  const salida = {}
+  for (const linea of fs.readFileSync(ruta, 'utf8').split(/\r?\n/)) {
+    const m = linea.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/)
+    if (m) salida[m[1]] = m[2].trim().replace(/^["']|["']$/g, '')
+  }
+  return salida
+}
+const env = leerEnv(path.join(raiz, '.env.staging.local'))
+if (!env.VITE_SUPABASE_URL.includes(REF_STAGING)) throw new Error('Debe ser el Supabase de staging')
+
+const casos = []
+const caso = (nombre, ok, detalle = {}) => {
+  casos.push({ nombre, ...detalle, ok: Boolean(ok) })
+  console.log(`${ok ? 'OK   ' : 'FALLA'} ${nombre}${ok ? '' : ' ' + JSON.stringify(detalle)}`)
+}
+const matar = (p) => { try { execSync(`taskkill /pid ${p.pid} /T /F`, { stdio: 'ignore' }) } catch {} }
+const espera = (ms) => new Promise((r) => setTimeout(r, ms))
+
+async function esperarUrl(url, estadoEsperado) {
+  for (let i = 0; i < 90; i += 1) {
+    try { const r = await fetch(url); if (!estadoEsperado || r.status === estadoEsperado) return } catch {}
+    await espera(1000)
+  }
+  throw new Error('No arrancó ' + url)
+}
+
+// ---------------- simulador de PostgREST en memoria ----------------
+function crearSimulador() {
+  const db = { productos: [], productos_vista: [], servicios: [], producto_fotos: [], servicio_fotos: [], galeria_web: [] }
+  const fallas = []
+  const registro = { noSimuladas: [], llamadas: [] }
+  let contador = 0
+
+  const cabeceras = (extra = {}) => ({
+    'access-control-allow-origin': ORIGEN,
+    'access-control-allow-headers': '*',
+    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    'access-control-expose-headers': '*',
+    'content-type': 'application/json',
+    ...extra,
+  })
+
+  function filtrar(filas, parametros) {
+    let resultado = filas
+    for (const [clave, valor] of parametros) {
+      if (['select', 'order', 'limit', 'offset', 'columns'].includes(clave)) continue
+      if (valor.startsWith('eq.')) resultado = resultado.filter((f) => String(f[clave]) === valor.slice(3))
+      else if (valor.startsWith('in.(')) {
+        const lista = valor.slice(4, -1).split(',').map((v) => v.replace(/^"|"$/g, ''))
+        resultado = resultado.filter((f) => lista.includes(String(f[clave])))
+      }
+    }
+    return resultado
+  }
+
+  async function manejar(route) {
+    const peticion = route.request()
+    const url = new URL(peticion.url())
+    const tabla = url.pathname.split('/').pop()
+    const metodo = peticion.method()
+    if (metodo === 'OPTIONS') return route.fulfill({ status: 204, headers: cabeceras() })
+    if (!db[tabla]) {
+      registro.noSimuladas.push(`${metodo} ${url.pathname}`)
+      return route.fulfill({ status: 404, headers: cabeceras(), body: '{"message":"no simulada"}' })
+    }
+    registro.llamadas.push(`${metodo} ${tabla}`)
+
+    const falla = fallas.find((f) => f.tabla === tabla && f.metodo === metodo && f.quedan > 0)
+    if (falla) {
+      falla.quedan -= 1
+      if (falla.silencioso) return route.fulfill({ status: 200, headers: cabeceras(), body: '[]' }) // RLS: 0 filas, sin error
+      return route.fulfill({ status: falla.status ?? 403, headers: cabeceras(), body: JSON.stringify(falla.body ?? { code: '42501', message: 'permiso denegado (simulado)' }) })
+    }
+
+    const unico = (peticion.headers().accept ?? '').includes('vnd.pgrst.object')
+    const responder = (filas, estadoHttp = 200) =>
+      unico
+        ? filas.length === 1
+          ? route.fulfill({ status: estadoHttp, headers: cabeceras(), body: JSON.stringify(filas[0]) })
+          : route.fulfill({ status: 406, headers: cabeceras(), body: JSON.stringify({ code: 'PGRST116', message: 'sin filas' }) })
+        : route.fulfill({ status: estadoHttp, headers: cabeceras(), body: JSON.stringify(filas) })
+
+    if (metodo === 'GET') {
+      const filas = filtrar(db[tabla], url.searchParams).slice().sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+      return responder(filas)
+    }
+    if (metodo === 'POST') {
+      const cuerpo = JSON.parse(peticion.postData() ?? '{}')
+      const nuevas = (Array.isArray(cuerpo) ? cuerpo : [cuerpo]).map((f) => ({ id: f.id ?? `id-${(contador += 1)}`, ...f }))
+      db[tabla].push(...nuevas)
+      return responder(nuevas, 201)
+    }
+    if (metodo === 'PATCH') {
+      const cuerpo = JSON.parse(peticion.postData() ?? '{}')
+      const afectadas = filtrar(db[tabla], url.searchParams)
+      afectadas.forEach((f) => Object.assign(f, cuerpo))
+      return responder(afectadas)
+    }
+    if (metodo === 'DELETE') {
+      const afectadas = filtrar(db[tabla], url.searchParams)
+      db[tabla] = db[tabla].filter((f) => !afectadas.includes(f))
+      return responder(afectadas)
+    }
+    return route.fulfill({ status: 405, headers: cabeceras(), body: '{}' })
+  }
+
+  return {
+    db,
+    registro,
+    manejar,
+    reiniciar() { for (const k of Object.keys(db)) db[k] = []; fallas.length = 0 },
+    fallar(tabla, metodo, opciones = {}) { fallas.push({ tabla, metodo, quedan: opciones.veces ?? 1, ...opciones }) },
+    limpiarFallas() { fallas.length = 0 },
+    sembrar(tabla, filas) { db[tabla].push(...filas) },
+  }
+}
+
+;(async () => {
+  try { fs.rmSync(estado, { recursive: true, force: true }) } catch {}
+  fs.mkdirSync(estado, { recursive: true })
+  fs.writeFileSync(path.join(carpetaWorker, '.dev.vars'), `SUPABASE_ANON_KEY=${env.VITE_SUPABASE_ANON_KEY}\n`)
+
+  const worker = spawn(process.execPath, ['C:/WedJaiseReact/cloudflare/medios-worker/node_modules/wrangler/bin/wrangler.js', 'dev', '--local', '--port', String(PUERTO_W), '--persist-to', estado, '--var', 'SERVIR_LECTURA:1', '--var', `ORIGENES_PERMITIDOS:${ORIGEN}`], { cwd: carpetaWorker, shell: false, stdio: 'ignore' })
+  const vite = spawn(process.execPath, ['C:/WedJaiseReact/node_modules/vite/bin/vite.js', '--configLoader', 'native', '--config', "C:\\Users\\jdeos\\.codex\\visualizations\\2026\\10\\09\\01a11ea8-be2a-7611-8e67-4ded5cca3f25\\fase3-verificacion-v2\\vite-diagnostico.mjs", '--port', String(PUERTO_V), '--strictPort', '--host', 'localhost'], {
+    cwd: raiz, shell: false, stdio: 'ignore',
+    env: { ...process.env, VITE_SUPABASE_URL: env.VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY: env.VITE_SUPABASE_ANON_KEY, VITE_CULQI_PUBLIC_KEY: '', VITE_MEDIOS_PROVEEDOR: 'r2', VITE_MEDIOS_API_URL: API, VITE_MEDIOS_PUBLIC_URL: API },
+  })
+  const navegador = await chromium.launch()
+
+  try {
+    await esperarUrl(`${API}/ping`, 404)
+    await esperarUrl(`${ORIGEN}/tests/harness/modales-fase3.html`)
+
+    // Token de administrador QA (solo autenticación) para sembrar/inspeccionar R2 desde Node.
+    const login = await fetch(`${env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: env.VITE_SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: env.QA_ADMIN_EMAIL, password: env.QA_ADMIN_PASSWORD }) })
+    const token = (await login.json()).access_token
+
+    const sim = crearSimulador()
+    const ctx = await navegador.newContext()
+    const page = await ctx.newPage()
+    const errores = []
+    page.on('pageerror', (e) => { errores.push(String(e)); if (process.env.DEPURAR) console.log('pageerror', String(e)) })
+    if (process.env.DEPURAR) page.on('console', (m) => m.type() === 'error' && console.log('consola:', m.text().slice(0, 300)))
+    const supabaseNoAuth = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.hostname.endsWith('supabase.co') && !u.pathname.startsWith('/auth/') && !u.pathname.startsWith('/rest/v1/')) supabaseNoAuth.push(`${r.method()} ${u.pathname}`)
+    })
+    await page.route(/supabase\.co\/rest\/v1\//, sim.manejar)
+
+    await page.goto(`${ORIGEN}/tests/harness/modales-fase3.html`, { waitUntil: 'networkidle' })
+    await page.evaluate(async ([email, password]) => {
+      const { error } = await window.__supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+    }, [env.QA_ADMIN_EMAIL, env.QA_ADMIN_PASSWORD])
+
+    // ---------- utilidades ----------
+    const generar = (lado) => page.evaluate(async (l) => {
+      const c = document.createElement('canvas'); c.width = l; c.height = l
+      const x = c.getContext('2d'); const g = x.createLinearGradient(0, 0, l, l)
+      g.addColorStop(0, '#c9a24b'); g.addColorStop(1, '#2b2b2b'); x.fillStyle = g; x.fillRect(0, 0, l, l)
+      const webp = async (lado2) => { const d = document.createElement('canvas'); d.width = lado2; d.height = lado2; d.getContext('2d').drawImage(c, 0, 0, lado2, lado2); const b = await new Promise((o) => d.toBlob(o, 'image/webp', 0.8)); return Array.from(new Uint8Array(await b.arrayBuffer())) }
+      const png = await new Promise((o) => c.toBlob(o, 'image/png'))
+      return { png: Array.from(new Uint8Array(await png.arrayBuffer())), m: await webp(320), g: await webp(600) }
+    }, lado)
+    const imagen = await generar(800)
+    const PNG = Buffer.from(imagen.png)
+
+    async function sembrarR2(destino) {
+      const id = crypto.randomUUID()
+      for (const [variante, bytes] of [['m', imagen.m], ['g', imagen.g]]) {
+        const r = await fetch(`${API}/v1/medios/${destino}/${id}/${variante}`, { method: 'PUT', headers: { Authorization: `Bearer ${token}`, Origin: ORIGEN, 'Content-Type': 'image/webp' }, body: Uint8Array.from(bytes) })
+        if (r.status !== 201) throw new Error('No se pudo sembrar ' + r.status)
+      }
+      return `r2:${destino}/${id}`
+    }
+    async function inventario() {
+      const grupos = new Set()
+      for (const destino of ['fotos-productos', 'fotos-servicios', 'fotos-galeria']) {
+        const r = await fetch(`${API}/v1/inventario/${destino}`, { headers: { Authorization: `Bearer ${token}`, Origin: ORIGEN } })
+        for (const o of (await r.json()).objetos) grupos.add(o.clave.split('/').slice(0, 2).join('/'))
+      }
+      return grupos
+    }
+    const grupoDe = (ref) => ref.replace(/^r2:/, '')
+    const textoModal = () => page.locator('form').innerText()
+    const abrir = async (tipo, props) => {
+      await page.evaluate(([t, p]) => window.__montar(t, p), [tipo, props])
+      await page.waitForSelector('form')
+      await espera(300)
+    }
+    const eligir = async (indice, buffer = PNG) => {
+      await page.locator('input[type=file]').nth(indice).setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer })
+      await page.waitForFunction(() => !document.body.innerText.includes('Procesando'), null, { timeout: 15000 })
+      await espera(200)
+    }
+    const guardar = async () => {
+      await page.locator('form button[type=submit]').click()
+      await espera(300)
+      await page.waitForFunction(() => !/Guardando\.\.\./.test(document.body.innerText), null, { timeout: 60000 })
+      await espera(900) // los borrados «best-effort» del modal no se esperan
+    }
+    const eventos = () => page.evaluate(() => window.__eventos)
+    const guardados = async () => (await eventos()).filter((e) => e.tipo === 'guardado').length
+    const abortarDesdeSegundo = async (patron) => {
+      const vistos = []
+      await page.route(patron, (ruta) => {
+        const id = ruta.request().url().split('/')[6]
+        if (!vistos.includes(id)) vistos.push(id)
+        return vistos.indexOf(id) >= 1 ? ruta.abort('failed') : ruta.continue()
+      })
+    }
+
+    const producto = (extra = {}) => ({ id: 'p1', nombre: 'Producto QA ficticio', codigo_barras: 'QA-0001', categoria: 'Cabello', precio: 50, costo: 20, stock_actual: 5, ...extra })
+    const servicio = (extra = {}) => ({ id: 's1', nombre: 'Servicio QA ficticio', categoria: 'Corte', precio: 40, duracion_min: 30, activo: true, ...extra })
+
+
+    sim.reiniciar();
+    sim.sembrar('servicios',[{id:'s1',foto_url:null,nombre:'Servicio QA ficticio',precio:40}]);
+    await abrir('servicio',{modo:'web',servicio:servicio({foto_url:null}),categoriasExistentes:['Corte']});
+    await eligir(1);
+    let liberar;const gate=new Promise(r=>liberar=r);let iniciadas=0;const ids=[];
+    const patron=API+'/v1/medios/fotos-servicios/**';
+    await page.route(patron,async route=>{if(route.request().method()==='PUT'){iniciadas++;ids.push(route.request().url());await gate;}await route.continue();});
+    const submit=page.locator('form button[type=submit]');await submit.click();
+    for(let i=0;i<100&&iniciadas===0;i++)await espera(100);
+    const enabled=await submit.isEnabled();const beforeRows=sim.db.servicio_fotos.length;
+    if(enabled)await submit.click();await espera(600);const beforeRelease=iniciadas;liberar();
+    for(let i=0;i<150&&(await guardados())<(enabled?2:1);i++)await espera(100);
+    await page.unroute(patron);const rows=sim.db.servicio_fotos.map(x=>({id:x.id,foto_url:x.foto_url}));
+    caso('SERVICIO lento: Guardar debe permanecer bloqueado hasta terminar la galeria y no duplicar filas',!enabled&&rows.length===1,{enabledDuringUpload:enabled,rowsBeforeRelease:beforeRows,putsBeforeRelease:beforeRelease,rows,guardados:await guardados(),iniciadas});
+    // ---------- aislamiento ----------
+    caso('aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase', sim.registro.noSimuladas.length === 0 && supabaseNoAuth.length === 0, { noSimuladas: sim.registro.noSimuladas, supabaseNoAuth })
+    caso('sin errores de página en todo el recorrido', errores.length === 0, { errores })
+  } finally {
+    await navegador.close().catch(() => {})
+    matar(vite)
+    matar(worker)
+    fs.rmSync(path.join(carpetaWorker, '.dev.vars'), { force: true })
+    await espera(1500)
+    try { fs.rmSync(estado, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }) } catch {}
+  }
+
+  const fallos = casos.filter((c) => !c.ok)
+  const carpeta = "C:\\Users\\jdeos\\.codex\\visualizations\\2026\\10\\09\\01a11ea8-be2a-7611-8e67-4ded5cca3f25\\fase3-verificacion-v2"
+  fs.mkdirSync(carpeta, { recursive: true })
+  fs.writeFileSync(path.join(carpeta, 'servicio-lento.json'), JSON.stringify({ fecha: new Date().toISOString(), entorno: 'Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión', total: casos.length, fallos: fallos.length, casos }, null, 2))
+  console.log(`\n${casos.length} casos, ${fallos.length} fallos`)
+  process.exit(fallos.length ? 1 : 0)
+})().catch((e) => { console.error(e); try { fs.rmSync(path.join(carpetaWorker, '.dev.vars'), { force: true }) } catch {}; process.exit(2) })

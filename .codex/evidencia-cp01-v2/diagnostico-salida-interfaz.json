@@ -1,0 +1,13 @@
+{
+  "tipo": "Sin red ni .env real: preflight incorrecto del verificador UI",
+  "sha256Script": "537d96f1fbdee0ada054cf927bbd9b206680fbaed44ac1f98d2917337bbfe530",
+  "exitCode": 2,
+  "informesGenerados": 0,
+  "llamadasSimuladas": [
+    {
+      "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/",
+      "method": "GET"
+    }
+  ],
+  "nota": "El aborto de UI ocurre antes de la carpeta/informe y termina en el catch exterior. --salida se usa para las corridas que alcanzan el recorrido, no genera informe ante este aborto."
+}

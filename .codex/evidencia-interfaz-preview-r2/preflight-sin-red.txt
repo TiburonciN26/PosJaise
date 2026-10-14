@@ -1,0 +1,11 @@
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const source=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-interfaz-r2-preview.cjs','utf8');
+async function probar(alias,supa){
+  const requests=[];let threw=null;
+  const fakeEnv=`VITE_SUPABASE_URL=${supa}\nVITE_SUPABASE_ANON_KEY=clave-ficticia\nQA_ADMIN_EMAIL=qa-admin@staging.test\nQA_ADMIN_PASSWORD=clave-qa-ficticia\n`;
+  const sandbox={__dirname:'C:/WedJaiseReact/scripts',require:name=>{if(name==='node:fs')return{readFileSync:()=>fakeEnv};if(name==='node:path')return path;if(name==='playwright')return{chromium:{launch:async()=>{throw new Error('CORTE_QA');}}};throw new Error('Modulo no previsto');},process:{argv:['node','verificador',`--alias=${alias}`],exitCode:0},console:{log(){},error(){}},URL,Buffer,setTimeout,fetch:async(url)=>{requests.push({host:new URL(url).hostname,path:new URL(url).pathname});throw new Error('CORTE_SIN_RED');}};
+  try{vm.runInNewContext(source,sandbox);}catch(e){threw=e.message;}
+  await new Promise(resolve=>setTimeout(resolve,10));
+  return{alias,supabase:supa,peticionesInterceptadas:requests,abortoAntesDeRed:requests.length===0,errorSincrono:threw,nota:'Fetch y filesystem sustituidos; ninguna petición real ni escritura.'};
+}
+(async()=>{const casos=[await probar('https://sitio-ajeno.example','https://tqkdtojnhgykmcbvwdmz.supabase.co'),await probar('https://feat-cloudflare-pages.pos-jaise.pages.dev','https://destino-ajeno.example/?ref=tqkdtojnhgykmcbvwdmz')];fs.writeFileSync(path.join(__dirname,'preflight-sin-red.json'),JSON.stringify({fecha:new Date().toISOString(),casos},null,2));console.log(JSON.stringify(casos,null,2));})();

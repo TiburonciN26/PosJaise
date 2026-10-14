@@ -1,0 +1,29 @@
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+const require=createRequire(import.meta.url);
+const G=require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs');
+const {clasificarClave}=await import(pathToFileURL('C:/WedJaiseReact/scripts/lib/entornos-supabase.mjs').href);
+const p={alias:G.ALIAS_APROBADO,buildId:'b36e7495',supabaseUrl:`https://${G.REF_STAGING}.supabase.co`,claveAnon:'sb_publishable_'+ 'x'.repeat(30),emails:['admin@staging.test','cliente@staging.test'],clasificarClave};
+const casos=[];
+for(const [nombre,origen] of [['alias-nuevo',G.ALIAS_APROBADO],['inmutable-anterior','https://4d334b5d.pos-jaise.pages.dev']]){
+  const memo=new Map();const solicitudes=[];
+  async function pedir(url){
+    if(!url.startsWith(G.ALIAS_APROBADO+'/'))throw new Error('origen no aprobado');
+    if(memo.has(url))return memo.get(url);
+    const efectiva=origen+url.slice(G.ALIAS_APROBADO.length);
+    const task=(async()=>{const r=await fetch(efectiva,{redirect:'error'});if(!r.ok)throw new Error('HTTP '+r.status);solicitudes.push({ruta:new URL(url).pathname,estado:r.status});return r.text();})();
+    memo.set(url,task);return task;
+  }
+  for(const entrega of ['pages','r2dev']){
+    let resultado,error;
+    try{resultado=await G.preflight({...p,entrega},pedir);}catch(e){error=e.message;}
+    casos.push({nombre,origen,entrega,aceptada:!!resultado,resultado,error,solicitudes:solicitudes.length,swSha256:createHash('sha256').update(await pedir(G.ALIAS_APROBADO+'/sw.js')).digest('hex')});
+  }
+}
+const esperado=[true,false,false,true];
+if(casos.some((c,i)=>c.aceptada!==esperado[i]))throw new Error('Resultado distinto del esperado');
+const informe={fecha:new Date().toISOString(),nota:'GET públicos exclusivamente. Sin .env, sin login, sin cookies, sin PUT/DELETE/POST. Para el inmutable anterior se conserva el alias validado en p y el adaptador GET lee las mismas rutas de ese deployment; no se cambia la guarda.',casos};
+fs.writeFileSync(new URL('./preflight-publico.json',import.meta.url),JSON.stringify(informe,null,2),{flag:'wx'});
+console.log(JSON.stringify(informe,null,2));

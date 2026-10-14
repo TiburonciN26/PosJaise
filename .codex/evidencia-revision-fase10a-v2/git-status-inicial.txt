@@ -1,0 +1,352 @@
+ M .oxlintrc.json
+ M cloudflare/_headers
+ M implementacionesWed.md
+ M index.html
+ M scripts/build-cloudflare.mjs
+ M scripts/lib/huerfanos-medios.mjs
+ M scripts/medios-huerfanos.mjs
+ M src/App.jsx
+ M src/components/BarraCatalogo.jsx
+ M src/components/BarraTuCarritoFlotante.jsx
+ M src/components/BarraTuCitaFlotante.jsx
+ M src/components/CampoColapsable.jsx
+ M src/components/FondoNivel.jsx
+ M src/components/PestanasCacheadas.jsx
+ M src/components/TarjetaProductoCliente.jsx
+ M src/components/TarjetaPuntos.jsx
+ M src/components/TarjetaServicioCliente.jsx
+ M src/config/paginasCliente.js
+ M src/context/AuthContext.jsx
+ M src/context/EstadoNegocioContext.jsx
+ M src/context/PaginaActivaContext.jsx
+ M src/hooks/useCerrarConEscape.js
+ M src/hooks/useTextoEscritura.js
+ M src/index.css
+ M src/main.jsx
+ M src/pages/Asistentes.jsx
+ M src/pages/Auditoria.jsx
+ M src/pages/CatalogoWeb.jsx
+ M src/pages/Citas.jsx
+ M src/pages/Clientes.jsx
+ M src/pages/ContactoWeb.jsx
+ M src/pages/Dashboard.jsx
+ M src/pages/Deudas.jsx
+ M src/pages/Estadisticas.jsx
+ M src/pages/FidelizacionWeb.jsx
+ M src/pages/Gastos.jsx
+ M src/pages/Historial.jsx
+ M src/pages/Inventario.jsx
+ M src/pages/LibroReclamacionesWeb.jsx
+ M src/pages/MiPanel.jsx
+ M src/pages/Mobiliario.jsx
+ M src/pages/PedidosWeb.jsx
+ M src/pages/Porcentajes.jsx
+ M src/pages/PortalCliente.jsx
+ M src/pages/Promociones.jsx
+ M src/pages/PuntosWeb.jsx
+ M src/pages/RecompensasWeb.jsx
+ M src/pages/ReferidosWeb.jsx
+ M src/pages/ResenasWeb.jsx
+ M src/pages/Servicios.jsx
+ M src/pages/Ventas.jsx
+ M src/pages/cliente/InicioCliente.jsx
+ M src/pages/cliente/NosotrosCliente.jsx
+ M src/pages/cliente/ProductosCliente.jsx
+ M src/pages/cliente/RecompensasCliente.jsx
+ M src/pages/cliente/ServiciosCliente.jsx
+ M src/pages/cliente/recompensas/useRecursosRecompensas.js
+ M vite.config.js
+?? .codex/ALCANCE-FASE4-CATALOGOS-ESCALABLES.md
+?? .codex/AUDITORIA-RENDIMIENTO.md
+?? .codex/CIERRE-FASE5-ACL-Y-PAQUETE.md
+?? .codex/CIERRE-FASE7-OBSERVACIONES.md
+?? .codex/CIERRE-FASE8-OBSERVACIONES.md
+?? .codex/CIERRE-FASE9-OBSERVACIONES.md
+?? .codex/DISENO-MIGRACION-MEDIOS-FASE9.md
+?? .codex/ENTREGA-FASE10A-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE10A-REGRESION-INTEGRADA.md
+?? .codex/ENTREGA-FASE4-CATALOGOS-ESCALABLES.md
+?? .codex/ENTREGA-FASE4-CORRECCIONES-V1.md
+?? .codex/ENTREGA-FASE4-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE4-CORRECCIONES-V3.md
+?? .codex/ENTREGA-FASE5-CORRECCIONES-V1.md
+?? .codex/ENTREGA-FASE5-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE5-LISTAS-ADMIN.md
+?? .codex/ENTREGA-FASE6-CORRECCIONES-V1.md
+?? .codex/ENTREGA-FASE6-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE6-SESIONES-LARGAS.md
+?? .codex/ENTREGA-FASE7-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE7-SQL.md
+?? .codex/ENTREGA-FASE8-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE8-INICIO-PWA.md
+?? .codex/ENTREGA-FASE9-CORRECCIONES-V2.1.md
+?? .codex/ENTREGA-FASE9-CORRECCIONES-V2.md
+?? .codex/ENTREGA-FASE9-MEDIOS-Y-CAMBIO-PUBLICO.md
+?? .codex/ESTADO-FASE3-CLI-Y-PREPARACION-FASE4.md
+?? .codex/ESTUDIO-PURGA-MEDIOS-PAGES.md
+?? .codex/FASES-RENDIMIENTO-CLOUDFLARE.md
+?? .codex/INVENTARIO-MEDIOS-FASE9.md
+?? .codex/LECTURA-CPU-CUOTA-B-Y-ALCANCE-CLI.md
+?? .codex/PAGES-CREADO-PARA-CLAUDE.md
+?? .codex/PAGES-GIT-CREADO-PARA-CLAUDE.md
+?? .codex/PAGES-PREVIEW-MEDIOS-FUNCTIONS-CONFIGURADO.md
+?? .codex/PAGES-PREVIEW-R2-CONFIGURADO.md
+?? .codex/PAGES-PREVIEW-VARIABLES-PARA-CODEX.md
+?? .codex/PAGES-PUBLICADO-PARA-CLAUDE.md
+?? .codex/PAQUETE-FASE4-ARCHIVOS.md
+?? .codex/PAQUETE-FASE5-ARCHIVOS.md
+?? .codex/PAQUETE-FASE6-ARCHIVOS.md
+?? .codex/PENDIENTES-CONSOLIDADOS-FASE10A.md
+?? .codex/PLAN-CAMBIO-PUBLICO-FASE9.md
+?? .codex/PLAN-VALIDACION-STAGING-FASE10.md
+?? .codex/POLITICA-VIDEO-FASE8.md
+?? .codex/R2-BUCKET-STAGING-CREADO.md
+?? .codex/R2-SIN-DOMINIO-PROPIO-Y-B0A83A2.md
+?? .codex/R2-URL-PRUEBAS-HABILITADA.md
+?? .codex/REVISION-B-Y-VERIFICADOR-RETIRADA.md
+?? .codex/REVISION-CACHE-UI-D16D816.md
+?? .codex/REVISION-CACHE-UI-PAGES-B36E7495.md
+?? .codex/REVISION-CARGA-6929C61-59D8CB.md
+?? .codex/REVISION-CARGA-V2-Y-LECTURA-MIXTA.md
+?? .codex/REVISION-CB-01-RETIRADA-B-V2.md
+?? .codex/REVISION-CONTRATO-RETIRADA-MEDIOS-V2.md
+?? .codex/REVISION-CONTRATO-RETIRADA-MEDIOS.md
+?? .codex/REVISION-CORRIDA-C1693734.md
+?? .codex/REVISION-CP-01-CACHE-PAGES-V2.md
+?? .codex/REVISION-DISENO-MEDIOS-PAGES-FUNCTIONS-V2.md
+?? .codex/REVISION-DISENO-MEDIOS-PAGES-FUNCTIONS.md
+?? .codex/REVISION-ENSAYO-CARGA-MEDIOS.md
+?? .codex/REVISION-ENSAYO-ROLLBACK-GALERIA-B.md
+?? .codex/REVISION-FASE10A-REGRESION-INTEGRADA-V1.md
+?? .codex/REVISION-FASE4-CATALOGOS-V1.md
+?? .codex/REVISION-FASE4-CATALOGOS-V2.md
+?? .codex/REVISION-FASE4-CATALOGOS-V3.md
+?? .codex/REVISION-FASE5-LISTAS-ADMIN-V1.md
+?? .codex/REVISION-FASE5-LISTAS-ADMIN-V2.md
+?? .codex/REVISION-FASE6-SESIONES-LARGAS-V1.md
+?? .codex/REVISION-FASE6-SESIONES-LARGAS-V2.md
+?? .codex/REVISION-FASE7-SQL-V1.md
+?? .codex/REVISION-FASE8-CORRECCIONES-V2.md
+?? .codex/REVISION-FASE8-INICIO-PWA-V1.md
+?? .codex/REVISION-FASE9-MEDIOS-V1.md
+?? .codex/REVISION-FASE9-MEDIOS-V2.1.md
+?? .codex/REVISION-FASE9-MEDIOS-V2.md
+?? .codex/REVISION-IMPLEMENTACION-MEDIOS-PAGES-FUNCTIONS-V2.md
+?? .codex/REVISION-IMPLEMENTACION-MEDIOS-PAGES-FUNCTIONS.md
+?? .codex/REVISION-INTERFAZ-6929C61-147B24.md
+?? .codex/REVISION-INTERFAZ-PREVIEW-R2-V2.md
+?? .codex/REVISION-INTERFAZ-PREVIEW-R2-V3.md
+?? .codex/REVISION-INTERFAZ-PREVIEW-R2-V4.md
+?? .codex/REVISION-INTERFAZ-PREVIEW-R2.md
+?? .codex/REVISION-IP-P1-Y-PRUEBA-CACHE-PAGES.md
+?? .codex/REVISION-LECTURA-MIXTA-V3-Y-RECOLECTOR.md
+?? .codex/REVISION-LECTURA-MIXTA-V4-Y-PAGES-6929C61.md
+?? .codex/REVISION-PAGES-08A740E.md
+?? .codex/REVISION-PAGES-9BB1330.md
+?? .codex/REVISION-PAGES-B36E749-Y-CONFIGURACION-PREVIEW.md
+?? .codex/REVISION-PAGES-C169373.md
+?? .codex/REVISION-PAGES-D16D816.md
+?? .codex/REVISION-PAGES-EC2A3B6.md
+?? .codex/REVISION-PAQUETE-CONTRATO-RETIRADA.md
+?? .codex/REVISION-PAQUETE-MIXTO-V3-Y-ML03-BUNDLE.md
+?? .codex/REVISION-PLAN-PWA-PAGES-MEDIOS.md
+?? .codex/REVISION-PWA-PAGES-7EE3C78.md
+?? .codex/REVISION-PWA-R2-E229396.md
+?? .codex/REVISION-R2-REAL-Y-COMMIT-FASE-3.md
+?? .codex/REVISION-RECOLECTOR-6929C61-73159D.md
+?? .codex/REVISION-ROLLBACK-GALERIA-PAGES-V2.md
+?? .codex/REVISION-ROLLBACK-GALERIA-PAGES-V3.md
+?? .codex/REVISION-ROLLBACK-GALERIA-PAGES.md
+?? .codex/REVISION-SERVICIO-B6BB1F.md
+?? .codex/REVISION-SERVICIO-F8A486.md
+?? .codex/REVISION-VERIFICADOR-ML03-BUNDLE-V2.md
+?? .codex/REVISION-Y-PLAN-PENDIENTES-FASE3-V2.md
+?? .codex/REVISION-Y-PLAN-PENDIENTES-FASE3.md
+?? .codex/VERIFICACION-FASE-2B-V2.md
+?? .codex/VERIFICACION-FASE-2B-V3-1.md
+?? .codex/VERIFICACION-FASE-2B-V3.md
+?? .codex/VERIFICACION-FASE-3-V2.md
+?? .codex/VERIFICACION-FASE-3-V3.md
+?? .codex/VERIFICACION-FASE-3-V4.md
+?? .codex/VERIFICACION-FASE-3-V5.md
+?? .codex/VERIFICACION-FASE-3.md
+?? .codex/VERIFICACION-FASE4-CATALOGOS-V4.md
+?? .codex/VERIFICACION-FASE5-LISTAS-ADMIN-V3.md
+?? .codex/VERIFICACION-FASE6-SESIONES-LARGAS-V3.md
+?? .codex/VERIFICACION-FASE7-SQL-V2.md
+?? .codex/VERIFICACION-FORMAL-FASE-2.md
+?? .codex/VERIFICACION-O1-ONLINE.md
+?? .codex/VERIFICACION-PREPARACION-FASE-2B.md
+?? .codex/WORKER-MEDIOS-STAGING-PUBLICADO.md
+?? .codex/artefacto-lectura-mixta-v2/
+?? .codex/artefacto-lectura-mixta-v3/
+?? .codex/artefacto-lectura-mixta/
+?? .codex/evidencia-cache-d16d816/
+?? .codex/evidencia-carga-6929c61/
+?? .codex/evidencia-carga-mixta-v2/
+?? .codex/evidencia-cb01-v2/
+?? .codex/evidencia-cierre-fase3-cli/
+?? .codex/evidencia-cierre-fase5-acl/
+?? .codex/evidencia-contrato-retirada-v2/
+?? .codex/evidencia-contrato-retirada/
+?? .codex/evidencia-corrida-3f2497/
+?? .codex/evidencia-cp01-v2/
+?? .codex/evidencia-ejecucion-cache-ui/
+?? .codex/evidencia-fase10a-v2/
+?? .codex/evidencia-fase10a/
+?? .codex/evidencia-fase3-codex-v2/
+?? .codex/evidencia-fase3-codex-v3/
+?? .codex/evidencia-fase3-codex-v4/
+?? .codex/evidencia-fase3-codex-v5/
+?? .codex/evidencia-fase3-codex/
+?? .codex/evidencia-fase4/
+?? .codex/evidencia-fase5/
+?? .codex/evidencia-fase6/
+?? .codex/evidencia-fase7/
+?? .codex/evidencia-fase8-v2/
+?? .codex/evidencia-fase8/
+?? .codex/evidencia-fase9-v2.1/
+?? .codex/evidencia-fase9-v2/
+?? .codex/evidencia-fase9/
+?? .codex/evidencia-implementacion-medios-pages-v2/
+?? .codex/evidencia-implementacion-medios-pages/
+?? .codex/evidencia-interfaz-6929c61/
+?? .codex/evidencia-interfaz-d16d816/
+?? .codex/evidencia-interfaz-preview-r2-v2/
+?? .codex/evidencia-interfaz-preview-r2-v3/
+?? .codex/evidencia-interfaz-preview-r2-v4/
+?? .codex/evidencia-interfaz-preview-r2/
+?? .codex/evidencia-ipp1-cache/
+?? .codex/evidencia-lectura-cpu-cuota-b-20261010/
+?? .codex/evidencia-mixta-recolector-v3/
+?? .codex/evidencia-mixta-recolector-v4-6929c61/
+?? .codex/evidencia-ml03-bundle-v3/
+?? .codex/evidencia-ml03-bundle-v3b/
+?? .codex/evidencia-o1-codex/
+?? .codex/evidencia-pages-08a740e-purga/
+?? .codex/evidencia-pages-9bb1330/
+?? .codex/evidencia-pages-b36e749/
+?? .codex/evidencia-pages-c169373/
+?? .codex/evidencia-pages-d16d816/
+?? .codex/evidencia-pages-ec2a3b6/
+?? .codex/evidencia-pages-medios-configurado/
+?? .codex/evidencia-pages-preview-r2/
+?? .codex/evidencia-paquete-retirada/
+?? .codex/evidencia-pendientes-fase3/
+?? .codex/evidencia-pwa-e229396/
+?? .codex/evidencia-pwa-pages/
+?? .codex/evidencia-r2-bucket-creado/
+?? .codex/evidencia-r2-dominio-b0a83a2/
+?? .codex/evidencia-r2-real-revision/
+?? .codex/evidencia-r2-url-pruebas/
+?? .codex/evidencia-recolector-6929c61/
+?? .codex/evidencia-retirada-b-ec2a3b6/
+?? .codex/evidencia-revision-b-retirada/
+?? .codex/evidencia-revision-cache-ui-d16d816/
+?? .codex/evidencia-revision-cache-ui-real/
+?? .codex/evidencia-revision-carga-6929c61-59d8cb/
+?? .codex/evidencia-revision-ensayo-carga/
+?? .codex/evidencia-revision-ensayo-rollback-real/
+?? .codex/evidencia-revision-fase10a-v1/
+?? .codex/evidencia-revision-fase4-v1/
+?? .codex/evidencia-revision-fase4-v2/
+?? .codex/evidencia-revision-fase4-v3/
+?? .codex/evidencia-revision-fase4-v4/
+?? .codex/evidencia-revision-fase5-v1/
+?? .codex/evidencia-revision-fase5-v2/
+?? .codex/evidencia-revision-fase5-v3/
+?? .codex/evidencia-revision-fase6-v1/
+?? .codex/evidencia-revision-fase6-v2/
+?? .codex/evidencia-revision-fase6-v3/
+?? .codex/evidencia-revision-fase7-v1/
+?? .codex/evidencia-revision-fase7-v2/
+?? .codex/evidencia-revision-fase8-v1/
+?? .codex/evidencia-revision-fase8-v2/
+?? .codex/evidencia-revision-fase9-v1/
+?? .codex/evidencia-revision-fase9-v2-1/
+?? .codex/evidencia-revision-fase9-v2/
+?? .codex/evidencia-revision-interfaz-6929c61-147b24/
+?? .codex/evidencia-revision-paquete-v3-ml03/
+?? .codex/evidencia-revision-plan-pwa-pages/
+?? .codex/evidencia-revision-pwa-pages-7ee3c78/
+?? .codex/evidencia-revision-recolector-6929c61-73159d/
+?? .codex/evidencia-revision-rollback-galeria-v2/
+?? .codex/evidencia-revision-rollback-galeria-v3/
+?? .codex/evidencia-revision-rollback-galeria/
+?? .codex/evidencia-revision-verificador-ml03-v2/
+?? .codex/evidencia-rollback-galeria/
+?? .codex/evidencia-servicio-b6bb1f/
+?? .codex/evidencia-servicio-f8a486/
+?? .codex/evidencia-worker-medios-staging/
+?? .codex/propuesta-f10a-05/
+?? _ver.cjs
+?? docs/evidencia-rendimiento/fase-1/capturas/antes-referidos-oscuro.png
+?? docs/evidencia-rendimiento/fase-1/capturas/despues-referidos-claro.png
+?? docs/evidencia-rendimiento/fase-1/capturas/despues-referidos-oscuro.png
+?? docs/evidencia-rendimiento/fase-3/clon-limpio-08a740e.json
+?? docs/evidencia-rendimiento/fase-3/clon-limpio-b-activa.json
+?? docs/evidencia-rendimiento/fase-3/clon-limpio-d16d816.json
+?? docs/evidencia-rendimiento/fase-3/clon-limpio-lectura-mixta.json
+?? public/inicio-web/antes-claro-1280.webp
+?? public/inicio-web/antes-claro-640.webp
+?? public/inicio-web/antes-claro-960.webp
+?? public/inicio-web/despues-claro-1280.webp
+?? public/inicio-web/despues-claro-640.webp
+?? public/inicio-web/despues-claro-960.webp
+?? public/inicio-web/hero-antes-referencia-1280.webp
+?? public/inicio-web/hero-antes-referencia-1680.webp
+?? public/inicio-web/hero-antes-referencia-640.webp
+?? public/inicio-web/hero-antes-referencia-960.webp
+?? public/inicio-web/hero-despues-referencia-1280.webp
+?? public/inicio-web/hero-despues-referencia-1680.webp
+?? public/inicio-web/hero-despues-referencia-640.webp
+?? public/inicio-web/hero-despues-referencia-960.webp
+?? public/sw-reglas-cache.js
+?? scripts/comparar-visual-fase8.cjs
+?? scripts/costo-indices-fase7.cjs
+?? scripts/escenario-catalogo-qa.mjs
+?? scripts/fase10a/
+?? scripts/generar-hero-responsivo.mjs
+?? scripts/lib/consultas-fase7.cjs
+?? scripts/lib/volumen-fase7.cjs
+?? scripts/medir-catalogos-fase4.cjs
+?? scripts/medir-fase5.cjs
+?? scripts/medir-fase6.cjs
+?? scripts/medir-fase7.cjs
+?? scripts/medir-fase8.cjs
+?? scripts/migracion-medios/
+?? scripts/verificar-barras-seleccion.cjs
+?? scripts/verificar-catalogo-publico.mjs
+?? scripts/verificar-catalogos-fotos-sesion.cjs
+?? scripts/verificar-catalogos-interfaz.cjs
+?? scripts/verificar-categorias-completas.mjs
+?? scripts/verificar-cli-huerfanos.mjs
+?? scripts/verificar-conteos-fase7.cjs
+?? scripts/verificar-fase5.cjs
+?? scripts/verificar-fase6.cjs
+?? scripts/verificar-fase7.cjs
+?? scripts/verificar-fase8-v2.cjs
+?? scripts/verificar-fase8.cjs
+?? scripts/verificar-ml03-bundle.cjs
+?? src/components/FiltroEstadoContadores.jsx
+?? src/components/LimiteCargaDiferida.jsx
+?? src/components/MapaDiferido.jsx
+?? src/components/PaginadorCatalogo.jsx
+?? src/components/PaginadorLista.jsx
+?? src/hooks/useCatalogoPublico.js
+?? src/hooks/useCuponesAdmin.js
+?? src/hooks/useLectura.js
+?? src/hooks/useListaPaginada.js
+?? src/hooks/usePreciosSeleccion.js
+?? src/hooks/usePreferenciasMovimiento.js
+?? src/lib/bucleAnimacion.js
+?? src/lib/catalogoPublico.js
+?? src/lib/estadoVista.js
+?? src/lib/formulariosProtegidos.js
+?? src/lib/listasAdmin.js
+?? src/lib/moduloDiferido.js
+?? supabase/migrations/20261011000001_catalogo_publico_vitrina.sql
+?? supabase/migrations/20261011000002_vistas_listas_admin.sql
+?? supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql
+?? supabase/migrations/20261012000002_indices_listas_medidos.sql
+?? supabase/migrations/20261012000003_migracion_medios_cambio_con_plazo.sql

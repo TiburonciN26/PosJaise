@@ -1,0 +1,160 @@
+{
+  "fecha": "2026-10-10T21:10:42.784Z",
+  "nota": "Auditoría de JSON originales de Claude y verificador aprobado, más GET públicos actuales; sin presenciar ni repetir las transiciones, publicaciones o logins.",
+  "inputs": [
+    {
+      "path": ".codex/evidencia-pwa-pages/ronda1-venta.json",
+      "sha256": "f9684f44ef283e8be9e5709f3754974c67541374d44a43cf104b905f6cd1aafb"
+    },
+    {
+      "path": ".codex/evidencia-pwa-pages/ronda2-vacio.json",
+      "sha256": "5336e11048c1817aeeb0eda41b239aae360eb85d65f24235a77a4c16bd64a8e2"
+    }
+  ],
+  "scriptHash": "947c7b1864609e6f5571e664a90d2d64c36c351ba8ee15d8315967acbf029859",
+  "checks": [
+    {
+      "n": "ronda1: total exacto y todos los pasos OK",
+      "ok": true
+    },
+    {
+      "n": "ronda1: origen, entrega, estados y marcas",
+      "ok": true
+    },
+    {
+      "n": "ronda1: publicación registrada después de validar A/medios",
+      "ok": true
+    },
+    {
+      "n": "ronda1: documento B exacto",
+      "ok": true
+    },
+    {
+      "n": "ronda1: sesiones protegidas A/B correctas",
+      "ok": true
+    },
+    {
+      "n": "ronda1: A tres lecturas de medios",
+      "ok": true
+    },
+    {
+      "n": "ronda1: B tres lecturas de medios",
+      "ok": true
+    },
+    {
+      "n": "ronda1: observadores sin fallos y staging único",
+      "ok": true
+    },
+    {
+      "n": "ronda1: hashes A/B distintos",
+      "ok": true
+    },
+    {
+      "n": "ronda2: total exacto y todos los pasos OK",
+      "ok": true
+    },
+    {
+      "n": "ronda2: origen, entrega, estados y marcas",
+      "ok": true
+    },
+    {
+      "n": "ronda2: publicación registrada después de validar A/medios",
+      "ok": true
+    },
+    {
+      "n": "ronda2: documento B exacto",
+      "ok": true
+    },
+    {
+      "n": "ronda2: sesiones protegidas A/B correctas",
+      "ok": true
+    },
+    {
+      "n": "ronda2: A tres lecturas de medios",
+      "ok": true
+    },
+    {
+      "n": "ronda2: B tres lecturas de medios",
+      "ok": true
+    },
+    {
+      "n": "ronda2: observadores sin fallos y staging único",
+      "ok": true
+    },
+    {
+      "n": "ronda2: hashes A/B distintos",
+      "ok": true
+    },
+    {
+      "n": "cadena coherente: B1 de ronda1 = A de ronda2",
+      "ok": true
+    },
+    {
+      "n": "ronda venta: pasos de conservación/bloqueo presentes",
+      "ok": true
+    },
+    {
+      "n": "ronda vacía: habilitado y sin bloqueo",
+      "ok": true
+    },
+    {
+      "n": "script idéntico al revisado en el plan",
+      "ok": true
+    },
+    {
+      "n": "publicación B2: verificación pública pasa",
+      "ok": true
+    },
+    {
+      "n": "hashes públicos B1/B2 coinciden con las rondas",
+      "ok": true
+    },
+    {
+      "n": "inmutable 9bb13306: marca/hash corresponden",
+      "ok": true
+    },
+    {
+      "n": "inmutable c8923709: marca/hash corresponden",
+      "ok": true
+    },
+    {
+      "n": "informe clon exacto c8923709",
+      "ok": true
+    },
+    {
+      "n": "informe clon exacto 7ee3c78e",
+      "ok": true
+    }
+  ],
+  "antiguos": [
+    {
+      "origen": "https://a68f02d7.pos-jaise.pages.dev",
+      "marca": "9bb13306",
+      "swSha256": "8018435f8d905900582e119857e3e5bae8e70ce62a74239aabd16d4d92bf9071"
+    },
+    {
+      "origen": "https://a3e716b2.pos-jaise.pages.dev",
+      "marca": "c8923709",
+      "swSha256": "fb28df6670866474774a3049ce442d5188146896c8258faeaaad6fe8cf0308a4"
+    }
+  ],
+  "clones": [
+    {
+      "id": "c8923709bdbc73787e47dd1bef40d688e283569e",
+      "archivos": 180,
+      "contenido": 0,
+      "soloFinLinea": 11
+    },
+    {
+      "id": "7ee3c78ea6c1fcba3a6be2f89e4045b6507ab536",
+      "archivos": 180,
+      "contenido": 0,
+      "soloFinLinea": 11
+    }
+  ],
+  "resumen": {
+    "controles": 28,
+    "fallos": 0,
+    "pasosAuditados": 69
+  }
+}

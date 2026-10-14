@@ -1,0 +1,35 @@
+import fs from 'node:fs'
+import vm from 'node:vm'
+import {createRequire} from 'node:module'
+const require=createRequire(import.meta.url)
+const {ejecutarCarga}=require('C:/WedJaiseReact/scripts/lib/ensayo-carga.cjs')
+const src=fs.readFileSync('C:/WedJaiseReact/scripts/ensayo-carga-medios.cjs','utf8').replace(/\r\n/g,'\n')
+const inicio=src.indexOf('    const leer = async ({ tipo, variante }) => {')
+const fin=src.indexOf('    informe.carga = await ejecutarCarga',inicio)
+if(inicio<0||fin<inicio)throw Error('No se identifica el adaptador real')
+const adapter=src.slice(inicio,fin)
+const bytes={m:Buffer.from([1,2,3]),g:Buffer.from([4,5,6,7])}
+const esperados={m:{etag:'"em"'},g:{etag:'"eg"'}}
+const results=[]
+for(const modo of ['sano','GET-sin-etag','HEAD-sin-etag','COND-sin-etag','GET-etag-distinto']){
+  let quitado=false,llamadas=0
+  const ctx={Buffer,performance,ejecutarCarga,esperados,bytes,url:(g,v)=>'https://qa.example/'+v+'.webp',igualesBytes:(a,b)=>a.length===b.length&&Buffer.compare(a,b)===0,pop:r=>r.headers.get('cf-ray').split('-')[1],seguro:async(u,op={})=>{
+    llamadas++
+    const v=u.endsWith('m.webp')?'m':'g'
+    const method=op.method||'GET'
+    const cond=!!op.headers?.['If-None-Match']
+    const tipo=cond?'COND':method
+    const status=cond?304:200
+    const headers={'CF-Ray':'ficticio-MIA','X-Medios-Cache':llamadas<=2?'MISS':'HIT',ETag:esperados[v].etag}
+    if(!quitado&&modo===tipo+'-sin-etag'){delete headers.ETag;quitado=true}
+    if(!quitado&&modo==='GET-etag-distinto'&&tipo==='GET'){headers.ETag='"otro"';quitado=true}
+    return new Response(status===304||method==='HEAD'?null:bytes[v],{status,headers})
+  }}
+  const r=await vm.runInNewContext(`(async()=>{${adapter}\nreturn await ejecutarCarga({leer,esperados});})()`,ctx)
+  results.push({modo,anomaliaInyectada:quitado,completa:r.completa,parada:r.parada,lecturas:r.lecturas,maxSimultaneas:r.maxSimultaneas,erroresServidor:r.erroresServidor})
+}
+const reproduced=results.filter(x=>x.modo.endsWith('sin-etag')).every(x=>x.anomaliaInyectada&&x.completa&&x.lecturas===302)&&results[0].completa&&!results[4].completa
+const report={fecha:new Date().toISOString(),sinRed:true,alcance:'Adaptador real de lectura del CLI y núcleo real, aislados con respuestas HTTP simuladas; no CLI completo ni autenticación',hallazgo:'EC-01: ETag ausente no detiene la carga pese a existir un ETag de referencia válido',reproducido:reproduced,results}
+fs.writeFileSync(new URL('./diagnostico-etag.json',import.meta.url),JSON.stringify(report,null,2),{flag:'wx'})
+console.log(JSON.stringify(report,null,2))
+if(!reproduced)process.exitCode=1

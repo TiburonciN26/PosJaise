@@ -1,0 +1,95 @@
+{
+  "fecha": "2026-10-12T18:55:07.137Z",
+  "actual": [
+    {
+      "archivo": "supabase/migrations/20261012000003_migracion_medios_cambio_con_plazo.sql",
+      "sha256": "f5dd6bb05942d42d2e4b4478f27e8122918998cfa9862d6a2a8204141745c9a5",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/lib.mjs",
+      "sha256": "422f4381cd555972c02d902cc94a472356c50add3e7bfbcb48a870db71d6941a",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/medios-migracion.mjs",
+      "sha256": "b588e3b4fdcdba83ef270dc978de519406be772ad0b9443a656daf6f177c69e0",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/probar-cli.mjs",
+      "sha256": "3c778117e3d4c05192eea780beba9bf46e6ed73eaf828e475be92849bfae56be",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/probar-lib.mjs",
+      "sha256": "dc1803f438fdadd868abce98c6bf81ac797f00ae718dea1229fdfc1d6c706715",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/probar-plazo-pg.mjs",
+      "sha256": "d92d43f90a7a872a5182547678766aaef0c3cc17bf82ca60bd74afe1d8c06e35",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/simular-fase9.mjs",
+      "sha256": "21e2675ebb2b138dfac98138e82d6384e637e29e81b3df99c8c54fbeec36b67d",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/trabajo-seguro.mjs",
+      "sha256": "8ed19ae89992fa2bbd0818fd1f4a5fe7e4d0c4f4bbb25dd80c753be938e173e2",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/pruebas/red-ficticia.mjs",
+      "sha256": "8049c6808e892f12e590c7994936c958fbd7ac4c0e86e010b38025484ac92218",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/pruebas/trampa-efectos.mjs",
+      "sha256": "94d3f8f248f144623fa90df959e5cdb77526a0ff2eee139dedd72dc6b2c549ee",
+      "coincide": true
+    },
+    {
+      "archivo": ".codex/DISENO-MIGRACION-MEDIOS-FASE9.md",
+      "sha256": "60479b90c785d95f3f78ef7fbe33ef5cdbddb0539847472b06c912625147746d",
+      "coincide": true
+    },
+    {
+      "archivo": ".codex/evidencia-fase9-v2.1/rollback/rollback-migracion.sql",
+      "sha256": "bd74153a8b77245d3714119251084535b6e54431f407df668340be146711a15b",
+      "coincide": true
+    }
+  ],
+  "copiasV2": [
+    {
+      "archivo": "codex_DISENO-MIGRACION-MEDIOS-FASE9.md",
+      "coincide": true
+    },
+    {
+      "archivo": "codex_FASES-RENDIMIENTO-CLOUDFLARE.md",
+      "coincide": true
+    },
+    {
+      "archivo": "implementacionesWed.md",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts_migracion-medios_lib.mjs",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts_migracion-medios_medios-migracion.mjs",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts_migracion-medios_probar-cli.mjs",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts_migracion-medios_probar-lib.mjs",
+      "coincide": true
+    }
+  ]
+}

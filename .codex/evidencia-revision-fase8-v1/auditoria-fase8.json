@@ -1,0 +1,257 @@
+{
+  "fecha": "2026-10-12",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "vite.config.js": "bb335f63cd57fb78dab36e3ee96c9fa10801752715651a0bb8a01e292698a8d0",
+    "index.html": "3c19161ef141a50bff65ad8cdd473c010e4de2b5dd1878220aacd4395563d1ef",
+    "src/components/MapaDiferido.jsx": "8f26734c6c85c2d3c4dc73f05edfded21650d15a178f5f83cf2991bf2e015da1",
+    "src/config/paginasCliente.js": "a1bb2e5773531e334cc9a0c7f9bac4ea5b896087c6d7d8b79c9c3475623ab9db",
+    "src/pages/cliente/InicioCliente.jsx": "ba6bc10a697768ee26b6fd7b559393ba21e06ba5e670a61d9ad33403f8b4e1c9",
+    "src/pages/cliente/NosotrosCliente.jsx": "6a94a902ceaa2ab5efea43093894c2a72ff8cfe9453b8d3051d28182960b7776",
+    "src/main.jsx": "c63c6ef8be6b190ce0a3822eaa8e1486f29e95a1f23a74fd1d631d674cf7698c",
+    "src/components/AvisoActualizacionPWA.jsx": "1aa523bd2b38a833c737e9b7b737c739290ccc1cc81fad7c1658b31c7c46e50a",
+    "src/lib/trabajoPendiente.js": "c0bb9297d68c68dbb796d35722e10e1b13fd65be878c496994ba40f92c41da80",
+    "scripts/verificar-fase8.cjs": "87f11c0ee488ba96d8cb1643b8e89ae73fce800cda2e275db0cda893ecc95a20",
+    ".codex/POLITICA-VIDEO-FASE8.md": "4eff3c37259c5393b3f882c71c46562b28c68a5cd8f45c320bf9f68731094ee1"
+  },
+  "originals": [
+    {
+      "nombre": "hero-despues-referencia.jpg",
+      "igualAntes": true
+    },
+    {
+      "nombre": "hero-antes-referencia.jpg",
+      "igualAntes": true
+    },
+    {
+      "nombre": "despues-claro.webp",
+      "igualAntes": true
+    },
+    {
+      "nombre": "antes-claro.webp",
+      "igualAntes": true
+    }
+  ],
+  "variants": [
+    {
+      "nombre": "antes-claro-1280.webp",
+      "bytes": 55914,
+      "dimensiones": {
+        "width": 1280,
+        "height": 720
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "antes-claro-640.webp",
+      "bytes": 21824,
+      "dimensiones": {
+        "width": 640,
+        "height": 360
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "antes-claro-960.webp",
+      "bytes": 38854,
+      "dimensiones": {
+        "width": 960,
+        "height": 540
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "despues-claro-1280.webp",
+      "bytes": 43992,
+      "dimensiones": {
+        "width": 1280,
+        "height": 720
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "despues-claro-640.webp",
+      "bytes": 17182,
+      "dimensiones": {
+        "width": 640,
+        "height": 360
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "despues-claro-960.webp",
+      "bytes": 30606,
+      "dimensiones": {
+        "width": 960,
+        "height": 540
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-antes-referencia-1280.webp",
+      "bytes": 21148,
+      "dimensiones": {
+        "width": 1280,
+        "height": 720
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-antes-referencia-1680.webp",
+      "bytes": 31090,
+      "dimensiones": {
+        "width": 1680,
+        "height": 944
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-antes-referencia-640.webp",
+      "bytes": 7862,
+      "dimensiones": {
+        "width": 640,
+        "height": 360
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-antes-referencia-960.webp",
+      "bytes": 14218,
+      "dimensiones": {
+        "width": 960,
+        "height": 540
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-despues-referencia-1280.webp",
+      "bytes": 22944,
+      "dimensiones": {
+        "width": 1280,
+        "height": 720
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-despues-referencia-1680.webp",
+      "bytes": 33222,
+      "dimensiones": {
+        "width": 1680,
+        "height": 944
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-despues-referencia-640.webp",
+      "bytes": 9384,
+      "dimensiones": {
+        "width": 640,
+        "height": 360
+      },
+      "anchoCorrecto": true
+    },
+    {
+      "nombre": "hero-despues-referencia-960.webp",
+      "bytes": 16030,
+      "dimensiones": {
+        "width": 960,
+        "height": 540
+      },
+      "anchoCorrecto": true
+    }
+  ],
+  "copies": [
+    {
+      "path": "index.html",
+      "previo": "114fe4a04691d75b4eb42e997e275c6825157a0553f299149a092d11f8c4c64a",
+      "copiaIgual": true
+    },
+    {
+      "path": "vite.config.js",
+      "previo": "fed74fb302193dca7648a102799e794cf0c377b23088d3b985a823b7eeaad793",
+      "copiaIgual": true
+    },
+    {
+      "path": "src/pages/cliente/InicioCliente.jsx",
+      "previo": "5b352c9997b56998917bd32c2f1e220618cad9b7700a5d6632f0034560fc7079",
+      "copiaIgual": true
+    },
+    {
+      "path": "src/pages/cliente/NosotrosCliente.jsx",
+      "previo": "aa0eb18d3d8526daea481d09ffb72b26bf7ed751d2794a6117668f1f84a14ff8",
+      "copiaIgual": true
+    },
+    {
+      "path": "src/main.jsx",
+      "previo": "c63c6ef8be6b190ce0a3822eaa8e1486f29e95a1f23a74fd1d631d674cf7698c",
+      "copiaIgual": true,
+      "actualSinCambio": true
+    },
+    {
+      "path": "src/components/AvisoActualizacionPWA.jsx",
+      "previo": "1aa523bd2b38a833c737e9b7b737c739290ccc1cc81fad7c1658b31c7c46e50a",
+      "copiaIgual": true,
+      "actualSinCambio": true
+    },
+    {
+      "path": "src/config/paginasCliente.js",
+      "previo": "35214357f25e068126966d53a97dbfd2fbca67b426f682e8067f9103c9d72229",
+      "copiaIgual": true
+    }
+  ],
+  "suitesClaude": {
+    "fase8": {
+      "correctos": 13,
+      "total": 13,
+      "fallos": 0
+    },
+    "fase5": {
+      "total": 32,
+      "fallos": 0
+    },
+    "nota": "JSON auditados; no se ejecuta verificar-fase5 con SQL de siembra/limpieza."
+  },
+  "precache": {
+    "antes": 176,
+    "despues": 33,
+    "totalBytes": 877472,
+    "citasEnCache": false,
+    "scanner": false,
+    "urls": [
+      "index.html",
+      "assets/useProgramaRecompensas-B5zIeh7V.js",
+      "assets/useEntornoAnimacion-DZ0GKA0e.js",
+      "assets/TemaWebContext-DTWAZpxT.js",
+      "assets/TarjetaServicioCliente-DuaC0wye.js",
+      "assets/supabase-COLDyNz-.js",
+      "assets/store-BLhnSYn0.js",
+      "assets/sparkles-C1cMe7M1.js",
+      "assets/serviciosVisual-BwLqhHct.js",
+      "assets/preload-helper-CZgWQFsJ.js",
+      "assets/PortalCliente-DTuyyaI5.js",
+      "assets/PieClienteWeb-CDtNrqgx.js",
+      "assets/phone-CXTWRe2d.js",
+      "assets/PerfilClienteContext-C5QOsKSI.js",
+      "assets/PaginaActivaContext-CFzro5s1.js",
+      "assets/NotificacionesClienteContext-syhn6xJ2.js",
+      "assets/message-circle-sz0ODs_s.js",
+      "assets/MapaDiferido-W_xoAN4n.js",
+      "assets/legal-F6tcrkVi.js",
+      "assets/InicioCliente-DFRy9b0G.js",
+      "assets/index-CgZfYuXx.css",
+      "assets/index-BDISJ5Rk.js",
+      "assets/globe-DgyqspkF.js",
+      "assets/geist-latin-wght-normal-BgDaEnEv.woff2",
+      "assets/createLucideIcon-CAdyUWaY.js",
+      "assets/contactoNegocio-BKRiXkam.js",
+      "assets/clock-DzFuioJf.js",
+      "assets/clienteWeb-CGw8e5Be.js",
+      "assets/catalogoPublico-Dk2Ycg0v.js",
+      "assets/CarritoClienteContext-BpdZ3uoK.js",
+      "assets/calendar-plus-Dc6ObvNS.js",
+      "assets/arrow-up-right-D2DLaEDR.js",
+      "manifest.webmanifest"
+    ]
+  },
+  "rollbackCheck": "git apply -R --check correcto, no aplicado"
+}

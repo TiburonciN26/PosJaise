@@ -1,0 +1,75 @@
+{
+  "tipo": "diagnóstico independiente SIN red, SIN login real, SIN objetos ni archivos del proyecto modificados",
+  "sha256Script": "92f6964d893d973270f54e001c24c137ec5706e44c9cf03870f66df7f4cf0c3c",
+  "casos": [
+    {
+      "falloInventario": -1,
+      "exitCode": 0,
+      "completa": true,
+      "error": null,
+      "errorLimpieza": null,
+      "resumen": {
+        "casos": 27,
+        "fallos": 0
+      },
+      "casosFallidos": [],
+      "expiracionProbada": true,
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 5,
+      "objetosSimuladosRestantes": 0,
+      "ultimosMensajes": [
+        "OK    pasado el TTL: también 404 en la variante g",
+        "OK    ESTADO FINAL: inventario de fotos-galeria idéntico al inicial (sin claves nuevas ni faltantes)",
+        "\n27 casos, 0 fallos → docs\\evidencia-rendimiento\\fase-3\\medios-pages\\cache-09da38.json"
+      ]
+    },
+    {
+      "falloInventario": 4,
+      "exitCode": 0,
+      "completa": true,
+      "error": null,
+      "errorLimpieza": "FALLO FICTICIO inventario final",
+      "resumen": {
+        "casos": 26,
+        "fallos": 0
+      },
+      "casosFallidos": [],
+      "expiracionProbada": true,
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0,
+      "ultimosMensajes": [
+        "OK    pasado el TTL: también 404 en la variante g",
+        "ERROR de limpieza: FALLO FICTICIO inventario final",
+        "\n26 casos, 0 fallos → docs\\evidencia-rendimiento\\fase-3\\medios-pages\\cache-c9c19f.json"
+      ]
+    },
+    {
+      "falloInventario": 5,
+      "exitCode": 0,
+      "completa": true,
+      "error": null,
+      "errorLimpieza": "FALLO FICTICIO inventario final",
+      "resumen": {
+        "casos": 26,
+        "fallos": 0
+      },
+      "casosFallidos": [],
+      "expiracionProbada": true,
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 5,
+      "objetosSimuladosRestantes": 0,
+      "ultimosMensajes": [
+        "OK    pasado el TTL: también 404 en la variante g",
+        "ERROR de limpieza: FALLO FICTICIO inventario final",
+        "\n26 casos, 0 fallos → docs\\evidencia-rendimiento\\fase-3\\medios-pages\\cache-81f5fa.json"
+      ]
+    }
+  ]
+}

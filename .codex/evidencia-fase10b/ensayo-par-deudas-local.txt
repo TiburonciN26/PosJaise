@@ -1,0 +1,4 @@
+Ensayo en Local (ROLLBACK) de la transaccion 06 generada por aplicar-lote-10b.ps1 -SoloGenerar, desde un estado previo emulado (sin deuda_pagos ni compatibilidad):
+PRE|cobradas=6|deudas=59|deuda_pagos=false
+POST|pagos=6|cobradas=6|triggers=2|incoherentes=0|versiones=2
+Despues del ROLLBACK: deuda_pagos=8 filas, triggers de compatibilidad=2 (estado original de Local).

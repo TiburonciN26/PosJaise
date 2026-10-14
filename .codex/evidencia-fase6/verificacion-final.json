@@ -1,0 +1,61 @@
+{
+ "app": "http://localhost:5196",
+ "fecha": "2026-10-11T19:51:31.689Z",
+ "casos": [
+  {
+   "nombre": "Caché: recorrer las 27 rutas nunca deja más de 6 pantallas montadas y el regreso a Ventas funciona",
+   "ok": true,
+   "ms": 8982
+  },
+  {
+   "nombre": "Conservación: carrito, búsqueda y orden, y scroll se conservan aunque la pantalla se haya desmontado",
+   "ok": true,
+   "ms": 20117
+  },
+  {
+   "nombre": "Protección: un diálogo abierto y un formulario editado impiden desmontar su pantalla; al liberarse vuelve el tope",
+   "ok": true,
+   "ms": 10277
+  },
+  {
+   "nombre": "Protección: un formulario editado sin enviar (Puntos Web) conserva su pantalla; los borradores de Recompensas Web también",
+   "ok": true,
+   "ms": 27619
+  },
+  {
+   "nombre": "Invalidación: al cambiar de cuenta no queda búsqueda, ni pantallas, ni scroll de la anterior",
+   "ok": true,
+   "ms": 4223
+  },
+  {
+   "nombre": "Pausa: los placeholders animados de pantallas ocultas no consumen temporizadores; vuelven al mostrarse",
+   "ok": true,
+   "ms": 15474
+  },
+  {
+   "nombre": "Pausa: con la pestaña del navegador oculta el placeholder y la máscara no programan trabajo",
+   "ok": true,
+   "ms": 6337
+  },
+  {
+   "nombre": "Movimiento reducido: el placeholder muestra el texto completo sin escribirse",
+   "ok": true,
+   "ms": 4626
+  },
+  {
+   "nombre": "Inicio: la máscara del héroe se duerme en reposo, despierta con el puntero y vuelve a dormirse",
+   "ok": true,
+   "ms": 10031
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento normal): animan solo a la vista, se pausan fuera de pantalla y con la pestaña oculta",
+   "ok": true,
+   "ms": 10624
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento reducido): quedan quietas, sin bucle; arrastrar sigue funcionando y luego vuelve a dormir",
+   "ok": true,
+   "ms": 15137
+  }
+ ]
+}

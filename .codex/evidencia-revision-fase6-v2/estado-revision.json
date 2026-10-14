@@ -1,0 +1,133 @@
+{
+  "fechaCliente": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "src/components/PestanasCacheadas.jsx": "ef611d49f6b76f697009a0b47e0c8faecfbae76ed1d48253e4044d6840f073ff",
+    "src/lib/estadoVista.js": "749e2173a3af492ca48817c7b11134243a1112412edd297747cd3ad908ff317a",
+    "src/lib/eventosToast.js": "da5f5c664a996df42b840566cac3bd5f8b9ed12f9d90978ac383d9ba3e6a4f1e",
+    "src/context/ToastContext.jsx": "950de2e50ddceb247b22b265bb65f558860854d7e4680c489489807125c83c1a",
+    "src/components/TarjetaPuntos.jsx": "c46611b2951f6eb7c1e969c18297e3441c773ed636bb3f72726cb800e95cb3b6",
+    "src/lib/bucleAnimacion.js": "475012a71097f5d074881a43cb439ed363ab760c4ccf2c0d55ef0ebd6e54faf7",
+    "src/pages/Dashboard.jsx": "fb3ba6a4735e89184d1a34c57a228cb25a50151df722e15fcc4f41988324dbb5",
+    "src/pages/Historial.jsx": "de35d97ffbb4763ce875248a042cd939aa4d37b2a7921e5d9573ebb6434f7ead",
+    "src/pages/MiPanel.jsx": "6040d32c031cbc910db87d62bab643839bfb26a8eb656f27cc8846c638aabd30",
+    "src/pages/Estadisticas.jsx": "f20b1c60bd5e1308b6f4fbe9e65461b891e5200a0cb3c9b0f24e5d37d8d4fc3b",
+    "src/pages/Auditoria.jsx": "a50e8cc6b8dcbf7fa99f90feee01c558f3b4b5e9b2ea3fe3d768208ce184f0db",
+    "src/pages/PuntosWeb.jsx": "eaab9a21995a892f18931e0f1971e6837906850138a68f81e7d5eba05a6ec4b1",
+    "src/components/ModalPromocion.jsx": "97f370440350a595b839bd26bfec233041b843cea86054f001c1032a00f158b9"
+  },
+  "suitesClaude": {
+    "fase6": {
+      "casos": 17,
+      "fallos": 0
+    },
+    "fase5": {
+      "casos": 34,
+      "fallos": 0
+    },
+    "nota": "Solo auditoría del JSON; no nueva ejecución de suites con SQL mutante"
+  },
+  "estabilidadClaude": {
+    "alcance": "Muestras auditadas, no repetidas por Codex",
+    "ciclos": [
+      {
+        "ciclo": 1,
+        "fin": {
+          "heapMB": 7.79,
+          "escuchas": 566,
+          "nodosCDP": 4059,
+          "nodos": 2600,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 174,
+          "estilos": 449,
+          "tarea": 1.695497,
+          "script": 0.440496
+        },
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 2.2,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 2.3,
+          "scriptMsPorSeg": 0.5,
+          "layoutPorSeg": 2.2,
+          "estilosPorSeg": 2.2
+        }
+      },
+      {
+        "ciclo": 2,
+        "fin": {
+          "heapMB": 8.98,
+          "escuchas": 610,
+          "nodosCDP": 4447,
+          "nodos": 2856,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 634,
+          "estilos": 1254,
+          "tarea": 5.838249,
+          "script": 1.725606
+        },
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 1.7,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 1.6,
+          "scriptMsPorSeg": 0.3,
+          "layoutPorSeg": 1.5,
+          "estilosPorSeg": 1.5
+        }
+      },
+      {
+        "ciclo": 3,
+        "fin": {
+          "heapMB": 9.08,
+          "escuchas": 610,
+          "nodosCDP": 4448,
+          "nodos": 2856,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 1076,
+          "estilos": 2047,
+          "tarea": 9.776758,
+          "script": 2.854241
+        },
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 2.5,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 2.1,
+          "scriptMsPorSeg": 0.5,
+          "layoutPorSeg": 2.2,
+          "estilosPorSeg": 2.2
+        }
+      }
+    ]
+  },
+  "baseLectura": {
+    "clientesQA": 0,
+    "promocionesQA": 0,
+    "cuponesQA": 0,
+    "resenasQA": 0
+  },
+  "lint": {
+    "errores": 0,
+    "avisos": 1,
+    "exit": 0,
+    "alcance": [
+      "PestanasCacheadas",
+      "estadoVista",
+      "eventosToast",
+      "ToastContext",
+      "TarjetaPuntos"
+    ]
+  },
+  "rollback": {
+    "exclusivos": 25,
+    "mixtos": 8,
+    "checks": "ambos correctos, sin aplicar"
+  }
+}

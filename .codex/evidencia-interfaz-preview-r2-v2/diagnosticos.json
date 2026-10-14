@@ -1,0 +1,34 @@
+{
+  "fecha": "2026-10-10T16:42:08.313Z",
+  "aislado": true,
+  "nota": "Solo servidores HTTP efímeros del equipo, datos ficticios y biblioteca original; sin Cloudflare, Supabase ni datos de negocio.",
+  "regresiones": {
+    "exitCode": 0,
+    "casos": 31
+  },
+  "redirect": {
+    "estado": 200,
+    "destinoFinalAprobado": false,
+    "solicitudesAlDestinoNoAprobado": 1,
+    "recibioCabeceraFicticia": true,
+    "recibioPasswordFicticio": true
+  },
+  "serviceWorkers": [
+    {
+      "serviceWorkers": "allow",
+      "controladoPorSW": true,
+      "clasificacionDestino": "prohibido",
+      "resultado": "rechazado",
+      "peticionesRecibidas": 0,
+      "bloqueadas": 1
+    },
+    {
+      "serviceWorkers": "block",
+      "controladoPorSW": false,
+      "clasificacionDestino": "prohibido",
+      "resultado": "rechazado",
+      "peticionesRecibidas": 0,
+      "bloqueadas": 1
+    }
+  ]
+}

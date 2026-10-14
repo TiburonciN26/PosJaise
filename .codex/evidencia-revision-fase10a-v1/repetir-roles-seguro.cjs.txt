@@ -1,0 +1,62 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const cp = require('node:child_process');
+const http = require('node:http');
+const crypto = require('node:crypto');
+const ROOT = 'C:/WedJaiseReact';
+const DIST = 'C:/Users/jdeos/AppData/Local/Temp/claude/c--WedJaiseReact/11cf04d8-3d08-4875-b1f5-84eda8bf65da/scratchpad/f10a/dist-cf';
+const ACCOUNTS = 'C:/Users/jdeos/AppData/Local/Temp/claude/c--WedJaiseReact/4cc4d69e-333e-461c-81a6-816527437289/scratchpad/cuentas-f5.json';
+const OUT = path.join(__dirname,'roles-v2');
+const RO_RPCS = ['politicas_cita_publicas','mi_perfil_cliente','mi_cliente_id','categorias_productos_publicas','categorias_servicios_publicas','productos_vitrina_publica','servicios_vitrina_publica','servicios_mas_pedidos','datos_proveedor_reclamos','datos_contacto','resenas_producto_resumen','resenas_producto_publicas','mi_resena_producto','productos_combo_sugerido','asistentes_para_citas','horario_atencion','mis_puntos','horarios_disponibles_cita','mis_cupones','resenas_publicas','resenas_inicio','galeria_para_web','mi_resena','usuarios_para_citas','resenas_servicio_resumen','resenas_servicio_publicas','mi_resena_servicio','servicios_combo_sugerido','mi_fidelizacion','equipo_para_web','mi_estado_referidos','recompensas_reglas_publicas','mi_saldo_recompensas','auditoria_paginada','datos_negocio_publicos','politicas_publicas','nombre_negocio_publico','datos_negocio'];
+const psql = sql => cp.execFileSync('docker', ['exec','-i','supabase_db_WedJaiseReact','psql','-U','postgres','-d','postgres','-At'], { input: 'begin read only;\n' + sql + '\nrollback;', encoding: 'utf8' }).trim().split('\n').filter(s=>!['BEGIN','ROLLBACK'].includes(s)).join('\n');
+const snapSQL = `select json_build_object('authQA', (select count(*) from auth.users where email like 'qa%'), 'asistentes10aAuth',(select count(*) from auth.users where email like 'qa-f10a-asistente-%@test.local'),'asistentes10aPerfil',(select count(*) from usuarios where email like 'qa-f10a-asistente-%@test.local'),'deudas',(select count(*) from deudas),'auditoria',(select count(*) from auditoria));`;
+async function main() {
+  fs.mkdirSync(OUT,{recursive:true});
+  RO_RPCS.push('productos_categorias_publicas','servicios_categorias_publicas','resumen_mi_panel','resumen_inventario','resumen_historial','resumen_dashboard','resumen_estadisticas');
+  const files = fs.readdirSync(path.join(DIST,'assets')).filter(f=>f.endsWith('.js'));
+  let local = 0; const remote = new Set();
+  for(const f of files) {
+    const js = fs.readFileSync(path.join(DIST,'assets',f),'utf8');
+    local += (js.match(/http:\/\/127\.0\.0\.1:54321/g)||[]).length;
+    for(const m of js.matchAll(/https:\/\/[a-z0-9-]+\.supabase\.co/g)) remote.add(m[0]);
+    if(js.includes('/__supabase')) throw new Error('No se acepta backend relativo/proxy para este QA');
+  }
+  if(!local || remote.size) throw new Error('Artefacto no verificado exclusivamente Local');
+  const accounts = JSON.parse(fs.readFileSync(ACCOUNTS,'utf8'));
+  for(const k of ['admin','cajera','clienteA']) if(!/^qa[^@]*@test\.local$/.test(accounts[k]?.email||'')) throw new Error('Cuenta no ficticia en ' + k);
+  const before = JSON.parse(psql(snapSQL));
+  const reserve = http.createServer();
+  const port = await new Promise(resolve=>reserve.listen(0,'127.0.0.1',()=>resolve(reserve.address().port)));
+  await new Promise(resolve=>reserve.close(resolve));
+  const app = 'http://127.0.0.1:' + port;
+  const server = cp.spawn(process.execPath,[ROOT+'/scripts/fase10a/servir-como-pages.cjs',DIST,String(port)],{cwd:ROOT,stdio:['ignore','pipe','pipe']});
+  let ready='';server.stdout.on('data',b=>ready+=b);
+  let child;
+  try {
+    const deadline=Date.now()+10000;
+    while(!ready.includes(app)&&Date.now()<deadline) await new Promise(r=>setTimeout(r,50));
+    if(!ready.includes(app)) throw new Error('No arrancó el servidor propio');
+    let src=fs.readFileSync(ROOT+'/scripts/fase10a/verificar-roles-rutas.cjs','utf8');
+    src=src.replace("path.resolve(__dirname, '..', '..')",JSON.stringify(ROOT)).replace("require('playwright')","require('C:/WedJaiseReact/node_modules/playwright')").replace("require('@supabase/supabase-js')","require('C:/WedJaiseReact/node_modules/@supabase/supabase-js')");
+    const routeLine="await ctx.route('**/*', (r) => { const o = new URL(r.request().url()).origin; return o === new URL(APP).origin || o === API ? r.continue() : r.fulfill({ status: 204, body: '' }) })";
+    if(!src.includes(routeLine))throw new Error('Cambió el cableado del verificador');
+    src=src.replace(routeLine,`await ctx.routeWebSocket(/.*/, ws => ws.close());
+      await ctx.route('**/*', (r) => {
+        const u = new URL(r.request().url()), m = r.request().method();
+        if(u.origin !== new URL(APP).origin && u.origin !== API) return r.fulfill({status:204, body:''});
+        const rpc = u.pathname.split('/rest/v1/rpc/')[1];
+        const lectura = ['GET','HEAD','OPTIONS'].includes(m) || u.origin === API && m === 'POST' && (['/auth/v1/token','/auth/v1/logout'].includes(u.pathname) || ${JSON.stringify(RO_RPCS)}.includes(rpc));
+        if(!lectura) { console.log('GUARDA_ESCRITURA_BLOQUEADA ' + m + ' ' + u.pathname); return r.abort(); }
+        return r.continue();
+      })`);
+    const copy=path.join(OUT,'roles-con-guardas-externas.cjs');fs.writeFileSync(copy,src);
+    const preflight={fecha:new Date().toISOString(),dist:DIST,indexSha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(DIST,'index.html'))).digest('hex'),api:'http://127.0.0.1:54321',ocurrenciasLocal:local,refsRemotos:[...remote],cuentasQA:true,nota:'No recompilé ni cambié el proyecto. Copia externa del verificador con una guarda de red más estricta y WebSockets cerrados. Solo provisiona su ASISTENTE ficticio Local; negocios en lectura.'};
+    fs.writeFileSync(path.join(OUT,'preflight-roles.json'),JSON.stringify(preflight,null,2));
+    const code=await new Promise(resolve=>{child=cp.spawn(process.execPath,[copy,'--app='+app,'--cuentas='+ACCOUNTS,'--salida='+path.join(OUT,'roles-repetidos.json')],{cwd:ROOT});let log='';child.stdout.on('data',b=>{log+=b;process.stdout.write(b)});child.stderr.on('data',b=>{log+=b;process.stderr.write(b)});child.once('close',code=>{fs.writeFileSync(path.join(OUT,'roles-repetidos.log'),log);resolve(code);});});
+    const after=JSON.parse(psql(snapSQL));
+    const cleanup={before,after,cuentasQAIguales:before.authQA===after.authQA,asistentePropioAusente:after.asistentes10aAuth===before.asistentes10aAuth && after.asistentes10aPerfil===before.asistentes10aPerfil,deudasIguales:before.deudas===after.deudas,exit:code};
+    fs.writeFileSync(path.join(OUT,'estado-final-roles.json'),JSON.stringify(cleanup,null,2));console.log(JSON.stringify(cleanup));
+    if(code || !cleanup.cuentasQAIguales || !cleanup.asistentePropioAusente)process.exitCode=1;
+  } finally {if(child && child.exitCode===null)child.kill();server.kill();await new Promise(resolve=>server.exitCode!==null?resolve():server.once('close',resolve));}
+}
+main().catch(e=>{console.error(e);process.exitCode=1;});

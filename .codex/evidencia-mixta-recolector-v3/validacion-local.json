@@ -1,0 +1,52 @@
+{
+  "fecha": "2026-10-11T00:59:45.637Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "head": "ec2a3b64b4fe7ad96e29d43bf9aef61ea2aa1c04",
+  "main": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "sinRed": true,
+  "sinBorradosReales": true,
+  "suites": [
+    {
+      "nombre": "salida segura",
+      "casos": 8,
+      "fallos": 0
+    },
+    {
+      "nombre": "harness recolector",
+      "casos": 13,
+      "fallos": 0
+    },
+    {
+      "nombre": "URLs y SSR real",
+      "casos": 16,
+      "fallos": 0
+    },
+    {
+      "nombre": "paquete aislado",
+      "casos": 6,
+      "fallos": 0
+    },
+    {
+      "nombre": "lectura mixta SSR real aislada",
+      "casos": 7,
+      "fallos": 0
+    }
+  ],
+  "nota": "La suite de 13 también se repitió dentro del diagnóstico independiente. No se suma como casos distintos. Paquete/SSR se ejecutaron desde copias externas: cache externa, red bloqueada y sin limpieza recursiva de la copia.",
+  "diagnosticosIndependientes": 6,
+  "lint": "oxlint de lo revisado: sin diagnósticos",
+  "sintaxis": "node --check del constructor y CLI del recolector: correctos",
+  "fuentesSha256": {
+    "scripts/lib/salida-segura.mjs": "863f35c2f19eb4f238881abe82490caef6e7d28f13dd8de69197371ae2d2bc70",
+    "scripts/construir-lectura-mixta.mjs": "745bb16d809bb47b512cf2f6f94d6d66c657423d0ed0805d351e05a08989e68f",
+    "scripts/lib/ensayo-recolector.mjs": "3d64e51fd421152b20d66b5885c5f23332237189644d772cc4a4288ace7c2d4e",
+    "scripts/ensayo-recolector-medios.mjs": "244f00acd4bed99d4cef503d64c40e4f4ad44d2f5c8aa394d31cad77dd2d258e",
+    "scripts/verificar-ensayo-recolector.mjs": "989a9666c8cb1f693d09feb4489bf969d86c78efb95e7273317be849478979d7",
+    "scripts/medios-huerfanos.mjs": "d03b1e7206405c6c90e7d49b40531570b17209565ff3b82cec72b18a0eaa7ade",
+    "scripts/verificar-paquete-lectura-mixta.mjs": "38c210928b02739be855d34538ed2f05f5bed65ca8e40defc81cdd37052a06fd",
+    "scripts/verificar-lectura-mixta.mjs": "4c0433287453e5c59da20a283b8617337cde75c90764d8da9204e188a7194d7b",
+    "src/lib/urlsMedios.js": "42c8c63973bba00e3b012ab45924e63dc31f782bc7e90ecf9a096fb12c94e513",
+    "src/lib/imagenes.js": "918ae4561b38be0b54e58ad087cbd60a7c03737edd17d0a5de33baa1f48d6f04"
+  }
+}

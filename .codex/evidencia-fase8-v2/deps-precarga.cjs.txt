@@ -1,0 +1,12 @@
+// Cuenta las dependencias que el entry precarga (modulepreload) para cada import() dinámico.
+const fs = require('fs')
+const d = process.argv[2]
+const idx = fs.readdirSync(d).find((n) => /^index-.*\.js$/.test(n))
+const s = fs.readFileSync(`${d}/${idx}`, 'utf8')
+const f = s.match(/m\.f=\[([^\]]*)\]/)[1].split(',').map((x) => x.replace(/"/g, ''))
+const out = {}
+for (const m of s.matchAll(/import\(`\.\/([\w-]+?)-[\w-]+\.js`\)(?:,__vite__mapDeps\(\[([\d,]*)\]\))?/g)) {
+  const deps = (m[2] ?? '').split(',').filter(Boolean).map((i) => f[Number(i)])
+  out[m[1]] = { js: deps.filter((x) => x.endsWith('.js')).length, css: deps.filter((x) => x.endsWith('.css')).length }
+}
+console.log(JSON.stringify(out))

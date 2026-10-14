@@ -1,0 +1,91 @@
+{
+ "app": "http://localhost:5196",
+ "fecha": "2026-10-11T21:15:23.305Z",
+ "casos": [
+  {
+   "nombre": "Caché: recorrer las 27 rutas nunca deja más de 6 pantallas montadas y el regreso a Ventas funciona",
+   "ok": true,
+   "ms": 8765
+  },
+  {
+   "nombre": "Conservación: carrito, búsqueda y orden, y scroll se conservan aunque la pantalla se haya desmontado",
+   "ok": true,
+   "ms": 18790
+  },
+  {
+   "nombre": "Protección: un diálogo abierto y un formulario editado impiden desmontar su pantalla; al liberarse vuelve el tope",
+   "ok": true,
+   "ms": 9567
+  },
+  {
+   "nombre": "Protección: un formulario editado sin enviar (Puntos Web) conserva su pantalla; los borradores de Recompensas Web también",
+   "ok": true,
+   "ms": 25010
+  },
+  {
+   "nombre": "Invalidación: al cambiar de cuenta no queda búsqueda, ni pantallas, ni scroll de la anterior",
+   "ok": true,
+   "ms": 4130
+  },
+  {
+   "nombre": "Pausa: los placeholders animados de pantallas ocultas no consumen temporizadores; vuelven al mostrarse",
+   "ok": true,
+   "ms": 15333
+  },
+  {
+   "nombre": "Pausa: con la pestaña del navegador oculta el placeholder y la máscara no programan trabajo",
+   "ok": true,
+   "ms": 5947
+  },
+  {
+   "nombre": "Movimiento reducido: el placeholder muestra el texto completo sin escribirse",
+   "ok": true,
+   "ms": 4372
+  },
+  {
+   "nombre": "Inicio: la máscara del héroe se duerme en reposo, despierta con el puntero y vuelve a dormirse",
+   "ok": true,
+   "ms": 10028
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento normal): animan solo a la vista, se pausan fuera de pantalla y con la pestaña oculta",
+   "ok": true,
+   "ms": 10553
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento reducido): quedan quietas, sin bucle; arrastrar sigue funcionando y luego vuelve a dormir",
+   "ok": true,
+   "ms": 15167
+  },
+  {
+   "nombre": "F6-01: un guardado que FALLA, una validación rechazada y un guardado EN VUELO no sueltan la protección de Puntos Web",
+   "ok": true,
+   "ms": 213961
+  },
+  {
+   "nombre": "F6-01: un guardado CONFIRMADO suelta solo ese formulario; cancelar un diálogo no deja protección falsa; coexistencia",
+   "ok": true,
+   "ms": 44646
+  },
+  {
+   "nombre": "F6-02: cambio DIRECTO de cuenta y de rol con la pantalla montada (sin sesión nula): los filtros nuevos nacen en su valor por defecto",
+   "ok": true,
+   "ms": 8066
+  },
+  {
+   "nombre": "F6-02: dentro de la MISMA identidad los filtros sí se conservan al desalojar (control)",
+   "ok": true,
+   "ms": 4938
+  },
+  {
+   "nombre": "F6-03: el mes anterior elegido en Dashboard (y el rango personalizado de las demás pantallas) se conserva exacto tras desalojar",
+   "ok": true,
+   "ms": 13976
+  },
+  {
+   "nombre": "F6-04: el contador de TarjetaPuntos se pausa fuera de pantalla y con la pestaña oculta, y CONTINÚA al volver; movimiento reducido lo salta",
+   "ok": true,
+   "ms": 14939
+  }
+ ]
+}

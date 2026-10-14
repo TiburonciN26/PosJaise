@@ -1,0 +1,2219 @@
+{
+  "nota": "Diagnóstico del CLI completo actual, con cableado REST/Worker real ejecutado contra un fetch falso, núcleo/guardas/validadores/URLs reales, imports adaptados en memoria y FS/Auth/Chromium/crypto ficticios. Sin .env ni red reales, datos o archivos de proyecto modificados. Los fallos son inyecciones, no incidentes observados en staging.",
+  "sha256Script": "6872d225275d1f385a3a9a1fddc1c9802c25e25a4a4e8c727a33687ec1387f90",
+  "sha256Nucleo": "3ad78c4a4eb225d7a02ff2bc32e2090c559b9204a3d5f52bd31616e14b9f3f03",
+  "resultados": [
+    {
+      "opciones": {
+        "nombre": "A sano"
+      },
+      "exitCode": 0,
+      "completa": true,
+      "estadoFinalConfirmado": true,
+      "pendientes": [],
+      "fallos": 0,
+      "error": null,
+      "casosFallidos": [],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 15
+    },
+    {
+      "opciones": {
+        "nombre": "B sano",
+        "objetos": true
+      },
+      "exitCode": 0,
+      "completa": true,
+      "estadoFinalConfirmado": true,
+      "pendientes": [],
+      "fallos": 0,
+      "error": null,
+      "casosFallidos": [],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+          "path": "/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+          "path": "/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 27
+    },
+    {
+      "opciones": {
+        "nombre": "Colisión preexistente, flujo normal",
+        "colision": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "sinEscrituras": true,
+      "pendientes": [],
+      "fallos": 1,
+      "error": "precondición: ya existe una fila con el título de esta ejecución; se aborta sin escribir",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "precondición: ya existe una fila con el título de esta ejecución; se aborta sin escribir"
+          }
+        }
+      ],
+      "filasIniciales": [
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "titulo": "QA rollback a1b2c3 (borrar)",
+          "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "orden": 9999,
+          "activo": false
+        }
+      ],
+      "filasFinales": [
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "titulo": "QA rollback a1b2c3 (borrar)",
+          "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "orden": 9999,
+          "activo": false
+        }
+      ],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        }
+      ],
+      "peticiones": 6
+    },
+    {
+      "opciones": {
+        "nombre": "Colisión preexistente + INSERT 500 sin commit",
+        "colision": true,
+        "insertRechazado": 500
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "sinEscrituras": true,
+      "pendientes": [],
+      "fallos": 1,
+      "error": "precondición: ya existe una fila con el título de esta ejecución; se aborta sin escribir",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "precondición: ya existe una fila con el título de esta ejecución; se aborta sin escribir"
+          }
+        }
+      ],
+      "filasIniciales": [
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "titulo": "QA rollback a1b2c3 (borrar)",
+          "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "orden": 9999,
+          "activo": false
+        }
+      ],
+      "filasFinales": [
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "titulo": "QA rollback a1b2c3 (borrar)",
+          "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/00000000-0000-4000-8000-000000000007/g.webp",
+          "orden": 9999,
+          "activo": false
+        }
+      ],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        }
+      ],
+      "peticiones": 6
+    },
+    {
+      "opciones": {
+        "nombre": "INSERT perdido sin edición",
+        "objetos": true,
+        "insertPerdido": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "pendientes": [],
+      "fallos": 2,
+      "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto",
+      "casosFallidos": [
+        {
+          "nombre": "fila propia creada con su id previsto y URLs de Pages (INSERT 201, confirmada por relectura por id)",
+          "ok": false,
+          "detalle": {
+            "estado": null,
+            "existe": true
+          }
+        },
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 20
+    },
+    {
+      "opciones": {
+        "nombre": "INSERT perdido + título editado",
+        "objetos": true,
+        "insertPerdido": true,
+        "cambioTitulo": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "pendientes": [],
+      "fallos": 2,
+      "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto",
+      "casosFallidos": [
+        {
+          "nombre": "fila propia creada con su id previsto y URLs de Pages (INSERT 201, confirmada por relectura por id)",
+          "ok": false,
+          "detalle": {
+            "estado": null,
+            "existe": true
+          }
+        },
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 20
+    },
+    {
+      "opciones": {
+        "nombre": "INSERT perdido + activo editado",
+        "objetos": true,
+        "insertPerdido": true,
+        "cambioActivo": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "pendientes": [],
+      "fallos": 2,
+      "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto",
+      "casosFallidos": [
+        {
+          "nombre": "fila propia creada con su id previsto y URLs de Pages (INSERT 201, confirmada por relectura por id)",
+          "ok": false,
+          "detalle": {
+            "estado": null,
+            "existe": true
+          }
+        },
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 20
+    },
+    {
+      "opciones": {
+        "nombre": "INSERT perdido + orden editado",
+        "objetos": true,
+        "insertPerdido": true,
+        "cambioOrden": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "pendientes": [],
+      "fallos": 2,
+      "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto",
+      "casosFallidos": [
+        {
+          "nombre": "fila propia creada con su id previsto y URLs de Pages (INSERT 201, confirmada por relectura por id)",
+          "ok": false,
+          "detalle": {
+            "estado": null,
+            "existe": true
+          }
+        },
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "el INSERT no quedó confirmado (estado null, fila existe); se aborta y la limpieza actúa solo sobre el id previsto"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002",
+          "method": "DELETE",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 20
+    },
+    {
+      "opciones": {
+        "nombre": "DELETE sin efecto",
+        "objetos": true,
+        "deleteSinEfecto": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": false,
+      "pendientes": [
+        "galeria_web:00000000-0000-4000-8000-000000000003"
+      ],
+      "fallos": 2,
+      "error": null,
+      "casosFallidos": [
+        {
+          "nombre": "limpieza: la fila propia (por id exacto) ya no existe, confirmado por relectura (solo entonces se borran sus objetos)",
+          "ok": false,
+          "detalle": {
+            "estadoDelete": 204,
+            "eliminada": false
+          }
+        },
+        {
+          "nombre": "ESTADO FINAL confirmado (la fila propia sigue existiendo: se CONSERVAN sus objetos para revisión)",
+          "ok": false,
+          "detalle": {
+            "pendientes": [
+              "galeria_web:00000000-0000-4000-8000-000000000003"
+            ]
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "titulo": "QA rollback a1b2c3 (borrar)",
+          "antes_url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "despues_url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "orden": 9999,
+          "activo": false
+        }
+      ],
+      "objetosFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp",
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+        "fotos-galeria/00000000-0000-4000-8000-000000000002/m.webp",
+        "fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp"
+      ],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+          "path": "/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+          "path": "/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 22
+    },
+    {
+      "opciones": {
+        "nombre": "Relectura tras DELETE caída",
+        "objetos": true,
+        "relecturaCaida": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": false,
+      "pendientes": [
+        "estado desconocido: se conservan fila y objetos propios"
+      ],
+      "fallos": 1,
+      "error": null,
+      "casosFallidos": [
+        {
+          "nombre": "limpieza y comprobación final sin errores (estado desconocido: se CONSERVAN los objetos)",
+          "ok": false,
+          "detalle": {
+            "error": "lectura incompleta o fallida (503) de galeria_web: ? de ?"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp",
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+        "fotos-galeria/00000000-0000-4000-8000-000000000002/m.webp",
+        "fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp"
+      ],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/m",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g",
+          "method": "PUT",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "POST",
+          "query": "",
+          "prefer": "return=minimal"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "PATCH",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003&titulo=eq.QA%20rollback%20a1b2c3%20(borrar)",
+          "prefer": "return=representation"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+          "path": "/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+          "path": "/fotos-galeria/00000000-0000-4000-8000-000000000002/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/g.webp",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "DELETE",
+          "query": "?id=eq.00000000-0000-4000-8000-000000000003"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 22
+    },
+    {
+      "opciones": {
+        "nombre": "Marca incorrecta",
+        "marcaIncorrecta": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": false,
+      "fallos": 1,
+      "error": "el artefacto del alias (7ee3c78e) no es el esperado (11111111); no se autentica ni se escribe nada",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "el artefacto del alias (7ee3c78e) no es el esperado (11111111); no se autentica ni se escribe nada"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        }
+      ],
+      "peticiones": 1
+    },
+    {
+      "opciones": {
+        "nombre": "Sin salida",
+        "sinSalida": true
+      },
+      "exitCode": 1,
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [],
+      "eventos": [],
+      "peticiones": 0
+    },
+    {
+      "opciones": {
+        "nombre": "Snapshot parcial declarado",
+        "parcial": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "sinEscrituras": true,
+      "pendientes": [],
+      "fallos": 1,
+      "error": "lectura incompleta o fallida (200) de galeria_web: 0 de 1",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "lectura incompleta o fallida (200) de galeria_web: 0 de 1"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 5
+    },
+    {
+      "opciones": {
+        "nombre": "Snapshot sin count",
+        "sinCount": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "sinEscrituras": true,
+      "pendientes": [],
+      "fallos": 1,
+      "error": "lectura incompleta o fallida (200) de galeria_web: 0 de ?",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "lectura incompleta o fallida (200) de galeria_web: 0 de ?"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        }
+      ],
+      "peticiones": 5
+    },
+    {
+      "opciones": {
+        "nombre": "Primer PUT confirmado, respuesta perdida",
+        "objetos": true,
+        "putPerdido": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "sinEscrituras": true,
+      "pendientes": [],
+      "fallos": 1,
+      "error": "primer PUT confirmado, respuesta perdida",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "primer PUT confirmado, respuesta perdida"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp"
+      ],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        }
+      ],
+      "peticiones": 7
+    },
+    {
+      "opciones": {
+        "nombre": "Primer PUT sin commit",
+        "objetos": true,
+        "putAntesDeCommit": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "sinEscrituras": true,
+      "pendientes": [],
+      "fallos": 1,
+      "error": "primer PUT caído antes de commit",
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "primer PUT caído antes de commit"
+          }
+        }
+      ],
+      "filasIniciales": [],
+      "filasFinales": [],
+      "objetosFinales": [],
+      "referenciasPropiasRotas": 0,
+      "escrituras": [
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        }
+      ],
+      "eventos": [
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/sw.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+          "path": "/assets/index.js",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token",
+          "method": "POST",
+          "query": "?grant_type=password"
+        },
+        {
+          "origin": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/rest/v1/galeria_web",
+          "method": "GET",
+          "query": "?select=id,titulo,antes_url,despues_url,orden,activo&order=id",
+          "prefer": "count=exact"
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/inventario/fotos-galeria",
+          "method": "GET",
+          "query": ""
+        },
+        {
+          "origin": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "path": "/v1/medios/fotos-galeria/00000000-0000-4000-8000-000000000001/m",
+          "method": "PUT",
+          "query": ""
+        }
+      ],
+      "peticiones": 7
+    }
+  ]
+}

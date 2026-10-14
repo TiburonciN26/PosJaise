@@ -1,0 +1,42 @@
+[
+  {
+    "archivo": "unitarios-repetidos.json",
+    "sha256": "08ed7927c244cdd5b88e4bf13e0326cb439d517def9945ffa0f5cb94af490310"
+  },
+  {
+    "archivo": "cli-repetida.json",
+    "sha256": "de301cd20ad52a58d1a85bec20a73e5e70c6c6105eef56f0ba555b09c6d68722"
+  },
+  {
+    "archivo": "barrera-commit-pendiente.json",
+    "sha256": "ecdca10cfaa4c5e137de9b5d96fdd6ba4076065008cb9a9ed75cba798a45119d"
+  },
+  {
+    "archivo": "metadata-local-solo-lectura.json",
+    "sha256": "5227860998100300bda86cd4dc1523a6c1d5a28cd8c13c3dd7c50b0d7f9d8c50"
+  },
+  {
+    "archivo": "acl-completa-local.json",
+    "sha256": "2c5724be8815179f0575feb2e50dc050db6aa99800bd6c40fa7168105e39c599"
+  },
+  {
+    "archivo": "hashes-y-rollback.json",
+    "sha256": "bd82af5b580f1e1a33aac886ee495fd1b79a8e0a3ef5e2cddf4ad542cd46a28a"
+  },
+  {
+    "archivo": "resumen-revision.json",
+    "sha256": "f1946ac29ad222c62bbfac4e7857daa265a759e6f4a778ec5c8e7594fe73b7f9"
+  },
+  {
+    "archivo": "barrera-commit-pendiente.mjs.txt",
+    "sha256": "a59d7724ad0a07e40060d7b1962ba23815f848091848728b0db39931cf1d9aec"
+  },
+  {
+    "archivo": "metadata-lectura.mjs.txt",
+    "sha256": "2ce6346573d39a4b8ce3f7df79dcf4e51ae28d4da0429fd8d3d3aeadcec343a9"
+  },
+  {
+    "archivo": "acl-lectura.mjs.txt",
+    "sha256": "20121a0f724c4c3322aba37d237aa9291787eb8bd87648f4f6061667e453bba4"
+  }
+]

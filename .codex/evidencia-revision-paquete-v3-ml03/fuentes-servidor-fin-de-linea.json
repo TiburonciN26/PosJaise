@@ -1,0 +1,40 @@
+{
+  "fecha": "2026-10-11T03:08:09.610Z",
+  "servidor": [
+    {
+      "archivo": "cloudflare/medios-pages/entrega.js",
+      "bytesPaquete": 7286,
+      "bytesGit": 7157,
+      "crlfPaquete": 129,
+      "crlfGit": 0,
+      "identicoExacto": false,
+      "identicoContenidoLF": true,
+      "hashContenidoLFPaquete": "8f2e452eadc33283485156bdf5ed05a9a0dad4005b53cc6473817801c3acbcf4",
+      "hashContenidoLFGit": "8f2e452eadc33283485156bdf5ed05a9a0dad4005b53cc6473817801c3acbcf4"
+    },
+    {
+      "archivo": "functions/medios/[[ruta]].js",
+      "bytesPaquete": 444,
+      "bytesGit": 438,
+      "crlfPaquete": 6,
+      "crlfGit": 0,
+      "identicoExacto": false,
+      "identicoContenidoLF": true,
+      "hashContenidoLFPaquete": "64fe96159bcd4203c6a37cbd16d556c1f006b745129983568a208f6a94c98d87",
+      "hashContenidoLFGit": "64fe96159bcd4203c6a37cbd16d556c1f006b745129983568a208f6a94c98d87"
+    },
+    {
+      "archivo": "functions/medios.js",
+      "bytesPaquete": 452,
+      "bytesGit": 446,
+      "crlfPaquete": 6,
+      "crlfGit": 0,
+      "identicoExacto": false,
+      "identicoContenidoLF": true,
+      "hashContenidoLFPaquete": "960af9ad8c67cdcd1a934a7ae1463e85a52d913131fd61166ed2ef0e3fec4eff",
+      "hashContenidoLFGit": "960af9ad8c67cdcd1a934a7ae1463e85a52d913131fd61166ed2ef0e3fec4eff"
+    }
+  ],
+  "soloDiferenciasFinDeLinea": true,
+  "nota": "Las 3 fuentes del servidor empaquetado coinciden con git show después de normalizar CRLF/LF. Los hashes exactos del manifiesto coinciden con los archivos del paquete."
+}

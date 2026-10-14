@@ -1,0 +1,72 @@
+{
+  "fecha": "2026-10-12T17:06:40.839Z",
+  "veredicto": "Pendiente de correcciones",
+  "alcance": "Implementación y simulación local, sin migraciones reales ni cambios remotos",
+  "unitarios": {
+    "total": 12,
+    "fallos": 0
+  },
+  "hallazgos": [
+    {
+      "id": "F9-01",
+      "prioridad": 1,
+      "confirmado": true,
+      "borradosReales": 0
+    },
+    {
+      "id": "F9-02",
+      "prioridad": 1,
+      "confirmado": true
+    },
+    {
+      "id": "F9-03",
+      "prioridad": 1,
+      "confirmado": true
+    },
+    {
+      "id": "F9-04",
+      "prioridad": 2,
+      "confirmado": true
+    },
+    {
+      "id": "F9-05",
+      "prioridad": 2,
+      "confirmado": true
+    },
+    {
+      "id": "F9-06",
+      "prioridad": 2,
+      "confirmado": true
+    }
+  ],
+  "controlPositivo": {
+    "caso": "control positivo actualizar y revertir",
+    "actualizarExit": 0,
+    "revertirExit": 0,
+    "originalRestaurado": true,
+    "estadoFinal": "revertida"
+  },
+  "fuentesSinCambios": true,
+  "integridad": [
+    {
+      "archivo": "scripts/migracion-medios/inventario.sql",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/lib.mjs",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/medios-migracion.mjs",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/probar-lib.mjs",
+      "coincide": true
+    },
+    {
+      "archivo": "scripts/migracion-medios/simular-fase9.mjs",
+      "coincide": true
+    }
+  ]
+}

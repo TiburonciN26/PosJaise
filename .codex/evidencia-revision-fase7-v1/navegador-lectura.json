@@ -1,0 +1,55 @@
+{
+  "alcance": "Navegación anónima real; datos solo Local, bloqueo de métodos de escritura y de otros Supabase",
+  "casos": [
+    {
+      "route": "/productos",
+      "url": "/productos",
+      "errors": [],
+      "denied": [],
+      "reads": [
+        "/rest/v1/rpc/politicas_cita_publicas",
+        "/rest/v1/rpc/datos_contacto",
+        "/rest/v1/rpc/horario_atencion",
+        "/rest/v1/rpc/productos_categorias_publicas",
+        "/rest/v1/rpc/productos_vitrina_publica",
+        "/rest/v1/productos",
+        "/rest/v1/productos",
+        "/rest/v1/productos",
+        "/rest/v1/productos",
+        "/storage/v1/object/public/fotos-productos/ruta/p.webp",
+        "/storage/v1/object/public/fotos-productos/ruta/p.webp",
+        "/storage/v1/object/public/fotos-productos/ruta/p.webp"
+      ],
+      "text": {
+        "contieneCategorias": true,
+        "contienePaginador": false,
+        "longitud": 6817
+      }
+    },
+    {
+      "route": "/servicios",
+      "url": "/servicios",
+      "errors": [],
+      "denied": [],
+      "reads": [
+        "/rest/v1/rpc/politicas_cita_publicas",
+        "/rest/v1/rpc/datos_contacto",
+        "/rest/v1/rpc/horario_atencion",
+        "/rest/v1/rpc/servicios_categorias_publicas",
+        "/rest/v1/rpc/servicios_vitrina_publica",
+        "/rest/v1/servicios",
+        "/rest/v1/servicios",
+        "/rest/v1/servicios",
+        "/rest/v1/servicios",
+        "/rest/v1/rpc/servicios_mas_pedidos",
+        "/rest/v1/servicios",
+        "/storage/v1/object/public/fotos-servicios/e4788f8b-d188-4467-8ab7-5aeea33b3810.webp"
+      ],
+      "text": {
+        "contieneCategorias": true,
+        "contienePaginador": true,
+        "longitud": 3546
+      }
+    }
+  ]
+}

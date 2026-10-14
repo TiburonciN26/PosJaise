@@ -1,0 +1,48 @@
+{
+  "fecha": "2026-10-13T05:16:56.922Z",
+  "pruebas": [
+    {
+      "id": "evaluacion-sin-mediciones",
+      "exit": 0,
+      "total": 0,
+      "fallos": 0,
+      "stdout": "0/0 presupuestos cumplidos",
+      "defectoReproducido": true
+    },
+    {
+      "id": "servidor-escape-prefijo",
+      "ruta": "/..%2fservidor-fixture-ajeno%2fmarca.txt",
+      "status": 200,
+      "leeMarcaAjena": true,
+      "defectoReproducido": true
+    },
+    {
+      "id": "control-fallback-propio",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "id": "login-a-backend-no-aprobado",
+      "exit": 0,
+      "backendPermitidoPorContrato": "http://127.0.0.1:54321",
+      "backendFicticioObservado": "http://127.0.0.1:61814",
+      "appFicticia": "http://127.0.0.1:61815",
+      "posts": [
+        {
+          "ruta": "/auth/token",
+          "metodo": "POST",
+          "emailFicticio": true,
+          "passwordFicticiaRecibida": true
+        },
+        {
+          "ruta": "/auth/token",
+          "metodo": "POST",
+          "emailFicticio": true,
+          "passwordFicticiaRecibida": true
+        }
+      ],
+      "defectoReproducido": true,
+      "limites": "Copia de diagnóstico del arranque, con dos cuentas inventadas y dos servidores de loopback. Sin Supabase Auth real ni red externa. Docker/psql originales solo leen Local."
+    }
+  ]
+}

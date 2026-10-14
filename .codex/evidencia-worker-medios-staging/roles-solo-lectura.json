@@ -1,0 +1,33 @@
+{
+  "fecha": "2026-10-10T04:18:12.464Z",
+  "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+  "supabase": "staging",
+  "soloLectura": true,
+  "escribio": false,
+  "casos": [
+    {
+      "rol": "admin",
+      "status": 200,
+      "esperado": 200,
+      "ok": true,
+      "objetos": 0,
+      "origenExacto": true
+    },
+    {
+      "rol": "cajera",
+      "status": 403,
+      "esperado": 403,
+      "ok": true,
+      "origenExacto": true
+    },
+    {
+      "rol": "cliente",
+      "status": 403,
+      "esperado": 403,
+      "ok": true,
+      "origenExacto": true
+    }
+  ],
+  "total": 3,
+  "fallos": 0
+}

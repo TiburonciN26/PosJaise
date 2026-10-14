@@ -1,0 +1,217 @@
+// Reconstruye el estado V1 (antes de las correcciones V2) de los archivos que V2 modificó, para el rollback V2→V1.
+//  · main.jsx: copia «antes» de la Fase 8 (V1 no lo tocó; hash en antes/SHA256.txt).
+//  · vite.config.js y paginasCliente.js: copia «antes» + parche V1 (aplicado aparte con git apply en un árbol temporal).
+//  · el resto: deshaciendo exactamente las sustituciones de texto de V2.
+const fs = require('fs'), path = require('path')
+const [repo, salida] = process.argv.slice(2)
+const leer = (f) => fs.readFileSync(path.join(repo, f), 'utf8')
+const escribir = (f, t) => { fs.mkdirSync(path.dirname(path.join(salida, f)), { recursive: true }); fs.writeFileSync(path.join(salida, f), t) }
+function deshacer(f, pares) {
+  let t = leer(f)
+  for (const [v2, v1] of pares) {
+    if (!t.includes(v2)) throw new Error(`${f}: no se encontró el texto V2: ${v2.slice(0, 80)}`)
+    t = t.split(v2).join(v1)
+  }
+  return t
+}
+
+// ---- App.jsx
+escribir('src/App.jsx', deshacer('src/App.jsx', [
+  ["import { Suspense, useEffect, useState } from 'react'", "import { lazy, Suspense, useEffect, useState } from 'react'"],
+  [`import PestanasCacheadas from './components/PestanasCacheadas.jsx'
+import LimiteCargaDiferida from './components/LimiteCargaDiferida.jsx'
+import { componenteDiferido } from './lib/moduloDiferido.js'
+
+// B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
+// (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
+// Fase 8 V2 (F8-01): reintentable y con límite local (Login no está en el precaché: la primera vez sin red no abre, pero
+// lo dice y se reintenta solo al volver la conexión, en vez de mostrar el «Algo salió mal» global).
+const Login = componenteDiferido(() => import('./pages/Login.jsx'), 'Login')
+`, `import PestanasCacheadas from './components/PestanasCacheadas.jsx'
+
+// B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
+// (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
+const Login = lazy(() => import('./pages/Login.jsx'))
+`],
+  [`            <LimiteCargaDiferida onReintentar={Login.reintentar}>
+              <Suspense fallback={<CargandoPantalla />}>
+                <Login />
+              </Suspense>
+            </LimiteCargaDiferida>`, `            <Suspense fallback={<CargandoPantalla />}>
+              <Login />
+            </Suspense>`],
+  [`              portalListo ? (
+                <LimiteCargaDiferida onReintentar={PortalCliente.reintentar}>
+                  <Suspense fallback={<CargandoPantalla />}>
+                    <PortalCliente />
+                  </Suspense>
+                </LimiteCargaDiferida>
+              ) : (`, `              portalListo ? (
+                <Suspense fallback={<CargandoPantalla />}>
+                  <PortalCliente />
+                </Suspense>
+              ) : (`],
+]))
+
+// ---- PestanasCacheadas.jsx
+{
+  let t = leer('src/components/PestanasCacheadas.jsx')
+  t = t.replace(/const (\w+) = componenteDiferido\(\(\) => import\('([^']+)'\), '\1'\)/g, "const $1 = lazy(() => import('$2'))")
+  fs.writeFileSync(path.join(salida, '.tmp'), t)
+  const pares = [
+    ["import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'", "import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'"],
+    ["import Ventas from '../pages/Ventas.jsx'\nimport LimiteCargaDiferida from './LimiteCargaDiferida.jsx'\nimport { componenteDiferido } from '../lib/moduloDiferido.js'\n", "import Ventas from '../pages/Ventas.jsx'\n"],
+    [`// —sobre todo las 7 exclusivas de admin— sí se cargan aparte (import()): una
+// asistente nunca llega a pedir ese código, y el admin lo pide recién cuando
+// entra a esa pestaña, no todo junto al abrir la app.
+//
+// Fase 8 V2 (F8-01): desde que el precaché de la PWA ya no incluye el POS, esas pantallas pueden no estar en el dispositivo.
+// Por eso (1) cada una es un componenteDiferido (lib/moduloDiferido.js): reintentable, y con un límite de error LOCAL
+// (LimiteCargaDiferida) que deja el fallo en su pestaña sin desmontar Layout ni la venta en curso; y (2) al entrar al POS,
+// en reposo, se precargan las pantallas que el rol puede abrir (ver precargarPantallasDelRol): quedan evaluadas en memoria
+// (abrirlas después no necesita red ni los archivos del servidor, aunque se haya publicado otra versión) y en la caché por
+// uso del service worker (sobreviven a una recarga de la misma versión).`, `// —sobre todo las 7 exclusivas de admin— sí van con React.lazy: una
+// asistente nunca llega a pedir ese código, y el admin lo pide recién cuando
+// entra a esa pestaña, no todo junto al abrir la app.`],
+  ]
+  for (const [v2, v1] of pares) { if (!t.includes(v2)) throw new Error('Pestanas: ' + v2.slice(0, 60)); t = t.split(v2).join(v1) }
+  const ini = t.indexOf('// Fase 8 V2 (F8-01): en reposo y de a una')
+  const fin = t.indexOf('function PantallaCacheada({ ruta, activa, Pagina, proteger, volver }) {')
+  if (ini < 0 || fin < 0) throw new Error('Pestanas: bloque de precarga')
+  t = t.slice(0, ini) + 'function PantallaCacheada({ ruta, activa, Pagina, proteger }) {' + t.slice(fin + 'function PantallaCacheada({ ruta, activa, Pagina, proteger, volver }) {'.length)
+  const pares2 = [
+    [`          {/* F8-01: si su código no llega, el error queda en ESTA pestaña (Layout, menú y venta en curso siguen montados). */}
+          <LimiteCargaDiferida activa={activa} onReintentar={Pagina.reintentar} volver={volver}>
+            <Suspense fallback={<CargandoPagina />}>
+              <Pagina activo={activa} />
+            </Suspense>
+          </LimiteCargaDiferida>`, `          <Suspense fallback={<CargandoPagina />}>
+            <Pagina activo={activa} />
+          </Suspense>`],
+    [`
+  // F8-01: precarga en reposo de las pantallas del rol (se cancela si cambia la cuenta o el rol: la \`key\` desmonta esto).
+  useEffect(() => precargarPantallasDelRol(rol), [rol])
+`, ''],
+    [`
+  // Salida segura desde una pestaña que no pudo abrirse: la pantalla inicial del rol (Ventas para administración y caja).
+  const inicial = secciones.find((s) => s.path === rutaInicialPara(rol))`, ''],
+    [`        const volver = inicial && inicial.path !== ruta ? { a: inicial.path, etiqueta: inicial.label } : undefined
+        return <PantallaCacheada key={ruta} ruta={ruta} activa={ruta === pathname} Pagina={Pagina} proteger={proteger} volver={volver} />`, `        return <PantallaCacheada key={ruta} ruta={ruta} activa={ruta === pathname} Pagina={Pagina} proteger={proteger} />`],
+  ]
+  for (const [v2, v1] of pares2) { if (!t.includes(v2)) throw new Error('Pestanas2: ' + v2.slice(0, 60)); t = t.split(v2).join(v1) }
+  fs.rmSync(path.join(salida, '.tmp'))
+  escribir('src/components/PestanasCacheadas.jsx', t)
+}
+
+// ---- Ventas.jsx
+escribir('src/pages/Ventas.jsx', deshacer('src/pages/Ventas.jsx', [
+  ["import { Suspense, useEffect, useRef, useState } from 'react'", "import { lazy, Suspense, useEffect, useRef, useState } from 'react'"],
+  ["import { useEstadoVista } from '../lib/estadoVista.js'\nimport { componenteDiferido } from '../lib/moduloDiferido.js'\nimport LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'\n", "import { useEstadoVista } from '../lib/estadoVista.js'\n"],
+  [`// F8-01: reintentable; si su código no llega (sin red o versión retirada) el fallo queda en su ventana, no en Ventas.
+const ModalEscanerCodigoBarras = componenteDiferido(() => import('../components/ModalEscanerCodigoBarras.jsx'), 'ModalEscanerCodigoBarras')`, "const ModalEscanerCodigoBarras = lazy(() => import('../components/ModalEscanerCodigoBarras.jsx'))"],
+  [`      {modalEscanerAbierto && (
+        <LimiteCargaDiferida
+          variante="ventana"
+          onReintentar={ModalEscanerCodigoBarras.reintentar}
+          onCerrar={() => setModalEscanerAbierto(false)}
+        >
+          <Suspense
+            fallback={
+              <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
+                <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
+              </div>
+            }
+          >
+            <ModalEscanerCodigoBarras
+              buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
+              onProductoEncontrado={agregarProducto}
+              onCerrar={() => setModalEscanerAbierto(false)}
+            />
+          </Suspense>
+        </LimiteCargaDiferida>
+      )}`, `      {modalEscanerAbierto && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
+              <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
+            </div>
+          }
+        >
+          <ModalEscanerCodigoBarras
+            buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
+            onProductoEncontrado={agregarProducto}
+            onCerrar={() => setModalEscanerAbierto(false)}
+          />
+        </Suspense>
+      )}`],
+]))
+
+// ---- PortalCliente.jsx
+escribir('src/pages/PortalCliente.jsx', deshacer('src/pages/PortalCliente.jsx', [
+  ["import { precargarPestanasPrincipales, reintentarPaginasFallidas } from '../config/paginasCliente.js'\nimport LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'", "import { precargarPestanasPrincipales } from '../config/paginasCliente.js'"],
+  [`              <main className="flex flex-1 flex-col overflow-hidden">
+                {/* F8-01: una página cuyo código no llega (sin red, versión retirada) falla AQUÍ, con el header, el menú y
+                    los providers de la clienta montados; al cambiar de ruta o volver la red se reintenta. */}
+                <LimiteCargaDiferida tono="portal" clave={location.pathname} onReintentar={reintentarPaginasFallidas}>
+                  <Suspense
+                    fallback={
+                      <div className="flex flex-1 items-center justify-center p-6">
+                        <p className="font-mono text-sm text-white/50">Cargando...</p>
+                      </div>
+                    }
+                  >
+                    <Outlet />
+                  </Suspense>
+                </LimiteCargaDiferida>
+              </main>`, `              <main className="flex flex-1 flex-col overflow-hidden">
+                <Suspense
+                  fallback={
+                    <div className="flex flex-1 items-center justify-center p-6">
+                      <p className="font-mono text-sm text-white/50">Cargando...</p>
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
+              </main>`],
+]))
+
+// ---- build-cloudflare.mjs
+escribir('scripts/build-cloudflare.mjs', deshacer('scripts/build-cloudflare.mjs', [
+  [`// Fase 8 V2 (F8-02): las reglas de caché por uso viven en sw-reglas-cache.js; sin él el SW no se instala (falla cerrado),
+// pero el build no debe publicarse así.
+if (!/importScripts\\(\\s*"sw-reglas-cache\\.js"\\s*\\)/.test(swSalida) || !existsSync(resolve(salida, 'sw-reglas-cache.js'))) falla('sw.js no importa sw-reglas-cache.js o falta en la salida')
+if (/sameOrigin\\s*&&/.test(swSalida)) falla('sw.js conserva una regla de caché por «mismo origen» (F8-02)')
+`, ''],
+  ["SW sin fallback en /medios, reglas de caché por uso, sin credenciales privilegiadas", 'SW sin fallback en /medios, sin credenciales privilegiadas'],
+]))
+
+// ---- cloudflare/_headers
+escribir('cloudflare/_headers', deshacer('cloudflare/_headers', [["\n/sw-reglas-cache.js\n  Cache-Control: no-cache\n", '']]))
+
+// ---- scripts/verificar-fase8.cjs
+escribir('scripts/verificar-fase8.cjs', deshacer('scripts/verificar-fase8.cjs', [
+  [`// Los dist se construyen con VITE_BASE_PATH=/ y sin 404.html (como en Cloudflare Pages). A y B: VITE_BUILD_ID distinto y, desde la V2,
+// B compilado con OTROS nombres de assets (ver scripts/verificar-fase8-v2.cjs); «publicar» B reemplaza la carpeta servida entera
+// (antes se copiaba B encima de A y los archivos de A seguían disponibles por accidente, Codex F8-01).`, `// Los dist se construyen con VITE_BASE_PATH=/ y sin 404.html (como en Cloudflare Pages). A y B son el mismo código con VITE_BUILD_ID distinto.`],
+  [`  // Producto de prueba de Local (nunca se confirma la venta: solo se agrega y se quita del carrito en memoria).
+  const producto = psql(\`select nombre from productos where activo and stock_actual > 0 and nombre ~ '^(TEST|ZZZ TEST|QA)' and nombre !~ '[%_]' order by nombre limit 1\`)
+  // Publicación simulada: la carpeta servida pasa a contener SOLO lo de B (los archivos de A dejan de existir).
+  const publicarB = () => { fs.rmSync(viva, { recursive: true, force: true }); fs.cpSync(B, viva, { recursive: true }) }`, `  const producto = psql(\`select nombre from productos where activo and stock_actual > 0 and nombre !~ '[%_]' order by nombre limit 1\`)`],
+  [`    // «publicar» B (reemplaza a A)
+    publicarB()`, `    // «publicar» B encima de A
+    fs.cpSync(B, viva, { recursive: true, force: true })`],
+  [`    publicarB()
+    await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+    await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+    assert.equal(await page.getByRole('button', { name: 'Actualizar' }).isDisabled(), false)`, `    fs.cpSync(B, viva, { recursive: true, force: true })
+    await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+    await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+    assert.equal(await page.getByRole('button', { name: 'Actualizar' }).isDisabled(), false)`],
+  [`    const metaB = fs.readFileSync(path.join(B, 'index.html'), 'utf8').match(/name="build-id" content="([^"]+)"/)[1]
+    await page.waitForFunction((m) => document.querySelector('meta[name="build-id"]')?.content === m, metaB, { timeout: 30000 })`, `    await page.waitForFunction(() => document.querySelector('meta[name="build-id"]')?.content === 'f8-b', null, { timeout: 30000 })`],
+  [`    const metaA = fs.readFileSync(path.join(A, 'index.html'), 'utf8').match(/name="build-id" content="([^"]+)"/)[1]
+    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), metaA)`, `    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), 'f8-a')`],
+  [`    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), metaA, 'sigue en A')`, `    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), 'f8-a', 'sigue en A')`],
+]))
+console.log('reconstrucción V1 lista en', salida)

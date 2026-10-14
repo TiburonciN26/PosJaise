@@ -1,0 +1,86 @@
+{
+  "fecha": "2026-10-10T23:08:17.883Z",
+  "entorno": "staging aprobado",
+  "modo": "recolector solo lectura, retención 14 días",
+  "informe": {
+    "retencionDias": 14,
+    "aplicar": false,
+    "referenciados": 0,
+    "objetos": 0,
+    "totales": {
+      "referenciado": 0,
+      "protegido-reciente": 0,
+      "sin-fecha": 0,
+      "candidato": 0
+    },
+    "candidatos": [],
+    "eliminados": [],
+    "omitidos": [],
+    "errores": [],
+    "abortado": null
+  },
+  "peticiones": [
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "POST"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "HEAD"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "HEAD"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "HEAD"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "HEAD"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "HEAD"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET"
+    }
+  ],
+  "resumen": {
+    "postAuth": 1,
+    "get": 8,
+    "head": 5,
+    "escriturasDatos": 0
+  }
+}

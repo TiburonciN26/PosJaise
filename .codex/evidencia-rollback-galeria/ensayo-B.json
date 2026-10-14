@@ -1,0 +1,211 @@
+{
+  "fecha": "2026-10-10T21:48:28.963Z",
+  "buildId": "7ee3c78e",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "idEjecucion": "232ebb",
+  "titulo": "QA rollback 232ebb (borrar)",
+  "idFila": "2dfb468d-0388-42a3-8383-3dcc2eaea790",
+  "conObjetos": true,
+  "completa": true,
+  "estadoFinalConfirmado": true,
+  "error": null,
+  "casos": [
+    {
+      "nombre": "snapshot de galeria_web (cardinalidad verificada) e inventario de fotos-galeria leídos (lectura estricta, sin cursor)",
+      "ok": true,
+      "detalle": {
+        "filas": 1,
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "precondiciones: título, id de fila y grupos previstos libres",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "subida fotos-galeria/c63ca78a…/m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida fotos-galeria/c63ca78a…/g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida fotos-galeria/5c85eeec…/m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida fotos-galeria/5c85eeec…/g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "fila propia creada con su id previsto y URLs de Pages (INSERT 201, confirmada por relectura por id)",
+      "ok": true,
+      "detalle": {
+        "estado": 201,
+        "existe": true
+      }
+    },
+    {
+      "nombre": "relectura: la fila tiene exactamente las dos URLs de Pages (activo=false, orden 9999)",
+      "ok": true,
+      "detalle": {
+        "id": "2dfb468d-0388-42a3-8383-3dcc2eaea790",
+        "titulo": "QA rollback 232ebb (borrar)",
+        "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+        "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+        "orden": 9999,
+        "activo": false
+      }
+    },
+    {
+      "nombre": "ANTES del rollback: con las bases de la transición ambas URLs se reconocen como medios propios (r2:fotos-galeria/…)",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "ANTES del rollback: con una build solo-r2.dev NO se reconocen (ni se desvían a Storage): por eso se convierten antes de retirar la Function",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "con objetos: por Pages /medios ambas fotos responden 200 con los bytes exactos",
+      "ok": true,
+      "detalle": [
+        {
+          "u": "aleria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+          "estado": 200
+        },
+        {
+          "u": "aleria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+          "estado": 200
+        }
+      ]
+    },
+    {
+      "nombre": "conversión pura: ambas URLs pasan de la base de Pages a la de r2.dev conservando destino/UUID/variante",
+      "ok": true,
+      "detalle": {
+        "nuevaAntes": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+        "nuevaDespues": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp"
+      }
+    },
+    {
+      "nombre": "UPDATE acotado por id Y título propios (devuelve exactamente 1 fila)",
+      "ok": true,
+      "detalle": {
+        "estado": 200,
+        "filas": 1
+      }
+    },
+    {
+      "nombre": "relectura: la fila quedó EXACTAMENTE con las URLs de r2.dev (título, orden y activo intactos)",
+      "ok": true,
+      "detalle": {
+        "id": "2dfb468d-0388-42a3-8383-3dcc2eaea790",
+        "titulo": "QA rollback 232ebb (borrar)",
+        "antes_url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+        "despues_url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+        "orden": 9999,
+        "activo": false
+      }
+    },
+    {
+      "nombre": "las demás filas (incl. «Foto de prueba (Inicio)») quedaron EXACTAMENTE como en el snapshot inicial",
+      "ok": true,
+      "detalle": {
+        "filas": 2
+      }
+    },
+    {
+      "nombre": "DESPUÉS del rollback: con una build solo-r2.dev ambas URLs se reconocen para administrar/borrar (r2:fotos-galeria/…) [reconocimiento del módulo puro, no un recorrido de UI recompilado]",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "con objetos: tras el rollback las fotos cargan por r2.dev (200 image/webp, bytes exactos)",
+      "ok": true,
+      "detalle": [
+        {
+          "u": "aleria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+          "estado": 200,
+          "tipo": "image/webp"
+        },
+        {
+          "u": "aleria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+          "estado": 200,
+          "tipo": "image/webp"
+        }
+      ]
+    },
+    {
+      "nombre": "con objetos: el rollback de datos NO retira la Function: Pages sigue sirviendo el objeto (200)",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "limpieza: la fila propia (por id exacto) ya no existe, confirmado por relectura (solo entonces se borran sus objetos)",
+      "ok": true,
+      "detalle": {
+        "estadoDelete": 204,
+        "eliminada": true
+      }
+    },
+    {
+      "nombre": "ESTADO FINAL confirmado: galeria_web idéntica al snapshot inicial e inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores",
+      "ok": true,
+      "detalle": {
+        "objetos": {
+          "confirmada": true,
+          "necesaria": true,
+          "estadoBorrado": 200,
+          "estadosBorrado": [
+            200,
+            200
+          ],
+          "pendientes": [],
+          "igualAlInicial": true,
+          "errores": []
+        },
+        "snapshotIgual": true
+      }
+    }
+  ],
+  "creacionIntentada": true,
+  "creacionConfirmada": true,
+  "conservaObjetos": false,
+  "pendientes": [],
+  "limpiezaFila": {
+    "estadoDelete": 204,
+    "eliminada": true
+  },
+  "limpiezaObjetos": {
+    "confirmada": true,
+    "necesaria": true,
+    "estadoBorrado": 200,
+    "estadosBorrado": [
+      200,
+      200
+    ],
+    "pendientes": [],
+    "igualAlInicial": true,
+    "errores": []
+  },
+  "resumen": {
+    "casos": 20,
+    "fallos": 0
+  }
+}

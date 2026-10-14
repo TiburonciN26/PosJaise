@@ -1,0 +1,27 @@
+{
+ "fecha": "2026-10-13T04:52:45.030Z",
+ "apps": {
+  "APP_CF": "http://127.0.0.1:5401",
+  "GH_PUERTO": "5402",
+  "APP_DEV": "http://127.0.0.1:5173",
+  "APP_R2": "http://127.0.0.1:5181"
+ },
+ "resultados": [
+  {
+   "id": "f5-listas-sesion",
+   "fase": 5,
+   "estado": 0,
+   "ms": 218246,
+   "resumen": "32/32",
+   "cola": "OK    F5-04b: la búsqueda de cupones equivale al normalizador anterior también con texto NFD, Å y comparando contra las cadenas ORIGINALES | OK    F5-02b: al cerrar sesión y entrar OTRA administradora, ni Programa ni Protección muestran los borradores de la anterior |  | 32 casos, 0 fallos"
+  },
+  {
+   "id": "f6-sesion-larga",
+   "fase": 6,
+   "estado": 0,
+   "ms": 1050558,
+   "resumen": "21/21",
+   "cola": "OK    F6-03: el mes anterior elegido en Dashboard (y el rango personalizado de las demás pantallas) se conserva exacto tras desalojar | OK    F6-04: el contador de TarjetaPuntos se pausa fuera de pantalla y con la pestaña oculta, y CONTINÚA al volver; movimiento reducido lo salta |  | 21 casos, 0 fallos"
+  }
+ ]
+}

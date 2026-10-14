@@ -1,0 +1,322 @@
+{
+  "fecha": "2026-10-10T19:34:14.695Z",
+  "buildId": "b36e7495",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "idEjecucion": "52d575",
+  "objeto": "fotos-galeria/971ad3c2-4f9c-45cd-88f6-266eae152368",
+  "ttlSegundos": 300,
+  "completa": true,
+  "estadoFinalConfirmado": true,
+  "error": null,
+  "casos": [
+    {
+      "nombre": "preflight: el alias sirve b36e7495 con la entrega de medios «pages» efectiva (antes de autenticar)",
+      "ok": true,
+      "detalle": {
+        "buildId": "b36e7495",
+        "entrega": "pages",
+        "modulos": [
+          "assets/index-DGsWTpdi.js"
+        ]
+      }
+    },
+    {
+      "nombre": "inventario inicial de fotos-galeria leído (lectura estricta, sin cursor)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "WebP de prueba fabricados (m 64 px, g 128 px)",
+      "ok": true,
+      "detalle": {
+        "m": 646,
+        "g": 788
+      }
+    },
+    {
+      "nombre": "objeto inexistente → 404 no-store con nosniff/noindex (el 404 no se cachea)",
+      "ok": true,
+      "detalle": {
+        "estado": 404,
+        "tipo": "text/plain; charset=utf-8",
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": null,
+        "etag": null,
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880fd99e96c873-MIA"
+      }
+    },
+    {
+      "nombre": "subida de la variante m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida de la variante g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "el inventario del Worker muestra exactamente las 2 claves propias nuevas",
+      "ok": true,
+      "detalle": {
+        "nuevas": [
+          "fotos-galeria/971ad3c2-4f9c-45cd-88f6-266eae152368/g.webp",
+          "fotos-galeria/971ad3c2-4f9c-45cd-88f6-266eae152368/m.webp"
+        ]
+      }
+    },
+    {
+      "nombre": "HEAD: 200 sin cuerpo, image/webp, ETag, max-age=300, nosniff/noindex",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880fe98a9ac873-MIA"
+      }
+    },
+    {
+      "nombre": "HEAD no puebla la caché: un segundo HEAD sigue siendo MISS",
+      "ok": true,
+      "detalle": {
+        "primero": "MISS",
+        "segundo": "MISS"
+      }
+    },
+    {
+      "nombre": "GET: 200 image/webp con los bytes EXACTOS subidos, max-age=300, nosniff/noindex, ETag igual al de HEAD",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880fed9fe8f2bf-MIA",
+        "bytes": 646
+      }
+    },
+    {
+      "nombre": "primer GET tras subir (sin entrada previa en este centro de datos) → X-Medios-Cache MISS",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880fed9fe8f2bf-MIA"
+      }
+    },
+    {
+      "nombre": "GET posterior → HIT (la escritura por waitUntil es asíncrona y por centro de datos: 1 intento(s))",
+      "ok": true,
+      "detalle": {
+        "intentos": 1,
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "el HIT conserva bytes, ETag y max-age=300 y recalcula X-Medios-Cache",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880ff31f7fc5ac-MIA"
+      }
+    },
+    {
+      "nombre": "If-None-Match coincidente → 304 sin cuerpo, con ETag, max-age=300 y nosniff/noindex",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880ff4ae6eb15a-MIA"
+      }
+    },
+    {
+      "nombre": "If-None-Match distinto → 200 completo",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "If-None-Match: * → 304",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Range se ignora: 200 completo, sin Content-Range",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4880ff68ab0c5ac-MIA"
+      }
+    },
+    {
+      "nombre": "la variante g se sirve con sus bytes exactos",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "POST → 405 con Allow: GET, HEAD, no-store",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "rutas inválidas → 404 no-store con nosniff/noindex (no la SPA)",
+      "ok": true,
+      "detalle": []
+    },
+    {
+      "nombre": "/medios-extra sigue siendo la SPA (200 HTML)",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "borrado por el Worker (200)",
+      "ok": true,
+      "detalle": {
+        "estado": 200
+      }
+    },
+    {
+      "nombre": "R2: el inventario del Worker ya NO contiene las claves propias (ausencia en R2 confirmada)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "tras borrar en R2: o HIT 200 retenido por el TTL (contrato) o 404; NUNCA un 200 MISS (que significaría que R2 aún lo sirve)",
+      "ok": true,
+      "detalle": {
+        "estado": 200,
+        "tipo": "image/webp",
+        "cache": "public, max-age=300",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a4881003fe6bc5ac-MIA"
+      }
+    },
+    {
+      "nombre": "pasado el TTL: se OBSERVA un 404 no-store (R2 ya no lo tiene)",
+      "ok": true,
+      "detalle": {
+        "estado": 404,
+        "popHit": "MIA",
+        "popExpiracion": "MIA",
+        "tipo": "text/plain; charset=utf-8",
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": null,
+        "etag": null,
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48817b2b86c260e-MIA"
+      }
+    },
+    {
+      "nombre": "pasado el TTL: también 404 en la variante g",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+      "ok": true,
+      "detalle": {
+        "confirmada": true,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      }
+    }
+  ],
+  "medidas": [
+    {
+      "etiqueta": "HEAD-1",
+      "ms": 149
+    },
+    {
+      "etiqueta": "GET-MISS",
+      "ms": 382
+    },
+    {
+      "etiqueta": "GET-intento-1",
+      "ms": 242
+    }
+  ],
+  "nota": "HIT por centro de datos; head() inferido; tiempos del cliente, no CPU/cuota.",
+  "popHit": "MIA",
+  "retencionObservada": "HIT 200 durante el TTL (esperado por contrato)",
+  "popExpiracion": "MIA",
+  "expiracionDeLaMismaCopia": true,
+  "expiracionProbada": true,
+  "limpieza": {
+    "confirmada": true,
+    "necesaria": false,
+    "estadoBorrado": null,
+    "pendientes": [],
+    "igualAlInicial": true,
+    "errores": []
+  },
+  "resumen": {
+    "casos": 27,
+    "fallos": 0
+  }
+}

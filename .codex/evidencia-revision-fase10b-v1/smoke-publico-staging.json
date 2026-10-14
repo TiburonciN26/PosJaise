@@ -1,0 +1,48 @@
+{
+  "fecha": "2026-10-13T19:15:25.184Z",
+  "sinLogin": true,
+  "sinEscriturasDeDatos": true,
+  "serviceWorkersBloqueados": true,
+  "casos": [
+    {
+      "ruta": "/inicio",
+      "status": 200,
+      "urlFinal": "https://43d3eeb4.pos-jaise.pages.dev/inicio",
+      "buildId": "05b7be34",
+      "contenidoVisible": true,
+      "falloVisible": false,
+      "fragmentoPublico": "JAISE˚\nBEAUTY ACADEMY\nInicio\nServicios\nProductos\nRecompensas\nCitas\nNosotros\nIniciar sesión\nCrear cuenta\nBELLEZA\nQUE\nTRANSFORMA\nVER SERVICIOS\nLunes a Sábado 10:00 a. m.-1:00 p. m. ·"
+    },
+    {
+      "ruta": "/productos",
+      "status": 200,
+      "urlFinal": "https://43d3eeb4.pos-jaise.pages.dev/productos",
+      "buildId": "05b7be34",
+      "contenidoVisible": true,
+      "falloVisible": false,
+      "fragmentoPublico": "JAISE˚\nBEAUTY ACADEMY\nInicio\n|\nProductos\nInicio\nServicios\nProductos\nRecompensas\nCitas\nNosotros\nIniciar sesión\nCrear cuenta\nCATEGORÍAS\n3\nTODOS\n6 PRODUCTOS\nBEBIDAS\n· 2\nCUIDADO PERSON"
+    },
+    {
+      "ruta": "/servicios",
+      "status": 200,
+      "urlFinal": "https://43d3eeb4.pos-jaise.pages.dev/servicios",
+      "buildId": "05b7be34",
+      "contenidoVisible": true,
+      "falloVisible": false,
+      "fragmentoPublico": "JAISE˚\nBEAUTY ACADEMY\nInicio\n|\nServicios\nInicio\nServicios\nProductos\nRecompensas\nCitas\nNosotros\nIniciar sesión\nCrear cuenta\nCATEGORÍAS\n2\nTODOS\n3 SERVICIOS\nCABELLO\n· 2\nUÑAS\n· 1\nCABEL"
+    },
+    {
+      "ruta": "/nosotros",
+      "status": 200,
+      "urlFinal": "https://43d3eeb4.pos-jaise.pages.dev/nosotros",
+      "buildId": "05b7be34",
+      "contenidoVisible": true,
+      "falloVisible": false,
+      "fragmentoPublico": "JAISE˚\nBEAUTY ACADEMY\nInicio\n|\nNosotros\nInicio\nServicios\nProductos\nRecompensas\nCitas\nNosotros\nIniciar sesión\nCrear cuenta\nEquipo\nGalería\nReseñas\nContacto\nNUESTRO EQUIPO\n\nConoce al "
+    }
+  ],
+  "pageErrors": [],
+  "violaciones": [],
+  "neutralizadas": 4,
+  "preconexionesRechazadas": 4
+}

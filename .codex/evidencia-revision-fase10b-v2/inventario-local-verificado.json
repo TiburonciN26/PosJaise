@@ -1,0 +1,12 @@
+{
+  "fecha": "2026-10-13T19:46:15.6656454Z",
+  "objetivo": "Supabase Local WedJaiseReact, gateway 127.0.0.1:54321 y DB contenedor local",
+  "soloLectura": true,
+  "primeraLinea": "ESTADO|COMPLETO",
+  "cantidadLineas": 204,
+  "soloLecturaConfirmada": true,
+  "vitrinaPresente": true,
+  "compatibilidadPresente": true,
+  "incoherentes": "deudas_incoherentes|0",
+  "sha256": "083844052ea8921e23db3f84b16853139ac9d3c5b2b0dc6de2736f2b212207e4"
+}

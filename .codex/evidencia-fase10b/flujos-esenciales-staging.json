@@ -1,0 +1,94 @@
+{
+ "fecha": "2026-10-13T18:48:13.596Z",
+ "app": "https://43d3eeb4.pos-jaise.pages.dev",
+ "total": 10,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "Preflight: Preview aprobado, build-id y backend = staging",
+   "ok": true,
+   "detalle": {
+    "app": "https://43d3eeb4.pos-jaise.pages.dev",
+    "buildId": "05b7be34",
+    "modulos": 143,
+    "backend": "staging (tqkd…)"
+   }
+  },
+  {
+   "nombre": "venta: la CAJERA vende 1 «Agua San Luis 625ml» con Yape → confirmar_venta OK y el stock baja en 1",
+   "ok": true,
+   "detalle": {
+    "codigo": "VEN003",
+    "total": 2,
+    "stockAntes": 40,
+    "stock": 39
+   }
+  },
+  {
+   "nombre": "venta: la CAJERA la anula en Historial → venta ANULADA y stock restituido",
+   "ok": true,
+   "detalle": {
+    "estado": "ANULADA",
+    "stock": 40
+   }
+  },
+  {
+   "nombre": "carrito: la CLIENTA agrega el producto desde su ficha, lo quita en el carrito y lo vuelve a agregar",
+   "ok": true,
+   "detalle": {
+    "tras": {
+     "agregar": 1,
+     "quitar": 0,
+     "reagregar": 1
+    }
+   }
+  },
+  {
+   "nombre": "carrito: confirma un pedido (recojo, Yape, captura generada; sin pago real) → confirmar_pedido_productos OK",
+   "ok": true,
+   "detalle": {
+    "pedidoId": "5a372735-41b6-4d89-8c63-594764a8825a",
+    "fila": "PENDIENTE|2.00",
+    "carritoTras": 0
+   }
+  },
+  {
+   "nombre": "carrito: la CLIENTA cancela el pedido en «Mis pedidos» → cancelar_mi_pedido_web OK y el stock queda como antes",
+   "ok": true,
+   "detalle": {
+    "estado": "CANCELADO",
+    "stock": 40
+   }
+  },
+  {
+   "nombre": "cita: la CLIENTA reserva un servicio con la asistente de prueba (horario disponible, captura generada) → agendar_cita_web OK",
+   "ok": true,
+   "detalle": {
+    "citaId": "7181a68e-d7c3-475c-8bc4-e66f064f569f",
+    "estado": "PENDIENTE",
+    "horariosOfrecidos": 32
+   }
+  },
+  {
+   "nombre": "cita: la CLIENTA la cancela en Mis citas → cancelar_mi_cita_web OK y la cita queda CANCELADA",
+   "ok": true,
+   "detalle": {
+    "estado": "CANCELADA"
+   }
+  },
+  {
+   "nombre": "Guardas: ninguna violación de red en ningún contexto",
+   "ok": true,
+   "detalle": {
+    "contextos": 3,
+    "neutralizadas": 12,
+    "preconexionesRechazadas": 12
+   }
+  },
+  {
+   "nombre": "Limpieza: asistente fixture y su cita cancelada borradas por id",
+   "ok": true,
+   "detalle": "0|0"
+  }
+ ]
+}

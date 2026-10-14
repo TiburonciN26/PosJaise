@@ -1,0 +1,123 @@
+
+  - heading "Workers & Pages" [level=1]
+  - link "View docs":
+    - /url: https://developers.cloudflare.com/workers/
+    - generic: View docs
+  - paragraph: Build & deploy serverless functions, sites, and full-stack applications.
+  - link "Create application":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers-and-pages/create
+    - generic: Create application
+  - toolbar:
+    - textbox "Search applications"
+    - 'combobox "Filter: Show all"':
+      - generic: Show all
+    - textbox: all
+    - 'combobox "Sort by: Last modified"':
+      - generic: Last modified
+    - textbox: last_modified
+    - button "Refresh":
+  - list:
+    - link "pos-jaise pos-jaise.pages.dev TiburonciN26/PosJaise 2h ago More options":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise
+      - generic: pos-jaise
+      - link "pos-jaise.pages.dev":
+        - /url: https://pos-jaise.pages.dev
+      - link "TiburonciN26/PosJaise":
+        - /url: https://github.com/TiburonciN26/PosJaise
+        - generic: TiburonciN26/PosJaise
+      - time: 2h ago
+      - button "More options":
+    - paragraph:
+      - generic: "Fase 3: herramientas de carga, lectura mixta y recolector acotado; lectura de URLs propias de Galería por la base configurada Cambio de aplicación (ML-03): resolverUrlGaleria lee por la base pública configurada las URLs propias de otra base aprobada (r2.dev -> Pages /medios con B), conservando destino, UUID y variante. Recolector habitual: estaReferenciado aborta ante un conteo inválido (RG-03). Nuevas herramientas, probadas solo en memoria y sin ejecución real: ensayo de carga (EC-01/02), constructor y verificador del build de lectura mixta (ML-01/02), harness del recolector acotado (RG-01/02) y entrega «mixta» en las guardas. Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+      - time: 2h ago
+    - link "pos-jaise-medios-staging":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production
+    - generic: pos-jaise-medios-staging
+    - link "pos-jaise-medios-staging.jdeostuas2.workers.dev":
+      - /url: https://pos-jaise-medios-staging.jdeostuas2.workers.dev
+      - generic: pos-jaise-medios-staging.jdeostuas2.workers.dev
+    - time: 23h ago
+    - button "More options":
+    - link "View deployments ↗":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/deployments
+      - generic: View deployments
+      - text: ↗
+    - generic: "971"
+    - generic: Requests
+    - button "1.9 ms":
+      - paragraph:
+        - text: "1.9"
+        - generic: ms
+    - link "pos-jaise-preview pos-jaise-preview.pages.dev 1d ago More options":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise-preview
+      - generic: pos-jaise-preview
+      - link "pos-jaise-preview.pages.dev":
+        - /url: https://pos-jaise-preview.pages.dev
+      - time: 1d ago
+      - button "More options":
+    - paragraph: No Git connection
+  - generic: Showing 1-3 of 3
+  - navigation "Pagination":
+    - button "First page" [disabled]:
+    - button "Previous page" [disabled]:
+    - textbox "Page number": "1"
+    - button "Next page" [disabled]:
+    - button "Last page" [disabled]:
+- complementary:
+  - heading "Usage" [level=2]
+  - button "Upgrade":
+    - generic: Upgrade
+  - generic: Requests today
+  - generic: 462 / 100,000
+  - button "View limits":
+    - text: View limits
+  - link "Billing Dashboard":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/billing/billable-usage
+    - generic: Billing Dashboard
+  - generic: Billable usage (current period)
+  - button "Add Budget Alert":
+    - generic: Add Budget Alert
+  - img "$0.00"
+  - generic: $0.00
+  - generic: No billable usage incurred yet
+  - generic: October 10 - November 10
+  - button "Requests 1.53k":
+    - generic: Requests
+    - generic: 1.53k
+  - button "CPU time 3.05k ms":
+    - generic: CPU time
+    - generic: 3.05k ms
+  - button "Observability events 929":
+    - generic: Observability events
+    - generic: "929"
+  - button "Workers build mins 0":
+    - generic: Workers build mins
+    - generic: "0"
+  - heading "Account details" [level=3]
+  - paragraph: Account ID
+  - paragraph: af5ea2cb3f504970fe293b1923cd64d7
+  - paragraph: Subdomain
+  - paragraph: jdeostuas2.workers.dev
+  - link "Edit":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/subdomain
+  - heading "Cloudflare Access" [level=3]
+  - paragraph: Set up Zero Trust before requiring Access sign-in for Workers on this account.
+  - link "Set up Zero Trust":
+    - /url: https://dash.cloudflare.com/af5ea2cb3f504970fe293b1923cd64d7/one/onboarding
+- contentinfo:
+  - list:
+    - link "Support":
+      - /url: https://support.cloudflare.com
+    - link "System status":
+      - /url: https://www.cloudflarestatus.com
+    - link "Careers":
+      - /url: https://www.cloudflare.com/careers/
+    - link "Terms of Use":
+      - /url: https://www.cloudflare.com/website-terms/
+    - link "Report Security Issues":
+      - /url: https://www.cloudflare.com/disclosure/
+    - link "Privacy Policy":
+      - /url: https://www.cloudflare.com/privacypolicy/
+    - button "Cookie Preferences"
+    - generic: © 2026 Cloudflare, Inc.
+- region "Notifications"

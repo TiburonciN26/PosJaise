@@ -1,0 +1,60 @@
+
+> app@0.0.0 lint
+> oxlint
+
+tests/e2e/known-issues.spec.mjs:98:82: warning eslint(no-unused-vars): Parameter 'browser' is declared but never used. Unused parameters should start with a '_'. help: Consider removing this parameter.
+tests/e2e/fixtures.mjs:8:16: warning eslint(no-empty-pattern): Empty object binding pattern help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+tests/e2e/fixtures.mjs:11:11: error react-hooks(rules-of-hooks): React Hook "use" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+tests/e2e/fixtures.mjs:27:11: error react-hooks(rules-of-hooks): React Hook "use" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
+src/hooks/useModalA11y.js:63:16: warning react-hooks(exhaustive-deps): React Hook useLayoutEffect has a missing dependency: 'etiquetaFallback' help: Either include it or remove the dependency array.
+src/components/ui/button.jsx:57:18: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/components/ModalMobiliario.jsx:8:14: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/components/ModalGasto.jsx:8:14: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+tests/e2e/ensayo-ui/lanzamiento.ensayo.spec.mjs:8:38: warning eslint(no-unused-vars): Identifier 'ORIGEN_APP' is imported but never used. help: Consider removing this import.
+tests/e2e/ensayo-ui/lanzamiento.ensayo.spec.mjs:39:7: warning eslint(no-unused-vars): Variable 'limpio' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+tests/e2e/ensayo-ui/lanzamiento-cupones.ensayo.spec.mjs:74:129: warning eslint(no-unused-vars): Parameter 'request' is declared but never used. Unused parameters should start with a '_'. help: Consider removing this parameter.
+src/pages/MiPanel.jsx:294:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarRegistros' help: Either include it or remove the dependency array.
+src/components/TarjetaProductoCliente.jsx:9:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/components/TarjetaProductoCliente.jsx:15:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+tests/e2e/sanear-salidas.mjs:67:38: warning oxc(only-used-in-recursion): Parameter `clave` is only used in recursive calls help: Remove the argument and its usage. Alternatively, use the argument in the function body.
+tests/e2e/recompensas-concurrencia.ensayo.mjs:108:11: warning eslint(no-unused-vars): Variable 'aperturaIni' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+src/pages/Inventario.jsx:189:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarProductos' help: Either include it or remove the dependency array.
+tests/e2e/report-campaign.mjs:28:157: warning eslint(no-control-regex): Unexpected control character help: Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.
+src/pages/Historial.jsx:653:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarVentas' help: Either include it or remove the dependency array.
+tests/e2e/recompensas-transicion.ensayo.mjs:59:63: warning eslint(no-unused-vars): Parameter 'sinVenta' is declared but never used. Unused parameters should start with a '_'. help: Consider removing this parameter.
+src/pages/Gastos.jsx:216:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarGastos' help: Either include it or remove the dependency array.
+tests/e2e/qa-autorizacion-configuracion.spec.mjs:42:7: warning eslint(no-unused-vars): Variable 'mensaje' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+tests/e2e/qa-autorizacion-configuracion.spec.mjs:455:107: warning eslint(no-empty-pattern): Empty object binding pattern help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+tests/e2e/qa-autorizacion-ampliada.spec.mjs:1:24: warning eslint(no-unused-vars): Identifier 'knownIssue' is imported but never used. help: Consider removing this import.
+tests/e2e/qa-autorizacion-ampliada.spec.mjs:323:107: warning eslint(no-unused-vars): Parameter 'browser' is declared but never used. Unused parameters should start with a '_'. help: Consider removing this parameter.
+tests/e2e/qa-autorizacion-ampliada.spec.mjs:586:132: warning eslint(no-empty-pattern): Empty object binding pattern help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
+src/pages/Estadisticas.jsx:312:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarDatos' help: Either include it or remove the dependency array.
+src/context/ToastContext.jsx:74:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/pages/Deudas.jsx:116:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarDeudas' help: Either include it or remove the dependency array.
+src/context/EstadoNegocioContext.jsx:164:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/context/ThemeContext.jsx:115:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/context/PerfilClienteContext.jsx:49:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/context/PerfilClienteContext.jsx:59:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/pages/Dashboard.jsx:263:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarDatos' help: Either include it or remove the dependency array.
+src/context/TemaWebContext.jsx:38:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+tests/e2e/archive-run.mjs:2:60: warning eslint(no-unused-vars): Identifier 'sanearTexto' is imported but never used. help: Consider removing this import.
+src/context/CarritoContext.jsx:75:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/pages/Clientes.jsx:298:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarClientes' help: Either include it or remove the dependency array.
+src/context/CarritoClienteContext.jsx:236:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/context/NotificacionesClienteContext.jsx:40:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/context/AuthContext.jsx:335:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/pages/Auditoria.jsx:286:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'cargarEntradas' help: Either include it or remove the dependency array.
+.codex/evidencia-fase3-codex-v2/verificar-medios-r2-fase3.cjs:19:7: warning eslint(no-unused-vars): Variable 'borrarOriginal' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+src/pages/Ventas.jsx:551:7: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'setMontoRecibido', and 'montoRecibido' help: Either include it or remove the dependency array.
+src/pages/Ventas.jsx:567:7: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'setMontoPosTarjeta', and 'montoPosTarjeta' help: Either include it or remove the dependency array.
+.codex/evidencia-fase3-codex-v2/verificar-modales-fase3.cjs:22:7: warning eslint(no-unused-vars): Variable 'borrarOriginal' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:22:7: warning eslint(no-unused-vars): Variable 'borrarOriginal' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:198:20: warning eslint(no-unused-vars): Function 'sembrarR2' is declared but never used. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:206:20: warning eslint(no-unused-vars): Function 'inventario' is declared but never used. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:214:11: warning eslint(no-unused-vars): Variable 'grupoDe' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:215:11: warning eslint(no-unused-vars): Variable 'textoModal' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:226:11: warning eslint(no-unused-vars): Variable 'guardar' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:234:11: warning eslint(no-unused-vars): Variable 'abortarDesdeSegundo' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.codex/evidencia-fase3-codex-v2/diagnosticar-servicio-lento.cjs:243:11: warning eslint(no-unused-vars): Variable 'producto' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+src/components/SelectorProductoBuscable.jsx:57:14: warning react-hooks(exhaustive-deps): React hook useEffect depends on `opcionesBusqueda`, which changes every render help: Try memoizing this variable with `useRef` or `useCallback`.
+src/components/ModalRegistroAtencion.jsx:283:22: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'registro.cliente_id', and 'esEdicion' help: Either include it or remove the dependency array.

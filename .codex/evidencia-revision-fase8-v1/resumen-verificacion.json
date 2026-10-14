@@ -1,0 +1,49 @@
+{
+  "fecha": "2026-10-12",
+  "veredicto": "PENDIENTE DE CORRECCIONES",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hallazgos": [
+    {
+      "id": "F8-01",
+      "prioridad": "P1",
+      "reproducido": true,
+      "descripcion": "Pérdida de carrito al fallar un chunk frío: offline y B virtual sin assets A. Control anterior conserva trabajo."
+    },
+    {
+      "id": "F8-02",
+      "prioridad": "P2",
+      "reproducido": true,
+      "descripcion": "Cache de URL firmada ficticia en proxy de Supabase del mismo origen; sigue 200 cuando red devuelve 401."
+    },
+    {
+      "id": "F8-03",
+      "prioridad": "P2",
+      "documentado": true,
+      "descripcion": "Contrato de video propone caché anual y R2 público directo, sin preservar retirada B."
+    }
+  ],
+  "mapa": {
+    "correctos": 5,
+    "total": 5
+  },
+  "hero": {
+    "variantes": 14,
+    "anchosCorrectos": true,
+    "originalesConservados": true
+  },
+  "ABClaudeMismoJS": {
+    "archivos": 143,
+    "iguales": true
+  },
+  "hashesEstables": true,
+  "SQLFinal": {
+    "clientes": 4749,
+    "pedidos": 429,
+    "cupones": 3067,
+    "productos": 3245,
+    "auditoria": 25860,
+    "migracion": "20261012000002",
+    "metodo": "SELECTs READ ONLY de inspección final, Local verificado por puerto."
+  },
+  "alcance": "Solo login de cuenta QA ficticia y carrito en memoria. API de escrituras de negocio bloqueada, ninguna venta guardada; Auth recibe los logins normales del ensayo. No se ejecutan builds, migraciones ni pruebas de siembra; fuentes no modificadas."
+}

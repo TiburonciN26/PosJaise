@@ -1,0 +1,63 @@
+{
+  "fecha": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "datos": {
+    "fallos": 0,
+    "casos": 27,
+    "siembraPorCodex": false,
+    "categoriasLocales": {
+      "productos": 4,
+      "servicios": 18
+    }
+  },
+  "interfaz": {
+    "fallos": 0,
+    "casos": 25,
+    "opcionConCategorias": false
+  },
+  "diagnosticos": {
+    "mutacionesBD": 0,
+    "observaciones": 13,
+    "relojSimuladoSoloBrowser": true,
+    "apiYCarritoSimulados": true
+  },
+  "medicion": {
+    "cpu": "4x",
+    "viewport": 1440,
+    "muestras": 6
+  },
+  "hashes": [
+    {
+      "archivo": "src/lib/catalogoPublico.js",
+      "sha256": "A61A8F7B6C898339E548B2F3F697F5DB0726F8AE0FE59F20E6A09120DED60BB7"
+    },
+    {
+      "archivo": "src/hooks/useCatalogoPublico.js",
+      "sha256": "C681FFAC7FA498F4DB1CB392453498B9E29C2D4B5399E9BC2F0EAAFE2445E29F"
+    },
+    {
+      "archivo": "src/hooks/usePreciosSeleccion.js",
+      "sha256": "370B9A5EA8BC7CD402742CA9292AD5D4DD52302390949A8CC9AAC1DBABAB1E9A"
+    },
+    {
+      "archivo": "src/components/BarraTuCarritoFlotante.jsx",
+      "sha256": "833D2C5E3D9D3A3A384A2404BF2B8A04E207FC8213BE82D8B7E5F60198737777"
+    },
+    {
+      "archivo": "src/components/BarraTuCitaFlotante.jsx",
+      "sha256": "23346727B48B083F3F29A5E9105F0B969AEB1B3BDF7A4B0A110609727DFE68CF"
+    },
+    {
+      "archivo": "src/pages/cliente/ProductosCliente.jsx",
+      "sha256": "E68BA5022660CE95AFCF8F9CE2739A415ED4B12A80979BF46D946438B58FDC4C"
+    },
+    {
+      "archivo": "src/pages/cliente/ServiciosCliente.jsx",
+      "sha256": "555609183455890A6B906B0C1CB01E4E69BCF724472958E6FBB4D1FB2D4C8E16"
+    },
+    {
+      "archivo": "supabase/migrations/20261011000001_catalogo_publico_vitrina.sql",
+      "sha256": "BA876F01057710F2982B937281E8AD6307851C6B2621B9DEAA7347A50B39653F"
+    }
+  ]
+}

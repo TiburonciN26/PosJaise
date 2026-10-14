@@ -1,0 +1,15 @@
+{
+  "fecha": "2026-10-11T03:19:08.489Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "mainLocal": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "scriptSha256": "89b12baa2bc079a7c3a9456afcc25a4c352224fa7c26670ea926663127b8db45",
+  "evidenciaOriginal": {
+    "positivoSha256": "0fb54d3e46e7b3e6a680def1e0603acd1d8decf2bcf9e63fe10fe51fd66d4406",
+    "negativoSha256": "175cd95ba2d23b6740564f2cbbe7024a38954749049dc3d2c46da3731794e510"
+  },
+  "manifiestoV3Sha256": "667cd7d66c8b1bb8f582185a1646734f82785cc463e58ae5c5ddcfdbebba2abf",
+  "manifiestoSinCambiosRespectoRevisionPrevia": true,
+  "veredicto": "Tres precisiones del verificador cerradas; 8/8, negativo 3 esperados y tres errores simulados con cierre confirmado. No autoriza escrituras remotas o Git."
+}

@@ -1,0 +1,184 @@
+{
+ "escala": "ampliada",
+ "reps": 3,
+ "migracion": "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql,.codex/evidencia-fase7/borradores/abl-D.sql",
+ "duracion_s": 353,
+ "meta": {
+  "filas_antes": "4749,429,3067,3245,119",
+  "volumen": "60429,120429,123067,20049,20089,20080,5208,23245,23340,34749",
+  "pedidos_clienta": 4,
+  "indices": [
+   "idx_f7_d|8937472"
+  ],
+  "filas_despues": "4749,429,3067,3245,119"
+ },
+ "filas": [
+  {
+   "id": "Q12",
+   "d": "Cupones Referidos · primera página",
+   "rol": "admin",
+   "antes": {
+    "ms": 1785.03,
+    "helpers": 95117,
+    "planificacion_ms": 0.54,
+    "buffers": 100993,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 56.35,
+    "helpers": 3,
+    "planificacion_ms": 0.4,
+    "buffers": 5881,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 31.17,
+    "helpers": 3,
+    "planificacion_ms": 0.37,
+    "buffers": 6377,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_d"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q13",
+   "d": "Cupones Fidelización · estado DISPONIBLE",
+   "rol": "admin",
+   "antes": {
+    "ms": 34.18,
+    "helpers": 269,
+    "planificacion_ms": 0.62,
+    "buffers": 5751,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 34.85,
+    "helpers": 3,
+    "planificacion_ms": 0.42,
+    "buffers": 5881,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 5.73,
+    "helpers": 3,
+    "planificacion_ms": 0.36,
+    "buffers": 795,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_d"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q14",
+   "d": "Cupones · búsqueda código o clienta",
+   "rol": "admin",
+   "antes": {
+    "ms": 3205.71,
+    "helpers": 129866,
+    "planificacion_ms": 0.87,
+    "buffers": 136492,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 691.55,
+    "helpers": 4,
+    "planificacion_ms": 0.62,
+    "buffers": 6632,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 656.68,
+    "helpers": 4,
+    "planificacion_ms": 0.5,
+    "buffers": 7128,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_d"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q15",
+   "d": "Cupones · conteo por estado (head)",
+   "rol": "admin",
+   "antes": {
+    "ms": 14.14,
+    "helpers": 6,
+    "planificacion_ms": 0.46,
+    "buffers": 2570,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 14.76,
+    "helpers": 2,
+    "planificacion_ms": 0.32,
+    "buffers": 2568,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.26,
+    "helpers": 2,
+    "planificacion_ms": 0.28,
+    "buffers": 9,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [
+     "idx_f7_d"
+    ],
+    "filas": 1
+   }
+  }
+ ]
+}

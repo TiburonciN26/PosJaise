@@ -1,0 +1,25 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import cp from 'node:child_process';import {fileURLToPath} from 'node:url';
+const root='C:/WedJaiseReact',base=path.dirname(fileURLToPath(import.meta.url));
+const git=(...args)=>cp.execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:1<<24}).trim();
+const tracked=git('diff','--name-only').split(/\r?\n/).filter(Boolean);
+const extra=git('ls-files','--others','--exclude-standard').split(/\r?\n/).filter(Boolean);
+const trackedSet=new Set(['.gitignore','implementacionesWed.md','src/components/ModalGaleriaWeb.jsx','src/components/ModalProducto.jsx','src/components/ModalServicio.jsx','src/components/TarjetaProductoCliente.jsx','src/components/TarjetaServicioCliente.jsx','src/lib/imagenes.js','src/pages/GaleriaWeb.jsx']);
+const extraSet=new Set(['scripts/lib/huerfanos-medios.mjs','scripts/medios-huerfanos.mjs','scripts/verificar-medios-r2-fase3.cjs','scripts/verificar-modales-fase3.cjs','scripts/verificar-r2-real-fase3.mjs','src/lib/galeriaFotos.js','src/lib/medios.js','src/lib/resultadoBd.js']);
+const candidate=[...tracked.filter(f=>trackedSet.has(f)),...extra.filter(f=>/^(cloudflare\/medios-worker\/|docs\/evidencia-rendimiento\/fase-3\/|tests\/harness\/)/.test(f)||extraSet.has(f))].sort();
+if(candidate.some(f=>/(^|\/)\.env|\.dev\.vars|\/node_modules\/|\/dist\//.test(f)))throw new Error('Archivo local no publicable entre candidatos');
+const findings=[];
+const patterns=[['clave privilegiada',/sb_secret_[A-Za-z0-9_-]{8,}/g],['clave privada',/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],['token GitHub',/gh[pousr]_[A-Za-z0-9]{25,}/g],['token Cloudflare',/CLOUDFLARE_API_TOKEN\s*[:=]\s*['"`][A-Za-z0-9_-]{20,}/g],['contraseña literal',/(?:password|passwd|contraseña)\s*[:=]\s*['"][^'"\s]{8,}['"]/gi],['URL BD con contraseña',/postgres(?:ql)?:\/\/[^\s:@/]+:[^\s@/]{4,}@/g]];
+for(const file of candidate){const text=fs.readFileSync(path.join(root,file),'utf8');for(const [tipo,re] of patterns){for(const match of text.matchAll(re))findings.push({file,line:text.slice(0,match.index).split('\n').length,tipo});}for(const match of text.matchAll(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{8,}/g)){try{const p=JSON.parse(Buffer.from(match[0].split('.')[1],'base64url'));if(p.role!=='anon')findings.push({file,line:text.slice(0,match.index).split('\n').length,tipo:'JWT con role '+(p.role??'sin role')});}catch{findings.push({file,tipo:'JWT ilegible'});}}}
+const meta={fecha:new Date().toISOString(),head:git('rev-parse','HEAD'),main:git('rev-parse','main'),branch:git('branch','--show-current'),tracked:tracked.length,newPhase3:candidate.filter(f=>extra.includes(f)).length,candidateCount:candidate.length,candidates:candidate,findings,excluded:extra.filter(f=>!candidate.includes(f)),hashes:candidate.map(file=>({file,sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')}))};
+fs.writeFileSync(path.join(base,'commit-fase3-propuesto.json'),JSON.stringify(meta,null,2));
+const snapshot=path.join(base,'snapshot');fs.mkdirSync(snapshot);
+cp.execFileSync('git',['archive','--format=tar','-o',path.join(base,'head.tar'),'HEAD'],{cwd:root});
+cp.execFileSync('tar',['-xf',path.join(base,'head.tar'),'-C',snapshot]);
+for(const f of candidate){const out=path.join(snapshot,f);fs.mkdirSync(path.dirname(out),{recursive:true});fs.copyFileSync(path.join(root,f),out);}
+const reportFiles=['solo-lectura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json','con-escritura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json'];
+const reports=reportFiles.map(file=>{const r=JSON.parse(fs.readFileSync(path.join(root,'docs/evidencia-rendimiento/fase-3/r2-real',file),'utf8'));return{file,fecha:r.fecha,total:r.total,fallos:r.fallos,escribio:r.escribio,api:r.api,publico:r.publico,origen:r.origenPages,ok:r.casos.every(c=>c.ok),fotos:(r.mediciones.fotos??[]).map(x=>({foto:x.foto,mKiB:x.mKiB,gKiB:x.gKiB,medianaMs:x.msMediana,cache:x.resumenCache,cumple:x.cumpleObjetivos})),borrado:r.mediciones.borrado,advertencias:r.advertencias};});
+fs.writeFileSync(path.join(base,'resumen-evidencia-claude.json'),JSON.stringify(reports,null,2));
+const prev=JSON.parse(fs.readFileSync('C:/WedJaiseReact/.codex/evidencia-fase3-codex-v5/metadatos.json','utf8'));
+meta.deltasDesdeV5=prev.sourceHashes.filter(x=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,x.file))).digest('hex')!==x.sha256).map(x=>x.file);
+fs.writeFileSync(path.join(base,'commit-fase3-propuesto.json'),JSON.stringify(meta,null,2));
+console.log(JSON.stringify({candidateCount:candidate.length,findings,deltasDesdeV5:meta.deltasDesdeV5,reports},null,2));

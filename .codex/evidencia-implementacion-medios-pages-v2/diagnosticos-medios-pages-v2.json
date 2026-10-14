@@ -1,0 +1,104 @@
+{
+  "fecha": "2026-10-10",
+  "alcance": "Codigo real, dobles en memoria, sin red ni escrituras al proyecto",
+  "suites": {
+    "entrega": 37,
+    "clienteYControlSW": 15,
+    "guardas": 42,
+    "fallos": 0,
+    "nota": "Caso 16 con SW_REAL requiere el artefacto Cloudflare nuevo, no se ejecuto aqui"
+  },
+  "lintDirigido": {
+    "archivos": 11,
+    "exitCode": 0
+  },
+  "resultados": [
+    {
+      "caso": "PFM-01 GET original: get resuelve y cuerpo rechaza",
+      "status": 503,
+      "noStore": true,
+      "cabecerasSeguras": true,
+      "puts": 0
+    },
+    {
+      "caso": "Recuperacion GET tras fallo",
+      "status": 200,
+      "puts": 1
+    },
+    {
+      "caso": "HEAD metadatos y cuerpo que fallaria",
+      "conHead": true,
+      "status": 200,
+      "heads": 1,
+      "gets": 0,
+      "cuerpos": 0,
+      "putsHead": 0
+    },
+    {
+      "caso": "HEAD metadatos y cuerpo que fallaria",
+      "conHead": false,
+      "status": 200,
+      "heads": 0,
+      "gets": 1,
+      "cuerpos": 0,
+      "putsHead": 0
+    },
+    {
+      "caso": "HEAD binding ausente",
+      "status": 404,
+      "bytesRespuesta": 0,
+      "noStore": true
+    },
+    {
+      "caso": "HEAD objeto ausente",
+      "status": 404,
+      "bytesRespuesta": 0,
+      "noStore": true
+    },
+    {
+      "caso": "HEAD fallo metadatos",
+      "status": 503,
+      "bytesRespuesta": 0,
+      "noStore": true
+    },
+    {
+      "caso": "HEAD ruta invalida",
+      "status": 404,
+      "bytesRespuesta": 0,
+      "noStore": true
+    },
+    {
+      "caso": "SW comprobacion estricta",
+      "positivo": true,
+      "controlesNegativos": 4,
+      "fallos": 0
+    }
+  ],
+  "artefactosLeidos": [
+    {
+      "dir": "dist",
+      "scope": "/PosJaise/",
+      "swExcluyeMedios": false,
+      "sha256": "5c72b6bc56295c218ab13346065296d5a7a092cc793ca0a2d7d16af32359b69b"
+    },
+    {
+      "dir": "dist-preview",
+      "scope": "/",
+      "swExcluyeMedios": false,
+      "sha256": "77baeaa58199848adc742ddf44ee17dc845261bf91fe3b931330a249c106c171"
+    }
+  ],
+  "sha256Fuentes": {
+    "cloudflare/medios-pages/entrega.js": "a5766e37e00800b4b6cdc05ed23a5e750e1a54665be6111e19ba02c00b4f8cf7",
+    "cloudflare/medios-pages/test/probar-entrega.mjs": "c28819d302caafc012f7cda8286b52a2d710582b060692aef1161cc49c19d723",
+    "functions/medios.js": "960af9ad8c67cdcd1a934a7ae1463e85a52d913131fd61166ed2ef0e3fec4eff",
+    "functions/medios/[[ruta]].js": "64fe96159bcd4203c6a37cbd16d556c1f006b745129983568a208f6a94c98d87",
+    "src/lib/urlsMedios.js": "67c12680eeb9b48b5196f1de99ef6c7822f4311a1b8478fec12fe83d0aa0f5df",
+    "src/lib/medios.js": "407bac3710025a9c23eea20cb250f5d1a8dcfd13fed35bfcdf8e510444057bca",
+    "src/lib/imagenes.js": "04dacae6aeb3ef1e6349d3604ae16034c2c9461e710721c3db0ea332be84a916",
+    "scripts/verificar-urls-medios.mjs": "92b2e5780ac4623aad0621c47c162bd787857f599e190456bb3a1750fd4cf412",
+    "scripts/build-cloudflare.mjs": "15a6950d5204d8eedb803200ced2ad7fcf744080948d5ae43975aeb9e0654fa8",
+    "scripts/lib/sw-medios.mjs": "e9c78ef445d44797cf9e23219873a5d7c286d1a91f4e5be46d27fd5906ded115",
+    "vite.config.js": "fed74fb302193dca7648a102799e794cf0c377b23088d3b985a823b7eeaad793"
+  }
+}

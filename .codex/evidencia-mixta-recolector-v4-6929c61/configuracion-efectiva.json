@@ -1,0 +1,28 @@
+{
+  "fecha": "2026-10-11T02:34:42.150Z",
+  "lecturaPublica": true,
+  "sinLogin": true,
+  "buildId": "6929c619",
+  "esperado": {
+    "proveedor": "r2",
+    "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+    "publica": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios",
+    "extras": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+  },
+  "hallazgos": [
+    {
+      "archivo": "assets/index-BJKOrzqm.js",
+      "configs": [
+        {
+          "proveedor": "r2",
+          "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "publica": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios"
+        }
+      ],
+      "extras": [
+        "https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+      ]
+    }
+  ],
+  "coincide": true
+}

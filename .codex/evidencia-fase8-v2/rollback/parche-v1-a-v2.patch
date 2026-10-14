@@ -1,0 +1,1882 @@
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -1,4 +1,4 @@
+-import { lazy, Suspense, useEffect, useState } from 'react'
++import { Suspense, useEffect, useState } from 'react'
+ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+ import { useAuth } from './context/AuthContext.jsx'
+ import { rutaInicialPara } from './config/navegacion.js'
+@@ -8,10 +8,14 @@
+ import RutaPrivada from './components/RutaPrivada.jsx'
+ import Layout from './components/Layout.jsx'
+ import PestanasCacheadas from './components/PestanasCacheadas.jsx'
++import LimiteCargaDiferida from './components/LimiteCargaDiferida.jsx'
++import { componenteDiferido } from './lib/moduloDiferido.js'
+ 
+ // B5 de la 2ª auditoría: por consistencia con el resto de las pantallas
+ // (ver PestanasCacheadas), aunque el impacto es mínimo — Login es liviana.
+-const Login = lazy(() => import('./pages/Login.jsx'))
++// Fase 8 V2 (F8-01): reintentable y con límite local (Login no está en el precaché: la primera vez sin red no abre, pero
++// lo dice y se reintenta solo al volver la conexión, en vez de mostrar el «Algo salió mal» global).
++const Login = componenteDiferido(() => import('./pages/Login.jsx'), 'Login')
+ 
+ // QA-021: el portal cliente (PortalCliente + ~20 páginas) viajaba en el bundle
+ // inicial de TODOS los roles, incluido el POS que jamás lo usa. Ahora cada página
+@@ -101,9 +105,11 @@
+         <Route
+           path="/login"
+           element={
+-            <Suspense fallback={<CargandoPantalla />}>
+-              <Login />
+-            </Suspense>
++            <LimiteCargaDiferida onReintentar={Login.reintentar}>
++              <Suspense fallback={<CargandoPantalla />}>
++                <Login />
++              </Suspense>
++            </LimiteCargaDiferida>
+           }
+         />
+ 
+@@ -116,9 +122,11 @@
+           <Route
+             element={
+               portalListo ? (
+-                <Suspense fallback={<CargandoPantalla />}>
+-                  <PortalCliente />
+-                </Suspense>
++                <LimiteCargaDiferida onReintentar={PortalCliente.reintentar}>
++                  <Suspense fallback={<CargandoPantalla />}>
++                    <PortalCliente />
++                  </Suspense>
++                </LimiteCargaDiferida>
+               ) : (
+                 <CargandoPantalla />
+               )
+--- a/src/main.jsx
++++ b/src/main.jsx
+@@ -9,18 +9,24 @@
+ import ErrorBoundary from './components/ErrorBoundary.jsx'
+ import AvisoActualizacionPWA from './components/AvisoActualizacionPWA.jsx'
+ 
++// Fase 8 V2 (F8-01): el aviso de versión nueva queda FUERA del límite de error de la app. Antes compartía el ErrorBoundary
++// global: un error que llegaba hasta ahí desmontaba también el aviso, y desaparecía el único botón «Actualizar» (el que respeta
++// el trabajo pendiente). Las pantallas y ventanas que se cargan aparte tienen además su propio límite local
++// (LimiteCargaDiferida): un fallo de descarga ya no llega a este nivel.
+ createRoot(document.getElementById('root')).render(
+   <StrictMode>
+     <ErrorBoundary>
+       <ThemeProvider>
+         <AvisoActualizacionPWA />
+-        <AuthProvider>
+-          <EstadoNegocioProvider>
+-            <ToastProvider>
+-              <App />
+-            </ToastProvider>
+-          </EstadoNegocioProvider>
+-        </AuthProvider>
++        <ErrorBoundary>
++          <AuthProvider>
++            <EstadoNegocioProvider>
++              <ToastProvider>
++                <App />
++              </ToastProvider>
++            </EstadoNegocioProvider>
++          </AuthProvider>
++        </ErrorBoundary>
+       </ThemeProvider>
+     </ErrorBoundary>
+   </StrictMode>,
+--- a/src/components/PestanasCacheadas.jsx
++++ b/src/components/PestanasCacheadas.jsx
+@@ -1,8 +1,10 @@
+-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
++import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+ import { Navigate, useLocation } from 'react-router-dom'
+ import { useAuth } from '../context/AuthContext.jsx'
+ import { secciones, rutaInicialPara } from '../config/navegacion.js'
+ import Ventas from '../pages/Ventas.jsx'
++import LimiteCargaDiferida from './LimiteCargaDiferida.jsx'
++import { componenteDiferido } from '../lib/moduloDiferido.js'
+ import { PaginaActivaContext, ProteccionPantallaContext } from '../context/PaginaActivaContext.jsx'
+ import { fijarIdentidadVista, reiniciarEstadoVista } from '../lib/estadoVista.js'
+ import { alLiberarFormulario, formularioEditado, formularioEnviado, tieneFormulariosSinConfirmar } from '../lib/formulariosProtegidos.js'
+@@ -10,35 +12,42 @@
+ // Ventas queda con import normal (no lazy): es la pestaña de aterrizaje de
+ // TODOS los usuarios (index redirige ahí), así que no vale la pena pagar una
+ // ida y vuelta de red extra solo para achicar el bundle inicial. Las demás
+-// —sobre todo las 7 exclusivas de admin— sí van con React.lazy: una
++// —sobre todo las 7 exclusivas de admin— sí se cargan aparte (import()): una
+ // asistente nunca llega a pedir ese código, y el admin lo pide recién cuando
+ // entra a esa pestaña, no todo junto al abrir la app.
+-const Citas = lazy(() => import('../pages/Citas.jsx'))
+-const Inventario = lazy(() => import('../pages/Inventario.jsx'))
+-const Historial = lazy(() => import('../pages/Historial.jsx'))
+-const Servicios = lazy(() => import('../pages/Servicios.jsx'))
+-const Dashboard = lazy(() => import('../pages/Dashboard.jsx'))
+-const MiPanel = lazy(() => import('../pages/MiPanel.jsx'))
+-const Estadisticas = lazy(() => import('../pages/Estadisticas.jsx'))
+-const Auditoria = lazy(() => import('../pages/Auditoria.jsx'))
+-const Clientes = lazy(() => import('../pages/Clientes.jsx'))
+-const Porcentajes = lazy(() => import('../pages/Porcentajes.jsx'))
+-const Gastos = lazy(() => import('../pages/Gastos.jsx'))
+-const Asistentes = lazy(() => import('../pages/Asistentes.jsx'))
+-const Mobiliario = lazy(() => import('../pages/Mobiliario.jsx'))
+-const Web = lazy(() => import('../pages/Web.jsx'))
+-const Deudas = lazy(() => import('../pages/Deudas.jsx'))
+-const Promociones = lazy(() => import('../pages/Promociones.jsx'))
+-const PedidosWeb = lazy(() => import('../pages/PedidosWeb.jsx'))
+-const ResenasWeb = lazy(() => import('../pages/ResenasWeb.jsx'))
+-const ContactoWeb = lazy(() => import('../pages/ContactoWeb.jsx'))
+-const PuntosWeb = lazy(() => import('../pages/PuntosWeb.jsx'))
+-const ReferidosWeb = lazy(() => import('../pages/ReferidosWeb.jsx'))
+-const FidelizacionWeb = lazy(() => import('../pages/FidelizacionWeb.jsx'))
+-const RecompensasWeb = lazy(() => import('../pages/RecompensasWeb.jsx'))
+-const GaleriaWeb = lazy(() => import('../pages/GaleriaWeb.jsx'))
+-const CatalogoWeb = lazy(() => import('../pages/CatalogoWeb.jsx'))
+-const LibroReclamacionesWeb = lazy(() => import('../pages/LibroReclamacionesWeb.jsx'))
++//
++// Fase 8 V2 (F8-01): desde que el precaché de la PWA ya no incluye el POS, esas pantallas pueden no estar en el dispositivo.
++// Por eso (1) cada una es un componenteDiferido (lib/moduloDiferido.js): reintentable, y con un límite de error LOCAL
++// (LimiteCargaDiferida) que deja el fallo en su pestaña sin desmontar Layout ni la venta en curso; y (2) al entrar al POS,
++// en reposo, se precargan las pantallas que el rol puede abrir (ver precargarPantallasDelRol): quedan evaluadas en memoria
++// (abrirlas después no necesita red ni los archivos del servidor, aunque se haya publicado otra versión) y en la caché por
++// uso del service worker (sobreviven a una recarga de la misma versión).
++const Citas = componenteDiferido(() => import('../pages/Citas.jsx'), 'Citas')
++const Inventario = componenteDiferido(() => import('../pages/Inventario.jsx'), 'Inventario')
++const Historial = componenteDiferido(() => import('../pages/Historial.jsx'), 'Historial')
++const Servicios = componenteDiferido(() => import('../pages/Servicios.jsx'), 'Servicios')
++const Dashboard = componenteDiferido(() => import('../pages/Dashboard.jsx'), 'Dashboard')
++const MiPanel = componenteDiferido(() => import('../pages/MiPanel.jsx'), 'MiPanel')
++const Estadisticas = componenteDiferido(() => import('../pages/Estadisticas.jsx'), 'Estadisticas')
++const Auditoria = componenteDiferido(() => import('../pages/Auditoria.jsx'), 'Auditoria')
++const Clientes = componenteDiferido(() => import('../pages/Clientes.jsx'), 'Clientes')
++const Porcentajes = componenteDiferido(() => import('../pages/Porcentajes.jsx'), 'Porcentajes')
++const Gastos = componenteDiferido(() => import('../pages/Gastos.jsx'), 'Gastos')
++const Asistentes = componenteDiferido(() => import('../pages/Asistentes.jsx'), 'Asistentes')
++const Mobiliario = componenteDiferido(() => import('../pages/Mobiliario.jsx'), 'Mobiliario')
++const Web = componenteDiferido(() => import('../pages/Web.jsx'), 'Web')
++const Deudas = componenteDiferido(() => import('../pages/Deudas.jsx'), 'Deudas')
++const Promociones = componenteDiferido(() => import('../pages/Promociones.jsx'), 'Promociones')
++const PedidosWeb = componenteDiferido(() => import('../pages/PedidosWeb.jsx'), 'PedidosWeb')
++const ResenasWeb = componenteDiferido(() => import('../pages/ResenasWeb.jsx'), 'ResenasWeb')
++const ContactoWeb = componenteDiferido(() => import('../pages/ContactoWeb.jsx'), 'ContactoWeb')
++const PuntosWeb = componenteDiferido(() => import('../pages/PuntosWeb.jsx'), 'PuntosWeb')
++const ReferidosWeb = componenteDiferido(() => import('../pages/ReferidosWeb.jsx'), 'ReferidosWeb')
++const FidelizacionWeb = componenteDiferido(() => import('../pages/FidelizacionWeb.jsx'), 'FidelizacionWeb')
++const RecompensasWeb = componenteDiferido(() => import('../pages/RecompensasWeb.jsx'), 'RecompensasWeb')
++const GaleriaWeb = componenteDiferido(() => import('../pages/GaleriaWeb.jsx'), 'GaleriaWeb')
++const CatalogoWeb = componenteDiferido(() => import('../pages/CatalogoWeb.jsx'), 'CatalogoWeb')
++const LibroReclamacionesWeb = componenteDiferido(() => import('../pages/LibroReclamacionesWeb.jsx'), 'LibroReclamacionesWeb')
+ 
+ const PAGINAS = {
+   '/ventas': Ventas,
+@@ -111,7 +120,31 @@
+   return resultado
+ }
+ 
+-function PantallaCacheada({ ruta, activa, Pagina, proteger }) {
++// Fase 8 V2 (F8-01): en reposo y de a una, se descargan Y evalúan las pantallas que este rol puede abrir (no el escáner de
++// Ventas: 480 kB que no hacen falta para terminar una venta; si falla se avisa en su ventana). Así, si luego se corta la red o
++// se publica una versión nueva que retira los archivos de la abierta, cambiar de pestaña sigue funcionando con el código que ya
++// está en memoria. Una precarga fallida no deja nada roto: la pantalla se vuelve a pedir al abrirla.
++function precargarPantallasDelRol(rol) {
++  const cola = secciones.filter((s) => puedeVer(s, rol)).map((s) => PAGINAS[s.path]).filter((Pagina) => Pagina?.precargar)
++  let cancelada = false
++  let espera = null
++  const conReposo = typeof window.requestIdleCallback === 'function'
++  const programar = () => {
++    espera = conReposo ? window.requestIdleCallback(siguiente, { timeout: 4000 }) : window.setTimeout(siguiente, 300)
++  }
++  function siguiente() {
++    espera = null
++    if (cancelada || cola.length === 0) return
++    cola.shift().precargar().finally(() => !cancelada && programar())
++  }
++  programar()
++  return () => {
++    cancelada = true
++    if (espera !== null) (conReposo ? window.cancelIdleCallback : window.clearTimeout)(espera)
++  }
++}
++
++function PantallaCacheada({ ruta, activa, Pagina, proteger, volver }) {
+   const protegerAqui = useCallback((id, valor) => proteger(ruta, id, valor), [proteger, ruta])
+   return (
+     <div
+@@ -129,9 +162,12 @@
+     >
+       <PaginaActivaContext.Provider value={activa}>
+         <ProteccionPantallaContext.Provider value={protegerAqui}>
+-          <Suspense fallback={<CargandoPagina />}>
+-            <Pagina activo={activa} />
+-          </Suspense>
++          {/* F8-01: si su código no llega, el error queda en ESTA pestaña (Layout, menú y venta en curso siguen montados). */}
++          <LimiteCargaDiferida activa={activa} onReintentar={Pagina.reintentar} volver={volver}>
++            <Suspense fallback={<CargandoPagina />}>
++              <Pagina activo={activa} />
++            </Suspense>
++          </LimiteCargaDiferida>
+         </ProteccionPantallaContext.Provider>
+       </PaginaActivaContext.Provider>
+     </div>
+@@ -229,6 +265,9 @@
+   // Al desmontar (cambio de cuenta / rol / salir del POS) se descarta también el estado de vista.
+   useEffect(() => () => reiniciarEstadoVista(), [])
+ 
++  // F8-01: precarga en reposo de las pantallas del rol (se cancela si cambia la cuenta o el rol: la `key` desmonta esto).
++  useEffect(() => precargarPantallasDelRol(rol), [rol])
++
+   if (!seccion || !permitido) {
+     // Bug real corregido: esto redirigía siempre a "/ventas" a mano, así
+     // que una ASISTENTE (sin acceso a Ventas) caía en un loop mudo —
+@@ -239,13 +278,16 @@
+ 
+   // La pestaña actual se monta en este mismo render aunque `montadas` se actualice después del efecto.
+   const aRenderizar = montadas.includes(pathname) ? montadas : [...montadas, pathname]
++  // Salida segura desde una pestaña que no pudo abrirse: la pantalla inicial del rol (Ventas para administración y caja).
++  const inicial = secciones.find((s) => s.path === rutaInicialPara(rol))
+   return (
+     <>
+       <span ref={centinela} hidden />
+       {aRenderizar.map((ruta) => {
+         const Pagina = PAGINAS[ruta]
+         if (!Pagina) return null
+-        return <PantallaCacheada key={ruta} ruta={ruta} activa={ruta === pathname} Pagina={Pagina} proteger={proteger} />
++        const volver = inicial && inicial.path !== ruta ? { a: inicial.path, etiqueta: inicial.label } : undefined
++        return <PantallaCacheada key={ruta} ruta={ruta} activa={ruta === pathname} Pagina={Pagina} proteger={proteger} volver={volver} />
+       })}
+     </>
+   )
+--- a/src/pages/Ventas.jsx
++++ b/src/pages/Ventas.jsx
+@@ -1,4 +1,4 @@
+-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
++import { Suspense, useEffect, useRef, useState } from 'react'
+ import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
+ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+@@ -24,10 +24,13 @@
+ import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
+ import { boletaRequiereDni, comprobanteCompleto } from '../lib/comprobante.js'
+ import { useEstadoVista } from '../lib/estadoVista.js'
++import { componenteDiferido } from '../lib/moduloDiferido.js'
++import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
+ 
+ // El lector de códigos de barras (@zxing) pesa varios cientos de KB;
+ // se carga solo cuando se abre el escáner, no en el bundle principal.
+-const ModalEscanerCodigoBarras = lazy(() => import('../components/ModalEscanerCodigoBarras.jsx'))
++// F8-01: reintentable; si su código no llega (sin red o versión retirada) el fallo queda en su ventana, no en Ventas.
++const ModalEscanerCodigoBarras = componenteDiferido(() => import('../components/ModalEscanerCodigoBarras.jsx'), 'ModalEscanerCodigoBarras')
+ 
+ // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
+ const DURACION_SALIDA = 300
+@@ -1609,19 +1612,25 @@
+       )}
+ 
+       {modalEscanerAbierto && (
+-        <Suspense
+-          fallback={
+-            <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
+-              <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
+-            </div>
+-          }
++        <LimiteCargaDiferida
++          variante="ventana"
++          onReintentar={ModalEscanerCodigoBarras.reintentar}
++          onCerrar={() => setModalEscanerAbierto(false)}
+         >
+-          <ModalEscanerCodigoBarras
+-            buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
+-            onProductoEncontrado={agregarProducto}
+-            onCerrar={() => setModalEscanerAbierto(false)}
+-          />
+-        </Suspense>
++          <Suspense
++            fallback={
++              <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/80">
++                <p className="font-mono text-sm text-ink/60">Cargando cámara...</p>
++              </div>
++            }
++          >
++            <ModalEscanerCodigoBarras
++              buscarPorCodigo={(codigo) => productoPorCodigo(supabase, codigo)}
++              onProductoEncontrado={agregarProducto}
++              onCerrar={() => setModalEscanerAbierto(false)}
++            />
++          </Suspense>
++        </LimiteCargaDiferida>
+       )}
+ 
+       {modalComprobante && (
+--- a/src/pages/PortalCliente.jsx
++++ b/src/pages/PortalCliente.jsx
+@@ -7,7 +7,8 @@
+ import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
+ import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
+ import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
+-import { precargarPestanasPrincipales } from '../config/paginasCliente.js'
++import { precargarPestanasPrincipales, reintentarPaginasFallidas } from '../config/paginasCliente.js'
++import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
+ import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
+ import AccionesVisitante from '../components/AccionesVisitante.jsx'
+ import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
+@@ -488,15 +489,19 @@
+               className="relative flex flex-1 flex-col overflow-hidden pt-12 sm:pt-[72px]"
+             >
+               <main className="flex flex-1 flex-col overflow-hidden">
+-                <Suspense
+-                  fallback={
+-                    <div className="flex flex-1 items-center justify-center p-6">
+-                      <p className="font-mono text-sm text-white/50">Cargando...</p>
+-                    </div>
+-                  }
+-                >
+-                  <Outlet />
+-                </Suspense>
++                {/* F8-01: una página cuyo código no llega (sin red, versión retirada) falla AQUÍ, con el header, el menú y
++                    los providers de la clienta montados; al cambiar de ruta o volver la red se reintenta. */}
++                <LimiteCargaDiferida tono="portal" clave={location.pathname} onReintentar={reintentarPaginasFallidas}>
++                  <Suspense
++                    fallback={
++                      <div className="flex flex-1 items-center justify-center p-6">
++                        <p className="font-mono text-sm text-white/50">Cargando...</p>
++                      </div>
++                    }
++                  >
++                    <Outlet />
++                  </Suspense>
++                </LimiteCargaDiferida>
+               </main>
+               <MenuLateralCliente abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
+             </div>
+--- a/src/config/paginasCliente.js
++++ b/src/config/paginasCliente.js
+@@ -1,144 +1,125 @@
+-import { createElement, use } from 'react'
+-
+-// QA-021: el portal cliente (PortalCliente + ~20 páginas) ya no viaja en el
+-// bundle inicial de todos los roles: cada página es un chunk.
+-//
+-// Por qué no React.lazy a secas: React.lazy suspende SIEMPRE en su primer
+-// render, aunque el módulo ya esté descargado, y React revela con ~300 ms de
+-// retraso un Suspense cuyo fallback ya se mostró. Medido (vite preview): los
+-// chunks terminaban a ~190 ms pero el portal aparecía a ~520 ms. Aquí cada
+-// página es un componente que lee el import con `use()` sobre una promesa a la
+-// que se le registra su estado (status/value, el mecanismo que React usa para
+-// resolver de forma síncrona): tras precargar no hay fallback ni espera.
+-const promesas = new Map()
+-
+-function cargar(clave, importar) {
+-  let promesa = promesas.get(clave)
+-  if (!promesa) {
+-    promesa = importar()
+-    promesa.then(
+-      (modulo) => {
+-        promesa.status = 'fulfilled'
+-        promesa.value = modulo
+-      },
+-      (error) => {
+-        promesa.status = 'rejected'
+-        promesa.reason = error
+-        promesas.delete(clave)
+-      },
+-    )
+-    promesas.set(clave, promesa)
+-  }
+-  return promesa
+-}
+-
+-export function paginaPrecargable(clave, importar) {
+-  function Pagina(props) {
+-    const modulo = use(cargar(clave, importar))
+-    return createElement(modulo.default, props)
+-  }
+-  Pagina.displayName = clave
+-  return Pagina
+-}
+-
+-export const importadores = {
+-  PortalCliente: () => import('../pages/PortalCliente.jsx'),
+-  InicioCliente: () => import('../pages/cliente/InicioCliente.jsx'),
+-  MiPerfil: () => import('../pages/cliente/MiPerfil.jsx'),
+-  ServiciosCliente: () => import('../pages/cliente/ServiciosCliente.jsx'),
+-  DetalleServicioCliente: () => import('../pages/cliente/DetalleServicioCliente.jsx'),
+-  ProductosCliente: () => import('../pages/cliente/ProductosCliente.jsx'),
+-  DetalleProductoCliente: () => import('../pages/cliente/DetalleProductoCliente.jsx'),
+-  CitasCliente: () => import('../pages/cliente/CitasCliente.jsx'),
+-  HistorialCliente: () => import('../pages/cliente/HistorialCliente.jsx'),
+-  RecompensasCliente: () => import('../pages/cliente/RecompensasCliente.jsx'),
+-  NosotrosCliente: () => import('../pages/cliente/NosotrosCliente.jsx'),
+-  PerfilEquipoCliente: () => import('../pages/cliente/PerfilEquipoCliente.jsx'),
+-  CarritoCliente: () => import('../pages/cliente/CarritoCliente.jsx'),
+-  CarritoServiciosCliente: () => import('../pages/cliente/CarritoServiciosCliente.jsx'),
+-  MisResenasCliente: () => import('../pages/cliente/MisResenasCliente.jsx'),
+-  DireccionesCliente: () => import('../pages/cliente/DireccionesCliente.jsx'),
+-  PedidosCliente: () => import('../pages/cliente/PedidosCliente.jsx'),
+-  NotificacionesCliente: () => import('../pages/cliente/NotificacionesCliente.jsx'),
+-  SeguridadCuentaCliente: () => import('../pages/cliente/SeguridadCuentaCliente.jsx'),
+-  ReferidosCliente: () => import('../pages/cliente/ReferidosCliente.jsx'),
+-  LibroReclamacionesCliente: () => import('../pages/cliente/LibroReclamacionesCliente.jsx'),
+-  TerminosCliente: () => import('../pages/cliente/TerminosCliente.jsx'),
+-  PoliticaCambiosCliente: () => import('../pages/cliente/PoliticaCambiosCliente.jsx'),
+-  PrivacidadCliente: () => import('../pages/cliente/PrivacidadCliente.jsx'),
+-}
+-
+-export const pagina = Object.fromEntries(
+-  Object.entries(importadores).map(([clave, importar]) => [clave, paginaPrecargable(clave, importar)]),
+-)
+-
+-const precargar = (clave) => cargar(clave, importadores[clave])
+-
+-const RUTAS = [
+-  [/^\/(inicio)?\/?$/, 'InicioCliente'],
+-  [/^\/mi-perfil\/?$/, 'MiPerfil'],
+-  [/^\/servicios\/?$/, 'ServiciosCliente'],
+-  [/^\/servicios\/[^/]+\/?$/, 'DetalleServicioCliente'],
+-  [/^\/productos\/?$/, 'ProductosCliente'],
+-  [/^\/productos\/[^/]+\/?$/, 'DetalleProductoCliente'],
+-  [/^\/citas\/?$/, 'CitasCliente'],
+-  [/^\/citas\/carrito\/?$/, 'CarritoServiciosCliente'],
+-  [/^\/historial\/?$/, 'HistorialCliente'],
+-  [/^\/recompensas\/?$/, 'RecompensasCliente'],
+-  [/^\/nosotros\/?$/, 'NosotrosCliente'],
+-  [/^\/nosotros\/equipo\/[^/]+\/?$/, 'PerfilEquipoCliente'],
+-  [/^\/carrito\/?$/, 'CarritoCliente'],
+-  [/^\/mis-resenas\/?$/, 'MisResenasCliente'],
+-  [/^\/mi-perfil\/direcciones\/?$/, 'DireccionesCliente'],
+-  [/^\/mi-perfil\/pedidos\/?$/, 'PedidosCliente'],
+-  [/^\/mi-perfil\/notificaciones\/?$/, 'NotificacionesCliente'],
+-  [/^\/mi-perfil\/seguridad\/?$/, 'SeguridadCuentaCliente'],
+-  [/^\/mi-perfil\/referidos\/?$/, 'ReferidosCliente'],
+-  [/^\/libro-de-reclamaciones\/?$/, 'LibroReclamacionesCliente'],
+-  [/^\/terminos-y-condiciones\/?$/, 'TerminosCliente'],
+-  [/^\/politica-de-cambios-y-devoluciones\/?$/, 'PoliticaCambiosCliente'],
+-  [/^\/politica-de-privacidad\/?$/, 'PrivacidadCliente'],
+-]
+-
+-// Carga el portal y la página de la URL actual (más Inicio, aterrizaje de la
+-// clienta) en paralelo; la app espera esa promesa antes de montar el portal.
+-export function precargarPortalYRuta() {
+-  const base = import.meta.env.BASE_URL
+-  const ruta = window.location.pathname.slice(Math.max(base.length - 1, 0)) || '/'
+-  const nombre = RUTAS.find(([patron]) => patron.test(ruta))?.[1] ?? 'InicioCliente'
+-  return Promise.all([precargar('PortalCliente'), precargar(nombre), precargar('InicioCliente')])
+-}
+-
+-// Mientras se muestra el formulario de login (aún sin saber el rol) se
+-// descargan en reposo, con prioridad baja, el portal y su página de aterrizaje:
+-// medido con red limitada, sin esto el CLIENTE esperaba ~0,6 s más tras "Entrar"
+-// porque esa descarga se había movido del arranque a después del login. El POS
+-// paga ~45 kB de transferencia a cambio de no cargar ~115 kB que antes sí.
+-export function precargarPortalEnReposo() {
+-  const lanzar = () => {
+-    precargar('PortalCliente').catch(() => {})
+-    precargar('InicioCliente').catch(() => {})
+-  }
+-  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 3000 })
+-  else setTimeout(lanzar, 1000)
+-}
+-
+-// Con el portal ya visible, en reposo se descargan las pestañas más usadas:
+-// navegar entre ellas no suspende (ni muestra el fallback).
+-const PRINCIPALES = [
+-  'ServiciosCliente', 'ProductosCliente', 'CitasCliente', 'NosotrosCliente',
+-  'DetalleServicioCliente', 'DetalleProductoCliente', 'RecompensasCliente', 'CarritoCliente',
+-]
+-// Fase 8: con «ahorrar datos» (Save-Data) o una conexión 2G no se precargan en reposo las 8 pestañas (~330 kB de JS que quizá no se usen);
+-// cada una se descarga al navegar a ella, como siempre ocurría con las demás páginas del portal. Con una conexión normal no cambia nada.
+-function conexionLimitada() {
+-  const c = typeof navigator !== 'undefined' ? navigator.connection : undefined
+-  return c?.saveData === true || /(^|-)2g$/.test(c?.effectiveType ?? '')
+-}
+-
+-export function precargarPestanasPrincipales() {
+-  if (conexionLimitada()) return
+-  const lanzar = () => PRINCIPALES.forEach((nombre) => precargar(nombre).catch(() => {}))
+-  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 4000 })
+-  else setTimeout(lanzar, 1500)
+-}
++import { componenteDiferido } from '../lib/moduloDiferido.js'
++
++// QA-021: el portal cliente (PortalCliente + ~20 páginas) ya no viaja en el
++// bundle inicial de todos los roles: cada página es un chunk.
++//
++// Por qué no React.lazy a secas: React.lazy suspende SIEMPRE en su primer
++// render, aunque el módulo ya esté descargado, y React revela con ~300 ms de
++// retraso un Suspense cuyo fallback ya se mostró. Medido (vite preview): los
++// chunks terminaban a ~190 ms pero el portal aparecía a ~520 ms. Aquí cada
++// página es un componente que lee el import con `use()` sobre una promesa a la
++// que se le registra su estado (status/value, el mecanismo que React usa para
++// resolver de forma síncrona): tras precargar no hay fallback ni espera.
++//
++// Fase 8 V2 (F8-01): ese mecanismo vive ahora en lib/moduloDiferido.js (lo comparte el POS). Antes, una página cuya
++// descarga fallaba se borraba del registro y el siguiente render la volvía a pedir: sin red eso es un bucle de descargas
++// fallidas. Ahora el fallo se conserva hasta reintentarlo explícitamente (reintentarPaginasFallidas, que llama el límite de
++// error local de PortalCliente al pulsar «Reintentar», al volver la red o al cambiar de ruta).
++
++export const importadores = {
++  PortalCliente: () => import('../pages/PortalCliente.jsx'),
++  InicioCliente: () => import('../pages/cliente/InicioCliente.jsx'),
++  MiPerfil: () => import('../pages/cliente/MiPerfil.jsx'),
++  ServiciosCliente: () => import('../pages/cliente/ServiciosCliente.jsx'),
++  DetalleServicioCliente: () => import('../pages/cliente/DetalleServicioCliente.jsx'),
++  ProductosCliente: () => import('../pages/cliente/ProductosCliente.jsx'),
++  DetalleProductoCliente: () => import('../pages/cliente/DetalleProductoCliente.jsx'),
++  CitasCliente: () => import('../pages/cliente/CitasCliente.jsx'),
++  HistorialCliente: () => import('../pages/cliente/HistorialCliente.jsx'),
++  RecompensasCliente: () => import('../pages/cliente/RecompensasCliente.jsx'),
++  NosotrosCliente: () => import('../pages/cliente/NosotrosCliente.jsx'),
++  PerfilEquipoCliente: () => import('../pages/cliente/PerfilEquipoCliente.jsx'),
++  CarritoCliente: () => import('../pages/cliente/CarritoCliente.jsx'),
++  CarritoServiciosCliente: () => import('../pages/cliente/CarritoServiciosCliente.jsx'),
++  MisResenasCliente: () => import('../pages/cliente/MisResenasCliente.jsx'),
++  DireccionesCliente: () => import('../pages/cliente/DireccionesCliente.jsx'),
++  PedidosCliente: () => import('../pages/cliente/PedidosCliente.jsx'),
++  NotificacionesCliente: () => import('../pages/cliente/NotificacionesCliente.jsx'),
++  SeguridadCuentaCliente: () => import('../pages/cliente/SeguridadCuentaCliente.jsx'),
++  ReferidosCliente: () => import('../pages/cliente/ReferidosCliente.jsx'),
++  LibroReclamacionesCliente: () => import('../pages/cliente/LibroReclamacionesCliente.jsx'),
++  TerminosCliente: () => import('../pages/cliente/TerminosCliente.jsx'),
++  PoliticaCambiosCliente: () => import('../pages/cliente/PoliticaCambiosCliente.jsx'),
++  PrivacidadCliente: () => import('../pages/cliente/PrivacidadCliente.jsx'),
++}
++
++export const pagina = Object.fromEntries(
++  Object.entries(importadores).map(([clave, importar]) => [clave, componenteDiferido(importar, clave)]),
++)
++
++// Resuelve true/false (nunca rechaza): una precarga fallida no deja la página rota, se vuelve a pedir al abrirla.
++const precargar = (clave) => pagina[clave].precargar()
++
++/** Descarta los fallos de descarga guardados: el próximo render vuelve a pedir esas páginas. */
++export function reintentarPaginasFallidas() {
++  for (const Pagina of Object.values(pagina)) Pagina.reintentar()
++}
++
++const RUTAS = [
++  [/^\/(inicio)?\/?$/, 'InicioCliente'],
++  [/^\/mi-perfil\/?$/, 'MiPerfil'],
++  [/^\/servicios\/?$/, 'ServiciosCliente'],
++  [/^\/servicios\/[^/]+\/?$/, 'DetalleServicioCliente'],
++  [/^\/productos\/?$/, 'ProductosCliente'],
++  [/^\/productos\/[^/]+\/?$/, 'DetalleProductoCliente'],
++  [/^\/citas\/?$/, 'CitasCliente'],
++  [/^\/citas\/carrito\/?$/, 'CarritoServiciosCliente'],
++  [/^\/historial\/?$/, 'HistorialCliente'],
++  [/^\/recompensas\/?$/, 'RecompensasCliente'],
++  [/^\/nosotros\/?$/, 'NosotrosCliente'],
++  [/^\/nosotros\/equipo\/[^/]+\/?$/, 'PerfilEquipoCliente'],
++  [/^\/carrito\/?$/, 'CarritoCliente'],
++  [/^\/mis-resenas\/?$/, 'MisResenasCliente'],
++  [/^\/mi-perfil\/direcciones\/?$/, 'DireccionesCliente'],
++  [/^\/mi-perfil\/pedidos\/?$/, 'PedidosCliente'],
++  [/^\/mi-perfil\/notificaciones\/?$/, 'NotificacionesCliente'],
++  [/^\/mi-perfil\/seguridad\/?$/, 'SeguridadCuentaCliente'],
++  [/^\/mi-perfil\/referidos\/?$/, 'ReferidosCliente'],
++  [/^\/libro-de-reclamaciones\/?$/, 'LibroReclamacionesCliente'],
++  [/^\/terminos-y-condiciones\/?$/, 'TerminosCliente'],
++  [/^\/politica-de-cambios-y-devoluciones\/?$/, 'PoliticaCambiosCliente'],
++  [/^\/politica-de-privacidad\/?$/, 'PrivacidadCliente'],
++]
++
++// Carga el portal y la página de la URL actual (más Inicio, aterrizaje de la
++// clienta) en paralelo; la app espera esa promesa antes de montar el portal.
++export function precargarPortalYRuta() {
++  const base = import.meta.env.BASE_URL
++  const ruta = window.location.pathname.slice(Math.max(base.length - 1, 0)) || '/'
++  const nombre = RUTAS.find(([patron]) => patron.test(ruta))?.[1] ?? 'InicioCliente'
++  return Promise.all([precargar('PortalCliente'), precargar(nombre), precargar('InicioCliente')])
++}
++
++// Mientras se muestra el formulario de login (aún sin saber el rol) se
++// descargan en reposo, con prioridad baja, el portal y su página de aterrizaje:
++// medido con red limitada, sin esto el CLIENTE esperaba ~0,6 s más tras "Entrar"
++// porque esa descarga se había movido del arranque a después del login. El POS
++// paga ~45 kB de transferencia a cambio de no cargar ~115 kB que antes sí.
++export function precargarPortalEnReposo() {
++  const lanzar = () => {
++    precargar('PortalCliente').catch(() => {})
++    precargar('InicioCliente').catch(() => {})
++  }
++  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 3000 })
++  else setTimeout(lanzar, 1000)
++}
++
++// Con el portal ya visible, en reposo se descargan las pestañas más usadas:
++// navegar entre ellas no suspende (ni muestra el fallback).
++const PRINCIPALES = [
++  'ServiciosCliente', 'ProductosCliente', 'CitasCliente', 'NosotrosCliente',
++  'DetalleServicioCliente', 'DetalleProductoCliente', 'RecompensasCliente', 'CarritoCliente',
++]
++// Fase 8: con «ahorrar datos» (Save-Data) o una conexión 2G no se precargan en reposo las 8 pestañas (~330 kB de JS que quizá no se usen);
++// cada una se descarga al navegar a ella, como siempre ocurría con las demás páginas del portal. Con una conexión normal no cambia nada.
++function conexionLimitada() {
++  const c = typeof navigator !== 'undefined' ? navigator.connection : undefined
++  return c?.saveData === true || /(^|-)2g$/.test(c?.effectiveType ?? '')
++}
++
++export function precargarPestanasPrincipales() {
++  if (conexionLimitada()) return
++  const lanzar = () => PRINCIPALES.forEach((nombre) => precargar(nombre).catch(() => {}))
++  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 4000 })
++  else setTimeout(lanzar, 1500)
++}
+--- a/vite.config.js
++++ b/vite.config.js
+@@ -1,171 +1,215 @@
+-import { fileURLToPath, URL } from 'node:url'
+-import { defineConfig } from 'vite'
+-import react from '@vitejs/plugin-react'
+-import tailwindcss from '@tailwindcss/vite'
+-import { VitePWA } from 'vite-plugin-pwa'
+-
+-// Fase 8 (PERF-10): el precaché ya no incluye TODO el build (176 entradas, ~3,5 MB: POS completo, escáner de 480 kB, maquetas HTML de
+-// public/…). Solo el SHELL: lo que el navegador necesita para arrancar la app y pintar la ruta de aterrizaje (/inicio) sin red.
+-// La lista se calcula del grafo REAL de chunks de Rollup (no por nombres con hash): chunks de entrada + sus importaciones estáticas + su CSS,
+-// más los chunks de PortalCliente e InicioCliente con las suyas. El resto (páginas del POS, escáner, páginas del portal, modales) se guarda
+-// «por uso» (runtimeCaching CacheFirst: son archivos con hash inmutable) la primera vez que se piden con el service worker activo.
+-// Los datos operativos (Supabase) NO pasan por ninguna regla: siempre red.
+-const RAICES_DE_ATERRIZAJE = ['/pages/PortalCliente.jsx', '/pages/cliente/InicioCliente.jsx']
+-// Los íconos de la PWA (192/512 y maskable) NO se precachean: el navegador los pide por su cuenta al instalar la app desde el manifest.
+-const SHELL_FIJO = new Set(['index.html', 'manifest.webmanifest'])
+-function cierreDelShell() {
+-  const permitidos = new Set()
+-  return {
+-    name: 'cierre-del-shell-pwa',
+-    apply: 'build',
+-    generateBundle(_opciones, bundle) {
+-      const chunks = Object.values(bundle).filter((x) => x.type === 'chunk')
+-      const porNombre = new Map(chunks.map((c) => [c.fileName, c]))
+-      const visitar = (nombre) => {
+-        if (permitidos.has(nombre) || !porNombre.has(nombre)) return
+-        const c = porNombre.get(nombre)
+-        permitidos.add(nombre)
+-        for (const css of c.viteMetadata?.importedCss ?? []) permitidos.add(css)
+-        for (const imp of c.imports ?? []) visitar(imp)
+-      }
+-      for (const c of chunks) {
+-        const id = (c.facadeModuleId ?? '').replace(/\\/g, '/')
+-        if (c.isEntry || RAICES_DE_ATERRIZAJE.some((r) => id.endsWith(r))) visitar(c.fileName)
+-      }
+-      if (permitidos.size < 3) throw new Error('cierre-del-shell-pwa: no se pudo calcular el shell del precaché (grafo vacío)')
+-    },
+-    incluye: (url) => SHELL_FIJO.has(url) || permitidos.has(url) || /^assets\/geist-latin-wght-normal-[\w-]+\.woff2$/.test(url),
+-  }
+-}
+-
+-// https://vite.dev/config/
+-export default defineConfig(({ command, mode }) => {
+-  // GitHub Pages sirve este proyecto bajo /PosJaise/ (Pages de proyecto, no
+-  // de usuario), así que el build necesita ese prefijo en assets, rutas y
+-  // manifest. En dev queda "/" porque Vite lo sirve desde la raíz.
+-  //
+-  // Fase 2 (Cloudflare Pages): el mismo código también se publica en la raíz de
+-  // un dominio (`*.pages.dev` o dominio propio). `VITE_BASE_PATH=/` en ese build
+-  // (ver scripts/build-cloudflare.mjs) cambia el prefijo; sin la variable el
+-  // resultado es idéntico al de siempre (/PosJaise/), así que GitHub Pages no cambia.
+-  const baseConfigurada = (process.env.VITE_BASE_PATH ?? '/PosJaise/').trim()
+-  const baseNormalizada = `/${baseConfigurada.replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/')
+-  const base = command === 'build' ? baseNormalizada : '/'
+-  // 404.html es el truco de SPA de GitHub Pages; en la raíz de Cloudflare Pages su
+-  // sola presencia DESACTIVA el fallback de SPA, así que ese build lo excluye (y del precache).
+-  const esRaiz = base === '/'
+-
+-  const shell = cierreDelShell()
+-
+-  return {
+-    base,
+-    // Alias @/ -> src/ (lo exige shadcn; también sirve para imports cortos)
+-    resolve: {
+-      alias: {
+-        '@': fileURLToPath(new URL('./src', import.meta.url)),
+-      },
+-    },
+-    plugins: [
+-      react(),
+-      // Marca opcional de versión (Fase 2B, prueba de actualización PWA entre dos builds):
+-      // solo si VITE_BUILD_ID está definido añade <meta name="build-id"> al index.html (entra al
+-      // precache y cambia sw.js). Sin la variable el build es idéntico al de siempre.
+-      {
+-        name: 'marca-build-id',
+-        transformIndexHtml: (html) => (process.env.VITE_BUILD_ID ? html.replace('</head>', `<meta name="build-id" content="${process.env.VITE_BUILD_ID.replace(/[^\w.-]/g, '')}" /></head>`) : html),
+-      },
+-      tailwindcss(),
+-      shell,
+-      VitePWA({
+-        // A2 de la 4ª auditoría: con 'autoUpdate' la versión nueva se activa
+-        // recién al recargar, sin avisar — un POS suele quedar abierto todo
+-        // el día, y una migración de RPC que cambia de firma (como pasó con
+-        // resumen_estadisticas en el ciclo anterior) rompe la pantalla en
+-        // cualquier celular que siga con el bundle viejo hasta que alguien
+-        // recargue por su cuenta. 'prompt' + injectRegister:false entrega el
+-        // control a AvisoActualizacionPWA (src/components), que muestra un
+-        // aviso explícito con botón "Actualizar" en vez de actualizar solo.
+-        registerType: 'prompt',
+-        // Fase 8: sin esto el plugin añade al precaché los íconos del manifest (≈275 kB, con entradas duplicadas).
+-        includeManifestIcons: false,
+-        injectRegister: false,
+-        // Solo precachea el shell estático (JS/CSS/HTML/íconos) generado por
+-        // el build. Nunca intercepta las consultas a Supabase — esas siguen
+-        // yendo siempre a la red, para no arriesgar mostrar datos viejos del
+-        // negocio (stock, ventas, etc.) al usuario.
+-        workbox: {
+-          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+-          // Fase 8: del glob completo solo se precachea el shell (ver cierreDelShell arriba).
+-          manifestTransforms: [(entradas) => ({ manifest: entradas.filter((e) => shell.incluye(e.url)), warnings: [] })],
+-          runtimeCaching: [
+-            {
+-              // Chunks/CSS/fuentes con hash del propio build que NO están en el shell: se guardan al pedirse por primera vez.
+-              // Las funciones de urlPattern se serializan tal cual dentro de sw.js: NO pueden usar variables de este archivo.
+-              urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/assets\/[^/]+\.(?:js|css|woff2|ttf)$/.test(url.pathname),
+-              handler: 'CacheFirst',
+-              options: { cacheName: 'assets-por-uso', expiration: { maxEntries: 160, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }, cacheableResponse: { statuses: [200] } },
+-            },
+-            {
+-              // Imágenes estáticas del sitio (hero, íconos). Nunca /medios (fotos del negocio vía Pages Function/R2).
+-              urlPattern: ({ url, sameOrigin }) => sameOrigin && !/\/medios(?:\/|$)/.test(url.pathname) && /\.(?:png|jpe?g|webp|avif|svg)$/.test(url.pathname),
+-              handler: 'StaleWhileRevalidate',
+-              options: { cacheName: 'imagenes-del-sitio', expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }, cacheableResponse: { statuses: [200] } },
+-            },
+-          ],
+-          globIgnores: esRaiz ? ['**/404.html'] : [],
+-          // Build de Cloudflare (base /): /medios y /medios/* los sirve una Pages Function (fotos), nunca la SPA.
+-          // El SW no debe devolver index.html a una navegación a una foto. `/medios-extra` NO queda excluido.
+-          // GitHub Pages (base /PosJaise/) no cambia.
+-          ...(esRaiz ? { navigateFallbackDenylist: [/^\/medios(?:\/|$)/] } : {}),
+-        },
+-        manifest: {
+-          name: 'Pos Jaise Beauty Academy',
+-          short_name: 'Pos Jaise',
+-          description: 'Sistema de punto de venta para el negocio.',
+-          lang: 'es',
+-          theme_color: '#0d0d0d',
+-          background_color: '#0d0d0d',
+-          display: 'standalone',
+-          start_url: base,
+-          scope: base,
+-          // "any" es el logo tal cual (sin recortes, se ve completo en el
+-          // launcher/instalador). "maskable" es una versión aparte con el
+-          // logo al 60% del lienzo sobre fondo sólido — el logo original no
+-          // tenía margen (tocaba el borde en los 4 lados), así que un
+-          // launcher que recorta a círculo/squircle (Android) le cortaba la
+-          // chispa o la cola de la "J" si se reusaba la misma imagen.
+-          icons: [
+-            { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+-            { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+-            {
+-              src: `${base}icon-192-maskable.png`,
+-              sizes: '192x192',
+-              type: 'image/png',
+-              purpose: 'maskable',
+-            },
+-            {
+-              src: `${base}icon-512-maskable.png`,
+-              sizes: '512x512',
+-              type: 'image/png',
+-              purpose: 'maskable',
+-            },
+-          ],
+-        },
+-      }),
+-    ],
+-    server: {
+-      // Permite acceder desde túneles temporales (localtunnel/ngrok) para
+-      // probar en celular por HTTPS — Vite bloquea por defecto cualquier
+-      // Host header que no reconozca, y estos túneles usan un dominio
+-      // público aleatorio cada vez.
+-      allowedHosts: true,
+-      // Solo en `vite --mode movil` (npm run dev:movil): el celular entra por UN túnel (ngrok al
+-      // puerto de Vite) y /__supabase reenvía al Supabase local (Docker, 127.0.0.1:54321),
+-      // incluidos los websockets de Realtime. Sin esto, 127.0.0.1 en el celular es el propio celular.
+-      proxy:
+-        mode === 'movil'
+-          ? { '/__supabase': { target: 'http://127.0.0.1:54321', changeOrigin: true, ws: true, rewrite: (path) => path.replace(/^\/__supabase/, '') } }
+-          : undefined,
+-    },
+-  }
+-})
++import { readFileSync } from 'node:fs'
++import { fileURLToPath, URL } from 'node:url'
++import { defineConfig } from 'vite'
++import react from '@vitejs/plugin-react'
++import tailwindcss from '@tailwindcss/vite'
++import { VitePWA } from 'vite-plugin-pwa'
++
++// Fase 8 (PERF-10): el precaché ya no incluye TODO el build (176 entradas, ~3,5 MB: POS completo, escáner de 480 kB, maquetas HTML de
++// public/…). Solo el SHELL: lo que el navegador necesita para arrancar la app y pintar la ruta de aterrizaje (/inicio) sin red.
++// La lista se calcula del grafo REAL de chunks de Rollup (no por nombres con hash): chunks de entrada + sus importaciones estáticas + su CSS,
++// más los chunks de PortalCliente e InicioCliente con las suyas. El resto (páginas del POS, escáner, páginas del portal, modales) se guarda
++// «por uso» (runtimeCaching CacheFirst: son archivos con hash inmutable) la primera vez que se piden con el service worker activo.
++// Los datos operativos (Supabase) NO pasan por ninguna regla: siempre red.
++const RAICES_DE_ATERRIZAJE = ['/pages/PortalCliente.jsx', '/pages/cliente/InicioCliente.jsx']
++// Los íconos de la PWA (192/512 y maskable) NO se precachean: el navegador los pide por su cuenta al instalar la app desde el manifest.
++// Fase 8 V2 (F8-01): sí entran los 4 íconos de métodos de pago que Ventas muestra al cobrar (≈30 kB): son lo único que el
++// panel de cobro pide fuera del código ya precacheado (Ventas viaja en la entrada) y deben verse aunque falle la red.
++const SHELL_FIJO = new Set(['index.html', 'manifest.webmanifest', 'icons/efectivo.svg', 'icons/targueta.svg', 'icons/transferencia.svg', 'icons/yape.svg'])
++function cierreDelShell() {
++  const permitidos = new Set()
++  return {
++    name: 'cierre-del-shell-pwa',
++    apply: 'build',
++    generateBundle(_opciones, bundle) {
++      const chunks = Object.values(bundle).filter((x) => x.type === 'chunk')
++      const porNombre = new Map(chunks.map((c) => [c.fileName, c]))
++      const visitar = (nombre) => {
++        if (permitidos.has(nombre) || !porNombre.has(nombre)) return
++        const c = porNombre.get(nombre)
++        permitidos.add(nombre)
++        for (const css of c.viteMetadata?.importedCss ?? []) permitidos.add(css)
++        for (const imp of c.imports ?? []) visitar(imp)
++      }
++      for (const c of chunks) {
++        const id = (c.facadeModuleId ?? '').replace(/\\/g, '/')
++        if (c.isEntry || RAICES_DE_ATERRIZAJE.some((r) => id.endsWith(r))) visitar(c.fileName)
++      }
++      if (permitidos.size < 3) throw new Error('cierre-del-shell-pwa: no se pudo calcular el shell del precaché (grafo vacío)')
++    },
++    incluye: (url) => SHELL_FIJO.has(url) || permitidos.has(url) || /^assets\/geist-latin-wght-normal-[\w-]+\.woff2$/.test(url),
++  }
++}
++
++// Fase 8 V2 (F8-01): pantallas y ventanas del POS que se cargan con import(). Se leen del propio código (PestanasCacheadas y
++// Ventas), así una pantalla nueva entra sola. Sus dependencias JS NO se precargan con <link rel=modulepreload> (ver `build`).
++function diferidosDelPos() {
++  const nombres = ['src/components/PestanasCacheadas.jsx', 'src/pages/Ventas.jsx'].flatMap((archivo) =>
++    [...readFileSync(fileURLToPath(new URL(`./${archivo}`, import.meta.url)), 'utf8').matchAll(/import\('\.\.\/(?:pages|components)\/(\w+)\.jsx'\)/g)].map((m) => m[1]),
++  )
++  if (!nombres.includes('Citas') || !nombres.includes('ModalEscanerCodigoBarras')) throw new Error('vite.config: no se encontraron los imports diferidos del POS')
++  return new RegExp(`(?:^|/)(?:${[...new Set(nombres)].join('|')})-[^/]+\\.js$`)
++}
++const DIFERIDO_POS = diferidosDelPos()
++
++// https://vite.dev/config/
++export default defineConfig(({ command, mode }) => {
++  // GitHub Pages sirve este proyecto bajo /PosJaise/ (Pages de proyecto, no
++  // de usuario), así que el build necesita ese prefijo en assets, rutas y
++  // manifest. En dev queda "/" porque Vite lo sirve desde la raíz.
++  //
++  // Fase 2 (Cloudflare Pages): el mismo código también se publica en la raíz de
++  // un dominio (`*.pages.dev` o dominio propio). `VITE_BASE_PATH=/` en ese build
++  // (ver scripts/build-cloudflare.mjs) cambia el prefijo; sin la variable el
++  // resultado es idéntico al de siempre (/PosJaise/), así que GitHub Pages no cambia.
++  const baseConfigurada = (process.env.VITE_BASE_PATH ?? '/PosJaise/').trim()
++  const baseNormalizada = `/${baseConfigurada.replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/')
++  const base = command === 'build' ? baseNormalizada : '/'
++  // 404.html es el truco de SPA de GitHub Pages; en la raíz de Cloudflare Pages su
++  // sola presencia DESACTIVA el fallback de SPA, así que ese build lo excluye (y del precache).
++  const esRaiz = base === '/'
++
++  const shell = cierreDelShell()
++
++  return {
++    base,
++    build: {
++      // Fase 8 V2 (F8-01): las dependencias JS de las pantallas/ventanas DIFERIDAS DEL POS ya no se precargan con
++      // <link rel=modulepreload>. Sin red, un modulepreload fallido deja esa dependencia marcada como fallida en el mapa de
++      // módulos del documento hasta recargar, y entonces ni el reintento de lib/moduloDiferido.js (que importa la pantalla con
++      // otra URL) podría abrirla sin recargar, y recargar perdería la venta en curso. No cuesta tiempo al navegar: el POS
++      // precarga esas pantallas en reposo. El portal conserva el modulepreload (sin él, abrir por primera vez una página no
++      // precargada tardaba ≈1 RTT más, medido): allí recargar no pierde trabajo (sus rutas no se cachean y el carrito de la
++      // clienta vive en la base), y el aviso local lo ofrece. HTML y CSS no cambian.
++      modulePreload: {
++        resolveDependencies: (archivo, dependencias, { hostType }) =>
++          hostType === 'js' && DIFERIDO_POS.test(archivo) ? dependencias.filter((d) => d.endsWith('.css')) : dependencias,
++      },
++    },
++    // Alias @/ -> src/ (lo exige shadcn; también sirve para imports cortos)
++    resolve: {
++      alias: {
++        '@': fileURLToPath(new URL('./src', import.meta.url)),
++      },
++    },
++    plugins: [
++      react(),
++      // Marca opcional de versión (Fase 2B, prueba de actualización PWA entre dos builds):
++      // solo si VITE_BUILD_ID está definido añade <meta name="build-id"> al index.html (entra al
++      // precache y cambia sw.js). Sin la variable el build es idéntico al de siempre.
++      {
++        name: 'marca-build-id',
++        transformIndexHtml: (html) => (process.env.VITE_BUILD_ID ? html.replace('</head>', `<meta name="build-id" content="${process.env.VITE_BUILD_ID.replace(/[^\w.-]/g, '')}" /></head>`) : html),
++      },
++      tailwindcss(),
++      shell,
++      VitePWA({
++        // A2 de la 4ª auditoría: con 'autoUpdate' la versión nueva se activa
++        // recién al recargar, sin avisar — un POS suele quedar abierto todo
++        // el día, y una migración de RPC que cambia de firma (como pasó con
++        // resumen_estadisticas en el ciclo anterior) rompe la pantalla en
++        // cualquier celular que siga con el bundle viejo hasta que alguien
++        // recargue por su cuenta. 'prompt' + injectRegister:false entrega el
++        // control a AvisoActualizacionPWA (src/components), que muestra un
++        // aviso explícito con botón "Actualizar" en vez de actualizar solo.
++        registerType: 'prompt',
++        // Fase 8: sin esto el plugin añade al precaché los íconos del manifest (≈275 kB, con entradas duplicadas).
++        includeManifestIcons: false,
++        injectRegister: false,
++        // Solo precachea el shell estático (JS/CSS/HTML/íconos) generado por
++        // el build. Nunca intercepta las consultas a Supabase — esas siguen
++        // yendo siempre a la red, para no arriesgar mostrar datos viejos del
++        // negocio (stock, ventas, etc.) al usuario.
++        workbox: {
++          globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
++          // Fase 8: del glob completo solo se precachea el shell (ver cierreDelShell arriba).
++          manifestTransforms: [(entradas) => ({ manifest: entradas.filter((e) => shell.incluye(e.url)), warnings: [] })],
++          // Fase 8 V2 (F8-02): qué se puede guardar «por uso» lo deciden las funciones de public/sw-reglas-cache.js (un solo
++          // lugar, probado aparte con scripts/verificar-fase8-v2.cjs): solo estáticos públicos del build dentro de su espacio de
++          // nombres (`assets/`, `inicio-web/`, `icons/`, favicons), sin query y con el tipo de contenido esperado. «Mismo origen»
++          // no basta: con VITE_SUPABASE_URL relativa (/__supabase) la API y las URLs firmadas de Storage también son del mismo
++          // origen. Ese script además retira, al activarse una versión, las entradas que estas reglas ya no admitirían.
++          // Las funciones de aquí se serializan tal cual dentro de sw.js: NO pueden usar variables de este archivo.
++          importScripts: ['sw-reglas-cache.js'],
++          runtimeCaching: [
++            {
++              // Chunks/CSS/fuentes/imágenes con hash (inmutables) que NO están en el shell: se guardan al pedirse la primera vez.
++              // 300 entradas: caben el POS y el portal de DOS versiones (una pestaña abierta de la anterior sigue usando las suyas).
++              urlPattern: ({ url }) => self.reglasCache.esAssetDelBuild(url),
++              handler: 'CacheFirst',
++              options: {
++                cacheName: 'assets-por-uso',
++                expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true },
++                cacheableResponse: { statuses: [200] },
++                plugins: [{ cacheWillUpdate: async ({ request, response }) => (self.reglasCache.respuestaDeAsset(request.url, response) ? response : null) }],
++              },
++            },
++            {
++              // Imágenes públicas de nombre fijo (hero de Inicio, íconos, favicons). Nunca /medios, Storage ni nada firmado.
++              urlPattern: ({ url }) => self.reglasCache.esImagenPublica(url),
++              handler: 'StaleWhileRevalidate',
++              options: {
++                cacheName: 'imagenes-del-sitio',
++                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true },
++                cacheableResponse: { statuses: [200] },
++                plugins: [{ cacheWillUpdate: async ({ request, response }) => (self.reglasCache.respuestaDeImagen(request.url, response) ? response : null) }],
++              },
++            },
++          ],
++          globIgnores: esRaiz ? ['**/404.html'] : [],
++          // Build de Cloudflare (base /): /medios y /medios/* los sirve una Pages Function (fotos), nunca la SPA.
++          // El SW no debe devolver index.html a una navegación a una foto. `/medios-extra` NO queda excluido.
++          // GitHub Pages (base /PosJaise/) no cambia.
++          ...(esRaiz ? { navigateFallbackDenylist: [/^\/medios(?:\/|$)/] } : {}),
++        },
++        manifest: {
++          name: 'Pos Jaise Beauty Academy',
++          short_name: 'Pos Jaise',
++          description: 'Sistema de punto de venta para el negocio.',
++          lang: 'es',
++          theme_color: '#0d0d0d',
++          background_color: '#0d0d0d',
++          display: 'standalone',
++          start_url: base,
++          scope: base,
++          // "any" es el logo tal cual (sin recortes, se ve completo en el
++          // launcher/instalador). "maskable" es una versión aparte con el
++          // logo al 60% del lienzo sobre fondo sólido — el logo original no
++          // tenía margen (tocaba el borde en los 4 lados), así que un
++          // launcher que recorta a círculo/squircle (Android) le cortaba la
++          // chispa o la cola de la "J" si se reusaba la misma imagen.
++          icons: [
++            { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
++            { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
++            {
++              src: `${base}icon-192-maskable.png`,
++              sizes: '192x192',
++              type: 'image/png',
++              purpose: 'maskable',
++            },
++            {
++              src: `${base}icon-512-maskable.png`,
++              sizes: '512x512',
++              type: 'image/png',
++              purpose: 'maskable',
++            },
++          ],
++        },
++      }),
++    ],
++    server: {
++      // Permite acceder desde túneles temporales (localtunnel/ngrok) para
++      // probar en celular por HTTPS — Vite bloquea por defecto cualquier
++      // Host header que no reconozca, y estos túneles usan un dominio
++      // público aleatorio cada vez.
++      allowedHosts: true,
++      // Solo en `vite --mode movil` (npm run dev:movil): el celular entra por UN túnel (ngrok al
++      // puerto de Vite) y /__supabase reenvía al Supabase local (Docker, 127.0.0.1:54321),
++      // incluidos los websockets de Realtime. Sin esto, 127.0.0.1 en el celular es el propio celular.
++      proxy:
++        mode === 'movil'
++          ? { '/__supabase': { target: 'http://127.0.0.1:54321', changeOrigin: true, ws: true, rewrite: (path) => path.replace(/^\/__supabase/, '') } }
++          : undefined,
++    },
++  }
++})
+--- a/scripts/build-cloudflare.mjs
++++ b/scripts/build-cloudflare.mjs
+@@ -61,4 +61,8 @@
+ if (rutas.version !== 1 || rutas.include.join() !== '/medios,/medios/*' || rutas.exclude.length) falla('_routes.json inesperado')
+ const swSalida = readFileSync(resolve(salida, 'sw.js'), 'utf8')
+ if (!swExcluyeMedios(swSalida)) falla('sw.js no excluye /medios/ de la navegación (navigateFallbackDenylist)')
+-console.log('build-cloudflare: OK (base /, sin 404.html, _headers y _routes.json, SW sin fallback en /medios, sin credenciales privilegiadas)')
++// Fase 8 V2 (F8-02): las reglas de caché por uso viven en sw-reglas-cache.js; sin él el SW no se instala (falla cerrado),
++// pero el build no debe publicarse así.
++if (!/importScripts\(\s*"sw-reglas-cache\.js"\s*\)/.test(swSalida) || !existsSync(resolve(salida, 'sw-reglas-cache.js'))) falla('sw.js no importa sw-reglas-cache.js o falta en la salida')
++if (/sameOrigin\s*&&/.test(swSalida)) falla('sw.js conserva una regla de caché por «mismo origen» (F8-02)')
++console.log('build-cloudflare: OK (base /, sin 404.html, _headers y _routes.json, SW sin fallback en /medios, reglas de caché por uso, sin credenciales privilegiadas)')
+--- a/cloudflare/_headers
++++ b/cloudflare/_headers
+@@ -21,6 +21,9 @@
+ /sw.js
+   Cache-Control: no-cache
+ 
++/sw-reglas-cache.js
++  Cache-Control: no-cache
++
+ /registerSW.js
+   Cache-Control: no-cache
+ 
+--- a/scripts/verificar-fase8.cjs
++++ b/scripts/verificar-fase8.cjs
+@@ -2,7 +2,9 @@
+ // datos) y actualización A→B con trabajo pendiente. Todo contra el Supabase LOCAL (el build lo incrusta) y servidores estáticos locales.
+ //
+ // Uso: node scripts/verificar-fase8.cjs --antes=<dist> --despues=<dist> --a=<dist build-id f8-a> --b=<dist build-id f8-b> --cuentas=<json> [--salida=ruta.json]
+-// Los dist se construyen con VITE_BASE_PATH=/ y sin 404.html (como en Cloudflare Pages). A y B son el mismo código con VITE_BUILD_ID distinto.
++// Los dist se construyen con VITE_BASE_PATH=/ y sin 404.html (como en Cloudflare Pages). A y B: VITE_BUILD_ID distinto y, desde la V2,
++// B compilado con OTROS nombres de assets (ver scripts/verificar-fase8-v2.cjs); «publicar» B reemplaza la carpeta servida entera
++// (antes se copiaba B encima de A y los archivos de A seguían disponibles por accidente, Codex F8-01).
+ const assert = require('node:assert/strict')
+ const { spawn, execFileSync } = require('node:child_process')
+ const fs = require('node:fs')
+@@ -232,7 +234,10 @@
+   fs.cpSync(A, viva, { recursive: true })
+   const baseU = servir(viva, 5323)
+   await ESPERA(800)
+-  const producto = psql(`select nombre from productos where activo and stock_actual > 0 and nombre !~ '[%_]' order by nombre limit 1`)
++  // Producto de prueba de Local (nunca se confirma la venta: solo se agrega y se quita del carrito en memoria).
++  const producto = psql(`select nombre from productos where activo and stock_actual > 0 and nombre ~ '^(TEST|ZZZ TEST|QA)' and nombre !~ '[%_]' order by nombre limit 1`)
++  // Publicación simulada: la carpeta servida pasa a contener SOLO lo de B (los archivos de A dejan de existir).
++  const publicarB = () => { fs.rmSync(viva, { recursive: true, force: true }); fs.cpSync(B, viva, { recursive: true }) }
+   await caso('Actualización A→B: con una venta en curso el botón queda bloqueado y el carrito se conserva; al vaciarlo se habilita y actualiza a B', async () => {
+     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+     const page = await ctx.newPage()
+@@ -240,23 +245,25 @@
+     await page.click('button[type=submit]'); await page.waitForFunction(() => !location.pathname.endsWith('/login'), null, { timeout: 30000 }); await ESPERA(1500)
+     await page.goto(`${baseU}/ventas`); await page.waitForSelector('main'); await ESPERA(1500)
+     await page.evaluate(() => navigator.serviceWorker.ready); await ESPERA(3000)
+-    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), 'f8-a')
++    const metaA = fs.readFileSync(path.join(A, 'index.html'), 'utf8').match(/name="build-id" content="([^"]+)"/)[1]
++    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), metaA)
+     await page.locator('[data-ruta="/ventas"] input').first().fill(producto.slice(0, 10))
+     await page.getByRole('button', { name: new RegExp(producto.slice(0, 10).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first().click()
+     await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor({ timeout: 10000 })
+-    // «publicar» B encima de A
+-    fs.cpSync(B, viva, { recursive: true, force: true })
++    // «publicar» B (reemplaza a A)
++    publicarB()
+     await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+     await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+     const boton = page.getByRole('button', { name: 'Actualizar' })
+     assert.equal(await boton.isDisabled(), true, 'con trabajo pendiente el botón debe estar deshabilitado')
+     assert.ok(await page.getByTestId('aviso-actualizacion-bloqueada').isVisible())
+-    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), 'f8-a', 'sigue en A')
++    assert.equal(await page.evaluate(() => document.querySelector('meta[name="build-id"]')?.content), metaA, 'sigue en A')
+     assert.ok(await page.getByRole('button', { name: 'Quitar', exact: true }).first().isVisible(), 'el carrito se conserva')
+     await page.getByRole('button', { name: 'Quitar', exact: true }).first().click()
+     await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Actualizar'); return b && !b.disabled }, null, { timeout: 15000 })
+     await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => null), page.getByRole('button', { name: 'Actualizar' }).click()])
+-    await page.waitForFunction(() => document.querySelector('meta[name="build-id"]')?.content === 'f8-b', null, { timeout: 30000 })
++    const metaB = fs.readFileSync(path.join(B, 'index.html'), 'utf8').match(/name="build-id" content="([^"]+)"/)[1]
++    await page.waitForFunction((m) => document.querySelector('meta[name="build-id"]')?.content === m, metaB, { timeout: 30000 })
+     // tras actualizar, los datos siguen sin caché y el SW nuevo controla la página
+     const caches = await page.evaluate(async () => { const o = []; for (const n of await caches.keys()) o.push(...(await (await caches.open(n)).keys()).map((k) => k.url)); return o })
+     assert.deepEqual(caches.filter((u) => /:54321|\/rest\/v1|\/auth\/v1/.test(u)), [])
+@@ -268,7 +275,7 @@
+     const page = await ctx.newPage()
+     await page.goto(`${baseU}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1')
+     await page.evaluate(() => navigator.serviceWorker.ready); await ESPERA(3500)
+-    fs.cpSync(B, viva, { recursive: true, force: true })
++    publicarB()
+     await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
+     await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
+     assert.equal(await page.getByRole('button', { name: 'Actualizar' }).isDisabled(), false)
+--- /dev/null
++++ b/src/lib/moduloDiferido.js
+@@ -0,0 +1,96 @@
++import { createElement, use } from 'react'
++
++// Fase 8 V2 (F8-01): componentes cargados con import() que se pueden REINTENTAR y PRECARGAR.
++//
++// Con el precaché reducido de la Fase 8 una pantalla/modal que nunca se abrió no está en este dispositivo: sin red, o
++// después de una publicación que retiró los archivos de la versión en uso, su import() falla. React.lazy guarda ese
++// rechazo para siempre (no hay forma de reintentar sin recargar la página, y recargar borra la venta en curso). Aquí:
++//   · el rechazo se CONSERVA hasta que alguien llame a `reintentar()` (un límite de error local, al pulsar «Reintentar»,
++//     al volver la red o al volver a la pestaña). Si se descartara solo, React volvería a renderizar, pediría el módulo
++//     otra vez y quedaría en un bucle de descargas fallidas mientras no haya red;
++//   · `precargar()` descarga y evalúa el módulo en reposo. Un módulo ya evaluado queda en memoria del documento: abrir esa
++//     pantalla después no necesita red ni los archivos del servidor. Si la precarga falla no deja el rechazo guardado
++//     (la apertura real lo vuelve a intentar);
++//   · se lee con `use()` sobre una promesa con estado (mismo mecanismo que config/paginasCliente.js): tras precargar no
++//     hay fallback de Suspense.
++//
++// Reintentar de verdad exige OTRA URL: el navegador guarda el fallo de un import() en el mapa de módulos del documento y no
++// vuelve a pedir esa URL hasta recargar (medido en Chromium: un segundo import() de la misma URL falla sin tocar la red).
++// Por eso el reintento importa la URL que falló con `?reintento=N` (un módulo nuevo). Sus dependencias se piden con su URL
++// normal: por eso vite.config.js no precarga con <link rel=modulepreload> las dependencias JS de estos imports (un
++// modulepreload fallido sin red dejaría envenenada la dependencia del mismo modo). Si aun así falla una dependencia, el
++// aviso sigue ofreciendo los controles seguros (volver a la venta; recargar solo sin trabajo pendiente).
++export function componenteDiferido(importar, nombre) {
++  let promesa = null
++  let urlFallida = null
++  let reintentos = 0
++
++  function cargar() {
++    if (!promesa) {
++      const actual = urlFallida ? import(/* @vite-ignore */ conReintento(urlFallida, ++reintentos)) : importar()
++      promesa = actual
++      actual.then(
++        (modulo) => {
++          actual.status = 'fulfilled'
++          actual.value = modulo
++        },
++        (error) => {
++          actual.status = 'rejected'
++          actual.reason = error
++          urlFallida = urlDelError(error) ?? urlFallida
++        },
++      )
++    }
++    return promesa
++  }
++
++  function reintentar() {
++    if (promesa?.status === 'rejected') promesa = null
++  }
++
++  function Componente(props) {
++    const modulo = use(cargar())
++    return createElement(modulo.default, props)
++  }
++  Componente.displayName = nombre
++  Componente.reintentar = reintentar
++  Componente.precargar = () =>
++    cargar().then(
++      () => true,
++      () => {
++        reintentar()
++        return false
++      },
++    )
++  return Componente
++}
++
++// Chromium y Firefox incluyen en el mensaje la URL del módulo que no se pudo importar (Safari no: ahí se reintenta igual).
++function urlDelError(error) {
++  const encontrada = String(error?.message ?? '').match(/https?:\/\/[^\s'"]+?\.js(?=[?#\s'"]|$)/)?.[0]
++  return encontrada && new URL(encontrada).origin === window.location.origin ? encontrada : null
++}
++
++function conReintento(url, n) {
++  const u = new URL(url)
++  u.searchParams.set('reintento', String(n))
++  return u.href
++}
++
++// Mensajes con que cada motor rechaza un import() cuyo archivo no llega (sin red, 404, o el HTML del fallback de SPA en
++// lugar del JS), más el error de Vite al no poder precargar el CSS de un chunk.
++const ERRORES_DE_CARGA = [
++  /Failed to fetch dynamically imported module/i, // Chromium
++  /error loading dynamically imported module/i, // Firefox
++  /Importing a module script failed/i, // Safari
++  /Unable to preload CSS/i, // Vite
++  /Expected a JavaScript.* module script/i,
++]
++
++/** ¿El error es de DESCARGA de código (y no un fallo de la propia pantalla)? */
++export function esErrorDeCarga(error) {
++  if (!error) return false
++  if (error.name === 'ChunkLoadError') return true
++  const mensaje = String(error.message ?? error)
++  return ERRORES_DE_CARGA.some((patron) => patron.test(mensaje))
++}
+--- /dev/null
++++ b/src/components/LimiteCargaDiferida.jsx
+@@ -0,0 +1,149 @@
++import { Component, useSyncExternalStore } from 'react'
++import { Link } from 'react-router-dom'
++import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
++import { esErrorDeCarga } from '../lib/moduloDiferido.js'
++import { usePendientes } from '../lib/trabajoPendiente.js'
++
++// Fase 8 V2 (F8-01): límite de error LOCAL para una pantalla o ventana que se carga con import().
++//
++// Antes, si el código de una pantalla no llegaba (sin red, o la publicación de una versión nueva retiró los archivos de la
++// que está abierta), el error subía hasta el ErrorBoundary global de main.jsx, que reemplazaba TODA la app: se desmontaban
++// Layout y CarritoProvider (la venta en curso, que vive solo en memoria, se perdía) y también el aviso de actualización.
++// Este límite deja el fallo dentro de la pantalla/ventana que lo causó: el menú, el carrito y el resto de pestañas siguen
++// montados. Nunca recarga solo. Reintenta al pulsar «Reintentar», al volver la red y al volver a mostrar la pestaña; ofrece
++// recargar la página únicamente cuando no hay trabajo pendiente que se perdería.
++//
++// Props: `variante` 'pantalla' | 'ventana'; `activa` (pestaña visible); `clave` (si cambia, p. ej. la ruta, se vuelve a
++// intentar); `onReintentar` (descarta el rechazo guardado del módulo); `volver` { a, etiqueta } (enlace a una pantalla
++// segura); `onCerrar` (ventana); `tono` 'portal' para el texto claro de la web de clientas.
++export default class LimiteCargaDiferida extends Component {
++  constructor(props) {
++    super(props)
++    this.state = { error: null }
++    this.reintentar = this.reintentar.bind(this)
++    this.alVolverLaRed = this.alVolverLaRed.bind(this)
++  }
++
++  static getDerivedStateFromError(error) {
++    return { error }
++  }
++
++  componentDidCatch(error, info) {
++    console.error('Error en una pantalla o ventana (se muestra en su lugar, el resto de la app sigue):', error, info?.componentStack)
++  }
++
++  componentDidMount() {
++    window.addEventListener('online', this.alVolverLaRed)
++  }
++
++  componentWillUnmount() {
++    window.removeEventListener('online', this.alVolverLaRed)
++  }
++
++  componentDidUpdate(previas) {
++    if (!this.state.error) return
++    const otraClave = this.props.clave !== previas.clave
++    const vuelveAVerse = this.props.activa !== false && previas.activa === false
++    if (otraClave || (vuelveAVerse && esErrorDeCarga(this.state.error))) this.reintentar()
++  }
++
++  alVolverLaRed() {
++    if (this.state.error && this.props.activa !== false && esErrorDeCarga(this.state.error)) this.reintentar()
++  }
++
++  reintentar() {
++    this.props.onReintentar?.()
++    this.setState({ error: null })
++  }
++
++  render() {
++    if (!this.state.error) return this.props.children
++    return (
++      <AvisoCargaFallida
++        error={this.state.error}
++        variante={this.props.variante ?? 'pantalla'}
++        tono={this.props.tono}
++        volver={this.props.volver}
++        onReintentar={this.reintentar}
++        onCerrar={this.props.onCerrar}
++      />
++    )
++  }
++}
++
++const suscribirRed = (avisar) => {
++  window.addEventListener('online', avisar)
++  window.addEventListener('offline', avisar)
++  return () => {
++    window.removeEventListener('online', avisar)
++    window.removeEventListener('offline', avisar)
++  }
++}
++
++function AvisoCargaFallida({ error, variante, tono, volver, onReintentar, onCerrar }) {
++  const enLinea = useSyncExternalStore(suscribirRed, () => navigator.onLine, () => true)
++  const pendientes = [...new Set(usePendientes())]
++  const esVentana = variante === 'ventana'
++  useCerrarConEscape(() => onCerrar?.(), esVentana && Boolean(onCerrar), { trabajoPendiente: false })
++
++  const deCarga = esErrorDeCarga(error)
++  const que = esVentana ? 'esta ventana' : 'esta pantalla'
++  const titulo = deCarga ? `No se pudo abrir ${que}` : `Ocurrió un error en ${que}`
++  let detalle
++  if (!deCarga) detalle = 'El resto de la app sigue funcionando. Puedes reintentar o ir a otra pantalla.'
++  else if (!enLinea) detalle = 'No hay conexión y esta parte de la app todavía no se había descargado en este dispositivo. Se reintentará sola al volver la conexión.'
++  else detalle = 'No se pudo descargar esta parte de la app. Puede que se haya publicado una versión nueva.'
++
++  const portal = tono === 'portal'
++  const textoFuerte = portal ? 'text-white' : 'text-ink'
++  const textoSuave = portal ? 'text-white/60' : 'text-ink/60'
++  const borde = portal ? 'border-white/20 text-white' : 'border-border text-ink'
++  const botonSecundario = `rounded-lg border px-4 py-2 text-sm font-semibold ${borde}`
++
++  const contenido = (
++    <>
++      <p className={`text-base font-semibold ${textoFuerte}`}>{titulo}</p>
++      <p className={`max-w-sm text-sm ${textoSuave}`}>{detalle}</p>
++      {pendientes.length > 0 && (
++        <p data-testid="carga-fallida-trabajo-conservado" className={`max-w-sm text-sm ${textoFuerte}`}>
++          Lo que tenías en curso sigue aquí ({pendientes.join(' y ')}). No recargues la página: termínalo o cancélalo primero.
++        </p>
++      )}
++      <div className="flex flex-wrap justify-center gap-2">
++        <button type="button" onClick={onReintentar} className="rounded-lg bg-amber px-4 py-2 text-sm font-semibold text-bg">
++          Reintentar
++        </button>
++        {esVentana && onCerrar && (
++          <button type="button" onClick={onCerrar} className={botonSecundario}>
++            Cerrar
++          </button>
++        )}
++        {!esVentana && volver && (
++          <Link to={volver.a} className={botonSecundario}>
++            Ir a {volver.etiqueta}
++          </Link>
++        )}
++        {deCarga && enLinea && pendientes.length === 0 && (
++          <button type="button" onClick={() => window.location.reload()} className={botonSecundario}>
++            Recargar la página
++          </button>
++        )}
++      </div>
++    </>
++  )
++
++  if (esVentana) {
++    return (
++      <div className="fixed inset-x-0 bottom-0 top-[59px] z-30 flex items-start justify-center bg-black/80 p-4 sm:top-0 sm:items-center">
++        <div role="alertdialog" aria-modal="true" aria-label={titulo} data-carga-fallida="ventana" className="flex max-w-md flex-col items-center gap-3 rounded-lg border border-border bg-surface p-6 text-center">
++          {contenido}
++        </div>
++      </div>
++    )
++  }
++  return (
++    <div role="alert" data-carga-fallida="pantalla" className="flex min-h-full flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
++      {contenido}
++    </div>
++  )
++}
+--- /dev/null
++++ b/public/sw-reglas-cache.js
+@@ -0,0 +1,88 @@
++// Fase 8 V2 (F8-02) · Reglas de la caché POR USO del service worker. Lo importa sw.js (workbox.importScripts en
++// vite.config.js); las reglas runtimeCaching de allí solo llaman a estas funciones. Es un script clásico de service worker,
++// no pasa por Vite: sin imports ni sintaxis de módulo.
++//
++// Contrato: solo se guardan recursos ESTÁTICOS PÚBLICOS DEL BUILD, reconocidos por su espacio de nombres bajo el alcance del
++// service worker (`/` en Cloudflare, `/PosJaise/` en GitHub Pages), sin query string y con el tipo de contenido esperado.
++// «Mismo origen» NO basta: con VITE_SUPABASE_URL relativa (`/__supabase`, modo móvil) la API, Storage y las URLs firmadas
++// de comprobantes viven en el mismo origen. Nunca se guardan: datos/Storage/Auth/Realtime/Functions (ni por el proxy), /medios
++// (fotos del negocio con retirada propia), nada con query (?token=… de las URLs firmadas), respuestas de error,
++// redirigidas, opacas, `private`/`no-store`, ni el index.html que el fallback de SPA devuelve con 200 en lugar de un
++// archivo que ya no existe (guardarlo envenenaría esa URL durante 30 días).
++;(function (alcance) {
++  const raiz = new URL(alcance.registration.scope).pathname // '/' o '/PosJaise/'
++  const ASSET = /^assets\/[^/]+\.(js|css|woff2?|ttf|png|jpe?g|webp|avif|svg)$/
++  const IMAGEN_PUBLICA = /^(?:(?:inicio-web|icons)\/[^/]+\.(png|jpe?g|webp|avif|svg)|(?:favicon[\w-]*|icon-[\w-]+)\.(png|ico)|icons\.(svg))$/
++  // Defensa explícita además de la lista positiva: rutas de datos o privadas, bajo cualquier prefijo.
++  const PRIVADA = /(?:^|\/)(?:__supabase|medios)(?:\/|$)|\/(?:rest|auth|storage|functions|realtime|graphql)\/v\d+(?:\/|$)|\/object\/(?:sign|authenticated)\//
++  const TIPOS = {
++    js: /javascript|ecmascript/,
++    css: /^text\/css/,
++    woff: /^font\/|^application\/(?:x-)?font|^application\/octet-stream/,
++    woff2: /^font\/|^application\/(?:x-)?font|^application\/octet-stream/,
++    ttf: /^font\/|^application\/(?:x-)?font|^application\/octet-stream/,
++    ico: /^image\//,
++    svg: /^image\/svg\+xml/,
++  }
++
++  // Ruta relativa al alcance, o null si la petición no es de este sitio/alcance o lleva query/hash.
++  function relativa(url) {
++    const u = typeof url === 'string' ? new URL(url, alcance.location.href) : url
++    if (u.origin !== alcance.location.origin || u.search !== '' || u.hash !== '') return null
++    if (!u.pathname.startsWith(raiz)) return null
++    const rel = u.pathname.slice(raiz.length)
++    return PRIVADA.test('/' + rel) ? null : rel
++  }
++  function extension(rel, patron) {
++    const m = rel === null ? null : rel.match(patron)
++    return m ? (m.slice(1).find(Boolean) ?? null) : null
++  }
++
++  /** Chunk/CSS/fuente/imagen con hash del propio build (CacheFirst). */
++  function esAssetDelBuild(url) {
++    return extension(relativa(url), ASSET) !== null
++  }
++  /** Imagen pública de nombre fijo del build: hero de Inicio, íconos, favicons (StaleWhileRevalidate). */
++  function esImagenPublica(url) {
++    return extension(relativa(url), IMAGEN_PUBLICA) !== null
++  }
++
++  /** ¿Se puede guardar esta respuesta para esta URL? */
++  function guardable(url, respuesta, patron) {
++    if (!respuesta || respuesta.status !== 200 || respuesta.type !== 'basic' || respuesta.redirected) return false
++    if (/(?:^|,)\s*(?:no-store|private)\b/i.test(respuesta.headers.get('Cache-Control') ?? '')) return false
++    const ext = extension(relativa(url), patron)
++    if (ext === null) return false
++    const tipo = (respuesta.headers.get('Content-Type') ?? '').toLowerCase()
++    const esperado = TIPOS[ext] ?? /^image\//
++    return esperado.test(tipo)
++  }
++  const respuestaDeAsset = (url, r) => guardable(url, r, ASSET)
++  const respuestaDeImagen = (url, r) => guardable(url, r, IMAGEN_PUBLICA)
++
++  alcance.reglasCache = { esAssetDelBuild, esImagenPublica, respuestaDeAsset, respuestaDeImagen }
++
++  // Al activarse una versión nueva: retirar de las cachés por uso SOLO las entradas que estas reglas no admitirían (p. ej.
++  // las que guardó la regla anterior, demasiado amplia: una imagen firmada del proxy, un index.html guardado como chunk).
++  // Lo válido se conserva: puede ser código que una pestaña abierta de la versión anterior todavía necesita.
++  const CACHES = { 'assets-por-uso': respuestaDeAsset, 'imagenes-del-sitio': respuestaDeImagen }
++  async function retirarEntradasIndebidas() {
++    const retiradas = []
++    for (const [nombre, admite] of Object.entries(CACHES)) {
++      if (!(await alcance.caches.has(nombre))) continue
++      const cache = await alcance.caches.open(nombre)
++      for (const peticion of await cache.keys()) {
++        const respuesta = await cache.match(peticion)
++        if (!admite(peticion.url, respuesta)) {
++          await cache.delete(peticion)
++          retiradas.push(peticion.url)
++        }
++      }
++    }
++    return retiradas
++  }
++  alcance.reglasCache.retirarEntradasIndebidas = retirarEntradasIndebidas
++  if (typeof alcance.addEventListener === 'function') {
++    alcance.addEventListener('activate', (evento) => evento.waitUntil(retirarEntradasIndebidas().catch(() => [])))
++  }
++})(self)
+--- /dev/null
++++ b/scripts/verificar-fase8-v2.cjs
+@@ -0,0 +1,436 @@
++// Fase 8 V2 · regresiones de las correcciones F8-01 (fallo de carga de una pantalla/ventana sin red o tras publicar otra versión)
++// y F8-02 (caché por uso del service worker limitada a estáticos públicos del build). Chromium + Supabase LOCAL.
++//
++// Uso: node scripts/verificar-fase8-v2.cjs --a=<dist A> --b=<dist B> --cuentas=<json> [--v1=<dist V1>] [--salida=ruta.json] [--etiqueta=texto] [--capturas=carpeta] [--solo=texto]
++//   A y B: VITE_BASE_PATH=/ y sin 404.html (como Cloudflare Pages), con VITE_BUILD_ID distinto y TODAS las URLs de assets distintas
++//   (B se compila con nombres `[name]-[hash]-b`): ningún archivo de A existe en B. Publicar B REEMPLAZA la raíz servida: los
++//   archivos de A dejan de existir y, como en Pages, una ruta inexistente recibe el index.html con 200 (fallback de SPA).
++//   --v1: build anterior a la corrección; habilita el caso de retirada de entradas indebidas (V1 → A).
++// Seguridad: cuenta QA ficticia (qa-…@test.local) y producto de prueba de Local; el carrito vive en memoria y NUNCA se confirma.
++// Las escrituras de negocio hacia Supabase quedan bloqueadas por el arnés (se registran); solo pasan el login y lecturas.
++// Los endpoints «privados» son fixtures de este servidor, nunca archivos reales.
++const assert = require('node:assert/strict')
++const { execFileSync } = require('node:child_process')
++const fs = require('node:fs')
++const http = require('node:http')
++const path = require('node:path')
++const { chromium } = require('playwright')
++
++const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) ?? '').split('=').slice(1).join('=')
++const A = path.resolve(arg('a')), B = path.resolve(arg('b')), V1 = arg('v1') ? path.resolve(arg('v1')) : null
++const CUENTAS = JSON.parse(fs.readFileSync(arg('cuentas'), 'utf8'))
++const SALIDA = arg('salida'), ETIQUETA = arg('etiqueta') || path.basename(A)
++const CAPTURAS = arg('capturas') // opcional: carpeta para capturas de los avisos locales
++const SUPABASE = 'http://127.0.0.1:54321'
++if (!/^qa[^@]*@test\.local$/i.test(CUENTAS.admin.email)) throw new Error('La cuenta de administración no es una cuenta QA ficticia')
++for (const d of [A, B, V1].filter(Boolean)) {
++  const js = fs.readdirSync(path.join(d, 'assets')).filter((n) => n.endsWith('.js')).map((n) => fs.readFileSync(path.join(d, 'assets', n), 'utf8')).join('\n')
++  if (!js.includes(SUPABASE) || /https:\/\/[a-z]{20}\.supabase\.co/.test(js)) throw new Error(`${d} no apunta solo al Supabase Local`)
++}
++const nombresA = new Set(fs.readdirSync(path.join(A, 'assets'))), nombresB = new Set(fs.readdirSync(path.join(B, 'assets')))
++const comunes = [...nombresA].filter((n) => nombresB.has(n))
++if (comunes.length) throw new Error(`A y B comparten ${comunes.length} archivos de assets: B debe compilarse con otros nombres`)
++const meta = (d) => fs.readFileSync(path.join(d, 'index.html'), 'utf8').match(/name="build-id" content="([^"]+)"/)?.[1]
++const META_A = meta(A), META_B = meta(B)
++const chunk = (d, prefijo) => fs.readdirSync(path.join(d, 'assets')).find((n) => n.startsWith(`${prefijo}-`) && n.endsWith('.js'))
++const CITAS_A = chunk(A, 'Citas'), ESCANER_A = chunk(A, 'ModalEscanerCodigoBarras')
++const PRODUCTO = execFileSync('docker', ['exec', '-i', 'supabase_db_WedJaiseReact', 'psql', '-U', 'postgres', '-d', 'postgres', '-At'], {
++  input: "begin read only; select nombre from productos where activo and stock_actual > 0 and nombre ~ '^(TEST|ZZZ TEST|QA)' and nombre !~ '[%_]' order by nombre limit 1; rollback;",
++  encoding: 'utf8',
++}).split('\n').find((l) => l && !['BEGIN', 'ROLLBACK'].includes(l))
++if (!PRODUCTO) throw new Error('No hay producto de prueba (TEST/QA) en Local')
++
++// ---------------- Servidor: dist intercambiable + fixtures del «proxy» de Supabase en el mismo origen ----------------
++const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.ico': 'image/x-icon' }
++const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9u8AAAAASUVORK5CYII=', 'base64')
++const estado = { raiz: A, privadaPermitida: true, lecturasJson: 0, pedidosDeA: [] }
++const servidor = http.createServer((req, res) => {
++  const u = new URL(req.url, 'http://x'), p = decodeURIComponent(u.pathname)
++  if (p.startsWith('/__supabase/storage/v1/object/sign/')) {
++    res.writeHead(estado.privadaPermitida ? 200 : 401, { 'Content-Type': estado.privadaPermitida ? 'image/png' : 'application/json', 'Cache-Control': 'private, no-store' })
++    return res.end(estado.privadaPermitida ? PNG : '{"error":"revocado (fixture)"}')
++  }
++  if (p.startsWith('/__supabase/storage/v1/object/public/')) { res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=60' }); return res.end(PNG) }
++  if (p === '/__supabase/rest/v1/productos') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ lectura: ++estado.lecturasJson })) }
++  if (p.startsWith('/medios/')) { res.writeHead(200, { 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=0, must-revalidate' }); return res.end(PNG) }
++  if (p === '/inicio-web/error-404.webp') { res.writeHead(404, { 'Content-Type': 'image/webp' }); return res.end() }
++  if (p.startsWith('/assets/') && nombresA.has(path.basename(p)) && estado.raiz !== A) estado.pedidosDeA.push(path.basename(p))
++  const raiz = estado.raiz
++  let f = path.resolve(raiz, '.' + p)
++  if (!f.startsWith(raiz + path.sep) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) f = path.join(raiz, 'index.html') // fallback de SPA (Pages)
++  res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] ?? 'application/octet-stream', 'Cache-Control': /\/assets\//.test(p) ? 'public, max-age=31536000, immutable' : 'no-cache' })
++  res.end(fs.readFileSync(f))
++})
++// Otro origen (como el Supabase absoluto de Local/producción): una imagen pública con CORS.
++const otroOrigen = http.createServer((req, res) => { res.writeHead(200, { 'Content-Type': 'image/png', 'Access-Control-Allow-Origin': '*' }); res.end(PNG) })
++const APP = 'http://127.0.0.1:5361', OTRO = 'http://127.0.0.1:5362'
++const publicar = (dir) => { estado.raiz = dir }
++const pedirAlServidor = (ruta) => new Promise((ok, mal) => http.get(APP + ruta, (r) => { let n = 0; r.on('data', (c) => (n += c.length)); r.on('end', () => ok({ status: r.statusCode, tipo: r.headers['content-type'], bytes: n })) }).on('error', mal))
++
++// ---------------- Utilidades de navegador ----------------
++const casos = []
++const ESPERA = (ms) => new Promise((r) => setTimeout(r, ms))
++const SOLO = arg('solo') // opcional: solo los casos cuyo nombre contenga este texto
++async function caso(nombre, fn) {
++  if (SOLO && !nombre.includes(SOLO)) return
++  const t0 = Date.now()
++  try { const detalle = await fn(); casos.push({ nombre, ok: true, ms: Date.now() - t0, detalle }); console.log(`OK    ${nombre}`) } catch (e) {
++    const d = String(e.message).split('\n').filter(Boolean).slice(0, 6).join(' | ').slice(0, 900)
++    casos.push({ nombre, ok: false, error: d, ms: Date.now() - t0 }); console.log(`FALLA ${nombre}\n      ${d}`)
++  }
++}
++let browser
++const ESCRITURA_RPC = /^(confirmar|guardar|crear|registrar|actualizar|eliminar|borrar|anular|cancelar|canjear|insertar|cerrar|abrir|marcar|aplicar|asignar|reabrir|reponer|ajustar|pagar|cobrar)_/
++async function contexto({ sw = true } = {}) {
++  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce', serviceWorkers: sw ? 'allow' : 'block' })
++  const bloqueadas = []
++  await ctx.route(`${SUPABASE}/**`, (r) => {
++    const u = new URL(r.request().url()), m = r.request().method()
++    if (['GET', 'HEAD', 'OPTIONS'].includes(m) || u.pathname === '/auth/v1/token') return r.continue()
++    const rpc = u.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/)?.[1]
++    if (m === 'POST' && rpc && !ESCRITURA_RPC.test(rpc)) return r.continue()
++    bloqueadas.push(`${m} ${u.pathname}`); return r.abort()
++  })
++  const page = await ctx.newPage()
++  page.setDefaultTimeout(20000)
++  const errores = []
++  page.on('pageerror', (e) => errores.push(e.message))
++  return { ctx, page, bloqueadas, errores }
++}
++async function login(page) {
++  await page.goto(`${APP}/login`, { waitUntil: 'load' })
++  await page.fill('#email', CUENTAS.admin.email); await page.fill('#password', CUENTAS.admin.password)
++  await page.click('button[type=submit]')
++  await page.waitForFunction(() => location.pathname === '/ventas', null, { timeout: 30000 })
++  await page.locator('[data-ruta="/ventas"] input').first().waitFor()
++}
++async function controladaPorSW(page) {
++  await page.evaluate(() => navigator.serviceWorker.ready); await ESPERA(1500)
++  await page.reload({ waitUntil: 'load' })
++  await page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 20000 })
++}
++const regexProducto = new RegExp(PRODUCTO.slice(0, 10).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
++async function agregarProducto(page) {
++  await page.locator('[data-ruta="/ventas"] input').first().fill(PRODUCTO.slice(0, 10))
++  await page.locator('[data-ruta="/ventas"]').getByRole('button', { name: regexProducto }).first().click()
++  await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor()
++}
++// Productos en el carrito, contando el DOM aunque Ventas esté oculta (pestaña cacheada con display:none).
++const enCarrito = (page) => page.locator('[data-ruta="/ventas"] button[aria-label="Quitar"]').count()
++async function irA(page, ruta) {
++  await page.getByRole('button', { name: 'Abrir menú', exact: true }).click()
++  await page.locator(`a[href="${ruta}"]`).first().click()
++  await page.waitForFunction((r) => location.pathname === r, ruta)
++}
++// Pantalla cargada: su contenedor existe, sin «Cargando...» ni aviso de fallo, con contenido real.
++const pantallaLista = (page, ruta, timeout = 20000) => page.waitForFunction((r) => {
++  const c = document.querySelector(`[data-ruta="${r}"]`)
++  return c && !c.querySelector('[data-carga-fallida]') && !/^\s*Cargando\.\.\.\s*$/.test(c.innerText) && c.innerText.trim().length > 40
++}, ruta, { timeout })
++const errorGlobal = (page) => page.getByText('Algo salió mal', { exact: true }).count()
++// Abre una pestaña del POS y espera su desenlace: lista, aviso local de fallo o límite global («Algo salió mal»).
++async function abrirPantalla(page, ruta) {
++  await irA(page, ruta)
++  await page.waitForFunction((r) => {
++    if (document.body.innerText.includes('Algo salió mal')) return true
++    const c = document.querySelector(`[data-ruta="${r}"]`)
++    return c && (c.querySelector('[data-carga-fallida]') || (!/^\s*Cargando\.\.\.\s*$/.test(c.innerText) && c.innerText.trim().length > 40))
++  }, ruta, { timeout: 20000 })
++  return { errorGlobal: await errorGlobal(page), avisoFallo: await page.locator(`[data-ruta="${ruta}"] [data-carga-fallida]`).count(), carrito: await enCarrito(page) }
++}
++// ¿Se descargó ya (precarga en reposo) el chunk? true/false: su ausencia se comprueba DESPUÉS de la propiedad principal, para
++// que contra una versión sin la corrección el caso falle mostrando el efecto real (límite global, venta perdida).
++const recursoPedido = (page, prefijo) => page.waitForFunction((p) => performance.getEntriesByType('resource').some((e) => new RegExp(`/assets/${p}-[^/]+\\.js$`).test(e.name)), prefijo, { timeout: 15000 }).then(() => true, () => false)
++async function contenidoCaches(page) {
++  return page.evaluate(async () => { const o = {}; for (const n of await caches.keys()) { const c = await caches.open(n); o[n] = await Promise.all((await c.keys()).map(async (k) => { const r = await c.match(k); return { url: k.url, tipo: r.headers.get('content-type') } })) } return o })
++}
++const urlsEnCaches = (cs) => Object.values(cs).flat().map((e) => e.url)
++async function vaciarCarrito(page) {
++  if (!(await page.evaluate(() => location.pathname === '/ventas'))) await irA(page, '/ventas')
++  while (await page.getByRole('button', { name: 'Quitar', exact: true }).count()) { await page.getByRole('button', { name: 'Quitar', exact: true }).first().click(); await ESPERA(300) }
++}
++
++;(async () => {
++  await new Promise((r) => servidor.listen(5361, '127.0.0.1', r))
++  await new Promise((r) => otroOrigen.listen(5362, '127.0.0.1', r))
++  browser = await chromium.launch()
++  console.log(`[${ETIQUETA}] A=${META_A} B=${META_B} Citas A=${CITAS_A} producto de prueba=${PRODUCTO}`)
++
++  // ---------------- F8-01 ----------------
++  await caso('F8-01 · Sin red y Citas NUNCA descargada: el fallo queda en su pestaña; la venta y el menú siguen; al volver la red abre', async () => {
++    publicar(A)
++    const { ctx, page, bloqueadas } = await contexto({ sw: false })
++    const reintentos = []
++    page.on('request', (r) => { if (/[?&]reintento=/.test(r.url())) reintentos.push(new URL(r.url()).pathname + new URL(r.url()).search) })
++    // La precarga en reposo NO debe alcanzar Citas en este caso: se aborta su descarga hasta cortar la red.
++    const bloquearCitas = (r) => r.abort()
++    await ctx.route(/\/assets\/Citas-[^/]+\.js$/, bloquearCitas)
++    await login(page); await agregarProducto(page); await ESPERA(4000)
++    await ctx.setOffline(true); await ctx.unroute(/\/assets\/Citas-[^/]+\.js$/, bloquearCitas)
++    const apertura = await abrirPantalla(page, '/citas')
++    assert.equal(apertura.errorGlobal, 0, 'no debe aparecer «Algo salió mal» (límite global)')
++    await page.locator('[data-ruta="/citas"] [data-carga-fallida="pantalla"]').waitFor()
++    if (CAPTURAS) await page.screenshot({ path: path.join(CAPTURAS, `${ETIQUETA}-pos-pantalla-sin-red.png`) })
++    const d = { errorGlobal: await errorGlobal(page), carrito: await enCarrito(page), menu: await page.getByRole('button', { name: 'Abrir menú', exact: true }).count(), trabajoConservado: await page.getByTestId('carga-fallida-trabajo-conservado').isVisible(), recargarVisible: await page.getByRole('button', { name: 'Recargar la página' }).count() }
++    assert.equal(d.errorGlobal, 0, 'no debe aparecer el límite global'); assert.equal(d.carrito, 1, 'la venta sigue en memoria'); assert.equal(d.menu, 1)
++    assert.ok(d.trabajoConservado, 'el aviso dice que el trabajo se conserva'); assert.equal(d.recargarVisible, 0, 'con venta pendiente no se ofrece recargar')
++    await page.getByRole('link', { name: 'Ir a Ventas' }).click()
++    await page.waitForFunction(() => location.pathname === '/ventas')
++    await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor({ timeout: 5000 }).catch(() => null)
++    assert.equal(await page.getByRole('button', { name: 'Quitar', exact: true }).count(), 1, 'de vuelta en Ventas, el producto sigue')
++    await ctx.setOffline(false); await ESPERA(500)
++    await irA(page, '/citas'); await pantallaLista(page, '/citas')
++    d.citasTrasVolverLaRed = true; d.reintentos = reintentos
++    assert.ok(reintentos.some((u) => /^\/assets\/Citas-[^/]+\.js\?reintento=\d+$/.test(u)), `el reintento debe pedir Citas con otra URL: ${reintentos}`)
++    await irA(page, '/ventas'); d.carritoFinal = await enCarrito(page)
++    assert.equal(d.carritoFinal, 1)
++    await vaciarCarrito(page); d.bloqueadas = bloqueadas
++    await ctx.close()
++    return d
++  })
++
++  // O1 de la revisión V2 de Codex: si falla una dependencia ESTÁTICA de la pantalla (no su archivo principal), el navegador la
++  // deja marcada como fallida en el documento y `?reintento=N` no la vuelve a pedir. Límite aceptado: la pantalla NO se recupera
++  // sola, pero la venta se conserva y la salida es segura (volver a Ventas; recargar solo cuando ya no hay trabajo pendiente).
++  await caso('F8-01 · O1 (límite): falla una dependencia estática de Citas → el aviso persiste aunque haya red, la venta se conserva; recargar solo tras cancelarla abre Citas', async () => {
++    publicar(A)
++    const citasJs = fs.readFileSync(path.join(A, 'assets', CITAS_A), 'utf8')
++    const entrada = fs.readFileSync(path.join(A, 'index.html'), 'utf8') + [...nombresA].filter((n) => /^index-.*\.js$/.test(n)).map((n) => fs.readFileSync(path.join(A, 'assets', n), 'utf8')).join('')
++    const dependencia = [...citasJs.matchAll(/from"\.\/([^"]+\.js)"/g)].map((m) => m[1]).find((n) => /^ModalRegistroAtencion-/.test(n) && !entrada.includes(n))
++    assert.ok(dependencia, 'Citas debe tener una dependencia estática propia (ModalRegistroAtencion) que la entrada no carga')
++    const { ctx, page, bloqueadas } = await contexto({ sw: false })
++    const pedidosDependencia = []
++    page.on('request', (r) => { if (r.url().includes(dependencia)) pedidosDependencia.push(r.url()) })
++    const abortar = (r) => r.abort()
++    const patron = new RegExp(`/assets/${dependencia.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
++    await ctx.route(patron, abortar)
++    await login(page); await agregarProducto(page)
++    await recursoPedido(page, 'Citas'); await ESPERA(1500) // la precarga en reposo de Citas falla por la dependencia
++    await ctx.unroute(patron, abortar) // la red y el archivo vuelven a estar disponibles
++    const d = { dependencia, apertura: await abrirPantalla(page, '/citas') }
++    assert.equal(d.apertura.errorGlobal, 0, 'no debe aparecer «Algo salió mal»'); assert.equal(d.apertura.carrito, 1, 'la venta sigue en memoria')
++    assert.equal(d.apertura.avisoFallo, 1, 'el fallo queda en la pestaña')
++    for (let i = 0; i < 2; i++) { await page.locator('[data-ruta="/citas"]').getByRole('button', { name: 'Reintentar' }).click(); await ESPERA(1500) }
++    d.trasReintentar = { avisoFallo: await page.locator('[data-ruta="/citas"] [data-carga-fallida]').count(), recargar: await page.getByRole('button', { name: 'Recargar la página' }).count(), carrito: await enCarrito(page) }
++    d.pedidosDependencia = pedidosDependencia.length
++    assert.equal(d.trasReintentar.avisoFallo, 1, 'límite documentado: el reintento no repara una dependencia estática ya fallida')
++    assert.equal(d.trasReintentar.recargar, 0, 'con venta pendiente no se ofrece recargar'); assert.equal(d.trasReintentar.carrito, 1)
++    await page.getByRole('link', { name: 'Ir a Ventas' }).click(); await page.waitForFunction(() => location.pathname === '/ventas')
++    await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor()
++    d.carritoEnVentas = await page.getByRole('button', { name: 'Quitar', exact: true }).count()
++    assert.equal(d.carritoEnVentas, 1, 'de vuelta en Ventas, el producto sigue')
++    await vaciarCarrito(page) // «cancelar» la venta ficticia
++    await irA(page, '/citas')
++    await page.getByRole('button', { name: 'Recargar la página' }).waitFor({ timeout: 10000 })
++    await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), page.getByRole('button', { name: 'Recargar la página' }).click()])
++    await pantallaLista(page, '/citas')
++    d.citasTrasRecargaSegura = true; d.bloqueadas = bloqueadas
++    await ctx.close()
++    return d
++  })
++
++  await caso('F8-01 · Sin red DESPUÉS de la precarga en reposo: Citas abre desde memoria y la venta sigue', async () => {
++    publicar(A)
++    const { ctx, page, bloqueadas } = await contexto({ sw: false })
++    await login(page); await agregarProducto(page)
++    const precargada = await recursoPedido(page, 'Citas'); await ESPERA(1500)
++    await ctx.setOffline(true)
++    const d = { precargada, citas: await abrirPantalla(page, '/citas') }
++    assert.equal(d.citas.errorGlobal, 0, 'no debe aparecer «Algo salió mal»'); assert.equal(d.citas.carrito, 1, 'la venta sigue en memoria')
++    assert.ok(precargada, 'Citas debe haberse precargado en reposo'); assert.equal(d.citas.avisoFallo, 0, 'Citas abre desde memoria')
++    await irA(page, '/ventas'); await page.getByRole('button', { name: 'Quitar', exact: true }).first().waitFor({ timeout: 5000 }).catch(() => null)
++    d.carrito = await page.getByRole('button', { name: 'Quitar', exact: true }).count()
++    assert.equal(d.carrito, 1)
++    await ctx.setOffline(false); await vaciarCarrito(page); d.bloqueadas = bloqueadas
++    await ctx.close()
++    return d
++  })
++
++  await caso('F8-01 · A→B real (URLs JS distintas, archivos de A retirados) con venta en curso: Citas abre, el escáner falla en su ventana, la venta se conserva; al cancelarla actualiza a B', async () => {
++    publicar(A)
++    const { ctx, page, bloqueadas, errores } = await contexto()
++    await login(page); await controladaPorSW(page); await page.locator('[data-ruta="/ventas"] input').first().waitFor()
++    const precargada = await recursoPedido(page, 'Citas'); await ESPERA(1500)
++    await agregarProducto(page)
++    publicar(B)
++    const citasAEnServidor = await pedirAlServidor(`/assets/${CITAS_A}`)
++    assert.match(citasAEnServidor.tipo, /text\/html/, 'tras publicar B, el chunk de Citas de A ya no existe en el servidor (fallback HTML)')
++    await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
++    await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
++    const d = { citasAEnServidor, meta: await page.locator('meta[name="build-id"]').getAttribute('content'), actualizarBloqueado: await page.getByRole('button', { name: 'Actualizar', exact: true }).isDisabled() }
++    assert.equal(d.meta, META_A); assert.equal(d.actualizarBloqueado, true)
++    // Pantalla de A no visitada en esta sesión: se abre con el código ya precargado en memoria.
++    d.citas = await abrirPantalla(page, '/citas'); d.precargada = precargada
++    assert.equal(d.citas.errorGlobal, 0, 'no debe aparecer «Algo salió mal»'); assert.equal(d.citas.carrito, 1, 'la venta sigue en memoria')
++    assert.ok(precargada, 'Citas debe haberse precargado en reposo'); assert.equal(d.citas.avisoFallo, 0, 'Citas abre con el código en memoria')
++    // Ventana diferida de A no precargada (escáner): su archivo ya no existe → fallo LOCAL en la ventana.
++    await irA(page, '/ventas')
++    await page.getByRole('button', { name: 'Escanear código de barras con la cámara' }).click()
++    await page.locator('[data-carga-fallida="ventana"]').waitFor()
++    if (CAPTURAS) await page.screenshot({ path: path.join(CAPTURAS, `${ETIQUETA}-pos-ventana-escaner-retirado.png`) })
++    d.escaner = { errorGlobal: await errorGlobal(page), carritoVisible: await page.getByRole('button', { name: 'Quitar', exact: true }).count() }
++    assert.equal(d.escaner.errorGlobal, 0); assert.equal(d.escaner.carritoVisible, 1)
++    await page.keyboard.press('Escape')
++    await page.locator('[data-carga-fallida="ventana"]').waitFor({ state: 'detached' })
++    // El index.html del fallback NO quedó guardado como si fuera el chunk del escáner.
++    const cs = await contenidoCaches(page)
++    d.escanerEnCache = urlsEnCaches(cs).filter((u) => u.endsWith(`/${ESCANER_A}`))
++    assert.deepEqual(d.escanerEnCache, [], 'el HTML de fallback no debe guardarse como chunk')
++    // Panel de cobro: los íconos de método de pago están disponibles (precaché) aunque el servidor ya sea B.
++    d.iconosCobro = await page.evaluate(() => [...document.querySelectorAll('[data-ruta="/ventas"] img[src*="/icons/"]')].map((i) => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })))
++    assert.ok(d.iconosCobro.length >= 3 && d.iconosCobro.every((i) => i.ok), JSON.stringify(d.iconosCobro))
++    // Cancelar la operación (quitar el producto) habilita «Actualizar» → B.
++    await vaciarCarrito(page)
++    await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Actualizar'); return b && !b.disabled }, null, { timeout: 15000 })
++    await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => null), page.getByRole('button', { name: 'Actualizar', exact: true }).click()])
++    await page.waitForFunction((m) => document.querySelector('meta[name="build-id"]')?.content === m, META_B, { timeout: 30000 })
++    await page.locator('[data-ruta="/ventas"] input').first().waitFor()
++    await irA(page, '/citas'); await pantallaLista(page, '/citas')
++    d.trasActualizar = { meta: META_B, citas: true, errorGlobal: await errorGlobal(page) }
++    d.bloqueadas = bloqueadas; d.erroresNoCapturados = errores
++    await ctx.close()
++    return d
++  })
++
++  await caso('F8-01 · Retención: tras publicar B, recargar A (sin trabajo pendiente) sigue funcionando con su código guardado por el SW', async () => {
++    publicar(A)
++    const { ctx, page, bloqueadas } = await contexto()
++    await login(page); await controladaPorSW(page); await page.locator('[data-ruta="/ventas"] input').first().waitFor()
++    const precargada = await recursoPedido(page, 'Citas')
++    const enCacheSW = await page.waitForFunction((n) => caches.keys().then((ns) => Promise.all(ns.map((x) => caches.open(x).then((c) => c.keys())))).then((ls) => ls.flat().some((k) => k.url.endsWith('/' + n))), CITAS_A, { timeout: 15000 }).then(() => true, () => false)
++    publicar(B)
++    await page.reload({ waitUntil: 'load' }); await page.locator('[data-ruta="/ventas"] input').first().waitFor()
++    const d = { meta: await page.locator('meta[name="build-id"]').getAttribute('content') }
++    assert.equal(d.meta, META_A, 'sigue en A (B no se activa solo)')
++    d.citas = await abrirPantalla(page, '/citas'); d.precargada = precargada; d.citasEnCacheSW = enCacheSW
++    assert.equal(d.citas.errorGlobal, 0, 'no debe aparecer «Algo salió mal»')
++    assert.equal(d.citas.avisoFallo, 0, 'Citas de A abre con su código guardado aunque el servidor ya no lo tenga'); assert.ok(enCacheSW)
++    d.pedidosDeAalServidor = [...new Set(estado.pedidosDeA)].length; d.bloqueadas = bloqueadas
++    await ctx.close()
++    return d
++  })
++
++  await caso('F8-01 · Portal sin red: una página pública no descargada falla dentro del portal (cabecera y menú intactos) y abre al volver la red', async () => {
++    publicar(A)
++    const { ctx, page } = await contexto({ sw: false })
++    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await ESPERA(5000)
++    const enlace = page.locator('a[href="/terminos-y-condiciones"]').first()
++    await ctx.setOffline(true)
++    await enlace.scrollIntoViewIfNeeded(); await enlace.click()
++    await page.waitForFunction(() => document.body.innerText.includes('Algo salió mal') || !!document.querySelector('[data-carga-fallida="pantalla"]'), null, { timeout: 20000 })
++    if (CAPTURAS) await page.screenshot({ path: path.join(CAPTURAS, `${ETIQUETA}-portal-sin-red.png`) })
++    const d = { errorGlobal: await errorGlobal(page), cabecera: await page.locator('.landing-web header').count() }
++    assert.equal(d.errorGlobal, 0, 'no debe aparecer «Algo salió mal» (límite global)'); assert.ok(d.cabecera >= 1, 'la cabecera del portal sigue montada')
++    // Al volver la red se reintenta solo. En el portal se conserva el modulepreload (rendimiento), así que una dependencia que
++    // falló sin red puede seguir marcada como fallida en este documento: entonces el aviso local ofrece «Recargar la página»
++    // (allí no hay trabajo en memoria que perder) y la recarga abre la página. Cualquiera de los dos desenlaces es el contrato.
++    await ctx.setOffline(false)
++    const terminos = () => /t[ée]rminos/i.test(document.querySelector('main')?.innerText ?? '') && !document.querySelector('[data-carga-fallida]')
++    await page.waitForFunction((f) => new Function(`return (${f})()`)() || [...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Recargar la página'), terminos.toString(), { timeout: 20000 })
++    d.abreSinRecargar = await page.evaluate((f) => new Function(`return (${f})()`)(), terminos.toString())
++    if (!d.abreSinRecargar) {
++      d.trabajoPendienteEnAviso = await page.getByTestId('carga-fallida-trabajo-conservado').count()
++      assert.equal(d.trabajoPendienteEnAviso, 0)
++      await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), page.getByRole('button', { name: 'Recargar la página' }).click()])
++      await page.waitForFunction((f) => new Function(`return (${f})()`)(), terminos.toString(), { timeout: 20000 })
++    }
++    d.abreAlVolverLaRed = true
++    await ctx.close()
++    return d
++  })
++
++  await caso('F8-01 · Cliente nuevo de B: Inicio, login y Citas sin errores', async () => {
++    publicar(B)
++    const { ctx, page, bloqueadas } = await contexto()
++    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1')
++    await login(page)
++    await irA(page, '/citas'); await pantallaLista(page, '/citas')
++    const d = { meta: await page.locator('meta[name="build-id"]').getAttribute('content'), errorGlobal: await errorGlobal(page), bloqueadas }
++    assert.equal(d.meta, META_B); assert.equal(d.errorGlobal, 0)
++    await ctx.close()
++    return d
++  })
++
++  await caso('F8-01 · Caso vacío: sin trabajo pendiente, «Actualizar» está disponible de inmediato', async () => {
++    publicar(A)
++    const { ctx, page } = await contexto()
++    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await controladaPorSW(page)
++    publicar(B)
++    await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
++    await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
++    assert.equal(await page.getByRole('button', { name: 'Actualizar', exact: true }).isDisabled(), false)
++    await ctx.close()
++  })
++
++  // ---------------- F8-02 ----------------
++  await caso('F8-02 · Caché por uso: solo estáticos públicos del build; nunca Storage/datos del proxy, firmados, /medios, otro origen ni errores', async () => {
++    publicar(A); estado.privadaPermitida = true; estado.lecturasJson = 0
++    const { ctx, page } = await contexto()
++    await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await controladaPorSW(page); await ESPERA(3000)
++    const pedir = (u) => page.evaluate(async (x) => { try { const r = await fetch(x); return { status: r.status, bytes: (await r.arrayBuffer()).byteLength } } catch (e) { return { error: String(e) } } }, u)
++    const privada = '/__supabase/storage/v1/object/sign/comprobantes-pedidos-web/qa-f8.png?token=ficticio'
++    const d = { privadaAntes: await pedir(privada) }
++    await ESPERA(300); estado.privadaPermitida = false
++    d.privadaTrasRevocar = await pedir(privada)
++    d.publicaProxy = await pedir('/__supabase/storage/v1/object/public/bucket/qa.png')
++    await pedir('/__supabase/rest/v1/productos'); await pedir('/__supabase/rest/v1/productos')
++    d.lecturasJson = estado.lecturasJson
++    d.otroOrigen = await pedir(`${OTRO}/storage/v1/object/public/bucket/qa.png`)
++    d.medios = await pedir('/medios/fotos-galeria/00000000-0000-4000-8000-000000000008/g.webp')
++    d.imagenInexistente = await pedir('/inicio-web/no-existe.webp') // fallback HTML 200
++    d.imagen404 = await pedir('/inicio-web/error-404.webp')
++    d.chunkInexistente = await pedir('/assets/no-existe-zzz.js') // fallback HTML 200
++    const algunChunk = [...nombresA].find((n) => /^Historial-.*\.js$/.test(n))
++    d.chunkConQuery = await pedir(`/assets/${algunChunk}?token=1`)
++    d.iconoSinPrecache = await pedir('/icons/whatsappColor.svg')
++    await ESPERA(1500)
++    const cs = await contenidoCaches(page), todas = urlsEnCaches(cs)
++    d.caches = Object.fromEntries(Object.entries(cs).map(([n, l]) => [n, l.length]))
++    assert.equal(d.privadaAntes.status, 200); assert.equal(d.privadaTrasRevocar.status, 401, 'tras revocar, el SW no debe devolver la copia privada')
++    assert.equal(estado.lecturasJson, 2, 'los datos del proxy siempre van a la red')
++    const indebidas = todas.filter((u) => /__supabase|\/storage\/v1|\/rest\/v1|\/medios\/|no-existe|error-404|\?token=|:5362/.test(u))
++    assert.deepEqual(indebidas, [], 'entradas indebidas en Cache Storage')
++    const html = Object.values(cs).flat().filter((e) => /\/assets\//.test(e.url) && /text\/html/.test(e.tipo ?? ''))
++    assert.deepEqual(html, [], 'ningún HTML guardado como asset')
++    // Positivos: hero e ícono público (imagenes-del-sitio), chunks (assets-por-uso), íconos de cobro (precaché).
++    assert.ok((cs['imagenes-del-sitio'] ?? []).some((e) => /\/inicio-web\/.+\.webp$/.test(e.url)), 'el hero se guarda')
++    assert.ok((cs['imagenes-del-sitio'] ?? []).some((e) => e.url.endsWith('/icons/whatsappColor.svg')), 'un ícono público se guarda')
++    assert.ok((cs['assets-por-uso'] ?? []).some((e) => /\/assets\/.+\.js$/.test(e.url)), 'los chunks por uso se guardan')
++    assert.ok(todas.some((u) => /\/icons\/yape\.svg/.test(u)), 'íconos de cobro en el precaché')
++    await ctx.close()
++    return d
++  })
++
++  if (V1) {
++    await caso('F8-02 · Al activarse la versión corregida se retiran las entradas indebidas que guardó V1, sin borrar las válidas', async () => {
++      publicar(V1); estado.privadaPermitida = true
++      const { ctx, page } = await contexto()
++      await page.goto(`${APP}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await controladaPorSW(page); await ESPERA(3000)
++      const privada = '/__supabase/storage/v1/object/sign/comprobantes-pedidos-web/qa-f8-v1.png?token=ficticio'
++      await page.evaluate(async (u) => { await fetch(u); await fetch('/assets/no-existe-v1.js').catch(() => null) }, privada)
++      await ESPERA(1500)
++      const antes = await contenidoCaches(page)
++      const indebidasAntes = urlsEnCaches(antes).filter((u) => /__supabase|no-existe-v1/.test(u))
++      const validasAntes = [...(antes['assets-por-uso'] ?? []), ...(antes['imagenes-del-sitio'] ?? [])].filter((e) => !/__supabase|no-existe-v1/.test(e.url)).map((e) => e.url)
++      assert.ok(indebidasAntes.length >= 2, `V1 debería haber guardado las entradas indebidas (estado QA a limpiar): ${indebidasAntes}`)
++      assert.ok(validasAntes.length > 3)
++      publicar(A)
++      await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()))
++      await page.getByText('Hay una versión nueva de la app.').waitFor({ timeout: 60000 })
++      await Promise.all([page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }).catch(() => null), page.getByRole('button', { name: 'Actualizar', exact: true }).click()])
++      await page.waitForFunction((m) => document.querySelector('meta[name="build-id"]')?.content === m, META_A, { timeout: 30000 }); await ESPERA(2000)
++      const despues = await contenidoCaches(page), urls = new Set(urlsEnCaches(despues))
++      const d = { indebidasAntes, indebidasDespues: urlsEnCaches(despues).filter((u) => /__supabase|no-existe-v1/.test(u)), validasAntes: validasAntes.length, validasConservadas: validasAntes.filter((u) => urls.has(u)).length }
++      assert.deepEqual(d.indebidasDespues, []); assert.equal(d.validasConservadas, d.validasAntes, 'las entradas válidas (código de la versión anterior, hero) se conservan')
++      await ctx.close()
++      return d
++    })
++  }
++
++  await browser.close(); servidor.close(); otroOrigen.close()
++  const fallos = casos.filter((c) => !c.ok)
++  const informe = { fecha: new Date().toISOString(), etiqueta: ETIQUETA, a: { dir: A, meta: META_A, citas: CITAS_A }, b: { dir: B, meta: META_B }, archivosComunesAB: comunes.length, producto: PRODUCTO, total: casos.length, correctos: casos.length - fallos.length, fallos: fallos.length, casos }
++  if (SALIDA) fs.writeFileSync(SALIDA, JSON.stringify(informe, null, 1))
++  console.log(`\n[${ETIQUETA}] ${informe.correctos}/${informe.total} correctos`)
++  process.exit(fallos.length ? 1 : 0)
++})().catch(async (e) => { console.error(e); try { await browser?.close() } catch {} process.exit(2) })

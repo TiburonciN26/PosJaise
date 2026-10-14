@@ -1,0 +1,20 @@
+import {createRequire} from 'node:module';
+import {writeFileSync} from 'node:fs';
+import {leerCategoriasCompletas} from 'file:///C:/WedJaiseReact/src/lib/catalogoPublico.js';
+const {createClient}=createRequire('C:/WedJaiseReact/package.json')('@supabase/supabase-js');
+const categorias=Array.from({length:1001},(_,i)=>({categoria:`C${i}`,total:1}));const resultados=[];
+for(const modo of ['completo','sin-conteo-inicial','sin-conteo-segundo','total-desconocido','conteo-malformado','conteo-negativo','tramo-vacio']){
+ let llamadas=0;
+ const fetchSimulado=async(url,init)=>{llamadas++;const u=new URL(url),desde=Number(u.searchParams.get('offset')??0),limit=Number(u.searchParams.get('limit')??500);
+ const filas=modo==='tramo-vacio'&&desde===500?[]:categorias.slice(desde,desde+limit);
+ const headers={'content-type':'application/json','content-range':`${desde}-${desde+Math.max(filas.length-1,0)}/1001`};
+ if((modo==='sin-conteo-inicial'&&desde===0)||(modo==='sin-conteo-segundo'&&desde===500))delete headers['content-range'];
+ if(modo==='total-desconocido')headers['content-range']=`${desde}-${desde+filas.length-1}/*`;
+ if(modo==='conteo-malformado')headers['content-range']=`${desde}-${desde+filas.length-1}/xyz`;
+ if(modo==='conteo-negativo')headers['content-range']=`${desde}-${desde+filas.length-1}/-1`;
+ return new Response(JSON.stringify(filas),{status:200,headers});};
+ const client=createClient('http://127.0.0.1:1','qa-ficticia',{global:{fetch:fetchSimulado},auth:{persistSession:false}});
+ try{const leidas=await leerCategoriasCompletas(client,'productos_categorias_publicas');resultados.push({modo,llamadas,rechazada:false,filas:leidas.length,totalRealSimulado:1001});}catch(e){resultados.push({modo,llamadas,rechazada:true,error:String(e.message)});}
+}
+writeFileSync(new URL('./conteos-estrictos.json',import.meta.url),JSON.stringify({sdkReal:true,redSimulada:true,resultados},null,2));
+for(const r of resultados)console.log(JSON.stringify(r));

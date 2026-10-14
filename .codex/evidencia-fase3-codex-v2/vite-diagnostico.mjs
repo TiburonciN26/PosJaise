@@ -1,0 +1,2 @@
+import original from 'file:///C:/WedJaiseReact/vite.config.js';
+export default async (args)=>({...await original(args),root:'C:/WedJaiseReact',cacheDir:"C:\\Users\\jdeos\\.codex\\visualizations\\2026\\10\\09\\01a11ea8-be2a-7611-8e67-4ded5cca3f25\\fase3-verificacion-v2\\vite-cache"});

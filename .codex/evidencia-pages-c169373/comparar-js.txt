@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+const old=JSON.parse(fs.readFileSync('C:/WedJaiseReact/.codex/evidencia-pages-preview-r2/verificacion-alias-final.json','utf8'));
+const now=JSON.parse(fs.readFileSync(new URL('./verificacion-alias-final.json',import.meta.url),'utf8'));
+const path=p=>p.replace(/^\//,'');
+const stem=p=>path(p).replace(/-[A-Za-z0-9_-]{8}\.js$/,'.js');
+const before=new Map(old.assets.map(a=>[stem(a.file),a]));
+const after=new Map(now.assets.map(a=>[stem(a.file),a]));
+const tasks=[...after].filter(([s,a])=>before.get(s)?.sha256!==a.sha256);
+const result={fecha:new Date().toISOString(),soloLectura:true,modulosAntes:before.size,modulosAhora:after.size,igualesPorHash:0,igualesTrasNormalizar:0,diferentes:[],ausentes:[]};
+result.igualesPorHash=after.size-tasks.length;
+const normalize=t=>t.replace(/-[A-Za-z0-9_-]{8}\.(?:js|css)/g,m=>m.replace(/-[A-Za-z0-9_-]{8}/,'-HASH'));
+async function read(origin,p){const r=await fetch(new URL(p,origin+'/'),{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000)});if(!r.ok)throw new Error('Script HTTP '+r.status);return r.text();}
+let next=0;
+await Promise.all(Array.from({length:6},async()=>{
+  while(next<tasks.length){
+    const [name,newAsset]=tasks[next++],oldAsset=before.get(name);
+    if(!oldAsset){result.ausentes.push(name);continue;}
+    const [a,b]=await Promise.all([read('https://9d206972.pos-jaise.pages.dev',oldAsset.file),read(now.origin,newAsset.file)]);
+    if(normalize(a)===normalize(b))result.igualesTrasNormalizar++;
+    else result.diferentes.push(name);
+  }
+}));
+result.ausentes.push(...[...before.keys()].filter(s=>!after.has(s)));
+result.nota='Comparación textual de módulos por su nombre base: normaliza únicamente sufijos de ocho caracteres de nombres .js/.css. No prueba interacción, ejecución PWA ni equivalencia semántica general.';
+fs.writeFileSync(new URL('./comparacion-js-confirmada.json',import.meta.url),JSON.stringify(result,null,2),{flag:'wx'});
+console.log(JSON.stringify(result,null,2));

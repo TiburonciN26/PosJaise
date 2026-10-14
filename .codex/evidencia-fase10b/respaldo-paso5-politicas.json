@@ -1,0 +1,125 @@
+﻿{
+    "fecha":  "2026-10-13T20:29:47.8569416Z",
+    "total":  6,
+    "fallos":  0,
+    "casos":  [
+                  {
+                      "nombre":  "B: movimientos_insert eliminada y 20261002000008 registrada -\u003e paso 5 OK; ventas_insert capturada y movimientos_insert registrada como AUSENTE",
+                      "ok":  true,
+                      "detalle":  {
+                                      "error":  null,
+                                      "paso5":  {
+                                                    "tablas_huella":  17,
+                                                    "check":  1,
+                                                    "huella_sha256":  "fdffab9078ff03b802e0830845c4c718b1183f5f8640932b2818f036d0f5bff6",
+                                                    "definiciones":  "definiciones_previas_20261013T202942Z.sql",
+                                                    "ok":  true,
+                                                    "huella_valores":  {
+                                                                           "pedidos_web":  "429:166670aacf591b6798d42a1113380231",
+                                                                           "clientes":  "4749:91a8441bfd5a46f9973e2e68f3d255f3",
+                                                                           "ventas":  "2939:3ec228ffd68f89a6a40584cb936850f6",
+                                                                           "productos":  "3245:194b51a0b33153b02c9cd7ff9ba97cc5",
+                                                                           "asistentes":  "12:ce02979c8eb727366aa5ba445aaaabe4",
+                                                                           "cita_servicios":  "294:eb37401733906808a8d314369a455d3f",
+                                                                           "servicios":  "3340:c012141e7217928f7051168566884932",
+                                                                           "citas":  "299:4f4ce53c80936db242b309dfb1668ec8",
+                                                                           "registro_servicios":  "7800:f5c2f7a6eaeeeacd89cf3dfa38d93c06",
+                                                                           "cupones":  "3067:708a9b54c569e3584a041d1c4b21cf89",
+                                                                           "config_fidelizacion":  "1:5f7b2a1fd440783389b639165b6c38ba",
+                                                                           "config_puntos":  "1:b67644afc407d81b5e139a9a6bfc4c7c",
+                                                                           "venta_items":  "3580:dbc9659bf29aa9e3be15ee4b1a40aefe",
+                                                                           "promociones":  "208:dc9f60151bf7c69a0e53059749ee0a1e",
+                                                                           "usuarios":  "36:f9ef6fa348b8609b6d341421e07990ac",
+                                                                           "config_referidos":  "1:657430ba0871e6962c33b87425e85157",
+                                                                           "porcentajes":  "43:b20fcd3b1240345cd5c70c50f39beb4d"
+                                                                       },
+                                                    "huella":  "huella_previa_20261013T202942Z.txt",
+                                                    "politicas":  1,
+                                                    "funciones":  14,
+                                                    "politicas_ausentes":  [
+                                                                               "public.movimientos_stock.movimientos_insert"
+                                                                           ],
+                                                    "migracion_20261002000008":  true,
+                                                    "definiciones_sha256":  "23c118b192b6f6000e92794ef61e063aa84e42a0bac36cc6ed7df39bd3f7927c",
+                                                    "politicas_detalle":  {
+                                                                              "public.movimientos_stock.movimientos_insert":  "ausente",
+                                                                              "public.ventas.ventas_insert":  "presente"
+                                                                          }
+                                                }
+                                  }
+                  },
+                  {
+                      "nombre":  "A: estado anterior con ambas politicas (20261002000008 sin registrar) -\u003e paso 5 OK; las 2 politicas capturadas, ninguna ausente",
+                      "ok":  true,
+                      "detalle":  {
+                                      "error":  null,
+                                      "paso5":  {
+                                                    "tablas_huella":  17,
+                                                    "check":  1,
+                                                    "huella_sha256":  "fdffab9078ff03b802e0830845c4c718b1183f5f8640932b2818f036d0f5bff6",
+                                                    "definiciones":  "definiciones_previas_20261013T202946Z.sql",
+                                                    "ok":  true,
+                                                    "huella_valores":  {
+                                                                           "pedidos_web":  "429:166670aacf591b6798d42a1113380231",
+                                                                           "clientes":  "4749:91a8441bfd5a46f9973e2e68f3d255f3",
+                                                                           "ventas":  "2939:3ec228ffd68f89a6a40584cb936850f6",
+                                                                           "productos":  "3245:194b51a0b33153b02c9cd7ff9ba97cc5",
+                                                                           "asistentes":  "12:ce02979c8eb727366aa5ba445aaaabe4",
+                                                                           "cita_servicios":  "294:eb37401733906808a8d314369a455d3f",
+                                                                           "servicios":  "3340:c012141e7217928f7051168566884932",
+                                                                           "citas":  "299:4f4ce53c80936db242b309dfb1668ec8",
+                                                                           "registro_servicios":  "7800:f5c2f7a6eaeeeacd89cf3dfa38d93c06",
+                                                                           "cupones":  "3067:708a9b54c569e3584a041d1c4b21cf89",
+                                                                           "config_fidelizacion":  "1:5f7b2a1fd440783389b639165b6c38ba",
+                                                                           "config_puntos":  "1:b67644afc407d81b5e139a9a6bfc4c7c",
+                                                                           "venta_items":  "3580:dbc9659bf29aa9e3be15ee4b1a40aefe",
+                                                                           "promociones":  "208:dc9f60151bf7c69a0e53059749ee0a1e",
+                                                                           "usuarios":  "36:f9ef6fa348b8609b6d341421e07990ac",
+                                                                           "config_referidos":  "1:657430ba0871e6962c33b87425e85157",
+                                                                           "porcentajes":  "43:b20fcd3b1240345cd5c70c50f39beb4d"
+                                                                       },
+                                                    "huella":  "huella_previa_20261013T202946Z.txt",
+                                                    "politicas":  2,
+                                                    "funciones":  14,
+                                                    "politicas_ausentes":  [
+
+                                                                           ],
+                                                    "migracion_20261002000008":  false,
+                                                    "definiciones_sha256":  "6268084ecf276379d8477c3c954d182c2e88e1457c2ec96bdfea1396707d2242",
+                                                    "politicas_detalle":  {
+                                                                              "public.movimientos_stock.movimientos_insert":  "presente",
+                                                                              "public.ventas.ventas_insert":  "presente"
+                                                                          }
+                                                }
+                                  }
+                  },
+                  {
+                      "nombre":  "Invalido: 20261002000008 registrada pero movimientos_insert sigue -\u003e DETENIDO (incoherente)",
+                      "ok":  true,
+                      "detalle":  {
+                                      "error":  "DETENIDO: 20261002000008 esta registrada pero public.movimientos_stock.movimientos_insert sigue existiendo; estado incoherente."
+                                  }
+                  },
+                  {
+                      "nombre":  "Invalido: movimientos_insert ausente sin 20261002000008 registrada -\u003e DETENIDO (estado desconocido)",
+                      "ok":  true,
+                      "detalle":  {
+                                      "error":  "DETENIDO: Falta public.movimientos_stock.movimientos_insert pero 20261002000008 (que la elimina) no esta registrada; estado desconocido."
+                                  }
+                  },
+                  {
+                      "nombre":  "Invalido: una politica movimientos_insert en otra tabla (public.ventas) -\u003e DETENIDO (fuera de lugar)",
+                      "ok":  true,
+                      "detalle":  {
+                                      "error":  "DETENIDO: Hay politicas con el nombre esperado en otra tabla o esquema: -- POLITICA FUERA DE LUGAR public.ventas.movimientos_insert"
+                                  }
+                  },
+                  {
+                      "nombre":  "Invalido: ventas_insert ausente -\u003e DETENIDO",
+                      "ok":  true,
+                      "detalle":  {
+                                      "error":  "DETENIDO: Falta public.ventas.ventas_insert: ninguna migracion la elimina; estado desconocido."
+                                  }
+                  }
+              ]
+}

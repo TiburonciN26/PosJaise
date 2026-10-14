@@ -1,0 +1,20 @@
+const fs=require('node:fs'),path=require('node:path');
+const G=require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs');
+const src=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-interfaz-r2-preview.cjs','utf8');
+const a=src.indexOf('      if (!limpio) {');
+const b=src.indexOf('\n    } catch (e)',a);
+if(a<0||b<0)throw new Error('Bloque no encontrado');
+const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+const execute=new AsyncFunction('limpio','idGaleria','snapFinal','G','WORKER','ALIAS','tokenAdmin','TITULO_GALERIA','seguro','rest','console',src.slice(a,b));
+(async()=>{
+  const uuid='11111111-2222-3333-4444-555555555555';
+  const row={id:'fila-propia',titulo:'QA propio',antes_url:`${G.PUBLICO_APROBADO}/fotos-galeria/${uuid}/g.webp`,despues_url:null};
+  const requests=[],messages=[];
+  let removed=false;
+  await execute(false,row.id,{galeriaWeb:[row]},G,G.WORKER_APROBADO,G.ALIAS_APROBADO,'valor-ficticio',row.titulo,
+    async(_url,options)=>{requests.push({tipo:'Worker',metodo:options.method,estado:200});removed=true;return{status:200};},
+    async(_url,options)=>{requests.push({tipo:'BD',metodo:options.method,estado:403});return{estado:403,datos:{message:'rechazo-ficticio'}};},
+    {log:v=>messages.push(v)});
+  const result={fecha:new Date().toISOString(),aislado:true,nota:'Bloque de emergencia original; REST y Worker sustituidos, ningún DELETE real.',peticiones:requests,filaPermanece:true,objetoEliminado:removed,filaConReferenciaRota:removed,mensajes:messages};
+  fs.writeFileSync(path.join(__dirname,'limpieza-rechazada.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+})();

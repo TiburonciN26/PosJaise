@@ -1,0 +1,22 @@
+[
+  {
+    "Archivo": "scripts/migracion-medios/inventario.sql",
+    "SHA256": "b269131438d89092b4ccfc7044847744b9e23b949b9acb3709f4206c9b822f99"
+  },
+  {
+    "Archivo": "scripts/migracion-medios/lib.mjs",
+    "SHA256": "4839e27c8a9b45451859ae1f273ef67c6db8b012ab7a54347c9ef14bc58e436d"
+  },
+  {
+    "Archivo": "scripts/migracion-medios/medios-migracion.mjs",
+    "SHA256": "fff09c3d2408f506e5f001a9e98f5ad517dc0ac1bac85a52d282e2aaed14ee30"
+  },
+  {
+    "Archivo": "scripts/migracion-medios/probar-lib.mjs",
+    "SHA256": "1c1726201f90fa277193de04df22dab36b4e8117fa7b702ee6f69d00e9bfd18f"
+  },
+  {
+    "Archivo": "scripts/migracion-medios/simular-fase9.mjs",
+    "SHA256": "969c9237a9e1f2a682a7315eced898fb9675b3adc4e094f180dbf3db4d4a5123"
+  }
+]

@@ -1,0 +1,18 @@
+// Apertura de una página del portal NO precargada (Términos) con latencia emulada: V1 (modulepreload de dependencias) vs V2.
+const { spawn } = require('child_process'); const { chromium } = require('C:/WedJaiseReact/node_modules/playwright')
+const [dist, puerto, etiqueta] = process.argv.slice(2)
+const srv = spawn(process.execPath, ['C:/WedJaiseReact/scripts/servir-dist-base.cjs', dist, puerto, '/'], { stdio: 'ignore' })
+;(async () => {
+  await new Promise((r) => setTimeout(r, 800)); const b = await chromium.launch(); const tiempos = []
+  for (let i = 0; i < 5; i++) {
+    const ctx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } }); const p = await ctx.newPage()
+    const cdp = await ctx.newCDPSession(p); await cdp.send('Network.enable')
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 1.25e6, uploadThroughput: 4e5 })
+    await p.goto(`http://127.0.0.1:${puerto}/inicio`, { waitUntil: 'load' }); await p.waitForSelector('h1'); await p.waitForTimeout(9000)
+    const enlace = p.locator('a[href="/terminos-y-condiciones"]').first(); await enlace.scrollIntoViewIfNeeded()
+    const t0 = Date.now(); await enlace.click()
+    await p.waitForFunction(() => /condiciones/i.test(document.querySelector('main h1, main h2')?.innerText ?? ''), null, { timeout: 30000 })
+    tiempos.push(Date.now() - t0); await ctx.close()
+  }
+  tiempos.sort((x, y) => x - y); console.log(etiqueta, 'ms', tiempos.join(' '), 'mediana', tiempos[2]); await b.close(); srv.kill()
+})()

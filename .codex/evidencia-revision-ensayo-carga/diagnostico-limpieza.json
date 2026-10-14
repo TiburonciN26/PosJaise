@@ -1,0 +1,163 @@
+{
+  "fecha": "2026-10-11T00:02:08.733Z",
+  "sinRed": true,
+  "alcance": "Bloques reales de subida y finally del CLI + helper real de limpieza; inventario/Worker en memoria. UUID previstos fijados solo en el doble para ejercitar conflicto; no CLI completo.",
+  "hallazgo": "EC-02: ante PUT 409 se borra un objeto que ya estaba en el inventario inicial",
+  "reproducido": true,
+  "resultados": [
+    {
+      "modo": "sano",
+      "baseInicial": [],
+      "clavesFinales": [],
+      "objetoInicialConservado": null,
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m"
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/g"
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/m"
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/g"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/v1/medios/fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        }
+      ],
+      "limpieza": {
+        "confirmada": true,
+        "necesaria": true,
+        "estadoBorrado": 200,
+        "estadosBorrado": [
+          200,
+          200
+        ],
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      },
+      "estadoFinalConfirmado": true,
+      "error": null
+    },
+    {
+      "modo": "primer-PUT-confirmado-respuesta-perdida",
+      "baseInicial": [],
+      "clavesFinales": [],
+      "objetoInicialConservado": null,
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        }
+      ],
+      "limpieza": {
+        "confirmada": true,
+        "necesaria": true,
+        "estadoBorrado": 200,
+        "estadosBorrado": [
+          200
+        ],
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      },
+      "estadoFinalConfirmado": true,
+      "error": "respuesta perdida ficticia"
+    },
+    {
+      "modo": "409-objeto-inicial",
+      "baseInicial": [
+        "fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m.webp"
+      ],
+      "clavesFinales": [],
+      "objetoInicialConservado": false,
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        }
+      ],
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": true,
+        "estadoBorrado": 200,
+        "estadosBorrado": [
+          200
+        ],
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": []
+      },
+      "estadoFinalConfirmado": false,
+      "error": "PUT A/m → 409"
+    },
+    {
+      "modo": "inventario-final-caido",
+      "baseInicial": [],
+      "clavesFinales": [],
+      "objetoInicialConservado": null,
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m"
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/g"
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/m"
+        },
+        {
+          "metodo": "PUT",
+          "ruta": "/v1/medios/fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/g"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/v1/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        },
+        {
+          "metodo": "DELETE",
+          "ruta": "/v1/medios/fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+        }
+      ],
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": true,
+        "estadoBorrado": 200,
+        "estadosBorrado": [
+          200,
+          200
+        ],
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": [
+          "lectura del inventario: inventario caído ficticio"
+        ]
+      },
+      "estadoFinalConfirmado": false,
+      "error": null
+    }
+  ]
+}

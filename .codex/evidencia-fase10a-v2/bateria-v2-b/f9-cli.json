@@ -1,0 +1,259 @@
+{
+ "fecha": "2026-10-13T07:16:57.523Z",
+ "alcance": "CLI y harness reales contra un servidor HTTP ficticio en memoria; sin red externa, sin Supabase, sin R2 y sin credenciales reales",
+ "total": 18,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "F9-02 · Manifiesto de A con entorno B (mismo id y valor): actualizar/revertir/copiar/verificar abortan antes de login, PUT o PATCH",
+   "ok": true,
+   "detalle": {
+    "actualizar": "medios-migracion: Manifiesto de otro ambiente: el manifiesto es de http://127.0.0.1:1, no de http://127.0.0.1:57687. No se autentica ni se escribe nada.",
+    "revertir": "medios-migracion: Manifiesto de otro ambiente: el manifiesto es de http://127.0.0.1:1, no de http://127.0.0.1:57687. No se autentica ni se escribe nada.",
+    "copiar": "medios-migracion: Manifiesto de otro ambiente: el manifiesto es de http://127.0.0.1:1, no de http://127.0.0.1:57687. No se autentica ni se escribe nada.",
+    "verificar": "medios-migracion: Manifiesto de otro ambiente: el manifiesto es de http://127.0.0.1:1, no de http://127.0.0.1:57687. No se autentica ni se escribe nada.",
+    "v1": "medios-migracion: Manifiesto de otro ambiente: manifiesto versión 1: esta herramienta exige la 2 (vuelva a planificar); el manifiesto es de 127.0.0.1:57687, no de http://127.0.0.1:57687. No se autentica ni se escribe nada.",
+    "origen": "medios-migracion: Manifiesto de otro ambiente: ad081420-22a3-54e1-bc21-3375e2087c28: la URL del original no es la de http://127.0.0.1:57687. No se autentica ni se escribe nada.",
+    "worker": "medios-migracion: Manifiesto de otro ambiente: el manifiesto ya se copió por el Worker http://127.0.0.1:2, no por http://127.0.0.1:57687. No se autentica ni se escribe nada."
+   }
+  },
+  {
+   "nombre": "F9-02 · Control: el manifiesto del MISMO entorno conserva el flujo sano (actualizar → verificar → revertir)",
+   "ok": true,
+   "detalle": {
+    "actualizar": 1,
+    "verificar": "completa",
+    "revertir": 1
+   }
+  },
+  {
+   "nombre": "F9-03 · Cambio confirmado + 503: la lectura de reconciliación lo da por hecho; revertir restaura el original",
+   "ok": true,
+   "detalle": {
+    "nota": "confirmado por lectura tras cambio HTTP 503: respuesta perdida después del commit (ficticia)"
+   }
+  },
+  {
+   "nombre": "F9-03 · Cambio confirmado + 503 + lectura caída: la duda queda abierta (exit 3) y revertir nunca da éxito con la fila migrada",
+   "ok": true,
+   "detalle": {
+    "primerIntento": {
+     "modo": "revertir",
+     "simulado": false,
+     "reconciliadas": 0,
+     "hechas": 0,
+     "conflictos": 0,
+     "rechazadas": 0,
+     "inciertas": 1,
+     "noAplicadas": 0,
+     "candidatas": 0,
+     "enEsteLote": 0,
+     "operacionesAbiertas": 1,
+     "restantes": 0,
+     "completo": false,
+     "resumen": {
+      "entradas": 1,
+      "porEstado": {
+       "verificada": 1
+      },
+      "referencias": 1,
+      "refsPorEstado": {
+       "pendiente": 1
+      },
+      "operacionesAbiertas": 1,
+      "bytesOrigen": 31,
+      "bytesVariantes": 50
+     }
+    },
+    "final": {
+     "reconciliadas": 1,
+     "hechas": 1
+    }
+   }
+  },
+  {
+   "nombre": "F9-03 · Interrupción tras el commit y antes de guardar el resultado: actualizar y revertir la reconcilian sin nuevo UPDATE de más",
+   "ok": true,
+   "detalle": {
+    "actualizar": 1,
+    "revertir": {
+     "modo": "revertir",
+     "simulado": false,
+     "reconciliadas": 1,
+     "hechas": 1,
+     "conflictos": 0,
+     "rechazadas": 0,
+     "inciertas": 0,
+     "noAplicadas": 0,
+     "candidatas": 1,
+     "enEsteLote": 1,
+     "operacionesAbiertas": 0,
+     "restantes": 0,
+     "completo": true,
+     "resumen": {
+      "entradas": 1,
+      "porEstado": {
+       "verificada": 1
+      },
+      "referencias": 1,
+      "refsPorEstado": {
+       "revertida": 1
+      },
+      "operacionesAbiertas": 0,
+      "bytesOrigen": 31,
+      "bytesVariantes": 50
+     }
+    }
+   }
+  },
+  {
+   "nombre": "F9-03 · Sin commit: 503 deja la duda (exit 3) aunque la lectura vea el valor anterior; la barrera, vencido el plazo, la cierra y se aplica",
+   "ok": true,
+   "detalle": {
+    "primero": 1,
+    "segundo": 1
+   }
+  },
+  {
+   "nombre": "F9-03 · Edición ajena: con operación abierta o con respuesta incierta, queda en conflicto (tras la barrera) y no se pisa",
+   "ok": true,
+   "detalle": {
+    "revertir": {
+     "en": "2026-10-13T07:16:39.835Z",
+     "motivo": "conflicto",
+     "detalle": "barrera: la fila tiene otro valor"
+    },
+    "actualizar": {
+     "en": "2026-10-13T07:16:41.261Z",
+     "motivo": "conflicto",
+     "detalle": "barrera: la fila tiene otro valor"
+    }
+   }
+  },
+  {
+   "nombre": "F9-03 · Rechazos definitivos (403 de PostgREST, RLS con 0 filas) y corte de red tras el commit",
+   "ok": true,
+   "detalle": {
+    "403": "cambio HTTP 403: permiso denegado (ficticio)",
+    "rls": "el cambio no afectó ninguna fila",
+    "corte": "confirmado por lectura tras cambio HTTP sin respuesta: TypeError: fetch failed"
+   }
+  },
+  {
+   "nombre": "F9-03b · 503 con el cambio EN VUELO y lectura del valor anterior; revertir ANTES del commit; el commit llega DESPUÉS de la reversión",
+   "ok": true,
+   "detalle": {
+    "esperaReversionMs": 2719,
+    "liberacionTardia": "vencida",
+    "barreras": 2
+   }
+  },
+  {
+   "nombre": "F9-03b · Commit temporizado a los 1.200 ms (antes del plazo) tras una lectura previa: la barrera lo ve y la reversión lo revierte, sin cambio duplicado",
+   "ok": true,
+   "detalle": {
+    "reconciliadas": 1,
+    "cambios": 2
+   }
+  },
+  {
+   "nombre": "F9-03b · Sin evidencia suficiente la operación sigue abierta con su id: plazo aún abierto, barrera caída y operación sin plazo → exit 3",
+   "ok": true,
+   "detalle": {
+    "plazoAbierto": 1,
+    "barreraCaida": 1,
+    "sinPlazo": "operación sin plazo (versión anterior de la herramienta): ninguna lectura prueba que ya no pueda aplicarse; requiere revisión manual"
+   }
+  },
+  {
+   "nombre": "F9-03b · Control: el commit concluye antes de reconciliar → reversión normal, sin barrera ni cambio duplicado",
+   "ok": true,
+   "detalle": {
+    "cambios": 2
+   }
+  },
+  {
+   "nombre": "F9-04 · verificar: sin --lectura falla cerrado; m/g ausentes, una sola variante, tipo o lectura caída nunca dan ok",
+   "ok": true,
+   "detalle": {
+    "sinLectura": "medios-migracion: hay 1 entradas con copia en R2: verificar exige --lectura=<base de lectura aprobada> (no se emite una verificación sin R2)",
+    "una": [
+     {
+      "tipo": "r2-no-coincide",
+      "id": "ad081420-22a3-54e1-bc21-3375e2087c28",
+      "variante": "g",
+      "estado": 404
+     }
+    ],
+    "completa": "completa"
+   }
+  },
+  {
+   "nombre": "F9-04 · Manifiesto vacío: caso explícito (cobertura «vacia»), sin inventar objetos ni autenticar",
+   "ok": true,
+   "detalle": {
+    "generado": "2026-10-13T07:16:53.545Z",
+    "entradas": 0,
+    "originalesEsperados": 0,
+    "originalesCoinciden": 0,
+    "r2Esperados": 0,
+    "r2Coinciden": 0,
+    "refsEsperadas": 0,
+    "refsComprobadas": 0,
+    "operacionesAbiertas": 0,
+    "cobertura": "vacia",
+    "problemas": [],
+    "ok": true,
+    "aviso": "manifiesto sin entradas"
+   }
+  },
+  {
+   "nombre": "F9-05 · inventariar: URLs firmadas/autenticadas/públicas a buckets privados (propio, ajeno, proxy) nunca salen al informe",
+   "ok": true,
+   "detalle": {
+    "sensibles": 108,
+    "privadas": 108,
+    "publicadas": 2
+   }
+  },
+  {
+   "nombre": "F9-06 · Tres hosts distintos aprobados (Supabase, Worker, lectura): copiar, actualizar y verificar llegan al cableado correcto",
+   "ok": true,
+   "detalle": {
+    "pedidos": 15,
+    "put": 2
+   }
+  },
+  {
+   "nombre": "F9-06 · Host sin permiso, intercambio de roles, producción sin su permiso, opción repetida y --permitir-remoto: rechazo antes del login",
+   "ok": true,
+   "detalle": {
+    "falta permiso de lectura": "medios-migracion: Lectura de medios: pages.qa.invalid es remoto: exige --permitir-lectura=pages.qa.invalid (y autorización explícita del usuario)",
+    "roles intercambiados": "medios-migracion: Worker de medios: worker.qa.invalid es remoto: exige --permitir-worker=worker.qa.invalid (y autorización explícita del usuario)",
+    "Supabase con permiso de Worker": "medios-migracion: Worker de medios: worker.qa.invalid es remoto: exige --permitir-worker=worker.qa.invalid (y autorización explícita del usuario)",
+    "producción sin --permitir-produccion": "medios-migracion: Supabase: Supabase de PRODUCCIÓN: exige además --permitir-produccion",
+    "opción repetida": "medios-migracion: --permitir-worker repetida: cada opción se indica una sola vez",
+    "permiso general retirado": "medios-migracion: --permitir-remoto ya no existe: use --permitir-supabase, --permitir-worker y --permitir-lectura con el host exacto de cada destino"
+   }
+  },
+  {
+   "nombre": "F9-01 · Harness real: raíz, proyecto, .codex, src, otra capitalización, ajena en tmp y junction a src → exit 2 con CERO efectos",
+   "ok": true,
+   "detalle": {
+    "raíz de unidad": "simular-fase9: --trabajo rechazado: no puede ser la raíz de una unidad",
+    "proyecto": "simular-fase9: --trabajo rechazado: no puede ser el proyecto ni un ancestro suyo",
+    "proyecto absoluto": "simular-fase9: --trabajo rechazado: no puede ser el proyecto ni un ancestro suyo",
+    ".codex": "simular-fase9: --trabajo rechazado: no puede estar dentro del proyecto",
+    "src": "simular-fase9: --trabajo rechazado: no puede estar dentro del proyecto",
+    "src con otra capitalización": "simular-fase9: --trabajo rechazado: no puede estar dentro del proyecto",
+    "ajena existente en tmp": "simular-fase9: --trabajo rechazado: existe y no es una carpeta propia de la simulación (falta la marca de propiedad): no se toca",
+    "junction en tmp hacia src": "simular-fase9: --trabajo rechazado: no puede estar dentro del proyecto",
+    "propia": {
+     "aceptada": true,
+     "primerEfectoBloqueado": "child_process.execFileSync"
+    },
+    "junctionProbada": true
+   }
+  }
+ ]
+}

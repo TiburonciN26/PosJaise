@@ -1,0 +1,93 @@
+{
+  "fecha": "2026-10-10",
+  "metodo": "Funciones reales con dobles en memoria; sin red ni datos externos; no se modifica codigo",
+  "suitesRepetidas": {
+    "entrega": {
+      "casos": 30,
+      "fallos": 0
+    },
+    "urls": {
+      "casos": 14,
+      "fallos": 0
+    },
+    "guardas": {
+      "casos": 42,
+      "fallos": 0
+    },
+    "lintDirigido": {
+      "archivos": 10,
+      "exitCode": 0
+    }
+  },
+  "resultados": [
+    {
+      "caso": "get resuelve, arrayBuffer rechaza",
+      "method": "GET",
+      "promesaRechazada": true,
+      "error": "fallo ficticio leyendo cuerpo",
+      "lecturasCuerpo": 1
+    },
+    {
+      "caso": "get resuelve, arrayBuffer rechaza",
+      "method": "HEAD",
+      "promesaRechazada": true,
+      "error": "fallo ficticio leyendo cuerpo",
+      "lecturasCuerpo": 1
+    },
+    {
+      "caso": "HEAD sano sin cache",
+      "status": 200,
+      "bytesLeidosR2Simulado": 131072,
+      "lecturasCuerpo": 1,
+      "bytesRespuesta": 0
+    },
+    {
+      "caso": "sin binding",
+      "method": "HEAD",
+      "status": 404,
+      "bytesResponseEnInvocacionDirecta": 13,
+      "cabeceras": {
+        "cache-control": "no-store",
+        "content-type": "text/plain; charset=utf-8",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex"
+      }
+    },
+    {
+      "caso": "objeto ausente",
+      "method": "HEAD",
+      "status": 404,
+      "bytesResponseEnInvocacionDirecta": 13,
+      "cabeceras": {
+        "cache-control": "no-store",
+        "content-type": "text/plain; charset=utf-8",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex"
+      }
+    },
+    {
+      "caso": "get rechaza",
+      "method": "HEAD",
+      "status": 503,
+      "bytesResponseEnInvocacionDirecta": 13,
+      "cabeceras": {
+        "cache-control": "no-store",
+        "content-type": "text/plain; charset=utf-8",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex"
+      }
+    }
+  ],
+  "sha256Fuentes": {
+    "cloudflare/medios-pages/entrega.js": "8351e6005a9c79267b6c6539f3b121958b108a06b2e2be907c16caf614301903",
+    "cloudflare/medios-pages/test/probar-entrega.mjs": "90f5f8387e73d0fd4bbe422759a4bef3b6937bc75172e16b4ba71f8ed91e4d79",
+    "functions/medios.js": "960af9ad8c67cdcd1a934a7ae1463e85a52d913131fd61166ed2ef0e3fec4eff",
+    "functions/medios/[[ruta]].js": "64fe96159bcd4203c6a37cbd16d556c1f006b745129983568a208f6a94c98d87",
+    "src/lib/urlsMedios.js": "67c12680eeb9b48b5196f1de99ef6c7822f4311a1b8478fec12fe83d0aa0f5df",
+    "src/lib/medios.js": "407bac3710025a9c23eea20cb250f5d1a8dcfd13fed35bfcdf8e510444057bca",
+    "src/lib/imagenes.js": "04dacae6aeb3ef1e6349d3604ae16034c2c9461e710721c3db0ea332be84a916",
+    "scripts/verificar-urls-medios.mjs": "3ee7fe8892ac9d65040e8fabc00734bb345a0dfbbaf1aaabb5f2fc94cce3238a",
+    "scripts/build-cloudflare.mjs": "7e955503670c1d26bbf15d60e4bf6d861854e8fb0bafd94418efc81f0ccf07ee",
+    "vite.config.js": "fed74fb302193dca7648a102799e794cf0c377b23088d3b985a823b7eeaad793"
+  }
+}

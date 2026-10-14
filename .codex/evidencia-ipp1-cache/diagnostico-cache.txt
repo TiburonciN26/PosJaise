@@ -1,0 +1,62 @@
+const fs = require('node:fs'); const vm = require('node:vm'); const path = require('node:path'); const assert = require('node:assert/strict'); const crypto = require('node:crypto');
+const ROOT = 'C:/WedJaiseReact';
+const G = require(ROOT + '/scripts/lib/guardas-interfaz-r2.cjs');
+const original = fs.readFileSync(ROOT + '/scripts/verificar-medios-pages-cache.cjs', 'utf8');
+// Única sustitución EN MEMORIA: clasificador de claves. Todos los datos/auth/HTTP/FS/Chromium y reloj son dobles ficticios.
+const source = original.replace("const { clasificarClave } = await import('./lib/entornos-supabase.mjs')", 'const clasificarClave = () => ({ ok: true })');
+assert.notEqual(source, original);
+const B = G.ALIAS_APROBADO + '/medios';
+const bundle = `function a(){return{proveedor:\`r2\`,apiUrl:t(\`${G.WORKER_APROBADO}\`),publicUrl:t(\`${B}\`)}}var b=()=>q(a().publicUrl,\`${G.PUBLICO_APROBADO}\`);`;
+async function ejecutar(falloInventario) {
+  const bytes = Buffer.alloc(160, 42); const objetos = new Set(); const cache = new Map(); const capturas = [];
+  let clock = 1000000, inv = 0, logins = 0, puts = 0, deletes = 0, salida;
+  const p = { argv: ['node','verificar-medios-pages-cache.cjs','--build-id=b36e7495'], exitCode: undefined };
+  const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers:{'content-type':'application/json'} });
+  const err = (s) => new Response('error', {status:s,headers:{'cache-control':'no-store','x-content-type-options':'nosniff','x-robots-tag':'noindex',...(s===405?{allow:'GET, HEAD'}:{})}});
+  async function fetchFake(raw, init = {}) {
+    const u = new URL(raw), method = init.method || 'GET';
+    if (u.pathname === '/auth/v1/token') { logins++; return json({access_token:'TOKEN-FICTICIO'}); }
+    if (u.hostname === new URL(G.ALIAS_APROBADO).hostname) {
+      if (u.pathname === '/' || u.pathname === '/medios-extra') return new Response('<meta name="build-id" content="b36e7495">');
+      if (u.pathname === '/sw.js') return new Response('precacheAndRoute([{url:"assets/index.js",revision:null}])');
+      if (u.pathname === '/assets/index.js') return new Response(bundle);
+      if (method === 'POST') return err(405);
+      const m = /^\/medios\/(fotos-galeria\/[0-9a-f-]{36}\/[mg]\.webp)$/.exec(u.pathname);
+      if (!m) return err(404);
+      const k = m[1], saved = cache.get(k); const hit = saved && clock - saved < 300000;
+      if (!hit && !objetos.has(k)) return err(404);
+      const hs = {'content-type':'image/webp','cache-control':'public, max-age=300','x-content-type-options':'nosniff','x-robots-tag':'noindex','x-medios-cache':hit?'HIT':'MISS',etag:'"ETAG-FICTICIO"'};
+      if (method === 'GET' && !hit) cache.set(k,clock);
+      const cond = init.headers?.['If-None-Match'];
+      if (cond === hs.etag || cond === '*') return new Response(null,{status:304,headers:hs});
+      return new Response(method==='HEAD'?null:bytes,{status:200,headers:hs});
+    }
+    if (u.pathname.startsWith('/v1/inventario/')) {
+      inv++; if (inv === falloInventario) throw new Error('FALLO FICTICIO inventario final');
+      return json({objetos:[...objetos].map(clave=>({clave}))});
+    }
+    if (method==='PUT') {puts++;objetos.add(u.pathname.replace('/v1/medios/','')+'.webp');return json({},201);}
+    if (method==='DELETE') {deletes++;const prefix=u.pathname.replace('/v1/medios/','')+'/';for(const k of objetos)if(k.startsWith(prefix))objetos.delete(k);return json({});}
+    throw new Error('URL inesperada en doble');
+  }
+  const env = `VITE_SUPABASE_URL=https://${G.REF_STAGING}.supabase.co\nVITE_SUPABASE_ANON_KEY=FICTICIA\nQA_ADMIN_EMAIL=admin@staging.test\nQA_CLIENTE_EMAIL=cliente@staging.test\nQA_ADMIN_PASSWORD=FICTICIA`;
+  const fakeFs = {readFileSync:()=>env,mkdirSync:()=>{},writeFileSync:(_,text)=>{salida=JSON.parse(text);}};
+  const chrome = {launch:async()=>({newPage:async()=>({evaluate:async()=>bytes.toString('base64')}),close:async()=>{}})};
+  const D = class extends Date {static now(){return clock;}};
+  const context = {require:n=>n==='node:fs'?fakeFs:n==='playwright'?{chromium:chrome}:n==='./lib/guardas-interfaz-r2.cjs'?G:require(n),__dirname:ROOT+'/scripts',Set,Buffer,URL,Response,performance,process:p,console:{log:t=>capturas.push(t)},Date:D,fetch:fetchFake,setTimeout:(f,ms)=>{clock+=ms;queueMicrotask(f);}};
+  vm.runInNewContext(source,context,{filename:'verificar-medios-pages-cache.cjs'});
+  for(let i=0;i<2000 && !salida;i++)await new Promise(r=>setImmediate(r));
+  assert.ok(salida,'el script debe terminar');
+  return {falloInventario,exitCode:p.exitCode,completa:salida.completa,error:salida.error,errorLimpieza:salida.errorLimpieza||null,resumen:salida.resumen,casosFallidos:salida.casos.filter(c=>!c.ok),expiracionProbada:salida.expiracionProbada,loginsSimulados:logins,putsSimulados:puts,deletesSimulados:deletes,inventarios:inv,objetosSimuladosRestantes:objetos.size,ultimosMensajes:capturas.slice(-3)};
+}
+(async()=>{
+  const casos=[];
+  casos.push(await ejecutar(-1));
+  casos.push(await ejecutar(4)); // falla el primer inventario del finally, tras acabar todas las comprobaciones
+  casos.push(await ejecutar(5)); // falla la comprobación de igualdad final, tras inventario sano del finally
+  assert.equal(casos[0].exitCode,0); assert.equal(casos[0].resumen.fallos,0);
+  for(const r of casos.slice(1)){assert.equal(r.exitCode,0);assert.equal(r.resumen.fallos,0);assert.ok(r.errorLimpieza);}
+  const informe={tipo:'diagnóstico independiente SIN red, SIN login real, SIN objetos ni archivos del proyecto modificados',sha256Script:crypto.createHash('sha256').update(original).digest('hex'),casos};
+  fs.writeFileSync(path.join(__dirname,'diagnostico-cache.json'),JSON.stringify(informe,null,2),{flag:'wx'});
+  console.log(JSON.stringify(informe,null,2));
+})().catch(e=>{console.error(e);process.exitCode=1;});

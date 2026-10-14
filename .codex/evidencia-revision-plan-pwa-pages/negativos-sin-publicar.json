@@ -1,0 +1,165 @@
+{
+  "nota": "Se ejecuta el script actual con validadores reales, imports adaptados en memoria, env/HTTP/FS/Playwright/publicación ficticios. Sin red, navegador, credenciales reales ni Git. Solo seis casos negativos; no demuestra la transición B.",
+  "sha256Script": "947c7b1864609e6f5571e664a90d2d64c36c351ba8ee15d8315967acbf029859",
+  "resultados": [
+    {
+      "opciones": {
+        "entrega": "r2dev"
+      },
+      "exitCode": 1,
+      "browserCalls": 0,
+      "publishCalls": 0,
+      "publicadoB": false,
+      "requests": [
+        {
+          "ruta": "/",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/sw.js",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/assets/index.js",
+          "metodo": "GET"
+        }
+      ],
+      "pasosFallidos": [
+        {
+          "n": "preflight: A sirve la marca 9bb13306 con la entrega «r2dev»",
+          "ok": false,
+          "d": "el bundle servido no tiene la entrega de medios \"r2dev\" (publicUrl observada: https://feat-cloudflare-pages.pos-jaise.pages.dev/medios; bases extra: https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+        }
+      ]
+    },
+    {
+      "opciones": {
+        "entrega": "otra"
+      },
+      "exitCode": 1,
+      "browserCalls": 0,
+      "publishCalls": 0,
+      "publicadoB": false,
+      "requests": [],
+      "pasosFallidos": [
+        {
+          "n": "preflight: --entrega válida (pages|r2dev)",
+          "ok": false,
+          "d": "otra"
+        }
+      ]
+    },
+    {
+      "opciones": {
+        "marca": "12345678"
+      },
+      "exitCode": 1,
+      "browserCalls": 0,
+      "publishCalls": 0,
+      "publicadoB": false,
+      "requests": [
+        {
+          "ruta": "/",
+          "metodo": "GET"
+        }
+      ],
+      "pasosFallidos": [
+        {
+          "n": "preflight: A sirve la marca 12345678 con la entrega «pages»",
+          "ok": false,
+          "d": "el artefacto del alias (9bb13306) no es el esperado (12345678); no se autentica ni se escribe nada"
+        }
+      ]
+    },
+    {
+      "opciones": {
+        "proveedor": "supabase"
+      },
+      "exitCode": 1,
+      "browserCalls": 0,
+      "publishCalls": 0,
+      "publicadoB": false,
+      "requests": [
+        {
+          "ruta": "/",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/sw.js",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/assets/index.js",
+          "metodo": "GET"
+        }
+      ],
+      "pasosFallidos": [
+        {
+          "n": "preflight: A sirve la marca 9bb13306 con la entrega «pages»",
+          "ok": false,
+          "d": "el bundle servido no tiene la entrega de medios \"pages\" (publicUrl observada: https://feat-cloudflare-pages.pos-jaise.pages.dev/medios; bases extra: https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+        }
+      ]
+    },
+    {
+      "opciones": {
+        "worker": "https://otro.workers.dev"
+      },
+      "exitCode": 1,
+      "browserCalls": 0,
+      "publishCalls": 0,
+      "publicadoB": false,
+      "requests": [
+        {
+          "ruta": "/",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/sw.js",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/assets/index.js",
+          "metodo": "GET"
+        }
+      ],
+      "pasosFallidos": [
+        {
+          "n": "preflight: A sirve la marca 9bb13306 con la entrega «pages»",
+          "ok": false,
+          "d": "el bundle servido no tiene la entrega de medios \"pages\" (publicUrl observada: https://feat-cloudflare-pages.pos-jaise.pages.dev/medios; bases extra: https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+        }
+      ]
+    },
+    {
+      "opciones": {
+        "invertido": true
+      },
+      "exitCode": 1,
+      "browserCalls": 0,
+      "publishCalls": 0,
+      "publicadoB": false,
+      "requests": [
+        {
+          "ruta": "/",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/sw.js",
+          "metodo": "GET"
+        },
+        {
+          "ruta": "/assets/index.js",
+          "metodo": "GET"
+        }
+      ],
+      "pasosFallidos": [
+        {
+          "n": "preflight: A sirve la marca 9bb13306 con la entrega «pages»",
+          "ok": false,
+          "d": "el bundle servido no tiene la entrega de medios \"pages\" (publicUrl observada: https://pub-b248edba3e19402382b557a35b33c674.r2.dev; bases extra: https://feat-cloudflare-pages.pos-jaise.pages.dev/medios"
+        }
+      ]
+    }
+  ]
+}

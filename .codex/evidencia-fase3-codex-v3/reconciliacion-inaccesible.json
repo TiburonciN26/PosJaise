@@ -1,0 +1,68 @@
+{
+  "fecha": "2026-10-10T01:33:27.451Z",
+  "entorno": "Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión",
+  "total": 4,
+  "fallos": 2,
+  "casos": [
+    {
+      "nombre": "F3-07 producto: respuesta de INSERT perdida con commit y GET inaccesible en el reintento 23505 deben conservar fotos",
+      "first": {
+        "rows": 1,
+        "imagesRetained": true,
+        "events": 0,
+        "pendingMessage": true
+      },
+      "second": {
+        "rows": 1,
+        "imagesRetained": false,
+        "events": 0,
+        "text": "o sanitario...)\n+ Agregar especificación\nIngredientes clave\n+ Agregar ingrediente\nLibre de\n+ Agregar\nDestacar en la fila \"Destacados\" (Web)\nMarcar como \"Nuevo\" (Web)\nMostrar en \"Novedades y lo más vendido\" (inicio de Productos, Web)\n\nEl producto se guardó, pero la galería quedó incompleta: No se pudo guardar una foto de la galería. Pulsa «Guardar cambios» para reintentar.\n\nCancelar\nGuardar cambios"
+      },
+      "third": {
+        "rows": 1,
+        "imagesRetained": false,
+        "events": 1
+      },
+      "referenceGroups": [
+        "fotos-productos/ccc54090-1954-4139-8146-84ad8e1d7301"
+      ],
+      "ok": false
+    },
+    {
+      "nombre": "F3-07 galeria: respuesta de INSERT perdida con commit y GET inaccesible en el reintento 23505 deben conservar fotos",
+      "first": {
+        "rows": 1,
+        "imagesRetained": true,
+        "events": 0,
+        "pendingMessage": true
+      },
+      "second": {
+        "rows": 1,
+        "imagesRetained": false,
+        "events": 0,
+        "text": "Nueva foto de galería\nFoto de antes *\nCambiar foto\nFoto de después *\nCambiar foto\nTítulo\nOrden\n\nLas fotos con número más chico van primero.\n\nVisible en la Web\n\nNo se pudo guardar. Intenta de nuevo.\n\nCancelar\nGuardar"
+      },
+      "third": {
+        "rows": 1,
+        "imagesRetained": false,
+        "events": 0
+      },
+      "referenceGroups": [
+        "fotos-galeria/3809d377-a6ab-4102-9827-0fd593000677",
+        "fotos-galeria/ab24e5ab-77c3-42da-9188-23fba642feca"
+      ],
+      "ok": false
+    },
+    {
+      "nombre": "aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "noSimuladas": [],
+      "supabaseNoAuth": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página en todo el recorrido",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

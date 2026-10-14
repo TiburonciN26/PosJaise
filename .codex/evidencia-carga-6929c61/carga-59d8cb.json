@@ -1,0 +1,636 @@
+{
+  "fecha": "2026-10-11T03:24:25.057Z",
+  "buildId": "6929c619",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "idEjecucion": "59d8cb",
+  "grupos": {
+    "A": "e48955b8-2837-4a30-903b-1d67a311bcb1",
+    "B": "bffd54a1-14c7-4ebf-9e60-3638b9c2cdf3"
+  },
+  "nota": "Latencias del cliente; no CPU ni cuota. Retirada acreditada solo en los POP observados.",
+  "completa": true,
+  "estadoFinalConfirmado": true,
+  "error": null,
+  "casos": [
+    {
+      "nombre": "inventario inicial leído (lectura estricta)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "precondición: ninguno de los dos prefijos previstos existe en el inventario inicial",
+      "ok": true,
+      "detalle": {
+        "ocupados": []
+      }
+    },
+    {
+      "nombre": "subida A/m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida A/g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida B/m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida B/g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "el inventario muestra exactamente las 4 claves propias nuevas",
+      "ok": true,
+      "detalle": [
+        "fotos-galeria/bffd54a1-14c7-4ebf-9e60-3638b9c2cdf3/g.webp",
+        "fotos-galeria/bffd54a1-14c7-4ebf-9e60-3638b9c2cdf3/m.webp",
+        "fotos-galeria/e48955b8-2837-4a30-903b-1d67a311bcb1/g.webp",
+        "fotos-galeria/e48955b8-2837-4a30-903b-1d67a311bcb1/m.webp"
+      ]
+    },
+    {
+      "nombre": "ETag de referencia de A/m y A/g presentes",
+      "ok": true,
+      "detalle": {
+        "m": {
+          "etag": "\"afa89848690a3ad2eb6e738ee5df324a\""
+        },
+        "g": {
+          "etag": "\"79cc581c04c0552b3308996da5bbc654\""
+        }
+      }
+    },
+    {
+      "nombre": "carga completada sin parada (302 lecturas, máx. 10 simultáneas)",
+      "ok": true,
+      "detalle": {
+        "completa": true,
+        "porMuestra": [
+          {
+            "nivel": 1,
+            "muestra": 1,
+            "n": 10,
+            "p50": 301,
+            "p95": 332,
+            "p99": 332,
+            "max": 332,
+            "hit": 10,
+            "errores": 0
+          },
+          {
+            "nivel": 1,
+            "muestra": 2,
+            "n": 10,
+            "p50": 302,
+            "p95": 337,
+            "p99": 337,
+            "max": 337,
+            "hit": 10,
+            "errores": 0
+          },
+          {
+            "nivel": 1,
+            "muestra": 3,
+            "n": 10,
+            "p50": 298,
+            "p95": 318,
+            "p99": 318,
+            "max": 318,
+            "hit": 10,
+            "errores": 0
+          },
+          {
+            "nivel": 5,
+            "muestra": 1,
+            "n": 30,
+            "p50": 299,
+            "p95": 323,
+            "p99": 328,
+            "max": 328,
+            "hit": 30,
+            "errores": 0
+          },
+          {
+            "nivel": 5,
+            "muestra": 2,
+            "n": 30,
+            "p50": 303,
+            "p95": 329,
+            "p99": 1357,
+            "max": 1357,
+            "hit": 29,
+            "errores": 0
+          },
+          {
+            "nivel": 5,
+            "muestra": 3,
+            "n": 30,
+            "p50": 300,
+            "p95": 321,
+            "p99": 327,
+            "max": 327,
+            "hit": 30,
+            "errores": 0
+          },
+          {
+            "nivel": 10,
+            "muestra": 1,
+            "n": 60,
+            "p50": 299,
+            "p95": 325,
+            "p99": 335,
+            "max": 335,
+            "hit": 60,
+            "errores": 0
+          },
+          {
+            "nivel": 10,
+            "muestra": 2,
+            "n": 60,
+            "p50": 300,
+            "p95": 319,
+            "p99": 470,
+            "max": 470,
+            "hit": 60,
+            "errores": 0
+          },
+          {
+            "nivel": 10,
+            "muestra": 3,
+            "n": 60,
+            "p50": 299,
+            "p95": 323,
+            "p99": 341,
+            "max": 341,
+            "hit": 60,
+            "errores": 0
+          }
+        ],
+        "nota": "Los percentiles incluyen las respuestas con error; son latencias del cliente, no CPU. El tope de 450 cuenta SOLO las lecturas de medios de la carga.",
+        "parada": null,
+        "lecturas": 302,
+        "maxSimultaneas": 10,
+        "erroresServidor": 0,
+        "fria": [
+          {
+            "tipo": "GET-m",
+            "nivel": 0,
+            "muestra": 0,
+            "fase": "fria",
+            "estado": 200,
+            "medios": "MISS",
+            "pop": "MIA",
+            "ms": 399
+          },
+          {
+            "tipo": "GET-g",
+            "nivel": 0,
+            "muestra": 0,
+            "fase": "fria",
+            "estado": 200,
+            "medios": "MISS",
+            "pop": "MIA",
+            "ms": 362
+          }
+        ],
+        "porNivel": {
+          "1": {
+            "n": 30,
+            "p50": 301,
+            "p95": 332,
+            "p99": 337,
+            "max": 337,
+            "hit": 30,
+            "miss": 0,
+            "errores": 0,
+            "pops": [
+              "MIA"
+            ]
+          },
+          "5": {
+            "n": 90,
+            "p50": 302,
+            "p95": 323,
+            "p99": 1357,
+            "max": 1357,
+            "hit": 89,
+            "miss": 1,
+            "errores": 0,
+            "pops": [
+              "MIA",
+              "LIM"
+            ]
+          },
+          "10": {
+            "n": 180,
+            "p50": 300,
+            "p95": 323,
+            "p99": 341,
+            "max": 470,
+            "hit": 180,
+            "miss": 0,
+            "errores": 0,
+            "pops": [
+              "MIA"
+            ]
+          }
+        },
+        "tope": {
+          "lecturas": 450,
+          "simultaneas": 10
+        }
+      }
+    },
+    {
+      "nombre": "copia caliente de A/m confirmada antes de borrar",
+      "ok": true,
+      "detalle": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\""
+      }
+    },
+    {
+      "nombre": "copia caliente de A/g confirmada antes de borrar",
+      "ok": true,
+      "detalle": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"79cc581c04c0552b3308996da5bbc654\""
+      }
+    },
+    {
+      "nombre": "borrado del grupo A por el Worker (200)",
+      "ok": true,
+      "detalle": {
+        "estado": 200
+      }
+    },
+    {
+      "nombre": "B: GET de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: GET de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: HEAD de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: HEAD de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: If-None-Match con el ETag antiguo de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: If-None-Match con el ETag antiguo de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: GET de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: GET de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: HEAD de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: HEAD de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: If-None-Match con el ETag antiguo de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: If-None-Match con el ETag antiguo de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "control: el grupo B sigue sirviéndose 200 con sus bytes tras borrar A",
+      "ok": true,
+      "detalle": {
+        "estado": 200
+      }
+    },
+    {
+      "nombre": "ESTADO FINAL confirmado: inventario idéntico al inicial, sin claves propias pendientes ni grupos en conflicto",
+      "ok": true,
+      "detalle": {
+        "limpieza": {
+          "confirmada": true,
+          "necesaria": true,
+          "estadoBorrado": 200,
+          "estadosBorrado": [
+            200
+          ],
+          "pendientes": [],
+          "igualAlInicial": true,
+          "errores": []
+        },
+        "pendientes": []
+      }
+    }
+  ],
+  "pendientes": [],
+  "escrituras": true,
+  "carga": {
+    "completa": true,
+    "porMuestra": [
+      {
+        "nivel": 1,
+        "muestra": 1,
+        "n": 10,
+        "p50": 301,
+        "p95": 332,
+        "p99": 332,
+        "max": 332,
+        "hit": 10,
+        "errores": 0
+      },
+      {
+        "nivel": 1,
+        "muestra": 2,
+        "n": 10,
+        "p50": 302,
+        "p95": 337,
+        "p99": 337,
+        "max": 337,
+        "hit": 10,
+        "errores": 0
+      },
+      {
+        "nivel": 1,
+        "muestra": 3,
+        "n": 10,
+        "p50": 298,
+        "p95": 318,
+        "p99": 318,
+        "max": 318,
+        "hit": 10,
+        "errores": 0
+      },
+      {
+        "nivel": 5,
+        "muestra": 1,
+        "n": 30,
+        "p50": 299,
+        "p95": 323,
+        "p99": 328,
+        "max": 328,
+        "hit": 30,
+        "errores": 0
+      },
+      {
+        "nivel": 5,
+        "muestra": 2,
+        "n": 30,
+        "p50": 303,
+        "p95": 329,
+        "p99": 1357,
+        "max": 1357,
+        "hit": 29,
+        "errores": 0
+      },
+      {
+        "nivel": 5,
+        "muestra": 3,
+        "n": 30,
+        "p50": 300,
+        "p95": 321,
+        "p99": 327,
+        "max": 327,
+        "hit": 30,
+        "errores": 0
+      },
+      {
+        "nivel": 10,
+        "muestra": 1,
+        "n": 60,
+        "p50": 299,
+        "p95": 325,
+        "p99": 335,
+        "max": 335,
+        "hit": 60,
+        "errores": 0
+      },
+      {
+        "nivel": 10,
+        "muestra": 2,
+        "n": 60,
+        "p50": 300,
+        "p95": 319,
+        "p99": 470,
+        "max": 470,
+        "hit": 60,
+        "errores": 0
+      },
+      {
+        "nivel": 10,
+        "muestra": 3,
+        "n": 60,
+        "p50": 299,
+        "p95": 323,
+        "p99": 341,
+        "max": 341,
+        "hit": 60,
+        "errores": 0
+      }
+    ],
+    "nota": "Los percentiles incluyen las respuestas con error; son latencias del cliente, no CPU. El tope de 450 cuenta SOLO las lecturas de medios de la carga.",
+    "parada": null,
+    "lecturas": 302,
+    "maxSimultaneas": 10,
+    "erroresServidor": 0,
+    "fria": [
+      {
+        "tipo": "GET-m",
+        "nivel": 0,
+        "muestra": 0,
+        "fase": "fria",
+        "estado": 200,
+        "medios": "MISS",
+        "pop": "MIA",
+        "ms": 399
+      },
+      {
+        "tipo": "GET-g",
+        "nivel": 0,
+        "muestra": 0,
+        "fase": "fria",
+        "estado": 200,
+        "medios": "MISS",
+        "pop": "MIA",
+        "ms": 362
+      }
+    ],
+    "porNivel": {
+      "1": {
+        "n": 30,
+        "p50": 301,
+        "p95": 332,
+        "p99": 337,
+        "max": 337,
+        "hit": 30,
+        "miss": 0,
+        "errores": 0,
+        "pops": [
+          "MIA"
+        ]
+      },
+      "5": {
+        "n": 90,
+        "p50": 302,
+        "p95": 323,
+        "p99": 1357,
+        "max": 1357,
+        "hit": 89,
+        "miss": 1,
+        "errores": 0,
+        "pops": [
+          "MIA",
+          "LIM"
+        ]
+      },
+      "10": {
+        "n": 180,
+        "p50": 300,
+        "p95": 323,
+        "p99": 341,
+        "max": 470,
+        "hit": 180,
+        "miss": 0,
+        "errores": 0,
+        "pops": [
+          "MIA"
+        ]
+      }
+    },
+    "tope": {
+      "lecturas": 450,
+      "simultaneas": 10
+    }
+  },
+  "retirada": {
+    "conclusion": "acreditada",
+    "calientes": {
+      "m": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\""
+      },
+      "g": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"79cc581c04c0552b3308996da5bbc654\""
+      }
+    },
+    "despues": [
+      {
+        "variante": "m",
+        "metodo": "GET",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": false
+      },
+      {
+        "variante": "m",
+        "metodo": "HEAD",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": true
+      },
+      {
+        "variante": "m",
+        "metodo": "COND",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": false
+      },
+      {
+        "variante": "g",
+        "metodo": "GET",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": false
+      },
+      {
+        "variante": "g",
+        "metodo": "HEAD",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": true
+      },
+      {
+        "variante": "g",
+        "metodo": "COND",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": false
+      }
+    ]
+  },
+  "limpieza": {
+    "confirmada": true,
+    "necesaria": true,
+    "estadoBorrado": 200,
+    "estadosBorrado": [
+      200
+    ],
+    "pendientes": [],
+    "igualAlInicial": true,
+    "errores": []
+  },
+  "resumen": {
+    "casos": 20,
+    "fallos": 0
+  }
+}

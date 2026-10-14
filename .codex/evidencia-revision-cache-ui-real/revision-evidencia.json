@@ -1,0 +1,149 @@
+{
+  "fecha": "2026-10-10T20:36:39.028Z",
+  "nota": "Auditoría de evidencias de Claude + comprobaciones independientes actuales. No se repiten las subidas/borrados/UI; un login QA y luego GET públicos/protegidos. No se afirma haber presenciado las corridas originales.",
+  "inputs": {
+    "cache": {
+      "ruta": "C:/WedJaiseReact/.codex/evidencia-ejecucion-cache-ui/cache/cache-52d575.json",
+      "sha256": "f5ec8c35acade4e8f31ee2b7e38e290204364c59d3a8bfa628790f14a281d5bd"
+    },
+    "ui": {
+      "ruta": "C:/WedJaiseReact/.codex/evidencia-ejecucion-cache-ui/ui/corridas/corrida-20df1b.json",
+      "sha256": "603fa677a9d9b446eafa4fa6764d87506a57229e41baa3e7d4c8e6f1d14de16a"
+    }
+  },
+  "fuentes": {
+    "scripts/verificar-medios-pages-cache.cjs": "a290abbb0fd44eda941dfbf1987dc21d59f429fc86e82262985b0c2d16882747",
+    "scripts/lib/guardas-interfaz-r2.cjs": "065106c0bde5d6ddd6ae35c0b9edc96cc92d2f26b904ce9a8df2d9833a4e6867",
+    "scripts/verificar-interfaz-r2-preview.cjs": "537d96f1fbdee0ada054cf927bbd9b206680fbaed44ac1f98d2917337bbfe530"
+  },
+  "checks": [
+    {
+      "nombre": "cache: recuento real 27/0 y resultado completo",
+      "ok": true
+    },
+    {
+      "nombre": "cache: limpieza sin pendientes y comparación final",
+      "ok": true
+    },
+    {
+      "nombre": "cache: POP coincidente y respuesta 404",
+      "ok": true
+    },
+    {
+      "nombre": "UI: recuento real 23/0 y recorrido completo",
+      "ok": true
+    },
+    {
+      "nombre": "UI: estado final sin claves nuevas/faltantes",
+      "ok": true
+    },
+    {
+      "nombre": "ambas evidencias: alias/marca esperados",
+      "ok": true
+    },
+    {
+      "nombre": "Servicio: galería idéntica en los valores registrados",
+      "ok": true
+    },
+    {
+      "nombre": "fuente idéntica a CP-01 aprobado: scripts/verificar-medios-pages-cache.cjs",
+      "ok": true
+    },
+    {
+      "nombre": "fuente idéntica a CP-01 aprobado: scripts/lib/guardas-interfaz-r2.cjs",
+      "ok": true
+    },
+    {
+      "nombre": "fuente idéntica a CP-01 aprobado: scripts/verificar-interfaz-r2-preview.cjs",
+      "ok": true
+    },
+    {
+      "nombre": "SW actual idéntico al deployment configurado 4d23d410",
+      "ok": true,
+      "detalle": {
+        "swHash": "4c3d38c262bc6f00879681c535548bd45d0e8cf440d2206222df247be39bca42",
+        "preflight": {
+          "buildId": "b36e7495",
+          "entrega": "pages",
+          "modulos": [
+            "assets/index-DGsWTpdi.js"
+          ]
+        }
+      }
+    },
+    {
+      "nombre": "Estado actual: fixtures sin foto ni galería",
+      "ok": true
+    },
+    {
+      "nombre": "Estado actual: única Galería antigua esperada, sin fila de ejecución",
+      "ok": true
+    },
+    {
+      "nombre": "Estado actual: inventario completo y vacío en los tres destinos",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "Objeto de caché probado: actualmente 404 no-store, ambas variantes",
+      "ok": true,
+      "detalle": [
+        {
+          "variante": "m",
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "ray": "a4886b235fd838b9-MIA"
+        },
+        {
+          "variante": "g",
+          "estado": 404,
+          "cache": "no-store",
+          "nosniff": "nosniff",
+          "robots": "noindex",
+          "ray": "a4886b24685c7bfa-MIA"
+        }
+      ]
+    },
+    {
+      "nombre": "Ninguna escritura de datos de esta verificación",
+      "ok": true,
+      "detalle": {
+        "GET": 151,
+        "POST_Auth": 1
+      }
+    }
+  ],
+  "resumen": {
+    "comprobaciones": 16,
+    "fallos": 0
+  },
+  "estadoActual": {
+    "producto": [
+      {
+        "id": "432a6610-67e5-4a7c-a979-eb891cc9263c",
+        "foto_url": null
+      }
+    ],
+    "servicio": [
+      {
+        "id": "6265a7d1-80b3-4b72-9b34-7f6eca3d7873",
+        "foto_url": null
+      }
+    ],
+    "galeriaProducto": 0,
+    "galeriaServicio": 0,
+    "galeriaWeb": [
+      {
+        "id": "4ab5c994-9bb1-40bf-b5ff-186d45603781",
+        "titulo": "Foto de prueba (Inicio)",
+        "antes_url": "inicio-web/hero-antes-referencia.jpg",
+        "despues_url": "inicio-web/hero-despues-referencia.jpg"
+      }
+    ],
+    "inventarioClaves": 0
+  }
+}

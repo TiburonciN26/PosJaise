@@ -1,0 +1,547 @@
+{
+ "version": 2,
+ "ambiente": "http://127.0.0.1:54321",
+ "creado": "2026-10-12T17:30:22.896Z",
+ "publica": "http://127.0.0.1:8799",
+ "api": "http://127.0.0.1:8799",
+ "lectura": "http://127.0.0.1:8799",
+ "entradas": [
+  {
+   "id": "060b48a2-717e-5a06-9e08-f78443e17558",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "QA-F9-mv5j2dpo/g-antes.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5j2dpo/g-antes.webp",
+    "bytes": 63058,
+    "mime": "image/webp",
+    "sha256": "958a907739d6e74926609d1c4c06a913928ed861dec7dac9db15cb5cd5cbaf15",
+    "ancho": 1800,
+    "alto": 1200,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-galeria/060b48a2-717e-5a06-9e08-f78443e17558",
+   "variantes": {
+    "m": {
+     "bytes": 3658,
+     "sha256": "4d0860ac07272c3eae021221c7b8d1e102dbe9b5c2396377d997b2c5ce3918b5",
+     "ancho": 320,
+     "alto": 213,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 35236,
+     "sha256": "6273ebe8601e8ff83da5b78690ab41ea3df2335ea419139c50e024fa86bc1de0",
+     "ancho": 1400,
+     "alto": 933,
+     "calidad": 80,
+     "reencode": true
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "antes_url",
+     "fila": "0e419ac5-2996-4a88-a64a-832a94301816",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5j2dpo/g-antes.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/060b48a2-717e-5a06-9e08-f78443e17558/g.webp",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:41.806Z",
+     "revertidaEn": "2026-10-12T17:31:34.841Z"
+    },
+    {
+     "tabla": "galeria_web",
+     "columna": "despues_url",
+     "fila": "5b35ced5-09ae-42ad-b73d-83e773d9bb1f",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5j2dpo/g-antes.webp",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/060b48a2-717e-5a06-9e08-f78443e17558/g.webp",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:41.814Z",
+     "revertidaEn": "2026-10-12T17:31:34.850Z"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:22.995Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:38.730Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:38.741Z",
+     "estado": "verificada"
+    },
+    {
+     "en": "2026-10-12T17:30:40.191Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:40.200Z",
+     "estado": "verificada"
+    }
+   ]
+  },
+  {
+   "id": "bf90a651-b9ec-5c1b-999f-9f18f8cb81be",
+   "destino": "fotos-galeria",
+   "origen": {
+    "bucket": "fotos-galeria",
+    "ruta": "QA-F9-mv5j2dpo/g-ruido.jpg",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5j2dpo/g-ruido.jpg",
+    "bytes": 655075,
+    "mime": "image/jpeg",
+    "sha256": "245f357beef781b71228b773e066dcc4da09cd57abb987f9047e251a5083befb",
+    "ancho": 960,
+    "alto": 960,
+    "codec": "mjpeg"
+   },
+   "ref": "r2:fotos-galeria/bf90a651-b9ec-5c1b-999f-9f18f8cb81be",
+   "variantes": {
+    "m": {
+     "bytes": 36588,
+     "sha256": "4f526e0c1cb51da727c1999eb5c9804544b26431addeac86807dba5233c1117c",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 486566,
+     "sha256": "25995cd6a35c772c2c541e85f0652ebce144482e7f570a73830df6ea5adefb07",
+     "ancho": 960,
+     "alto": 960,
+     "calidad": 70,
+     "reencode": true
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "galeria_web",
+     "columna": "despues_url",
+     "fila": "0e419ac5-2996-4a88-a64a-832a94301816",
+     "original": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5j2dpo/g-ruido.jpg",
+     "nuevo": "http://127.0.0.1:8799/fotos-galeria/bf90a651-b9ec-5c1b-999f-9f18f8cb81be/g.webp",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:41.822Z",
+     "revertidaEn": "2026-10-12T17:31:34.859Z"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.071Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:38.863Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:38.875Z",
+     "estado": "verificada"
+    }
+   ]
+  },
+  {
+   "id": "77101505-6241-56bb-ab7f-b47e8d9bda13",
+   "destino": "fotos-productos",
+   "origen": {
+    "bucket": "fotos-productos",
+    "ruta": "QA-F9-mv5j2dpo/y-alfa.png",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-productos/QA-F9-mv5j2dpo/y-alfa.png",
+    "bytes": 66622,
+    "mime": "image/png",
+    "sha256": "ec2a3a0126c3a03d4d8f8cf2d8d97ba079f4cd60b3bad04f7ef3b07fe4035476",
+    "ancho": 800,
+    "alto": 800,
+    "codec": "png"
+   },
+   "ref": "r2:fotos-productos/77101505-6241-56bb-ab7f-b47e8d9bda13",
+   "variantes": {
+    "m": {
+     "bytes": 4840,
+     "sha256": "e54b0afbc9b4b79df8daddafe518baa1a745ad216ad22a210aee7b065900122d",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 19966,
+     "sha256": "004652e73ac87205de4cae5910a47b52d847161028896b49eb5d63abd4b3ff1b",
+     "ancho": 800,
+     "alto": 800,
+     "calidad": 80,
+     "reencode": true
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "producto_fotos",
+     "columna": "foto_url",
+     "fila": "15f0cc61-3bb2-43ec-ba4f-1eee7b12bc91",
+     "original": "QA-F9-mv5j2dpo/y-alfa.png",
+     "nuevo": "r2:fotos-productos/77101505-6241-56bb-ab7f-b47e8d9bda13",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:42.060Z",
+     "revertidaEn": "2026-10-12T17:31:34.869Z"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.142Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:38.980Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:38.997Z",
+     "estado": "verificada"
+    }
+   ]
+  },
+  {
+   "id": "05119119-2665-5110-994b-637104651a66",
+   "destino": "fotos-productos",
+   "origen": {
+    "bucket": "fotos-productos",
+    "ruta": "QA-F9-mv5j2dpo/x-compartida.jpg",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-productos/QA-F9-mv5j2dpo/x-compartida.jpg",
+    "bytes": 186321,
+    "mime": "image/jpeg",
+    "sha256": "da2e05b6c2f2540fe69ce23f2415e169759eb548f21fbea82e41cbf3e1f0801e",
+    "ancho": 2400,
+    "alto": 1600,
+    "codec": "mjpeg"
+   },
+   "ref": "r2:fotos-productos/05119119-2665-5110-994b-637104651a66",
+   "variantes": {
+    "m": {
+     "bytes": 3310,
+     "sha256": "c8bdef85214e735977c5a3304f04e5155d229e89e192c333febcbbdf61c4f9a3",
+     "ancho": 320,
+     "alto": 213,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 34666,
+     "sha256": "0d42810eb0936b6996ade45bbeba4dd1d55e0b73497e046a52787dd69b1a1453",
+     "ancho": 1400,
+     "alto": 933,
+     "calidad": 80,
+     "reencode": true
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "producto_fotos",
+     "columna": "foto_url",
+     "fila": "2305684c-259f-4945-bf9f-64f3d60a606a",
+     "original": "QA-F9-mv5j2dpo/x-compartida.jpg",
+     "nuevo": "r2:fotos-productos/05119119-2665-5110-994b-637104651a66",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:42.068Z",
+     "revertidaEn": "2026-10-12T17:31:35.127Z"
+    },
+    {
+     "tabla": "productos",
+     "columna": "foto_url",
+     "fila": "19588b4c-0f00-471e-b930-f46cdf9d2bc7",
+     "original": "QA-F9-mv5j2dpo/x-compartida.jpg",
+     "nuevo": "r2:fotos-productos/05119119-2665-5110-994b-637104651a66",
+     "estado": "conflicto",
+     "conflicto": {
+      "en": "2026-10-12T17:30:42.078Z",
+      "motivo": "conflicto",
+      "detalle": "el UPDATE no afectó ninguna fila"
+     }
+    },
+    {
+     "tabla": "productos",
+     "columna": "foto_url",
+     "fila": "f3ae8c8f-9f5f-41b1-95d9-8f2ad56e3118",
+     "original": "QA-F9-mv5j2dpo/x-compartida.jpg",
+     "nuevo": "r2:fotos-productos/05119119-2665-5110-994b-637104651a66",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:42.313Z",
+     "revertidaEn": "2026-10-12T17:31:35.138Z"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.199Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.345Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.356Z",
+     "estado": "verificada"
+    }
+   ]
+  },
+  {
+   "id": "99b22cbd-14b8-5f66-90a2-0dcad678c8ed",
+   "destino": "fotos-productos",
+   "origen": {
+    "bucket": "fotos-productos",
+    "ruta": "QA-F9-mv5j2dpo/z-chico.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-productos/QA-F9-mv5j2dpo/z-chico.webp",
+    "bytes": 9762,
+    "mime": "image/webp",
+    "sha256": "52f67ae960a56b58cc3f7249dba1635c5a88d2bfb9b5677b8ad268f2f60515b3",
+    "ancho": 500,
+    "alto": 500,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-productos/99b22cbd-14b8-5f66-90a2-0dcad678c8ed",
+   "variantes": {
+    "m": {
+     "bytes": 5224,
+     "sha256": "57e4266cb143a0a01dd7f24689ee3b099ce51b9b2aa4a30cd01c111257190b2b",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 9762,
+     "sha256": "52f67ae960a56b58cc3f7249dba1635c5a88d2bfb9b5677b8ad268f2f60515b3",
+     "ancho": 500,
+     "alto": 500,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "productos",
+     "columna": "foto_url",
+     "fila": "b9704303-084f-40c3-8524-90bdf7df097a",
+     "original": "QA-F9-mv5j2dpo/z-chico.webp",
+     "nuevo": "r2:fotos-productos/99b22cbd-14b8-5f66-90a2-0dcad678c8ed",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:42.323Z",
+     "revertidaEn": "2026-10-12T17:31:35.149Z"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.292Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.456Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.465Z",
+     "estado": "verificada"
+    }
+   ]
+  },
+  {
+   "id": "69d8f547-0ecc-5c76-b709-4106d9e6861f",
+   "destino": "fotos-productos",
+   "origen": {
+    "bucket": "fotos-productos",
+    "ruta": "QA-F9-mv5j2dpo/ruido-grande.jpg",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-productos/QA-F9-mv5j2dpo/ruido-grande.jpg",
+    "bytes": 1209924,
+    "mime": "image/jpeg",
+    "sha256": "259cfa220836612fa448169c7a5af9aa8e1464b7ae086bd799002f995ff58d6c",
+    "ancho": 1300,
+    "alto": 1300,
+    "codec": "mjpeg"
+   },
+   "ref": "r2:fotos-productos/69d8f547-0ecc-5c76-b709-4106d9e6861f",
+   "variantes": null,
+   "estado": "error",
+   "referencias": [
+    {
+     "tabla": "productos",
+     "columna": "foto_url",
+     "fila": "f4a38a47-8eb7-4392-a0ed-17f15c393762",
+     "original": "QA-F9-mv5j2dpo/ruido-grande.jpg",
+     "nuevo": "r2:fotos-productos/69d8f547-0ecc-5c76-b709-4106d9e6861f",
+     "estado": "pendiente"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.359Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:28.286Z",
+     "estado": "error",
+     "error": "variante g: no cabe en 524288 bytes ni con calidad 60"
+    }
+   ],
+   "error": "variante g: no cabe en 524288 bytes ni con calidad 60"
+  },
+  {
+   "id": "f6c2d4a3-00ed-597f-be78-3087a18b5683",
+   "destino": "fotos-servicios",
+   "origen": {
+    "bucket": "fotos-servicios",
+    "ruta": "QA-F9-mv5j2dpo/s-grande.jpg",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-servicios/QA-F9-mv5j2dpo/s-grande.jpg",
+    "bytes": 186321,
+    "mime": "image/jpeg",
+    "sha256": "da2e05b6c2f2540fe69ce23f2415e169759eb548f21fbea82e41cbf3e1f0801e",
+    "ancho": 2400,
+    "alto": 1600,
+    "codec": "mjpeg"
+   },
+   "ref": "r2:fotos-servicios/f6c2d4a3-00ed-597f-be78-3087a18b5683",
+   "variantes": {
+    "m": {
+     "bytes": 3310,
+     "sha256": "c8bdef85214e735977c5a3304f04e5155d229e89e192c333febcbbdf61c4f9a3",
+     "ancho": 320,
+     "alto": 213,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 34666,
+     "sha256": "0d42810eb0936b6996ade45bbeba4dd1d55e0b73497e046a52787dd69b1a1453",
+     "ancho": 1400,
+     "alto": 933,
+     "calidad": 80,
+     "reencode": true
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "servicio_fotos",
+     "columna": "foto_url",
+     "fila": "9ac67da1-7654-49d4-82d2-4d7cb92137ad",
+     "original": "QA-F9-mv5j2dpo/s-grande.jpg",
+     "nuevo": "r2:fotos-servicios/f6c2d4a3-00ed-597f-be78-3087a18b5683",
+     "estado": "revertida",
+     "actualizadaEn": "2026-10-12T17:30:42.331Z",
+     "revertidaEn": "2026-10-12T17:31:35.157Z"
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.407Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.559Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.568Z",
+     "estado": "verificada"
+    }
+   ]
+  },
+  {
+   "id": "5cb2309f-f516-581e-b29a-5db72269ae49",
+   "destino": "fotos-servicios",
+   "origen": {
+    "bucket": "fotos-servicios",
+    "ruta": "QA-F9-mv5j2dpo/s-chico.webp",
+    "url": "http://127.0.0.1:54321/storage/v1/object/public/fotos-servicios/QA-F9-mv5j2dpo/s-chico.webp",
+    "bytes": 9762,
+    "mime": "image/webp",
+    "sha256": "52f67ae960a56b58cc3f7249dba1635c5a88d2bfb9b5677b8ad268f2f60515b3",
+    "ancho": 500,
+    "alto": 500,
+    "codec": "webp"
+   },
+   "ref": "r2:fotos-servicios/5cb2309f-f516-581e-b29a-5db72269ae49",
+   "variantes": {
+    "m": {
+     "bytes": 5224,
+     "sha256": "57e4266cb143a0a01dd7f24689ee3b099ce51b9b2aa4a30cd01c111257190b2b",
+     "ancho": 320,
+     "alto": 320,
+     "calidad": 80,
+     "reencode": true
+    },
+    "g": {
+     "bytes": 9762,
+     "sha256": "52f67ae960a56b58cc3f7249dba1635c5a88d2bfb9b5677b8ad268f2f60515b3",
+     "ancho": 500,
+     "alto": 500,
+     "calidad": null,
+     "reencode": false
+    }
+   },
+   "estado": "verificada",
+   "referencias": [
+    {
+     "tabla": "servicios",
+     "columna": "foto_url",
+     "fila": "aff8c4d5-12bb-4867-a3f1-4925fd5a8d25",
+     "original": "QA-F9-mv5j2dpo/s-chico.webp",
+     "nuevo": "r2:fotos-servicios/5cb2309f-f516-581e-b29a-5db72269ae49",
+     "estado": "conflicto-reversion",
+     "actualizadaEn": "2026-10-12T17:30:42.569Z",
+     "conflicto": {
+      "en": "2026-10-12T17:31:35.395Z",
+      "motivo": "conflicto",
+      "detalle": "el UPDATE no afectó ninguna fila"
+     }
+    }
+   ],
+   "historial": [
+    {
+     "en": "2026-10-12T17:30:23.445Z",
+     "estado": "planificada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.662Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:39.670Z",
+     "estado": "verificada"
+    },
+    {
+     "en": "2026-10-12T17:30:40.689Z",
+     "estado": "copiada"
+    },
+    {
+     "en": "2026-10-12T17:30:40.697Z",
+     "estado": "verificada"
+    }
+   ]
+  }
+ ],
+ "eventos": [
+  {
+   "en": "2026-10-12T17:30:23.244Z",
+   "tipo": "origen-ilegible",
+   "bucket": "fotos-productos",
+   "ruta": "QA-F9-mv5j2dpo/corrupto.jpg",
+   "error": "Command failed: ffprobe -v error -select_streams v:0 -show_entries stream=width,height,codec_name -of json C:\\Users\\jdeos\\AppData\\Local\\Temp\\sim-f9-v2\\corrida\\cache\\085390e7f59eada74cc11aaa28953eb861a003c4d2fbd928b4f08956f770c57e.orig\nC:\\Users\\jdeos\\AppData\\Local\\Temp\\sim-f9-v2\\corrida\\cache\\085390e7f59eada74cc11aaa28953eb861a003c4d2fbd928b4f08956f770c57e.orig: Invalid data found when processing input\r\n"
+  },
+  {
+   "en": "2026-10-12T17:30:23.620Z",
+   "tipo": "origen-ilegible",
+   "bucket": "fotos-productos",
+   "ruta": "QA-F9-mv5j2dpo/corrupto.jpg",
+   "error": "Command failed: ffprobe -v error -select_streams v:0 -show_entries stream=width,height,codec_name -of json C:\\Users\\jdeos\\AppData\\Local\\Temp\\sim-f9-v2\\corrida\\cache\\085390e7f59eada74cc11aaa28953eb861a003c4d2fbd928b4f08956f770c57e.orig\nC:\\Users\\jdeos\\AppData\\Local\\Temp\\sim-f9-v2\\corrida\\cache\\085390e7f59eada74cc11aaa28953eb861a003c4d2fbd928b4f08956f770c57e.orig: Invalid data found when processing input\r\n"
+  }
+ ],
+ "ffmpeg": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+}

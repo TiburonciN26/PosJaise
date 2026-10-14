@@ -1,0 +1,29 @@
+{
+  "fecha": "2026-10-11T02:32:51.110Z",
+  "sinRed": true,
+  "independientes": [
+    {
+      "nombre": "RG-01 cerrado: referencia tardía y foto conservadas",
+      "filaSigueExistiendo": true,
+      "grupoReferenciado": "fotos-galeria/22222222-2222-4222-8222-222222222222",
+      "fotoGExiste": true,
+      "recolectorOmitio": 1,
+      "cleanupBorrados": [
+        "fotos-galeria/11111111-1111-4111-8111-111111111111/"
+      ],
+      "completa": false,
+      "estadoFinalConfirmado": false
+    },
+    {
+      "nombre": "RG-02 cerrado: metadata diferente impide confirmar estado",
+      "tituloInicial": "Foto de prueba (Inicio)",
+      "tituloFinal": "editado por otro actor",
+      "completa": false,
+      "estadoFinalConfirmado": false
+    }
+  ],
+  "regresiones": {
+    "casos": 24,
+    "fallos": 0
+  }
+}

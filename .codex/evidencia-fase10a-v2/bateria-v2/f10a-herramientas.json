@@ -1,0 +1,415 @@
+{
+ "fecha": "2026-10-13T07:06:40.396Z",
+ "appReal": "http://127.0.0.1:5401",
+ "sinNavegador": false,
+ "total": 38,
+ "fallos": 1,
+ "casos": [
+  {
+   "nombre": "F10A-04: CLS se compara EXACTO: 0.1 cumple; 0.10001, 0.14, 0.149, 0.15, ausente, texto y NaN no",
+   "ok": true,
+   "ms": 0
+  },
+  {
+   "nombre": "F10A-04: la evaluación de vitales usa la mediana EXACTA de las muestras, no el resumen redondeado",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "Mediana: impar, PAR (media de las dos centrales), sin muestras válidas → null; --muestras validado",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "F10A-02: carpeta sin mediciones → INCOMPLETA y código 1 (la V1 daba «0/0» con código 0)",
+   "ok": true,
+   "ms": 58
+  },
+  {
+   "nombre": "F10A-02: el productor FALLA (archivo de cuentas inexistente) → FALLÓ, INCOMPLETA y código 1",
+   "ok": false,
+   "ms": 512,
+   "error": "rado «pos-pedidos-web» | PROBLEMA reducido: falta el resultado esperado «reducido-inicio» | PROBLEMA reducido: falta el resultado esperado «reducido-promociones» | PROBLEMA reducido: falta el resultado esperado «reducido-referidos-web» | 0/0 presupuestos cumplidos · 13 problemas · alcance PARCIAL | VEREDICTO: INCOMPLETA"
+  },
+  {
+   "nombre": "F10A-02: medir en una carpeta con resultados anteriores se rechaza (código 2) y no los reutiliza",
+   "ok": true,
+   "ms": 59
+  },
+  {
+   "nombre": "F10A-02: ejecución SANA completa (5 grupos, manifiesto y hashes correctos) → CUMPLE, alcance global y código 0",
+   "ok": true,
+   "ms": 73
+  },
+  {
+   "nombre": "F10A-02: archivo faltante → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 70
+  },
+  {
+   "nombre": "F10A-02: muestras vacías → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 74
+  },
+  {
+   "nombre": "F10A-02: escenario omitido → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 77
+  },
+  {
+   "nombre": "F10A-02: medición declarada incompleta → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 73
+  },
+  {
+   "nombre": "F10A-02: resultado de iniciales omitido → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 71
+  },
+  {
+   "nombre": "F10A-02: un archivo ALTERADO tras la ejecución (resultado antiguo o ajeno) no coincide con el manifiesto → código 1",
+   "ok": true,
+   "ms": 73
+  },
+  {
+   "nombre": "F10A-02: un productor con código distinto de 0 en el manifiesto → código 1 aunque su archivo cumpla",
+   "ok": true,
+   "ms": 73
+  },
+  {
+   "nombre": "F10A-02: --solo evalúa un alcance menor y lo declara PARCIAL (no es el cierre global)",
+   "ok": true,
+   "ms": 123
+  },
+  {
+   "nombre": "F10A-02/04: la evidencia V1 reevaluada da 18/219 incumplimientos y queda INCOMPLETA por no tener manifiesto",
+   "ok": true,
+   "ms": 65,
+   "detalle": {
+    "incumplimientos": 18
+   }
+  },
+  {
+   "nombre": "F10A-03: servidor V2 — prefijo vecino, traversal codificado, junction, URI malformada y NUL no salen de la carpeta; assets, HEAD, _headers y fallback intactos",
+   "ok": true,
+   "ms": 84,
+   "detalle": {
+    "estados": {
+     "prefijo": 400,
+     "puntos": 200,
+     "barraInvertida": 400,
+     "enlaceArchivo": 403,
+     "enlaceDir": 403,
+     "malformada": 400,
+     "nul": 400,
+     "asset": 200,
+     "ventas": 200,
+     "raiz": 200,
+     "head": 200
+    },
+    "junctionProbada": true
+   }
+  },
+  {
+   "nombre": "F10A-03: reproducción del defecto en la V1 (copia de rollback): el prefijo vecino SÍ devolvía la marca",
+   "ok": true,
+   "ms": 78,
+   "detalle": {
+    "v1": {
+     "prefijo": 200,
+     "puntos": 200,
+     "barraInvertida": 200,
+     "enlaceArchivo": 200,
+     "enlaceDir": 200,
+     "malformada": 0,
+     "nul": 0,
+     "asset": 0,
+     "ventas": 0,
+     "raiz": 0,
+     "head": 0
+    }
+   }
+  },
+  {
+   "nombre": "F10A-01: validación de --app (remota, LAN, el propio Supabase, credenciales, query) y de cuentas (ajena, sin id)",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "F10A-01: backend efectivo del bundle — Local exacto pasa; otro puerto, relativo/proxy, Supabase remoto, dos configuraciones o ninguna se rechazan",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "F10A-01: clasificación de peticiones del navegador (app solo lectura sin rutas de API; Supabase Local; terceros GET neutralizados; lo demás prohibido)",
+   "ok": true,
+   "ms": 0
+  },
+  {
+   "nombre": "F10A-01: CONTROL POSITIVO — preflight de la app real (bundle servido con backend Local exacto y cuentas QA de Local)",
+   "ok": true,
+   "ms": 307,
+   "detalle": {
+    "app": "http://127.0.0.1:5401",
+    "api": "http://127.0.0.1:54321",
+    "indexSha256": "2d83ebf7b6416d4a4be7cc1c6f87018f420bb2dd99eaa59f7303cb8abad68ea9",
+    "modulosRevisados": 143,
+    "configuraciones": 1,
+    "cuentas": [
+     "admin",
+     "cajera",
+     "clienteA"
+    ]
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · app remota → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 494,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "--app debe ser una app local (http://127.0.0.1:<puerto>); se recibió el origen https://feat-cloudflare-pages.pos-jaise.pages.dev"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "debe ser una app local"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · app remota → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 545,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "Error: --app debe ser una app local (http://127.0.0.1:<puerto>); se recibió el origen https://feat-cloudflare-pages.pos-jaise.pages.dev"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "debe ser una app local"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · app local con backend ajeno en el bundle → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 606,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "el backend efectivo del bundle no es exactamente http://127.0.0.1:54321 (observado: http://127.0.0.1:59880); no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "backend efectivo del bundle no es exactamente"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · app local con backend ajeno en el bundle → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 638,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "Error: el backend efectivo del bundle no es exactamente http://127.0.0.1:54321 (observado: http://127.0.0.1:59884); no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "backend efectivo del bundle no es exactamente"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · app local con proxy del mismo origen (/__supabase) → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 592,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "el backend efectivo del bundle no es exactamente http://127.0.0.1:54321 (observado: relativo /__supabase); no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "relativo /__supabase"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · app local con proxy del mismo origen (/__supabase) → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 602,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "Error: el backend efectivo del bundle no es exactamente http://127.0.0.1:54321 (observado: relativo /__supabase); no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "relativo /__supabase"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · cuenta ajena al conjunto QA → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 472,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "la cuenta «admin» no es una cuenta QA ficticia (qa-…@test.local); no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no es una cuenta QA ficticia"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · cuenta ajena al conjunto QA → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 506,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "Error: la cuenta «admin» no es una cuenta QA ficticia (qa-…@test.local); no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no es una cuenta QA ficticia"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · cuenta QA que no existe en el Auth de Local → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 653,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "1 de 2 cuentas no existen en el Auth de Local con ese id y correo; no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no existen en el Auth de Local"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · cuenta QA que no existe en el Auth de Local → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 679,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "Error: 1 de 3 cuentas no existen en el Auth de Local con ese id y correo; no se autentica nada"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no existen en el Auth de Local"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · login redirigido a otro servidor → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 918,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "la app redirige /login (302); no se sigue una redirección antes de autenticar"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "la app redirige /login (302)"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · login redirigido a otro servidor → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 50502,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "FALLA visitante: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+     "      [{\"ruta\":\"/ventas\",\"destino\":\"/ventas\",\"esperado\":\"/login\",\"ok\":false,\"textoError\":false,\"timeout\":false,\"pageerror\":[]},{\"ruta\":\"/inventario\",\"destino\":\"/inventario\",\"esperado\":\"/login\",\"ok\":false,\"textoError\":fal",
+     "OK    visitante: la guarda de red no registró ninguna violación",
+     "Error: la app redirige /login (302); no se sigue una redirección antes de autenticar"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "la app redirige /login (302)"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · credenciales desviadas a otro servidor (y WebSocket) al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 1478,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "guarda de red (tras iniciar sesión): evento POST http://127.0.0.1:55112/token | peticion POST http://127.0.0.1:55112/token | websocket WS ws://127.0.0.1:55112/ws"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · credenciales desviadas a otro servidor (y WebSocket) al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 50822,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "FALLA visitante: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+     "      [{\"ruta\":\"/ventas\",\"destino\":\"/ventas\",\"esperado\":\"/login\",\"ok\":false,\"textoError\":false,\"timeout\":false,\"pageerror\":[]},{\"ruta\":\"/inventario\",\"destino\":\"/inventario\",\"esperado\":\"/login\",\"ok\":false,\"textoError\":fal",
+     "OK    visitante: la guarda de red no registró ninguna violación",
+     "Error: guarda de red (tras iniciar sesión): evento POST http://127.0.0.1:58901/token | peticion POST http://127.0.0.1:58901/token | websocket WS ws://127.0.0.1:58901/ws"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · credenciales desviadas por proxy del mismo origen al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 1428,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "guarda de red (tras iniciar sesión): evento POST http://127.0.0.1:63763/auth/v1/token | peticion POST http://127.0.0.1:63763/auth/v1/token"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · credenciales desviadas por proxy del mismo origen al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 50933,
+   "detalle": {
+    "codigo": 2,
+    "cola": [
+     "FALLA visitante: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+     "      [{\"ruta\":\"/ventas\",\"destino\":\"/ventas\",\"esperado\":\"/login\",\"ok\":false,\"textoError\":false,\"timeout\":false,\"pageerror\":[]},{\"ruta\":\"/inventario\",\"destino\":\"/inventario\",\"esperado\":\"/login\",\"ok\":false,\"textoError\":fal",
+     "OK    visitante: la guarda de red no registró ninguna violación",
+     "Error: guarda de red (tras iniciar sesión): evento POST http://127.0.0.1:63775/auth/v1/token | peticion POST http://127.0.0.1:63775/auth/v1/token"
+    ],
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  }
+ ]
+}

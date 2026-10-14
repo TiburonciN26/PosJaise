@@ -1,0 +1,44 @@
+const fs=require('node:fs'); const path=require('node:path');
+const {chromium}=require('C:/WedJaiseReact/node_modules/playwright');
+const APP='http://localhost:5173';const out={fechaCliente:'2026-10-11',alcance:'Componentes reales de Vite en Chromium, Supabase/contextos simulados; cero mutaciones de base de datos',casos:[]};
+let browser,spec;
+const bootstrap=`
+window.__calls=[];window.__owner='A';window.__change=()=>{};window.__pending=[];
+const id=n=>'aaaaaaaa-0000-4000-8000-'+String(n).padStart(12,'0');
+const rows=Array.from({length:81},(_,i)=>({id:id(i+1),titulo:'Promo '+(i+1),nombre:'Servicio '+(i+1),precio:100,activo:true,descripcion:'Detalle '+(i+1),tipo_descuento:'PORCENTAJE',valor:10,vigente_desde:null,vigente_hasta:null}));
+class Query {constructor(table,kind='table'){this.table=table;this.kind=kind;this.ops=[];this.from=0;this.to=39;this.opts={};}
+ select(s,o){this.selectCols=s;this.opts=o||{};return this} eq(k,v){this.ops.push(['eq',k,v]);return this}in(k,v){this.ops.push(['in',k,v]);return this} ilike(k,v){this.ops.push(['ilike',k,v]);return this}or(v){this.ops.push(['or',v]);return this}order(){return this}limit(v){this.to=v-1;return this}range(a,b){this.from=a;this.to=b;return this}single(){this.one=true;return this}maybeSingle(){this.one=true;return this}
+ then(a,b){const owner=window.__owner;window.__calls.push({table:this.table,kind:this.kind,owner,ops:this.ops,from:this.from,to:this.to});let r;
+ if(this.table==='promociones'){const search=this.ops.find(x=>x[0]==='ilike'); r=window.__fail==='page'&&this.from>0 || window.__fail==='search'&&search?{error:{message:'QA falla'},data:null,count:null}:{data:search?[rows[80]]:rows.slice(this.from,this.to+1),count:search?1:81,error:null};}
+ else if(this.table==='servicios'||this.table==='productos_vista')r={data:rows.slice(this.from,this.to+1),count:81,error:null};
+ else if(this.table==='servicios_proteccion'||this.table==='productos_proteccion')r={data:[],error:null};
+ else if(this.table==='config_referidos')r={data:{credito_referidor:15,credito_referido:10},error:null};else if(this.table==='config_fidelizacion')r={data:{porcentaje_recompensa:10,visitas_requeridas:6},error:null};else if(this.table==='cupones_gestion'){const cup={id:id(1),codigo:'QA-CUPON-001',cliente_nombre:'José',origen:this.ops.find(x=>x[0]==='in')?.[2]?.[0]??'FIDELIZACION',valor:10,tipo_descuento:'MONTO',estado:'DISPONIBLE',creado_en:'2026-10-10T12:00:00Z'};const filtro=this.ops.find(x=>x[0]==='or')?.[1]??'';const found=!filtro||filtro.toLowerCase().includes('josé');r={data:this.opts.head?null:(found?[cup]:[]),count:this.opts.head?(this.ops.find(x=>x[1]==='estado')?.[2]==='DISPONIBLE'?1:0):found?1:0,error:null}}else if(this.table==='recompensas_catalogo')r={data:[],count:0,error:null};
+ else if(this.table==='recompensas_config')r={data:{id:1,activo:false,sellos_por_premio:6,sellos_max:12,tasa_serv_monedas:1,tasa_serv_soles:10,tasa_prod_monedas:1,tasa_prod_soles:10,umbral_premium:100,umbral_vip:200},error:null};
+ else if(this.table==='recompensas_reglas_publicas')r={data:[{activo:false}],error:null};
+ else if(this.table==='mi_saldo_recompensas')r=window.__saldoError&&owner==='A'?{data:null,error:{message:'QA saldo caído'}}:{data:[{activo:false}],error:null};
+ else if(this.table==='mis_cupones')r={data:[],error:null};
+ else if(this.table==='mis_puntos')r={data:[{puntos:10}],error:null};
+ else r={data:[],count:0,error:null};
+ if(window.__deferSaldo&&this.table==='mi_saldo_recompensas'&&owner==='A')return new Promise(resolve=>window.__pending.push(()=>resolve(r))).then(a,b);
+ return Promise.resolve(r).then(a,b)}
+}
+window.__sb={from:t=>new Query(t),rpc:t=>new Query(t,'rpc'),auth:{getSession:async()=>({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}};
+`;
+async function run(name,component,entry,mode,fn){if(!name.startsWith('Catálogo público'))return;const ctx=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900},reducedMotion:'reduce'});const p=await ctx.newPage();p.setDefaultTimeout(6000);const errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await ctx.route('**/*',async r=>{const u=new URL(r.request().url());if(u.origin!==APP)return r.abort();
+ if(u.pathname==='/__qa_f5'){return r.fulfill({contentType:'text/html',body:`<html><head><meta charset="utf-8"></head><body><div id="root"></div><script type="module">import RefreshRuntime from '/@react-refresh';RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;import '/@vite/client';import React from '${spec.react}';import ReactDOM from '${spec.dom}';import{BrowserRouter}from '${spec.router}';${bootstrap}window.__saldoError=${mode==='saldo-error'};window.__deferSaldo=${mode==='saldo-lento'};history.replaceState(null,"",${JSON.stringify(entry)});const{default:Component}=await import('${component}');const tree=React.createElement(BrowserRouter,null,React.createElement(Component,{publico:'${mode}'.startsWith('publico')}));ReactDOM.createRoot(document.getElementById('root')).render('${mode}'==='publico-strict'?React.createElement(React.StrictMode,null,tree):tree);</script></body></html>`})}
+ if(u.pathname==='/src/lib/supabase.js')return r.fulfill({contentType:'application/javascript',body:'export const supabase=window.__sb;'});
+ if(u.pathname==='/src/context/ToastContext.jsx')return r.fulfill({contentType:'application/javascript',body:'export function useToast(){return{mostrarToast(){}}}export function ToastProvider({children}){return children}'});
+ if(u.pathname==='/src/context/AuthContext.jsx')return r.fulfill({contentType:'application/javascript',body:`import React from '${spec.react}';export function useAuth(){const[_,v]=React.useState(0);React.useEffect(()=>{const f=()=>v(n=>n+1);window.addEventListener('qa-auth',f);window.__change=()=>window.dispatchEvent(new Event('qa-auth'));return()=>window.removeEventListener('qa-auth',f)},[]);return{session:{user:{id:window.__owner}},usuario:{id:window.__owner},cargando:false}}`});
+ if(u.pathname==='/src/context/PerfilClienteContext.jsx')return r.fulfill({contentType:'application/javascript',body:'export function usePerfilClienteOpcional(){return null}export function usePerfilCliente(){return{perfil:null}}'});
+ return r.continue();});
+ try{await p.goto(APP+'/__qa_f5');await p.waitForTimeout(1000);const resultado=await fn(p);out.casos.push({name,resultado,errors});console.log(JSON.stringify({name,resultado:{...resultado,body:resultado.body?.slice(0,550)},errors}));}catch(e){out.casos.push({name,error:e.message,body:(await p.locator('body').innerText()).slice(0,900),errors});console.log(JSON.stringify(out.casos.at(-1)))}finally{await ctx.close()}}
+(async()=>{const main=await(await fetch(APP+'/src/main.jsx')).text(),comp=await(await fetch(APP+'/src/pages/RecompensasWeb.jsx')).text();spec={react:comp.match(/from "([^"]*\/react\.js[^\"]*)"/)[1],dom:main.match(/from "([^"]*react-dom_client[^\"]*)"/)[1],router:comp.match(/from "([^"]*react-router-dom[^\"]*)"/)[1]};browser=await chromium.launch();try{
+ for(const modo of ['publico-normal','publico-strict'])await run('Catálogo público '+modo,'/src/pages/cliente/RecompensasCliente.jsx','/recompensas?seccion=canje',modo,async p=>({body:await p.locator('body').innerText(),catalogoRequests:await p.evaluate(()=>window.__calls.filter(x=>x.table==='catalogo_recompensas_publico')),cargando:await p.getByLabel('Cargando tus datos',{exact:true}).count()}));
+ for(const tipo of ['ReferidosWeb','FidelizacionWeb'])await run('Búsqueda sin tildes '+tipo,'/src/pages/'+tipo+'.jsx','/qa','',async p=>{const inicial=await p.getByText('QA-CUPON-001',{exact:true}).count();await p.locator('input[type=search]').fill('jose');await p.waitForTimeout(650);const sinTilde=await p.getByText('QA-CUPON-001',{exact:true}).count();await p.locator('input[type=search]').fill('josé');await p.waitForTimeout(650);return{inicial,sinTilde,conTilde:await p.getByText('QA-CUPON-001',{exact:true}).count(),consultas:await p.evaluate(()=>window.__calls.filter(x=>x.table==='cupones_gestion'&&x.ops.some(op=>op[0]==='or')))}});
+ }finally{await browser.close();fs.writeFileSync(path.join(__dirname,'diagnosticos-adicionales.json'),JSON.stringify(out,null,2))}})().catch(e=>{console.error(e);process.exitCode=1});
+
+
+
+
+

@@ -1,0 +1,24 @@
+{
+  "fecha": "2026-10-10",
+  "head": "08a740e9ff39646161ea9c45ea2fe37866d5758f",
+  "suite": {
+    "comando": "node cloudflare/medios-pages/test/probar-entrega.mjs",
+    "casos": 48,
+    "fallos": 0,
+    "exit": 0
+  },
+  "lint": {
+    "archivos": [
+      "cloudflare/medios-pages/entrega.js",
+      "cloudflare/medios-pages/test/probar-entrega.mjs"
+    ],
+    "diagnosticos": 0,
+    "exit": 0
+  },
+  "diagnostico_independiente": {
+    "casos": 14,
+    "fallos": 0,
+    "exit": 0
+  },
+  "red": false
+}

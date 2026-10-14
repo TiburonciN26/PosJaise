@@ -1,0 +1,40 @@
+{
+  "fecha": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "datos": {
+    "soloLecturaLocal": true,
+    "fallos": 0,
+    "casos": 27
+  },
+  "categoriasEntregadas": {
+    "fallos": 0,
+    "sdkRealFetchSimulado": true,
+    "casos": 16
+  },
+  "diagnosticos": {
+    "precios": 11,
+    "categoriasBrowser": 4,
+    "conteosSDK": 7,
+    "mutacionesBD": 0
+  },
+  "rollbackCheck": true,
+  "lintSinDiagnosticos": true,
+  "hashes": [
+    {
+      "archivo": "src/hooks/usePreciosSeleccion.js",
+      "sha256": "0070CA75900AD7A0E51E1BB5FF3987F1D128E59456F0C7581BC9F7437C6B17AA"
+    },
+    {
+      "archivo": "src/lib/catalogoPublico.js",
+      "sha256": "0523DE5714952E724F4442D6B05E4550296DCC073204C7B30E3BB625F175E55E"
+    },
+    {
+      "archivo": "scripts/verificar-categorias-completas.mjs",
+      "sha256": "D51D6CA8985ED01390D5AE97233499DF8741B5AA78930366A624ECE592480D78"
+    },
+    {
+      "archivo": "supabase/migrations/20261011000001_catalogo_publico_vitrina.sql",
+      "sha256": "BA876F01057710F2982B937281E8AD6307851C6B2621B9DEAA7347A50B39653F"
+    }
+  ]
+}

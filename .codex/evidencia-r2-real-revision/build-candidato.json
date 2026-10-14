@@ -1,0 +1,13 @@
+{
+  "fecha": "2026-10-10T04:36:45.219Z",
+  "snapshot": "HEAD + solo los 38 candidatos de Fase 3",
+  "dependencies": "Dependencias existentes enlazadas, sin instalar. No es un npm ci nuevo.",
+  "nativeConfig": true,
+  "exit": 0,
+  "files": 179,
+  "backend": "staging",
+  "baseRaiz": true,
+  "sin404": true,
+  "findings": [],
+  "hashMatchCommitPending": "Debe repetirse desde el commit exacto antes del push."
+}

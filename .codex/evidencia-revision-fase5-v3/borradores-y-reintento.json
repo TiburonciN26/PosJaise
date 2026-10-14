@@ -1,0 +1,57 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "Componentes reales de Vite en Chromium, Supabase/contextos simulados; cero mutaciones de base de datos",
+  "casos": [
+    {
+      "name": "Programa conserva borrador entre subpestañas y prueba A→B",
+      "resultado": {
+        "inicial": "1",
+        "vuelta": "77",
+        "otraCuenta": "1",
+        "otraCuentaRemontado": "1"
+      },
+      "errors": []
+    },
+    {
+      "name": "Protección A→B→A sin editar con B",
+      "resultado": {
+        "camposAlCambiarB": 0,
+        "b": "",
+        "camposAlVolverA": 0,
+        "aAlVolver": ""
+      },
+      "errors": []
+    },
+    {
+      "name": "Fallo página 2 y reintento sano",
+      "resultado": {
+        "fallo": {
+          "paginador": "«Página 1 de 3»\n\n1–40 de 81 promociones",
+          "alerts": 1
+        },
+        "reintento": {
+          "paginador": "«Página 2 de 3»\n\n41–80 de 81 promociones",
+          "promo41": 1,
+          "alerts": 0
+        }
+      },
+      "errors": []
+    },
+    {
+      "name": "Fallo búsqueda y reintento sano",
+      "resultado": {
+        "fallo": {
+          "paginadores": 0,
+          "promo1": 0,
+          "alerts": 1
+        },
+        "reintento": {
+          "paginador": "1–1 de 1 promociones",
+          "promo81": 1,
+          "alerts": 0
+        }
+      },
+      "errors": []
+    }
+  ]
+}

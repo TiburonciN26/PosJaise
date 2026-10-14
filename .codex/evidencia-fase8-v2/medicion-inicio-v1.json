@@ -1,0 +1,1719 @@
+{
+ "etiqueta": "v1-a",
+ "dist": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v1-a",
+ "fecha": "2026-10-12T15:22:14.358Z",
+ "reps": 3,
+ "nota": "Mediciones de laboratorio en Chromium contra un servidor estático local; los orígenes externos (Google) dependen de Internet; no es Lighthouse ni un dispositivo real.",
+ "inicio": {
+  "movil-390": {
+   "resumen": {
+    "reps": 3,
+    "bytes_sin_scroll": 1578432,
+    "bytes_tras_scroll": 3006136,
+    "peticiones_sin_scroll": 98,
+    "peticiones_tras_scroll": 137,
+    "mapa_sin_scroll": 0,
+    "mapa_tras_scroll": 29,
+    "bytes_mapa_tras_scroll": 848790,
+    "lcp_ms": 164,
+    "fcp_ms": 68,
+    "por_origen_sin_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1503991
+     },
+     "google-fonts": {
+      "peticiones": 3,
+      "bytes": 62521
+     },
+     "supabase-local": {
+      "peticiones": 20,
+      "bytes": 11920
+     }
+    },
+    "por_origen_tras_scroll": {
+     "propio": {
+      "peticiones": 77,
+      "bytes": 1708096
+     },
+     "google-fonts": {
+      "peticiones": 7,
+      "bytes": 110035
+     },
+     "supabase-local": {
+      "peticiones": 24,
+      "bytes": 346185
+     },
+     "google-maps": {
+      "peticiones": 29,
+      "bytes": 935432
+     }
+    },
+    "lcp_elemento": {
+     "t": 172,
+     "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+     "tag": "IMG",
+     "size": 110632
+    },
+    "hero": [
+     {
+      "url": "/inicio-web/hero-despues-referencia-960.webp",
+      "bytes": 16200,
+      "estado": 200
+     },
+     {
+      "url": "/inicio-web/hero-antes-referencia-960.webp",
+      "bytes": 14388,
+      "estado": 200
+     }
+    ],
+    "fuentes": [
+     {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+      "bytes": 1796
+     },
+     {
+      "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+      "bytes": 12024
+     },
+     {
+      "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+      "bytes": 122809
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "bytes": 48807
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+      "bytes": 11918
+     }
+    ],
+    "errores_pagina": [],
+    "fallos_red": []
+   },
+   "muestras": [
+    {
+     "nombre": "movil-390",
+     "viewport": {
+      "width": 390,
+      "height": 844
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1578432,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1503991
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 30588
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 137,
+      "bytes": 3006136,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1708096
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110035
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 29,
+        "bytes": 841819
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7257
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601914
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238830
+       },
+       "Image": {
+        "peticiones": 17,
+        "bytes": 948386
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 6145
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 29,
+     "bytes_mapa_tras_scroll": 841819,
+     "lcp": {
+      "t": 172,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+      "tag": "IMG",
+      "size": 110632
+     },
+     "fcp": 88,
+     "posicion_mapa_px": 4543,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-960.webp",
+       "bytes": 16200,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-960.webp",
+       "bytes": 14388,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48807
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 64
+    },
+    {
+     "nombre": "movil-390",
+     "viewport": {
+      "width": 390,
+      "height": 844
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1568648,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1503991
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 52737
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187640
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 185576
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 30588
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 137,
+      "bytes": 3003586,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1708096
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 100514
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 29,
+        "bytes": 848790
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7257
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601914
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191882
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 229111
+       },
+       "Image": {
+        "peticiones": 17,
+        "bytes": 955357
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 6145
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 29,
+     "bytes_mapa_tras_scroll": 848790,
+     "lcp": {
+      "t": 164,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+      "tag": "IMG",
+      "size": 128700
+     },
+     "fcp": 64,
+     "posicion_mapa_px": 4543,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-960.webp",
+       "bytes": 16200,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-960.webp",
+       "bytes": 14388,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1994
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/l/font?kit=UcCB3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfU5NJeWUdIOjBeTGiXZdND2M&s…",
+       "bytes": 38796
+      },
+      {
+       "url": "https://fonts.gstatic.com/l/font?kit=yMJ_MIlzdpvBhQQL_SC3X9yhF25-T1ny_CnTrUDChqmWoLxl7rvry-eeuQ&skey=1145794a0…",
+       "bytes": 11947
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 64
+    },
+    {
+     "nombre": "movil-390",
+     "viewport": {
+      "width": 390,
+      "height": 844
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1578432,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1503991
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 30588
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 137,
+      "bytes": 3099748,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1708096
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110035
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346185
+       },
+       "google-maps": {
+        "peticiones": 29,
+        "bytes": 935432
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7258
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601856
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238830
+       },
+       "Image": {
+        "peticiones": 17,
+        "bytes": 1042055
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 6145
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 29,
+     "bytes_mapa_tras_scroll": 935432,
+     "lcp": {
+      "t": 136,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+      "tag": "IMG",
+      "size": 110632
+     },
+     "fcp": 68,
+     "posicion_mapa_px": 4543,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-960.webp",
+       "bytes": 16200,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-960.webp",
+       "bytes": 14388,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48807
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 64
+    }
+   ]
+  },
+  "movil-412": {
+   "resumen": {
+    "reps": 3,
+    "bytes_sin_scroll": 1578432,
+    "bytes_tras_scroll": 3122214,
+    "peticiones_sin_scroll": 98,
+    "peticiones_tras_scroll": 137,
+    "mapa_sin_scroll": 0,
+    "mapa_tras_scroll": 29,
+    "bytes_mapa_tras_scroll": 957897,
+    "lcp_ms": 164,
+    "fcp_ms": 64,
+    "por_origen_sin_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1503991
+     },
+     "google-fonts": {
+      "peticiones": 3,
+      "bytes": 62521
+     },
+     "supabase-local": {
+      "peticiones": 20,
+      "bytes": 11920
+     }
+    },
+    "por_origen_tras_scroll": {
+     "propio": {
+      "peticiones": 77,
+      "bytes": 1708096
+     },
+     "google-fonts": {
+      "peticiones": 7,
+      "bytes": 110035
+     },
+     "supabase-local": {
+      "peticiones": 24,
+      "bytes": 346184
+     },
+     "google-maps": {
+      "peticiones": 29,
+      "bytes": 853211
+     }
+    },
+    "lcp_elemento": {
+     "t": 152,
+     "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+     "tag": "IMG",
+     "size": 116872
+    },
+    "hero": [
+     {
+      "url": "/inicio-web/hero-despues-referencia-960.webp",
+      "bytes": 16200,
+      "estado": 200
+     },
+     {
+      "url": "/inicio-web/hero-antes-referencia-960.webp",
+      "bytes": 14388,
+      "estado": 200
+     }
+    ],
+    "fuentes": [
+     {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+      "bytes": 1796
+     },
+     {
+      "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+      "bytes": 12024
+     },
+     {
+      "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+      "bytes": 122809
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "bytes": 48392
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+      "bytes": 12333
+     }
+    ],
+    "errores_pagina": [],
+    "fallos_red": []
+   },
+   "muestras": [
+    {
+     "nombre": "movil-412",
+     "viewport": {
+      "width": 412,
+      "height": 915
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1578432,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1503991
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 30588
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 137,
+      "bytes": 3122214,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1708096
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110035
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 29,
+        "bytes": 957897
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7256
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601914
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238830
+       },
+       "Image": {
+        "peticiones": 17,
+        "bytes": 1064383
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 6227
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 29,
+     "bytes_mapa_tras_scroll": 957897,
+     "lcp": {
+      "t": 152,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+      "tag": "IMG",
+      "size": 116872
+     },
+     "fcp": 56,
+     "posicion_mapa_px": 4452,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-960.webp",
+       "bytes": 16200,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-960.webp",
+       "bytes": 14388,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 12333
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 64
+    },
+    {
+     "nombre": "movil-412",
+     "viewport": {
+      "width": 412,
+      "height": 915
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1578432,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1503991
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 30588
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 137,
+      "bytes": 3122604,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1708096
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110035
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346185
+       },
+       "google-maps": {
+        "peticiones": 29,
+        "bytes": 958288
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7257
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601914
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238830
+       },
+       "Image": {
+        "peticiones": 17,
+        "bytes": 1064772
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 6227
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 29,
+     "bytes_mapa_tras_scroll": 958288,
+     "lcp": {
+      "t": 168,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+      "tag": "IMG",
+      "size": 135960
+     },
+     "fcp": 64,
+     "posicion_mapa_px": 4452,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-960.webp",
+       "bytes": 16200,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-960.webp",
+       "bytes": 14388,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 12333
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 64
+    },
+    {
+     "nombre": "movil-412",
+     "viewport": {
+      "width": 412,
+      "height": 915
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1578432,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1503991
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 30588
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 137,
+      "bytes": 3017526,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1708096
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110035
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346184
+       },
+       "google-maps": {
+        "peticiones": 29,
+        "bytes": 853211
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7258
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601914
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238830
+       },
+       "Image": {
+        "peticiones": 17,
+        "bytes": 959693
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 6227
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 29,
+     "bytes_mapa_tras_scroll": 853211,
+     "lcp": {
+      "t": 164,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-960.webp",
+      "tag": "IMG",
+      "size": 116872
+     },
+     "fcp": 64,
+     "posicion_mapa_px": 4452,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-960.webp",
+       "bytes": 16200,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-960.webp",
+       "bytes": 14388,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 12333
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 64
+    }
+   ]
+  },
+  "escritorio-1440": {
+   "resumen": {
+    "reps": 3,
+    "bytes_sin_scroll": 1612496,
+    "bytes_tras_scroll": 2865352,
+    "peticiones_sin_scroll": 98,
+    "peticiones_tras_scroll": 143,
+    "mapa_sin_scroll": 0,
+    "mapa_tras_scroll": 35,
+    "bytes_mapa_tras_scroll": 666972,
+    "lcp_ms": 176,
+    "fcp_ms": 68,
+    "por_origen_sin_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1538055
+     },
+     "google-fonts": {
+      "peticiones": 3,
+      "bytes": 62521
+     },
+     "supabase-local": {
+      "peticiones": 20,
+      "bytes": 11920
+     }
+    },
+    "por_origen_tras_scroll": {
+     "propio": {
+      "peticiones": 77,
+      "bytes": 1742160
+     },
+     "google-fonts": {
+      "peticiones": 7,
+      "bytes": 110034
+     },
+     "supabase-local": {
+      "peticiones": 24,
+      "bytes": 346186
+     },
+     "google-maps": {
+      "peticiones": 35,
+      "bytes": 666972
+     }
+    },
+    "lcp_elemento": {
+     "t": 164,
+     "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-1680.webp",
+     "tag": "IMG",
+     "size": 1164960
+    },
+    "hero": [
+     {
+      "url": "/inicio-web/hero-despues-referencia-1680.webp",
+      "bytes": 33392,
+      "estado": 200
+     },
+     {
+      "url": "/inicio-web/hero-antes-referencia-1680.webp",
+      "bytes": 31260,
+      "estado": 200
+     }
+    ],
+    "fuentes": [
+     {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+      "bytes": 1796
+     },
+     {
+      "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+      "bytes": 12024
+     },
+     {
+      "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+      "bytes": 122809
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "bytes": 48807
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+      "bytes": 11918
+     }
+    ],
+    "errores_pagina": [],
+    "fallos_red": []
+   },
+   "muestras": [
+    {
+     "nombre": "escritorio-1440",
+     "viewport": {
+      "width": 1440,
+      "height": 900
+     },
+     "dpr": 1,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1612496,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1538055
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 64652
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 143,
+      "bytes": 2867510,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1742160
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110026
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346184
+       },
+       "google-maps": {
+        "peticiones": 35,
+        "bytes": 669140
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7256
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601856
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191675
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238830
+       },
+       "Image": {
+        "peticiones": 23,
+        "bytes": 807532
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 8441
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 35,
+     "bytes_mapa_tras_scroll": 669140,
+     "lcp": {
+      "t": 164,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-1680.webp",
+      "tag": "IMG",
+      "size": 1164960
+     },
+     "fcp": 68,
+     "posicion_mapa_px": 3314,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-1680.webp",
+       "bytes": 33392,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-1680.webp",
+       "bytes": 31260,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48807
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 70
+    },
+    {
+     "nombre": "escritorio-1440",
+     "viewport": {
+      "width": 1440,
+      "height": 900
+     },
+     "dpr": 1,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1612496,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1538055
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 64652
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 143,
+      "bytes": 2861909,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1742160
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110034
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346185
+       },
+       "google-maps": {
+        "peticiones": 35,
+        "bytes": 663530
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7256
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601924
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238829
+       },
+       "Image": {
+        "peticiones": 23,
+        "bytes": 801855
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 8441
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 35,
+     "bytes_mapa_tras_scroll": 663530,
+     "lcp": {
+      "t": 176,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-1680.webp",
+      "tag": "IMG",
+      "size": 1164960
+     },
+     "fcp": 72,
+     "posicion_mapa_px": 3314,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-1680.webp",
+       "bytes": 33392,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-1680.webp",
+       "bytes": 31260,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 12333
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 70
+    },
+    {
+     "nombre": "escritorio-1440",
+     "viewport": {
+      "width": 1440,
+      "height": 900
+     },
+     "dpr": 1,
+     "sin_scroll": {
+      "peticiones": 98,
+      "bytes": 1612496,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1538055
+       },
+       "google-fonts": {
+        "peticiones": 3,
+        "bytes": 62521
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 1,
+        "bytes": 5854
+       },
+       "Script": {
+        "peticiones": 69,
+        "bytes": 1147070
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187442
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 4,
+        "bytes": 195558
+       },
+       "Image": {
+        "peticiones": 2,
+        "bytes": 64652
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 143,
+      "bytes": 2865352,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 77,
+        "bytes": 1742160
+       },
+       "google-fonts": {
+        "peticiones": 7,
+        "bytes": 110034
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 35,
+        "bytes": 666972
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 7252
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1601906
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191684
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 6,
+        "bytes": 238829
+       },
+       "Image": {
+        "peticiones": 23,
+        "bytes": 805320
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 8441
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 0,
+     "peticiones_mapa_tras_scroll": 35,
+     "bytes_mapa_tras_scroll": 666972,
+     "lcp": {
+      "t": 232,
+      "url": "http://127.0.0.1:5301/inicio-web/hero-despues-referencia-1680.webp",
+      "tag": "IMG",
+      "size": 1164960
+     },
+     "fcp": 64,
+     "posicion_mapa_px": 3314,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia-1680.webp",
+       "bytes": 33392,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia-1680.webp",
+       "bytes": 31260,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1796
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5301/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48807
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 70
+    }
+   ]
+  }
+ }
+}

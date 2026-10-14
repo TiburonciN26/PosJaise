@@ -1,0 +1,9 @@
+{
+  "fecha": "2026-10-13T19:44:16.7996315Z",
+  "adaptador": "Ejecutar original, sin -EjecutorPsql; solo el comando docker es doble que lanza antes de conectar",
+  "sinRed": true,
+  "sinCredencialesReales": true,
+  "error": "No se encontro docker (doble sin red del lanzamiento del proceso)",
+  "archivoPrevioIntacto": true,
+  "estadoQueQueda": "ESTADO|COMPLETO"
+}

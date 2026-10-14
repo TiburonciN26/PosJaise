@@ -1,0 +1,45 @@
+{
+  "fecha": "2026-10-10T16:41:11.645Z",
+  "soloLectura": true,
+  "producto": {
+    "id": "432a6610-67e5-4a7c-a979-eb891cc9263c",
+    "foto_url": null
+  },
+  "servicio": {
+    "id": "6265a7d1-80b3-4b72-9b34-7f6eca3d7873",
+    "foto_url": null
+  },
+  "galeriaProducto": 0,
+  "galeriaServicio": 0,
+  "galeriaWeb": [
+    {
+      "id": "4ab5c994-9bb1-40bf-b5ff-186d45603781",
+      "titulo": "Foto de prueba (Inicio)"
+    },
+    {
+      "id": "5bb670df-db45-4c70-a6aa-40b856fbf8a6",
+      "titulo": "QA fase 3 (borrar)"
+    }
+  ],
+  "inventario": [
+    {
+      "destino": "fotos-productos",
+      "objetos": 0,
+      "truncated": null,
+      "cursor": null
+    },
+    {
+      "destino": "fotos-servicios",
+      "objetos": 0,
+      "truncated": null,
+      "cursor": null
+    },
+    {
+      "destino": "fotos-galeria",
+      "objetos": 0,
+      "truncated": null,
+      "cursor": null
+    }
+  ],
+  "nota": "Confirma estado actual de medios; no prueba identidad de todos los campos frente a un snapshot previo inexistente."
+}

@@ -1,0 +1,14 @@
+{
+  "fecha": "2026-10-10",
+  "offline": true,
+  "objetivo": "Demostrar que el preflight actual comprueba build-id pero no entrega pages",
+  "esperado": "Rechazar la configuracion/artefacto incompatible antes del login y las escrituras",
+  "observado": {
+    "preflightAceptado": true,
+    "htmlCalls": 1,
+    "resultado": {
+      "buildId": "b36e7495"
+    }
+  },
+  "limite": "Doble HTML en memoria, sin peticiones ni autenticacion; la aceptacion de G.preflight se confirma, no se ejecuto el recorrido remoto"
+}

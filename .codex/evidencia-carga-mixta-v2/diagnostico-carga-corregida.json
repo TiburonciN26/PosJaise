@@ -1,0 +1,186 @@
+{
+  "fecha": "2026-10-11T00:22:52.488Z",
+  "sinRed": true,
+  "alcance": "Flujo exportado real, dependencias de Worker/lecturas en memoria; fuente ajena inicial conservada. No CLI completo ni autenticación.",
+  "casos": 6,
+  "fallos": 0,
+  "resultados": [
+    {
+      "modo": "sano-con-objeto-ajeno",
+      "ok": true,
+      "completa": true,
+      "estadoFinalConfirmado": true,
+      "error": null,
+      "pendientes": [],
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "m"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "g"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "B",
+          "variante": "m"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "B",
+          "variante": "g"
+        },
+        {
+          "metodo": "DELETE",
+          "prefijo": "fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/"
+        },
+        {
+          "metodo": "DELETE",
+          "prefijo": "fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/"
+        }
+      ],
+      "clavesFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp"
+      ],
+      "lecturasCarga": 302
+    },
+    {
+      "modo": "conflicto-inicial-A",
+      "ok": true,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "error": "prefijo previsto ya existente: se aborta antes de escribir y sin limpieza",
+      "pendientes": [],
+      "operaciones": [],
+      "clavesFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp",
+        "fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m.webp"
+      ],
+      "lecturasCarga": 0
+    },
+    {
+      "modo": "conflicto-inicial-B",
+      "ok": true,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "error": "prefijo previsto ya existente: se aborta antes de escribir y sin limpieza",
+      "pendientes": [],
+      "operaciones": [],
+      "clavesFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp",
+        "fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/g.webp"
+      ],
+      "lecturasCarga": 0
+    },
+    {
+      "modo": "primer-PUT-respuesta-perdida",
+      "ok": true,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "error": "respuesta perdida ficticia",
+      "pendientes": [],
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "m"
+        },
+        {
+          "metodo": "DELETE",
+          "prefijo": "fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/"
+        }
+      ],
+      "clavesFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp"
+      ],
+      "lecturasCarga": 0
+    },
+    {
+      "modo": "409-tardio-en-B-g",
+      "ok": true,
+      "completa": false,
+      "estadoFinalConfirmado": false,
+      "error": "409 en B/g",
+      "pendientes": [
+        "fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/ (409: pertenencia incierta, conservado)"
+      ],
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "m"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "g"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "B",
+          "variante": "m"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "B",
+          "variante": "g"
+        },
+        {
+          "metodo": "DELETE",
+          "prefijo": "fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/"
+        }
+      ],
+      "clavesFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp",
+        "fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/m.webp",
+        "fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/g.webp"
+      ],
+      "lecturasCarga": 0
+    },
+    {
+      "modo": "ETag-ausente-en-carga",
+      "ok": true,
+      "completa": false,
+      "estadoFinalConfirmado": true,
+      "error": "carga detenida: ETag ausente en GET-m",
+      "pendientes": [],
+      "operaciones": [
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "m"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "A",
+          "variante": "g"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "B",
+          "variante": "m"
+        },
+        {
+          "metodo": "PUT",
+          "grupo": "B",
+          "variante": "g"
+        },
+        {
+          "metodo": "DELETE",
+          "prefijo": "fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/"
+        },
+        {
+          "metodo": "DELETE",
+          "prefijo": "fotos-galeria/ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee/"
+        }
+      ],
+      "clavesFinales": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp"
+      ],
+      "lecturasCarga": 1
+    }
+  ]
+}

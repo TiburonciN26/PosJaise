@@ -1,0 +1,396 @@
+{
+  "tipo": "diagnóstico independiente SIN red, SIN login real, SIN objetos ni archivos del proyecto modificados",
+  "sha256Script": "a290abbb0fd44eda941dfbf1987dc21d59f429fc86e82262985b0c2d16882747",
+  "casos": [
+    {
+      "opciones": {},
+      "exitCode": 0,
+      "completa": true,
+      "error": null,
+      "limpieza": {
+        "confirmada": true,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      },
+      "estadoFinalConfirmado": true,
+      "resumen": {
+        "casos": 27,
+        "fallos": 0
+      },
+      "casosFallidos": [],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-c9fcaf.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "popDistinto": true
+      },
+      "exitCode": 0,
+      "completa": true,
+      "error": null,
+      "limpieza": {
+        "confirmada": true,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      },
+      "estadoFinalConfirmado": true,
+      "resumen": {
+        "casos": 27,
+        "fallos": 0
+      },
+      "casosFallidos": [],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": false,
+      "popHit": "LIM",
+      "popExpiracion": "MIA",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-df9705.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "fallo": "red"
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": null,
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": [
+          "lectura del inventario: FALLO FICTICIO inventario final"
+        ]
+      },
+      "estadoFinalConfirmado": false,
+      "resumen": {
+        "casos": 27,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+          "ok": false,
+          "detalle": {
+            "confirmada": false,
+            "necesaria": false,
+            "estadoBorrado": null,
+            "pendientes": [],
+            "igualAlInicial": false,
+            "errores": [
+              "lectura del inventario: FALLO FICTICIO inventario final"
+            ]
+          }
+        }
+      ],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-5ff679.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "fallo": "500"
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": null,
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": [
+          "lectura del inventario: inventario ilegible para fotos-galeria (estado 500)"
+        ]
+      },
+      "estadoFinalConfirmado": false,
+      "resumen": {
+        "casos": 27,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+          "ok": false,
+          "detalle": {
+            "confirmada": false,
+            "necesaria": false,
+            "estadoBorrado": null,
+            "pendientes": [],
+            "igualAlInicial": false,
+            "errores": [
+              "lectura del inventario: inventario ilegible para fotos-galeria (estado 500)"
+            ]
+          }
+        }
+      ],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-bcd084.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "fallo": "malformado"
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": null,
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": [
+          "lectura del inventario: inventario ilegible para fotos-galeria (estado 200)"
+        ]
+      },
+      "estadoFinalConfirmado": false,
+      "resumen": {
+        "casos": 27,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+          "ok": false,
+          "detalle": {
+            "confirmada": false,
+            "necesaria": false,
+            "estadoBorrado": null,
+            "pendientes": [],
+            "igualAlInicial": false,
+            "errores": [
+              "lectura del inventario: inventario ilegible para fotos-galeria (estado 200)"
+            ]
+          }
+        }
+      ],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-fcc475.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "fallo": "cursor"
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": null,
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": [
+          "lectura del inventario: inventario paginado en fotos-galeria (cursor presente): el snapshot no sería completo"
+        ]
+      },
+      "estadoFinalConfirmado": false,
+      "resumen": {
+        "casos": 27,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+          "ok": false,
+          "detalle": {
+            "confirmada": false,
+            "necesaria": false,
+            "estadoBorrado": null,
+            "pendientes": [],
+            "igualAlInicial": false,
+            "errores": [
+              "lectura del inventario: inventario paginado en fotos-galeria (cursor presente): el snapshot no sería completo"
+            ]
+          }
+        }
+      ],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-3ba3b0.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 1,
+      "inventarios": 4,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "forzarLimpieza": true,
+        "fallo": "red",
+        "falloEn": 5
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": null,
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": true,
+        "estadoBorrado": 200,
+        "pendientes": [],
+        "igualAlInicial": false,
+        "errores": [
+          "lectura del inventario: FALLO FICTICIO inventario final"
+        ]
+      },
+      "estadoFinalConfirmado": false,
+      "resumen": {
+        "casos": 27,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+          "ok": false,
+          "detalle": {
+            "confirmada": false,
+            "necesaria": true,
+            "estadoBorrado": 200,
+            "pendientes": [],
+            "igualAlInicial": false,
+            "errores": [
+              "lectura del inventario: FALLO FICTICIO inventario final"
+            ]
+          }
+        }
+      ],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-5fec99.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 2,
+      "inventarios": 5,
+      "objetosSimuladosRestantes": 0
+    },
+    {
+      "opciones": {
+        "forzarLimpieza": true,
+        "deleteFalla": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": null,
+      "limpieza": {
+        "confirmada": false,
+        "necesaria": true,
+        "estadoBorrado": 500,
+        "pendientes": [
+          "fotos-galeria/dba1fde2-1122-4017-a5e2-76df6f8a519b/m.webp",
+          "fotos-galeria/dba1fde2-1122-4017-a5e2-76df6f8a519b/g.webp"
+        ],
+        "igualAlInicial": false,
+        "errores": []
+      },
+      "estadoFinalConfirmado": false,
+      "resumen": {
+        "casos": 27,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+          "ok": false,
+          "detalle": {
+            "confirmada": false,
+            "necesaria": true,
+            "estadoBorrado": 500,
+            "pendientes": [
+              "fotos-galeria/dba1fde2-1122-4017-a5e2-76df6f8a519b/m.webp",
+              "fotos-galeria/dba1fde2-1122-4017-a5e2-76df6f8a519b/g.webp"
+            ],
+            "igualAlInicial": false,
+            "errores": []
+          }
+        }
+      ],
+      "expiracionProbada": true,
+      "expiracionDeLaMismaCopia": true,
+      "popHit": "LIM",
+      "popExpiracion": "LIM",
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-1ac796.json",
+      "loginsSimulados": 1,
+      "putsSimulados": 2,
+      "deletesSimulados": 2,
+      "inventarios": 5,
+      "objetosSimuladosRestantes": 2
+    },
+    {
+      "opciones": {
+        "marcaIncorrecta": true
+      },
+      "exitCode": 1,
+      "completa": false,
+      "error": "el artefacto del alias (b36e7495) no es el esperado (12345678); no se autentica ni se escribe nada",
+      "limpieza": null,
+      "estadoFinalConfirmado": true,
+      "resumen": {
+        "casos": 1,
+        "fallos": 1
+      },
+      "casosFallidos": [
+        {
+          "nombre": "la corrida terminó sin error",
+          "ok": false,
+          "detalle": {
+            "error": "el artefacto del alias (b36e7495) no es el esperado (12345678); no se autentica ni se escribe nada"
+          }
+        }
+      ],
+      "rutaInforme": "C:\\QA-ficticio\\informe\\cache-f38f43.json",
+      "loginsSimulados": 0,
+      "putsSimulados": 0,
+      "deletesSimulados": 0,
+      "inventarios": 0,
+      "objetosSimuladosRestantes": 0
+    }
+  ]
+}

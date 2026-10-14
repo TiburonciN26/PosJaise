@@ -33,17 +33,17 @@
  */
 @theme {
   /* Fondos y superficies (oscuro — sin cambios respecto al diseño actual) */
-  --color-bg: #0d0d0d;
-  --color-surface: #161616;
-  --color-surface-2: #1e1e1e;
-  --color-surface-3: #262626;
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-2: #141414;
+  --color-surface-3: #1c1c1c;
 
   /* Bordes */
-  --color-border: #2e2e2e;
-  --color-border-strong: #3a3a3a;
+  --color-border: #2a2a2a;
+  --color-border-strong: #363636;
 
   /* Texto */
-  --color-ink: #f0ede6;
+  --color-ink: #ffffff;
 
   /* Acentos */
   --color-amber: #f5a623;
@@ -678,6 +678,13 @@
 ::view-transition-new(root) {
   animation-duration: 350ms;
   animation-timing-function: ease;
+}
+
+/* Fondo también en <html>: en móvil la franja detrás de los botones del
+   sistema (Android) queda fuera de #root/body y se veía BLANCA; pintando el
+   canvas del tema ahí se ve negro en oscuro y claro en claro. */
+html {
+  background-color: var(--color-bg);
 }
 
 body {
@@ -2137,6 +2144,42 @@ input[type='search']::-webkit-search-decoration {
 .lgn-a-bottom { animation: lgnIn .5s cubic-bezier(.22,1,.36,1) 1260ms both; }
 @media (prefers-reduced-motion: reduce) {
   .lgn *, .lgn { transition: none !important; animation: none !important; }
+}
+
+/* ===== Paleta oscura del POS (la "nueva" oscuro: fondo #0A0A0A, secundario
+   #141414, bordes finos, texto blanco) =====
+   Los colores van en @theme (arriba). Acá van las reglas que no son tokens.
+   Excluye el portal de clientes: body:not(:has(.landing-web)) — el portal
+   conserva su paleta de antes (se re-declara en .landing-web más abajo).
+   Solo en oscuro; el tema claro no se toca. */
+:root:not([data-tema='claro']) body:not(:has(.landing-web)) {
+  /* Header y barras de buscador: mismo negro del fondo, no el secundario */
+  & .tema-negro-fondo { background-color: var(--color-bg); }
+  /* Texto gris (text-ink/NN) a blanco puro; los de color y los
+     placeholders no se tocan (el placeholder es un pseudo-elemento) */
+  & [class*='text-ink/'] { color: #ffffff; }
+
+  /* Bordes finos (en 1x el navegador los redondea a 1px) */
+  & .border { border-width: 0.75px; }
+  & .border-t { border-top-width: 0.75px; }
+  & .border-b { border-bottom-width: 0.75px; }
+  & .border-l { border-left-width: 0.75px; }
+  & .border-r { border-right-width: 0.75px; }
+  & .divide-y > :not(:last-child) { border-bottom-width: 0.75px; }
+
+  /* Header un poco más bajo (7px -> 6px de padding vertical) */
+  & header > div { padding-block: 6px; }
+}
+
+/* Portal de clientes: conserva la paleta oscura anterior */
+:root:not([data-tema='claro']) .landing-web {
+  --color-bg: #0d0d0d;
+  --color-surface: #161616;
+  --color-surface-2: #1e1e1e;
+  --color-surface-3: #262626;
+  --color-border: #2e2e2e;
+  --color-border-strong: #3a3a3a;
+  --color-ink: #f0ede6;
 }
 
 /*

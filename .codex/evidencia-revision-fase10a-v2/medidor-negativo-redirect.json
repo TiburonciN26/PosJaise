@@ -1,0 +1,45 @@
+{
+ "fecha": "2026-10-13T15:19:18.487Z",
+ "metodo": "CPU 4×, red 150 ms / 1,6 Mbps, SW bloqueado; mediana exacta de muestras",
+ "completo": false,
+ "escenarios": {},
+ "reducido": {},
+ "errores": [
+  "guarda de red (tras iniciar sesión): redireccion GET http://127.0.0.1:61381/captura"
+ ],
+ "app": "http://127.0.0.1:61382",
+ "muestras": 1,
+ "preflight": {
+  "app": "http://127.0.0.1:61382",
+  "api": "http://127.0.0.1:54321",
+  "indexSha256": "039bfbb6b68eaef3cde6ac673bf7a1c616120eb51edb8305aecf2d13ffa054f9",
+  "modulosRevisados": 1,
+  "configuraciones": 1,
+  "cuentas": [
+   "admin",
+   "clienteA"
+  ]
+ },
+ "escenariosEsperados": [
+  "portal-inicio",
+  "portal-productos",
+  "portal-detalle-producto",
+  "clienta-inicio",
+  "clienta-productos",
+  "clienta-detalle-producto",
+  "pos-ventas",
+  "pos-pedidos-web"
+ ],
+ "reducidoEsperados": [
+  "reducido-inicio",
+  "reducido-promociones",
+  "reducido-referidos-web"
+ ],
+ "guarda": {
+  "origen": "http://127.0.0.1:61382",
+  "violaciones": [
+   "redireccion GET http://127.0.0.1:61381/captura"
+  ],
+  "neutralizadas": 0
+ }
+}

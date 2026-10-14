@@ -1,0 +1,133 @@
+{
+ "fecha": "2026-10-13T06:36:32.114Z",
+ "app": "http://127.0.0.1:5173",
+ "api": "http://127.0.0.1:54321",
+ "casos": [
+  {
+   "nombre": "productos: la vitrina inicial NO descarga el catálogo (ninguna consulta pide más de 40 filas) y monta pocas tarjetas",
+   "ok": true
+  },
+  {
+   "nombre": "productos: buscar «ULTIMA UNIDAD» encuentra un registro posterior a la posición 1000 (antes no aparecía)",
+   "ok": true
+  },
+  {
+   "nombre": "productos: respuestas fuera de orden — una respuesta lenta y vieja no pisa la búsqueda más reciente",
+   "ok": true
+  },
+  {
+   "nombre": "productos: limpiar la búsqueda vuelve a la vista agrupada al instante",
+   "ok": true
+  },
+  {
+   "nombre": "productos: sin coincidencias muestra «Sin resultados» (no un error ni «Buscando…» eterno)",
+   "ok": true
+  },
+  {
+   "nombre": "productos: paginación — 40 tarjetas por página, el DOM NO acumula, sin repetidos entre páginas, primera/última/anterior",
+   "ok": true
+  },
+  {
+   "nombre": "productos: un fallo de red muestra un error con «Reintentar» (distinto de «sin resultados») y se recupera",
+   "ok": true
+  },
+  {
+   "nombre": "productos: si la vitrina inicial falla se muestra un error con «Reintentar» (no «Cargando...» para siempre)",
+   "ok": true
+  },
+  {
+   "nombre": "productos: abrir el detalle de una tarjeta y volver conserva el catálogo funcionando",
+   "ok": true
+  },
+  {
+   "nombre": "productos: 390px — sin desborde horizontal en la vista agrupada, la lista paginada y el paginador",
+   "ok": true
+  },
+  {
+   "nombre": "productos: 412px — sin desborde horizontal en la vista agrupada, la lista paginada y el paginador",
+   "ok": true
+  },
+  {
+   "nombre": "productos: 1440px — sin desborde horizontal en la vista agrupada, la lista paginada y el paginador",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: la vitrina inicial NO descarga el catálogo (ninguna consulta pide más de 40 filas) y monta pocas tarjetas",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: buscar «PORC muy8» encuentra un registro posterior a la posición 1000 (antes no aparecía)",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: respuestas fuera de orden — una respuesta lenta y vieja no pisa la búsqueda más reciente",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: limpiar la búsqueda vuelve a la vista agrupada al instante",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: sin coincidencias muestra «Sin resultados» (no un error ni «Buscando…» eterno)",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: paginación — 40 tarjetas por página, el DOM NO acumula, sin repetidos entre páginas, primera/última/anterior",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: un fallo de red muestra un error con «Reintentar» (distinto de «sin resultados») y se recupera",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: si la vitrina inicial falla se muestra un error con «Reintentar» (no «Cargando...» para siempre)",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: abrir el detalle de una tarjeta y volver conserva el catálogo funcionando",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: 390px — sin desborde horizontal en la vista agrupada, la lista paginada y el paginador",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: 412px — sin desborde horizontal en la vista agrupada, la lista paginada y el paginador",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: 1440px — sin desborde horizontal en la vista agrupada, la lista paginada y el paginador",
+   "ok": true
+  },
+  {
+   "nombre": "productos: elegir una categoría en la barra muestra su listado (conteo global) y «Todas las categorías» regresa",
+   "ok": true
+  },
+  {
+   "nombre": "productos: muchas categorías — «Todos» monta como máximo 40 tarjetas por ventana, con paginador de categorías, y TODAS las categorías son alcanzables",
+   "ok": true
+  },
+  {
+   "nombre": "productos: muchas categorías — sin desborde horizontal y el paginador de categorías cabe en 390 px",
+   "ok": true
+  },
+  {
+   "nombre": "productos: muchas categorías — si falla una ventana se muestra el error con «Reintentar» y se recupera",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: muchas categorías — «Todos» monta como máximo 40 tarjetas por ventana, con paginador de categorías, y TODAS las categorías son alcanzables",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: muchas categorías — sin desborde horizontal y el paginador de categorías cabe en 390 px",
+   "ok": true
+  },
+  {
+   "nombre": "servicios: muchas categorías — si falla una ventana se muestra el error con «Reintentar» y se recupera",
+   "ok": true
+  }
+ ],
+ "total": 31,
+ "fallos": 0
+}

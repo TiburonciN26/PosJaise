@@ -1,0 +1,1464 @@
+{
+ "fecha": "2026-10-13T01:00:47.070Z",
+ "app": "http://127.0.0.1:5404/PosJaise",
+ "metodo": "CPU 4×, red 150 ms / 1,6 Mbps, SW bloqueado; mediana de muestras",
+ "muestras": 3,
+ "escenarios": {
+  "portal-inicio": {
+   "ruta": "/inicio",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 2188,
+    "lcpPrimero": 1504,
+    "fcp": 1504,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 1,
+    "mayorTareaMs": 155,
+    "nodos": 69,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 1672,
+    "lcpPrimero": 1304,
+    "fcp": 1300,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 69,
+    "interaccionMs": null
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 2148,
+     "lcpPrimero": 1504,
+     "candidatos": [
+      {
+       "t": 1504,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2148,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1504,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 155,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 2196,
+     "lcpPrimero": 1512,
+     "candidatos": [
+      {
+       "t": 1512,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2196,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1456,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 157,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 2188,
+     "lcpPrimero": 1504,
+     "candidatos": [
+      {
+       "t": 1504,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2188,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1504,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 154,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 1824,
+     "lcpPrimero": 1304,
+     "candidatos": [
+      {
+       "t": 1304,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1824,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1288,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1664,
+     "lcpPrimero": 1312,
+     "candidatos": [
+      {
+       "t": 1312,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1664,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1300,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1672,
+     "lcpPrimero": 1304,
+     "candidatos": [
+      {
+       "t": 1304,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1672,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1304,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "portal-productos": {
+   "ruta": "/productos",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 2132,
+    "lcpPrimero": 1492,
+    "fcp": 1492,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 1,
+    "mayorTareaMs": 150,
+    "nodos": 69,
+    "interaccionMs": "sin-campo"
+   },
+   "caliente": {
+    "lcp": 1840,
+    "lcpPrimero": 1300,
+    "fcp": 1300,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 69,
+    "interaccionMs": "sin-campo"
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 2176,
+     "lcpPrimero": 1496,
+     "candidatos": [
+      {
+       "t": 1496,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2176,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1496,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 154,
+     "nodos": 69,
+     "interaccionMs": "sin-campo",
+     "errores": 0
+    },
+    {
+     "lcp": 2132,
+     "lcpPrimero": 1492,
+     "candidatos": [
+      {
+       "t": 1492,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2132,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1492,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 150,
+     "nodos": 69,
+     "interaccionMs": "sin-campo",
+     "errores": 0
+    },
+    {
+     "lcp": 2020,
+     "lcpPrimero": 1484,
+     "candidatos": [
+      {
+       "t": 1484,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2020,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1484,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 150,
+     "nodos": 69,
+     "interaccionMs": "sin-campo",
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 1876,
+     "lcpPrimero": 1316,
+     "candidatos": [
+      {
+       "t": 1316,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1876,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1300,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": "sin-campo",
+     "errores": 0
+    },
+    {
+     "lcp": 1840,
+     "lcpPrimero": 1280,
+     "candidatos": [
+      {
+       "t": 1280,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1840,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1280,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": "sin-campo",
+     "errores": 0
+    },
+    {
+     "lcp": 1816,
+     "lcpPrimero": 1300,
+     "candidatos": [
+      {
+       "t": 1300,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1816,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1300,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": "sin-campo",
+     "errores": 0
+    }
+   ]
+  },
+  "portal-detalle-producto": {
+   "ruta": "/productos/:id",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 2164,
+    "lcpPrimero": 1492,
+    "fcp": 1492,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 1,
+    "mayorTareaMs": 144,
+    "nodos": 69,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 1740,
+    "lcpPrimero": 1288,
+    "fcp": 1288,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 69,
+    "interaccionMs": null
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 2116,
+     "lcpPrimero": 1504,
+     "candidatos": [
+      {
+       "t": 1504,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2116,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1504,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 151,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 2224,
+     "lcpPrimero": 1492,
+     "candidatos": [
+      {
+       "t": 1492,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2224,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1492,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 144,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 2164,
+     "lcpPrimero": 1472,
+     "candidatos": [
+      {
+       "t": 1472,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2164,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1428,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 143,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 1920,
+     "lcpPrimero": 1288,
+     "candidatos": [
+      {
+       "t": 1288,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1920,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1288,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1740,
+     "lcpPrimero": 1316,
+     "candidatos": [
+      {
+       "t": 1316,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1740,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1300,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1640,
+     "lcpPrimero": 1288,
+     "candidatos": [
+      {
+       "t": 1288,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1640,
+       "tam": 5742,
+       "el": "H1 Pos Jaise Beauty Academy"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1288,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 69,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "clienta-inicio": {
+   "ruta": "/inicio",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 1516,
+    "lcpPrimero": 1516,
+    "fcp": 1516,
+    "cls": 0,
+    "tbt": 2,
+    "tareasLargas": 2,
+    "mayorTareaMs": 186,
+    "nodos": 201,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 1308,
+    "lcpPrimero": 1308,
+    "fcp": 1308,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 201,
+    "interaccionMs": null
+   },
+   "lcpElemento": "P",
+   "muestrasFrio": [
+    {
+     "lcp": 1520,
+     "lcpPrimero": 1520,
+     "candidatos": [
+      {
+       "t": 1520,
+       "tam": 1462,
+       "el": "P Cargando..."
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1520,
+     "cls": 0,
+     "tbt": 12,
+     "tareasLargas": 2,
+     "mayorTareaMs": 207,
+     "nodos": 201,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1516,
+     "lcpPrimero": 1516,
+     "candidatos": [
+      {
+       "t": 1516,
+       "tam": 1462,
+       "el": "P Cargando..."
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1516,
+     "cls": 0,
+     "tbt": 2,
+     "tareasLargas": 2,
+     "mayorTareaMs": 186,
+     "nodos": 201,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1472,
+     "lcpPrimero": 1472,
+     "candidatos": [
+      {
+       "t": 1472,
+       "tam": 1462,
+       "el": "P Cargando..."
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1472,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 153,
+     "nodos": 201,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 1320,
+     "lcpPrimero": 1320,
+     "candidatos": [
+      {
+       "t": 1320,
+       "tam": 1462,
+       "el": "P Cargando..."
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1320,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 201,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1308,
+     "lcpPrimero": 1308,
+     "candidatos": [
+      {
+       "t": 1308,
+       "tam": 1462,
+       "el": "P Cargando..."
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1308,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 201,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 1308,
+     "lcpPrimero": 1308,
+     "candidatos": [
+      {
+       "t": 1308,
+       "tam": 1462,
+       "el": "P Cargando..."
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1308,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 201,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "clienta-productos": {
+   "ruta": "/productos",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 6172,
+    "lcpPrimero": 1484,
+    "fcp": 1484,
+    "cls": 0,
+    "tbt": 95,
+    "tareasLargas": 3,
+    "mayorTareaMs": 164,
+    "nodos": 2280,
+    "interaccionMs": 544
+   },
+   "caliente": {
+    "lcp": 5584,
+    "lcpPrimero": 1304,
+    "fcp": 1304,
+    "cls": 0,
+    "tbt": 65,
+    "tareasLargas": 2,
+    "mayorTareaMs": 105,
+    "nodos": 2280,
+    "interaccionMs": 512
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 6204,
+     "lcpPrimero": 1484,
+     "candidatos": [
+      {
+       "t": 1484,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 6204,
+       "tam": 50352,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1484,
+     "cls": 0,
+     "tbt": 95,
+     "tareasLargas": 3,
+     "mayorTareaMs": 162,
+     "nodos": 2280,
+     "interaccionMs": 536,
+     "errores": 0
+    },
+    {
+     "lcp": 6172,
+     "lcpPrimero": 1492,
+     "candidatos": [
+      {
+       "t": 1492,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 6172,
+       "tam": 48432,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1492,
+     "cls": 0,
+     "tbt": 86,
+     "tareasLargas": 2,
+     "mayorTareaMs": 168,
+     "nodos": 2280,
+     "interaccionMs": 560,
+     "errores": 0
+    },
+    {
+     "lcp": 6120,
+     "lcpPrimero": 1456,
+     "candidatos": [
+      {
+       "t": 1456,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 6120,
+       "tam": 48433,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1456,
+     "cls": 0,
+     "tbt": 120,
+     "tareasLargas": 3,
+     "mayorTareaMs": 164,
+     "nodos": 2280,
+     "interaccionMs": 544,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 5584,
+     "lcpPrimero": 1296,
+     "candidatos": [
+      {
+       "t": 1296,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 5584,
+       "tam": 48432,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1296,
+     "cls": 0,
+     "tbt": 59,
+     "tareasLargas": 2,
+     "mayorTareaMs": 106,
+     "nodos": 2280,
+     "interaccionMs": 480,
+     "errores": 0
+    },
+    {
+     "lcp": 5620,
+     "lcpPrimero": 1304,
+     "candidatos": [
+      {
+       "t": 1304,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 5620,
+       "tam": 48989,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1304,
+     "cls": 0,
+     "tbt": 70,
+     "tareasLargas": 3,
+     "mayorTareaMs": 105,
+     "nodos": 2280,
+     "interaccionMs": 512,
+     "errores": 0
+    },
+    {
+     "lcp": 5572,
+     "lcpPrimero": 1312,
+     "candidatos": [
+      {
+       "t": 1312,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 5572,
+       "tam": 50351,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1312,
+     "cls": 0,
+     "tbt": 65,
+     "tareasLargas": 2,
+     "mayorTareaMs": 104,
+     "nodos": 2280,
+     "interaccionMs": 544,
+     "errores": 0
+    }
+   ]
+  },
+  "clienta-detalle-producto": {
+   "ruta": "/productos/:id",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 4600,
+    "lcpPrimero": 1508,
+    "fcp": 1508,
+    "cls": 0,
+    "tbt": 19,
+    "tareasLargas": 2,
+    "mayorTareaMs": 173,
+    "nodos": 369,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 4152,
+    "lcpPrimero": 1320,
+    "fcp": 1320,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 369,
+    "interaccionMs": null
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 4444,
+     "lcpPrimero": 1472,
+     "candidatos": [
+      {
+       "t": 1472,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4444,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1472,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 158,
+     "nodos": 369,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4676,
+     "lcpPrimero": 1540,
+     "candidatos": [
+      {
+       "t": 1540,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4676,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1540,
+     "cls": 0,
+     "tbt": 27,
+     "tareasLargas": 2,
+     "mayorTareaMs": 214,
+     "nodos": 369,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4600,
+     "lcpPrimero": 1508,
+     "candidatos": [
+      {
+       "t": 1508,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4600,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1508,
+     "cls": 0,
+     "tbt": 19,
+     "tareasLargas": 2,
+     "mayorTareaMs": 173,
+     "nodos": 369,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 4152,
+     "lcpPrimero": 1328,
+     "candidatos": [
+      {
+       "t": 1328,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4152,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1328,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 369,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4164,
+     "lcpPrimero": 1320,
+     "candidatos": [
+      {
+       "t": 1320,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4164,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1320,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 369,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4148,
+     "lcpPrimero": 1296,
+     "candidatos": [
+      {
+       "t": 1296,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4148,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1296,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 369,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "pos-ventas": {
+   "ruta": "/ventas",
+   "vista": "1366×900",
+   "frio": {
+    "lcp": 2192,
+    "lcpPrimero": 1500,
+    "fcp": 1500,
+    "cls": 0,
+    "tbt": 47,
+    "tareasLargas": 2,
+    "mayorTareaMs": 174,
+    "nodos": 328,
+    "interaccionMs": 32
+   },
+   "caliente": {
+    "lcp": 1784,
+    "lcpPrimero": 1312,
+    "fcp": 1312,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 328,
+    "interaccionMs": 24
+   },
+   "lcpElemento": "P",
+   "muestrasFrio": [
+    {
+     "lcp": 2272,
+     "lcpPrimero": 1496,
+     "candidatos": [
+      {
+       "t": 1496,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2272,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1496,
+     "cls": 0,
+     "tbt": 81,
+     "tareasLargas": 2,
+     "mayorTareaMs": 174,
+     "nodos": 328,
+     "interaccionMs": 32,
+     "errores": 0
+    },
+    {
+     "lcp": 2192,
+     "lcpPrimero": 1508,
+     "candidatos": [
+      {
+       "t": 1508,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2192,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1508,
+     "cls": 0,
+     "tbt": 47,
+     "tareasLargas": 2,
+     "mayorTareaMs": 185,
+     "nodos": 328,
+     "interaccionMs": 32,
+     "errores": 0
+    },
+    {
+     "lcp": 2140,
+     "lcpPrimero": 1500,
+     "candidatos": [
+      {
+       "t": 1500,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2140,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1500,
+     "cls": 0,
+     "tbt": 34,
+     "tareasLargas": 2,
+     "mayorTareaMs": 162,
+     "nodos": 328,
+     "interaccionMs": 24,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 1784,
+     "lcpPrimero": 1312,
+     "candidatos": [
+      {
+       "t": 1312,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1784,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1312,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 328,
+     "interaccionMs": 24,
+     "errores": 0
+    },
+    {
+     "lcp": 1804,
+     "lcpPrimero": 1336,
+     "candidatos": [
+      {
+       "t": 1336,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1804,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1336,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 328,
+     "interaccionMs": 32,
+     "errores": 0
+    },
+    {
+     "lcp": 1696,
+     "lcpPrimero": 1304,
+     "candidatos": [
+      {
+       "t": 1304,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1696,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1304,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 328,
+     "interaccionMs": 24,
+     "errores": 0
+    }
+   ]
+  },
+  "pos-pedidos-web": {
+   "ruta": "/pedidos-web",
+   "vista": "1366×900",
+   "frio": {
+    "lcp": 6276,
+    "lcpPrimero": 1532,
+    "fcp": 1532,
+    "cls": 0,
+    "tbt": 654,
+    "tareasLargas": 3,
+    "mayorTareaMs": 670,
+    "nodos": 18235,
+    "interaccionMs": 408
+   },
+   "caliente": {
+    "lcp": 6028,
+    "lcpPrimero": 1324,
+    "fcp": 1324,
+    "cls": 0,
+    "tbt": 606,
+    "tareasLargas": 1,
+    "mayorTareaMs": 646,
+    "nodos": 18235,
+    "interaccionMs": 408
+   },
+   "lcpElemento": "P",
+   "muestrasFrio": [
+    {
+     "lcp": 6276,
+     "lcpPrimero": 1508,
+     "candidatos": [
+      {
+       "t": 1508,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2128,
+       "tam": 1717,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 6276,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1508,
+     "cls": 0,
+     "tbt": 632,
+     "tareasLargas": 3,
+     "mayorTareaMs": 646,
+     "nodos": 18235,
+     "interaccionMs": 352,
+     "errores": 0
+    },
+    {
+     "lcp": 6404,
+     "lcpPrimero": 1532,
+     "candidatos": [
+      {
+       "t": 1532,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2156,
+       "tam": 1717,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 6404,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1532,
+     "cls": 0,
+     "tbt": 654,
+     "tareasLargas": 3,
+     "mayorTareaMs": 670,
+     "nodos": 18235,
+     "interaccionMs": 408,
+     "errores": 0
+    },
+    {
+     "lcp": 2304,
+     "lcpPrimero": 1612,
+     "candidatos": [
+      {
+       "t": 1612,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2304,
+       "tam": 1717,
+       "el": "SPAN Pedidos Web"
+      }
+     ],
+     "lcpEl": "SPAN",
+     "fcp": 1612,
+     "cls": 0,
+     "tbt": 758,
+     "tareasLargas": 3,
+     "mayorTareaMs": 755,
+     "nodos": 18235,
+     "interaccionMs": 432,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 6028,
+     "lcpPrimero": 1316,
+     "candidatos": [
+      {
+       "t": 1316,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1896,
+       "tam": 1717,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 6028,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1316,
+     "cls": 0,
+     "tbt": 565,
+     "tareasLargas": 1,
+     "mayorTareaMs": 615,
+     "nodos": 18235,
+     "interaccionMs": 336,
+     "errores": 0
+    },
+    {
+     "lcp": 1892,
+     "lcpPrimero": 1324,
+     "candidatos": [
+      {
+       "t": 1324,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1892,
+       "tam": 1717,
+       "el": "SPAN Pedidos Web"
+      }
+     ],
+     "lcpEl": "SPAN",
+     "fcp": 1324,
+     "cls": 0,
+     "tbt": 698,
+     "tareasLargas": 1,
+     "mayorTareaMs": 748,
+     "nodos": 18235,
+     "interaccionMs": 448,
+     "errores": 0
+    },
+    {
+     "lcp": 6200,
+     "lcpPrimero": 1332,
+     "candidatos": [
+      {
+       "t": 1332,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1936,
+       "tam": 1717,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 6200,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1332,
+     "cls": 0,
+     "tbt": 606,
+     "tareasLargas": 2,
+     "mayorTareaMs": 646,
+     "nodos": 18235,
+     "interaccionMs": 408,
+     "errores": 0
+    }
+   ]
+  }
+ },
+ "reducido": {
+  "reducido-inicio": {
+   "ruta": "/inicio",
+   "rafPorSeg": 0,
+   "animacionesEnCurso": 0
+  },
+  "reducido-promociones": {
+   "ruta": "/promociones",
+   "rafPorSeg": 0,
+   "animacionesEnCurso": 0
+  },
+  "reducido-referidos-web": {
+   "ruta": "/referidos-web",
+   "rafPorSeg": 0,
+   "animacionesEnCurso": 0
+  }
+ },
+ "errores": []
+}

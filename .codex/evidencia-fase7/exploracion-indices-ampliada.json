@@ -1,0 +1,1530 @@
+{
+ "escala": "ampliada",
+ "reps": 3,
+ "migracion": "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql,.codex/evidencia-fase7/borradores/indices-candidatos.sql",
+ "duracion_s": 674,
+ "meta": {
+  "filas_antes": "4749,429,3067,3245,119",
+  "volumen": "60429,120429,123067,20049,20089,20080,5208,23245,23340,34749",
+  "pedidos_clienta": 4,
+  "indices": [
+   "idx_f7_pedidos_web_cliente|3579904",
+   "idx_f7_pedidos_web_estado_creado|3497984",
+   "idx_f7_pedidos_web_creado|2473984",
+   "idx_f7_resenas_estado_creado|1196032",
+   "idx_f7_productos_categoria_nombre|1523712",
+   "idx_f7_promociones_creado|229376",
+   "idx_f7_pedidos_web_items_pedido|3006464",
+   "idx_f7_resenas_servicio_estado_creado|1196032",
+   "idx_f7_servicios_categoria_nombre|1499136",
+   "idx_f7_resenas_producto_estado_creado|1196032",
+   "idx_f7_resenas_creado|827392",
+   "idx_f7_resenas_producto_creado|827392",
+   "idx_f7_resenas_servicio_creado|827392",
+   "idx_f7_cupones_origen_estado_creado|8937472"
+  ],
+  "filas_despues": "4749,429,3067,3245,119"
+ },
+ "filas": [
+  {
+   "id": "Q01",
+   "d": "Pedidos Web · primera página (sin filtro)",
+   "rol": "admin",
+   "antes": {
+    "ms": 10528.45,
+    "helpers": 392994,
+    "planificacion_ms": 0.45,
+    "buffers": 518792,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 157.76,
+    "helpers": 9,
+    "planificacion_ms": 0.3,
+    "buffers": 125788,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 7.03,
+    "helpers": 9,
+    "planificacion_ms": 0.28,
+    "buffers": 2218,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_pedidos_web_creado",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q01",
+   "d": "Pedidos Web · primera página (sin filtro)",
+   "rol": "cajera",
+   "antes": {
+    "ms": 9024.91,
+    "helpers": 362576,
+    "planificacion_ms": 0.43,
+    "buffers": 366660,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.6,
+    "helpers": 6,
+    "planificacion_ms": 0.28,
+    "buffers": 4092,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 9.71,
+    "helpers": 6,
+    "planificacion_ms": 0.32,
+    "buffers": 4397,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_pedidos_web_creado",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q02",
+   "d": "Pedidos Web · estado PENDIENTE",
+   "rol": "admin",
+   "antes": {
+    "ms": 1575.65,
+    "helpers": 60307,
+    "planificacion_ms": 0.46,
+    "buffers": 98853,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 43.46,
+    "helpers": 9,
+    "planificacion_ms": 0.31,
+    "buffers": 38548,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 3.15,
+    "helpers": 9,
+    "planificacion_ms": 0.28,
+    "buffers": 2129,
+    "seq": [
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_pedidos_web_estado_creado",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q03",
+   "d": "Pedidos Web · búsqueda de clienta + estado",
+   "rol": "admin",
+   "antes": {
+    "ms": 6153.6,
+    "helpers": 232061,
+    "planificacion_ms": 0.47,
+    "buffers": 339357,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 88.81,
+    "helpers": 9,
+    "planificacion_ms": 0.29,
+    "buffers": 107307,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 11.72,
+    "helpers": 9,
+    "planificacion_ms": 0.31,
+    "buffers": 3758,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_pedidos_web_estado_creado",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q04",
+   "d": "Pedidos Web · conteo exacto por estado (head)",
+   "rol": "admin",
+   "antes": {
+    "ms": 677.38,
+    "helpers": 25973,
+    "planificacion_ms": 0.33,
+    "buffers": 28016,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 7.51,
+    "helpers": 6,
+    "planificacion_ms": 0.12,
+    "buffers": 2051,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 2.5,
+    "helpers": 6,
+    "planificacion_ms": 0.14,
+    "buffers": 1954,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "idx_f7_pedidos_web_estado_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q05",
+   "d": "Pedidos Web · ítems de un pedido",
+   "rol": "admin",
+   "antes": {
+    "ms": 40.85,
+    "helpers": 32,
+    "planificacion_ms": 0.86,
+    "buffers": 123186,
+    "seq": [
+     "pedidos_web_items"
+    ],
+    "idx": [
+     "pedidos_web_pkey",
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 38.98,
+    "helpers": 12,
+    "planificacion_ms": 0.22,
+    "buffers": 123174,
+    "seq": [
+     "pedidos_web_items"
+    ],
+    "idx": [
+     "pedidos_web_pkey",
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.83,
+    "helpers": 12,
+    "planificacion_ms": 0.35,
+    "buffers": 39,
+    "seq": [],
+    "idx": [
+     "idx_f7_pedidos_web_items_pedido",
+     "pedidos_web_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q06",
+   "d": "Promociones · primera página",
+   "rol": "admin",
+   "antes": {
+    "ms": 695.24,
+    "helpers": 20828,
+    "planificacion_ms": 0.16,
+    "buffers": 10560,
+    "seq": [
+     "promociones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 1.69,
+    "helpers": 4,
+    "planificacion_ms": 0.15,
+    "buffers": 148,
+    "seq": [
+     "promociones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.73,
+    "helpers": 4,
+    "planificacion_ms": 0.14,
+    "buffers": 86,
+    "seq": [
+     "promociones"
+    ],
+    "idx": [
+     "idx_f7_promociones_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q07",
+   "d": "Promociones · búsqueda por título",
+   "rol": "admin",
+   "antes": {
+    "ms": 737.45,
+    "helpers": 20828,
+    "planificacion_ms": 0.15,
+    "buffers": 10560,
+    "seq": [
+     "promociones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.02,
+    "helpers": 4,
+    "planificacion_ms": 0.15,
+    "buffers": 148,
+    "seq": [
+     "promociones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 7.86,
+    "helpers": 4,
+    "planificacion_ms": 0.2,
+    "buffers": 148,
+    "seq": [
+     "promociones"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q08",
+   "d": "Reseñas · primera página (vista de 3 tablas)",
+   "rol": "admin",
+   "antes": {
+    "ms": 6909.72,
+    "helpers": 345394,
+    "planificacion_ms": 1.44,
+    "buffers": 410385,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio",
+     "clientes"
+    ],
+    "idx": [
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 63.56,
+    "helpers": 23,
+    "planificacion_ms": 1.06,
+    "buffers": 4876,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio",
+     "clientes"
+    ],
+    "idx": [
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 60.95,
+    "helpers": 23,
+    "planificacion_ms": 1.04,
+    "buffers": 4876,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio",
+     "clientes"
+    ],
+    "idx": [
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q09",
+   "d": "Reseñas · estado PENDIENTE",
+   "rol": "admin",
+   "antes": {
+    "ms": 2768.31,
+    "helpers": 105582,
+    "planificacion_ms": 1.27,
+    "buffers": 168269,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 33.42,
+    "helpers": 23,
+    "planificacion_ms": 1.05,
+    "buffers": 4666,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio",
+     "clientes"
+    ],
+    "idx": [
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 27.78,
+    "helpers": 23,
+    "planificacion_ms": 1.09,
+    "buffers": 4894,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_resenas_estado_creado",
+     "idx_f7_resenas_producto_estado_creado",
+     "idx_f7_resenas_servicio_estado_creado",
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q10",
+   "d": "Reseñas · búsqueda (clienta o ítem)",
+   "rol": "admin",
+   "antes": {
+    "ms": 7329.89,
+    "helpers": 374564,
+    "planificacion_ms": 1.94,
+    "buffers": 446428,
+    "seq": [
+     "clientes",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [
+     "resenas_cliente_id_key",
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 207.12,
+    "helpers": 28,
+    "planificacion_ms": 1.5,
+    "buffers": 7494,
+    "seq": [
+     "resenas",
+     "clientes",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 206.14,
+    "helpers": 28,
+    "planificacion_ms": 1.24,
+    "buffers": 7494,
+    "seq": [
+     "resenas",
+     "clientes",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [
+     "productos_pkey",
+     "servicios_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q11",
+   "d": "Reseñas · conteo por estado (head)",
+   "rol": "admin",
+   "antes": {
+    "ms": 200.05,
+    "helpers": 30079,
+    "planificacion_ms": 1.11,
+    "buffers": 61268,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.46,
+    "helpers": 4,
+    "planificacion_ms": 0.67,
+    "buffers": 1130,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 8.79,
+    "helpers": 4,
+    "planificacion_ms": 0.72,
+    "buffers": 1130,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q12",
+   "d": "Cupones Referidos · primera página",
+   "rol": "admin",
+   "antes": {
+    "ms": 1541.16,
+    "helpers": 95117,
+    "planificacion_ms": 0.55,
+    "buffers": 100993,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 38.99,
+    "helpers": 3,
+    "planificacion_ms": 0.34,
+    "buffers": 5881,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 29.7,
+    "helpers": 3,
+    "planificacion_ms": 0.44,
+    "buffers": 6377,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_cupones_origen_estado_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q13",
+   "d": "Cupones Fidelización · estado DISPONIBLE",
+   "rol": "admin",
+   "antes": {
+    "ms": 27.07,
+    "helpers": 269,
+    "planificacion_ms": 0.49,
+    "buffers": 5751,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 29.69,
+    "helpers": 3,
+    "planificacion_ms": 0.36,
+    "buffers": 5881,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 5.26,
+    "helpers": 3,
+    "planificacion_ms": 0.38,
+    "buffers": 795,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_cupones_origen_estado_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q14",
+   "d": "Cupones · búsqueda código o clienta",
+   "rol": "admin",
+   "antes": {
+    "ms": 2755.52,
+    "helpers": 129866,
+    "planificacion_ms": 0.6,
+    "buffers": 136492,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 584.63,
+    "helpers": 4,
+    "planificacion_ms": 0.49,
+    "buffers": 6632,
+    "seq": [
+     "cupones",
+     "clientes"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 562.95,
+    "helpers": 4,
+    "planificacion_ms": 0.48,
+    "buffers": 7128,
+    "seq": [
+     "clientes"
+    ],
+    "idx": [
+     "idx_f7_cupones_origen_estado_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q15",
+   "d": "Cupones · conteo por estado (head)",
+   "rol": "admin",
+   "antes": {
+    "ms": 12.07,
+    "helpers": 6,
+    "planificacion_ms": 0.41,
+    "buffers": 2570,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 12.29,
+    "helpers": 2,
+    "planificacion_ms": 0.23,
+    "buffers": 2568,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.25,
+    "helpers": 2,
+    "planificacion_ms": 0.28,
+    "buffers": 9,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [
+     "idx_f7_cupones_origen_estado_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q16",
+   "d": "Productos · búsqueda ilike + orden nombre,id",
+   "rol": "anon",
+   "antes": {
+    "ms": 33.08,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 31.48,
+    "helpers": 0,
+    "planificacion_ms": 0.11,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 31.25,
+    "helpers": 0,
+    "planificacion_ms": 0.12,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q16",
+   "d": "Productos · búsqueda ilike + orden nombre,id",
+   "rol": "cliente",
+   "antes": {
+    "ms": 1396.76,
+    "helpers": 42490,
+    "planificacion_ms": 0.14,
+    "buffers": 43338,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 33.64,
+    "helpers": 2,
+    "planificacion_ms": 0.15,
+    "buffers": 850,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 32.1,
+    "helpers": 2,
+    "planificacion_ms": 0.13,
+    "buffers": 850,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q17",
+   "d": "Productos · listado por categoría",
+   "rol": "anon",
+   "antes": {
+    "ms": 4.01,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 3.92,
+    "helpers": 0,
+    "planificacion_ms": 0.12,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.28,
+    "helpers": 0,
+    "planificacion_ms": 0.13,
+    "buffers": 382,
+    "seq": [],
+    "idx": [
+     "idx_f7_productos_categoria_nombre"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q17",
+   "d": "Productos · listado por categoría",
+   "rol": "cliente",
+   "antes": {
+    "ms": 26.23,
+    "helpers": 668,
+    "planificacion_ms": 0.12,
+    "buffers": 1516,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 4.62,
+    "helpers": 2,
+    "planificacion_ms": 0.14,
+    "buffers": 850,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.27,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 382,
+    "seq": [],
+    "idx": [
+     "idx_f7_productos_categoria_nombre"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q18",
+   "d": "Servicios · listado por categoría",
+   "rol": "anon",
+   "antes": {
+    "ms": 3.55,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 722,
+    "seq": [
+     "servicios"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 3.39,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 722,
+    "seq": [
+     "servicios"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.17,
+    "helpers": 0,
+    "planificacion_ms": 0.11,
+    "buffers": 68,
+    "seq": [],
+    "idx": [
+     "idx_f7_servicios_categoria_nombre"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q18",
+   "d": "Servicios · listado por categoría",
+   "rol": "cliente",
+   "antes": {
+    "ms": 44.67,
+    "helpers": 1308,
+    "planificacion_ms": 0.15,
+    "buffers": 2030,
+    "seq": [
+     "servicios"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 3.83,
+    "helpers": 2,
+    "planificacion_ms": 0.11,
+    "buffers": 724,
+    "seq": [
+     "servicios"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.16,
+    "helpers": 0,
+    "planificacion_ms": 0.13,
+    "buffers": 68,
+    "seq": [],
+    "idx": [
+     "idx_f7_servicios_categoria_nombre"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q19",
+   "d": "Productos · hero (en_inicio, stock>0)",
+   "rol": "anon",
+   "antes": {
+    "ms": 2.27,
+    "helpers": 0,
+    "planificacion_ms": 0.08,
+    "buffers": 424,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 2.18,
+    "helpers": 0,
+    "planificacion_ms": 0.08,
+    "buffers": 424,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 2.18,
+    "helpers": 0,
+    "planificacion_ms": 0.09,
+    "buffers": 424,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q20",
+   "d": "Productos · cinta de ofertas",
+   "rol": "anon",
+   "antes": {
+    "ms": 3.71,
+    "helpers": 0,
+    "planificacion_ms": 0.12,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 3.87,
+    "helpers": 0,
+    "planificacion_ms": 0.12,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 3.65,
+    "helpers": 0,
+    "planificacion_ms": 0.12,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q21",
+   "d": "Productos · cinta de destacados",
+   "rol": "anon",
+   "antes": {
+    "ms": 3.71,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 3.41,
+    "helpers": 0,
+    "planificacion_ms": 0.13,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 3.79,
+    "helpers": 0,
+    "planificacion_ms": 0.12,
+    "buffers": 848,
+    "seq": [
+     "productos"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q22",
+   "d": "productos_categorias_publicas()",
+   "rol": "anon",
+   "antes": {
+    "ms": 9.83,
+    "helpers": 0,
+    "planificacion_ms": 0.05,
+    "buffers": 848,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 9.62,
+    "helpers": 0,
+    "planificacion_ms": 0.06,
+    "buffers": 848,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 9.5,
+    "helpers": 0,
+    "planificacion_ms": 0.06,
+    "buffers": 848,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q22",
+   "d": "productos_categorias_publicas()",
+   "rol": "cliente",
+   "antes": {
+    "ms": 1230.96,
+    "helpers": 36062,
+    "planificacion_ms": 0.07,
+    "buffers": 36910,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 10.3,
+    "helpers": 2,
+    "planificacion_ms": 0.06,
+    "buffers": 850,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 10.09,
+    "helpers": 2,
+    "planificacion_ms": 0.06,
+    "buffers": 850,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q23",
+   "d": "productos_vitrina_publica(4,0,10)",
+   "rol": "anon",
+   "antes": {
+    "ms": 13.14,
+    "helpers": 0,
+    "planificacion_ms": 0.09,
+    "buffers": 848,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 13.59,
+    "helpers": 0,
+    "planificacion_ms": 0.1,
+    "buffers": 848,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 11.12,
+    "helpers": 0,
+    "planificacion_ms": 0.06,
+    "buffers": 3816,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q23",
+   "d": "productos_vitrina_publica(4,0,10)",
+   "rol": "cliente",
+   "antes": {
+    "ms": 1292.7,
+    "helpers": 39276,
+    "planificacion_ms": 0.07,
+    "buffers": 40124,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 14.32,
+    "helpers": 2,
+    "planificacion_ms": 0.07,
+    "buffers": 850,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 11.36,
+    "helpers": 1,
+    "planificacion_ms": 0.06,
+    "buffers": 3817,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q24",
+   "d": "servicios_categorias_publicas()",
+   "rol": "anon",
+   "antes": {
+    "ms": 8.74,
+    "helpers": 0,
+    "planificacion_ms": 0.06,
+    "buffers": 722,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.88,
+    "helpers": 0,
+    "planificacion_ms": 0.05,
+    "buffers": 722,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 9.14,
+    "helpers": 0,
+    "planificacion_ms": 0.05,
+    "buffers": 722,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q24",
+   "d": "servicios_categorias_publicas()",
+   "rol": "cliente",
+   "antes": {
+    "ms": 1226.27,
+    "helpers": 37352,
+    "planificacion_ms": 0.07,
+    "buffers": 38074,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 9.89,
+    "helpers": 2,
+    "planificacion_ms": 0.05,
+    "buffers": 724,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 9.6,
+    "helpers": 2,
+    "planificacion_ms": 0.05,
+    "buffers": 724,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q25",
+   "d": "servicios_vitrina_publica(4,30,0,10)",
+   "rol": "anon",
+   "antes": {
+    "ms": 16.33,
+    "helpers": 0,
+    "planificacion_ms": 0.09,
+    "buffers": 752,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 15.01,
+    "helpers": 0,
+    "planificacion_ms": 0.09,
+    "buffers": 752,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 14.68,
+    "helpers": 0,
+    "planificacion_ms": 0.06,
+    "buffers": 3308,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q25",
+   "d": "servicios_vitrina_publica(4,30,0,10)",
+   "rol": "cliente",
+   "antes": {
+    "ms": 1333.45,
+    "helpers": 40001,
+    "planificacion_ms": 0.07,
+    "buffers": 40753,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 16.08,
+    "helpers": 2,
+    "planificacion_ms": 0.06,
+    "buffers": 754,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 14.14,
+    "helpers": 1,
+    "planificacion_ms": 0.06,
+    "buffers": 3309,
+    "seq": [],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q26",
+   "d": "Clienta · sus pedidos (RLS cliente_id = mi_cliente_id())",
+   "rol": "cliente",
+   "antes": {
+    "ms": 12078.76,
+    "helpers": 362560,
+    "planificacion_ms": 0.29,
+    "buffers": 487510,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.15,
+    "helpers": 6,
+    "planificacion_ms": 0.16,
+    "buffers": 4094,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 11.86,
+    "helpers": 6,
+    "planificacion_ms": 0.13,
+    "buffers": 4399,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "idx_f7_pedidos_web_creado"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q27",
+   "d": "Clienta · ítems de sus pedidos (RLS con EXISTS)",
+   "rol": "cliente",
+   "antes": {
+    "ms": 11935.48,
+    "helpers": 362574,
+    "planificacion_ms": 0.85,
+    "buffers": 610680,
+    "seq": [
+     "pedidos_web_items",
+     "pedidos_web"
+    ],
+    "idx": [
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 63.72,
+    "helpers": 8,
+    "planificacion_ms": 0.24,
+    "buffers": 127246,
+    "seq": [
+     "pedidos_web_items",
+     "pedidos_web"
+    ],
+    "idx": [
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 62.39,
+    "helpers": 8,
+    "planificacion_ms": 0.28,
+    "buffers": 127246,
+    "seq": [
+     "pedidos_web_items",
+     "pedidos_web"
+    ],
+    "idx": [
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q28",
+   "d": "Clienta · reseñas visibles (aprobadas + propias)",
+   "rol": "cliente",
+   "antes": {
+    "ms": 6559.34,
+    "helpers": 241026,
+    "planificacion_ms": 1.06,
+    "buffers": 423840,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 18.47,
+    "helpers": 18,
+    "planificacion_ms": 0.65,
+    "buffers": 2264,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 21.82,
+    "helpers": 18,
+    "planificacion_ms": 0.73,
+    "buffers": 2264,
+    "seq": [
+     "resenas",
+     "resenas_producto",
+     "resenas_servicio"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q29",
+   "d": "Clienta · sus cupones (RLS cliente_id = mi_cliente_id())",
+   "rol": "cliente",
+   "antes": {
+    "ms": 10120.8,
+    "helpers": 492270,
+    "planificacion_ms": 0.41,
+    "buffers": 989664,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 16.07,
+    "helpers": 4,
+    "planificacion_ms": 0.23,
+    "buffers": 5136,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 16.63,
+    "helpers": 4,
+    "planificacion_ms": 0.28,
+    "buffers": 5136,
+    "seq": [
+     "cupones"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  }
+ ]
+}

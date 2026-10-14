@@ -1,0 +1,89 @@
+{
+  "fecha": "2026-10-11T06:38:16.969Z",
+  "nota": "Componentes y páginas reales servidos por Vite; contexto de carrito y API simulados en navegador. Cero mutaciones de BD.",
+  "casos": [
+    {
+      "name": "F4-01: Todos con 11 categorías",
+      "data": {
+        "tarjetas": 44,
+        "filas": 11
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-02: servicio en hero y en categoría",
+      "data": {
+        "barra": "2 servicios en tu cita · S/ 20.00\nReservar",
+        "esperado": "1 servicio, S/ 10.00"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-02: duplicación al buscar un servicio seleccionado",
+      "data": {
+        "barra": "2 servicios en tu cita · S/ 20.00\nReservar",
+        "esperado": "1 servicio, S/ 10.00"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-03: precio faltante falla y cambia cantidad",
+      "data": {
+        "antes": "1 producto en tu carrito · S/ 10.00\nVer carrito",
+        "despues": "1 producto en tu carrito · S/ 10.00\nVer carrito",
+        "consultasPrecio": 2,
+        "intentosAntes": 2,
+        "esperado": "3 productos, S/ 50.00; no presentar subtotal como total"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "allowPrice": true
+      }
+    },
+    {
+      "name": "F4-03: precio de cita faltante falla",
+      "data": {
+        "antes": "1 servicio en tu cita · S/ 10.00\nReservar",
+        "despues": "1 servicio en tu cita · S/ 10.00\nReservar",
+        "intentosAntes": 2,
+        "consultasPrecio": 2,
+        "esperado": "2 servicios, S/ 30.00; o mostrar estado de error"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "allowPrice": true
+      }
+    },
+    {
+      "name": "F4-04: precio recién visto se pierde al quitar búsqueda",
+      "data": {
+        "antes": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "durante": "1 producto en tu carrito · S/ 25.00\nVer carrito",
+        "despues": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "consultasPrecio": 2,
+        "esperado": "Conservar/refrescar precio confirmado 25, sin regresar a 20 al ocultar la tarjeta"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    }
+  ]
+}

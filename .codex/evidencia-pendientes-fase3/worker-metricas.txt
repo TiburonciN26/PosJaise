@@ -1,0 +1,459 @@
+nk:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/images/hosted
+          - generic: Hosted images
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/stream/videos
+          - generic: Hosted videos
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/stream/inputs
+          - generic: Live inputs
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/stream/analytics
+          - generic: Stream analytics
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/media/plans
+          - generic: Plans
+      - button:
+        - generic: Realtime
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/realtime/kit
+          - generic: RealtimeKit
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/realtime/turn
+          - generic: TURN Server
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/realtime/sfu
+          - generic: Serverless SFU
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/realtime/moq
+          - generic: MoQ Relay
+    - generic: Protect & connect
+    - list:
+      - button:
+        - generic: Application security
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/security-center
+          - generic: Security insights
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/application-security/waf
+          - generic: WAF
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/application-security/botbase
+          - generic: BotBase
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/security-center/inventory
+          - generic: Infrastructure
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/turnstile
+          - generic: Turnstile
+      - link:
+        - /url: /af5ea2cb3f504970fe293b1923cd64d7/zero-trust/landing-page
+        - generic: Zero Trust
+      - button:
+        - generic: Networking
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/magic-networks/overview
+          - generic: Overview
+        - button:
+          - generic: Insights
+        - list:
+          - link:
+            - /url: /af5ea2cb3f504970fe293b1923cd64d7/networking-insights/analytics/network-analytics/flow-analytics
+            - generic: Network flow
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/tunnels
+          - generic: Tunnels
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/mesh
+          - generic: Mesh
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/magic-networks/routes
+          - generic: Routes
+        - button:
+          - generic: IP addresses
+        - list:
+          - link:
+            - /url: /af5ea2cb3f504970fe293b1923cd64d7/ip-addresses/address-space
+            - generic: Address space
+          - link:
+            - /url: /af5ea2cb3f504970fe293b1923cd64d7/ip-addresses/proxy-ips
+            - generic: Address maps
+      - button:
+        - generic: Threats & defense
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/threats-defense
+          - generic: Overview
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/threat-intelligence
+          - generic: Threat intelligence
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/threat-intelligence/investigate
+          - generic: Investigate
+      - button:
+        - generic: Monetize
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/monetize/monetization-gateway
+          - generic: Monetization Gateway
+      - button:
+        - generic: Delivery & performance
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/bulk-redirects
+          - generic: Bulk redirects
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/load-balancing
+          - generic: Load Balancing
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/tag-management/zaraz
+          - generic: Web tag management
+    - list:
+      - button:
+        - generic: Manage account
+      - list:
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/members
+          - generic: Members
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/billing
+          - generic: Billing
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/api-tokens
+          - generic: Account API tokens
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/oauth-clients
+          - generic: OAuth clients
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/audit-log
+          - generic: Audit logs
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/blocked-content
+          - generic: Blocked content
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/abuse-reports
+          - generic: Abuse reports
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/carbon
+          - generic: Carbon Impact Report
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/configurations
+          - generic: Configurations
+        - link:
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/tags
+          - generic: Tagged Resources
+- banner:
+  - button "Toggle sidebar navigation":
+    - generic: Open sidebar
+  - navigation "breadcrumb":
+    - link "Workers & Pages":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers-and-pages
+      - generic: Workers & Pages
+    - generic: pos-jaise-medios-staging
+    - combobox:
+      - generic: Production
+    - textbox: "{\"kind\":\"production\",\"id\":\"production\",\"name\":\"Production\"}"
+  - button:
+  - link:
+    - /url: /?to=/:account/support
+  - button "User menu":
+- navigation:
+  - tablist:
+    - tab "Overview"
+    - tab "Metrics" [active] [selected]
+    - tab "Deployments"
+    - tab "Observability"
+    - tab "Issues"
+    - tab "Domains"
+    - tab "Access"
+    - tab "Settings"
+  - button:
+  - button "Scroll tabs right":
+  - button "More actions":
+- combobox:
+  - generic: All deployed versions
+- textbox: "0"
+- button "Last 24 hours":
+  - text: Last 24 hours
+- link "Invocations 855 ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/invocations
+  - generic: Invocations
+  - generic: "855"
+  - generic: ↗ 100.0%
+- link "Subrequests 1.54k ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/subrequests
+  - generic: Subrequests
+  - generic: 1.54k
+  - generic: ↗ 100.0%
+- link "Errors 0 No data":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/errors
+  - generic: Errors
+  - generic: "0"
+  - generic: No data
+- link "CPU Time 2 ms ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/cpu-time
+  - generic: CPU Time
+  - generic: 2 ms
+  - generic: ↗ 100.0%
+- link "Wall Time 270 ms ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/wall-time
+  - generic: Wall Time
+  - generic: 270 ms
+  - generic: ↗ 100.0%
+- link "Request duration 270 ms ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/request-duration
+  - generic: Request duration
+  - generic: 270 ms
+  - generic: ↗ 100.0%
+- button "Show next metrics":
+- generic: Active deployment
+- banner:
+  - generic: Version ID
+  - generic: Deployed
+  - generic: Traffic %
+  - button "About traffic percentage":
+    - generic: About traffic percentage
+  - generic: Requests/sec
+  - generic: Error rate
+  - generic: Median CPU time
+- generic: 6d4cd0cc
+- time: 18 hours ago
+- generic: 100%
+- generic: 100%
+- generic: 0 req/sec
+- generic: 0%
+- generic: 1.97ms
+- generic: Invocations
+- button:
+- tablist:
+  - tab "Count" [selected]:
+    - text: Count
+  - tab "Invocations/s":
+    - text: Invocations/s
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/invocations
+- button "6d4cd0cc 853":
+  - generic: 6d4cd0cc
+  - generic: "853"
+- 'img "This is a chart. It consists of 2 series count. The 0 series is a Bar chart representing 6d4cd0cc.The first 10 items are: 1791586800000, 0, 0, NaN, 1791587700000, 0, 0, NaN, 1791588600000, 0, 0, NaN, 1791589500000, 0, 0, NaN, 1791590400000, 0, 0, NaN, 1791591300000, 0, 0, NaN, 1791592200000, 0, 0, NaN, 1791593100000, 0, 0, NaN, 1791594000000, 0, 0, NaN, 1791594900000, 0, 0, NaN. The 1 series is a Line chart.The data is as follows: ."'
+- generic: Subrequests
+- button:
+- textbox "Search hosts..."
+- tablist:
+  - tab "All" [selected]
+  - tab "2xx"
+  - tab "3xx"
+  - tab "4xx"
+  - tab "5xx"
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/subrequests
+- table:
+  - rowgroup:
+    - row "Host Requests Request Duration":
+      - columnheader "Host":
+        - button "Host"
+      - columnheader "Requests":
+        - button "Requests":
+          - text: Requests
+      - columnheader "Request Duration":
+        - button "Request Duration"
+      - columnheader
+  - rowgroup:
+    - row "tqkdtojnhgykmcbvwdmz.supabase.co 2xx 2k 45.0ms":
+      - cell "tqkdtojnhgykmcbvwdmz.supabase.co":
+        - link "tqkdtojnhgykmcbvwdmz.supabase.co":
+          - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/subrequests/tqkdtojnhgykmcbvwdmz.supabase.co
+      - cell "2xx 2k":
+        - button "2xx 2k":
+          - generic: 2xx
+          - generic: 2k
+      - cell "45.0ms"
+      - cell:
+- generic: Showing 1-1 of 1
+- navigation "Pagination":
+  - button "First page" [disabled]:
+  - button "Previous page" [disabled]:
+  - textbox "Page number": "1"
+  - button "Next page" [disabled]:
+  - button "Last page" [disabled]:
+- generic: Errors by version
+- tablist:
+  - tab "Count" [selected]:
+    - text: Count
+  - tab "RPS":
+    - text: RPS
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/errors
+- button "6d4cd0cc 0":
+  - generic: 6d4cd0cc
+  - generic: "0"
+- 'img "This is a chart. It consists of 2 series count. The 0 series is a Bar chart representing 6d4cd0cc.The first 10 items are: 1791586800000, 0, 0, NaN, 1791587700000, 0, 0, NaN, 1791588600000, 0, 0, NaN, 1791589500000, 0, 0, NaN, 1791590400000, 0, 0, NaN, 1791591300000, 0, 0, NaN, 1791592200000, 0, 0, NaN, 1791593100000, 0, 0, NaN, 1791594000000, 0, 0, NaN, 1791594900000, 0, 0, NaN. The 1 series is a Line chart.The data is as follows: ."'
+- generic: Errors by invocation status
+- button:
+- tablist:
+  - tab "Count" [selected]:
+    - text: Count
+  - tab "RPS":
+    - text: RPS
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/errors-by-status
+- button "Exceeded Memory 0":
+  - generic: Exceeded Memory
+  - generic: "0"
+- button "Exceeded CPU Time Limits 0":
+  - generic: Exceeded CPU Time Limits
+  - generic: "0"
+- button "Internal 0":
+  - generic: Internal
+  - generic: "0"
+- button "Load Shed 0":
+  - generic: Load Shed
+  - generic: "0"
+- button "Uncaught Exception 0":
+  - generic: Uncaught Exception
+  - generic: "0"
+- generic: Client disconnected by version
+- tablist:
+  - tab "Count" [selected]:
+    - text: Count
+  - tab "RPS":
+    - text: RPS
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/client-disconnects
+- generic: No client disconnects in this time range.
+- generic: Client disconnected by type
+- button:
+- tablist:
+  - tab "Count" [selected]:
+    - text: Count
+  - tab "RPS":
+    - text: RPS
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/client-disconnects-type
+- button "Cancelled 0":
+  - generic: Cancelled
+  - generic: "0"
+- button "Response stream disconnected 0":
+  - generic: Response stream disconnected
+  - generic: "0"
+- 'img "This is a chart. It consists of 3 series count. The 0 series is a Bar chart representing Cancelled.The first 10 items are: 1791587400000, 0, 0, NaN, 1791587460000, 0, 0, NaN, 1791587520000, 0, 0, NaN, 1791587580000, 0, 0, NaN, 1791587640000, 0, 0, NaN, 1791587700000, 0, 0, NaN, 1791587760000, 0, 0, NaN, 1791587820000, 0, 0, NaN, 1791587880000, 0, 0, NaN, 1791587940000, 0, 0, NaN. The 1 series is a Bar chart representing Response stream disconnected.The first 10 items are: 1791587400000, 0, 0, NaN, 1791587460000, 0, 0, NaN, 1791587520000, 0, 0, NaN, 1791587580000, 0, 0, NaN, 1791587640000, 0, 0, NaN, 1791587700000, 0, 0, NaN, 1791587760000, 0, 0, NaN, 1791587820000, 0, 0, NaN, 1791587880000, 0, 0, NaN, 1791587940000, 0, 0, NaN. The 2 series is a Line chart.The data is as follows: ."'
+- generic: Request Distribution
+- button:
+- tablist:
+  - tab "Count" [selected]:
+    - text: Count
+  - tab "RPS":
+    - text: RPS
+- button:
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/request-distribution
+- generic "Ezeiza, AR (EZE)":
+  - generic "Ezeiza, AR (EZE)"
+  - generic: "853"
+- generic "Miami, US (MIA)":
+  - generic "Miami, US (MIA)"
+  - generic: "2"
+- generic: Placement Performance
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/placement-performance
+- paragraph: Enable Smart Placement to see the performance impact of Cloudflare's Smart Placement decisions.
+- link "Enable in Settings":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/settings#runtime-section
+  - generic: Enable in Settings
+- generic: CPU Time
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/cpu-time
+- button "P50 1.88":
+  - generic: P50
+  - generic: "1.88"
+- button "P90 2.5":
+  - generic: P90
+  - generic: "2.5"
+- button "P99 3.06":
+  - generic: P99
+  - generic: "3.06"
+- button "P999 3.08":
+  - generic: P999
+  - generic: "3.08"
+- generic: Wall Time
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/wall-time
+- button "P50 305":
+  - generic: P50
+  - generic: "305"
+- button "P90 596":
+  - generic: P90
+  - generic: "596"
+- button "P99 828":
+  - generic: P99
+  - generic: "828"
+- button "P999 834":
+  - generic: P999
+  - generic: "834"
+- generic: Memory usage
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/memory-usage
+- button "P50 1.63 MB":
+  - generic: P50
+  - generic: 1.63 MB
+- button "P90 1.89 MB":
+  - generic: P90
+  - generic: 1.89 MB
+- button "P99 1.98 MB":
+  - generic: P99
+  - generic: 1.98 MB
+- button "P999 1.98 MB":
+  - generic: P999
+  - generic: 1.98 MB
+- generic: Request duration
+- button:
+- link "Expand chart":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/request-duration
+- button "P50 305":
+  - generic: P50
+  - generic: "305"
+- button "P90 596":
+  - generic: P90
+  - generic: "596"
+- button "P99 828":
+  - generic: P99
+  - generic: "828"
+- button "P999 834":
+  - generic: P999
+  - generic: "834"
+- contentinfo:
+  - list:
+    - link "Support":
+      - /url: https://support.cloudflare.com
+    - link "System status":
+      - /url: https://www.cloudflarestatus.com
+    - link "Careers":
+      - /url: https://www.cloudflare.com/careers/
+    - link "Terms of Use":
+      - /url: https://www.cloudflare.com/website-terms/
+    - link "Report Security Issues":
+      - /url: https://www.cloudflare.com/disclosure/
+    - link "Privacy Policy":
+      - /url: https://www.cloudflare.com/privacypolicy/
+    - button "Cookie Preferences"
+    - generic: © 2026 Cloudflare, Inc.
+- region "Notifications"

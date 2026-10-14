@@ -1,0 +1,164 @@
+{
+  "fecha": "2026-10-10T23:35:01.155Z",
+  "sinRed": true,
+  "hallazgo": "CB-01: un HIT en otro POP no demuestra que el 404 posterior retiró una copia caliente",
+  "reproducido": true,
+  "resultados": [
+    {
+      "nombre": "Control A, mismo POP caliente: el verificador rechaza A",
+      "opcionReal": "A",
+      "popHitPrevio": "MIA",
+      "popPosterior": "MIA",
+      "aserciones": 5,
+      "fallos": 4,
+      "aceptadoPorVerificador": false,
+      "retencionDeclarada": "sin retención: 404 inmediato (contrato B)",
+      "casos": [
+        {
+          "nombre": "B: había un HIT previo en este centro de datos (la copia estaba caliente antes de borrar)",
+          "ok": true,
+          "detalle": {
+            "popHit": "MIA"
+          }
+        },
+        {
+          "nombre": "B: GET m inmediatamente tras el DELETE confirmado → 404 no-store (sin bytes antiguos)",
+          "ok": false,
+          "detalle": {
+            "estado": 200,
+            "cache": "public, max-age=0, must-revalidate",
+            "nosniff": "nosniff",
+            "robots": "noindex",
+            "medios": "HIT",
+            "ray": "simulado-MIA"
+          }
+        },
+        {
+          "nombre": "B: GET g tras el DELETE → 404 no-store",
+          "ok": false,
+          "detalle": {
+            "estado": 200
+          }
+        },
+        {
+          "nombre": "B: HEAD m tras el DELETE → 404 no-store sin cuerpo",
+          "ok": false,
+          "detalle": {
+            "estado": 200
+          }
+        },
+        {
+          "nombre": "B: If-None-Match con el ETag antiguo tras el DELETE → 404 no-store (nunca 304)",
+          "ok": false,
+          "detalle": {
+            "estado": 304
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "REPRODUCCIÓN: A sigue activa, HIT en MIA y lecturas posteriores en SCL frío",
+      "opcionReal": "A",
+      "popHitPrevio": "MIA",
+      "popPosterior": "SCL",
+      "aserciones": 5,
+      "fallos": 0,
+      "aceptadoPorVerificador": true,
+      "retencionDeclarada": "sin retención: 404 inmediato (contrato B)",
+      "casos": [
+        {
+          "nombre": "B: había un HIT previo en este centro de datos (la copia estaba caliente antes de borrar)",
+          "ok": true,
+          "detalle": {
+            "popHit": "MIA"
+          }
+        },
+        {
+          "nombre": "B: GET m inmediatamente tras el DELETE confirmado → 404 no-store (sin bytes antiguos)",
+          "ok": true,
+          "detalle": {
+            "estado": 404,
+            "cache": "no-store",
+            "nosniff": "nosniff",
+            "robots": "noindex",
+            "medios": null,
+            "ray": "simulado-SCL"
+          }
+        },
+        {
+          "nombre": "B: GET g tras el DELETE → 404 no-store",
+          "ok": true,
+          "detalle": {
+            "estado": 404
+          }
+        },
+        {
+          "nombre": "B: HEAD m tras el DELETE → 404 no-store sin cuerpo",
+          "ok": true,
+          "detalle": {
+            "estado": 404
+          }
+        },
+        {
+          "nombre": "B: If-None-Match con el ETag antiguo tras el DELETE → 404 no-store (nunca 304)",
+          "ok": true,
+          "detalle": {
+            "estado": 404
+          }
+        }
+      ]
+    },
+    {
+      "nombre": "Control B, mismo POP caliente: retirada real aceptada",
+      "opcionReal": "B",
+      "popHitPrevio": "MIA",
+      "popPosterior": "MIA",
+      "aserciones": 5,
+      "fallos": 0,
+      "aceptadoPorVerificador": true,
+      "retencionDeclarada": "sin retención: 404 inmediato (contrato B)",
+      "casos": [
+        {
+          "nombre": "B: había un HIT previo en este centro de datos (la copia estaba caliente antes de borrar)",
+          "ok": true,
+          "detalle": {
+            "popHit": "MIA"
+          }
+        },
+        {
+          "nombre": "B: GET m inmediatamente tras el DELETE confirmado → 404 no-store (sin bytes antiguos)",
+          "ok": true,
+          "detalle": {
+            "estado": 404,
+            "cache": "no-store",
+            "nosniff": "nosniff",
+            "robots": "noindex",
+            "medios": null,
+            "ray": "simulado-MIA"
+          }
+        },
+        {
+          "nombre": "B: GET g tras el DELETE → 404 no-store",
+          "ok": true,
+          "detalle": {
+            "estado": 404
+          }
+        },
+        {
+          "nombre": "B: HEAD m tras el DELETE → 404 no-store sin cuerpo",
+          "ok": true,
+          "detalle": {
+            "estado": 404
+          }
+        },
+        {
+          "nombre": "B: If-None-Match con el ETag antiguo tras el DELETE → 404 no-store (nunca 304)",
+          "ok": true,
+          "detalle": {
+            "estado": 404
+          }
+        }
+      ]
+    }
+  ]
+}

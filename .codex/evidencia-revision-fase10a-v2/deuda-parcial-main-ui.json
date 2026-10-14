@@ -1,0 +1,15 @@
+{
+  "fecha": "2026-10-13T15:23:47.835Z",
+  "artefacto": "C:/Users/jdeos/AppData/Local/Temp/claude/c--WedJaiseReact/11cf04d8-3d08-4875-b1f5-84eda8bf65da/scratchpad/f10a/dist-main",
+  "metodo": "UI compilada de main contra Supabase Local para login QA; deuda ficticia servida por interceptor. No se hizo ningún cobro ni escritura de deuda.",
+  "montoOriginal": 100,
+  "abonoPrevioSupuesto": 30,
+  "saldoCorrecto": 70,
+  "importePagoLegacyQueRegistrariaBorrador": 70,
+  "textoTarjeta": "TEST QA CLIENTE FICTICIO\n\nTEST QA DEUDA CON ABONO\n\nPendiente\nDebe desde 13/10/2026\nS/ 100.00",
+  "muestraImporteOriginal": true,
+  "muestraSaldo70": false,
+  "botonCobradoVisible": true,
+  "mutacionesBloqueadas": [],
+  "limite": "El abono previo se usa para calcular el saldo esperado y no se envía a main, porque su SELECT no pide deuda_pagos. No prueba que una persona cobre dinero; prueba que la pantalla antigua no informa el saldo."
+}

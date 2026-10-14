@@ -1,0 +1,26 @@
+[
+  {
+    "nombre": "migracion_medios_barrera",
+    "executeRoles": [
+      "authenticated",
+      "postgres",
+      "service_role"
+    ]
+  },
+  {
+    "nombre": "migracion_medios_cambiar",
+    "executeRoles": [
+      "authenticated",
+      "postgres",
+      "service_role"
+    ]
+  },
+  {
+    "nombre": "migracion_medios_columna_permitida",
+    "executeRoles": [
+      "authenticated",
+      "postgres",
+      "service_role"
+    ]
+  }
+]

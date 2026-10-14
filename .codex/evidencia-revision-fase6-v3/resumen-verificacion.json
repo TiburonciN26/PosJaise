@@ -1,0 +1,96 @@
+{
+  "fecha": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "alcance": "QA independiente con componentes reales y datos/Auth simulados. Sin escrituras de BD, migraciones, builds, commit o push.",
+  "casos": [
+    {
+      "nombre": "Puntos error + éxito ajeno",
+      "ok": true
+    },
+    {
+      "nombre": "Puntos validacion + éxito ajeno",
+      "ok": true
+    },
+    {
+      "nombre": "Puntos lento + éxito ajeno",
+      "ok": true
+    },
+    {
+      "nombre": "Control: guardado propio confirmado libera y conserva valor servidor",
+      "ok": true
+    },
+    {
+      "nombre": "Dos formularios: confirmar A conserva B pendiente",
+      "ok": true
+    },
+    {
+      "nombre": "Intento antiguo tras editar y reenviar no confirma el actual",
+      "ok": true
+    },
+    {
+      "nombre": "Confirmación repetida no libera una edición posterior",
+      "ok": true
+    },
+    {
+      "nombre": "LRU: 27 rutas sin trabajo pendiente",
+      "ok": true
+    },
+    {
+      "nombre": "Puntos Web: error al guardar pierde borrador al desalojar",
+      "ok": true
+    },
+    {
+      "nombre": "Puntos Web: validación local rechazada pierde borrador",
+      "ok": true
+    },
+    {
+      "nombre": "Puntos Web: guardado en vuelo pierde pantalla",
+      "ok": true
+    },
+    {
+      "nombre": "Cancelar 8 diálogos editados retiene pantallas sin trabajo",
+      "ok": true
+    },
+    {
+      "nombre": "Cambio de cuenta conserva filtro anterior",
+      "ok": true
+    },
+    {
+      "nombre": "Cambio de rol conserva filtro anterior",
+      "ok": true
+    },
+    {
+      "nombre": "Dashboard: mes pasado se pierde al desalojar",
+      "ok": true
+    },
+    {
+      "nombre": "Promoción real: cancelar modal editado no libera pantalla",
+      "ok": true
+    },
+    {
+      "nombre": "Cancelaciones repetidas: GC de formularios sin recorte",
+      "ok": true
+    }
+  ],
+  "casosCorrectos": 17,
+  "fallos": 0,
+  "controlNegativo": {
+    "diagnosticos": 1,
+    "perdidaDetectada": true,
+    "nota": "Se omite comparación del intento únicamente en respuesta interceptada del navegador, sin editar fuente. Los scripts de diagnóstico guardan observaciones; este resumen calcula el veredicto."
+  },
+  "hashesEstables": true,
+  "toastIgualHead": true,
+  "eventosToastAusente": true,
+  "rollback": {
+    "exclusivos": 26,
+    "mixtos": 8,
+    "ambosCheckCorrectos": true,
+    "aplicado": false
+  },
+  "lint": {
+    "archivos": 8,
+    "diagnosticos": 0
+  },
+  "notas": "No se repiten las suites de Claude con SQL de siembra/limpieza. La revisión de los JSON y SELECTs de prefijos se documenta en estado-revision.json."
+}

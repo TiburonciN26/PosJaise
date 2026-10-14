@@ -1,0 +1,198 @@
+{
+  "fecha": "2026-10-11T02:57:01.654Z",
+  "buildId": "6929c619",
+  "corridaAuditada": "147b24",
+  "controles": [
+    {
+      "nombre": "Identidad y resultado del informe",
+      "ok": true
+    },
+    {
+      "nombre": "Sin bloqueos ni limpieza de emergencia informados",
+      "ok": true
+    },
+    {
+      "nombre": "Igualdad final registrada",
+      "ok": true
+    },
+    {
+      "nombre": "Galería de Servicio idéntica en la evidencia",
+      "ok": true
+    },
+    {
+      "nombre": "Marca actual del alias",
+      "ok": true
+    },
+    {
+      "nombre": "Mismo service worker del deployment revisado",
+      "ok": true,
+      "sha256": "2eb8003dc69f00c9e40cb8e576dd01427b4589138474cf5596558ae57bf1b897"
+    },
+    {
+      "nombre": "Entrega efectiva Pages por rol",
+      "ok": true
+    },
+    {
+      "nombre": "Producto QA sin foto",
+      "ok": true
+    },
+    {
+      "nombre": "Servicio QA sin foto",
+      "ok": true
+    },
+    {
+      "nombre": "Galería del producto vacía",
+      "ok": true
+    },
+    {
+      "nombre": "Galería del servicio vacía",
+      "ok": true
+    },
+    {
+      "nombre": "Solo queda la fila histórica de Galería",
+      "ok": true
+    },
+    {
+      "nombre": "Inventario vacío: fotos-productos",
+      "ok": true
+    },
+    {
+      "nombre": "Inventario vacío: fotos-galeria",
+      "ok": true
+    },
+    {
+      "nombre": "Inventario vacío: fotos-servicios",
+      "ok": true
+    },
+    {
+      "nombre": "URL propia eliminada responde 404 ahora: m",
+      "ok": true
+    },
+    {
+      "nombre": "URL propia eliminada responde 404 ahora: g",
+      "ok": true
+    },
+    {
+      "nombre": "Operaciones del auditor acotadas a lecturas y login QA",
+      "ok": true
+    }
+  ],
+  "casos": 18,
+  "fallos": 0,
+  "inventarios": [
+    {
+      "destino": "fotos-productos",
+      "claves": [],
+      "cursor": null
+    },
+    {
+      "destino": "fotos-servicios",
+      "claves": [],
+      "cursor": null
+    },
+    {
+      "destino": "fotos-galeria",
+      "claves": [],
+      "cursor": null
+    }
+  ],
+  "estadoActual": {
+    "producto": [
+      {
+        "id": "432a6610-67e5-4a7c-a979-eb891cc9263c",
+        "foto_url": null
+      }
+    ],
+    "servicio": [
+      {
+        "id": "6265a7d1-80b3-4b72-9b34-7f6eca3d7873",
+        "foto_url": null
+      }
+    ],
+    "galeriaProducto": [],
+    "galeriaServicio": [],
+    "galeriaWeb": [
+      {
+        "id": "4ab5c994-9bb1-40bf-b5ff-186d45603781",
+        "titulo": "Foto de prueba (Inicio)",
+        "antes_url": "inicio-web/hero-antes-referencia.jpg",
+        "despues_url": "inicio-web/hero-despues-referencia.jpg",
+        "orden": 0,
+        "activo": true
+      }
+    ]
+  },
+  "peticiones": [
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/sw.js"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/assets/index-BJKOrzqm.js"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "POST",
+      "ruta": "/auth/v1/token"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/productos"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/servicios"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/producto_fotos"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/servicio_fotos"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/galeria_web"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET",
+      "ruta": "/v1/inventario/fotos-productos"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET",
+      "ruta": "/v1/inventario/fotos-servicios"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET",
+      "ruta": "/v1/inventario/fotos-galeria"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-productos/7a7ac20c-aa22-472b-8f8f-544fae4ba3ee/m.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-productos/7a7ac20c-aa22-472b-8f8f-544fae4ba3ee/g.webp"
+    }
+  ],
+  "nota": "Auditoría de evidencia y lecturas actuales; no repetición del recorrido. Solo GET + un login QA existente, sin modificaciones de filas u objetos. El 404 tardío no acredita revocación inmediata ni POP caliente."
+}

@@ -1,0 +1,40 @@
+{
+ "fecha": "2026-10-12T20:42:48.254Z",
+ "app": "http://127.0.0.1:5181",
+ "casos": [
+  {
+   "nombre": "fotos: las tarjetas piden la variante MINIATURA (m) para referencias r2:, la ruta antigua de Storage se conserva y no se piden «g» en las tarjetas",
+   "ok": true
+  },
+  {
+   "nombre": "fotos: el héroe pide «g» solo para la foto activa y sus vecinas (no las 5) y sus miniaturas, «m»",
+   "ok": true
+  },
+  {
+   "nombre": "fotos: la primera vista NO pide todas las imágenes montadas (carga diferida: se piden menos de las que hay en el DOM)",
+   "ok": true
+  },
+  {
+   "nombre": "fotos: las imágenes de la página 2 NO se piden antes de visitarla y sí después",
+   "ok": true
+  },
+  {
+   "nombre": "fotos: una imagen que FALLA (404) muestra el degradado, no una imagen rota, y no rompe la página",
+   "ok": true
+  },
+  {
+   "nombre": "navegación: salir de la página con una búsqueda en vuelo la cancela y no deja errores",
+   "ok": true
+  },
+  {
+   "nombre": "sesión (productos): un producto de la página 3 agregado al carrito aparece en la barra «Tu carrito» con su precio al volver al catálogo",
+   "ok": true
+  },
+  {
+   "nombre": "sesión (servicios): un servicio de la página 3 agregado a la cita aparece en la barra «Tu cita» con su precio al volver al catálogo",
+   "ok": true
+  }
+ ],
+ "total": 8,
+ "fallos": 0
+}

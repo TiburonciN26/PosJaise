@@ -1,0 +1,10 @@
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';
+const out='C:/Users/jdeos/.codex/visualizations/2026/10/09/01a11ea8-be2a-7611-8e67-4ded5cca3f25/revision-verificador-ml03-v2';
+const pkg='C:/WedJaiseReact/.codex/artefacto-lectura-mixta-v3';const viejo='C:/WedJaiseReact/.codex/artefacto-lectura-mixta-v2';
+const escenarios=[{nombre:'v3',pkg,exit:0},{nombre:'negativo',pkg:viejo,exit:1},{nombre:'lanzamiento',pkg,exit:2,fallo:true},{nombre:'navegacion',pkg,exit:2,fallo:true},{nombre:'interaccion',pkg,exit:2,fallo:true}];
+const resultados=[];
+for(const e of escenarios){const args=[out+'/ml03-aislado.cjs',e.pkg,'--salida='+out+'/'+e.nombre];if(e.fallo)args.push('--fallo-auditor='+e.nombre);const inicio=Date.now();const r=spawnSync(process.execPath,args,{cwd:'C:/WedJaiseReact',env:{...process.env,PLAYWRIGHT_BROWSERS_PATH:'C:/Users/jdeos/AppData/Local/ms-playwright'},encoding:'utf8',timeout:15000,maxBuffer:1000000});
+let datos=e.fallo?JSON.parse(fs.readFileSync(out+'/cierre-'+e.nombre+'.json','utf8')):JSON.parse(fs.readFileSync(out+'/'+e.nombre+'/ml03-bundle.json','utf8'));
+const completo=!r.error&&r.status===e.exit&&(e.fallo?datos.servidorEscuchando===false&&datos.browserConectado===false:e.nombre==='v3'?datos.total===8&&datos.fallos===0:datos.total===8&&datos.fallos===3);
+const registro={escenario:e.nombre,ok:completo,exitCode:r.status,exitEsperado:e.exit,ms:Date.now()-inicio,errorProceso:r.error?.code??null,datos,stdout:r.stdout,stderr:r.stderr};resultados.push(registro);console.log(JSON.stringify({escenario:e.nombre,ok:completo,exitCode:r.status,ms:registro.ms,...(e.fallo?datos:{casos:datos.total,fallos:datos.fallos})}));}
+fs.writeFileSync(out+'/resultados-independientes.json',JSON.stringify({fecha:new Date().toISOString(),resultados,fallos:resultados.filter(r=>!r.ok).length,nota:'Red externa simulada/abortada; Service Workers bloqueados por el script corregido. Copia externa solo ajusta require para resolver Playwright e inyecta errores para verificar finally. Sin escrituras remotas ni cambios en fuentes.'},null,2),{flag:'wx'});process.exitCode=resultados.some(r=>!r.ok)?1:0;

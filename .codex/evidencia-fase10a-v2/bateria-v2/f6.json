@@ -1,0 +1,116 @@
+{
+ "app": "http://127.0.0.1:5401",
+ "fecha": "2026-10-13T07:03:06.106Z",
+ "casos": [
+  {
+   "nombre": "Caché: recorrer las 27 rutas nunca deja más de 6 pantallas montadas y el regreso a Ventas funciona",
+   "ok": true,
+   "ms": 201027
+  },
+  {
+   "nombre": "Conservación: carrito, búsqueda y orden, y scroll se conservan aunque la pantalla se haya desmontado",
+   "ok": false,
+   "error": "Command failed: docker exec -i supabase_db_WedJaiseReact psql -U postgres -d postgres -At -v ON_ERROR_STOP=1 | Error response from daemon: Docker Desktop is unable to start",
+   "ms": 48
+  },
+  {
+   "nombre": "Protección: un diálogo abierto y un formulario editado impiden desmontar su pantalla; al liberarse vuelve el tope",
+   "ok": false,
+   "error": "locator.click: Timeout 30000ms exceeded. | Call log: | \u001b[2m  - waiting for getByRole('button', { name: 'Nueva promoción' }).first()\u001b[22m",
+   "ms": 55313
+  },
+  {
+   "nombre": "Protección: un formulario editado sin enviar (Puntos Web) conserva su pantalla; los borradores de Recompensas Web también",
+   "ok": false,
+   "error": "page.waitForSelector: Timeout 30000ms exceeded. | Call log: | \u001b[2m  - waiting for locator('main form input') to be visible\u001b[22m",
+   "ms": 30263
+  },
+  {
+   "nombre": "Invalidación: al cambiar de cuenta no queda búsqueda, ni pantallas, ni scroll de la anterior",
+   "ok": false,
+   "error": "locator.fill: Timeout 30000ms exceeded. | Call log: | \u001b[2m  - waiting for locator('[data-ruta=\"/inventario\"]').locator('input[type=search]').first()\u001b[22m",
+   "ms": 30281
+  },
+  {
+   "nombre": "Pausa: los placeholders animados de pantallas ocultas no consumen temporizadores; vuelven al mostrarse",
+   "ok": false,
+   "error": "placeholder visible 0.2/s (solo el suyo)",
+   "ms": 13025
+  },
+  {
+   "nombre": "Pausa: con la pestaña del navegador oculta el placeholder y la máscara no programan trabajo",
+   "ok": true,
+   "ms": 4069
+  },
+  {
+   "nombre": "Movimiento reducido: el placeholder muestra el texto completo sin escribirse",
+   "ok": true,
+   "ms": 3708
+  },
+  {
+   "nombre": "Inicio: la máscara del héroe se duerme en reposo, despierta con el puntero y vuelve a dormirse",
+   "ok": true,
+   "ms": 10122
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento normal): animan solo a la vista, se pausan fuera de pantalla y con la pestaña oculta",
+   "ok": true,
+   "ms": 10591
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento reducido): quedan quietas, sin bucle; arrastrar sigue funcionando y luego vuelve a dormir",
+   "ok": true,
+   "ms": 15013
+  },
+  {
+   "nombre": "F6-01: un guardado que FALLA, una validación rechazada y un guardado EN VUELO no sueltan la protección de Puntos Web",
+   "ok": true,
+   "ms": 240310
+  },
+  {
+   "nombre": "F6-01: un guardado CONFIRMADO suelta solo ese formulario; cancelar un diálogo no deja protección falsa; coexistencia",
+   "ok": true,
+   "ms": 53354
+  },
+  {
+   "nombre": "F6-01b: un éxito de OTRO flujo (otro formulario) no libera un guardado fallido, rechazado ni en vuelo; el éxito propio libera solo el suyo",
+   "ok": true,
+   "ms": 240360
+  },
+  {
+   "nombre": "F6-01b: dos formularios enviados en la misma pantalla/sesión: el éxito de uno no libera al otro; editar tras enviar invalida la respuesta anterior",
+   "ok": true,
+   "ms": 18830
+  },
+  {
+   "nombre": "F6-01b: enviar → editar → reenviar → respuesta ANTIGUA no libera; la respuesta ACTUAL sí",
+   "ok": true,
+   "ms": 220448
+  },
+  {
+   "nombre": "F6-05: editar y Cancelar un diálogo muchas veces en una sola pantalla no acumula formularios desmontados (nodos tras GC)",
+   "ok": true,
+   "ms": 11259
+  },
+  {
+   "nombre": "F6-02: cambio DIRECTO de cuenta y de rol con la pantalla montada (sin sesión nula): los filtros nuevos nacen en su valor por defecto",
+   "ok": true,
+   "ms": 7726
+  },
+  {
+   "nombre": "F6-02: dentro de la MISMA identidad los filtros sí se conservan al desalojar (control)",
+   "ok": true,
+   "ms": 20049
+  },
+  {
+   "nombre": "F6-03: el mes anterior elegido en Dashboard (y el rango personalizado de las demás pantallas) se conserva exacto tras desalojar",
+   "ok": true,
+   "ms": 20930
+  },
+  {
+   "nombre": "F6-04: el contador de TarjetaPuntos se pausa fuera de pantalla y con la pestaña oculta, y CONTINÚA al volver; movimiento reducido lo salta",
+   "ok": true,
+   "ms": 14831
+  }
+ ]
+}

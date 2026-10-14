@@ -1,0 +1,76 @@
+{
+ "fecha": "2026-10-11T07:44:08.429Z",
+ "app": "http://localhost:5173",
+ "casos": [
+  {
+   "nombre": "F4-03 carrito: la lectura de precios falla (403) → la barra cuenta los 2 productos y NO presenta un subtotal como total; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-03 carrito: la lectura de precios falla (500) → la barra cuenta los 2 productos y NO presenta un subtotal como total; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-03 carrito: la lectura de precios falla (red) → la barra cuenta los 2 productos y NO presenta un subtotal como total; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-03 carrito: recuperación SIN añadir un id distinto — al cambiar la cantidad de un producto la barra vuelve a pedir el precio que faltaba",
+   "ok": true
+  },
+  {
+   "nombre": "F4-04 carrito: un precio actualizado visto en la página NO se revierte al limpiar la búsqueda (la caché se reconcilia con lo que muestra la página)",
+   "ok": true
+  },
+  {
+   "nombre": "F4-03 cita: la lectura de precios falla (403) → la barra cuenta los 2 servicios y NO presenta un subtotal como total; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-03 cita: la lectura de precios falla (500) → la barra cuenta los 2 servicios y NO presenta un subtotal como total; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-03 cita: la lectura de precios falla (red) → la barra cuenta los 2 servicios y NO presenta un subtotal como total; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-02 cita: un servicio presente a la vez en el héroe y en una fila de categoría cuenta UNA vez y suma su precio UNA vez",
+   "ok": true
+  },
+  {
+   "nombre": "F4-04b carrito: elemento que sigue en la vitrina (S/ 20) → la búsqueda lo confirma a S/ 25 → al limpiar la barra NO vuelve a S/ 20",
+   "ok": true
+  },
+  {
+   "nombre": "F4-04b cita: elemento que sigue en la vitrina (S/ 20) → la búsqueda lo confirma a S/ 25 → al limpiar la barra NO vuelve a S/ 20",
+   "ok": true
+  },
+  {
+   "nombre": "F4-05 carrito: precio en caché vencido (>60 s) y la renovación falla (403) → NO se presenta como total vigente; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-05 carrito: precio en caché vencido (>60 s) y la renovación falla (500) → NO se presenta como total vigente; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-05 carrito: precio en caché vencido (>60 s) y la renovación falla (red) → NO se presenta como total vigente; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-05 cita: precio en caché vencido (>60 s) y la renovación falla (403) → NO se presenta como total vigente; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-05 cita: precio en caché vencido (>60 s) y la renovación falla (500) → NO se presenta como total vigente; «Reintentar» lo recupera",
+   "ok": true
+  },
+  {
+   "nombre": "F4-05 cita: precio en caché vencido (>60 s) y la renovación falla (red) → NO se presenta como total vigente; «Reintentar» lo recupera",
+   "ok": true
+  }
+ ],
+ "total": 17,
+ "fallos": 0
+}

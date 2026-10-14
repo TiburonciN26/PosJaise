@@ -1,0 +1,68 @@
+{
+ "fecha": "2026-10-12T18:07:29.980Z",
+ "entorno": "Postgres 17 de Supabase Local (127.0.0.1:54321), sesiones psql concurrentes como admin QA por claims; fixture propio eliminado al terminar",
+ "marca": "QA-F9B-mv5kdxu1",
+ "total": 7,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "Plazo vigente: el cambio aplica (hecho); con p_de distinto no (sin-cambio); ya vencido devuelve «vencida» sin tocar la fila",
+   "ok": true
+  },
+  {
+   "nombre": "Barrera antes del plazo: responde «esperar» y no toca la fila; después: «cerrada» con el valor",
+   "ok": true,
+   "detalle": {
+    "antes": {
+     "estado": "esperar",
+     "faltan_ms": 2903
+    },
+    "despues": {
+     "valor": "QA-F9B-mv5kdxu1/de.webp",
+     "estado": "cerrada",
+     "existe": true
+    }
+   }
+  },
+  {
+   "nombre": "EN VUELO: cambio ejecutado antes del plazo y confirmado DESPUÉS; la barrera (tras el plazo) espera ese commit y devuelve el valor nuevo",
+   "ok": true,
+   "detalle": {
+    "esperaBarreraMs": 1310
+   }
+  },
+  {
+   "nombre": "EN VUELO bloqueado por otra transacción que REESCRIBE la fila hasta después del plazo: al desbloquearse re-evalúa el plazo y no aplica",
+   "ok": true,
+   "detalle": {
+    "cambio": "sin-cambio",
+    "esperaMs": 2703
+   }
+  },
+  {
+   "nombre": "EN VUELO bloqueado por un FOR UPDATE (sin reescribir) hasta después del plazo: el cambio aplica tarde, PERO la barrera queda detrás y lo ve",
+   "ok": true,
+   "detalle": {
+    "cambio": "hecho",
+    "barrera": "vio el cambio tardío",
+    "final": "nuevo"
+   }
+  },
+  {
+   "nombre": "Permisos: clienta (no admin) → 42501; columna fuera de la lista → 22023; anon sin EXECUTE",
+   "ok": true,
+   "detalle": {
+    "clienta": "CONTEXT:  PL/pgSQL function migracion_medios_cambiar(text,text,uuid,text,text,timestamp with time zone) line 6 at RAISE",
+    "columna": "CONTEXT:  PL/pgSQL function migracion_medios_cambiar(text,text,uuid,text,text,timestamp with time zone) line 9 at RAISE",
+    "anon": "ERROR:  permission denied for function migracion_medios_barrera"
+   }
+  },
+  {
+   "nombre": "Limpieza: el producto fixture se eliminó",
+   "ok": true,
+   "detalle": {
+    "filasDeAuditoriaNuevas": 8
+   }
+  }
+ ]
+}

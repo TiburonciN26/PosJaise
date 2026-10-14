@@ -1,0 +1,1747 @@
+{
+ "generado": "2026-10-12T16:45:39.952Z",
+ "origen": "2026-10-12T16:45:39.916114+00:00",
+ "supabase": "127.0.0.1:54321",
+ "columnas": [
+  {
+   "tabla": "asistentes",
+   "columna": "foto_url",
+   "filas": 12,
+   "noNulos": 3
+  },
+  {
+   "tabla": "citas",
+   "columna": "comprobante_url",
+   "filas": 299,
+   "noNulos": 46
+  },
+  {
+   "tabla": "clientes",
+   "columna": "foto_url",
+   "filas": 4749,
+   "noNulos": 0
+  },
+  {
+   "tabla": "estado_negocio",
+   "columna": "plin_qr_url",
+   "filas": 1,
+   "noNulos": 0
+  },
+  {
+   "tabla": "estado_negocio",
+   "columna": "yape_qr_url",
+   "filas": 1,
+   "noNulos": 1
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "filas": 39,
+   "noNulos": 39
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "filas": 39,
+   "noNulos": 39
+  },
+  {
+   "tabla": "mobiliario",
+   "columna": "foto_url",
+   "filas": 43,
+   "noNulos": 0
+  },
+  {
+   "tabla": "pedidos_web",
+   "columna": "comprobante_url",
+   "filas": 429,
+   "noNulos": 429
+  },
+  {
+   "tabla": "producto_fotos",
+   "columna": "foto_url",
+   "filas": 0,
+   "noNulos": 0
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "filas": 3245,
+   "noNulos": 16
+  },
+  {
+   "tabla": "servicio_fotos",
+   "columna": "foto_url",
+   "filas": 2,
+   "noNulos": 2
+  },
+  {
+   "tabla": "servicios",
+   "columna": "foto_url",
+   "filas": 3340,
+   "noNulos": 1
+  },
+  {
+   "tabla": "usuarios",
+   "columna": "foto_url",
+   "filas": 36,
+   "noNulos": 1
+  }
+ ],
+ "buckets": [
+  {
+   "id": "comprobantes-citas-web",
+   "publico": false
+  },
+  {
+   "id": "comprobantes-pedidos-web",
+   "publico": false
+  },
+  {
+   "id": "fotos-asistentes",
+   "publico": true
+  },
+  {
+   "id": "fotos-clientes",
+   "publico": true
+  },
+  {
+   "id": "fotos-galeria",
+   "publico": true
+  },
+  {
+   "id": "fotos-productos",
+   "publico": true
+  },
+  {
+   "id": "fotos-servicios",
+   "publico": true
+  },
+  {
+   "id": "fotos-usuarios",
+   "publico": true
+  },
+  {
+   "id": "qr-pagos",
+   "publico": true
+  }
+ ],
+ "porBucket": {
+  "comprobantes-citas-web": {
+   "privacidad": "privado",
+   "objetos": 46,
+   "bytes": 191832,
+   "referenciados": 46,
+   "huerfanos": 0
+  },
+  "comprobantes-pedidos-web": {
+   "privacidad": "privado",
+   "objetos": 380,
+   "bytes": 6174776,
+   "referenciados": 371,
+   "huerfanos": 9
+  },
+  "fotos-asistentes": {
+   "privacidad": "publico-personal",
+   "objetos": 3,
+   "bytes": 114482,
+   "referenciados": 3,
+   "huerfanos": 0
+  },
+  "fotos-galeria": {
+   "privacidad": "publico-catalogo",
+   "objetos": 6,
+   "bytes": 397504,
+   "referenciados": 6,
+   "huerfanos": 0
+  },
+  "fotos-productos": {
+   "privacidad": "publico-catalogo",
+   "objetos": 1,
+   "bytes": 78016,
+   "referenciados": 1,
+   "huerfanos": 0
+  },
+  "fotos-servicios": {
+   "privacidad": "publico-catalogo",
+   "objetos": 3,
+   "bytes": 122528,
+   "referenciados": 3,
+   "huerfanos": 0
+  },
+  "fotos-usuarios": {
+   "privacidad": "publico-personal",
+   "objetos": 1,
+   "bytes": 2572,
+   "referenciados": 1,
+   "huerfanos": 0
+  },
+  "qr-pagos": {
+   "privacidad": "publico-negocio",
+   "objetos": 1,
+   "bytes": 87746,
+   "referenciados": 1,
+   "huerfanos": 0
+  }
+ },
+ "resumenPorColumna": {
+  "asistentes.foto_url": {
+   "privacidad": "publico-personal",
+   "formatos": {
+    "supabase-ruta": 3
+   },
+   "migrables": 0,
+   "motivos": {
+    "perfil personal: fuera de alcance (requiere decisión)": 3
+   }
+  },
+  "citas.comprobante_url": {
+   "privacidad": "privado",
+   "formatos": {
+    "supabase-ruta": 46
+   },
+   "migrables": 0,
+   "motivos": {
+    "privado: excluido siempre": 46
+   }
+  },
+  "estado_negocio.yape_qr_url": {
+   "privacidad": "publico-negocio",
+   "formatos": {
+    "supabase-ruta": 1
+   },
+   "migrables": 0,
+   "motivos": {
+    "fuera de alcance (publico-negocio)": 1
+   }
+  },
+  "galeria_web.antes_url": {
+   "privacidad": "publico-catalogo",
+   "formatos": {
+    "asset-build": 36,
+    "supabase-url": 3
+   },
+   "migrables": 3,
+   "motivos": {
+    "rota: recurso del build inexistente": 35,
+    "migrable": 3,
+    "recurso del build (public/)": 1
+   }
+  },
+  "galeria_web.despues_url": {
+   "privacidad": "publico-catalogo",
+   "formatos": {
+    "asset-build": 36,
+    "supabase-url": 3
+   },
+   "migrables": 3,
+   "motivos": {
+    "rota: recurso del build inexistente": 35,
+    "migrable": 3,
+    "recurso del build (public/)": 1
+   }
+  },
+  "pedidos_web.comprobante_url": {
+   "privacidad": "privado",
+   "formatos": {
+    "supabase-ruta": 429
+   },
+   "migrables": 0,
+   "motivos": {
+    "privado: excluido siempre": 429
+   }
+  },
+  "productos.foto_url": {
+   "privacidad": "publico-catalogo",
+   "formatos": {
+    "supabase-ruta": 16
+   },
+   "migrables": 1,
+   "motivos": {
+    "rota: el objeto no existe en Storage": 15,
+    "migrable": 1
+   }
+  },
+  "servicio_fotos.foto_url": {
+   "privacidad": "publico-catalogo",
+   "formatos": {
+    "supabase-ruta": 2
+   },
+   "migrables": 2,
+   "motivos": {
+    "migrable": 2
+   }
+  },
+  "servicios.foto_url": {
+   "privacidad": "publico-catalogo",
+   "formatos": {
+    "supabase-ruta": 1
+   },
+   "migrables": 1,
+   "motivos": {
+    "migrable": 1
+   }
+  },
+  "usuarios.foto_url": {
+   "privacidad": "publico-personal",
+   "formatos": {
+    "supabase-ruta": 1
+   },
+   "migrables": 0,
+   "motivos": {
+    "perfil personal: fuera de alcance (requiere decisión)": 1
+   }
+  }
+ },
+ "totales": {
+  "referencias": 577,
+  "migrables": 10,
+  "objetosMigrables": 10,
+  "rotasEnAlcance": 85,
+  "privadas": 475
+ },
+ "referencias": [
+  {
+   "tabla": "asistentes",
+   "columna": "foto_url",
+   "fila": "61386f66-85d1-4324-a452-181d1aa44347",
+   "valor": "cc044060-d9da-40c7-b83c-91f3bced7c7a.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-asistentes",
+   "ruta": "cc044060-d9da-40c7-b83c-91f3bced7c7a.webp",
+   "objeto": {
+    "bytes": 49282,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-personal",
+   "migrar": false,
+   "motivo": "perfil personal: fuera de alcance (requiere decisión)"
+  },
+  {
+   "tabla": "asistentes",
+   "columna": "foto_url",
+   "fila": "e35744f1-25be-49e9-af4c-b17cd978b7cf",
+   "valor": "35b64885-84af-411d-8f56-ede6d93484b1.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-asistentes",
+   "ruta": "35b64885-84af-411d-8f56-ede6d93484b1.webp",
+   "objeto": {
+    "bytes": 58302,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-personal",
+   "migrar": false,
+   "motivo": "perfil personal: fuera de alcance (requiere decisión)"
+  },
+  {
+   "tabla": "asistentes",
+   "columna": "foto_url",
+   "fila": "ff0c053b-e081-48ef-85cf-71055c310623",
+   "valor": "499870c6-5efc-4de1-87cd-a7be1fe17e9f.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-asistentes",
+   "ruta": "499870c6-5efc-4de1-87cd-a7be1fe17e9f.webp",
+   "objeto": {
+    "bytes": 6898,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-personal",
+   "migrar": false,
+   "motivo": "perfil personal: fuera de alcance (requiere decisión)"
+  },
+  {
+   "tabla": "estado_negocio",
+   "columna": "yape_qr_url",
+   "fila": "1",
+   "valor": "yape-173f7737-fff9-4bb1-94d3-5f0d6acc9fde.webp",
+   "formato": "supabase-ruta",
+   "bucket": "qr-pagos",
+   "ruta": "yape-173f7737-fff9-4bb1-94d3-5f0d6acc9fde.webp",
+   "objeto": {
+    "bytes": 87746,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-negocio",
+   "migrar": false,
+   "motivo": "fuera de alcance (publico-negocio)"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "04c7062c-fc81-451d-b703-53fb2d4491f4",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "0c92de72-3f86-47f9-bf3d-09257f12dd2d",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "0dab6d6a-18ca-46cd-a594-db678b6d3d74",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "0e426a40-91b6-4b6f-9530-ae2e797e2a18",
+   "valor": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/d59326fc-22a0-48bd-b4bf-1c2da272f7e4.webp",
+   "formato": "supabase-url",
+   "bucket": "fotos-galeria",
+   "ruta": "d59326fc-22a0-48bd-b4bf-1c2da272f7e4.webp",
+   "objeto": {
+    "bytes": 36108,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "198bcec9-1688-47a4-b464-1102880706a5",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "1b931031-78f8-4009-9535-41a8d99bfe5b",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "1b9b1913-2ec6-4220-8af3-acfa478e5429",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "1c028d76-18dc-45aa-b32b-17d09cc81e21",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "4073dc36-8966-46b0-8097-f8e766f8942c",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "4f6ac4b6-b546-4896-bf44-f6b51992586c",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "50bfcc27-5fec-426c-9a2e-8c0d08e7def3",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "53d4ff48-8644-4918-a917-32f451a2cdee",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "611a723e-356c-470c-b22f-a0d40bf8ad33",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "6e1e2182-5ede-4030-9b42-2ef97bdbc33b",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "727e21af-a216-4ba5-835a-9c4208da66cd",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "8c0f7a0b-414e-4599-ab89-25c0045f063d",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "8f59d95a-2a0d-4a50-83b5-fb515aff2183",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "9a64c36c-a894-4323-8f0f-5022860cc362",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "9cc9cce0-e660-4b7e-a355-e84e3f83e1c4",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "a14a1be5-8e69-4558-aeb3-aaa48802d5b0",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "a719a687-7375-4a2a-9e88-afc858e09060",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "a828baaf-2283-42a9-a824-1107cad60084",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "a9646f4c-09d3-49bf-8659-1de8ad3d0cbe",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "abe212a1-84ef-4963-855c-97aa4ab512f0",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "ad0b1e99-9942-476f-b66e-f7367c590262",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "af02ca09-8190-4606-a187-695c397fc26e",
+   "valor": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/ce0950a0-9e3b-4214-9c79-a6243dd431a4.webp",
+   "formato": "supabase-url",
+   "bucket": "fotos-galeria",
+   "ruta": "ce0950a0-9e3b-4214-9c79-a6243dd431a4.webp",
+   "objeto": {
+    "bytes": 120906,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "be158c9e-63ce-4ac7-ae5f-84434defcb47",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "c45c90cc-0dd0-4be4-bb84-156f0c454b3e",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "c5742d42-2ea1-4dd1-9723-e09910a78cb4",
+   "valor": "inicio-web/hero-antes-referencia.jpg",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "inicio-web/hero-antes-referencia.jpg",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "recurso del build (public/)"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "d03d0a29-8f50-4ede-98ba-51d3429f1187",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "d0a7cbad-2742-47d4-80db-432464f78a75",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "d1dd03c6-8486-4999-9cd5-61ae8a6ed703",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "d98fe5fa-8f21-4fc5-85b7-092eb5be3c9f",
+   "valor": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/75560750-c6d5-44a9-861f-afaf41141b24.webp",
+   "formato": "supabase-url",
+   "bucket": "fotos-galeria",
+   "ruta": "75560750-c6d5-44a9-861f-afaf41141b24.webp",
+   "objeto": {
+    "bytes": 83804,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "dec90442-5856-43c3-bff6-ce5e6aea0403",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "e5dac357-e817-4ed3-9f56-93fc4b041215",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "ef63571b-a835-4675-82c4-e7d3382afabe",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "eff9e0ca-2092-4062-b688-3f697c7905fb",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "f00eddca-bbed-4725-b9e6-d5f322242356",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "antes_url",
+   "fila": "fcba2e40-1567-471e-86c5-1f165ae39708",
+   "valor": "TEST/antes.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/antes.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "04c7062c-fc81-451d-b703-53fb2d4491f4",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "0c92de72-3f86-47f9-bf3d-09257f12dd2d",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "0dab6d6a-18ca-46cd-a594-db678b6d3d74",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "0e426a40-91b6-4b6f-9530-ae2e797e2a18",
+   "valor": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/77247612-7b2a-4861-b3a9-73559aed8097.webp",
+   "formato": "supabase-url",
+   "bucket": "fotos-galeria",
+   "ruta": "77247612-7b2a-4861-b3a9-73559aed8097.webp",
+   "objeto": {
+    "bytes": 28712,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "198bcec9-1688-47a4-b464-1102880706a5",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "1b931031-78f8-4009-9535-41a8d99bfe5b",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "1b9b1913-2ec6-4220-8af3-acfa478e5429",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "1c028d76-18dc-45aa-b32b-17d09cc81e21",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "4073dc36-8966-46b0-8097-f8e766f8942c",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "4f6ac4b6-b546-4896-bf44-f6b51992586c",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "50bfcc27-5fec-426c-9a2e-8c0d08e7def3",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "53d4ff48-8644-4918-a917-32f451a2cdee",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "611a723e-356c-470c-b22f-a0d40bf8ad33",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "6e1e2182-5ede-4030-9b42-2ef97bdbc33b",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "727e21af-a216-4ba5-835a-9c4208da66cd",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "8c0f7a0b-414e-4599-ab89-25c0045f063d",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "8f59d95a-2a0d-4a50-83b5-fb515aff2183",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "9a64c36c-a894-4323-8f0f-5022860cc362",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "9cc9cce0-e660-4b7e-a355-e84e3f83e1c4",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "a14a1be5-8e69-4558-aeb3-aaa48802d5b0",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "a719a687-7375-4a2a-9e88-afc858e09060",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "a828baaf-2283-42a9-a824-1107cad60084",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "a9646f4c-09d3-49bf-8659-1de8ad3d0cbe",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "abe212a1-84ef-4963-855c-97aa4ab512f0",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "ad0b1e99-9942-476f-b66e-f7367c590262",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "af02ca09-8190-4606-a187-695c397fc26e",
+   "valor": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/7e8c89d7-2f33-4e92-82e5-4917f667e961.webp",
+   "formato": "supabase-url",
+   "bucket": "fotos-galeria",
+   "ruta": "7e8c89d7-2f33-4e92-82e5-4917f667e961.webp",
+   "objeto": {
+    "bytes": 107162,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "be158c9e-63ce-4ac7-ae5f-84434defcb47",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "c45c90cc-0dd0-4be4-bb84-156f0c454b3e",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "c5742d42-2ea1-4dd1-9723-e09910a78cb4",
+   "valor": "inicio-web/hero-despues-referencia.jpg",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "inicio-web/hero-despues-referencia.jpg",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "recurso del build (public/)"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "d03d0a29-8f50-4ede-98ba-51d3429f1187",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "d0a7cbad-2742-47d4-80db-432464f78a75",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "d1dd03c6-8486-4999-9cd5-61ae8a6ed703",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "d98fe5fa-8f21-4fc5-85b7-092eb5be3c9f",
+   "valor": "http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/4842bfde-11a4-4982-96f1-503330714032.webp",
+   "formato": "supabase-url",
+   "bucket": "fotos-galeria",
+   "ruta": "4842bfde-11a4-4982-96f1-503330714032.webp",
+   "objeto": {
+    "bytes": 20812,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "dec90442-5856-43c3-bff6-ce5e6aea0403",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "e5dac357-e817-4ed3-9f56-93fc4b041215",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "ef63571b-a835-4675-82c4-e7d3382afabe",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "eff9e0ca-2092-4062-b688-3f697c7905fb",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "f00eddca-bbed-4725-b9e6-d5f322242356",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "galeria_web",
+   "columna": "despues_url",
+   "fila": "fcba2e40-1567-471e-86c5-1f165ae39708",
+   "valor": "TEST/despues.png",
+   "formato": "asset-build",
+   "bucket": null,
+   "ruta": "TEST/despues.png",
+   "objeto": null,
+   "privacidad": "sin-bucket",
+   "migrar": false,
+   "motivo": "rota: recurso del build inexistente",
+   "detalle": "no existe en public/"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "1c5bbb5e-b84b-4055-adc4-bce706b3ec82",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "1f369525-a519-4ed7-bacb-180f6f5de997",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "2457807b-d8b4-4624-b88b-17d947e37d8a",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "2dc7bd3f-44fb-4fd0-9125-a2d4ea536ea1",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "3c25dd7e-b518-46f6-a488-73f7c675cd16",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "3fe99302-f2ae-47f1-b704-40ab1e9c6f5a",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "44eef58a-27c0-4c1a-8876-f5afb29b7381",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "45670291-e16e-491e-9129-a7f325e6609a",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "4a142c0b-a15b-441e-89ca-baa864585fe4",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "5a711dca-12f6-4998-a028-8fcd70354118",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "7f3ea894-7739-4b2f-a069-b7eb5d9dc4f3",
+   "valor": "5f1c335d-a5b4-4800-9ba9-3697e06bbc1e.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "5f1c335d-a5b4-4800-9ba9-3697e06bbc1e.webp",
+   "objeto": {
+    "bytes": 78016,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "8ecdf5e6-95ff-4e2d-b1aa-b32aebc68a77",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "a197dddd-22e4-41fb-b521-a65e73c08e9d",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "cde4aa69-a75d-4fd9-9e0e-141caa20d999",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "d2e555eb-542d-4092-ad26-f04ff4219860",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "productos",
+   "columna": "foto_url",
+   "fila": "e4a3f3ed-03fe-48dd-b253-8235063aa61b",
+   "valor": "ruta/p.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-productos",
+   "ruta": "ruta/p.webp",
+   "objeto": null,
+   "privacidad": "publico-catalogo",
+   "migrar": false,
+   "motivo": "rota: el objeto no existe en Storage"
+  },
+  {
+   "tabla": "servicio_fotos",
+   "columna": "foto_url",
+   "fila": "32807a38-5e48-4b50-81c9-05295f91600f",
+   "valor": "8eb77ffc-3e16-4739-b600-51bf553cd996.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-servicios",
+   "ruta": "8eb77ffc-3e16-4739-b600-51bf553cd996.webp",
+   "objeto": {
+    "bytes": 71300,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "servicio_fotos",
+   "columna": "foto_url",
+   "fila": "b85e6334-2218-4131-858c-ca93d8710f2f",
+   "valor": "0e5360c2-2603-4820-8950-c10f6b76c9c8.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-servicios",
+   "ruta": "0e5360c2-2603-4820-8950-c10f6b76c9c8.webp",
+   "objeto": {
+    "bytes": 1946,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "servicios",
+   "columna": "foto_url",
+   "fila": "2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+   "valor": "e4788f8b-d188-4467-8ab7-5aeea33b3810.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-servicios",
+   "ruta": "e4788f8b-d188-4467-8ab7-5aeea33b3810.webp",
+   "objeto": {
+    "bytes": 49282,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-catalogo",
+   "migrar": true,
+   "motivo": "migrable"
+  },
+  {
+   "tabla": "usuarios",
+   "columna": "foto_url",
+   "fila": "efc666d2-166b-4b73-8c24-f9498585950a",
+   "valor": "efc666d2-166b-4b73-8c24-f9498585950a/be720e21-6933-406e-90fd-e742842cb862.webp",
+   "formato": "supabase-ruta",
+   "bucket": "fotos-usuarios",
+   "ruta": "efc666d2-166b-4b73-8c24-f9498585950a/be720e21-6933-406e-90fd-e742842cb862.webp",
+   "objeto": {
+    "bytes": 2572,
+    "mime": "image/webp"
+   },
+   "privacidad": "publico-personal",
+   "migrar": false,
+   "motivo": "perfil personal: fuera de alcance (requiere decisión)"
+  }
+ ],
+ "huerfanosPublicos": []
+}

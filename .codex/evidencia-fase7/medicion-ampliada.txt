@@ -1,0 +1,71 @@
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+escala=ampliada volumen(pedidos,items,cupones,res,res_p,res_s,promos,prod,serv,cli)=60429,120429,123067,20049,20089,20080,5208,23245,23340,34749  filas antes/después de la prueba: 4749,429,3067,3245,119 → 4749,429,3067,3245,119
+Q01 admin      11902.18 ms h392994 →    195.66 ms h9 →      7.31 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · primera página (sin filtro)
+Q01 cajera     10057.74 ms h362576 →       8.9 ms h6 →      12.3 ms h6  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · primera página (sin filtro)
+Q02 admin       1861.34 ms h60307 →     56.04 ms h9 →      8.82 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · estado PENDIENTE
+Q03 admin       6979.85 ms h232061 →     97.48 ms h9 →     10.28 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · búsqueda de clienta + estado
+Q04 admin        774.56 ms h25973 →      8.24 ms h6 →      7.79 ms h6  seq[pedidos_web] → seq[pedidos_web]  Pedidos Web · conteo exacto por estado (head)
+Q05 admin         15.17 ms h32 →     13.76 ms h12 →      0.88 ms h12  seq[pedidos_web_items] → seq[]  Pedidos Web · ítems de un pedido
+Q06 admin        863.99 ms h20828 →      1.69 ms h4 →      1.79 ms h4  seq[promociones] → seq[promociones]  Promociones · primera página
+Q07 admin        854.06 ms h20828 →       8.3 ms h4 →      8.22 ms h4  seq[promociones] → seq[promociones]  Promociones · búsqueda por título
+Q08 admin       8018.09 ms h345394 →     72.47 ms h23 →     70.59 ms h23  seq[resenas,resenas_producto,resenas_servicio,clientes] → seq[resenas,resenas_producto,resenas_servicio,clientes]  Reseñas · primera página (vista de 3 tablas)
+Q09 admin        3063.8 ms h105582 →     34.86 ms h23 →     37.63 ms h23  seq[resenas,resenas_producto,resenas_servicio] → seq[resenas,resenas_producto,resenas_servicio,clientes]  Reseñas · estado PENDIENTE
+Q10 admin        7919.1 ms h374564 →     230.8 ms h28 →    227.25 ms h28  seq[clientes,resenas_producto,resenas_servicio] → seq[resenas,clientes,resenas_producto,resenas_servicio]  Reseñas · búsqueda (clienta o ítem)
+Q11 admin        222.56 ms h30079 →      8.85 ms h4 →      9.16 ms h4  seq[resenas,resenas_producto,resenas_servicio] → seq[resenas,resenas_producto,resenas_servicio]  Reseñas · conteo por estado (head)
+Q12 admin       1699.23 ms h95117 →     50.44 ms h3 →     31.39 ms h3  seq[cupones,clientes] → seq[clientes]  Cupones Referidos · primera página
+Q13 admin          30.6 ms h269 →     40.63 ms h3 →      5.53 ms h3  seq[cupones] → seq[clientes]  Cupones Fidelización · estado DISPONIBLE
+Q14 admin       3059.49 ms h129866 →    661.21 ms h4 →     631.6 ms h4  seq[cupones,clientes] → seq[clientes]  Cupones · búsqueda código o clienta
+Q15 admin         14.58 ms h6 →     16.15 ms h2 →      0.21 ms h2  seq[cupones] → seq[cupones]  Cupones · conteo por estado (head)
+Q16 anon          35.84 ms h0 →     32.35 ms h0 →     35.27 ms h0  seq[productos] → seq[productos]  Productos · búsqueda ilike + orden nombre,id
+Q16 cliente     1492.57 ms h42490 →     36.27 ms h2 →     39.16 ms h2  seq[productos] → seq[productos]  Productos · búsqueda ilike + orden nombre,id
+Q17 anon           4.29 ms h0 →      4.78 ms h0 →      4.74 ms h0  seq[productos] → seq[productos]  Productos · listado por categoría
+Q17 cliente       27.12 ms h668 →      6.75 ms h2 →      5.12 ms h2  seq[productos] → seq[productos]  Productos · listado por categoría
+Q18 anon           3.41 ms h0 →      4.13 ms h0 →      3.76 ms h0  seq[servicios] → seq[servicios]  Servicios · listado por categoría
+Q18 cliente       47.65 ms h1308 →      3.84 ms h2 →      3.77 ms h2  seq[servicios] → seq[servicios]  Servicios · listado por categoría
+Q19 anon            2.4 ms h0 →      2.46 ms h0 →       2.4 ms h0  seq[productos] → seq[productos]  Productos · hero (en_inicio, stock>0)
+Q20 anon           4.37 ms h0 →       4.5 ms h0 →      5.24 ms h0  seq[productos] → seq[productos]  Productos · cinta de ofertas
+Q21 anon              4 ms h0 →      4.58 ms h0 →      4.51 ms h0  seq[productos] → seq[productos]  Productos · cinta de destacados
+Q22 anon          10.81 ms h0 →      11.4 ms h0 →     12.56 ms h0  seq[] → seq[]  productos_categorias_publicas()
+Q22 cliente     1291.98 ms h36062 →     12.98 ms h2 →     12.54 ms h2  seq[] → seq[]  productos_categorias_publicas()
+Q23 anon          13.02 ms h0 →     12.97 ms h0 →     15.77 ms h0  seq[] → seq[]  productos_vitrina_publica(4,0,10)
+Q23 cliente     1415.07 ms h39276 →     14.22 ms h2 →     14.35 ms h2  seq[] → seq[]  productos_vitrina_publica(4,0,10)
+Q24 anon           9.69 ms h0 →     10.04 ms h0 →      9.69 ms h0  seq[] → seq[]  servicios_categorias_publicas()
+Q24 cliente     1302.07 ms h37352 →     11.79 ms h2 →      9.98 ms h2  seq[] → seq[]  servicios_categorias_publicas()
+Q25 anon          16.47 ms h0 →     17.86 ms h0 →     18.14 ms h0  seq[] → seq[]  servicios_vitrina_publica(4,30,0,10)
+Q25 cliente      1474.3 ms h40001 →     19.98 ms h2 →     19.32 ms h2  seq[] → seq[]  servicios_vitrina_publica(4,30,0,10)
+Q26 cliente    12881.34 ms h362560 →      9.82 ms h6 →     14.09 ms h6  seq[pedidos_web] → seq[pedidos_web]  Clienta · sus pedidos (RLS cliente_id = mi_cliente_id())
+Q27 cliente    13389.29 ms h362574 →     76.16 ms h8 →     73.45 ms h8  seq[pedidos_web_items,pedidos_web] → seq[pedidos_web_items,pedidos_web]  Clienta · ítems de sus pedidos (RLS con EXISTS)
+Q28 cliente     7387.46 ms h241026 →     24.36 ms h18 →     22.93 ms h18  seq[resenas,resenas_producto,resenas_servicio] → seq[resenas,resenas_producto,resenas_servicio]  Clienta · reseñas visibles (aprobadas + propias)
+Q29 cliente    11347.32 ms h492270 →     22.06 ms h4 →     19.75 ms h4  seq[cupones] → seq[cupones]  Clienta · sus cupones (RLS cliente_id = mi_cliente_id())

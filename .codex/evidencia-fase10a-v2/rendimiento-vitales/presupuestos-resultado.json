@@ -1,0 +1,337 @@
+{
+ "fecha": "2026-10-13T06:32:07.101Z",
+ "presupuestos": "scripts/fase10a/presupuestos-rendimiento.json",
+ "ejecucion": "cdf364ab-d54d-4d5a-8a53-550fa664363c",
+ "alcance": [
+  "vitales"
+ ],
+ "global": false,
+ "veredicto": "NO CUMPLE",
+ "total": 46,
+ "fallos": 18,
+ "problemas": [],
+ "filas": [
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio frio · LCP (ms)",
+   "valor": 3020,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio frio · CLS",
+   "valor": 0.10043430171997483,
+   "limite": "<= 0.1",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio caliente · LCP (ms)",
+   "valor": 2692,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio caliente · CLS",
+   "valor": 0.10043430171997483,
+   "limite": "<= 0.1",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · LCP (ms)",
+   "valor": 4104,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · interacción (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · LCP (ms)",
+   "valor": 3676,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · interacción (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto frio · LCP (ms)",
+   "valor": 4116,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto caliente · LCP (ms)",
+   "valor": 3824,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio frio · LCP (ms)",
+   "valor": 3328,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio frio · CLS",
+   "valor": 0.33437264419459356,
+   "limite": "<= 0.1",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio caliente · LCP (ms)",
+   "valor": 3012,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio caliente · CLS",
+   "valor": 0.3279848142239056,
+   "limite": "<= 0.1",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · LCP (ms)",
+   "valor": 4492,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · interacción (ms)",
+   "valor": 40,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · LCP (ms)",
+   "valor": 4056,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · interacción (ms)",
+   "valor": 40,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto frio · LCP (ms)",
+   "valor": 4496,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto caliente · LCP (ms)",
+   "valor": 4176,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · LCP (ms)",
+   "valor": 2048,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · interacción (ms)",
+   "valor": 24,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · LCP (ms)",
+   "valor": 1700,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · interacción (ms)",
+   "valor": 24,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · LCP (ms)",
+   "valor": 2860,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · CLS",
+   "valor": 0.0005127729357557795,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · interacción (ms)",
+   "valor": 24,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · LCP (ms)",
+   "valor": 2632,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · CLS",
+   "valor": 0.0005127729357557795,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · interacción (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-inicio · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-inicio · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-promociones · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-promociones · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-referidos-web · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-referidos-web · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  }
+ ]
+}

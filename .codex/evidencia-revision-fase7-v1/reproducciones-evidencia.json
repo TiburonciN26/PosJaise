@@ -1,0 +1,67 @@
+{
+  "q03": {
+    "fuente": "select p.id, p.tipo_entrega, p.direccion_entrega, p.celular_entrega, p.costo_delivery, p.subtotal, p.descuento_cupon, p.total, p.estado, p.creado_en, p.metodo_pago, p.comprobante_url, p.cupon_codigo, p.tipo_comprobante, p.ruc, p.razon_social, p.pago_verificado, row_to_json(c1.*)::jsonb clientes, row_to_json(z1.*)::jsonb zonas from public.pedidos_web p\n    inner join lateral (select c.nombre, c.telefono from public.clientes c where c.nombre ilike '%maria%' and c.id = p.cliente_id limit 1) c1 on true\n    left join lateral (select z.nombre from public.zonas_delivery z where z.id = p.zona_delivery_id limit 1) z1 on true\n    where p.estado = 'ENTREGADO' order by p.creado_en desc, p.id desc limit 40 offset 0",
+    "cuenta": "select 1 from public.pedidos_web p where p.estado = 'ENTREGADO'",
+    "contraejemplo": {
+      "pedidos": [
+        {
+          "id": "A",
+          "estado": "ENTREGADO",
+          "cliente": "maria"
+        },
+        {
+          "id": "B",
+          "estado": "ENTREGADO",
+          "cliente": "ana"
+        },
+        {
+          "id": "C",
+          "estado": "LISTO",
+          "cliente": "maria"
+        }
+      ],
+      "medidor": 2,
+      "esperado": 1,
+      "nota": "Contrajemplo puro: el conteo de Q03 omite el predicado de clienta presente en la página y en leerPedidos."
+    },
+    "vivo": {
+      "medidorCuenta": 90,
+      "cuentaConBusqueda": 0
+    }
+  },
+  "costo": {
+    "orden": [
+      "sin0",
+      "sin1",
+      "sin2",
+      "con0",
+      "con1",
+      "con2"
+    ],
+    "confirmadoDosBucles": true,
+    "sin": [
+      31165,
+      31327,
+      31521
+    ],
+    "con": [
+      31245,
+      32266,
+      32311
+    ],
+    "medianas": [
+      31327,
+      32266
+    ],
+    "sobrecostoMedianas": 2.9974143709898815,
+    "intervalosSolapados": true,
+    "limiteSuperiorNoDemostrado": true,
+    "razon": "El porcentaje de medianas secuenciales con generación, SAVEPOINT/ROLLBACK y calentamiento no identifica el sobrecosto puro ni su cota superior.",
+    "precondicionActual": {
+      "indicesF7Presentes": 3,
+      "elScriptNoQuitaIndicesAntesDeSin": true,
+      "sinGuardiaDeEstadoInicial": true,
+      "nota": "No se ejecutó el ensayo. Por lectura del código, una repetición tras las migraciones mediría también con índices los lotes etiquetados sin índices."
+    }
+  }
+}

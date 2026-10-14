@@ -1,0 +1,32 @@
+{
+  "method": "Fragmentos literales de handlers ejecutados en VM con subida y BD simuladas; ninguna escritura remota",
+  "results": [
+    {
+      "case": "galeria_antes_subida_despues_falla",
+      "dbCalls": 0,
+      "objectsRemaining": 2,
+      "cleanupCalls": 0,
+      "errorShown": [
+        "No se pudo subir alguna de las fotos. Intenta de nuevo."
+      ]
+    },
+    {
+      "case": "producto_galeria_insert_error_resuelto",
+      "uploaded": 1,
+      "cleanupCalls": 0,
+      "dbErrors": [
+        "42501"
+      ],
+      "exceptionPropagated": false
+    },
+    {
+      "case": "servicio_galeria_insert_error_resuelto",
+      "uploaded": 1,
+      "cleanupCalls": 0,
+      "dbErrors": [
+        "42501"
+      ],
+      "exceptionPropagated": false
+    }
+  ]
+}

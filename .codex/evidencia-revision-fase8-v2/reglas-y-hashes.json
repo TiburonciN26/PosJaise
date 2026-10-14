@@ -1,0 +1,404 @@
+{
+  "fecha": "2026-10-12T16:07:22.514Z",
+  "pruebas": 48,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "/asset assets/a.js",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/asset assets/a.css",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/asset assets/a.woff2",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/asset assets/a.webp",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/imagen inicio-web/hero.webp",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/imagen icons/efectivo.svg",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/imagen favicon.ico",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/imagen icons.svg",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/exclusión assets/a.js?token=x",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión assets/a.webp#x",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión __supabase/storage/v1/object/sign/b/x.webp?token=x",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión storage/v1/object/public/b/x.png",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión medios/x.webp",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión api/x.png",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión public/data.json",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/exclusión assets/d/x.js",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/origen ajeno",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/respuesta JS correcto",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/respuesta privado",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/respuesta no-store",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/respuesta HTML fallback",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/respuesta redirect",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/respuesta opaco",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/respuesta 404",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/asset assets/a.js",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/asset assets/a.css",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/asset assets/a.woff2",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/asset assets/a.webp",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/imagen inicio-web/hero.webp",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/imagen icons/efectivo.svg",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/imagen favicon.ico",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/imagen icons.svg",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/exclusión assets/a.js?token=x",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión assets/a.webp#x",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión __supabase/storage/v1/object/sign/b/x.webp?token=x",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión storage/v1/object/public/b/x.png",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión medios/x.webp",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión api/x.png",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión public/data.json",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/exclusión assets/d/x.js",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/origen ajeno",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/respuesta JS correcto",
+      "ok": true,
+      "actual": true,
+      "esperado": true
+    },
+    {
+      "nombre": "/PosJaise/respuesta privado",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/respuesta no-store",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/respuesta HTML fallback",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/respuesta redirect",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/respuesta opaco",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    },
+    {
+      "nombre": "/PosJaise/respuesta 404",
+      "ok": true,
+      "actual": false,
+      "esperado": false
+    }
+  ],
+  "checks": {
+    "v1": [
+      {
+        "archivo": "src/App.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/main.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/components/PestanasCacheadas.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/pages/Ventas.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/pages/PortalCliente.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/config/paginasCliente.js",
+        "coincide": true
+      },
+      {
+        "archivo": "vite.config.js",
+        "coincide": true
+      },
+      {
+        "archivo": "scripts/build-cloudflare.mjs",
+        "coincide": true
+      },
+      {
+        "archivo": "cloudflare/_headers",
+        "coincide": true
+      },
+      {
+        "archivo": "scripts/verificar-fase8.cjs",
+        "coincide": true
+      }
+    ],
+    "v2": [
+      {
+        "archivo": "src/App.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/main.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/components/PestanasCacheadas.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/pages/Ventas.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/pages/PortalCliente.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "src/config/paginasCliente.js",
+        "coincide": true
+      },
+      {
+        "archivo": "vite.config.js",
+        "coincide": true
+      },
+      {
+        "archivo": "scripts/build-cloudflare.mjs",
+        "coincide": true
+      },
+      {
+        "archivo": "cloudflare/_headers",
+        "coincide": true
+      },
+      {
+        "archivo": "scripts/verificar-fase8.cjs",
+        "coincide": true
+      },
+      {
+        "archivo": "src/lib/moduloDiferido.js",
+        "coincide": true
+      },
+      {
+        "archivo": "src/components/LimiteCargaDiferida.jsx",
+        "coincide": true
+      },
+      {
+        "archivo": "public/sw-reglas-cache.js",
+        "coincide": true
+      },
+      {
+        "archivo": "scripts/verificar-fase8-v2.cjs",
+        "coincide": true
+      },
+      {
+        "archivo": ".codex/POLITICA-VIDEO-FASE8.md",
+        "coincide": true
+      }
+    ],
+    "workerPublicado": true,
+    "sourceSinCambios": true,
+    "rollbackCheck": true
+  }
+}

@@ -1,0 +1,75 @@
+import { manejarMedios } from 'file:///C:/WedJaiseReact/cloudflare/medios-pages/entrega.js'
+import { swExcluyeMedios } from 'file:///C:/WedJaiseReact/scripts/lib/sw-medios.mjs'
+import { createHash } from 'node:crypto'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import assert from 'node:assert/strict'
+
+const ruta = 'https://staging.pages.dev/medios/fotos-productos/00000000-0000-4000-8000-000000000001/g.webp'
+const resultados = []
+const cabecerasSeguras = (r) => r.headers.get('X-Content-Type-Options') === 'nosniff' && r.headers.get('X-Robots-Tag') === 'noindex'
+let fallaCuerpo = true
+let puts = 0
+const pendientes = []
+const env = { MEDIOS: { get: async () => ({ httpEtag: '"ficticio"', arrayBuffer: async () => { if (fallaCuerpo) throw new Error('fallo ficticio leyendo cuerpo'); return new Uint8Array([1, 2, 3]).buffer } }) } }
+const cache = { match: async () => undefined, put: async () => { puts++ } }
+const ctx = { waitUntil: (p) => pendientes.push(p) }
+const error = await manejarMedios(new Request(ruta), env, ctx, { cache })
+await Promise.all(pendientes.splice(0))
+assert.equal(error.status, 503)
+assert.equal(error.headers.get('Cache-Control'), 'no-store')
+assert.ok(cabecerasSeguras(error))
+assert.equal(await error.text(), 'No disponible')
+assert.equal(puts, 0)
+resultados.push({ caso: 'PFM-01 GET original: get resuelve y cuerpo rechaza', status: error.status, noStore: true, cabecerasSeguras: true, puts })
+fallaCuerpo = false
+const sano = await manejarMedios(new Request(ruta), env, ctx, { cache })
+await Promise.all(pendientes.splice(0))
+assert.equal(sano.status, 200)
+assert.deepEqual([...new Uint8Array(await sano.arrayBuffer())], [1, 2, 3])
+assert.equal(puts, 1)
+resultados.push({ caso: 'Recuperacion GET tras fallo', status: sano.status, puts })
+
+for (const conHead of [true, false]) {
+  let heads = 0
+  let gets = 0
+  let cuerpos = 0
+  let putsHead = 0
+  const binding = { get: async () => { gets++; return { httpEtag: '"ficticio"', arrayBuffer: async () => { cuerpos++; throw new Error('no debe consumirse') } } } }
+  if (conHead) binding.head = async () => { heads++; return { httpEtag: '"ficticio"' } }
+  const r = await manejarMedios(new Request(ruta, { method: 'HEAD' }), { MEDIOS: binding }, ctx, { cache: { match: async () => undefined, put: async () => { putsHead++ } } })
+  assert.equal(r.status, 200)
+  assert.equal((await r.arrayBuffer()).byteLength, 0)
+  assert.equal(cuerpos, 0)
+  assert.equal(putsHead, 0)
+  assert.equal(heads, conHead ? 1 : 0)
+  assert.equal(gets, conHead ? 0 : 1)
+  resultados.push({ caso: 'HEAD metadatos y cuerpo que fallaria', conHead, status: r.status, heads, gets, cuerpos, putsHead })
+}
+
+for (const tipo of ['binding ausente', 'objeto ausente', 'fallo metadatos', 'ruta invalida']) {
+  const binding = { get: async () => null, head: async () => { if (tipo === 'fallo metadatos') throw new Error('ficticio'); return null } }
+  const r = await manejarMedios(new Request(tipo === 'ruta invalida' ? 'https://staging.pages.dev/medios' : ruta, { method: 'HEAD' }), tipo === 'binding ausente' ? {} : { MEDIOS: binding }, ctx, { cache })
+  assert.equal(r.status, tipo === 'fallo metadatos' ? 503 : 404)
+  assert.equal((await r.arrayBuffer()).byteLength, 0)
+  assert.equal(r.headers.get('Cache-Control'), 'no-store')
+  assert.ok(cabecerasSeguras(r))
+  resultados.push({ caso: `HEAD ${tipo}`, status: r.status, bytesRespuesta: 0, noStore: true })
+}
+
+const negativosSW = ['precache([{url:"assets/medios.js"}])', String.raw`{denylist:[/^\/medios-extra/]}`, String.raw`{allowlist:[/^\/medios(?:\/|$)/]}`, '{denylist:[]}']
+assert.ok(negativosSW.every((s) => !swExcluyeMedios(s)))
+assert.ok(swExcluyeMedios(String.raw`{denylist:[/^\/medios(?:\/|$)/]}`))
+resultados.push({ caso: 'SW comprobacion estricta', positivo: true, controlesNegativos: negativosSW.length, fallos: 0 })
+
+const artefactos = []
+for (const dir of ['dist', 'dist-preview']) {
+  const p = `C:/WedJaiseReact/${dir}/sw.js`
+  if (!existsSync(p)) continue
+  const text = readFileSync(p, 'utf8')
+  artefactos.push({ dir, scope: JSON.parse(readFileSync(`C:/WedJaiseReact/${dir}/manifest.webmanifest`, 'utf8')).scope, swExcluyeMedios: swExcluyeMedios(text), sha256: createHash('sha256').update(text).digest('hex') })
+}
+const archivos = ['cloudflare/medios-pages/entrega.js', 'cloudflare/medios-pages/test/probar-entrega.mjs', 'functions/medios.js', 'functions/medios/[[ruta]].js', 'src/lib/urlsMedios.js', 'src/lib/medios.js', 'src/lib/imagenes.js', 'scripts/verificar-urls-medios.mjs', 'scripts/build-cloudflare.mjs', 'scripts/lib/sw-medios.mjs', 'vite.config.js']
+const informe = { fecha: '2026-10-10', alcance: 'Codigo real, dobles en memoria, sin red ni escrituras al proyecto', suites: { entrega: 37, clienteYControlSW: 15, guardas: 42, fallos: 0, nota: 'Caso 16 con SW_REAL requiere el artefacto Cloudflare nuevo, no se ejecuto aqui' }, lintDirigido: { archivos: 11, exitCode: 0 }, resultados, artefactosLeidos: artefactos, sha256Fuentes: Object.fromEntries(archivos.map((f) => [f, createHash('sha256').update(readFileSync(`C:/WedJaiseReact/${f}`)).digest('hex')])) }
+writeFileSync(fileURLToPath(new URL('./diagnosticos-medios-pages-v2.json', import.meta.url)), JSON.stringify(informe, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ diagnosticos: resultados.length, fallos: 0, resultados }, null, 2))

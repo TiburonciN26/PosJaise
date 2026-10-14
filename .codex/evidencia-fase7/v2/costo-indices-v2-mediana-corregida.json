@@ -1,0 +1,27 @@
+{
+ "origen": "costo-indices-v2.json (sin cambios); recalculado en memoria a partir de las MISMAS ocho muestras, sin nueva corrida de INSERT",
+ "definicion_mediana": "habitual: con cuatro valores, promedio de los dos centrales (el JSON original informaba la mediana SUPERIOR)",
+ "sin_ordenado_ms": [
+  352,
+  409,
+  472,
+  512
+ ],
+ "con_ordenado_ms": [
+  590,
+  623,
+  698,
+  925
+ ],
+ "mediana_sin_ms": 440.5,
+ "mediana_con_ms": 660.5,
+ "cambio_de_medianas_pct": 49.94,
+ "media_de_diferencias_pareadas_pct": 62.1,
+ "diferencias_pareadas_pct": [
+  67.6,
+  80.7,
+  52.3,
+  47.9
+ ],
+ "nota": "El cambio de medianas (+49,94 %) y la media de los cuatro porcentajes pareados (+62,1 %) son estadísticos distintos; ambos con el mismo signo en los cuatro pares."
+}

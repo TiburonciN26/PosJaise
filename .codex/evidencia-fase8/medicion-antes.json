@@ -1,0 +1,2079 @@
+{
+ "etiqueta": "antes",
+ "dist": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\4cc4d69e-333e-461c-81a6-816527437289\\scratchpad\\dist-f8-antes",
+ "fecha": "2026-10-12T06:31:13.226Z",
+ "reps": 3,
+ "nota": "Mediciones de laboratorio en Chromium contra un servidor estático local; los orígenes externos (Google) dependen de Internet; no es Lighthouse ni un dispositivo real.",
+ "inicio": {
+  "movil-390": {
+   "resumen": {
+    "reps": 3,
+    "bytes_sin_scroll": 2239296,
+    "bytes_tras_scroll": 2891616,
+    "peticiones_sin_scroll": 115,
+    "peticiones_tras_scroll": 134,
+    "mapa_sin_scroll": 16,
+    "mapa_tras_scroll": 27,
+    "bytes_mapa_tras_scroll": 743957,
+    "lcp_ms": 320,
+    "fcp_ms": 212,
+    "por_origen_sin_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1674730
+     },
+     "google-fonts": {
+      "peticiones": 4,
+      "bytes": 79233
+     },
+     "supabase-local": {
+      "peticiones": 20,
+      "bytes": 11928
+     },
+     "google-maps": {
+      "peticiones": 16,
+      "bytes": 473411
+     }
+    },
+    "por_origen_tras_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1674730
+     },
+     "google-fonts": {
+      "peticiones": 8,
+      "bytes": 126747
+     },
+     "supabase-local": {
+      "peticiones": 24,
+      "bytes": 346186
+     },
+     "google-maps": {
+      "peticiones": 27,
+      "bytes": 838793
+     }
+    },
+    "lcp_elemento": {
+     "t": 328,
+     "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+     "tag": "IMG",
+     "size": 110632
+    },
+    "hero": [
+     {
+      "url": "/inicio-web/hero-despues-referencia.jpg",
+      "bytes": 104189,
+      "estado": 200
+     },
+     {
+      "url": "/inicio-web/hero-antes-referencia.jpg",
+      "bytes": 99916,
+      "estado": 200
+     }
+    ],
+    "fuentes": [
+     {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+      "bytes": 1862
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+      "bytes": 17061
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "bytes": 48392
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+      "bytes": 11918
+     },
+     {
+      "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+      "bytes": 12024
+     },
+     {
+      "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+      "bytes": 122809
+     }
+    ],
+    "errores_pagina": [],
+    "fallos_red": []
+   },
+   "muestras": [
+    {
+     "nombre": "movil-390",
+     "viewport": {
+      "width": 390,
+      "height": 844
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2239302,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79233
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11928
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 473411
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6250
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589970
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11928
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212204
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 231580
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 134,
+      "bytes": 2862474,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126747
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346194
+       },
+       "google-maps": {
+        "peticiones": 27,
+        "bytes": 714803
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6250
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600357
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11928
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255476
+       },
+       "Image": {
+        "peticiones": 13,
+        "bytes": 791500
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 5397
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 27,
+     "bytes_mapa_tras_scroll": 714803,
+     "lcp": {
+      "t": 328,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 110632
+     },
+     "fcp": 248,
+     "posicion_mapa_px": 4543,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17061
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 43
+    },
+    {
+     "nombre": "movil-390",
+     "viewport": {
+      "width": 390,
+      "height": 844
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2239296,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79233
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 473413
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6252
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589970
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212204
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 231580
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 134,
+      "bytes": 2891616,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126747
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346182
+       },
+       "google-maps": {
+        "peticiones": 27,
+        "bytes": 743957
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6252
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600357
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255476
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 13,
+        "bytes": 820648
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 5397
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 27,
+     "bytes_mapa_tras_scroll": 743957,
+     "lcp": {
+      "t": 320,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 110632
+     },
+     "fcp": 208,
+     "posicion_mapa_px": 4543,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17061
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 43
+    },
+    {
+     "nombre": "movil-390",
+     "viewport": {
+      "width": 390,
+      "height": 844
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2239279,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79233
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 473396
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6252
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589953
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212204
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 231580
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 134,
+      "bytes": 2986456,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126747
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 27,
+        "bytes": 838793
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6252
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600340
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255476
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 13,
+        "bytes": 915505
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 5397
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 27,
+     "bytes_mapa_tras_scroll": 838793,
+     "lcp": {
+      "t": 304,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 110632
+     },
+     "fcp": 212,
+     "posicion_mapa_px": 4543,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17061
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 43
+    }
+   ]
+  },
+  "movil-412": {
+   "resumen": {
+    "reps": 3,
+    "bytes_sin_scroll": 2240922,
+    "bytes_tras_scroll": 2958321,
+    "peticiones_sin_scroll": 115,
+    "peticiones_tras_scroll": 134,
+    "mapa_sin_scroll": 16,
+    "mapa_tras_scroll": 27,
+    "bytes_mapa_tras_scroll": 810659,
+    "lcp_ms": 304,
+    "fcp_ms": 212,
+    "por_origen_sin_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1674730
+     },
+     "google-fonts": {
+      "peticiones": 4,
+      "bytes": 79233
+     },
+     "supabase-local": {
+      "peticiones": 20,
+      "bytes": 11920
+     },
+     "google-maps": {
+      "peticiones": 16,
+      "bytes": 475039
+     }
+    },
+    "por_origen_tras_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1674730
+     },
+     "google-fonts": {
+      "peticiones": 8,
+      "bytes": 126747
+     },
+     "supabase-local": {
+      "peticiones": 24,
+      "bytes": 346184
+     },
+     "google-maps": {
+      "peticiones": 27,
+      "bytes": 818723
+     }
+    },
+    "lcp_elemento": {
+     "t": 296,
+     "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+     "tag": "IMG",
+     "size": 116872
+    },
+    "hero": [
+     {
+      "url": "/inicio-web/hero-despues-referencia.jpg",
+      "bytes": 104189,
+      "estado": 200
+     },
+     {
+      "url": "/inicio-web/hero-antes-referencia.jpg",
+      "bytes": 99916,
+      "estado": 200
+     }
+    ],
+    "fuentes": [
+     {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+      "bytes": 1862
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+      "bytes": 17061
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "bytes": 48392
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+      "bytes": 11918
+     },
+     {
+      "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+      "bytes": 12024
+     },
+     {
+      "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+      "bytes": 122809
+     }
+    ],
+    "errores_pagina": [],
+    "fallos_red": []
+   },
+   "muestras": [
+    {
+     "nombre": "movil-412",
+     "viewport": {
+      "width": 412,
+      "height": 915
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2240922,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79233
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 475039
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6253
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589970
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212204
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 233205
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 134,
+      "bytes": 2874117,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126747
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346185
+       },
+       "google-maps": {
+        "peticiones": 27,
+        "bytes": 726455
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6253
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600357
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255476
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 13,
+        "bytes": 803129
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 5416
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 27,
+     "bytes_mapa_tras_scroll": 726455,
+     "lcp": {
+      "t": 296,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 116872
+     },
+     "fcp": 204,
+     "posicion_mapa_px": 4452,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17061
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 43
+    },
+    {
+     "nombre": "movil-412",
+     "viewport": {
+      "width": 412,
+      "height": 915
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2240894,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79233
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 475011
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6254
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589941
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212204
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 233205
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 134,
+      "bytes": 2958321,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126747
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346185
+       },
+       "google-maps": {
+        "peticiones": 27,
+        "bytes": 810659
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6254
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600328
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255476
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 13,
+        "bytes": 887361
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 5416
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 27,
+     "bytes_mapa_tras_scroll": 810659,
+     "lcp": {
+      "t": 304,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 116872
+     },
+     "fcp": 212,
+     "posicion_mapa_px": 4452,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17061
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 43
+    },
+    {
+     "nombre": "movil-412",
+     "viewport": {
+      "width": 412,
+      "height": 915
+     },
+     "dpr": 2,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2240949,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79233
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 475066
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6251
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589999
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212204
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 233205
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 134,
+      "bytes": 2966384,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126747
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346184
+       },
+       "google-maps": {
+        "peticiones": 27,
+        "bytes": 818723
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6251
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600386
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255476
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 13,
+        "bytes": 895369
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 5416
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 27,
+     "bytes_mapa_tras_scroll": 818723,
+     "lcp": {
+      "t": 324,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 116872
+     },
+     "fcp": 220,
+     "posicion_mapa_px": 4452,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17061
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 43
+    }
+   ]
+  },
+  "escritorio-1440": {
+   "resumen": {
+    "reps": 3,
+    "bytes_sin_scroll": 2286927,
+    "bytes_tras_scroll": 2895024,
+    "peticiones_sin_scroll": 115,
+    "peticiones_tras_scroll": 142,
+    "mapa_sin_scroll": 16,
+    "mapa_tras_scroll": 35,
+    "bytes_mapa_tras_scroll": 747360,
+    "lcp_ms": 328,
+    "fcp_ms": 208,
+    "por_origen_sin_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1674730
+     },
+     "google-fonts": {
+      "peticiones": 4,
+      "bytes": 79234
+     },
+     "supabase-local": {
+      "peticiones": 20,
+      "bytes": 11920
+     },
+     "google-maps": {
+      "peticiones": 16,
+      "bytes": 521043
+     }
+    },
+    "por_origen_tras_scroll": {
+     "propio": {
+      "peticiones": 75,
+      "bytes": 1674730
+     },
+     "google-fonts": {
+      "peticiones": 8,
+      "bytes": 126748
+     },
+     "supabase-local": {
+      "peticiones": 24,
+      "bytes": 346186
+     },
+     "google-maps": {
+      "peticiones": 35,
+      "bytes": 747360
+     }
+    },
+    "lcp_elemento": {
+     "t": 308,
+     "url": "",
+     "tag": "SPAN",
+     "size": 3366
+    },
+    "hero": [
+     {
+      "url": "/inicio-web/hero-despues-referencia.jpg",
+      "bytes": 104189,
+      "estado": 200
+     },
+     {
+      "url": "/inicio-web/hero-antes-referencia.jpg",
+      "bytes": 99916,
+      "estado": 200
+     }
+    ],
+    "fuentes": [
+     {
+      "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+      "bytes": 1862
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+      "bytes": 17062
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "bytes": 48392
+     },
+     {
+      "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+      "bytes": 11918
+     },
+     {
+      "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+      "bytes": 12024
+     },
+     {
+      "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+      "bytes": 122809
+     }
+    ],
+    "errores_pagina": [],
+    "fallos_red": []
+   },
+   "muestras": [
+    {
+     "nombre": "escritorio-1440",
+     "viewport": {
+      "width": 1440,
+      "height": 900
+     },
+     "dpr": 1,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2286927,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79234
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 521043
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6252
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589970
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212205
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 279210
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 142,
+      "bytes": 2887318,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126748
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 35,
+        "bytes": 739654
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6252
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600357
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255477
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 21,
+        "bytes": 812460
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 9286
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 35,
+     "bytes_mapa_tras_scroll": 739654,
+     "lcp": {
+      "t": 308,
+      "url": "",
+      "tag": "SPAN",
+      "size": 3366
+     },
+     "fcp": 220,
+     "posicion_mapa_px": 3314,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17062
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 51
+    },
+    {
+     "nombre": "escritorio-1440",
+     "viewport": {
+      "width": 1440,
+      "height": 900
+     },
+     "dpr": 1,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2286914,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79234
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 521030
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6250
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589969
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212205
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 279200
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 142,
+      "bytes": 2898224,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126748
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346184
+       },
+       "google-maps": {
+        "peticiones": 35,
+        "bytes": 750562
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6250
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600356
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255477
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 21,
+        "bytes": 823369
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 9286
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 35,
+     "bytes_mapa_tras_scroll": 750562,
+     "lcp": {
+      "t": 328,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 1164960
+     },
+     "fcp": 208,
+     "posicion_mapa_px": 3314,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17062
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 51
+    },
+    {
+     "nombre": "escritorio-1440",
+     "viewport": {
+      "width": 1440,
+      "height": 900
+     },
+     "dpr": 1,
+     "sin_scroll": {
+      "peticiones": 115,
+      "bytes": 2286947,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 4,
+        "bytes": 79234
+       },
+       "supabase-local": {
+        "peticiones": 20,
+        "bytes": 11920
+       },
+       "google-maps": {
+        "peticiones": 16,
+        "bytes": 521063
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6253
+       },
+       "Stylesheet": {
+        "peticiones": 2,
+        "bytes": 187324
+       },
+       "Script": {
+        "peticiones": 82,
+        "bytes": 1589999
+       },
+       "Font": {
+        "peticiones": 5,
+        "bytes": 212205
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 10,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 3,
+        "bytes": 279200
+       },
+       "XHR": {
+        "peticiones": 1,
+        "bytes": 46
+       }
+      }
+     },
+     "tras_scroll": {
+      "peticiones": 142,
+      "bytes": 2895024,
+      "porOrigen": {
+       "propio": {
+        "peticiones": 75,
+        "bytes": 1674730
+       },
+       "google-fonts": {
+        "peticiones": 8,
+        "bytes": 126748
+       },
+       "supabase-local": {
+        "peticiones": 24,
+        "bytes": 346186
+       },
+       "google-maps": {
+        "peticiones": 35,
+        "bytes": 747360
+       }
+      },
+      "porTipo": {
+       "Document": {
+        "peticiones": 2,
+        "bytes": 6253
+       },
+       "Stylesheet": {
+        "peticiones": 4,
+        "bytes": 191566
+       },
+       "Script": {
+        "peticiones": 83,
+        "bytes": 1600386
+       },
+       "Font": {
+        "peticiones": 7,
+        "bytes": 255477
+       },
+       "Fetch": {
+        "peticiones": 10,
+        "bytes": 11920
+       },
+       "Other": {
+        "peticiones": 11,
+        "bytes": 0
+       },
+       "Image": {
+        "peticiones": 21,
+        "bytes": 820136
+       },
+       "XHR": {
+        "peticiones": 4,
+        "bytes": 9286
+       }
+      }
+     },
+     "peticiones_mapa_sin_scroll": 16,
+     "peticiones_mapa_tras_scroll": 35,
+     "bytes_mapa_tras_scroll": 747360,
+     "lcp": {
+      "t": 328,
+      "url": "http://127.0.0.1:5304/inicio-web/hero-despues-referencia.jpg",
+      "tag": "IMG",
+      "size": 1164960
+     },
+     "fcp": 204,
+     "posicion_mapa_px": 3314,
+     "hero": [
+      {
+       "url": "/inicio-web/hero-despues-referencia.jpg",
+       "bytes": 104189,
+       "estado": 200
+      },
+      {
+       "url": "/inicio-web/hero-antes-referencia.jpg",
+       "bytes": 99916,
+       "estado": 200
+      }
+     ],
+     "fuentes": [
+      {
+       "url": "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,70…",
+       "bytes": 1862
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2",
+       "bytes": 17062
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+       "bytes": 48392
+      },
+      {
+       "url": "https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2",
+       "bytes": 11918
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Kunaroh-hCztfKx7.ttf",
+       "bytes": 12024
+      },
+      {
+       "url": "http://127.0.0.1:5304/assets/Heavitas-BE4TTxyk.ttf",
+       "bytes": 122809
+      }
+     ],
+     "errores_pagina": [],
+     "fallos_red": [],
+     "creadas_tras_scroll": 51
+    }
+   ]
+  }
+ },
+ "pwa": {
+  "instalacion": {
+   "caches": [
+    {
+     "nombre": "workbox-precache-v2-http://127.0.0.1:5304/",
+     "entradas": 172,
+     "bytes": 3583112
+    }
+   ],
+   "precache_entradas": 172,
+   "precache_bytes": 3583112,
+   "precache_modal_escaner": [
+    "/assets/ModalEscanerCodigoBarras-BtDyia-p.js 481063"
+   ],
+   "precache_maquetas_html": [],
+   "precache_urls": [
+    "/assets/AceptoTerminos-CWGLsvry.js 1187",
+    "/assets/Asistentes-BzKl8jSU.js 25186",
+    "/assets/Auditoria-BNF5wGn5.js 9149",
+    "/assets/AyudaCampo-D1pA-rQg.js 1446",
+    "/assets/BarraBusqueda-BCdLda4n.js 2130",
+    "/assets/BarraTuCarritoFlotante-BZD16Ynw.js 4632",
+    "/assets/BarraTuCitaFlotante-C4p5Huol.js 1962",
+    "/assets/BotonAccion-UJRmMYSa.js 715",
+    "/assets/BotonFlotanteAgregar-HxSj3t-u.js 555",
+    "/assets/CarritoCliente-58MVHLId.js 39983",
+    "/assets/CarritoClienteContext-BQyPsnCu.js 2775",
+    "/assets/CarritoServiciosCliente-Cq6FIhla.js 26343",
+    "/assets/CatalogoWeb-CWKaG2dD.js 8089",
+    "/assets/Citas-D3MpFHZz.js 46023",
+    "/assets/CitasCliente-Cqq35W8-.js 51639",
+    "/assets/Clientes-D-TmqhLH.js 12572",
+    "/assets/ContactoWeb-ByELsEiJ.js 18154",
+    "/assets/Contador-ktcpszBN.js 7197",
+    "/assets/Dashboard-DNWcx-BA.js 10713",
+    "/assets/DetalleProductoCliente-Bdi8IZye.js 34979",
+    "/assets/DetalleServicioCliente-DejGiMcG.js 32593",
+    "/assets/Deudas-DLOqN9Ro.js 23009",
+    "/assets/DireccionesCliente-BpUfaIJb.js 9670",
+    "/assets/EnvolturaCupon-BNpj1XXk.js 1186",
+    "/assets/Esqueleto-DtR861ra.js 2227",
+    "/assets/Estadisticas-BuR3FQPF.js 9765",
+    "/assets/Estrellas-C6WQ-WHJ.js 480",
+    "/assets/FidelizacionWeb-B9wD8MUO.js 5994",
+    "/assets/FiltroEstadoContadores-DsoBCTLb.js 817",
+    "/assets/FiltrosFecha-Cq8QLiSO.js 4077",
+    "/assets/GaleriaWeb-Dd2kN1Am.js 12004",
+    "/assets/Gastos-Brgd2fGN.js 29985",
+    "/assets/GuiaPestana-D0VBNInc.js 1236",
+    "/assets/Historial-BzaOeSK3.js 19380",
+    "/assets/HistorialCliente-CrUQ1s9t.js 2355",
+    "/assets/InicioCliente-BNXkd9da.js 28780",
+    "/assets/Inventario-DtWD0qrN.js 26251",
+    "/assets/LibroReclamacionesCliente-BeXKfsPa.js 13757",
+    "/assets/LibroReclamacionesWeb-C1sXYScz.js 7433",
+    "/assets/Login-D3qzitEs.js 10163",
+    "/assets/MiPanel-Bzg074m3.js 15954",
+    "/assets/MiPerfil-BW97eO9v.js 9236",
+    "/assets/MisResenasCliente-CWyiMVEQ.js 3683",
+    "/assets/Mobiliario-Brz9R1IE.js 35922",
+    "/assets/ModalEscanerCodigoBarras-BtDyia-p.js 481063",
+    "/assets/ModalProducto-BZ0NEBvL.js 23583",
+    "/assets/ModalRegistroAtencion-BjnQxUQ5.js 21216",
+    "/assets/ModalServicio-C72PhSjJ.js 21051",
+    "/assets/NosotrosCliente-Bk1kGN5i.js 24885",
+    "/assets/NotificacionesCliente-BYqVXFmQ.js 3085",
+    "/assets/NotificacionesClienteContext-DR3GBeJV.js 986",
+    "/assets/PaginaActivaContext-CFzro5s1.js 416",
+    "/assets/PaginadorCatalogo-uLo7Txla.js 8517",
+    "/assets/PedidosCliente-CM8lHF1a.js 7789",
+    "/assets/PedidosWeb-9qxoiLol.js 9597",
+    "/assets/PerfilClienteContext-DA36PHte.js 812",
+    "/assets/PerfilEquipoCliente-qx65plaC.js 2072",
+    "/assets/PieClienteWeb-DDIDbH0e.js 3480",
+    "/assets/PoliticaCambiosCliente-DSO9bT7W.js 2732",
+    "/assets/Porcentajes-3E5ZomAY.js 8761",
+    "/assets/PortalCliente-CO_7rc1O.js 15818",
+    "/assets/PrivacidadCliente-C_gGcvAp.js 2182",
+    "/assets/ProductosCliente-Dx0KwahV.js 26293",
+    "/assets/Promociones-Dkh7whzC.js 12266",
+    "/assets/PuntosWeb-DYNuNKj_.js 4200",
+    "/assets/RecompensasCliente-DMavcfsX.js 80207",
+    "/assets/RecompensasWeb-BmJsHIZd.js 41293",
+    "/assets/ReferidosCliente-wcHesMNM.js 7276",
+    "/assets/ReferidosWeb-BJOC2BP-.js 6620",
+    "/assets/ResenasWeb-DwH_PvLv.js 5992",
+    "/assets/SeguridadCuentaCliente-2rSXIxSA.js 2837",
+    "/assets/SelectorOrden-CaCH3s2h.js 2223",
+    "/assets/Servicios-Ddlmhyb3.js 9599",
+    "/assets/ServiciosCliente-DkU4RQq9.js 18985",
+    "/assets/TarjetaCupon-BO-RrCbG.js 2163",
+    "/assets/TarjetaResumen-B7ivP8yH.js 1126",
+    "/assets/TarjetaServicioCliente-D5ETV3cI.js 1878",
+    "/assets/TemaWebContext-DTWAZpxT.js 647",
+    "/assets/TerminosCliente-DTfB2OHe.js 4390",
+    "/assets/Web-BElJYgXq.js 4290",
+    "/assets/arrow-left-Dq1p50Qt.js 165",
+    "/assets/arrow-right-Dlgg1_EG.js 165",
+    "/assets/arrow-up-right-D2DLaEDR.js 167",
+    "/assets/ban-BLi76F12.js 181",
+    "/assets/bike-B8iQG1Vp.js 288",
+    "/assets/buscarServicios-D61uqHjJ.js 1819",
+    "/assets/cake-CZH4OzdQ.js 487",
+    "/assets/calendar-BrwSNqMN.js 257",
+    "/assets/calendar-days-CNqlqT2X.js 494",
+    "/assets/calendar-plus-Dc6ObvNS.js 362",
+    "/assets/catalogoPublico-p4YOSUAy.js 4985",
+    "/assets/check-check-D48dy4aw.js 179",
+    "/assets/chevron-right--KS-DjBd.js 207",
+    "/assets/circle-alert-B_-nQjLz.js 250",
+    "/assets/circle-check-DBgJubBC.js 178",
+    "/assets/circle-plus-BkQE10Vc.js 207",
+    "/assets/clienteWeb-CGw8e5Be.js 251",
+    "/assets/clock-DzFuioJf.js 169",
+    "/assets/columnasCatalogo-Da-3VL1g.js 603",
+    "/assets/contactoNegocio-BKRiXkam.js 521",
+    "/assets/createLucideIcon-CAdyUWaY.js 9728",
+    "/assets/credit-card-C6lS9aNZ.js 207",
+    "/assets/crown-tbl0G-Do.js 362",
+    "/assets/csv-CgVGSWhD.js 671",
+    "/assets/eye-DB38PBw_.js 633",
+    "/assets/fechas-BiD9QY8e.js 1897",
+    "/assets/finanzas-BeRZVqjU.js 794",
+    "/assets/funnel-BGRRNZcy.js 256",
+    "/assets/galeriaFotos-BdhsdLrx.js 6628",
+    "/assets/geist-cyrillic-ext-wght-normal-DjL33-gN.woff2 7420",
+    "/assets/geist-cyrillic-wght-normal-BEAKL7Jp.woff2 15084",
+    "/assets/geist-latin-ext-wght-normal-DC-KSUi6.woff2 16512",
+    "/assets/geist-latin-wght-normal-BgDaEnEv.woff2 29400",
+    "/assets/geist-vietnamese-wght-normal-6IgcOCM7.woff2 8004",
+    "/assets/globe-DgyqspkF.js 242",
+    "/assets/index-BfBrOhOF.js 370834",
+    "/assets/index-C0p7N0xe.css 185276",
+    "/assets/info-trrZR698.js 204",
+    "/assets/legal-F6tcrkVi.js 364",
+    "/assets/listasAdmin--bktzyyX.js 2613",
+    "/assets/mail-CT5H3rPo.js 213",
+    "/assets/message-circle-sz0ODs_s.js 241",
+    "/assets/minus-CEsFY2cG.js 117",
+    "/assets/pen-line-Tv_IsIDG.js 277",
+    "/assets/pencil-bKiJn8Ie.js 276",
+    "/assets/phone-CXTWRe2d.js 322",
+    "/assets/plus-8EeP8tIY.js 153",
+    "/assets/preload-helper-CZgWQFsJ.js 1256",
+    "/assets/proxy-BwCqO-XO.js 123309",
+    "/assets/resultadoBd-BLxhvoIo.js 485",
+    "/assets/rotate-ccw-B-MlNNBs.js 200",
+    "/assets/search-BATgNWJb.js 174",
+    "/assets/serviciosVisual-BwLqhHct.js 691",
+    "/assets/sparkles-C1cMe7M1.js 494",
+    "/assets/sticky-note-BH8Y5Unk.js 280",
+    "/assets/store-BLhnSYn0.js 498",
+    "/assets/supabase-COLDyNz-.js 202729",
+    "/assets/trash-2-CVgFhhGP.js 328",
+    "/assets/truck-CzFZqgSx.js 611",
+    "/assets/ui-44TcZ8iE.js 2239",
+    "/assets/useCuponesAdmin-WjLZYl--.js 1002",
+    "/assets/useCuponesNuevos-C6jzHpw3.js 542",
+    "/assets/useDatosNegocioLegal-D2H_rH6P.js 3036",
+    "/assets/useEntornoAnimacion-DZ0GKA0e.js 347",
+    "/assets/useListaPaginada-BeKv3YAc.js 3019",
+    "/assets/usePreciosSeleccion-BY7Uc_Fl.js 1471",
+    "/assets/useProgramaRecompensas-B5zIeh7V.js 4361",
+    "/assets/useRevelarEnPantalla-Blk8Jnwk.js 1227",
+    "/assets/workbox-window.prod.es5-Bd17z0YL.js 5653",
+    "/dise%C3%B1osPropios/Login.html? 625083",
+    "/dise%C3%B1osPropios/Niveles%20de%20Tarjeta%20Rewards.html? 14881",
+    "/favicon-16x16.png? 823",
+    "/favicon-32x32.png? 2086",
+    "/favicon.ico? 15086",
+    "/icon-192-maskable.png? 13512",
+    "/icon-192.png? 33406",
+    "/icon-512-maskable.png? 75499",
+    "/icon-512.png? 161919",
+    "/icons.svg? 5031",
+    "/icons/InstagramColor.svg? 3170",
+    "/icons/chanchitoActivo.svg? 652",
+    "/icons/chanchitoBloqueado.svg? 686",
+    "/icons/efectivo.svg? 17153",
+    "/icons/facebookColor.svg? 804",
+    "/icons/plinColor.png? 81389",
+    "/icons/targueta.svg? 2913",
+    "/icons/tiktokColor.svg? 5067",
+    "/icons/transferencia.svg? 3288",
+    "/icons/whatsappColor.svg? 2478",
+    "/icons/yape.svg? 6653",
+    "/index.html? 4620",
+    "/manifest.webmanifest? 582"
+   ],
+   "bytes_red_primera_visita_con_sw": 2240895,
+   "peticiones_red_primera_visita_con_sw": 115
+  },
+  "segunda_visita": {
+   "peticiones_propias": 75,
+   "desde_service_worker": 71,
+   "a_red": 4,
+   "bytes_red_propios": 338938,
+   "controlada": true
+  },
+  "tercera_visita": {
+   "peticiones_propias": 75,
+   "desde_service_worker": 71,
+   "bytes_red_propios": 338938
+  },
+  "caches_tras_tres_visitas": [
+   [
+    "workbox-precache-v2-http://127.0.0.1:5304/",
+    172
+   ]
+  ],
+  "frescura_datos": {
+   "peticiones_supabase": 30,
+   "desde_service_worker": 0,
+   "entradas_supabase_en_caches": 0
+  },
+  "sin_conexion": {
+   "inicio_recargada": {
+    "raiz_texto": "JAISE˚\nBEAUTY ACADEMY\nIniciar sesión\nBELLEZA\nQUE\nTRANSFORMA\nRESERVA TU CITA\nVer servicios\nHola\nNo tienes citas pendiente",
+    "tiene_h1": true,
+    "titulo": "Pos Jaise Beauty Academy"
+   },
+   "login_no_visitada": {
+    "raiz_texto": "JAISE\n˚\nBEAUTY ACADEMY\nTU ACADEMIA\nDE BELLEZA\n¡BIENVENIDA!\n\nInicia sesión para gestionar tus citas.\n\nCorreo electrónico\n",
+    "tiene_formulario": true
+   }
+  },
+  "errores_pagina": []
+ }
+}

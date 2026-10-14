@@ -1,0 +1,226 @@
+{
+  "fecha": "2026-10-13T18:50:23.251Z",
+  "version": "guardas IP-R1/IP-R2 (IP-R1b/IP-R2b)",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "entrega": "pages",
+  "publico": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios",
+  "buildId": "05b7be34",
+  "idEjecucion": "a85f6d",
+  "entorno": "Pages Preview (staging) + Worker y bucket de pruebas; cuentas QA ficticias",
+  "completa": true,
+  "error": null,
+  "limpieza": null,
+  "bloqueadas": [],
+  "total": 23,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "el alias sirve el build-id esperado (05b7be34); verificado ANTES de autenticar",
+      "buildId": "05b7be34",
+      "ok": true
+    },
+    {
+      "nombre": "precondición: producto y servicio sin foto principal ni galería, y snapshot/inventario inicial leídos",
+      "clavesIniciales": 0,
+      "filasGaleriaWeb": 1,
+      "ok": true
+    },
+    {
+      "nombre": "login ADMIN QA en el alias de Pages",
+      "ruta": "/ventas",
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: foto principal y 1 foto de galería guardadas con referencia r2:",
+      "principal": "r2:fotos-productos/66d86330-dce2-455b-b7ee-b1b563595709",
+      "galeria": [
+        "r2:fotos-productos/ae2e6540-fd3b-4d92-983b-f1b229445a45"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: la subida fue al Worker de staging (4 PUT: m y g de cada foto) y NO a Supabase Storage",
+      "subidas": [
+        "PUT m",
+        "PUT g",
+        "PUT m",
+        "PUT g"
+      ],
+      "storageSupabase": [],
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: las 4 variantes responden 200 image/webp en el dominio público de pruebas",
+      "pubs": [
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 3202,
+          "nosniff": "nosniff",
+          "cache": "public, max-age=0, must-revalidate",
+          "medios": "MISS"
+        },
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 8504,
+          "nosniff": "nosniff",
+          "cache": "public, max-age=0, must-revalidate",
+          "medios": "MISS"
+        },
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 3896,
+          "nosniff": "nosniff",
+          "cache": "public, max-age=0, must-revalidate",
+          "medios": "MISS"
+        },
+        {
+          "estado": 200,
+          "tipo": "image/webp",
+          "bytes": 9696,
+          "nosniff": "nosniff",
+          "cache": "public, max-age=0, must-revalidate",
+          "medios": "MISS"
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: el inventario del Worker muestra exactamente 2 grupos nuevos",
+      "antes": 0,
+      "despues": 2,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: reemplazo de la foto principal — tras guardar, la nueva existe y la anterior ya no está (estado final; no prueba el orden temporal)",
+      "anterior": "r2:fotos-productos/66d86330-dce2-455b-b7ee-b1b563595709",
+      "nueva": "r2:fotos-productos/a0d42c0b-8644-449e-a7f7-ed149e7f3f24",
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO: quitar galería y foto principal — fila sin foto, 0 filas de galería, objetos eliminados (estado original)",
+      "foto": null,
+      "filas": 0,
+      "inv": 0,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO: foto principal + 1 de galería guardadas con referencia r2: y existentes",
+      "principal": "r2:fotos-servicios/6c2c0b47-7dd9-4593-9272-e44ad423085d",
+      "galeria": [
+        "r2:fotos-servicios/0569c22b-ecff-443f-bdf3-619d86b3d89c"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "CLIENTE: el listado de servicios carga la foto nueva desde el dominio público de medios — tarjeta en miniatura m y portada en g — y todas decodifican",
+      "listado": [
+        {
+          "src": "6c2c0b47-7dd9-4593-9272-e44ad423085d/g.webp",
+          "v": "g.webp",
+          "ok": true
+        },
+        {
+          "src": "6c2c0b47-7dd9-4593-9272-e44ad423085d/m.webp",
+          "v": "m.webp",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "CLIENTE: el detalle del servicio muestra la foto de la galería desde el dominio público de medios (variante g) y decodifica",
+      "detalle": [
+        {
+          "src": "0569c22b-ecff-443f-bdf3-619d86b3d89c/g.webp",
+          "v": "g.webp",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO: reemplazo de la foto principal — tras guardar, la nueva existe, la anterior ya no está y la galería sigue idéntica (filas y variantes m/g; no prueba el orden temporal)",
+      "anterior": "r2:fotos-servicios/6c2c0b47-7dd9-4593-9272-e44ad423085d",
+      "nueva": "r2:fotos-servicios/8e591f8c-3be1-4d8a-b7db-31bd11460921",
+      "galeriaAntes": [
+        {
+          "id": "8d2484f8-49f3-418d-b859-7f30a332ce6d",
+          "foto_url": "r2:fotos-servicios/0569c22b-ecff-443f-bdf3-619d86b3d89c",
+          "etiqueta": "Resultado",
+          "orden": 0
+        }
+      ],
+      "galeriaDespues": [
+        {
+          "id": "8d2484f8-49f3-418d-b859-7f30a332ce6d",
+          "foto_url": "r2:fotos-servicios/0569c22b-ecff-443f-bdf3-619d86b3d89c",
+          "etiqueta": "Resultado",
+          "orden": 0
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO: quitar galería y principal — fila sin foto, 0 filas de galería, objetos eliminados",
+      "foto": null,
+      "filas": 0,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: alta con dos fotos — la fila guarda URLs del dominio público de pruebas y ambos objetos existen",
+      "antes": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/99ba07d3-5d1b-4d64-9645-fbeccd301295/g.webp",
+      "despues": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/f8ece16a-d6ca-498f-bd7b-507ccb822cee/g.webp",
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: la lista del administrador muestra las dos miniaturas desde el dominio público de medios",
+      "imagenes": 2,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: reemplazo de «antes» — tras guardar, la nueva existe, la anterior ya no está y «después» conserva exactamente su URL anterior",
+      "nueva": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/b17a42ac-c047-41d0-a296-ee775f3495a2/g.webp",
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: eliminar — la fila desaparece y ambos objetos se borran del almacenamiento",
+      "filas": 1,
+      "filasAntes": 1,
+      "ok": true
+    },
+    {
+      "nombre": "COMPATIBILIDAD: la fila antigua de la galería (ruta relativa de /public) sigue resolviéndose en el alias",
+      "ruta": "inicio-web/hero-antes-referencia.jpg",
+      "estado": 200,
+      "ok": true
+    },
+    {
+      "nombre": "tráfico de ambos contextos (ADMIN y CLIENTE) y del script: Supabase solo de STAGING y ninguna petición a destinos no aprobados (negocio, local, pasarelas, otro Worker/bucket)",
+      "hosts": [
+        "tqkdtojnhgykmcbvwdmz.supabase.co"
+      ],
+      "bloqueadas": [],
+      "ok": true
+    },
+    {
+      "nombre": "ninguna subida/borrado de las páginas ADMIN ni CLIENTE usó Supabase Storage (todo pasó por el Worker de staging)",
+      "storageSupabase": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página durante todo el recorrido",
+      "erroresPagina": [],
+      "ok": true
+    },
+    {
+      "nombre": "ESTADO FINAL: fotos, galerías y galería web idénticas al snapshot inicial, e inventario del Worker con las mismas claves (sin nuevas ni faltantes)",
+      "igualSnapshot": true,
+      "clavesNuevas": [],
+      "clavesFaltantes": [],
+      "ok": true
+    }
+  ]
+}

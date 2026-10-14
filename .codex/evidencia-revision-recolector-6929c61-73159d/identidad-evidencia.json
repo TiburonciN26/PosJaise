@@ -1,0 +1,18 @@
+{
+  "fecha": "2026-10-11T03:42:25.460Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "mainLocal": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "corrida": "73159d",
+  "informeOriginalSha256": "833e244bdd5d472cfc64b0e2199dbda72e610fca5585544c3773b391bc97d6c9",
+  "fuentesSha256": {
+    "scripts/ensayo-recolector-medios.mjs": "244f00acd4bed99d4cef503d64c40e4f4ad44d2f5c8aa394d31cad77dd2d258e",
+    "scripts/lib/ensayo-recolector.mjs": "0dfd168fc9ff0af7376607a0e13eabdb9d3fba5c449aa9fc752b8e0cf033294b",
+    "scripts/lib/huerfanos-medios.mjs": "885712e507509347a9427663c19e85a95f6a410052b5d05fff68cfa2c6693182",
+    "scripts/medios-huerfanos.mjs": "903ad4b147d72c9abd80238948810731639b7ded64c9ae31305029f9c96204ba",
+    "scripts/lib/ensayo-rollback-reales.cjs": "92c0728d318491f1764b4002f33e46f6762e7e6d992a7e1ea03cd26e41c86f6f",
+    "scripts/lib/guardas-interfaz-r2.cjs": "3963afe0e1c1fbb18fb2670cacd1e82cdb440726026708e4f5900a5fed830709"
+  },
+  "veredicto": "Aceptada evidencia del ensayo acotado 13/13 en staging y limpieza coherente; 38/38 controles independientes. No acredita recolector general, cron o producción."
+}

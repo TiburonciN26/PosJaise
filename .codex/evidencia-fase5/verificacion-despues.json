@@ -1,0 +1,127 @@
+{
+ "app": "http://localhost:5192",
+ "fecha": "2026-10-11T17:47:57.287Z",
+ "casos": [
+  {
+   "nombre": "Pedidos Web: 40 filas por página, total y contadores por estado = base de datos",
+   "ok": true,
+   "ms": 2502
+  },
+  {
+   "nombre": "Pedidos Web: recorrer todas las páginas no repite ni omite pedidos y la última tiene el resto",
+   "ok": true,
+   "ms": 6623
+  },
+  {
+   "nombre": "Pedidos Web: detalles cerrados NO están en el DOM; los ítems se piden al expandir (una vez) y se conservan",
+   "ok": true,
+   "ms": 3593
+  },
+  {
+   "nombre": "Pedidos Web: búsqueda y filtro de estado se resuelven en el servidor con total exacto",
+   "ok": true,
+   "ms": 4444
+  },
+  {
+   "nombre": "Pedidos Web: cambiar un estado refresca la fila y los contadores globales",
+   "ok": true,
+   "ms": 3593
+  },
+  {
+   "nombre": "Promociones: 40 por página con total exacto; crear, editar y eliminar refrescan fila y contador",
+   "ok": true,
+   "ms": 4044
+  },
+  {
+   "nombre": "Reseñas: tres tablas en una lista de 40, contadores globales por estado y moderación que los actualiza",
+   "ok": true,
+   "ms": 6791
+  },
+  {
+   "nombre": "referidos-web: cupones de 40 en 40, contadores globales, búsqueda por código o clienta y filtro de estado",
+   "ok": true,
+   "ms": 36382
+  },
+  {
+   "nombre": "fidelizacion-web: cupones de 40 en 40, contadores globales, búsqueda por código o clienta y filtro de estado",
+   "ok": true,
+   "ms": 35193
+  },
+  {
+   "nombre": "Recompensas Web: al entrar solo se lee la configuración; cada subpestaña pide lo suyo",
+   "ok": true,
+   "ms": 5316
+  },
+  {
+   "nombre": "Recompensas Web › Premios de sellos y Protección de productos: totales exactos y 40 filas",
+   "ok": true,
+   "ms": 1267
+  },
+  {
+   "nombre": "Recompensas Web › Protección de servicios: 40 por página con total exacto y BORRADORES conservados al paginar y buscar",
+   "ok": true,
+   "ms": 9894
+  },
+  {
+   "nombre": "Recompensas Web: el selector de servicio del premio ofrece ≤ 41 opciones y busca en el servidor",
+   "ok": true,
+   "ms": 5068
+  },
+  {
+   "nombre": "Inicio: lecturas acotadas (4 destacados, 3 galería, 3 tarjetas, 1 promoción) y sin descargar el catálogo",
+   "ok": true,
+   "ms": 2177
+  },
+  {
+   "nombre": "Inicio: con 1,5 s de demora (o fallo) en las dependencias secundarias el hero permanece disponible",
+   "ok": true,
+   "ms": 4334
+  },
+  {
+   "nombre": "Recompensas (clienta): «Cómo funciona» no lee nada personal; cada subpestaña pide lo suyo una sola vez",
+   "ok": true,
+   "ms": 6900
+  },
+  {
+   "nombre": "Recompensas (visitante): solo el catálogo público y solo al entrar a «Canjear puntos»",
+   "ok": true,
+   "ms": 4068
+  },
+  {
+   "nombre": "Restaurar sesión del personal: un perfil, un estado de negocio y un canal Realtime",
+   "ok": true,
+   "ms": 1908
+  },
+  {
+   "nombre": "Restaurar sesión de la clienta: perfil, estado y canal una sola vez; sin precargar nada del POS",
+   "ok": true,
+   "ms": 2300
+  },
+  {
+   "nombre": "Refrescar el token no reabre el canal Realtime ni repite las lecturas de sesión",
+   "ok": true,
+   "ms": 6412
+  },
+  {
+   "nombre": "El POS no precarga el portal ni Inicio al restaurar la sesión del personal",
+   "ok": true,
+   "ms": 3916
+  },
+  {
+   "nombre": "Login → logout → login de otra clienta: ningún dato de la cuenta anterior",
+   "ok": true,
+   "ms": 4349
+  },
+  {
+   "nombre": "Cambio de cuenta con la pantalla abierta (otra pestaña cierra sesión y entra otra clienta): nunca se ven datos de Alfa después de salir",
+   "ok": true,
+   "ms": 8104
+  },
+  {
+   "nombre": "Personal → cerrar sesión → clienta: la lista administrativa anterior no reaparece",
+   "ok": true,
+   "ms": 4999
+  }
+ ],
+ "falloGlobal": null
+}

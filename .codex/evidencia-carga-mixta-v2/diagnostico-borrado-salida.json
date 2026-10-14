@@ -1,0 +1,50 @@
+{
+  "fecha": "2026-10-11T00:18:20.396Z",
+  "sinBorradosReales": true,
+  "alcance": "Código completo del constructor en VM, FS/child_process completamente simulados; se detiene al primer rmSync. No git archive real, npm ci ni build.",
+  "reproducido": true,
+  "resultados": [
+    {
+      "salida": "C:/WedJaiseReact",
+      "operaciones": [
+        {
+          "tipo": "rmSync",
+          "path": "C:\\WedJaiseReact",
+          "opciones": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "error": "Diagnóstico detenido ANTES de cualquier borrado real"
+    },
+    {
+      "salida": "C:/WedJaiseReact/.codex",
+      "operaciones": [
+        {
+          "tipo": "rmSync",
+          "path": "C:\\WedJaiseReact\\.codex",
+          "opciones": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "error": "Diagnóstico detenido ANTES de cualquier borrado real"
+    },
+    {
+      "salida": "C:/WedJaiseReact/.codex/artefacto-lectura-mixta",
+      "operaciones": [
+        {
+          "tipo": "rmSync",
+          "path": "C:\\WedJaiseReact\\.codex\\artefacto-lectura-mixta",
+          "opciones": {
+            "recursive": true,
+            "force": true
+          }
+        }
+      ],
+      "error": "Diagnóstico detenido ANTES de cualquier borrado real"
+    }
+  ]
+}

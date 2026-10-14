@@ -1,0 +1,62 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+const cp = require('node:child_process');
+const G = require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs');
+const { chromium } = require('C:/WedJaiseReact/node_modules/playwright');
+const serve = async handler => {
+  const server = http.createServer(handler);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  return {server, origin: `http://127.0.0.1:${server.address().port}`};
+};
+const close = async server => { server.closeAllConnections(); await new Promise(r => server.close(r)); };
+(async () => {
+  const regression = cp.spawnSync(process.execPath, ['scripts/verificar-guardas-interfaz-r2.cjs'], {cwd:'C:/WedJaiseReact',encoding:'utf8'});
+  fs.writeFileSync(path.join(__dirname,'regresiones-31.txt'), regression.stdout + regression.stderr);
+  let redirected = 0, receivedFakeKey = false, receivedFakePassword = false;
+  const destination = await serve((req,res) => {
+    redirected++; receivedFakeKey = req.headers.apikey === 'valor-ficticio'; let body=''; req.on('data',d=>body+=d); req.on('end',()=>{receivedFakePassword=body.includes('password-ficticio');res.end('QA');});
+  });
+  const source = await serve((_req,res) => {res.writeHead(307,{Location:destination.origin + '/destino'});res.end();});
+  const approved = new Set([source.origin]);
+  let redirectResult;
+  try {
+    const r = await G.crearFetchSeguro(approved, fetch)(source.origin + '/inicio', {method:'POST',headers:{apikey:'valor-ficticio','Content-Type':'application/json'},body:JSON.stringify({password:'password-ficticio'})});
+    redirectResult = {estado:r.status,destinoFinalAprobado:approved.has(new URL(r.url).origin),solicitudesAlDestinoNoAprobado:redirected,recibioCabeceraFicticia:receivedFakeKey,recibioPasswordFicticio:receivedFakePassword};
+  } finally {await close(source.server);await close(destination.server);}
+
+  let hits = 0;
+  const target = await serve((_req,res)=> {hits++;res.setHeader('Access-Control-Allow-Origin','*');res.end('QA');});
+  const web = await serve((req,res)=> {
+    if(req.url === '/sw.js'){
+      res.setHeader('Content-Type','application/javascript');
+      res.end("self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));");
+    } else {res.setHeader('Content-Type','text/html');res.end('<html>QA local aislado</html>');}
+  });
+  const browser = await chromium.launch();
+  const swResults=[];
+  try {
+    for(const setting of ['allow','block']){
+      const context = await browser.newContext({serviceWorkers:setting});
+      const blocked=[];
+      await G.instalarBloqueo(context,'QA',new Set([web.origin]),blocked);
+      const page=await context.newPage();
+      await page.goto(web.origin);
+      const hasController=await page.evaluate(async mode=>{
+        if(mode==='block')return false;
+        await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        if(!navigator.serviceWorker.controller)await new Promise(r=>navigator.serviceWorker.addEventListener('controllerchange',r,{once:true}));
+        return Boolean(navigator.serviceWorker.controller);
+      },setting);
+      const before=hits;
+      const outcome=await page.evaluate(async url=>{try{await fetch(url);return 'resuelto';}catch{return 'rechazado';}},target.origin+'/destino');
+      swResults.push({serviceWorkers:setting,controladoPorSW:hasController,clasificacionDestino:G.clasificarDestino(target.origin,new Set([web.origin])),resultado:outcome,peticionesRecibidas:hits-before,bloqueadas:blocked.length});
+      await context.close();
+    }
+  } finally {await browser.close();await close(web.server);await close(target.server);}
+  const result={fecha:new Date().toISOString(),aislado:true,nota:'Solo servidores HTTP efímeros del equipo, datos ficticios y biblioteca original; sin Cloudflare, Supabase ni datos de negocio.',regresiones:{exitCode:regression.status,casos:31},redirect:redirectResult,serviceWorkers:swResults};
+  fs.writeFileSync(path.join(__dirname,'diagnosticos.json'),JSON.stringify(result,null,2));
+  console.log(JSON.stringify(result,null,2));
+})().catch(e=>{console.error(e.message);process.exitCode=1;});
+

@@ -1,0 +1,1183 @@
+diff --git a/src/components/FondoNivel.jsx b/src/components/FondoNivel.jsx
+index c7b35c6..75fdfee 100644
+--- a/src/components/FondoNivel.jsx
++++ b/src/components/FondoNivel.jsx
+@@ -1,5 +1,6 @@
+ import { useEffect, useRef } from 'react'
+ import { NIVELES_PUNTOS } from '../lib/nivelesPuntos.js'
++import { crearBucle } from '../lib/bucleAnimacion.js'
+ 
+ // Superficie metálica de un nivel (Básico plata / Premium dorado /
+ // VIP diamante azul hielo) — la misma paleta (--tp-*) y las mismas capas (.tp-iri,
+@@ -8,7 +9,10 @@ import { NIVELES_PUNTOS } from '../lib/nivelesPuntos.js'
+ // mismo ritmo que el idle de la tarjeta (`despl` es la misma fórmula).
+ // Lo usan las tres tarjetas "Beneficios por nivel" de Recompensas.
+ //
+-// Con `prefers-reduced-motion` no hay movimiento, solo el color.
++// Fase 6: el movimiento corre SOLO mientras la tarjeta está en pantalla y la pestaña del navegador visible (crearBucle: sin rAF
++// pendiente en cuanto sale del viewport), con referencias de capas buscadas una vez y desplazamiento por transform (sin layout ni
++// repintado de gradientes). Con `prefers-reduced-motion` no hay movimiento, solo el color (brillo fijo); si la preferencia cambia
++// en el sistema, la tarjeta reacciona.
+ export default function FondoNivel({ nivel, destacada = false, className = '', style, children }) {
+   const ref = useRef(null)
+   const config = NIVELES_PUNTOS[nivel] ?? NIVELES_PUNTOS.BASICO
+@@ -17,33 +21,51 @@ export default function FondoNivel({ nivel, destacada = false, className = '', s
+     const el = ref.current
+     if (!el) return undefined
+ 
+-    const glares = el.querySelectorAll('.tp-glare')
+-    const sheens = el.querySelectorAll('.tp-sheen')
++    const glares = [...el.querySelectorAll('.tp-glare')]
++    const sheens = [...el.querySelectorAll('.tp-sheen')]
++    const consulta = window.matchMedia('(prefers-reduced-motion: reduce)')
++    let ancho = el.clientWidth || 1
++    let alto = el.clientHeight || 1
++    const observador = new ResizeObserver(() => {
++      ancho = el.clientWidth || 1
++      alto = el.clientHeight || 1
++    })
++    observador.observe(el)
++
+     const pintarGlare = (k) => {
+-      const fondo = `radial-gradient(circle at ${50 + k * 40}% 40%, rgba(255,248,220,.7), rgba(255,248,220,0) 45%)`
+-      glares.forEach((g) => {
+-        g.style.background = fondo
+-      })
++      const gx = `${(k * 0.4 * ancho).toFixed(1)}px`
++      const gy = `${(-0.1 * alto).toFixed(1)}px`
++      for (const g of glares) {
++        g.style.setProperty('--gx', gx)
++        g.style.setProperty('--gy', gy)
++      }
++    }
++    const cuadro = (t) => {
++      pintarGlare(Math.sin(t * 0.6) * 0.8)
++      const despl = ((t * 0.28) % 1.6) - 0.3
++      const transformacion = `translateX(${(despl * 1.6 * ancho).toFixed(1)}px) rotate(18deg)`
++      for (const s of sheens) s.style.transform = transformacion
++      return true
+     }
+ 
+-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+-      pintarGlare(0.4)
+-      return undefined
++    const bucle = crearBucle(el, cuadro)
++    const aplicar = () => {
++      if (consulta.matches) {
++        bucle.querer(false)
++        pintarGlare(0.4)
++        for (const s of sheens) s.style.transform = 'translateX(0) rotate(18deg)'
++      } else {
++        bucle.querer(true)
++      }
+     }
++    aplicar()
++    consulta.addEventListener('change', aplicar)
+ 
+-    const t0 = performance.now()
+-    let raf
+-    function loop(now) {
+-      const t = (now - t0) / 1000
+-      pintarGlare(Math.sin(t * 0.6) * 0.8)
+-      const despl = ((t * 0.28) % 1.6) - 0.3
+-      sheens.forEach((s) => {
+-        s.style.left = `${despl * 160 - 60}%`
+-      })
+-      raf = requestAnimationFrame(loop)
++    return () => {
++      consulta.removeEventListener('change', aplicar)
++      observador.disconnect()
++      bucle.destruir()
+     }
+-    raf = requestAnimationFrame(loop)
+-    return () => cancelAnimationFrame(raf)
+   }, [])
+ 
+   return (
+diff --git a/src/components/PestanasCacheadas.jsx b/src/components/PestanasCacheadas.jsx
+index e9c1c06..ecd527d 100644
+--- a/src/components/PestanasCacheadas.jsx
++++ b/src/components/PestanasCacheadas.jsx
+@@ -1,9 +1,11 @@
+-import { lazy, Suspense, useEffect, useState } from 'react'
++import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+ import { Navigate, useLocation } from 'react-router-dom'
+ import { useAuth } from '../context/AuthContext.jsx'
+ import { secciones, rutaInicialPara } from '../config/navegacion.js'
+ import Ventas from '../pages/Ventas.jsx'
+-import { PaginaActivaContext } from '../context/PaginaActivaContext.jsx'
++import { PaginaActivaContext, ProteccionPantallaContext } from '../context/PaginaActivaContext.jsx'
++import { fijarIdentidadVista, reiniciarEstadoVista } from '../lib/estadoVista.js'
++import { alLiberarFormulario, formularioEditado, formularioEnviado, tieneFormulariosSinConfirmar } from '../lib/formulariosProtegidos.js'
+ 
+ // Ventas queda con import normal (no lazy): es la pestaña de aterrizaje de
+ // TODOS los usuarios (index redirige ahí), así que no vale la pena pagar una
+@@ -80,23 +82,152 @@ function CargandoPagina() {
+   )
+ }
+ 
+-// Cada pestaña visitada queda montada (oculta con display:none, no
+-// desmontada) en vez de que el router la destruya al cambiar de ruta: volver
+-// a una pestaña es instantáneo, sin "Cargando...", y conserva scroll y
+-// búsqueda. Cada página recibe `activo` y decide sola si refresca sus datos
+-// en silencio al volver a mostrarse.
+-export default function PestanasCacheadas() {
++// ───────── Política de caché de pantallas (Fase 6) ─────────
++// Cada pestaña visitada queda montada (oculta con display:none, no desmontada): volver a ella es instantáneo y conserva su
++// estado. Pero conservar TODAS las visitadas en una sesión larga acumulaba hasta 27 pantallas (decenas de miles de nodos, escuchas
++// y suscripciones). Política explícita:
++//   · como máximo MAX_PANTALLAS_MONTADAS pantallas montadas (la visible + las más recientes);
++//   · al superarlo se desmonta la MENOS recientemente usada que no esté protegida;
++//   · una pantalla PROTEGIDA nunca se descarta: tiene un diálogo abierto (useCerrarConEscape → useProtegerPantalla), un formulario
++//     editado cuyo guardado NO se ha confirmado, o declaró trabajo pendiente con useProtegerPantalla(). El tope es entonces «blando»:
++//     se supera mientras haya trabajo sin terminar y se recorta apenas se libera. Un formulario editado deja de proteger cuando:
++//       – su guardado se CONFIRMA de forma explícita (`confirmarGuardado(envio)`, lib/formulariosProtegidos.js: el token nombra el
++//         formulario y el intento, así que un éxito de otro flujo no lo libera); un envío rechazado por validación, con error o aún
++//         en vuelo NO lo suelta, ni una respuesta de un intento anterior si ya se siguió editando;
++//       – el formulario desaparece del DOM (un diálogo cancelado o cerrado); el registro lo guarda con WeakRef, así que no lo retiene;
++//     y cada formulario cuenta por separado: enviar uno no suelta la protección de otro de la misma pantalla;
++//   · lo que se conserva AUNQUE una pantalla se desmonte: el carrito y la venta en curso (CarritoProvider está por encima), los
++//     filtros y búsquedas (useEstadoVista) y la posición de scroll de cada pantalla;
++//   · al cambiar de cuenta o de rol TODO se invalida (la `key` desmonta las pantallas y se vacía el estado de vista).
++export const MAX_PANTALLAS_MONTADAS = 6
++
++function recortar(montadas, recencia, actual, protegida) {
++  let resultado = montadas
++  while (resultado.length > MAX_PANTALLAS_MONTADAS) {
++    const candidata = recencia.find((ruta) => ruta !== actual && resultado.includes(ruta) && !protegida(ruta))
++    if (!candidata) break
++    resultado = resultado.filter((ruta) => ruta !== candidata)
++  }
++  return resultado
++}
++
++function PantallaCacheada({ ruta, activa, Pagina, proteger }) {
++  const protegerAqui = useCallback((id, valor) => proteger(ruta, id, valor), [proteger, ruta])
++  return (
++    <div
++      data-ruta={ruta}
++      className={activa ? 'contents' : 'hidden'}
++      // Un campo de un <form> editado protege la pantalla hasta que ese formulario se confirme o desaparezca.
++      onInputCapture={(evento) => {
++        const formulario = evento.target instanceof Element ? evento.target.closest('form') : null
++        if (formulario) formularioEditado(ruta, formulario)
++      }}
++      // Enviar NO suelta nada por sí solo: solo marca el formulario como «enviado, esperando confirmación».
++      onSubmitCapture={(evento) => {
++        if (evento.target instanceof HTMLFormElement) formularioEnviado(evento.target)
++      }}
++    >
++      <PaginaActivaContext.Provider value={activa}>
++        <ProteccionPantallaContext.Provider value={protegerAqui}>
++          <Suspense fallback={<CargandoPagina />}>
++            <Pagina activo={activa} />
++          </Suspense>
++        </ProteccionPantallaContext.Provider>
++      </PaginaActivaContext.Provider>
++    </div>
++  )
++}
++
++function Pantallas() {
+   const { pathname } = useLocation()
+   const { rol } = useAuth()
+   const seccion = secciones.find((s) => s.path === pathname)
+   const permitido = puedeVer(seccion, rol)
+ 
+-  const [visitadas, setVisitadas] = useState(() => (permitido ? [pathname] : []))
++  const [montadas, setMontadas] = useState(() => (permitido ? [pathname] : []))
++  const recencia = useRef(permitido ? [pathname] : []) // de la más antigua a la más reciente
++  const razones = useRef(new Map()) // ruta → Set de razones de protección declaradas
++  const [version, setVersion] = useState(0) // sube al liberar una protección para volver a evaluar el recorte
++  const centinela = useRef(null)
++  const scrollGuardado = useRef(new Map())
++  const rutaVisible = useRef(pathname)
+ 
++  // Un formulario protege mientras siga en el DOM y su guardado no se haya confirmado (los desmontados se olvidan aquí mismo).
++  const protegida = useCallback((ruta) => tieneFormulariosSinConfirmar(ruta) || (razones.current.get(ruta)?.size ?? 0) > 0, [])
++
++  const proteger = useCallback((ruta, id, valor) => {
++    const conjunto = razones.current.get(ruta) ?? new Set()
++    if (valor) conjunto.add(id)
++    else conjunto.delete(id)
++    razones.current.set(ruta, conjunto)
++    if (!valor) setVersion((v) => v + 1)
++  }, [])
++  // Guardado confirmado de un formulario: se vuelve a evaluar el recorte.
++  useEffect(() => alLiberarFormulario(() => setVersion((v) => v + 1)), [])
++
++  // Registro de la pestaña actual y recorte de la caché.
+   useEffect(() => {
+     if (!permitido) return
+-    setVisitadas((anterior) => (anterior.includes(pathname) ? anterior : [...anterior, pathname]))
+-  }, [pathname, permitido])
++    recencia.current = [...recencia.current.filter((r) => r !== pathname), pathname]
++    setMontadas((anterior) => recortar(anterior.includes(pathname) ? anterior : [...anterior, pathname], recencia.current, pathname, protegida))
++  }, [pathname, permitido, protegida])
++
++  // Al liberarse una protección se vuelve a aplicar el tope.
++  useEffect(() => {
++    setMontadas((anterior) => recortar(anterior, recencia.current, pathname, protegida))
++  }, [version, pathname, protegida])
++
++  // Scroll por pantalla: el <main> es UNO solo para todas; se guarda su posición mientras una pantalla está visible y se restaura
++  // al volver a ella (también si se desmontó y volvió a montarse y sus datos llegan después). Mientras se restaura NO se guardan los
++  // eventos de scroll (el navegador recorta la posición cuando el contenido aún es corto y eso pisaría la posición guardada);
++  // la restauración termina al alcanzarla, a los 3 s, o en cuanto la persona interactúa (rueda, toque, tecla, puntero).
++  const restaurando = useRef(null)
++  useEffect(() => {
++    const main = centinela.current?.closest('main')
++    if (!main) return undefined
++    const alScroll = () => {
++      if (restaurando.current !== null) return
++      scrollGuardado.current.set(rutaVisible.current, main.scrollTop)
++    }
++    const alInteractuar = () => {
++      restaurando.current = null
++    }
++    main.addEventListener('scroll', alScroll, { passive: true })
++    for (const evento of ['wheel', 'touchstart', 'keydown', 'pointerdown']) main.addEventListener(evento, alInteractuar, { passive: true })
++    return () => {
++      main.removeEventListener('scroll', alScroll)
++      for (const evento of ['wheel', 'touchstart', 'keydown', 'pointerdown']) main.removeEventListener(evento, alInteractuar)
++    }
++  }, [])
++  useLayoutEffect(() => {
++    const main = centinela.current?.closest('main')
++    rutaVisible.current = pathname
++    if (!main) return undefined
++    const destino = scrollGuardado.current.get(pathname) ?? 0
++    restaurando.current = destino > 0 ? destino : null
++    main.scrollTop = destino
++    if (destino <= 0) return undefined
++    const limite = Date.now() + 3000
++    const temporizador = setInterval(() => {
++      if (restaurando.current === null || Date.now() > limite) {
++        restaurando.current = null
++        clearInterval(temporizador)
++        return
++      }
++      main.scrollTop = destino
++      if (Math.abs(main.scrollTop - destino) < 2) {
++        restaurando.current = null
++        clearInterval(temporizador)
++      }
++    }, 100)
++    return () => {
++      clearInterval(temporizador)
++      restaurando.current = null
++    }
++  }, [pathname])
++
++  // Al desmontar (cambio de cuenta / rol / salir del POS) se descarta también el estado de vista.
++  useEffect(() => () => reiniciarEstadoVista(), [])
+ 
+   if (!seccion || !permitido) {
+     // Bug real corregido: esto redirigía siempre a "/ventas" a mano, así
+@@ -106,22 +237,26 @@ export default function PestanasCacheadas() {
+     return <Navigate to={rutaInicialPara(rol)} replace />
+   }
+ 
++  // La pestaña actual se monta en este mismo render aunque `montadas` se actualice después del efecto.
++  const aRenderizar = montadas.includes(pathname) ? montadas : [...montadas, pathname]
+   return (
+     <>
+-      {visitadas.map((ruta) => {
++      <span ref={centinela} hidden />
++      {aRenderizar.map((ruta) => {
+         const Pagina = PAGINAS[ruta]
+         if (!Pagina) return null
+-        const activa = ruta === pathname
+-        return (
+-          <div key={ruta} className={activa ? 'contents' : 'hidden'}>
+-            <PaginaActivaContext.Provider value={activa}>
+-              <Suspense fallback={<CargandoPagina />}>
+-                <Pagina activo={activa} />
+-              </Suspense>
+-            </PaginaActivaContext.Provider>
+-          </div>
+-        )
++        return <PantallaCacheada key={ruta} ruta={ruta} activa={ruta === pathname} Pagina={Pagina} proteger={proteger} />
+       })}
+     </>
+   )
+ }
++
++// La `key` ata las pantallas a la cuenta Y al rol: si cambia cualquiera de los dos se desmontan todas (y se vacía el estado de
++// vista), así el contenido protegido de una cuenta o de un rol anterior no queda en memoria ni a la vista.
++export default function PestanasCacheadas() {
++  const { usuario, rol } = useAuth()
++  const identidad = `${usuario?.id ?? 'sin-cuenta'}:${rol ?? 'sin-rol'}`
++  // Se declara en el render, antes de que se renderice cualquier pantalla: el almacén de vista queda vacío para la identidad nueva.
++  fijarIdentidadVista(identidad)
++  return <Pantallas key={identidad} />
++}
+diff --git a/src/components/TarjetaPuntos.jsx b/src/components/TarjetaPuntos.jsx
+index 8fd5e9a..7375b04 100644
+--- a/src/components/TarjetaPuntos.jsx
++++ b/src/components/TarjetaPuntos.jsx
+@@ -1,5 +1,6 @@
+ import { useEffect, useRef } from 'react'
+ import { NIVELES_PUNTOS as NIVELES } from '../lib/nivelesPuntos.js'
++import { crearBucle } from '../lib/bucleAnimacion.js'
+ 
+ // Tarjeta 3D de "Mis puntos" — recreación de la referencia animada que
+ // trajo el usuario, con dos diferencias a propósito frente a la demo
+@@ -45,15 +46,20 @@ export default function TarjetaPuntos({
+     if (!stage || !lienzo || !card) return undefined
+ 
+     let escala = 1
+-    function ajustarEscala() {
+-      escala = stage.clientWidth / 1160 || 1
+-      lienzo.style.transform = `scale(${escala})`
+-      stage.style.height = `${800 * escala}px`
+-    }
+-    ajustarEscala()
+-    const observer = new ResizeObserver(ajustarEscala)
++    let ajustarEscalaRef = () => {}
++    const observer = new ResizeObserver(() => ajustarEscalaRef())
+     observer.observe(stage)
+ 
++    // Fase 6: el bucle solo corre cuando la tarjeta está en pantalla y la pestaña visible (crearBucle). Con «movimiento reducido»
++    // no hay flotación ni giro automático: la tarjeta queda quieta y el bucle solo despierta mientras se arrastra o vuelve a su
++    // posición de reposo (el arrastre es una acción de la persona, no animación automática). Las capas de brillo y destello se
++    // buscan UNA vez y se mueven con transform (compuesto), sin recalcular layout ni rehacer el gradiente en cada cuadro.
++    const consultaReducido = window.matchMedia('(prefers-reduced-motion: reduce)')
++    let reducido = consultaReducido.matches
++    const brillos = [...lienzo.querySelectorAll('.tp-glare')]
++    const destellos = [...lienzo.querySelectorAll('.tp-sheen')]
++    let ancho = lienzo.clientWidth || 1160
++
+     let yaw = 0
+     let pitch = 0
+     let ty = 0
+@@ -61,10 +67,11 @@ export default function TarjetaPuntos({
+     let arrastrando = false
+     let px = 0
+     let py = 0
+-    let peso = 1
++    let peso = reducido ? 0 : 1
+     const SENS = 0.16
+     const FOLLOW = 0.07
+     const RETURN = 0.018
++    let bucle = null
+ 
+     function alPresionar(e) {
+       arrastrando = true
+@@ -72,6 +79,7 @@ export default function TarjetaPuntos({
+       py = e.clientY
+       card.classList.add('tp-arrastrando')
+       if (pista) pista.style.opacity = '0'
++      bucle?.querer(true)
+     }
+     function alMover(e) {
+       if (!arrastrando) return
+@@ -100,15 +108,14 @@ export default function TarjetaPuntos({
+     window.addEventListener('pointercancel', alSoltar)
+     window.addEventListener('blur', alSoltar)
+ 
+-    const t0 = performance.now()
+-    let raf
+-
+-    function loop(now) {
+-      const t = (now - t0) / 1000
++    let ultimoBrillo = ''
++    function cuadro(t) {
+       if (!arrastrando) {
+-        ty += (0 - ty) * RETURN
+-        tp += (0 - tp) * RETURN
+-        peso += (1 - peso) * 0.02
++        // Con movimiento reducido vuelve al reposo más rápido (sin la deriva lenta del modo normal).
++        const retorno = reducido ? 0.08 : RETURN
++        ty += (0 - ty) * retorno
++        tp += (0 - tp) * retorno
++        peso += ((reducido ? 0 : 1) - peso) * 0.02
+       } else {
+         peso += (0 - peso) * 0.08
+       }
+@@ -120,24 +127,50 @@ export default function TarjetaPuntos({
+       const frz = Math.sin(t * 0.5) * 1.5
+       const rx = pitch + frx * peso
+       const ry = yaw + fry * peso
+-      card.style.transform = `translateY(${fy}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${frz * peso}deg)`
++      card.style.transform = `translateY(${reducido ? 0 : fy}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${frz * peso}deg)`
+ 
++      // Brillo y destello: se desplazan con transform (el gradiente es fijo, ver .tp-glare::before y .tp-sheen en index.css).
+       const k = Math.sin((ry * Math.PI) / 180)
+-      const brilloBg = `radial-gradient(circle at ${50 + k * 40}% ${40 + rx * 2}%, rgba(255,248,220,.7), rgba(255,248,220,0) 45%)`
+-      lienzo.querySelectorAll('.tp-glare').forEach((el) => {
+-        el.style.background = brilloBg
+-      })
++      const gx = `${(k * 0.4 * ancho).toFixed(1)}px`
++      const gy = `${((-0.1 + rx * 0.02) * ancho * 0.69).toFixed(1)}px`
++      const clave = gx + gy
++      if (clave !== ultimoBrillo) {
++        ultimoBrillo = clave
++        for (const el of brillos) {
++          el.style.setProperty('--gx', gx)
++          el.style.setProperty('--gy', gy)
++        }
++      }
+       const despl = ((t * 0.28) % 1.6) - 0.3 + k * 0.15
+-      lienzo.querySelectorAll('.tp-sheen').forEach((el) => {
+-        el.style.left = `${despl * 160 - 60}%`
+-      })
++      const dx = `translateX(${(despl * 1.6 * ancho).toFixed(1)}px) rotate(18deg)`
++      for (const el of destellos) el.style.transform = dx
++
++      // En reposo con movimiento reducido el bucle se duerme solo.
++      if (reducido && !arrastrando && Math.abs(ty) + Math.abs(tp) + Math.abs(yaw) + Math.abs(pitch) + Math.abs(peso) < 0.1) return false
++      return true
++    }
++
++    function ajustarEscala() {
++      escala = stage.clientWidth / 1160 || 1
++      lienzo.style.transform = `scale(${escala})`
++      stage.style.height = `${800 * escala}px`
++      ancho = lienzo.clientWidth || 1160
++    }
++    ajustarEscala()
++    ajustarEscalaRef = ajustarEscala
+ 
+-      raf = requestAnimationFrame(loop)
++    bucle = crearBucle(stage, cuadro)
++    cuadro(0) // primer cuadro estático (también con movimiento reducido)
++    bucle.querer(!reducido)
++    const alCambiarReducido = () => {
++      reducido = consultaReducido.matches
++      bucle.querer(!reducido)
+     }
+-    raf = requestAnimationFrame(loop)
++    consultaReducido.addEventListener('change', alCambiarReducido)
+ 
+     return () => {
+-      cancelAnimationFrame(raf)
++      bucle.destruir()
++      consultaReducido.removeEventListener('change', alCambiarReducido)
+       observer.disconnect()
+       stage.removeEventListener('pointerdown', alPresionar)
+       window.removeEventListener('pointermove', alMover)
+@@ -150,30 +183,55 @@ export default function TarjetaPuntos({
+   // Conteo de puntos + barra de progreso (revelado animado, igual que la
+   // referencia) y flash "pop" — se re-disparan cada vez que cambian los
+   // puntos o el nivel real (ej. el cliente sube de nivel).
++  //
++  // Fase 6: el conteo usa el MISMO bucle que la física (crearBucle): corre solo con la tarjeta en pantalla y la pestaña visible (si
++  // se oculta a mitad, se pausa y CONTINÚA al volver hasta el valor final), y con «movimiento reducido» —desde el montaje o activado
++  // durante el conteo— salta al valor final sin animar (ni conteo, ni barra, ni «pop»).
+   useEffect(() => {
+     const numEl = numRef.current
+     const barraEl = barraRef.current
+     const card = cardRef.current
+-    if (!numEl || !barraEl) return undefined
++    const stage = stageRef.current
++    if (!numEl || !barraEl || !stage) return undefined
+ 
+-    const c0 = performance.now()
+-    let raf
+-    function pasoConteo(now) {
+-      const p = Math.min(1, (now - c0) / 2600)
+-      const e = 1 - (1 - p) ** 3
+-      numEl.textContent = Math.round(puntos * e).toLocaleString('es-PE')
+-      barraEl.style.width = `${(progresoPct ?? 0) * e}%`
+-      if (p < 1) raf = requestAnimationFrame(pasoConteo)
++    const mostrarFinal = () => {
++      numEl.textContent = Math.round(puntos).toLocaleString('es-PE')
++      barraEl.style.width = `${progresoPct ?? 0}%`
+     }
+-    raf = requestAnimationFrame(pasoConteo)
++    const consulta = window.matchMedia('(prefers-reduced-motion: reduce)')
++    if (consulta.matches) {
++      mostrarFinal()
++    }
++    let bucle = null
++    const alCambiarPreferencia = () => {
++      if (consulta.matches) {
++        bucle?.destruir()
++        bucle = null
++        mostrarFinal()
++      }
++    }
++    consulta.addEventListener('change', alCambiarPreferencia)
+ 
+-    if (card) {
+-      card.classList.remove('tp-pop')
+-      void card.offsetWidth
+-      card.classList.add('tp-pop')
++    if (!consulta.matches) {
++      bucle = crearBucle(stage, (t) => {
++        const p = Math.min(1, (t * 1000) / 2600)
++        const e = 1 - (1 - p) ** 3
++        numEl.textContent = Math.round(puntos * e).toLocaleString('es-PE')
++        barraEl.style.width = `${(progresoPct ?? 0) * e}%`
++        return p < 1
++      })
++      bucle.querer(true)
++      if (card) {
++        card.classList.remove('tp-pop')
++        void card.offsetWidth
++        card.classList.add('tp-pop')
++      }
+     }
+ 
+-    return () => cancelAnimationFrame(raf)
++    return () => {
++      consulta.removeEventListener('change', alCambiarPreferencia)
++      bucle?.destruir()
++    }
+   }, [puntos, progresoPct])
+ 
+   return (
+diff --git a/src/context/PaginaActivaContext.jsx b/src/context/PaginaActivaContext.jsx
+index d717dd8..244538a 100644
+--- a/src/context/PaginaActivaContext.jsx
++++ b/src/context/PaginaActivaContext.jsx
+@@ -1,13 +1,34 @@
+-import { createContext, useContext } from 'react'
++import { createContext, useContext, useEffect, useRef } from 'react'
+ 
+ // PestanasCacheadas mantiene montadas las pestañas ya visitadas y oculta las inactivas con display:none. Los diálogos que
+ // esas páginas dejan abiertos (borrador a medias) siguen montados, pero NO están a la vista: no deben participar ni en la
+ // pila de Escape ni en la trampa de foco (QA-049: un segundo Escape cerraba el modal POS oculto en vez del modal Web
+ // visible). Cada página cacheada se envuelve en este contexto con su visibilidad real; fuera de ese contenedor (portal,
+-// login, etc.) el valor por defecto es «visible». Nada se desmonta ni se descarta: al volver a ser visible la página, sus
+-// diálogos recuperan Escape y foco con el borrador intacto.
++// login, etc.) el valor por defecto es «visible». Una pantalla oculta SIGUE montada con su estado mientras esté en la caché; al volver
++// a ser visible, sus diálogos recuperan Escape y foco con el borrador intacto. (Desde la Fase 6 la caché es LRU de tamaño limitado:
++// las pantallas con trabajo sin terminar están protegidas —ver ProteccionPantallaContext más abajo— y las demás, sin nada que perder,
++// pueden desmontarse cuando hay otras más recientes.)
+ export const PaginaActivaContext = createContext(true)
+ 
+ export function usePaginaActiva() {
+   return useContext(PaginaActivaContext)
+ }
++
++// Fase 6: PestanasCacheadas LIMITA cuántas pantallas conserva montadas y desmonta las más antiguas. Una pantalla con trabajo sin
++// terminar (un diálogo abierto, un formulario editado, borradores) NO se puede descartar: lo declara con este contexto.
++//   proteger(id, true|false): registra / retira una razón de protección de ESA pantalla (cada fuente usa su propio `id`).
++// Fuera de PestanasCacheadas (portal, login) el valor es null y no hace nada.
++export const ProteccionPantallaContext = createContext(null)
++
++/** Mientras `protegida` sea true, la pantalla que contiene este componente no se desmonta por la política de caché. */
++export function useProtegerPantalla(protegida) {
++  const proteger = useContext(ProteccionPantallaContext)
++  const idRef = useRef(null)
++  if (idRef.current === null) idRef.current = Symbol('proteccion-pantalla')
++  useEffect(() => {
++    if (!proteger || !protegida) return undefined
++    const id = idRef.current
++    proteger(id, true)
++    return () => proteger(id, false)
++  }, [proteger, protegida])
++}
+diff --git a/src/hooks/useCerrarConEscape.js b/src/hooks/useCerrarConEscape.js
+index d3bd115..5575b4b 100644
+--- a/src/hooks/useCerrarConEscape.js
++++ b/src/hooks/useCerrarConEscape.js
+@@ -1,5 +1,5 @@
+ import { useEffect, useLayoutEffect, useRef } from 'react'
+-import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
++import { usePaginaActiva, useProtegerPantalla } from '../context/PaginaActivaContext.jsx'
+ import { limpiarPendiente, marcarPendiente } from '../lib/trabajoPendiente.js'
+ 
+ // B5 de la 4ª auditoría: con modales apilados (ej. Gastos -> Plantillas ->
+@@ -63,4 +63,8 @@ export function useCerrarConEscape(onCerrar, activoSolicitado = true, { trabajoP
+     marcarPendiente(id, 'una ventana o formulario abierto')
+     return () => limpiarPendiente(id)
+   }, [activoSolicitado, trabajoPendiente])
++
++  // Fase 6: una pantalla con un diálogo abierto (borrador a medias) no se puede descartar de la caché de pestañas mientras siga
++  // abierto, esté o no a la vista. Los menús (`trabajoPendiente: false`) no protegen nada.
++  useProtegerPantalla(activoSolicitado && trabajoPendiente)
+ }
+diff --git a/src/hooks/useTextoEscritura.js b/src/hooks/useTextoEscritura.js
+index 3150dff..a622a3d 100644
+--- a/src/hooks/useTextoEscritura.js
++++ b/src/hooks/useTextoEscritura.js
+@@ -1,13 +1,23 @@
+ import { useEffect, useState } from 'react'
++import { usePaginaActiva } from '../context/PaginaActivaContext.jsx'
++import { useDocumentoVisible, useMovimientoReducido } from './usePreferenciasMovimiento.js'
+ 
+ // activo=false pausa el ciclo por completo (ej. cuando el placeholder no se
+ // ve porque el campo ya tiene texto) — evita un setState cada 45ms sin
+ // ningún efecto visual, que en un componente grande sale caro re-renderizar.
++//
++// Fase 6: además se pausa cuando NADIE lo ve: la pantalla está oculta en la caché de pestañas (cada pantalla montada con un
++// buscador sumaba ~2,5 temporizadores por segundo), la pestaña del navegador está en segundo plano, o la persona pidió
++// movimiento reducido (en ese caso se muestra el texto completo, sin escribirlo letra a letra). Al volver, retoma el ciclo.
+ export function useTextoEscritura(textoCompleto, velocidadMs = 45, pausaMs = 5000, activo = true) {
+   const [texto, setTexto] = useState(textoCompleto.slice(0, 1))
++  const paginaActiva = usePaginaActiva()
++  const documentoVisible = useDocumentoVisible()
++  const reducido = useMovimientoReducido()
++  const corre = activo && paginaActiva && documentoVisible && !reducido
+ 
+   useEffect(() => {
+-    if (!activo) return undefined
++    if (!corre) return undefined
+ 
+     let indice = 1
+     let cancelado = false
+@@ -33,7 +43,7 @@ export function useTextoEscritura(textoCompleto, velocidadMs = 45, pausaMs = 500
+       cancelado = true
+       clearTimeout(temporizador)
+     }
+-  }, [textoCompleto, velocidadMs, pausaMs, activo])
++  }, [textoCompleto, velocidadMs, pausaMs, corre])
+ 
+-  return texto
++  return reducido ? textoCompleto : texto
+ }
+diff --git a/src/index.css b/src/index.css
+index 374af90..d23b5f8 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -1592,10 +1592,27 @@ input[type='search']::-webkit-search-decoration {
+   font-weight: 800;
+   letter-spacing: 8px;
+ }
++/* Fase 6: brillo y destello se mueven con TRANSFORM (compuesto), no con `left` ni reescribiendo el gradiente en cada cuadro (antes
++   forzaba layout y repintado continuos). El gradiente del brillo es fijo y vive en ::before (el doble de grande para poder
++   desplazarlo); TarjetaPuntos.jsx / FondoNivel.jsx solo actualizan --gx / --gy y el transform del destello. */
+ .tp-glare {
+   position: absolute;
+   inset: 0;
++  overflow: hidden;
+   mix-blend-mode: soft-light;
++  --gx: 0px;
++  --gy: 0px;
++}
++.tp-glare::before {
++  content: '';
++  position: absolute;
++  top: -50%;
++  left: -50%;
++  width: 200%;
++  height: 200%;
++  background: radial-gradient(circle at 50% 50%, rgba(255, 248, 220, 0.7), rgba(255, 248, 220, 0) 24%);
++  transform: translate(var(--gx), var(--gy));
++  will-change: transform;
+ }
+ .tp-sheen {
+   position: absolute;
+@@ -1607,9 +1624,10 @@ input[type='search']::-webkit-search-decoration {
+     100deg,
+     rgba(255, 255, 255, 0) 0%,
+     rgba(255, 255, 255, 0.9) 50%,
+-    rgba(255, 255, 255, 0) 100%
++    rgba(255, 255, 255, 0)  100%
+   );
+-  transform: rotate(18deg);
++  transform: translateX(0) rotate(18deg);
++  will-change: transform;
+   mix-blend-mode: overlay;
+ }
+ .tp-pista {
+diff --git a/src/pages/Asistentes.jsx b/src/pages/Asistentes.jsx
+index b384441..f9bfae6 100644
+--- a/src/pages/Asistentes.jsx
++++ b/src/pages/Asistentes.jsx
+@@ -30,6 +30,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
+ import ModalAsistente from '../components/ModalAsistente.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const CAMPOS_OPCIONALES = [
+   'telefono',
+@@ -126,8 +127,8 @@ export default function Asistentes({ activo = true }) {
+   const [usuariosAsistente, setUsuariosAsistente] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [orden, setOrden] = useState('nombre-asc')
++  const [busqueda, setBusqueda] = useEstadoVista('/asistentes:busqueda', '')
++  const [orden, setOrden] = useEstadoVista('/asistentes:orden', 'nombre-asc')
+   const [modalAsistente, setModalAsistente] = useState(null) // null | 'nuevo' | asistente
+   const [asistenteAEliminar, setAsistenteAEliminar] = useState(null)
+   const [eliminando, setEliminando] = useState(false)
+diff --git a/src/pages/Auditoria.jsx b/src/pages/Auditoria.jsx
+index 2aba939..ab56245 100644
+--- a/src/pages/Auditoria.jsx
++++ b/src/pages/Auditoria.jsx
+@@ -8,6 +8,7 @@ import FiltrosFecha from '../components/FiltrosFecha.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const TABLA_LABELS = {
+   usuarios: 'Usuarios',
+@@ -131,8 +132,8 @@ function descripcionEntrada(entrada) {
+ }
+ 
+ export default function Auditoria({ activo = true }) {
+-  const [filtro, setFiltro] = useState('hoy')
+-  const [personalizado, setPersonalizado] = useState(() => {
++  const [filtro, setFiltro] = useEstadoVista('/auditoria:filtro', 'hoy')
++  const [personalizado, setPersonalizado] = useEstadoVista('/auditoria:personalizado', () => {
+     const hoyStr = formatearFechaISO(new Date())
+     return { desde: hoyStr, hasta: hoyStr }
+   })
+@@ -142,8 +143,8 @@ export default function Auditoria({ activo = true }) {
+   const [cargandoMas, setCargandoMas] = useState(false)
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [tablaFiltro, setTablaFiltro] = useState(OPCION_TODAS_TABLAS)
++  const [busqueda, setBusqueda] = useEstadoVista('/auditoria:busqueda', '')
++  const [tablaFiltro, setTablaFiltro] = useEstadoVista('/auditoria:tablaFiltro', OPCION_TODAS_TABLAS)
+   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
+   const primeraCargaHecha = useRef(false)
+   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
+diff --git a/src/pages/CatalogoWeb.jsx b/src/pages/CatalogoWeb.jsx
+index 966bbab..d5e2d48 100644
+--- a/src/pages/CatalogoWeb.jsx
++++ b/src/pages/CatalogoWeb.jsx
+@@ -17,6 +17,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import ModalProducto from '../components/ModalProducto.jsx'
+ import ModalServicio from '../components/ModalServicio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ // Web → Catálogo → Productos / Servicios — solo ADMINISTRADOR (la ruta y el backend lo exigen; no se cambió ningún permiso).
+ // Edita el contenido EDITORIAL y de configuración Web de las MISMAS fichas que el POS (no duplica productos, servicios
+@@ -94,7 +95,7 @@ export default function CatalogoWeb({ activo = true }) {
+   const desdeParam = params.get('desde')
+   const desde = desdeParam && ORIGENES[desdeParam] ? desdeParam : null
+ 
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/catalogo-web:busqueda', '')
+   const busquedaDebounced = useDebounce(busqueda, 300)
+   const [filas, setFilas] = useState([])
+   const [hayMas, setHayMas] = useState(false)
+diff --git a/src/pages/Citas.jsx b/src/pages/Citas.jsx
+index 91696ce..314efd4 100644
+--- a/src/pages/Citas.jsx
++++ b/src/pages/Citas.jsx
+@@ -44,6 +44,7 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import ModalCita from '../components/ModalCita.jsx'
+ import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const DIAS_CORTOS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
+ const MESES = [
+@@ -244,7 +245,7 @@ export default function Citas({ activo = true }) {
+   const { usuario, rol } = useAuth()
+   const { mostrarToast } = useToast()
+ 
+-  const [fechaCursor, setFechaCursor] = useState(() => new Date())
++  const [fechaCursor, setFechaCursor] = useEstadoVista('/citas:fechaCursor', () => new Date())
+   const [diaSeleccionado, setDiaSeleccionado] = useState(() => new Date())
+   const [asistentes, setAsistentes] = useState([])
+   const [asistenteFiltro, setAsistenteFiltro] = useState('todas')
+diff --git a/src/pages/Clientes.jsx b/src/pages/Clientes.jsx
+index 4b2d419..e7cf259 100644
+--- a/src/pages/Clientes.jsx
++++ b/src/pages/Clientes.jsx
+@@ -34,6 +34,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
+ import ModalCliente from '../components/ModalCliente.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ // Datos que suman a la barra de "datos completos": ocasionales como notas
+ // no cuentan (casi nadie los llena y no dice nada de qué tan bien se conoce
+@@ -216,10 +217,10 @@ export default function Clientes({ activo = true }) {
+   const [cargandoMas, setCargandoMas] = useState(false)
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/clientes:busqueda', '')
+   const busquedaDebounced = useDebounce(busqueda, 300)
+-  const [orden, setOrden] = useState('nombre-asc')
+-  const [filtroSexo, setFiltroSexo] = useState('todos')
++  const [orden, setOrden] = useEstadoVista('/clientes:orden', 'nombre-asc')
++  const [filtroSexo, setFiltroSexo] = useEstadoVista('/clientes:filtroSexo', 'todos')
+   const [modalCliente, setModalCliente] = useState(null) // null | 'nuevo' | cliente
+   const [clienteAEliminar, setClienteAEliminar] = useState(null)
+   const [eliminando, setEliminando] = useState(false)
+diff --git a/src/pages/ContactoWeb.jsx b/src/pages/ContactoWeb.jsx
+index 410aeeb..75d24cc 100644
+--- a/src/pages/ContactoWeb.jsx
++++ b/src/pages/ContactoWeb.jsx
+@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
+ import GuiaPestana from '../components/GuiaPestana.jsx'
+ import { CalendarDays, ImagePlus, MapPin, Phone, Wallet, X } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
++import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import Etiqueta from '../components/Etiqueta.jsx'
+ import AyudaCampo from '../components/AyudaCampo.jsx'
+@@ -282,6 +283,7 @@ export default function ContactoWeb() {
+ 
+   async function guardar(evento) {
+     evento.preventDefault()
++    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
+ 
+     const primerInvalido = telefonoIncompleto
+       ? 'contacto-telefono'
+@@ -376,6 +378,7 @@ export default function ContactoWeb() {
+     setPlinQrNueva(null)
+     setPlinQrEliminada(false)
+ 
++    confirmarGuardado(envio)
+     mostrarToast('Datos de contacto actualizados.', 'exito')
+   }
+ 
+diff --git a/src/pages/Dashboard.jsx b/src/pages/Dashboard.jsx
+index 6242233..ca12fa8 100644
+--- a/src/pages/Dashboard.jsx
++++ b/src/pages/Dashboard.jsx
+@@ -7,6 +7,7 @@ import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/fina
+ import TarjetaResumen from '../components/TarjetaResumen.jsx'
+ import FiltrosFecha from '../components/FiltrosFecha.jsx'
+ import { EsqueletoResumen } from '../components/Esqueleto.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const METRICAS_VACIAS = {
+   ingresoProductos: 0,
+@@ -186,8 +187,8 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
+ }
+ 
+ export default function Dashboard({ activo = true }) {
+-  const [filtro, setFiltro] = useState('mes')
+-  const [personalizado, setPersonalizado] = useState(() => {
++  const [filtro, setFiltro] = useEstadoVista('/dashboard:filtro', 'mes')
++  const [personalizado, setPersonalizado] = useEstadoVista('/dashboard:personalizado', () => {
+     const hoyStr = formatearFechaISO(new Date())
+     return { desde: hoyStr, hasta: hoyStr }
+   })
+diff --git a/src/pages/Deudas.jsx b/src/pages/Deudas.jsx
+index 22b4325..2ac8caa 100644
+--- a/src/pages/Deudas.jsx
++++ b/src/pages/Deudas.jsx
+@@ -14,6 +14,7 @@ import ModalDeuda from '../components/ModalDeuda.jsx'
+ import ModalPagoDeuda from '../components/ModalPagoDeuda.jsx'
+ import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const OPCIONES_FILTRO = [
+   { id: 'todas', label: 'Todas' },
+@@ -61,9 +62,9 @@ export default function Deudas({ activo = true }) {
+   const [deudas, setDeudas] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/deudas:busqueda', '')
+   const busquedaDebounced = useDebounce(busqueda, 300)
+-  const [filtroEstado, setFiltroEstado] = useState('todas')
++  const [filtroEstado, setFiltroEstado] = useEstadoVista('/deudas:filtroEstado', 'todas')
+   const [modalDeuda, setModalDeuda] = useState(null) // null | 'nuevo' | deuda
+   const [deudaAEliminar, setDeudaAEliminar] = useState(null)
+   const [eliminando, setEliminando] = useState(false)
+diff --git a/src/pages/Estadisticas.jsx b/src/pages/Estadisticas.jsx
+index 3d28ee7..55aafa0 100644
+--- a/src/pages/Estadisticas.jsx
++++ b/src/pages/Estadisticas.jsx
+@@ -13,6 +13,7 @@ import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
+ import { calcularCascadaGanancia, calcularGastosProrrateados } from '../lib/finanzas.js'
+ import FiltrosFecha from '../components/FiltrosFecha.jsx'
+ import { EsqueletoResumen } from '../components/Esqueleto.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const CLASE_METODO_PAGO = {
+   Efectivo: 'bg-green',
+@@ -212,8 +213,8 @@ function GraficoTendencia({ dias }) {
+ }
+ 
+ export default function Estadisticas({ activo = true }) {
+-  const [filtro, setFiltro] = useState('mes')
+-  const [personalizado, setPersonalizado] = useState(() => {
++  const [filtro, setFiltro] = useEstadoVista('/estadisticas:filtro', 'mes')
++  const [personalizado, setPersonalizado] = useEstadoVista('/estadisticas:personalizado', () => {
+     const hoyStr = formatearFechaISO(new Date())
+     return { desde: hoyStr, hasta: hoyStr }
+   })
+diff --git a/src/pages/Gastos.jsx b/src/pages/Gastos.jsx
+index 86dea95..afff10b 100644
+--- a/src/pages/Gastos.jsx
++++ b/src/pages/Gastos.jsx
+@@ -19,6 +19,7 @@ import ModalGasto, { MESES } from '../components/ModalGasto.jsx'
+ import ModalPlantillasGasto from '../components/ModalPlantillasGasto.jsx'
+ import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const MAX_NOMBRES_VISIBLES = 3
+ 
+@@ -102,8 +103,8 @@ export default function Gastos({ activo = true }) {
+   // auditoría) — el resto de la app ya deriva el período con anioMesEnLima.
+   const { anio: anioLima, mes: mesLimaIndice } = anioMesEnLima(new Date())
+ 
+-  const [mes, setMes] = useState(mesLimaIndice + 1)
+-  const [anio, setAnio] = useState(anioLima)
++  const [mes, setMes] = useEstadoVista('/gastos:mes', mesLimaIndice + 1)
++  const [anio, setAnio] = useEstadoVista('/gastos:anio', anioLima)
+   // B9 de la 3ª auditoría: texto del input separado del año numérico — antes
+   // el input escribía directo sobre "anio" y, al borrar el campo para
+   // escribir uno nuevo, el fallback (parseInt(...) || anioLima) saltaba al
+diff --git a/src/pages/Historial.jsx b/src/pages/Historial.jsx
+index c423647..b64db62 100644
+--- a/src/pages/Historial.jsx
++++ b/src/pages/Historial.jsx
+@@ -16,6 +16,7 @@ import FiltrosFecha from '../components/FiltrosFecha.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const OPCIONES_ORDEN = [
+   { id: 'fecha-desc', label: 'Más recientes primero' },
+@@ -314,8 +315,8 @@ export default function Historial({ activo = true }) {
+   const esAdmin = rol === 'ADMINISTRADOR'
+   const { mostrarToast } = useToast()
+ 
+-  const [filtro, setFiltro] = useState('mes')
+-  const [personalizado, setPersonalizado] = useState(() => {
++  const [filtro, setFiltro] = useEstadoVista('/historial:filtro', 'mes')
++  const [personalizado, setPersonalizado] = useEstadoVista('/historial:personalizado', () => {
+     const hoyStr = formatearFechaISO(new Date())
+     return { desde: hoyStr, hasta: hoyStr }
+   })
+@@ -326,9 +327,9 @@ export default function Historial({ activo = true }) {
+   const [cargandoMas, setCargandoMas] = useState(false)
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [orden, setOrden] = useState('fecha-desc')
+-  const [filtroMetodo, setFiltroMetodo] = useState('todos')
++  const [busqueda, setBusqueda] = useEstadoVista('/historial:busqueda', '')
++  const [orden, setOrden] = useEstadoVista('/historial:orden', 'fecha-desc')
++  const [filtroMetodo, setFiltroMetodo] = useEstadoVista('/historial:filtroMetodo', 'todos')
+ 
+   const [abiertos, setAbiertos] = useState(() => new Set())
+   const [detalles, setDetalles] = useState({})
+diff --git a/src/pages/Inventario.jsx b/src/pages/Inventario.jsx
+index ad0dfe8..31fa536 100644
+--- a/src/pages/Inventario.jsx
++++ b/src/pages/Inventario.jsx
+@@ -19,6 +19,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import BotonAccion from '../components/BotonAccion.jsx'
+ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const OPCIONES_ORDEN = [
+   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
+@@ -98,10 +99,10 @@ export default function Inventario({ activo = true }) {
+   const [cargandoMas, setCargandoMas] = useState(false)
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/inventario:busqueda', '')
+   const busquedaDebounced = useDebounce(busqueda, 300)
+-  const [orden, setOrden] = useState('nombre-asc')
+-  const [filtroStock, setFiltroStock] = useState('todos') // 'todos' | 'bajo' | 'sin_stock'
++  const [orden, setOrden] = useEstadoVista('/inventario:orden', 'nombre-asc')
++  const [filtroStock, setFiltroStock] = useEstadoVista('/inventario:filtroStock', 'todos') // 'todos' | 'bajo' | 'sin_stock'
+   const [modalProducto, setModalProducto] = useState(null) // null | 'nuevo' | producto
+   const [productoAEliminar, setProductoAEliminar] = useState(null)
+   const [eliminando, setEliminando] = useState(false)
+diff --git a/src/pages/LibroReclamacionesWeb.jsx b/src/pages/LibroReclamacionesWeb.jsx
+index 4b0e573..835d201 100644
+--- a/src/pages/LibroReclamacionesWeb.jsx
++++ b/src/pages/LibroReclamacionesWeb.jsx
+@@ -1,12 +1,14 @@
+ import { useEffect, useRef, useState } from 'react'
+ import { ArrowBigDown, BookOpen } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
++import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import { manejarActivacionTeclado } from '../lib/teclado.js'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import Etiqueta from '../components/Etiqueta.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const formatoFecha = new Intl.DateTimeFormat('es-PE', {
+   day: 'numeric',
+@@ -40,7 +42,7 @@ export default function LibroReclamacionesWeb({ activo = true }) {
+   const [reclamos, setReclamos] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [filtro, setFiltro] = useState('PENDIENTE')
++  const [filtro, setFiltro] = useEstadoVista('/libro-reclamaciones-web:filtro', 'PENDIENTE')
+   const [abiertos, setAbiertos] = useState(() => new Set())
+   const [respuestas, setRespuestas] = useState({})
+   const [respondiendo, setRespondiendo] = useState(null)
+@@ -84,6 +86,7 @@ export default function LibroReclamacionesWeb({ activo = true }) {
+ 
+   async function guardarProveedor(evento) {
+     evento.preventDefault()
++    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
+     const ruc = proveedor.ruc.trim()
+     if (ruc && !/^\d{11}$/.test(ruc)) {
+       mostrarToast('El RUC debe tener 11 dígitos.', 'error')
+@@ -99,6 +102,7 @@ export default function LibroReclamacionesWeb({ activo = true }) {
+       mostrarToast('No se pudo guardar los datos del proveedor.', 'error')
+       return
+     }
++    confirmarGuardado(envio)
+     mostrarToast('Datos del proveedor guardados.', 'exito')
+   }
+ 
+diff --git a/src/pages/MiPanel.jsx b/src/pages/MiPanel.jsx
+index 653d97f..629608a 100644
+--- a/src/pages/MiPanel.jsx
++++ b/src/pages/MiPanel.jsx
+@@ -32,6 +32,7 @@ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
+ import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
+ import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const OPCION_TODOS = 'todos'
+ const TAMANO_PAGINA = 50
+@@ -110,8 +111,8 @@ export default function MiPanel({ activo = true }) {
+   const esAdmin = rol === 'ADMINISTRADOR'
+   const { mostrarToast } = useToast()
+ 
+-  const [filtro, setFiltro] = useState('mes')
+-  const [personalizado, setPersonalizado] = useState(() => {
++  const [filtro, setFiltro] = useEstadoVista('/mi-panel:filtro', 'mes')
++  const [personalizado, setPersonalizado] = useEstadoVista('/mi-panel:personalizado', () => {
+     const hoyStr = formatearFechaISO(new Date())
+     return { desde: hoyStr, hasta: hoyStr }
+   })
+@@ -122,7 +123,7 @@ export default function MiPanel({ activo = true }) {
+   const [cargandoMas, setCargandoMas] = useState(false)
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/mi-panel:busqueda', '')
+   const busquedaDebounced = useDebounce(busqueda, 300)
+ 
+   const [asistentesUsuarios, setAsistentesUsuarios] = useState([])
+diff --git a/src/pages/Mobiliario.jsx b/src/pages/Mobiliario.jsx
+index aeaab90..6f5b718 100644
+--- a/src/pages/Mobiliario.jsx
++++ b/src/pages/Mobiliario.jsx
+@@ -33,6 +33,7 @@ import ModalMobiliario, { OPCIONES_CONDICION } from '../components/ModalMobiliar
+ import ModalCompraMobiliario from '../components/ModalCompraMobiliario.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const CAMPOS_OPCIONALES = [
+   'marca',
+@@ -198,8 +199,8 @@ export default function Mobiliario({ activo = true }) {
+   const [muebles, setMuebles] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [orden, setOrden] = useState('nombre-asc')
++  const [busqueda, setBusqueda] = useEstadoVista('/mobiliario:busqueda', '')
++  const [orden, setOrden] = useEstadoVista('/mobiliario:orden', 'nombre-asc')
+   const [abiertos, setAbiertos] = useState(() => new Set())
+ 
+   const [modalMueble, setModalMueble] = useState(null) // null | 'nuevo' | mueble
+diff --git a/src/pages/Porcentajes.jsx b/src/pages/Porcentajes.jsx
+index 648f4a7..99abd37 100644
+--- a/src/pages/Porcentajes.jsx
++++ b/src/pages/Porcentajes.jsx
+@@ -8,6 +8,7 @@ import BarraBusqueda from '../components/BarraBusqueda.jsx'
+ import SelectorOrden from '../components/SelectorOrden.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ // QA-050: cuántas tarjetas se pintan a la vez. Los datos siguen COMPLETOS en memoria (lectura por bloques, QA-046) y la
+ // búsqueda y el orden recorren todo el catálogo; solo el DOM se acota.
+@@ -232,8 +233,8 @@ export default function Porcentajes({ activo = true }) {
+   const [porcentajes, setPorcentajes] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [orden, setOrden] = useState('nombre-asc')
++  const [busqueda, setBusqueda] = useEstadoVista('/porcentajes:busqueda', '')
++  const [orden, setOrden] = useEstadoVista('/porcentajes:orden', 'nombre-asc')
+   const [ventana, setVentana] = useState({ clave: '', n: TAMANO_VENTANA })
+   const primeraCargaHecha = useRef(false)
+   const numColumnas = useNumeroColumnas()
+diff --git a/src/pages/PuntosWeb.jsx b/src/pages/PuntosWeb.jsx
+index fe03b58..564e0eb 100644
+--- a/src/pages/PuntosWeb.jsx
++++ b/src/pages/PuntosWeb.jsx
+@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
+ import GuiaPestana from '../components/GuiaPestana.jsx'
+ import { PiggyBank } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
++import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import Etiqueta from '../components/Etiqueta.jsx'
+ 
+@@ -52,6 +53,7 @@ export default function PuntosWeb() {
+ 
+   async function guardar(evento) {
+     evento.preventDefault()
++    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
+ 
+     const umbralPremium = parseInt(formulario.umbralPremium, 10)
+     const umbralVip = parseInt(formulario.umbralVip, 10)
+@@ -79,6 +81,7 @@ export default function PuntosWeb() {
+       return
+     }
+ 
++    confirmarGuardado(envio)
+     mostrarToast('Configuración de puntos actualizada.', 'exito')
+   }
+ 
+diff --git a/src/pages/Servicios.jsx b/src/pages/Servicios.jsx
+index d6ab7f0..f225795 100644
+--- a/src/pages/Servicios.jsx
++++ b/src/pages/Servicios.jsx
+@@ -19,6 +19,7 @@ import ModalServicio from '../components/ModalServicio.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const OPCIONES_ORDEN = [
+   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
+@@ -42,13 +43,13 @@ export default function Servicios({ activo = true }) {
+   const [servicios, setServicios] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/servicios:busqueda', '')
+   const busquedaDebounced = useDebounce(busqueda, 300)
+   const [hayMas, setHayMas] = useState(false)
+   const [cargandoMas, setCargandoMas] = useState(false)
+   const [categoriasExistentes, setCategoriasExistentes] = useState([])
+   const vigenteRef = useRef({ actual: true })
+-  const [orden, setOrden] = useState('nombre-asc')
++  const [orden, setOrden] = useEstadoVista('/servicios:orden', 'nombre-asc')
+   const [modalServicio, setModalServicio] = useState(null) // null | 'nuevo' | servicio
+   const [servicioAEliminar, setServicioAEliminar] = useState(null)
+   const [eliminando, setEliminando] = useState(false)
+diff --git a/src/pages/Ventas.jsx b/src/pages/Ventas.jsx
+index 304ea7f..389f966 100644
+--- a/src/pages/Ventas.jsx
++++ b/src/pages/Ventas.jsx
+@@ -23,6 +23,7 @@ import TicketImprimible from '../components/TicketImprimible.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
+ import { boletaRequiereDni, comprobanteCompleto } from '../lib/comprobante.js'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ // El lector de códigos de barras (@zxing) pesa varios cientos de KB;
+ // se carga solo cuando se abre el escáner, no en el bundle principal.
+@@ -321,7 +322,7 @@ export default function Ventas({ activo = true }) {
+   const [cuponPreview, setCuponPreview] = useState(null)
+   const [cuponError, setCuponError] = useState('')
+   const [buscandoCupon, setBuscandoCupon] = useState(false)
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/ventas:busqueda', '')
+   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
+   const [indiceActivo, setIndiceActivo] = useState(-1)
+   // Tocar el cabezal del carrito (móvil) empuja fuera de vista el panel de

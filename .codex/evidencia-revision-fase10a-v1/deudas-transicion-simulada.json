@@ -1,0 +1,51 @@
+{
+  "fecha": "2026-10-13T05:27:29.190Z",
+  "metodo": "UI real compilada; fila y PATCH/RPC de deuda simulados en memoria. Los demás negocios solo se leen en Local; Auth QA Local por formulario. No se escribe ninguna deuda real.",
+  "casos": [
+    {
+      "id": "cobrada-sin-pago",
+      "estado": "COBRADA",
+      "pagos": 0,
+      "monto": 100,
+      "interfazCobrada": true,
+      "interfazSinPagos": true,
+      "botonCobradoVisible": 0
+    },
+    {
+      "id": "editar-nota-reabre-deuda",
+      "estado": "PENDIENTE",
+      "pagos": 0,
+      "monto": 100,
+      "botonCobradoVisible": true,
+      "defectoReproducido": true
+    },
+    {
+      "id": "marcar-pendiente-legacy-no-anula-ledger",
+      "estado": "PENDIENTE",
+      "pagado": 100,
+      "saldoDerivado": 0,
+      "interfazPagoParcial": true,
+      "botonCobradoVisible": true,
+      "limite": "Esta segunda entrada modela el PATCH de main después del backfill. No ejecuta main ni el UPDATE real."
+    }
+  ],
+  "mutacionesSimuladas": [
+    {
+      "tipo": "PATCH",
+      "campos": [
+        "cliente_id",
+        "concepto",
+        "monto",
+        "fecha",
+        "nota"
+      ],
+      "monto": 100
+    },
+    {
+      "tipo": "recalcular_estado_deuda",
+      "pagado": 0,
+      "estado": "PENDIENTE"
+    }
+  ],
+  "mutacionesRealesBloqueadas": []
+}

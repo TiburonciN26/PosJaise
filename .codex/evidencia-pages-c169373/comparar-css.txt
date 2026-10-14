@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const info=JSON.parse(fs.readFileSync(new URL('./comparacion-artefactos.json',import.meta.url),'utf8'));
+const fetchCss=async(origin,file)=>{
+  const r=await fetch(new URL(file,origin+'/'),{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(25000)});
+  if(!r.ok)throw new Error('CSS HTTP '+r.status);return r.text();
+};
+const [oldCss,newCss]=await Promise.all([fetchCss(info.anterior,info.css[0].antes),fetchCss(info.nuevo,info.css[0].ahora)]);
+const rules=t=>new Set([...t.matchAll(/[^{}]+\{[^{}]*\}/g)].map(m=>m[0]));
+const before=rules(oldCss),after=rules(newCss);
+const added=[...after].filter(x=>!before.has(x)),removed=[...before].filter(x=>!after.has(x));
+const withoutAdded=added.reduce((s,rule)=>s.replace(rule,''),newCss);
+const result={fecha:new Date().toISOString(),bytesAntes:Buffer.byteLength(oldCss),bytesAhora:Buffer.byteLength(newCss),reglasAgregadas:added,reglasRetiradas:removed,restoDelCssIdentico:withoutAdded===oldCss,nota:'Comparación íntegra de los textos CSS tras retirar únicamente los bloques nuevos identificados.'};
+fs.writeFileSync(new URL('./comparacion-css-confirmada.json',import.meta.url),JSON.stringify(result,null,2),{flag:'wx'});
+console.log(JSON.stringify(result,null,2));

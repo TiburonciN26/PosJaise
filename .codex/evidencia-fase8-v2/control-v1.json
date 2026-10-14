@@ -1,0 +1,71 @@
+{
+ "fecha": "2026-10-12T15:34:27.584Z",
+ "etiqueta": "control-v1",
+ "a": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v1-a",
+  "meta": "v1-a",
+  "citas": "Citas-BW2jo6ac.js"
+ },
+ "b": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-b",
+  "meta": "f8v2-b"
+ },
+ "archivosComunesAB": 0,
+ "producto": "TEST E2E Stock 10 a 8 - 20260930",
+ "total": 8,
+ "correctos": 2,
+ "fallos": 6,
+ "casos": [
+  {
+   "nombre": "F8-01 · Sin red y Citas NUNCA descargada: el fallo queda en su pestaña; la venta y el menú siguen; al volver la red abre",
+   "ok": false,
+   "error": "no debe aparecer «Algo salió mal» (límite global) | 1 !== 0",
+   "ms": 5585
+  },
+  {
+   "nombre": "F8-01 · Sin red DESPUÉS de la precarga en reposo: Citas abre desde memoria y la venta sigue",
+   "ok": false,
+   "error": "no debe aparecer «Algo salió mal» | 1 !== 0",
+   "ms": 18065
+  },
+  {
+   "nombre": "F8-01 · A→B real (URLs JS distintas, archivos de A retirados) con venta en curso: Citas abre, el escáner falla en su ventana, la venta se conserva; al cancelarla actualiza a B",
+   "ok": false,
+   "error": "no debe aparecer «Algo salió mal» | 1 !== 0",
+   "ms": 20484
+  },
+  {
+   "nombre": "F8-01 · Retención: tras publicar B, recargar A (sin trabajo pendiente) sigue funcionando con su código guardado por el SW",
+   "ok": false,
+   "error": "no debe aparecer «Algo salió mal» | 1 !== 0",
+   "ms": 17945
+  },
+  {
+   "nombre": "F8-01 · Portal sin red: una página pública no descargada falla dentro del portal (cabecera y menú intactos) y abre al volver la red",
+   "ok": false,
+   "error": "no debe aparecer «Algo salió mal» (límite global) | 1 !== 0",
+   "ms": 5406
+  },
+  {
+   "nombre": "F8-01 · Cliente nuevo de B: Inicio, login y Citas sin errores",
+   "ok": true,
+   "ms": 1267,
+   "detalle": {
+    "meta": "f8v2-b",
+    "errorGlobal": 0,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Caso vacío: sin trabajo pendiente, «Actualizar» está disponible de inmediato",
+   "ok": true,
+   "ms": 2855
+  },
+  {
+   "nombre": "F8-02 · Caché por uso: solo estáticos públicos del build; nunca Storage/datos del proxy, firmados, /medios, otro origen ni errores",
+   "ok": false,
+   "error": "tras revocar, el SW no debe devolver la copia privada | 200 !== 401",
+   "ms": 6794
+  }
+ ]
+}

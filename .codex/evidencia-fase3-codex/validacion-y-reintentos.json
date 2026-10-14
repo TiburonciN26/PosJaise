@@ -1,0 +1,86 @@
+{
+  "validator": {
+    "fabricatedBytes": 30,
+    "result": {
+      "ok": true,
+      "ancho": 128,
+      "alto": 128,
+      "codec": "VP8X"
+    },
+    "browserDecodes": false,
+    "workerStatus": 201,
+    "stored": true
+  },
+  "privateBucketRejected": 400,
+  "retries": [
+    {
+      "loss": "ninguna",
+      "referenceReturned": true,
+      "error": null,
+      "calls": [
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/5c67db99-ba62-412f-a15e-2cc18ea5bf2f/m",
+          "status": 201
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/5c67db99-ba62-412f-a15e-2cc18ea5bf2f/g",
+          "status": 201
+        }
+      ],
+      "objectsRemaining": 2
+    },
+    {
+      "loss": "m",
+      "referenceReturned": false,
+      "error": "ya-existe",
+      "calls": [
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/7d51671c-d074-42c4-af0a-6ebc38ce1512/m",
+          "status": 201
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/7d51671c-d074-42c4-af0a-6ebc38ce1512/m",
+          "status": 409
+        },
+        {
+          "method": "DELETE",
+          "path": "/v1/medios/fotos-productos/7d51671c-d074-42c4-af0a-6ebc38ce1512",
+          "status": 200
+        }
+      ],
+      "objectsRemaining": 0
+    },
+    {
+      "loss": "g",
+      "referenceReturned": false,
+      "error": "ya-existe",
+      "calls": [
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/36757a3e-6d07-4321-af8a-bcf20208fb77/m",
+          "status": 201
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/36757a3e-6d07-4321-af8a-bcf20208fb77/g",
+          "status": 201
+        },
+        {
+          "method": "PUT",
+          "path": "/v1/medios/fotos-productos/36757a3e-6d07-4321-af8a-bcf20208fb77/g",
+          "status": 409
+        },
+        {
+          "method": "DELETE",
+          "path": "/v1/medios/fotos-productos/36757a3e-6d07-4321-af8a-bcf20208fb77",
+          "status": 200
+        }
+      ],
+      "objectsRemaining": 0
+    }
+  ]
+}

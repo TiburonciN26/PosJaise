@@ -1,0 +1,540 @@
+{
+ "fecha": "2026-10-12T16:47:02.382Z",
+ "entorno": "Supabase Local 127.0.0.1:54321 + Worker wrangler dev --local (R2 simulado en disco) + app Vite dev; ningún recurso remoto",
+ "marca": "QA-F9-mv5hgzh0",
+ "reintentosRed": [
+  {
+   "url": "/v1/inventario/fotos-productos",
+   "intento": 1,
+   "causa": "ECONNRESET"
+  }
+ ],
+ "total": 18,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "Inventario y planificación de SOLO LECTURA sobre todo el dataset de Local (sin fixtures)",
+   "ok": true,
+   "ms": 1801,
+   "detalle": {
+    "totales": {
+     "referencias": 577,
+     "migrables": 10,
+     "objetosMigrables": 10,
+     "rotasEnAlcance": 85,
+     "privadas": 475
+    },
+    "plan": {
+     "entradas": 10,
+     "porEstado": {
+      "planificada": 10
+     },
+     "referencias": 10,
+     "refsPorEstado": {
+      "pendiente": 10
+     },
+     "bytesOrigen": 598048,
+     "bytesVariantes": 0
+    },
+    "variantesPreparadas": 10,
+    "errores": 0
+   }
+  },
+  {
+   "nombre": "Inventario con fixtures: clasifica rota, corrupta, GIF, recurso del build, URL a bucket privado y la foto compartida",
+   "ok": true,
+   "ms": 243,
+   "detalle": {
+    "referencias": 593,
+    "migrables": 22,
+    "objetosMigrables": 19,
+    "rotasEnAlcance": 86,
+    "privadas": 476
+   }
+  },
+  {
+   "nombre": "Planificar fixtures: SHA-256 de los bytes, objeto compartido una sola vez, corrupta descartada; reanudar no duplica",
+   "ok": true,
+   "ms": 780,
+   "detalle": {
+    "entradas": 8,
+    "referencias": 11,
+    "eventos": [
+     "origen-ilegible",
+     "origen-ilegible"
+    ]
+   }
+  },
+  {
+   "nombre": "Sin --aplicar, copiar solo prepara variantes; el Worker no recibe nada y la base no cambia",
+   "ok": true,
+   "ms": 5850,
+   "detalle": {
+    "preparadas": 7,
+    "calidadRuido": {
+     "m": 80,
+     "g": 70
+    },
+    "ffmpeg": "ffmpeg version 8.1.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+   }
+  },
+  {
+   "nombre": "Bloqueo: dos ejecuciones sobre el mismo manifiesto no pueden convivir",
+   "ok": true,
+   "ms": 84
+  },
+  {
+   "nombre": "Guardas: destinos remotos y producción se rechazan antes de autenticar",
+   "ok": true,
+   "ms": 167,
+   "detalle": {
+    "remoto": "medios-migracion: Worker de medios: pos-jaise-medios.workers.dev es remoto: exige --permitir-remoto=pos-jaise-medios.workers.dev (y autorización explícita del usuario)",
+    "produccion": "medios-migracion: Supabase: Supabase de PRODUCCIÓN: exige además --permitir-produccion"
+   }
+  },
+  {
+   "nombre": "App ANTES de actualizar referencias: las fotos de los fixtures se leen de Supabase y cargan",
+   "ok": true,
+   "ms": 5307,
+   "detalle": {
+    "producto": 3
+   }
+  },
+  {
+   "nombre": "Copiar con --aplicar en lotes, por el Worker (solo crear), con verificación por lectura byte a byte",
+   "ok": true,
+   "ms": 1365,
+   "detalle": {
+    "lote1": 3,
+    "lote2": 4,
+    "objetosR2": 14,
+    "errorEsperado": "variante g: no cabe en 524288 bytes ni con calidad 60"
+   }
+  },
+  {
+   "nombre": "Reanudación: una entrada «perdida» tras subir (estado retrocedido) se re-sube con 200 «reanudado», sin duplicar",
+   "ok": true,
+   "ms": 501,
+   "detalle": {
+    "preparadas": 0,
+    "subidas": 0,
+    "reanudadas": 2,
+    "existentesPropias": 0,
+    "verificadas": 1,
+    "errores": 0,
+    "simulado": false,
+    "resumen": {
+     "entradas": 8,
+     "porEstado": {
+      "verificada": 7,
+      "error": 1
+     },
+     "referencias": 11,
+     "refsPorEstado": {
+      "pendiente": 11
+     },
+     "bytesOrigen": 2386845,
+     "bytesVariantes": 692778
+    }
+   }
+  },
+  {
+   "nombre": "Reanudación por OTRA administradora: el Worker responde 409 y la herramienta acepta la copia solo porque el SHA-256 coincide",
+   "ok": true,
+   "ms": 363,
+   "detalle": {
+    "preparadas": 0,
+    "subidas": 0,
+    "reanudadas": 0,
+    "existentesPropias": 2,
+    "verificadas": 1,
+    "errores": 0,
+    "simulado": false,
+    "resumen": {
+     "entradas": 8,
+     "porEstado": {
+      "verificada": 7,
+      "error": 1
+     },
+     "referencias": 11,
+     "refsPorEstado": {
+      "pendiente": 11
+     },
+     "bytesOrigen": 2386845,
+     "bytesVariantes": 692778
+    }
+   }
+  },
+  {
+   "nombre": "Contenido distinto bajo el mismo id (409 con otro SHA-256) → error de conflicto, sin sobrescribir ni actualizar referencias",
+   "ok": true,
+   "ms": 563,
+   "detalle": {
+    "errores": 1,
+    "error": "conflicto: fotos-galeria/aac6395a-58a5-5c28-a206-d55be13db051/m ya existe con OTRO contenido"
+   }
+  },
+  {
+   "nombre": "Actualizar en lotes con UPDATE condicional; una fila editada entretanto queda en «conflicto» y no se pisa",
+   "ok": true,
+   "ms": 1583,
+   "detalle": {
+    "lotes": [
+     3,
+     3,
+     3,
+     1
+    ],
+    "resumen": {
+     "actualizada": 9,
+     "conflicto": 1,
+     "pendiente": 1
+    }
+   }
+  },
+  {
+   "nombre": "Verificar tras actualizar: referencias = manifiesto, R2 = SHA-256 de las variantes, originales intactos en Supabase",
+   "ok": true,
+   "ms": 390,
+   "detalle": {
+    "ok": true,
+    "entradas": 8,
+    "refsComprobadas": 11,
+    "r2Comprobados": 14,
+    "originalesComprobados": 8,
+    "problemas": []
+   }
+  },
+  {
+   "nombre": "App DESPUÉS: lectura mixta — producto y servicio desde R2 simulado, galería con su URL completa, rota/corrupta sin romper la página",
+   "ok": true,
+   "ms": 51158,
+   "detalle": {
+    "productoR2": 2,
+    "servicioR2": true,
+    "galeriaR2": 2,
+    "imagenesProductoRota": 1
+   }
+  },
+  {
+   "nombre": "Revertir: vuelve cada referencia a su valor original (condicional); una editada después de migrar no se pisa",
+   "ok": true,
+   "ms": 2250,
+   "detalle": {
+    "porEstado": {
+     "revertida": 8,
+     "conflicto": 1,
+     "pendiente": 1,
+     "conflicto-reversion": 1
+    },
+    "objetosR2Conservados": 14
+   }
+  },
+  {
+   "nombre": "App tras revertir: las fotos vuelven a leerse de Supabase (los originales nunca se tocaron)",
+   "ok": true,
+   "ms": 5259,
+   "detalle": {
+    "supabase": 3
+   }
+  },
+  {
+   "nombre": "Limpieza de fixtures y R2 simulado",
+   "ok": true,
+   "detalle": [
+    "filas",
+    "fotos-productos:5",
+    "fotos-servicios:2",
+    "fotos-galeria:3"
+   ]
+  },
+  {
+   "nombre": "Estado final de Local: valores de medios preexistentes idénticos y objetos de Storage como al inicio",
+   "ok": true,
+   "detalle": {
+    "inicio": {
+     "huella": "93b565019ca98416a7dca946b1ee89ad",
+     "auditoria": 25923,
+     "objetos": 441
+    },
+    "fin": {
+     "huella": "93b565019ca98416a7dca946b1ee89ad",
+     "auditoria": 25944,
+     "objetos": 441
+    },
+    "filasDeAuditoriaNuevas": 21
+   }
+  }
+ ],
+ "pasos": [
+  {
+   "args": [
+    "inventariar",
+    "--salida=<trabajo>\\inventario-dataset.json"
+   ],
+   "estado": 0,
+   "salida": "{\n \"salida\": \"C:\\\\Users\\\\jdeos\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--WedJaiseReact\\\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\\\scratchpad\\\\sim-f9\\\\inventario-dataset.json\",\n \"totales\": {\n  \"referencias\": 577,\n  \"migrables\": 10,\n  \"objetosMigrables\": 10,\n  \"rotasEnAlcance\": 85,\n  \"privadas\": 475\n }\n}\n"
+  },
+  {
+   "args": [
+    "planificar",
+    "--inventario=<trabajo>\\inventario-dataset.json",
+    "--manifiesto=<trabajo>\\manifiesto-dataset.json",
+    "--cache=<trabajo>\\cache",
+    "--publica=http://127.0.0.1:8799"
+   ],
+   "estado": 0,
+   "salida": "{\n \"nuevas\": 10,\n \"refsNuevas\": 10,\n \"errores\": 0,\n \"resumen\": {\n  \"entradas\": 10,\n  \"porEstado\": {\n   \"planificada\": 10\n  },\n  \"referencias\": 10,\n  \"refsPorEstado\": {\n   \"pendiente\": 10\n  },\n  \"bytesOrigen\": 598048,\n  \"bytesVariantes\": 0\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-dataset.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 10,\n \"subidas\": 0,\n \"reanudadas\": 0,\n \"existentesPropias\": 0,\n \"verificadas\": 0,\n \"errores\": 0,\n \"simulado\": true,\n \"resumen\": {\n  \"entradas\": 10,\n  \"porEstado\": {\n   \"planificada\": 10\n  },\n  \"referencias\": 10,\n  \"refsPorEstado\": {\n   \"pendiente\": 10\n  },\n  \"bytesOrigen\": 598048,\n  \"bytesVariantes\": 679098\n }\n}\n"
+  },
+  {
+   "args": [
+    "inventariar",
+    "--salida=<trabajo>\\inventario.json",
+    "--publica=http://127.0.0.1:8799"
+   ],
+   "estado": 0,
+   "salida": "{\n \"salida\": \"C:\\\\Users\\\\jdeos\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--WedJaiseReact\\\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\\\scratchpad\\\\sim-f9\\\\inventario.json\",\n \"totales\": {\n  \"referencias\": 593,\n  \"migrables\": 22,\n  \"objetosMigrables\": 19,\n  \"rotasEnAlcance\": 86,\n  \"privadas\": 476\n }\n}\n"
+  },
+  {
+   "args": [
+    "planificar",
+    "--inventario=<trabajo>\\inventario.json",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--publica=http://127.0.0.1:8799",
+    "--filas=<trabajo>\\filas-fixtures.json"
+   ],
+   "estado": 0,
+   "salida": "{\n \"nuevas\": 8,\n \"refsNuevas\": 11,\n \"errores\": 1,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"planificada\": 8\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 0\n }\n}\n"
+  },
+  {
+   "args": [
+    "planificar",
+    "--inventario=<trabajo>\\inventario.json",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--publica=http://127.0.0.1:8799",
+    "--filas=<trabajo>\\filas-fixtures.json"
+   ],
+   "estado": 0,
+   "salida": "{\n \"nuevas\": 0,\n \"refsNuevas\": 0,\n \"errores\": 1,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"planificada\": 8\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 0\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 7,\n \"subidas\": 0,\n \"reanudadas\": 0,\n \"existentesPropias\": 0,\n \"verificadas\": 0,\n \"errores\": 1,\n \"simulado\": true,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"planificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar"
+   ],
+   "estado": 2,
+   "salida": "medios-migracion: El manifiesto está en uso (C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\sim-f9\\manifiesto-fixtures.json.lock). Si no hay otra ejecución, borre el .lock a mano.\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=https://pos-jaise-medios.workers.dev",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar"
+   ],
+   "estado": 2,
+   "salida": "medios-migracion: Worker de medios: pos-jaise-medios.workers.dev es remoto: exige --permitir-remoto=pos-jaise-medios.workers.dev (y autorización explícita del usuario)\n"
+  },
+  {
+   "args": [
+    "actualizar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--env-file=<trabajo>\\env-prod",
+    "--aplicar",
+    "--permitir-remoto=cmkelllerzjqjbsqsylc.supabase.co"
+   ],
+   "estado": 2,
+   "salida": "medios-migracion: Supabase: Supabase de PRODUCCIÓN: exige además --permitir-produccion\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar",
+    "--lote=3"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 0,\n \"subidas\": 6,\n \"reanudadas\": 0,\n \"existentesPropias\": 0,\n \"verificadas\": 3,\n \"errores\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 3,\n   \"planificada\": 4,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar",
+    "--lote=50"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 0,\n \"subidas\": 8,\n \"reanudadas\": 0,\n \"existentesPropias\": 0,\n \"verificadas\": 4,\n \"errores\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 0,\n \"subidas\": 0,\n \"reanudadas\": 2,\n \"existentesPropias\": 0,\n \"verificadas\": 1,\n \"errores\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 0,\n \"subidas\": 0,\n \"reanudadas\": 0,\n \"existentesPropias\": 2,\n \"verificadas\": 1,\n \"errores\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "copiar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--cache=<trabajo>\\cache",
+    "--api=http://127.0.0.1:8799",
+    "--lectura=http://127.0.0.1:8799",
+    "--aplicar"
+   ],
+   "estado": 0,
+   "salida": "{\n \"preparadas\": 0,\n \"subidas\": 0,\n \"reanudadas\": 0,\n \"existentesPropias\": 0,\n \"verificadas\": 0,\n \"errores\": 1,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"error\": 2,\n   \"verificada\": 6\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"pendiente\": 11\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "actualizar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"actualizar\",\n \"candidatas\": 10,\n \"enEsteLote\": 10,\n \"hechas\": 0,\n \"conflictos\": 0,\n \"simulado\": true,\n \"muestra\": [\n  {\n   \"tabla\": \"galeria_web\",\n   \"fila\": \"a8ee5a1f-e6bf-455d-8a9f-4e596e8f3388\",\n   \"de\": \"http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5hgzh0/g-antes.webp\",\n   \"a\": \"http://127.0.0.1:8799/fotos-galeria/aac6395a-58a5-5c28-a206-d55be13db051/g.webp\"\n  },\n  {\n   \"tabla\": \"galeria_web\",\n   \"fila\": \"fe0fd9bc-9c87-4234-b49f-0cad0ab6f66b\",\n   \"de\": \"http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5hgzh0/g-antes.webp\",\n   \"a\": \"http://127.0.0.1:8799/fotos-galeria/aac6395a-58a5-5c28-a206-d55be13db051/g.webp\"\n  },\n  {\n   \"tabla\": \"galeria_web\",\n   \"fila\": \"a8ee5a1f-e6bf-455d-8a9f-4e596e8f3388\",\n   \"de\": \"http://127.0.0.1:54321/storage/v1/object/public/fotos-galeria/QA-F9-mv5hgzh0/g-ruido.jpg\",\n   \"a\": \"http://127.0.0.1:8799/fotos-galeria/e4fba1cc-9764-5ec3-931c-df9ef1d355bf/g.webp\"\n  },\n  {\n   \"tabla\": \"producto_fotos\",\n   \"fila\": \"1c1d0978-434b-4f5f-816a-d224c11ed60c\",\n   \"de\": \"QA-F9-mv5hgzh0/y-alfa.png\",\n   \"a\": \"r2:fotos-productos/f8009f03-f39d-5ae3-a50d-b4595db74890\"\n  },\n  {\n   \"tabla\": \"producto_fotos\",\n   \"fila\": \"6a43159e-da11-4969-8496-c3fad8ef40e6\",\n   \"de\": \"QA-F9-mv5hgzh0/x-compartida.jpg\",\n   \"a\": \"r2:fotos-productos/a3859ab3-2ba9-5546-8500-118b312e9539\"\n  }\n ]\n}\n"
+  },
+  {
+   "args": [
+    "actualizar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=3"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"actualizar\",\n \"candidatas\": 10,\n \"enEsteLote\": 3,\n \"hechas\": 3,\n \"conflictos\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"actualizada\": 3,\n   \"pendiente\": 8\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "actualizar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=3"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"actualizar\",\n \"candidatas\": 7,\n \"enEsteLote\": 3,\n \"hechas\": 2,\n \"conflictos\": 1,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"actualizada\": 5,\n   \"conflicto\": 1,\n   \"pendiente\": 5\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "actualizar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=3"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"actualizar\",\n \"candidatas\": 4,\n \"enEsteLote\": 3,\n \"hechas\": 3,\n \"conflictos\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"actualizada\": 8,\n   \"conflicto\": 1,\n   \"pendiente\": 2\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "actualizar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=3"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"actualizar\",\n \"candidatas\": 1,\n \"enEsteLote\": 1,\n \"hechas\": 1,\n \"conflictos\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"actualizada\": 9,\n   \"conflicto\": 1,\n   \"pendiente\": 1\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "verificar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--lectura=http://127.0.0.1:8799",
+    "--salida=<trabajo>\\verificacion-tras-actualizar.json"
+   ],
+   "estado": 0,
+   "salida": "{\n \"ok\": true,\n \"entradas\": 8,\n \"refsComprobadas\": 11,\n \"r2Comprobados\": 14,\n \"originalesComprobados\": 8,\n \"problemas\": []\n}\n"
+  },
+  {
+   "args": [
+    "revertir",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=4"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"revertir\",\n \"candidatas\": 9,\n \"enEsteLote\": 4,\n \"hechas\": 4,\n \"conflictos\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"revertida\": 4,\n   \"actualizada\": 5,\n   \"conflicto\": 1,\n   \"pendiente\": 1\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "revertir",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=4"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"revertir\",\n \"candidatas\": 5,\n \"enEsteLote\": 4,\n \"hechas\": 4,\n \"conflictos\": 0,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"revertida\": 8,\n   \"conflicto\": 1,\n   \"pendiente\": 1,\n   \"actualizada\": 1\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "revertir",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--aplicar",
+    "--lote=4"
+   ],
+   "estado": 0,
+   "salida": "{\n \"modo\": \"revertir\",\n \"candidatas\": 1,\n \"enEsteLote\": 1,\n \"hechas\": 0,\n \"conflictos\": 1,\n \"simulado\": false,\n \"resumen\": {\n  \"entradas\": 8,\n  \"porEstado\": {\n   \"verificada\": 7,\n   \"error\": 1\n  },\n  \"referencias\": 11,\n  \"refsPorEstado\": {\n   \"revertida\": 8,\n   \"conflicto\": 1,\n   \"pendiente\": 1,\n   \"conflicto-reversion\": 1\n  },\n  \"bytesOrigen\": 2386845,\n  \"bytesVariantes\": 692778\n }\n}\n"
+  },
+  {
+   "args": [
+    "verificar",
+    "--manifiesto=<trabajo>\\manifiesto-fixtures.json",
+    "--lectura=http://127.0.0.1:8799",
+    "--salida=<trabajo>\\verificacion-tras-revertir.json"
+   ],
+   "estado": 0,
+   "salida": "{\n \"ok\": true,\n \"entradas\": 8,\n \"refsComprobadas\": 11,\n \"r2Comprobados\": 14,\n \"originalesComprobados\": 8,\n \"problemas\": []\n}\n"
+  }
+ ]
+}

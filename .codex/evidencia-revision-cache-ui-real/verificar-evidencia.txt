@@ -1,0 +1,42 @@
+import fs from 'node:fs';import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import {createHash} from 'node:crypto';import assert from 'node:assert/strict';
+const root='C:/WedJaiseReact';const require=createRequire(import.meta.url);const G=require(root+'/scripts/lib/guardas-interfaz-r2.cjs');
+const {clasificarClave}=await import(pathToFileURL(root+'/scripts/lib/entornos-supabase.mjs').href);
+const inputs={cache:root+'/.codex/evidencia-ejecucion-cache-ui/cache/cache-52d575.json',ui:root+'/.codex/evidencia-ejecucion-cache-ui/ui/corridas/corrida-20df1b.json'};
+const digest=x=>createHash('sha256').update(x).digest('hex');
+const cache=JSON.parse(fs.readFileSync(inputs.cache));const ui=JSON.parse(fs.readFileSync(inputs.ui));
+const checks=[];const check=(nombre,ok,detalle)=>{checks.push({nombre,ok:Boolean(ok),detalle});if(!ok)throw new Error(nombre);};
+check('cache: recuento real 27/0 y resultado completo',cache.casos.length===27&&cache.casos.every(c=>c.ok===true)&&cache.resumen.casos===27&&cache.resumen.fallos===0&&cache.completa&&cache.estadoFinalConfirmado&&!cache.error);
+check('cache: limpieza sin pendientes y comparación final',cache.limpieza.confirmada&&cache.limpieza.igualAlInicial&&cache.limpieza.pendientes.length===0&&cache.limpieza.errores.length===0);
+check('cache: POP coincidente y respuesta 404',cache.popHit==='MIA'&&cache.popExpiracion==='MIA'&&cache.expiracionProbada&&cache.expiracionDeLaMismaCopia&&cache.casos.find(c=>c.nombre.startsWith('pasado el TTL: se OBSERVA')).detalle.estado===404);
+check('UI: recuento real 23/0 y recorrido completo',ui.casos.length===23&&ui.casos.every(c=>c.ok===true)&&ui.total===23&&ui.fallos===0&&ui.completa&&!ui.error&&!ui.limpieza&&ui.bloqueadas.length===0);
+check('UI: estado final sin claves nuevas/faltantes',ui.casos.at(-1).igualSnapshot&&ui.casos.at(-1).clavesNuevas.length===0&&ui.casos.at(-1).clavesFaltantes.length===0);
+check('ambas evidencias: alias/marca esperados',cache.alias===G.ALIAS_APROBADO&&ui.alias===G.ALIAS_APROBADO&&cache.buildId==='b36e7495'&&ui.buildId==='b36e7495'&&ui.entrega==='pages'&&ui.publico===G.ALIAS_APROBADO+'/medios');
+const gal=ui.casos.find(c=>c.nombre.startsWith('SERVICIO: reemplazo'));
+check('Servicio: galería idéntica en los valores registrados',G.iguales(gal.galeriaAntes,gal.galeriaDespues)&&gal.galeriaAntes.length===1);
+const esperados={'scripts/verificar-medios-pages-cache.cjs':'a290abbb0fd44eda941dfbf1987dc21d59f429fc86e82262985b0c2d16882747','scripts/lib/guardas-interfaz-r2.cjs':'065106c0bde5d6ddd6ae35c0b9edc96cc92d2f26b904ce9a8df2d9833a4e6867','scripts/verificar-interfaz-r2-preview.cjs':'537d96f1fbdee0ada054cf927bbd9b206680fbaed44ac1f98d2917337bbfe530'};
+const fuentes={};for(const [p,h]of Object.entries(esperados)){fuentes[p]=digest(fs.readFileSync(root+'/'+p));check('fuente idéntica a CP-01 aprobado: '+p,fuentes[p]===h);}
+// Solo campos de QA necesarios; nunca usar/imprimir cadena de BD, service_role ni contraseñas.
+const env={};const campos=new Set(['VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','QA_ADMIN_EMAIL','QA_ADMIN_PASSWORD','QA_CLIENTE_EMAIL']);
+for(const l of fs.readFileSync(root+'/.env.staging.local','utf8').split(/\r?\n/)){const m=l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);if(m&&campos.has(m[1]))env[m[1]]=m[2].trim().replace(/^["']|["']$/g,'');}
+const requests=[];const origins=new Set([G.ALIAS_APROBADO,`https://${G.REF_STAGING}.supabase.co`,G.WORKER_APROBADO]);
+const secure=G.crearFetchSeguro(origins,async(u,op={})=>{requests.push({origen:new URL(u).origin,metodo:op.method||'GET'});return fetch(u,op);});
+const memo=new Map();async function text(u){if(memo.has(u))return memo.get(u);const t=(async()=>{const r=await secure(u);if(!r.ok)throw new Error('GET público fallido');return r.text();})();memo.set(u,t);return t;}
+const pf=await G.preflight({alias:G.ALIAS_APROBADO,buildId:'b36e7495',entrega:'pages',supabaseUrl:env.VITE_SUPABASE_URL,claveAnon:env.VITE_SUPABASE_ANON_KEY,emails:[env.QA_ADMIN_EMAIL,env.QA_CLIENTE_EMAIL],clasificarClave},text);
+const swHash=digest(await text(G.ALIAS_APROBADO+'/sw.js'));
+check('SW actual idéntico al deployment configurado 4d23d410',swHash==='4c3d38c262bc6f00879681c535548bd45d0e8cf440d2206222df247be39bca42',{swHash,preflight:pf});
+// Login QA para lecturas protegidas; única petición POST. No PUT/DELETE/PATCH/operación de datos.
+const login=await secure(env.VITE_SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:env.VITE_SUPABASE_ANON_KEY,'content-type':'application/json'},body:JSON.stringify({email:env.QA_ADMIN_EMAIL,password:env.QA_ADMIN_PASSWORD})});
+if(!login.ok)throw new Error('Login QA de lectura rechazado');const token=(await login.json()).access_token;if(!token)throw new Error('Sesión QA inválida');
+const headers={apikey:env.VITE_SUPABASE_ANON_KEY,Authorization:'Bearer '+token};
+async function rest(q){const r=await secure(env.VITE_SUPABASE_URL+'/rest/v1/'+q,{headers});if(!r.ok)throw new Error('Lectura staging fallida');const rows=await r.json();if(!Array.isArray(rows))throw new Error('Filas inválidas');return rows;}
+const p='432a6610-67e5-4a7c-a979-eb891cc9263c',s='6265a7d1-80b3-4b72-9b34-7f6eca3d7873';
+const [producto,servicio,gp,gs,gw]=await Promise.all([rest(`productos?id=eq.${p}&select=id,foto_url`),rest(`servicios?id=eq.${s}&select=id,foto_url`),rest(`producto_fotos?producto_id=eq.${p}&select=id,foto_url`),rest(`servicio_fotos?servicio_id=eq.${s}&select=id,foto_url`),rest('galeria_web?select=id,titulo,antes_url,despues_url&order=id')]);
+check('Estado actual: fixtures sin foto ni galería',producto.length===1&&producto[0].foto_url===null&&servicio.length===1&&servicio[0].foto_url===null&&gp.length===0&&gs.length===0);
+check('Estado actual: única Galería antigua esperada, sin fila de ejecución',gw.length===1&&gw[0].id==='4ab5c994-9bb1-40bf-b5ff-186d45603781'&&gw[0].titulo==='Foto de prueba (Inicio)'&&!gw.some(f=>f.titulo.includes('20df1b')));
+const inv=await G.leerInventario(['fotos-productos','fotos-servicios','fotos-galeria'],async(d)=>{const r=await secure(G.WORKER_APROBADO+'/v1/inventario/'+d,{headers:{Authorization:'Bearer '+token,Origin:G.ALIAS_APROBADO}});return{estado:r.status,cuerpo:await r.json().catch(()=>null)};});
+check('Estado actual: inventario completo y vacío en los tres destinos',inv.size===0,{claves:inv.size});
+const publicas=[];for(const v of ['m','g']){const url=G.ALIAS_APROBADO+'/medios/'+cache.objeto+'/'+v+'.webp';const r=await secure(url);publicas.push({variante:v,estado:r.status,cache:r.headers.get('cache-control'),nosniff:r.headers.get('x-content-type-options'),robots:r.headers.get('x-robots-tag'),ray:r.headers.get('cf-ray')});await r.arrayBuffer();}
+check('Objeto de caché probado: actualmente 404 no-store, ambas variantes',publicas.every(x=>x.estado===404&&x.cache==='no-store'&&x.nosniff==='nosniff'&&x.robots==='noindex'),publicas);
+check('Ninguna escritura de datos de esta verificación',requests.every(r=>r.metodo==='GET'||(r.metodo==='POST'&&r.origen===env.VITE_SUPABASE_URL)),{GET:requests.filter(x=>x.metodo==='GET').length,POST_Auth:requests.filter(x=>x.metodo==='POST').length});
+const informe={fecha:new Date().toISOString(),nota:'Auditoría de evidencias de Claude + comprobaciones independientes actuales. No se repiten las subidas/borrados/UI; un login QA y luego GET públicos/protegidos. No se afirma haber presenciado las corridas originales.',inputs:Object.fromEntries(Object.entries(inputs).map(([k,p])=>[k,{ruta:p,sha256:digest(fs.readFileSync(p))}])),fuentes,checks,resumen:{comprobaciones:checks.length,fallos:checks.filter(c=>!c.ok).length},estadoActual:{producto,servicio,galeriaProducto:gp.length,galeriaServicio:gs.length,galeriaWeb:gw,inventarioClaves:inv.size}};
+fs.writeFileSync(new URL('./revision-evidencia.json',import.meta.url),JSON.stringify(informe,null,2),{flag:'wx'});console.log(JSON.stringify({fecha:informe.fecha,resumen:informe.resumen,swHash,fixturesSinFotos:true,galeriasFixtures:0,galeriaWeb:gw.length,inventario:inv.size,objetoCache:publicas},null,2));

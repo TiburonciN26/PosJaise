@@ -1,0 +1,23 @@
+{
+  "fecha": "2026-10-11T02:58:07.211Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "mainLocal": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "informe": {
+    "ruta": ".codex/evidencia-interfaz-6929c61/corridas/corrida-147b24.json",
+    "sha256": "cbe4f743ae668fd9ad23443265e47a273506924f0886b60e92878a44bee4e6d7"
+  },
+  "capturas": {
+    "producto-antes-de-guardar.png": "8fd4444536e5fef8f068f63c475975022a95822aca2ea228c29c5709f8694287",
+    "cliente-detalle-servicio.png": "fcb69aa853f3e6de3afc777128938428289a800a9987f3b801152e3e9d71519c",
+    "galeria-alta.png": "b2ab83ed7a408ebe7b3bc51cdf607c1e63fa75a63276d1fcff3e4804c00a9e06"
+  },
+  "fuentes": {
+    "scripts/verificar-interfaz-r2-preview.cjs": "13d86750335177dfda7336d1393405c14b4ea1bdd6468c1d864da7ca34c90c20",
+    "scripts/lib/guardas-interfaz-r2.cjs": "3963afe0e1c1fbb18fb2670cacd1e82cdb440726026708e4f5900a5fed830709",
+    "src/lib/imagenes.js": "918ae4561b38be0b54e58ad087cbd60a7c03737edd17d0a5de33baa1f48d6f04",
+    "src/lib/urlsMedios.js": "4068136e303366ee3de357f6bcda3d75f7a603b13da38627e00f15a6b851a688"
+  },
+  "veredicto": "Aceptada la evidencia 23/23 de staging; 18/18 controles independientes en solo lectura; no repetición del recorrido ni autorización de escrituras."
+}

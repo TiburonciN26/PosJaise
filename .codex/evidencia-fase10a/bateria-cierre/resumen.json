@@ -1,0 +1,171 @@
+{
+ "fecha": "2026-10-13T04:26:25.373Z",
+ "apps": {
+  "APP_CF": "http://127.0.0.1:5401",
+  "GH_PUERTO": "5402",
+  "APP_DEV": "http://127.0.0.1:5173",
+  "APP_R2": "http://127.0.0.1:5181"
+ },
+ "resultados": [
+  {
+   "id": "f2-salvaguardas-entornos",
+   "fase": 2,
+   "estado": 0,
+   "ms": 2194,
+   "resumen": "43/43",
+   "cola": "OK    preview-staging: tercer host → rechaza · build-preview-staging: el entorno «preview» exige el backend de STAGING y la URL apunta a un proyecto NO aprobado | OK    preview-staging: URL local → rechaza · build-preview-staging: la URL debe ser exactamente https://<ref>.supabase.co |  | 43 casos, 0 fallos"
+  },
+  {
+   "id": "f3-urls-medios",
+   "fase": 3,
+   "estado": 0,
+   "ms": 1049,
+   "resumen": "16/16",
+   "cola": "OK    B: VITE_MEDIOS_PUBLIC_URL relativa → error de configuración y las subidas nuevas NO van a R2 | OK    B: VITE_MEDIOS_PUBLIC_URL http ajena → error de configuración y las subidas nuevas NO van a R2 |  | 16 casos, 0 fallos"
+  },
+  {
+   "id": "f3-lectura-mixta",
+   "fase": 3,
+   "estado": 0,
+   "ms": 359,
+   "resumen": "7/7",
+   "cola": "OK    el borrado de una referencia r2: ya existente sigue yendo al Worker (hay API configurada: no falla por «Sin VITE_MEDIOS_API_URL») | OK    una foto antigua (ruta de Supabase) se sigue eliminando de Storage, no del Worker |  | 7 casos, 0 fallos"
+  },
+  {
+   "id": "f3-salida-segura",
+   "fase": 3,
+   "estado": 0,
+   "ms": 54,
+   "resumen": "9/9",
+   "cola": "OK    solo se pueden borrar hijos conocidos del artefacto (dist, servidor, manifiesto), nunca la carpeta entera | OK    el temporal solo se borra si es una carpeta propia «lectura-mixta-*» directamente bajo el directorio temporal del sistema |  | 9 casos, 0 fallos"
+  },
+  {
+   "id": "f3-fuentes-huerfanos",
+   "fase": 3,
+   "estado": 0,
+   "ms": 147,
+   "resumen": "9/9",
+   "cola": "OK    RG-03: con recolectar real y el adaptador sin conteo, el candidato NO se borra y el informe aborta | OK    control positivo: con conteo cero el mismo candidato SÍ se elimina (el aborto anterior es por la lectura incierta) |  | 9 casos, 0 fallos"
+  },
+  {
+   "id": "f3-cli-huerfanos",
+   "fase": 3,
+   "estado": 0,
+   "ms": 1442,
+   "resumen": "23/23",
+   "cola": "OK    C: CLI real, sin credenciales o sin --api → código 1 | OK    C: CLI real, Supabase del negocio sin --permitir-produccion → código 1 antes de leer nada (sin informe) |  | 23 casos, 0 fallos"
+  },
+  {
+   "id": "f3-guardas-interfaz-r2",
+   "fase": 3,
+   "estado": 0,
+   "ms": 153,
+   "resumen": "49/49",
+   "cola": "OK    CP-01: limpiarObjetoPropio — sano confirma; inventario/DELETE/relectura fallidos, cursor o malformado NO confirman y solo se borra el grupo propio | OK    Rollback de Galería: grupos propios bajo varias bases y limpieza con varios prefijos (solo los propios) |  | 49 casos, 0 fallos"
+  },
+  {
+   "id": "f4-categorias-completas",
+   "fase": 4,
+   "estado": 0,
+   "ms": 167,
+   "resumen": "31/31",
+   "cola": "OK    conteo ausente → la vitrina completa falla (Reintentar) en vez de ofrecer 500 categorías | OK    tras un fallo por conteo, un reintento con respuesta sana devuelve las 1001 |  | 31 casos, 0 fallos"
+  },
+  {
+   "id": "f4-catalogo-publico",
+   "fase": 4,
+   "estado": 0,
+   "ms": 2316,
+   "resumen": "27/27",
+   "cola": "OK    C: página fuera de rango → el servidor responde 416/PGRST103 (el hook la trata sin romper) | OK    C: leerPorIds devuelve solo los pedidos y las cintas respetan «activo» |  | 27 casos, 0 fallos"
+  },
+  {
+   "id": "f7-conteos",
+   "fase": 7,
+   "estado": 0,
+   "ms": 3415,
+   "resumen": "CORRECTO",
+   "cola": "A: 24 combinaciones (ejemplo mínimo)   B: 16 combinaciones (datos reales, SQL vs página vs app) | control negativo: conteo antiguo del medidor=2, correcto=1, discrepa=true | base sin cambios tras A: true (FILAS|429,4749) | VEREDICTO: CORRECTO"
+  },
+  {
+   "id": "f9-lib",
+   "fase": 9,
+   "estado": 0,
+   "ms": 78,
+   "resumen": "17/17",
+   "cola": "OK    F9-01 · Garantía estática del harness: valida --trabajo antes de cualquier efecto y nunca borra la carpeta entera | OK    Garantía estática (V2.1): las escrituras de referencias son condicionales al valor esperado Y a un plazo del servidor |  | 17/17 correctos"
+  },
+  {
+   "id": "f9-cli",
+   "fase": 9,
+   "estado": 0,
+   "ms": 22661,
+   "resumen": "18/18",
+   "cola": "OK    F9-06 · Host sin permiso, intercambio de roles, producción sin su permiso, opción repetida y --permitir-remoto: rechazo antes del login | OK    F9-01 · Harness real: raíz, proyecto, .codex, src, otra capitalización, ajena en tmp y junction a src → exit 2 con CERO efectos |  | 18/18 correctos"
+  },
+  {
+   "id": "f1-cupones",
+   "fase": 1,
+   "estado": 0,
+   "ms": 16647,
+   "resumen": null,
+   "cola": "OK   [claro/reduced-motion] animaciones CSS activas en reposo → 0 | OK   [claro/reduced-motion] reduced-motion: sin destello al hover → \"none\" | OK   [claro/reduced-motion] reduced-motion: sin centelleo al hover → \"none\" | OK   [claro/reduced-motion] sin errores de página → []"
+  },
+  {
+   "id": "f4-catalogos-interfaz",
+   "fase": 4,
+   "estado": 0,
+   "ms": 70063,
+   "resumen": "31/31",
+   "cola": "OK    servicios: muchas categorías — sin desborde horizontal y el paginador de categorías cabe en 390 px | OK    servicios: muchas categorías — si falla una ventana se muestra el error con «Reintentar» y se recupera |  | 31 casos, 0 fallos"
+  },
+  {
+   "id": "f4-barras-seleccion",
+   "fase": 4,
+   "estado": 0,
+   "ms": 102281,
+   "resumen": "17/17",
+   "cola": "OK    F4-05 cita: precio en caché vencido (>60 s) y la renovación falla (500) → NO se presenta como total vigente; «Reintentar» lo recupera | OK    F4-05 cita: precio en caché vencido (>60 s) y la renovación falla (red) → NO se presenta como total vigente; «Reintentar» lo recupera |  | 17 casos, 0 fallos"
+  },
+  {
+   "id": "f4-fotos-sesion",
+   "fase": 4,
+   "estado": 0,
+   "ms": 42919,
+   "resumen": "8/8",
+   "cola": "OK    sesión (productos): un producto de la página 3 agregado al carrito aparece en la barra «Tu carrito» con su precio al volver al catálogo | OK    sesión (servicios): un servicio de la página 3 agregado a la cita aparece en la barra «Tu cita» con su precio al volver al catálogo |  | 8 casos, 0 fallos"
+  },
+  {
+   "id": "f5-listas-sesion",
+   "fase": 5,
+   "estado": 0,
+   "ms": 217661,
+   "resumen": "32/32",
+   "cola": "OK    F5-04b: la búsqueda de cupones equivale al normalizador anterior también con texto NFD, Å y comparando contra las cadenas ORIGINALES | OK    F5-02b: al cerrar sesión y entrar OTRA administradora, ni Programa ni Protección muestran los borradores de la anterior |  | 32 casos, 0 fallos"
+  },
+  {
+   "id": "f6-sesion-larga",
+   "fase": 6,
+   "estado": 1,
+   "ms": 1046580,
+   "resumen": "20/21",
+   "cola": "OK    F6-03: el mes anterior elegido en Dashboard (y el rango personalizado de las demás pantallas) se conserva exacto tras desalojar | OK    F6-04: el contador de TarjetaPuntos se pausa fuera de pantalla y con la pestaña oculta, y CONTINÚA al volver; movimiento reducido lo salta |  | 21 casos, 1 fallos"
+  },
+  {
+   "id": "f8-pwa-v2",
+   "fase": 8,
+   "estado": 0,
+   "ms": 46541,
+   "resumen": "9/9",
+   "cola": "OK    F8-01 · Caso vacío: sin trabajo pendiente, «Actualizar» está disponible de inmediato | OK    F8-02 · Caché por uso: solo estáticos públicos del build; nunca Storage/datos del proxy, firmados, /medios, otro origen ni errores |  | [f10a] 9/9 correctos"
+  },
+  {
+   "id": "f10a-roles-rutas",
+   "fase": "10A",
+   "estado": 0,
+   "ms": 329139,
+   "resumen": "13/13",
+   "cola": "OK    admin: el menú del POS no ofrece rutas ajenas al rol y sí su pantalla inicial | OK    admin: «Cerrar sesión» y después una ruta del POS vuelve a pedir el login |  | 13/13 correctos"
+  }
+ ]
+}

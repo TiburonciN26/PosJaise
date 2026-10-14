@@ -1,0 +1,24 @@
+{
+  "fecha": "2026-10-10T05:38:56.233Z",
+  "aislado": true,
+  "nota": "Bloque de limpieza original ejecutado con REST/BD en memoria; ningún borrado real.",
+  "filaPreexistente": "fila-qa-anterior",
+  "filaPropia": "fila-creada-por-esta-prueba",
+  "borradosIntentados": [
+    {
+      "route": "galeria_web?id=eq.fila-qa-anterior",
+      "method": "DELETE"
+    },
+    {
+      "route": "galeria_web?id=eq.fila-creada-por-esta-prueba",
+      "method": "DELETE"
+    }
+  ],
+  "borraFilaAjena": true,
+  "cases": [
+    {
+      "nombre": "ESTADO FINAL: producto, servicio y galería devueltos a su estado original y bucket sin objetos de la prueba",
+      "ok": false
+    }
+  ]
+}

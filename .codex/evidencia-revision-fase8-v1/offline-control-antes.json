@@ -1,0 +1,42 @@
+{
+  "alcance": "Artefacto real A local con servicio worker real. B virtual coherente: cambia todas las URLs JS y referencias, index y precaché; no conserva chunks A en red. No es un build/deployment real de Pages. Cuenta y producto ficticios Local; ninguna venta guardada.",
+  "casos": [
+    {
+      "nombre": "Cache de imagen firmada mismo origen",
+      "primero": {
+        "status": 200,
+        "bytes": 68
+      },
+      "cache": false,
+      "trasRevocar": {
+        "status": 401,
+        "bytes": 29
+      },
+      "servidorRevocado": 401,
+      "JSON": [
+        {
+          "lectura": 1
+        },
+        {
+          "lectura": 2
+        }
+      ],
+      "medios": {
+        "status": 404,
+        "bytes": 9
+      },
+      "mediosCached": false
+    },
+    {
+      "nombre": "Red caída y Citas no visitada",
+      "initial": {
+        "cart": 1,
+        "citasCached": true
+      },
+      "errorBoundary": 0,
+      "cartAlRecuperar": 1,
+      "denied": []
+    }
+  ],
+  "oldRequests": []
+}

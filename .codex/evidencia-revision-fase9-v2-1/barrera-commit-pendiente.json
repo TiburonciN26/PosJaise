@@ -1,0 +1,22 @@
+{
+ "fecha": "2026-10-12T18:28:46.675Z",
+ "alcance": "CLI y harness reales contra un servidor HTTP ficticio en memoria; sin red externa, sin Supabase, sin R2 y sin credenciales reales",
+ "total": 1,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "INDEPENDIENTE: la barrera espera una escritura ejecutada antes del plazo y confirmada después",
+   "ok": true,
+   "detalle": {
+    "cambioInicial": 3,
+    "commitTrasPlazoMs": 1214,
+    "esperaBarreraMs": 953,
+    "reconciliadas": 1,
+    "hechas": 1,
+    "completo": true,
+    "estado": "revertida",
+    "originalRestaurado": true
+   }
+  }
+ ]
+}

@@ -1,0 +1,2435 @@
+diff --git a/src/App.jsx b/src/App.jsx
+index 471e54a..d3c6f5b 100644
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -54,9 +54,13 @@ function App() {
+   // El portal (y la página de la URL actual) se descargan ANTES de montarlo, con
+   // el mismo "Cargando..." de siempre: así React no muestra ni estrangula un
+   // fallback de Suspense (~300 ms medidos) y los POS no descargan nada de esto.
++  //
++  // Fase 5: mientras la autenticación sigue resolviendo (`cargando`) `usuario` es null aunque exista una sesión de personal
++  // guardada, y `vistaCliente` salía verdadero: cada recarga del POS descargaba el portal y Inicio sin necesitarlos. Ahora la
++  // precarga espera a conocer el rol; un visitante (sin sesión) no tiene perfil que leer, así que esa espera es inmediata.
+   const [portalListo, setPortalListo] = useState(false)
+   useEffect(() => {
+-    if (!vistaCliente) return undefined
++    if (cargando || !vistaCliente) return undefined
+     let vigente = true
+     precargarPortalYRuta()
+       .catch(() => {})
+@@ -64,7 +68,7 @@ function App() {
+     return () => {
+       vigente = false
+     }
+-  }, [vistaCliente])
++  }, [cargando, vistaCliente])
+ 
+   if (cargando) {
+     return <CargandoPantalla />
+diff --git a/src/components/CampoColapsable.jsx b/src/components/CampoColapsable.jsx
+index a5a73a7..2afdebd 100644
+--- a/src/components/CampoColapsable.jsx
++++ b/src/components/CampoColapsable.jsx
+@@ -1,8 +1,19 @@
++import { useEffect, useState } from 'react'
++
++const DURACION_MS = 300
++
+ // `margen` es para Ventas: además de expandir, anima un margin-top (mt-3/mt-0)
+ // que las demás pantallas no necesitan. Se separan los dos className completos
+ // (en vez de armar el string con un ternario) para que Tailwind los detecte
+ // como clases literales al escanear el código.
+-export default function CampoColapsable({ abierto, children, margen = false }) {
++//
++// `diferido` (Fase 5): el contenido solo existe en el DOM mientras el campo está abierto (más lo que dura la animación de
++// cierre). Sin él, cada fila de una lista montaba su detalle aunque nadie lo abriera: con cientos de filas eran miles de nodos.
++// Es opt-in porque Ventas y otras pantallas conservan dentro de campos cerrados borradores que NO deben perderse; quien lo
++// active debe guardar sus borradores fuera del árbol (en el padre) o no tener ninguno.
++export default function CampoColapsable({ abierto, children, margen = false, diferido = false }) {
++  const montado = useMontado(abierto, diferido)
++
+   if (margen) {
+     return (
+       <div
+@@ -10,7 +21,7 @@ export default function CampoColapsable({ abierto, children, margen = false }) {
+           abierto ? 'mt-2 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'
+         }`}
+       >
+-        <div className="overflow-hidden">{children}</div>
++        <div className="overflow-hidden">{montado ? children : null}</div>
+       </div>
+     )
+   }
+@@ -21,7 +32,25 @@ export default function CampoColapsable({ abierto, children, margen = false }) {
+         abierto ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+       }`}
+     >
+-      <div className="overflow-hidden">{children}</div>
++      <div className="overflow-hidden">{montado ? children : null}</div>
+     </div>
+   )
+ }
++
++// Sin `diferido` siempre está montado. Con él: se monta en el mismo render en que se abre y se desmonta cuando termina la
++// animación de cierre (para que el contenido no desaparezca de golpe mientras se pliega).
++function useMontado(abierto, diferido) {
++  const [conservar, setConservar] = useState(false)
++
++  useEffect(() => {
++    if (!diferido) return undefined
++    if (abierto) {
++      setConservar(true)
++      return undefined
++    }
++    const temporizador = setTimeout(() => setConservar(false), DURACION_MS + 40)
++    return () => clearTimeout(temporizador)
++  }, [abierto, diferido])
++
++  return !diferido || abierto || conservar
++}
+diff --git a/src/context/AuthContext.jsx b/src/context/AuthContext.jsx
+index d00f544..c6fe5e6 100644
+--- a/src/context/AuthContext.jsx
++++ b/src/context/AuthContext.jsx
+@@ -1,4 +1,4 @@
+-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
++import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+ import { supabase } from '../lib/supabase'
+ import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
+ 
+@@ -118,7 +118,7 @@ export function AuthProvider({ children }) {
+   // alcanzara a echarlo — eso se vivía como "entra un segundo y lo bota".
+   // Haciendo el chequeo ACÁ, en el único lugar que decide setUsuario, no
+   // hay ventana en la que la app llegue a mostrarse.
+-  const cargarPerfil = useCallback(async (userId, esNuevoLogin = false) => {
++  const cargarPerfilSinCompartir = useCallback(async (userId, esNuevoLogin = false) => {
+     const { data, error } = await supabase
+       .from('usuarios')
+       .select('id, email, nombre_completo, rol, activo, foto_url')
+@@ -174,6 +174,24 @@ export function AuthProvider({ children }) {
+     setUsuario(data)
+   }, [cargarPerfilCliente])
+ 
++  // Fase 5: al restaurar una sesión, getSession() y el evento INITIAL_SESSION de onAuthStateChange pedían el MISMO perfil a la vez
++  // (dos lecturas de «usuarios», y de «clientes_web» para una clienta). Mientras una lectura del mismo usuario siga en curso, las
++  // demás llamadas esperan ESA misma promesa. Un login recién hecho (SIGNED_IN) sí necesita su propia lectura si la que vuela
++  // no es de login, porque es la que aplica el bloqueo de «negocio cerrado».
++  const perfilesEnCurso = useRef(new Map())
++  const cargarPerfil = useCallback(
++    (userId, esNuevoLogin = false) => {
++      const previa = perfilesEnCurso.current.get(userId)
++      if (previa && (!esNuevoLogin || previa.esNuevoLogin)) return previa.promesa
++      const promesa = cargarPerfilSinCompartir(userId, esNuevoLogin).finally(() => {
++        if (perfilesEnCurso.current.get(userId)?.promesa === promesa) perfilesEnCurso.current.delete(userId)
++      })
++      perfilesEnCurso.current.set(userId, { promesa, esNuevoLogin })
++      return promesa
++    },
++    [cargarPerfilSinCompartir],
++  )
++
+   const reintentarPerfil = useCallback(async () => {
+     const { data: { session: sesionActual } } = await supabase.auth.getSession()
+     if (sesionActual?.user) {
+diff --git a/src/context/EstadoNegocioContext.jsx b/src/context/EstadoNegocioContext.jsx
+index 6327d53..fbe54c5 100644
+--- a/src/context/EstadoNegocioContext.jsx
++++ b/src/context/EstadoNegocioContext.jsx
+@@ -36,12 +36,20 @@ export function EstadoNegocioProvider({ children }) {
+   const [cancelacionPlazoHoras, setCancelacionPlazoHoras] = useState(null)
+   const [cargando, setCargando] = useState(true)
+ 
++  // Fase 5: el efecto depende del ID de la cuenta, no del objeto `session`. Supabase entrega un objeto nuevo en cada
++  // TOKEN_REFRESHED (cada hora y al volver a la pestaña): con él como dependencia se cerraba y reabría el canal Realtime y se
++  // repetía la lectura de estado_negocio sin que nada hubiera cambiado.
++  const usuarioId = session?.user?.id ?? null
++  // «Esperando» solo importa para el visitante: con una cuenta ya identificada el efecto no debe reiniciarse cuando la auth
++  // termina de cargar el perfil (eso repetía la lectura y el canal Realtime sin que nada hubiera cambiado).
++  const esperandoVisitante = !usuarioId && cargandoAuth
++
+   useEffect(() => {
+-    if (!session) {
++    if (!usuarioId) {
+       // QA-029: sin sesión AÚN (la auth sigue resolviendo la sesión guardada) no
+       // es "sin configuración": marcarlo como cargado haría que el detalle del
+       // servicio mostrara el texto de "no configurado" antes de que llegue la fila.
+-      if (cargandoAuth) return undefined
++      if (esperandoVisitante) return undefined
+ 
+       // Visitante (web pública): solo lo que la ficha del servicio anuncia —adelanto
+       // mínimo y plazo de cancelación— por una función que NO devuelve cuentas de
+@@ -111,7 +119,7 @@ export function EstadoNegocioProvider({ children }) {
+       vigente = false
+       supabase.removeChannel(canal)
+     }
+-  }, [session, cargandoAuth])
++  }, [usuarioId, esperandoVisitante])
+ 
+   // El servidor decide quién puede llamar esto (RLS admin-only) — acá no
+   // se repite ese chequeo, solo se propaga el error si Supabase lo rechaza.
+diff --git a/src/pages/FidelizacionWeb.jsx b/src/pages/FidelizacionWeb.jsx
+index 5561cda..7010674 100644
+--- a/src/pages/FidelizacionWeb.jsx
++++ b/src/pages/FidelizacionWeb.jsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useMemo, useState } from 'react'
++import { useEffect, useState } from 'react'
+ import AyudaCampo from '../components/AyudaCampo.jsx'
+ import BarraBusqueda from '../components/BarraBusqueda.jsx'
+ import SelectorOrden from '../components/SelectorOrden.jsx'
+@@ -9,6 +9,8 @@ import { formatearValorCupon, nivelDeCupon } from '../lib/cupones.js'
+ import Etiqueta from '../components/Etiqueta.jsx'
+ import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import PaginadorLista from '../components/PaginadorLista.jsx'
++import { useCuponesAdmin } from '../hooks/useCuponesAdmin.js'
+ 
+ const formularioVacio = {
+   porcentajeRecompensa: '20',
+@@ -20,6 +22,9 @@ const ETIQUETAS_ESTADO = {
+   ANULADO: { texto: 'Anulado', clase: 'bg-ink/10 text-ink/50' },
+ }
+ 
++// Orígenes que lista esta pantalla (los de Referidos tienen la suya en Referidos Web).
++const ORIGENES_FIDELIZACION = ['FIDELIZACION']
++
+ // Acabado verde de los cupones de fidelización en la web de clientes.
+ const NIVEL_CUPON = nivelDeCupon({ origen: 'FIDELIZACION' })
+ 
+@@ -29,9 +34,6 @@ const OPCIONES_FILTRO = [
+   { id: 'CANJEADO', label: 'Canjeados' },
+ ]
+ 
+-const normalizar = (texto) =>
+-  (texto ?? '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+-
+ // Panel administrativo de "Fidelización Web" (cuelga de /web como
+ // "padre", admin-only, mismo patrón que Puntos Web/Referidos Web) —
+ // configura el % de descuento del cupón que se genera al completar una
+@@ -40,46 +42,25 @@ const normalizar = (texto) =>
+ // no aplica acá, es la tarjeta de puntos — esto es la tarjeta de sellos)
+ // se sigue viendo solo desde el lado del cliente (FidelizacionCliente.jsx);
+ // acá solo el % y la trazabilidad de lo ya generado.
+-export default function FidelizacionWeb() {
++export default function FidelizacionWeb({ activo = true }) {
+   const { mostrarToast } = useToast()
+   const [formulario, setFormulario] = useState(formularioVacio)
+-  const [cupones, setCupones] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [guardando, setGuardando] = useState(false)
+-  const [filtro, setFiltro] = useState('RECIENTES')
+-  const [busqueda, setBusqueda] = useState('')
+-
+-  // La consulta ya llega ordenada por creado_en desc, así que "Más recientes"
+-  // es el orden base y los otros filtros solo recortan por estado.
+-  const cuponesVisibles = useMemo(() => {
+-    const consulta = normalizar(busqueda)
+-    return cupones.filter((cupon) => {
+-      if (filtro !== 'RECIENTES' && cupon.estado !== filtro) return false
+-      if (!consulta) return true
+-      return normalizar(cupon.codigo).includes(consulta) || normalizar(cupon.cliente?.nombre).includes(consulta)
+-    })
+-  }, [cupones, filtro, busqueda])
++  // Fase 5: los cupones emitidos se leen paginados (hasta 40 por página) con filtro, búsqueda y contadores globales del
++  // servidor; la configuración (% del cupón) es una sola fila y se lee aparte.
++  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_FIDELIZACION, activo })
+ 
+   useEffect(() => {
+-    Promise.all([
+-      supabase.from('config_fidelizacion').select('porcentaje_recompensa').eq('id', 1).single(),
+-      // "clientes!cliente_id" desambigua: cupones tiene DOS FK a
+-      // clientes (cliente_id y referido_id) — mismo hint que ya usa
+-      // ReferidosWeb.jsx, sin él PostgREST no sabe cuál usar.
+-      // origen=FIDELIZACION: esta pantalla es solo de ESTOS cupones,
+-      // los de Referidos tienen su propia lista en Referidos Web.
+-      supabase
+-        .from('cupones')
+-        .select('codigo, valor, tipo_descuento, estado, creado_en, cliente:clientes!cliente_id(nombre)')
+-        .eq('origen', 'FIDELIZACION')
+-        .order('creado_en', { ascending: false }),
+-    ]).then(([configRes, cuponesRes]) => {
+-      if (configRes.data) {
+-        setFormulario({ porcentajeRecompensa: String(configRes.data.porcentaje_recompensa) })
+-      }
+-      setCupones(cuponesRes.data ?? [])
+-      setCargando(false)
+-    })
++    supabase
++      .from('config_fidelizacion')
++      .select('porcentaje_recompensa')
++      .eq('id', 1)
++      .single()
++      .then((configRes) => {
++        if (configRes.data) setFormulario({ porcentajeRecompensa: String(configRes.data.porcentaje_recompensa) })
++        setCargando(false)
++      })
+   }, [])
+ 
+   function actualizarCampo(campo, valor) {
+@@ -172,21 +153,39 @@ export default function FidelizacionWeb() {
+         />
+       </div>
+ 
+-      {cupones.length === 0 ? (
++      {conteos && (
++        <p className="mt-1 font-mono text-xs text-ink/60" data-conteos>
++          {conteos.DISPONIBLE + conteos.CANJEADO + conteos.ANULADO} emitidos · {conteos.DISPONIBLE} disponibles · {conteos.CANJEADO} canjeados
++          {conteos.ANULADO > 0 ? ` · ${conteos.ANULADO} anulados` : ''}
++        </p>
++      )}
++
++      {lista.fallo && (
++        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
++          No se pudo cargar los cupones.{' '}
++          <button type="button" onClick={lista.recargar} className="underline">
++            Reintentar
++          </button>
++        </p>
++      )}
++
++      {lista.cargando ? (
++        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>
++      ) : lista.error ? null : lista.total === 0 && !termino && !estado ? (
+         <EstadoVacio icono={Stamp} mensaje="Todavía no se generó ningún cupón de fidelización." />
+-      ) : cuponesVisibles.length === 0 ? (
++      ) : lista.filas.length === 0 ? (
+         <EstadoVacio icono={Stamp} mensaje="Ningún cupón coincide con la búsqueda o el filtro." />
+       ) : (
+-        <div className="mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)]">
+-          {cuponesVisibles.map((cupon) => {
++        <div className={`mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)] transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((cupon) => {
+             const etiquetaEstado = ETIQUETAS_ESTADO[cupon.estado] ?? ETIQUETAS_ESTADO.DISPONIBLE
+             return (
+-              <EnvolturaCupon key={cupon.codigo} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
++              <EnvolturaCupon key={cupon.id} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
+                 <div className="relative flex items-center gap-3 p-3">
+                   <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
+                   <div className="min-w-0 flex-1">
+                     <p className={`font-mono text-base font-semibold tracking-widest ${NIVEL_CUPON.claseTexto}`}>{cupon.codigo}</p>
+-                    <p className="truncate text-xs text-white/50">{cupon.cliente?.nombre ?? '—'}</p>
++                    <p className="truncate text-xs text-white/50">{cupon.cliente_nombre ?? '—'}</p>
+                   </div>
+                   <div className="shrink-0 text-right">
+                     <p className={`font-semibold ${NIVEL_CUPON.claseTexto}`}>{formatearValorCupon(cupon)}</p>
+@@ -198,6 +197,18 @@ export default function FidelizacionWeb() {
+           })}
+         </div>
+       )}
++
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista
++          pagina={lista.pagina}
++          totalPaginas={lista.totalPaginas}
++          total={lista.total}
++          tam={lista.tam}
++          ocupado={lista.ocupado}
++          onPagina={lista.irA}
++          etiqueta="cupones"
++        />
++      )}
+     </div>
+   )
+ }
+diff --git a/src/pages/PedidosWeb.jsx b/src/pages/PedidosWeb.jsx
+index 282f8d8..f0911f7 100644
+--- a/src/pages/PedidosWeb.jsx
++++ b/src/pages/PedidosWeb.jsx
+@@ -1,14 +1,19 @@
+-import { useEffect, useRef, useState } from 'react'
++import { useCallback, useEffect, useRef, useState } from 'react'
+ import { ArrowBigDown, Bike, Image, MapPin, Phone, Receipt, ShieldCheck, ShoppingBag, Store, Ticket } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import { manejarActivacionTeclado } from '../lib/teclado.js'
+ import { formatearSoles } from '../lib/moneda.js'
+ import { urlFirmadaFoto } from '../lib/imagenes.js'
++import { contarPedidosPorEstado, ESTADOS_PEDIDO, leerItemsPedido, leerPedidos } from '../lib/listasAdmin.js'
++import { useDebounce } from '../hooks/useDebounce.js'
++import { useListaPaginada } from '../hooks/useListaPaginada.js'
+ import BarraBusqueda from '../components/BarraBusqueda.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
++import PaginadorLista from '../components/PaginadorLista.jsx'
+ 
+ const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
+ 
+@@ -50,51 +55,63 @@ function numeroWhatsapp(telefono) {
+ export default function PedidosWeb({ activo = true }) {
+   const { mostrarToast } = useToast()
+ 
+-  const [pedidos, setPedidos] = useState([])
+-  const [cargando, setCargando] = useState(true)
+-  const [error, setError] = useState(null)
+   const [busqueda, setBusqueda] = useState('')
++  const termino = useDebounce(busqueda.trim(), 300)
++  const [estadoFiltro, setEstadoFiltro] = useState(null)
+   const [abiertos, setAbiertos] = useState(() => new Set())
+   const [actualizando, setActualizando] = useState(null)
+   const [abriendoComprobante, setAbriendoComprobante] = useState(null)
+-  const primeraCargaHecha = useRef(false)
+ 
+-  async function cargarPedidos(silencioso = false) {
+-    if (!silencioso) setCargando(true)
+-    const { data, error: errorConsulta } = await supabase
+-      .from('pedidos_web')
+-      .select(
+-        'id, tipo_entrega, direccion_entrega, celular_entrega, costo_delivery, subtotal, descuento_cupon, total, estado, creado_en, ' +
+-          'metodo_pago, comprobante_url, cupon_codigo, tipo_comprobante, ruc, razon_social, pago_verificado, ' +
+-          'clientes(nombre, telefono), zonas_delivery(nombre), ' +
+-          'pedidos_web_items(id, nombre_producto, cantidad, precio_unitario, subtotal)',
+-      )
+-      .order('creado_en', { ascending: false })
++  // Fase 5: hasta 40 pedidos por página, con búsqueda y filtro de estado en el servidor y el total exacto. La lista NO trae los
++  // ítems de cada pedido: se piden al expandirlo (ver `items`).
++  const lista = useListaPaginada({
++    activo,
++    clave: `${termino}|${estadoFiltro ?? ''}`,
++    leer: ({ desde, hasta }) => leerPedidos(supabase, { termino, estado: estadoFiltro, desde, hasta }),
++  })
+ 
+-    if (errorConsulta) {
+-      setError('No se pudo cargar los pedidos.')
+-    } else {
+-      setError(null)
+-      setPedidos(data ?? [])
++  // Contadores GLOBALES por estado (toda la tabla, no la página). Se refrescan al volver a la pestaña y tras cada cambio.
++  const [conteos, setConteos] = useState(null)
++  const generacionConteos = useRef(0)
++  const refrescarConteos = useCallback(async () => {
++    const gen = (generacionConteos.current += 1)
++    try {
++      const nuevos = await contarPedidosPorEstado(supabase)
++      if (gen === generacionConteos.current) setConteos(nuevos)
++    } catch {
++      if (gen === generacionConteos.current) setConteos(null)
+     }
+-    setCargando(false)
+-  }
+-
++  }, [])
+   useEffect(() => {
+-    if (!activo) return
+-    const silencioso = primeraCargaHecha.current
+-    primeraCargaHecha.current = true
+-    cargarPedidos(silencioso)
+-    // eslint-disable-next-line react-hooks/exhaustive-deps
+-  }, [activo])
++    if (activo) refrescarConteos()
++  }, [activo, refrescarConteos])
++
++  // Detalle por pedido (ítems), pedido al expandir y conservado mientras la pestaña viva. Un error se reintenta al reabrir.
++  const [items, setItems] = useState({})
++  const pidiendo = useRef(new Set())
++  const cargarItems = useCallback(async (id) => {
++    if (pidiendo.current.has(id)) return
++    pidiendo.current.add(id)
++    setItems((a) => ({ ...a, [id]: { estado: 'cargando', datos: [] } }))
++    try {
++      const datos = await leerItemsPedido(supabase, id)
++      setItems((a) => ({ ...a, [id]: { estado: 'ok', datos } }))
++    } catch {
++      setItems((a) => ({ ...a, [id]: { estado: 'error', datos: [] } }))
++    } finally {
++      pidiendo.current.delete(id)
++    }
++  }, [])
+ 
+   function alternarAbierto(id) {
++    const abriendo = !abiertos.has(id)
+     setAbiertos((anterior) => {
+       const siguiente = new Set(anterior)
+       if (siguiente.has(id)) siguiente.delete(id)
+       else siguiente.add(id)
+       return siguiente
+     })
++    if (abriendo && items[id]?.estado !== 'ok') cargarItems(id)
+   }
+ 
+   async function cambiarEstado(pedido, estado) {
+@@ -109,12 +126,14 @@ export default function PedidosWeb({ activo = true }) {
+       // QA-027: el backend rechaza entregar un pedido cuya venta se anuló
+       // (pestaña desactualizada); se muestra su motivo y se refresca el estado.
+       mostrarToast(errorActualizar.message || 'No se pudo actualizar el pedido.', 'error')
+-      cargarPedidos(true)
++      lista.recargar()
++      refrescarConteos()
+       return
+     }
+ 
+     mostrarToast('Pedido actualizado.', 'exito')
+-    cargarPedidos(true)
++    lista.recargar()
++    refrescarConteos()
+   }
+ 
+   // Único camino real para Pendiente → Listo: verificar_pago_pedido_web()
+@@ -134,7 +153,8 @@ export default function PedidosWeb({ activo = true }) {
+     }
+ 
+     mostrarToast('Pago verificado — pedido listo.', 'exito')
+-    cargarPedidos(true)
++    lista.recargar()
++    refrescarConteos()
+   }
+ 
+   // El bucket es privado (RLS: cada clienta solo ve las suyas, el admin
+@@ -152,12 +172,6 @@ export default function PedidosWeb({ activo = true }) {
+     }
+   }
+ 
+-  const filtrados = busqueda.trim()
+-    ? pedidos.filter((p) =>
+-        (p.clientes?.nombre ?? '').toLowerCase().includes(busqueda.trim().toLowerCase()),
+-      )
+-    : pedidos
+-
+   return (
+     <div
+       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+@@ -173,19 +187,30 @@ export default function PedidosWeb({ activo = true }) {
+         />
+       </div>
+ 
+-      {error && (
+-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+-          {error}
++      <FiltroEstadoContadores
++        etiqueta="Filtrar pedidos por estado"
++        opciones={ESTADOS_PEDIDO.map((id) => ({ id, label: ETIQUETAS_ESTADO[id].texto }))}
++        valor={estadoFiltro}
++        onCambiar={setEstadoFiltro}
++        conteos={conteos}
++      />
++
++      {lista.fallo && (
++        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
++          No se pudo cargar los pedidos.{' '}
++          <button type="button" onClick={lista.recargar} className="underline">
++            Reintentar
++          </button>
+         </p>
+       )}
+ 
+-      {cargando ? (
++      {lista.cargando ? (
+         <EsqueletoLista columnas={3} />
+-      ) : filtrados.length === 0 ? (
+-        <EstadoVacio icono={ShoppingBag} mensaje="No hay pedidos todavía." />
++      ) : lista.error ? null : lista.filas.length === 0 ? (
++        <EstadoVacio icono={ShoppingBag} mensaje={termino || estadoFiltro ? 'Ningún pedido coincide con la búsqueda o el filtro.' : 'No hay pedidos todavía.'} />
+       ) : (
+-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+-          {filtrados.map((pedido) => {
++        <div className={`mt-4 grid grid-cols-1 gap-3 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((pedido) => {
+             const abierto = abiertos.has(pedido.id)
+             const etiqueta = ETIQUETAS_ESTADO[pedido.estado] ?? ETIQUETAS_ESTADO.PENDIENTE
+ 
+@@ -222,14 +247,25 @@ export default function PedidosWeb({ activo = true }) {
+                   />
+                 </div>
+ 
+-                <CampoColapsable abierto={abierto}>
++                <CampoColapsable abierto={abierto} diferido>
+                   <div className="border-t border-border p-3">
+                     <p className="font-mono text-xs text-ink/50">
+                       {formatoFecha.format(new Date(pedido.creado_en))}
+                     </p>
+ 
+-                    <div className="mt-2 space-y-1">
+-                      {pedido.pedidos_web_items.map((item) => (
++                    <div className="mt-2 space-y-1" aria-busy={items[pedido.id]?.estado === 'cargando'}>
++                      {(!items[pedido.id] || items[pedido.id].estado === 'cargando') && (
++                        <p className="font-mono text-xs text-ink/50">Cargando productos…</p>
++                      )}
++                      {items[pedido.id]?.estado === 'error' && (
++                        <p role="alert" className="text-xs text-red">
++                          No se pudieron cargar los productos.{' '}
++                          <button type="button" onClick={() => cargarItems(pedido.id)} className="underline">
++                            Reintentar
++                          </button>
++                        </p>
++                      )}
++                      {items[pedido.id]?.datos.map((item) => (
+                         <div key={item.id} className="flex items-center justify-between text-sm">
+                           <span className="min-w-0 truncate text-ink/80">
+                             {item.cantidad}× {item.nombre_producto}
+@@ -363,6 +399,18 @@ export default function PedidosWeb({ activo = true }) {
+           })}
+         </div>
+       )}
++
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista
++          pagina={lista.pagina}
++          totalPaginas={lista.totalPaginas}
++          total={lista.total}
++          tam={lista.tam}
++          ocupado={lista.ocupado}
++          onPagina={lista.irA}
++          etiqueta="pedidos"
++        />
++      )}
+     </div>
+   )
+ }
+diff --git a/src/pages/Promociones.jsx b/src/pages/Promociones.jsx
+index fbf52c8..22c09e1 100644
+--- a/src/pages/Promociones.jsx
++++ b/src/pages/Promociones.jsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useRef, useState } from 'react'
++import { useRef, useState } from 'react'
+ import { Pencil, Trash2, Plus, Ticket, Calendar, ArrowBigDown } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
+ import { useToast } from '../context/ToastContext.jsx'
+@@ -7,6 +7,9 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
+ import { manejarActivacionTeclado } from '../lib/teclado.js'
+ import { formatearSoles } from '../lib/moneda.js'
+ import { nivelDeCupon } from '../lib/cupones.js'
++import { leerPromociones } from '../lib/listasAdmin.js'
++import { useDebounce } from '../hooks/useDebounce.js'
++import { useListaPaginada } from '../hooks/useListaPaginada.js'
+ import BarraBusqueda from '../components/BarraBusqueda.jsx'
+ import BotonAccion from '../components/BotonAccion.jsx'
+ import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
+@@ -15,6 +18,7 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import PaginadorLista from '../components/PaginadorLista.jsx'
+ 
+ // Acabado rojo «Especial» de los cupones de promoción en la web de clientes.
+ const NIVEL_CUPON = nivelDeCupon({ origen: 'PROMOCION' })
+@@ -43,43 +47,23 @@ function formatearVigencia(promocion) {
+ export default function Promociones({ activo = true }) {
+   const { mostrarToast } = useToast()
+ 
+-  const [promociones, setPromociones] = useState([])
+-  const [cargando, setCargando] = useState(true)
+-  const [error, setError] = useState(null)
+   const [busqueda, setBusqueda] = useState('')
++  const termino = useDebounce(busqueda.trim(), 300)
+   const [modalPromocion, setModalPromocion] = useState(null) // null | 'nuevo' | promocion
+   const [promocionAEliminar, setPromocionAEliminar] = useState(null)
+   const [eliminando, setEliminando] = useState(false)
+   const [abiertos, setAbiertos] = useState(() => new Set())
+-  const primeraCargaHecha = useRef(false)
+   const panelEliminarRef = useRef(null)
+ 
+   useCerrarConEscape(() => setPromocionAEliminar(null), Boolean(promocionAEliminar))
+   useModalA11y(panelEliminarRef, Boolean(promocionAEliminar))
+ 
+-  async function cargarPromociones(silencioso = false) {
+-    if (!silencioso) setCargando(true)
+-    const { data, error: errorConsulta } = await supabase
+-      .from('promociones')
+-      .select('id, titulo, descripcion, tipo_descuento, valor, vigente_desde, vigente_hasta, activo')
+-      .order('creado_en', { ascending: false })
+-
+-    if (errorConsulta) {
+-      setError('No se pudo cargar las promociones.')
+-    } else {
+-      setError(null)
+-      setPromociones(data ?? [])
+-    }
+-    setCargando(false)
+-  }
+-
+-  useEffect(() => {
+-    if (!activo) return
+-    const silencioso = primeraCargaHecha.current
+-    primeraCargaHecha.current = true
+-    cargarPromociones(silencioso)
+-    // eslint-disable-next-line react-hooks/exhaustive-deps
+-  }, [activo])
++  // Fase 5: hasta 40 promociones por página, con búsqueda por título en el servidor y el total exacto de todo el conjunto.
++  const lista = useListaPaginada({
++    activo,
++    clave: termino,
++    leer: ({ desde, hasta }) => leerPromociones(supabase, { termino, desde, hasta }),
++  })
+ 
+   function alternarAbierto(id) {
+     setAbiertos((anterior) => {
+@@ -106,13 +90,9 @@ export default function Promociones({ activo = true }) {
+     }
+ 
+     mostrarToast('Promoción eliminada.', 'exito')
+-    cargarPromociones()
++    lista.recargar()
+   }
+ 
+-  const filtradas = busqueda.trim()
+-    ? promociones.filter((p) => p.titulo.toLowerCase().includes(busqueda.trim().toLowerCase()))
+-    : promociones
+-
+   return (
+     <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
+       <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
+@@ -133,23 +113,26 @@ export default function Promociones({ activo = true }) {
+         </button>
+       </div>
+ 
+-      {error && (
+-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+-          {error}
++      {lista.fallo && (
++        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
++          No se pudo cargar las promociones.{' '}
++          <button type="button" onClick={lista.recargar} className="underline">
++            Reintentar
++          </button>
+         </p>
+       )}
+ 
+-      {cargando ? (
++      {lista.cargando ? (
+         <EsqueletoLista columnas={3} />
+-      ) : filtradas.length === 0 ? (
++      ) : lista.error ? null : lista.filas.length === 0 ? (
+         <EstadoVacio
+           icono={Ticket}
+-          mensaje="No hay promociones registradas."
++          mensaje={termino ? 'Ninguna promoción coincide con la búsqueda.' : 'No hay promociones registradas.'}
+           accion={{ label: '+ Nueva promoción', onClick: () => setModalPromocion('nuevo') }}
+         />
+       ) : (
+-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+-          {filtradas.map((promocion) => {
++        <div className={`mt-4 grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((promocion) => {
+             const abierta = abiertos.has(promocion.id)
+             return (
+               <EnvolturaCupon key={promocion.id} nivel={NIVEL_CUPON} apagada={!promocion.activo}>
+@@ -174,7 +157,7 @@ export default function Promociones({ activo = true }) {
+                   />
+                 </div>
+ 
+-                <CampoColapsable abierto={abierta}>
++                <CampoColapsable abierto={abierta} diferido>
+                   <div className="relative mx-2.5 mb-2.5 border border-white/10 bg-black/25 p-3">
+                     {promocion.descripcion && (
+                       <p className="text-sm text-white/70">{promocion.descripcion}</p>
+@@ -206,6 +189,18 @@ export default function Promociones({ activo = true }) {
+         </div>
+       )}
+ 
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista
++          pagina={lista.pagina}
++          totalPaginas={lista.totalPaginas}
++          total={lista.total}
++          tam={lista.tam}
++          ocupado={lista.ocupado}
++          onPagina={lista.irA}
++          etiqueta="promociones"
++        />
++      )}
++
+       <BotonFlotanteAgregar
+         onClick={() => setModalPromocion('nuevo')}
+         color="rojo"
+@@ -220,7 +215,7 @@ export default function Promociones({ activo = true }) {
+             const esNueva = modalPromocion === 'nuevo'
+             setModalPromocion(null)
+             mostrarToast(esNueva ? 'Promoción creada.' : 'Promoción actualizada.', 'exito')
+-            cargarPromociones()
++            lista.recargar()
+           }}
+         />
+       )}
+diff --git a/src/pages/RecompensasWeb.jsx b/src/pages/RecompensasWeb.jsx
+index c270a68..73d1e13 100644
+--- a/src/pages/RecompensasWeb.jsx
++++ b/src/pages/RecompensasWeb.jsx
+@@ -1,13 +1,18 @@
+-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
++import { useCallback, useEffect, useRef, useState } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
+ import { Coins, Plus, Stamp, ShieldCheck, ShoppingBag, Settings2 } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
+-import { leerServicios } from '../lib/buscarServicios.js'
++import { buscarServicios, servicioPorId } from '../lib/buscarServicios.js'
+ import { patronIlike } from '../lib/buscarClientes.js'
+ import { useToast } from '../context/ToastContext.jsx'
++import { useAuth } from '../context/AuthContext.jsx'
+ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+ import { useModalA11y } from '../hooks/useModalA11y.js'
++import { useDebounce } from '../hooks/useDebounce.js'
++import { useListaPaginada } from '../hooks/useListaPaginada.js'
++import CampoColapsable from '../components/CampoColapsable.jsx'
+ import Etiqueta from '../components/Etiqueta.jsx'
++import PaginadorLista from '../components/PaginadorLista.jsx'
+ 
+ // Administración de Recompensas (Fase 2) — cuelga de /web, solo ADMINISTRADOR.
+ // Las escrituras las limita el backend (RLS es_admin() en recompensas_catalogo,
+@@ -168,10 +173,65 @@ function AvisoError({ mensaje, onReintentar }) {
+   )
+ }
+ 
++// Selector del servicio del premio (Fase 5): busca en el servidor y muestra como máximo 40 opciones (más la elegida). Antes el
++// modal montaba un <option> por cada servicio de la tabla (miles) con solo abrirlo.
++function CampoServicioPremio({ id, valor, onCambiar }) {
++  const [texto, setTexto] = useState('')
++  const termino = useDebounce(texto.trim(), 250)
++  const [opciones, setOpciones] = useState([])
++  const [elegido, setElegido] = useState(null)
++  const [error, setError] = useState(false)
++
++  useEffect(() => {
++    let vigente = true
++    buscarServicios(supabase, termino, { limite: 40, columnas: 'id, nombre' }).then(
++      (filas) => {
++        if (!vigente) return
++        setOpciones(filas)
++        setError(false)
++      },
++      () => vigente && setError(true),
++    )
++    return () => {
++      vigente = false
++    }
++  }, [termino])
++
++  // La opción elegida puede quedar fuera de los resultados de la búsqueda (o venir de un premio ya guardado): se pide por id.
++  useEffect(() => {
++    if (!valor) return undefined
++    let vigente = true
++    servicioPorId(supabase, valor, 'id, nombre').then(
++      (fila) => vigente && setElegido(fila),
++      () => {},
++    )
++    return () => {
++      vigente = false
++    }
++  }, [valor])
++
++  const visibles = elegido && valor === elegido.id && !opciones.some((o) => o.id === elegido.id) ? [elegido, ...opciones] : opciones
++  return (
++    <div className="space-y-2">
++      <input aria-label="Buscar servicio del premio" placeholder="Buscar servicio…" value={texto} onChange={(e) => setTexto(e.target.value)} className={CLASE_INPUT} />
++      <select id={id} className={CLASE_INPUT} value={valor} onChange={(e) => onCambiar(e.target.value)}>
++        <option value="">Elige…</option>
++        {visibles.map((s) => (
++          <option key={s.id} value={s.id}>
++            {s.nombre}
++          </option>
++        ))}
++      </select>
++      {error && <p role="alert" className="text-xs text-red">No se pudieron buscar servicios.</p>}
++      {opciones.length === 40 && <p className="text-xs text-ink/50">Se muestran los primeros 40: escribe para acotar.</p>}
++    </div>
++  )
++}
++
+ // ---------------------------------------------------------------------------
+ // Modal de premio
+ // ---------------------------------------------------------------------------
+-function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onGuardado }) {
++function ModalPremio({ premio, origen, sellosPorPremio, onCerrar, onGuardado }) {
+   const { mostrarToast } = useToast()
+   const [f, setF] = useState(() => (premio ? premioAFormulario(premio) : premioVacio(origen)))
+   const [guardando, setGuardando] = useState(false)
+@@ -246,14 +306,7 @@ function ModalPremio({ premio, origen, servicios, sellosPorPremio, onCerrar, onG
+               </Campo>
+             ) : (
+               <Campo id={`${idBase}-serv`} etiqueta="Servicio" obligatorio>
+-                <select id={`${idBase}-serv`} className={CLASE_INPUT} value={f.servicioId} onChange={(e) => set('servicioId', e.target.value)}>
+-                  <option value="">Elige…</option>
+-                  {servicios.map((s) => (
+-                    <option key={s.id} value={s.id}>
+-                      {s.nombre}
+-                    </option>
+-                  ))}
+-                </select>
++                <CampoServicioPremio id={`${idBase}-serv`} valor={f.servicioId} onCambiar={(id) => set('servicioId', id)} />
+               </Campo>
+             )}
+           </div>
+@@ -400,9 +453,85 @@ function resumenCondiciones(p) {
+   return partes.join(' · ')
+ }
+ 
+-function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
++// Detalle de un premio (se monta solo al expandirlo): condiciones completas y cuántas veces se reclamó. El conteo de canjes se
++// pide al abrir —un conteo exacto de ESE premio—, en vez de descargar todos los canjes al entrar a la pestaña.
++function DetallePremio({ premio: p, origen, sellosPorPremio, canje, pedirCanje, onEditar }) {
++  useEffect(() => {
++    if (!canje) pedirCanje(p.id)
++  }, [canje, p.id, pedirCanje])
++  const usados = canje?.estado === 'ok' ? canje.n : null
++
++  return (
++    <div className="border-t border-border px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
++      <p className="font-mono text-xs text-ink/70">
++        {origen === 'MONEDAS'
++          ? `Costo: ${p.costo_basico ?? '—'} / ${p.costo_premium ?? p.costo_basico ?? '—'} / ${p.costo_vip ?? p.costo_premium ?? p.costo_basico ?? '—'} (Básico / Premium / VIP)`
++          : `Costo: ${sellosPorPremio} sellos`}
++      </p>
++      <p className="font-mono text-xs text-ink/60" aria-busy={canje?.estado === 'cargando' || !canje}>
++        {usados === null ? (
++          canje?.estado === 'error' ? (
++            <>
++              Reclamados: no disponible{' '}
++              <button type="button" onClick={() => pedirCanje(p.id)} className="underline">
++                Reintentar
++              </button>
++            </>
++          ) : (
++            'Reclamados: …'
++          )
++        ) : (
++          <>
++            Reclamados: {usados}
++            {p.cupo_global !== null ? ` · restantes: ${Math.max(p.cupo_global - usados, 0)} de ${p.cupo_global}` : ' · sin cupo global'}
++          </>
++        )}
++        {p.limite_por_clienta !== null ? ` · máx. ${p.limite_por_clienta} por clienta` : ''}
++      </p>
++      <p className="font-mono text-xs text-ink/60">
++        Reclamo: {p.reclamo_desde || p.reclamo_hasta ? `${p.reclamo_desde ? new Date(p.reclamo_desde).toLocaleDateString('es-PE') : '…'} – ${p.reclamo_hasta ? new Date(p.reclamo_hasta).toLocaleDateString('es-PE') : '…'}` : 'siempre'}
++        {' · '}Cupón: {p.cupon_vigencia_dias || p.cupon_vence_el ? `${p.cupon_vigencia_dias ? `${p.cupon_vigencia_dias} días` : ''}${p.cupon_vigencia_dias && p.cupon_vence_el ? ' / ' : ''}${p.cupon_vence_el ? `hasta ${new Date(p.cupon_vence_el).toLocaleDateString('es-PE')}` : ''}` : 'indefinido'}
++      </p>
++      <button type="button" onClick={() => onEditar(p)} className="mt-2 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink hover:border-azul-metal hover:text-azul-metal">
++        Editar
++      </button>
++    </div>
++  )
++}
++
++// Fase 5: el catálogo se lee paginado (hasta 40 premios por página) y SOLO al entrar a esta subpestaña; el detalle de cada premio
++// se monta y se consulta al expandirlo.
++function Catalogo({ origen, activo, sellosPorPremio }) {
+   const [editando, setEditando] = useState(null) // null | 'nuevo' | premio
+-  const lista = useMemo(() => estado.premios.filter((p) => p.origen === origen), [estado.premios, origen])
++  const [abiertos, setAbiertos] = useState(() => new Set())
++  const [canjes, setCanjes] = useState({}) // id → { estado: 'cargando' | 'ok' | 'error', n }
++  const lista = useListaPaginada({
++    activo,
++    clave: origen,
++    leer: ({ desde, hasta }) =>
++      supabase
++        .from('recompensas_catalogo')
++        .select('*', { count: 'exact' })
++        .eq('origen', origen)
++        .order('creado_en', { ascending: false })
++        .order('id', { ascending: false })
++        .range(desde, hasta),
++  })
++
++  const pedirCanje = useCallback(async (id) => {
++    setCanjes((a) => ({ ...a, [id]: { estado: 'cargando' } }))
++    const { count, error } = await supabase.from('recompensas_canjes').select('id', { count: 'exact', head: true }).eq('catalogo_id', id)
++    setCanjes((a) => ({ ...a, [id]: error || !Number.isSafeInteger(count) ? { estado: 'error' } : { estado: 'ok', n: count } }))
++  }, [])
++
++  function alternar(id) {
++    setAbiertos((a) => {
++      const siguiente = new Set(a)
++      if (siguiente.has(id)) siguiente.delete(id)
++      else siguiente.add(id)
++      return siguiente
++    })
++  }
+ 
+   return (
+     <div>
+@@ -418,58 +547,59 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
+         </button>
+       </div>
+ 
+-      {lista.length === 0 ? (
++      {lista.fallo && <AvisoError mensaje="No se pudo cargar el catálogo." onReintentar={lista.recargar} />}
++      {lista.cargando && <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>}
++
++      {!lista.cargando && !lista.error && lista.total === 0 && (
+         <p className="mt-6 text-center text-sm text-ink/60">
+           Todavía no hay premios. El catálogo no trae ejemplos: crea y revisa cada uno antes de publicarlo.
+         </p>
+-      ) : (
+-        <ul className="mt-4 space-y-2">
+-          {lista.map((p) => {
+-            const usados = estado.canjes[p.id] ?? 0
++      )}
++
++      {!lista.cargando && !lista.error && lista.total > 0 && (
++        <ul className={`mt-4 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((p) => {
++            const abierto = abiertos.has(p.id)
+             return (
+-              <li key={p.id} className="rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+-                <div className="flex items-start justify-between gap-2">
+-                  <div className="min-w-0">
+-                    <p className="truncate text-sm font-medium text-ink">{p.nombre}</p>
+-                    <p className="font-mono text-xs text-ink/60">{resumenCondiciones(p)}</p>
+-                  </div>
++              <li key={p.id} className="rounded-lg border border-border bg-surface">
++                <button
++                  type="button"
++                  aria-expanded={abierto}
++                  onClick={() => alternar(p.id)}
++                  className="flex w-full items-start justify-between gap-2 px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) text-left"
++                >
++                  <span className="min-w-0">
++                    <span className="block truncate text-sm font-medium text-ink">{p.nombre}</span>
++                    <span className="block font-mono text-xs text-ink/60">{resumenCondiciones(p)}</span>
++                  </span>
+                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${p.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'}`}>
+                     {p.activo ? 'Publicado' : 'Sin publicar'}
+                   </span>
+-                </div>
+-                <p className="mt-1 font-mono text-xs text-ink/70">
+-                  {origen === 'MONEDAS'
+-                    ? `Costo: ${p.costo_basico ?? '—'} / ${p.costo_premium ?? p.costo_basico ?? '—'} / ${p.costo_vip ?? p.costo_premium ?? p.costo_basico ?? '—'} (Básico / Premium / VIP)`
+-                    : `Costo: ${sellosPorPremio} sellos`}
+-                </p>
+-                <p className="font-mono text-xs text-ink/60">
+-                  Reclamados: {usados}
+-                  {p.cupo_global !== null ? ` · restantes: ${Math.max(p.cupo_global - usados, 0)} de ${p.cupo_global}` : ' · sin cupo global'}
+-                  {p.limite_por_clienta !== null ? ` · máx. ${p.limite_por_clienta} por clienta` : ''}
+-                </p>
+-                <p className="font-mono text-xs text-ink/60">
+-                  Reclamo: {p.reclamo_desde || p.reclamo_hasta ? `${p.reclamo_desde ? new Date(p.reclamo_desde).toLocaleDateString('es-PE') : '…'} – ${p.reclamo_hasta ? new Date(p.reclamo_hasta).toLocaleDateString('es-PE') : '…'}` : 'siempre'}
+-                  {' · '}Cupón: {p.cupon_vigencia_dias || p.cupon_vence_el ? `${p.cupon_vigencia_dias ? `${p.cupon_vigencia_dias} días` : ''}${p.cupon_vigencia_dias && p.cupon_vence_el ? ' / ' : ''}${p.cupon_vence_el ? `hasta ${new Date(p.cupon_vence_el).toLocaleDateString('es-PE')}` : ''}` : 'indefinido'}
+-                </p>
+-                <button type="button" onClick={() => setEditando(p)} className="mt-2 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink hover:border-azul-metal hover:text-azul-metal">
+-                  Editar
+                 </button>
++                <CampoColapsable abierto={abierto} diferido>
++                  <DetallePremio premio={p} origen={origen} sellosPorPremio={sellosPorPremio} canje={canjes[p.id]} pedirCanje={pedirCanje} onEditar={setEditando} />
++                </CampoColapsable>
+               </li>
+             )
+           })}
+         </ul>
+       )}
+ 
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista pagina={lista.pagina} totalPaginas={lista.totalPaginas} total={lista.total} tam={lista.tam} ocupado={lista.ocupado} onPagina={lista.irA} etiqueta="premios" />
++      )}
++
+       {editando && (
+         <ModalPremio
+           premio={editando === 'nuevo' ? null : editando}
+           origen={origen}
+-          servicios={servicios}
+           sellosPorPremio={sellosPorPremio}
+           onCerrar={() => setEditando(null)}
+           onGuardado={() => {
++            const id = editando === 'nuevo' ? null : editando.id
+             setEditando(null)
+-            recargar()
++            if (id) setCanjes((a) => Object.fromEntries(Object.entries(a).filter(([k]) => k !== id)))
++            lista.recargar()
+           }}
+         />
+       )}
+@@ -480,26 +610,30 @@ function Catalogo({ origen, estado, servicios, sellosPorPremio, recargar }) {
+ // ---------------------------------------------------------------------------
+ // Protección por servicio
+ // ---------------------------------------------------------------------------
+-function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
+-  const { mostrarToast } = useToast()
+-  const [abierto, setAbierto] = useState(Boolean(destacado))
+-  // Porcentaje protegido de asistente (estimación). Una protección ANTIGUA (importe fijo en S/) tiene asistente_pct nulo:
+-  // conserva su importe y se muestra como pendiente de actualización; nunca se convierte sola en porcentaje.
++// Fase 5: los servicios se leen paginados (hasta 40 por página) con búsqueda en el servidor, y solo al entrar a esta subpestaña.
++// Los BORRADORES de cada fila (lo que la administradora escribió y aún no guardó) viven en el padre, por id de servicio: así
++// sobreviven a plegar la fila, cambiar de página y buscar, aunque el detalle de las filas cerradas ya no esté en el DOM.
++const valoresDeProteccion = (prot) => {
+   const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
+-  const [v, setV] = useState({
++  return {
+     materiales: prot ? String(prot.materiales) : '',
+     pct: prot && !pendiente ? String(prot.asistente_pct) : '',
+     otros: prot ? String(prot.otros) : '',
+-  })
++  }
++}
++
++function FilaProteccion({ servicio, prot, valores, abierto, destacado, onAlternar, onCambiar, onGuardado, onLimpiarBorrador }) {
++  const { mostrarToast } = useToast()
++  // Porcentaje protegido de asistente (estimación). Una protección ANTIGUA (importe fijo en S/) tiene asistente_pct nulo:
++  // conserva su importe y se muestra como pendiente de actualización; nunca se convierte sola en porcentaje.
++  const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
++  const v = valores
+   const [guardando, setGuardando] = useState(false)
+   const ref = useRef(null)
+   const idBase = useRef(`pt-${servicio.id.slice(0, 8)}`).current
+ 
+   useEffect(() => {
+-    if (destacado) {
+-      setAbierto(true)
+-      ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+-    }
++    if (destacado) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+   }, [destacado])
+ 
+   const n = (x) => (x === '' ? 0 : Number(x))
+@@ -528,6 +662,7 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
+       return
+     }
+     mostrarToast('Protección guardada.', 'exito')
++    onLimpiarBorrador(servicio.id)
+     onGuardado()
+   }
+ 
+@@ -539,14 +674,14 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
+       mostrarToast('No se pudo quitar la configuración.', 'error')
+       return
+     }
+-    setV({ materiales: '', pct: '', otros: '' })
+     mostrarToast('Servicio sin configurar.', 'exito')
++    onLimpiarBorrador(servicio.id)
+     onGuardado()
+   }
+ 
+   return (
+     <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
+-      <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
++      <button type="button" aria-expanded={abierto} onClick={() => onAlternar(servicio.id)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
+         <span className="min-w-0">
+           <span className="block truncate text-sm font-medium text-ink">{servicio.nombre}</span>
+           <span className="block font-mono text-xs text-ink/60">Precio {soles(servicio.precio)}</span>
+@@ -559,13 +694,13 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
+         <div className="border-t border-border p-3">
+           <div className="grid grid-cols-3 gap-2">
+             <Campo id={`${idBase}-m`} etiqueta="Materiales protegidos (S/)">
+-              <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => setV((a) => ({ ...a, materiales: e.target.value }))} />
++              <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => onCambiar(servicio.id, { ...v, materiales: e.target.value })} />
+             </Campo>
+             <Campo id={`${idBase}-a`} etiqueta="Porcentaje protegido de asistente (%)">
+-              <input id={`${idBase}-a`} type="number" min="0" max="100" step="0.01" className={CLASE_INPUT} value={v.pct} placeholder={pendiente ? 'Sin actualizar' : ''} onChange={(e) => setV((a) => ({ ...a, pct: e.target.value }))} />
++              <input id={`${idBase}-a`} type="number" min="0" max="100" step="0.01" className={CLASE_INPUT} value={v.pct} placeholder={pendiente ? 'Sin actualizar' : ''} onChange={(e) => onCambiar(servicio.id, { ...v, pct: e.target.value })} />
+             </Campo>
+             <Campo id={`${idBase}-o`} etiqueta="Otros costos directos (S/)">
+-              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => setV((a) => ({ ...a, otros: e.target.value }))} />
++              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => onCambiar(servicio.id, { ...v, otros: e.target.value })} />
+             </Campo>
+           </div>
+           {pendiente && (
+@@ -606,23 +741,21 @@ function FilaProteccion({ servicio, prot, destacado, onGuardado }) {
+ // El costo de compra NO se copia ni se edita aquí: se lee de Inventario (productos.costo, visible solo para el
+ // administrador mediante productos_vista). El transporte de abastecimiento es distinto del envío cobrado a la clienta.
+ // Un costo 0 sin confirmar es DESCONOCIDO: bloquea el uso de cupones hasta que el administrador lo confirme.
+-function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
++const valoresDeProteccionProducto = (prot) => ({
++  transporte: prot ? String(prot.transporte) : '',
++  otros: prot ? String(prot.otros) : '',
++  confirmado: Boolean(prot?.costo_confirmado),
++})
++
++function FilaProteccionProducto({ producto, prot, valores, abierto, destacado, onAlternar, onCambiar, onGuardado, onLimpiarBorrador }) {
+   const { mostrarToast } = useToast()
+-  const [abierto, setAbierto] = useState(Boolean(destacado))
+-  const [v, setV] = useState({
+-    transporte: prot ? String(prot.transporte) : '',
+-    otros: prot ? String(prot.otros) : '',
+-    confirmado: Boolean(prot?.costo_confirmado),
+-  })
++  const v = valores
+   const [guardando, setGuardando] = useState(false)
+   const ref = useRef(null)
+   const idBase = useRef(`pp-${producto.id.slice(0, 8)}`).current
+ 
+   useEffect(() => {
+-    if (destacado) {
+-      setAbierto(true)
+-      ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+-    }
++    if (destacado) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+   }, [destacado])
+ 
+   const n = (x) => (x === '' ? 0 : Number(x))
+@@ -648,6 +781,7 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
+       return
+     }
+     mostrarToast('Protección del producto guardada.', 'exito')
++    onLimpiarBorrador(producto.id)
+     onGuardado()
+   }
+ 
+@@ -659,14 +793,14 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
+       mostrarToast('No se pudo quitar la configuración.', 'error')
+       return
+     }
+-    setV({ transporte: '', otros: '', confirmado: false })
+     mostrarToast('Producto sin importes adicionales.', 'exito')
++    onLimpiarBorrador(producto.id)
+     onGuardado()
+   }
+ 
+   return (
+     <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
+-      <button type="button" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
++      <button type="button" aria-expanded={abierto} onClick={() => onAlternar(producto.id)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
+         <span className="min-w-0">
+           <span className="block truncate text-sm font-medium text-ink">{producto.nombre}</span>
+           <span className="block font-mono text-xs text-ink/60">Precio {soles(producto.precio)} · Costo registrado {soles(costo)}</span>
+@@ -682,15 +816,15 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
+           </p>
+           <div className="mt-2 grid grid-cols-2 gap-2">
+             <Campo id={`${idBase}-t`} etiqueta="Transporte de abastecimiento por unidad (S/)">
+-              <input id={`${idBase}-t`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.transporte} onChange={(e) => setV((a) => ({ ...a, transporte: e.target.value }))} />
++              <input id={`${idBase}-t`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.transporte} onChange={(e) => onCambiar(producto.id, { ...v, transporte: e.target.value })} />
+             </Campo>
+             <Campo id={`${idBase}-o`} etiqueta="Otros importes protegidos por unidad (S/)">
+-              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => setV((a) => ({ ...a, otros: e.target.value }))} />
++              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => onCambiar(producto.id, { ...v, otros: e.target.value })} />
+             </Campo>
+           </div>
+           {costo === 0 && (
+             <label className="mt-3 flex items-start gap-2 text-sm text-ink">
+-              <input type="checkbox" className="mt-1" checked={v.confirmado} onChange={(e) => setV((a) => ({ ...a, confirmado: e.target.checked }))} />
++              <input type="checkbox" className="mt-1" checked={v.confirmado} onChange={(e) => onCambiar(producto.id, { ...v, confirmado: e.target.checked })} />
+               <span>Confirmo que el costo de compra de este producto es realmente S/ 0,00. Sin esta confirmación el costo se considera desconocido y los cupones no se podrán usar en compras que lo incluyan.</span>
+             </label>
+           )}
+@@ -719,46 +853,72 @@ function FilaProteccionProducto({ producto, prot, destacado, onGuardado }) {
+   )
+ }
+ 
+-function ProteccionProductos({ productoFoco }) {
++// Almacén de BORRADORES de toda la pantalla (lo escrito y aún no guardado): vive en RecompensasWeb, que sigue montada al cambiar de
++// subpestaña, así que un borrador sobrevive a plegar, paginar, buscar Y a ir a otra subpestaña y volver. Claves tipo + id. Está atado
++// a la cuenta: si cambia el usuario, lo anterior deja de verse (y se descarta) en ese mismo render.
++const SIN_BORRADORES = {}
++function useAlmacenBorradores(duenoId) {
++  const [almacen, setAlmacen] = useState({ dueno: duenoId, datos: {} })
++  // Si la identidad cambia con la pantalla montada, el almacén se REINICIA (no solo se oculta): el borrador de la cuenta anterior
++  // no reaparece ni siquiera si luego vuelve esa cuenta. (Ajuste de estado durante el render, patrón documentado de React.)
++  if (almacen.dueno !== duenoId) setAlmacen({ dueno: duenoId, datos: {} })
++  const datos = almacen.dueno === duenoId ? almacen.datos : SIN_BORRADORES
++  const leer = useCallback((tipo, id) => datos[`${tipo}:${id}`], [datos])
++  const escribir = useCallback(
++    (tipo, id, valores) => setAlmacen((a) => ({ dueno: duenoId, datos: { ...(a.dueno === duenoId ? a.datos : {}), [`${tipo}:${id}`]: valores } })),
++    [duenoId],
++  )
++  const borrar = useCallback(
++    (tipo, id) => setAlmacen((a) => ({ dueno: duenoId, datos: Object.fromEntries(Object.entries(a.dueno === duenoId ? a.datos : {}).filter(([k]) => k !== `${tipo}:${id}`)) })),
++    [duenoId],
++  )
++  return { leer, escribir, borrar }
++}
++
++// Estado común de las dos listas de protección: filas abiertas (locales) y borradores por id (en el almacén de la pantalla).
++function useBorradoresPorId(valoresDe, tipo, almacen) {
++  const [abiertas, setAbiertas] = useState(() => new Set())
++  const alternar = useCallback((id) => setAbiertas((a) => { const s = new Set(a); if (s.has(id)) s.delete(id); else s.add(id); return s }), [])
++  const abrir = useCallback((id) => setAbiertas((a) => (a.has(id) ? a : new Set(a).add(id))), [])
++  const { leer, escribir, borrar } = almacen
++  const cambiar = useCallback((id, valores) => escribir(tipo, id, valores), [escribir, tipo])
++  const limpiar = useCallback((id) => borrar(tipo, id), [borrar, tipo])
++  const valoresDeFila = (id, prot) => leer(tipo, id) ?? valoresDe(prot)
++  return { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila }
++}
++
++function ProteccionProductos({ productoFoco, activo, almacen }) {
+   const [filtro, setFiltro] = useState('')
+-  const [estado, setEstado] = useState({ cargando: true, error: false, productos: [], prot: {} })
+-  const [version, setVersion] = useState(0)
++  const termino = useDebounce(filtro.trim(), 250)
++  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeProteccionProducto, 'producto', almacen)
+ 
+-  useEffect(() => {
+-    let vigente = true
+-    const t = setTimeout(async () => {
+-      // Búsqueda y límite en el SERVIDOR (el catálogo puede superar las 1000 filas de max_rows).
+-      const base = supabase.from('productos_vista').select('id, nombre, precio, costo')
++  // Búsqueda, orden y límite en el SERVIDOR (el catálogo supera las 1000 filas de max_rows); hasta 40 por página con total exacto.
++  const lista = useListaPaginada({
++    activo,
++    clave: `${termino}|${productoFoco ?? ''}`,
++    leer: async ({ desde, hasta }) => {
++      const base = supabase.from('productos_vista').select('id, nombre, precio, costo', { count: 'exact' })
+       const consulta =
+-        productoFoco && !filtro.trim()
++        productoFoco && !termino
+           ? base.eq('id', productoFoco)
+-          : filtro.trim()
+-            ? base.ilike('nombre', patronIlike(filtro)).order('nombre').order('id').limit(40)
+-            : base.order('nombre').order('id').limit(40)
+-      const res = await consulta
+-      if (!vigente) return
+-      if (res.error) {
+-        setEstado({ cargando: false, error: true, productos: [], prot: {} })
+-        return
+-      }
++          : termino
++            ? base.ilike('nombre', patronIlike(termino)).order('nombre').order('id')
++            : base.order('nombre').order('id')
++      const res = await consulta.range(desde, hasta)
++      if (res.error) return res
+       const ids = res.data.map((p) => p.id)
+       const pr = ids.length
+         ? await supabase.from('productos_proteccion').select('producto_id, transporte, otros, costo_confirmado, actualizado_en').in('producto_id', ids)
+         : { data: [], error: null }
+-      if (!vigente) return
+-      if (pr.error) {
+-        setEstado({ cargando: false, error: true, productos: [], prot: {} })
+-        return
+-      }
+-      const prot = {}
+-      for (const p of pr.data) prot[p.producto_id] = p
+-      setEstado({ cargando: false, error: false, productos: res.data, prot })
+-    }, 250)
+-    return () => {
+-      vigente = false
+-      clearTimeout(t)
+-    }
+-  }, [filtro, productoFoco, version])
++      if (pr.error) return { data: null, count: null, error: pr.error }
++      const mapa = Object.fromEntries(pr.data.map((p) => [p.producto_id, p]))
++      return { ...res, data: res.data.map((p) => ({ ...p, prot: mapa[p.id] ?? null })) }
++    },
++  })
++
++  useEffect(() => {
++    if (productoFoco) abrir(productoFoco)
++  }, [productoFoco, abrir])
+ 
+   return (
+     <div>
+@@ -774,24 +934,66 @@ function ProteccionProductos({ productoFoco }) {
+         onChange={(e) => setFiltro(e.target.value)}
+         className={`${CLASE_INPUT} mt-3`}
+       />
+-      {estado.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
+-      {estado.error && <AvisoError mensaje="No se pudo cargar la protección de productos." onReintentar={() => setVersion((x) => x + 1)} />}
+-      {!estado.cargando && !estado.error && (
+-        <ul className="mt-3 space-y-2">
+-          {estado.productos.map((p) => (
+-            <FilaProteccionProducto key={`${p.id}-${estado.prot[p.id]?.actualizado_en ?? 'x'}`} producto={p} prot={estado.prot[p.id]} destacado={productoFoco === p.id} onGuardado={() => setVersion((x) => x + 1)} />
++      {lista.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
++      {lista.fallo && <AvisoError mensaje="No se pudo cargar la protección de productos." onReintentar={lista.recargar} />}
++      {!lista.cargando && !lista.error && (
++        <ul className={`mt-3 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((p) => (
++            <FilaProteccionProducto
++              key={p.id}
++              producto={p}
++              prot={p.prot}
++              valores={valoresDeFila(p.id, p.prot)}
++              abierto={abiertas.has(p.id)}
++              destacado={productoFoco === p.id}
++              onAlternar={alternar}
++              onCambiar={cambiar}
++              onLimpiarBorrador={limpiar}
++              onGuardado={lista.recargar}
++            />
+           ))}
+-          {estado.productos.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
+-          {estado.productos.length === 40 && <li className="text-center text-xs text-ink/50">Se muestran los primeros 40: usa el buscador para acotar.</li>}
++          {lista.filas.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
+         </ul>
+       )}
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista pagina={lista.pagina} totalPaginas={lista.totalPaginas} total={lista.total} tam={lista.tam} ocupado={lista.ocupado} onPagina={lista.irA} etiqueta="productos" />
++      )}
+     </div>
+   )
+ }
+ 
+-function Proteccion({ estado, servicios, servicioFoco, recargar }) {
++function Proteccion({ servicioFoco, activo, almacen }) {
+   const [filtro, setFiltro] = useState('')
+-  const lista = servicios.filter((s) => s.nombre.toLowerCase().includes(filtro.trim().toLowerCase()))
++  const termino = useDebounce(filtro.trim(), 250)
++  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeProteccion, 'servicio', almacen)
++
++  const lista = useListaPaginada({
++    activo,
++    clave: `${termino}|${servicioFoco ?? ''}`,
++    leer: async ({ desde, hasta }) => {
++      const base = supabase.from('servicios').select('id, nombre, precio, activo', { count: 'exact' })
++      const consulta =
++        servicioFoco && !termino
++          ? base.eq('id', servicioFoco)
++          : termino
++            ? base.ilike('nombre', patronIlike(termino)).order('nombre').order('id')
++            : base.order('nombre').order('id')
++      const res = await consulta.range(desde, hasta)
++      if (res.error) return res
++      const ids = res.data.map((s) => s.id)
++      const pr = ids.length
++        ? await supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en').in('servicio_id', ids)
++        : { data: [], error: null }
++      if (pr.error) return { data: null, count: null, error: pr.error }
++      const mapa = Object.fromEntries(pr.data.map((p) => [p.servicio_id, p]))
++      return { ...res, data: res.data.map((s) => ({ ...s, prot: mapa[s.id] ?? null })) }
++    },
++  })
++
++  useEffect(() => {
++    if (servicioFoco) abrir(servicioFoco)
++  }, [servicioFoco, abrir])
++
+   return (
+     <div>
+       <p className="mt-3 text-sm text-ink/60">
+@@ -805,12 +1007,30 @@ function Proteccion({ estado, servicios, servicioFoco, recargar }) {
+         onChange={(e) => setFiltro(e.target.value)}
+         className={`${CLASE_INPUT} mt-3`}
+       />
+-      <ul className="mt-3 space-y-2">
+-        {lista.map((s) => (
+-          <FilaProteccion key={`${s.id}-${estado.proteccion[s.id]?.actualizado_en ?? 'x'}`} servicio={s} prot={estado.proteccion[s.id]} destacado={servicioFoco === s.id} onGuardado={recargar} />
+-        ))}
+-        {lista.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
+-      </ul>
++      {lista.cargando && <p className="mt-3 text-center font-mono text-sm text-ink/60">Cargando...</p>}
++      {lista.fallo && <AvisoError mensaje="No se pudo cargar la protección de servicios." onReintentar={lista.recargar} />}
++      {!lista.cargando && !lista.error && (
++        <ul className={`mt-3 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((s) => (
++            <FilaProteccion
++              key={s.id}
++              servicio={s}
++              prot={s.prot}
++              valores={valoresDeFila(s.id, s.prot)}
++              abierto={abiertas.has(s.id)}
++              destacado={servicioFoco === s.id}
++              onAlternar={alternar}
++              onCambiar={cambiar}
++              onLimpiarBorrador={limpiar}
++              onGuardado={lista.recargar}
++            />
++          ))}
++          {lista.filas.length === 0 && <li className="text-center text-sm text-ink/60">Sin resultados.</li>}
++        </ul>
++      )}
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista pagina={lista.pagina} totalPaginas={lista.totalPaginas} total={lista.total} tam={lista.tam} ocupado={lista.ocupado} onPagina={lista.irA} etiqueta="servicios" />
++      )}
+     </div>
+   )
+ }
+@@ -818,12 +1038,12 @@ function Proteccion({ estado, servicios, servicioFoco, recargar }) {
+ // ---------------------------------------------------------------------------
+ // Programa (activación, tasas, umbrales)
+ // ---------------------------------------------------------------------------
+-function Programa({ estado, recargar }) {
++function Programa({ config, recargar, almacen }) {
+   const { mostrarToast } = useToast()
+-  const c = estado.config
++  const c = config
+   // Sin apertura ejecutada el servidor rechaza activar (migración 20261008000002): no se ofrece una acción que terminaría en error.
+   const activacionBloqueada = !c.activo && !c.apertura_ejecutada_en
+-  const [f, setF] = useState({
++  const [f, setFLocal] = useState(() => almacen.leer('programa', 'config') ?? {
+     tasaServMonedas: String(c.tasa_serv_monedas),
+     tasaServSoles: String(c.tasa_serv_soles),
+     tasaProdMonedas: String(c.tasa_prod_monedas),
+@@ -831,6 +1051,12 @@ function Programa({ estado, recargar }) {
+     umbralPremium: String(c.umbral_premium),
+     umbralVip: String(c.umbral_vip),
+   })
++  // Cada cambio también se guarda en el almacén de la pantalla: sobrevive a ir a otra subpestaña y volver.
++  const setF = (actualizar) => {
++    const siguiente = typeof actualizar === 'function' ? actualizar(f) : actualizar
++    setFLocal(siguiente)
++    almacen.escribir('programa', 'config', siguiente)
++  }
+   const [guardando, setGuardando] = useState(false)
+   const [confirmando, setConfirmando] = useState(false)
+ 
+@@ -864,6 +1090,7 @@ function Programa({ estado, recargar }) {
+       return
+     }
+     mostrarToast('Configuración guardada. Las tasas nuevas aplican a ventas futuras.', 'exito')
++    almacen.borrar('programa', 'config')
+     recargar()
+   }
+ 
+@@ -954,7 +1181,7 @@ function Programa({ estado, recargar }) {
+ // ---------------------------------------------------------------------------
+ // Página
+ // ---------------------------------------------------------------------------
+-export default function RecompensasWeb() {
++export default function RecompensasWeb({ activo = true }) {
+   const [params, setParams] = useSearchParams()
+   const pestana = PESTANAS.some((p) => p.id === params.get('tab')) ? params.get('tab') : 'monedas'
+   const servicioFoco = params.get('servicio')
+@@ -963,36 +1190,23 @@ export default function RecompensasWeb() {
+   const desdeParam = params.get('desde')
+   const desde = desdeParam && /^\/[a-z-]+$/.test(desdeParam) ? desdeParam : null
+ 
+-  const [estado, setEstado] = useState(null)
+-  const [servicios, setServicios] = useState([])
++  // Fase 5: al abrir solo se lee la configuración mínima del programa (una fila). Cada subpestaña pide sus datos al entrar:
++  // catálogo de monedas / sellos, protección de servicios y de productos paginados, y los canjes de cada premio al expandirlo.
++  const { usuario } = useAuth()
++  const almacen = useAlmacenBorradores(usuario?.id ?? null)
++  const [config, setConfig] = useState(null)
+   const [cargando, setCargando] = useState(true)
+   const [error, setError] = useState(null)
+ 
+   const cargar = useCallback(async () => {
+-    const [cat, prot, canj, cfg, serv] = await Promise.all([
+-      supabase.from('recompensas_catalogo').select('*').order('creado_en', { ascending: false }),
+-      supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en'),
+-      supabase.from('recompensas_canjes').select('catalogo_id'),
+-      supabase.from('recompensas_config').select('*').eq('id', 1).single(),
+-      // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
+-      leerServicios(supabase, { columnas: 'id, nombre, precio, activo' }).then(
+-        (data) => ({ data, error: null }),
+-        (error) => ({ data: null, error }),
+-      ),
+-    ])
+-    const falla = [cat, prot, canj, cfg, serv].find((r) => r.error)
+-    if (falla) {
++    const cfg = await supabase.from('recompensas_config').select('*').eq('id', 1).single()
++    if (cfg.error) {
+       // Un error nunca se presenta como lista vacía o valor 0.
+       setError('No se pudo cargar la administración de Recompensas.')
+       setCargando(false)
+       return
+     }
+-    const canjes = {}
+-    for (const c of canj.data) canjes[c.catalogo_id] = (canjes[c.catalogo_id] ?? 0) + 1
+-    const proteccion = {}
+-    for (const p of prot.data) proteccion[p.servicio_id] = p
+-    setServicios(serv.data)
+-    setEstado({ premios: cat.data, canjes, proteccion, config: cfg.data })
++    setConfig(cfg.data)
+     setError(null)
+     setCargando(false)
+   }, [])
+@@ -1040,22 +1254,19 @@ export default function RecompensasWeb() {
+       {cargando && <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>}
+       {!cargando && error && <AvisoError mensaje={error} onReintentar={() => { setCargando(true); cargar() }} />}
+ 
+-      {!cargando && !error && estado && (
+-        <div role="tabpanel" aria-label={PESTANAS.find((p) => p.id === pestana).label}>
++      {!cargando && !error && config && (
++        <div key={usuario?.id ?? 'sin-cuenta'} role="tabpanel" aria-label={PESTANAS.find((p) => p.id === pestana).label}>
+           {(pestana === 'monedas' || pestana === 'sellos') && (
+             <Catalogo
++              key={pestana}
+               origen={pestana === 'monedas' ? 'MONEDAS' : 'SELLOS'}
+-              estado={estado}
+-              servicios={servicios}
+-              sellosPorPremio={estado.config.sellos_por_premio}
+-              recargar={cargar}
++              activo={activo}
++              sellosPorPremio={config.sellos_por_premio}
+             />
+           )}
+-          {pestana === 'proteccion' && (
+-            <Proteccion estado={estado} servicios={servicios} servicioFoco={servicioFoco} recargar={cargar} />
+-          )}
+-          {pestana === 'proteccion-productos' && <ProteccionProductos productoFoco={productoFoco} />}
+-          {pestana === 'programa' && <Programa key={estado.config.actualizado_en} estado={estado} recargar={cargar} />}
++          {pestana === 'proteccion' && <Proteccion servicioFoco={servicioFoco} activo={activo} almacen={almacen} />}
++          {pestana === 'proteccion-productos' && <ProteccionProductos productoFoco={productoFoco} activo={activo} almacen={almacen} />}
++          {pestana === 'programa' && <Programa key={`${usuario?.id ?? 'sin-cuenta'}-${config.actualizado_en}`} config={config} recargar={cargar} almacen={almacen} />}
+         </div>
+       )}
+     </div>
+diff --git a/src/pages/ReferidosWeb.jsx b/src/pages/ReferidosWeb.jsx
+index b82c704..99fcd9c 100644
+--- a/src/pages/ReferidosWeb.jsx
++++ b/src/pages/ReferidosWeb.jsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useMemo, useState } from 'react'
++import { useEffect, useState } from 'react'
+ import AyudaCampo from '../components/AyudaCampo.jsx'
+ import BarraBusqueda from '../components/BarraBusqueda.jsx'
+ import SelectorOrden from '../components/SelectorOrden.jsx'
+@@ -10,6 +10,9 @@ import { nivelDeCupon } from '../lib/cupones.js'
+ import Etiqueta from '../components/Etiqueta.jsx'
+ import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import PaginadorLista from '../components/PaginadorLista.jsx'
++import { useCuponesAdmin } from '../hooks/useCuponesAdmin.js'
++import { ORIGENES_REFERIDOS } from '../lib/listasAdmin.js'
+ 
+ const formularioVacio = {
+   creditoReferidor: '15',
+@@ -36,9 +39,6 @@ const OPCIONES_FILTRO = [
+   { id: 'CANJEADO', label: 'Canjeados' },
+ ]
+ 
+-const normalizar = (texto) =>
+-  (texto ?? '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+-
+ // Panel administrativo de "Referidos Web" (cuelga de /web como "padre",
+ // admin-only, junto a Puntos Web) — configura el crédito en soles que
+ // gana cada lado y muestra los cupones emitidos (§7.26/§7.27,
+@@ -48,55 +48,30 @@ const normalizar = (texto) =>
+ // venta — acá solo hay visibilidad, el canje en sí pasa por el nuevo
+ // modo "Cupón" del botón de descuento en Ventas.jsx (pide el código,
+ // nunca un monto a mano).
+-export default function ReferidosWeb() {
++export default function ReferidosWeb({ activo = true }) {
+   const { mostrarToast } = useToast()
+   const [formulario, setFormulario] = useState(formularioVacio)
+-  const [cupones, setCupones] = useState([])
+   const [cargando, setCargando] = useState(true)
+   const [guardando, setGuardando] = useState(false)
+-  const [filtro, setFiltro] = useState('RECIENTES')
+-  const [busqueda, setBusqueda] = useState('')
+-
+-  // La consulta ya llega ordenada por creado_en desc, así que "Más recientes"
+-  // es el orden base y los otros filtros solo recortan por estado.
+-  const cuponesVisibles = useMemo(() => {
+-    const consulta = normalizar(busqueda)
+-    return cupones.filter((cupon) => {
+-      if (filtro !== 'RECIENTES' && cupon.estado !== filtro) return false
+-      if (!consulta) return true
+-      return normalizar(cupon.codigo).includes(consulta) || normalizar(cupon.cliente?.nombre).includes(consulta)
+-    })
+-  }, [cupones, filtro, busqueda])
++  // Fase 5: los cupones emitidos se leen paginados (hasta 40 por página) con filtro, búsqueda y contadores globales del
++  // servidor; la configuración (crédito de cada lado) es una sola fila y se lee aparte.
++  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_REFERIDOS, activo })
+ 
+   useEffect(() => {
+-    Promise.all([
+-      supabase
+-        .from('config_referidos')
+-        .select('credito_referidor, credito_referido')
+-        .eq('id', 1)
+-        .single(),
+-      supabase
+-        .from('cupones')
+-        // "clientes!cliente_id" desambigua: cupones tiene DOS FK a
+-        // clientes (cliente_id y referido_id) — sin el hint del FK,
+-        // PostgREST no sabe cuál usar y el select falla entero.
+-        // .in(...) (§7.58): desde que existen los cupones de
+-        // Fidelización, sin este filtro se mezclaban acá también —
+-        // esta pantalla es solo de los de Referidos, Fidelización
+-        // tiene su propia lista en Fidelización Web.
+-        .select('codigo, origen, valor, estado, creado_en, cliente:clientes!cliente_id(nombre)')
+-        .in('origen', ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA'])
+-        .order('creado_en', { ascending: false }),
+-    ]).then(([configRes, cuponesRes]) => {
+-      if (configRes.data) {
+-        setFormulario({
+-          creditoReferidor: String(configRes.data.credito_referidor),
+-          creditoReferido: String(configRes.data.credito_referido),
+-        })
+-      }
+-      setCupones(cuponesRes.data ?? [])
+-      setCargando(false)
+-    })
++    supabase
++      .from('config_referidos')
++      .select('credito_referidor, credito_referido')
++      .eq('id', 1)
++      .single()
++      .then((configRes) => {
++        if (configRes.data) {
++          setFormulario({
++            creditoReferidor: String(configRes.data.credito_referidor),
++            creditoReferido: String(configRes.data.credito_referido),
++          })
++        }
++        setCargando(false)
++      })
+   }, [])
+ 
+   function actualizarCampo(campo, valor) {
+@@ -200,22 +175,40 @@ export default function ReferidosWeb() {
+         />
+       </div>
+ 
+-      {cupones.length === 0 ? (
++      {conteos && (
++        <p className="mt-1 font-mono text-xs text-ink/60" data-conteos>
++          {conteos.DISPONIBLE + conteos.CANJEADO + conteos.ANULADO} emitidos · {conteos.DISPONIBLE} disponibles · {conteos.CANJEADO} canjeados
++          {conteos.ANULADO > 0 ? ` · ${conteos.ANULADO} anulados` : ''}
++        </p>
++      )}
++
++      {lista.fallo && (
++        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
++          No se pudo cargar los cupones.{' '}
++          <button type="button" onClick={lista.recargar} className="underline">
++            Reintentar
++          </button>
++        </p>
++      )}
++
++      {lista.cargando ? (
++        <p className="mt-6 text-center font-mono text-sm text-ink/60">Cargando...</p>
++      ) : lista.error ? null : lista.total === 0 && !termino && !estado ? (
+         <EstadoVacio icono={Gift} mensaje="Todavía no se emitió ningún cupón." />
+-      ) : cuponesVisibles.length === 0 ? (
++      ) : lista.filas.length === 0 ? (
+         <EstadoVacio icono={Gift} mensaje="Ningún cupón coincide con la búsqueda o el filtro." />
+       ) : (
+-        <div className="mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)]">
+-          {cuponesVisibles.map((cupon) => {
++        <div className={`mt-2 space-y-2 px-[calc(var(--separador-vertical-secundario)*2)] py-[calc(var(--separador-horizontal-secundario)*2)] transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((cupon) => {
+             const etiquetaEstado = ETIQUETAS_ESTADO[cupon.estado] ?? ETIQUETAS_ESTADO.DISPONIBLE
+             return (
+-              <EnvolturaCupon key={cupon.codigo} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
++              <EnvolturaCupon key={cupon.id} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
+                 <div className="relative flex items-center gap-3 p-3">
+                   <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
+                   <div className="min-w-0 flex-1">
+                     <p className={`font-mono text-base font-semibold tracking-widest ${NIVEL_CUPON.claseTexto}`}>{cupon.codigo}</p>
+                     <p className="truncate text-xs text-white/50">
+-                      {cupon.cliente?.nombre ?? '—'} · {ETIQUETAS_ORIGEN[cupon.origen] ?? cupon.origen}
++                      {cupon.cliente_nombre ?? '—'} · {ETIQUETAS_ORIGEN[cupon.origen] ?? cupon.origen}
+                     </p>
+                   </div>
+                   <div className="shrink-0 text-right">
+@@ -228,6 +221,18 @@ export default function ReferidosWeb() {
+           })}
+         </div>
+       )}
++
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista
++          pagina={lista.pagina}
++          totalPaginas={lista.totalPaginas}
++          total={lista.total}
++          tam={lista.tam}
++          ocupado={lista.ocupado}
++          onPagina={lista.irA}
++          etiqueta="cupones"
++        />
++      )}
+     </div>
+   )
+ }
+diff --git a/src/pages/ResenasWeb.jsx b/src/pages/ResenasWeb.jsx
+index e70aa11..98bcccc 100644
+--- a/src/pages/ResenasWeb.jsx
++++ b/src/pages/ResenasWeb.jsx
+@@ -1,12 +1,17 @@
+-import { useEffect, useRef, useState } from 'react'
++import { useCallback, useEffect, useRef, useState } from 'react'
+ import { ArrowBigDown, MessageCircle, Star } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import { manejarActivacionTeclado } from '../lib/teclado.js'
++import { contarResenasPorEstado, ESTADOS_RESENA, leerResenas } from '../lib/listasAdmin.js'
++import { useDebounce } from '../hooks/useDebounce.js'
++import { useListaPaginada } from '../hooks/useListaPaginada.js'
+ import BarraBusqueda from '../components/BarraBusqueda.jsx'
+ import CampoColapsable from '../components/CampoColapsable.jsx'
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
++import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
++import PaginadorLista from '../components/PaginadorLista.jsx'
+ 
+ const ETIQUETAS_ESTADO = {
+   PENDIENTE: { texto: 'Pendiente', clase: 'bg-amber/15 text-amber' },
+@@ -52,52 +57,35 @@ const TABLA_POR_ORIGEN = {
+ export default function ResenasWeb({ activo = true }) {
+   const { mostrarToast } = useToast()
+ 
+-  const [resenas, setResenas] = useState([])
+-  const [cargando, setCargando] = useState(true)
+-  const [error, setError] = useState(null)
+   const [busqueda, setBusqueda] = useState('')
++  const termino = useDebounce(busqueda.trim(), 300)
++  const [estadoFiltro, setEstadoFiltro] = useState(null)
+   const [abiertos, setAbiertos] = useState(() => new Set())
+   const [actualizando, setActualizando] = useState(null)
+-  const primeraCargaHecha = useRef(false)
+ 
+-  async function cargarResenas(silencioso = false) {
+-    if (!silencioso) setCargando(true)
+-    const [generales, deProducto, deServicio] = await Promise.all([
+-      supabase
+-        .from('resenas')
+-        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono)')
+-        .order('creado_en', { ascending: false }),
+-      supabase
+-        .from('resenas_producto')
+-        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), productos(nombre)')
+-        .order('creado_en', { ascending: false }),
+-      supabase
+-        .from('resenas_servicio')
+-        .select('id, calificacion, comentario, estado, creado_en, clientes(nombre, telefono), servicios(nombre)')
+-        .order('creado_en', { ascending: false }),
+-    ])
++  // Fase 5: las tres tablas (general, producto y servicio) se leen juntas, ya ordenadas por fecha, desde la vista
++  // resenas_moderacion: hasta 40 reseñas por página, búsqueda por clienta / producto / servicio en el servidor y total exacto.
++  const lista = useListaPaginada({
++    activo,
++    clave: `${termino}|${estadoFiltro ?? ''}`,
++    leer: ({ desde, hasta }) => leerResenas(supabase, { termino, estado: estadoFiltro, desde, hasta }),
++  })
+ 
+-    if (generales.error || deProducto.error || deServicio.error) {
+-      setError('No se pudo cargar las reseñas.')
+-    } else {
+-      setError(null)
+-      const todas = [
+-        ...(generales.data ?? []).map((r) => ({ ...r, origen: 'GENERAL' })),
+-        ...(deProducto.data ?? []).map((r) => ({ ...r, origen: 'PRODUCTO' })),
+-        ...(deServicio.data ?? []).map((r) => ({ ...r, origen: 'SERVICIO' })),
+-      ].sort((a, b) => new Date(b.creado_en) - new Date(a.creado_en))
+-      setResenas(todas)
++  // Contadores GLOBALES por estado (p. ej. cuántas faltan por moderar en TODA la tabla, no solo en la página).
++  const [conteos, setConteos] = useState(null)
++  const generacionConteos = useRef(0)
++  const refrescarConteos = useCallback(async () => {
++    const gen = (generacionConteos.current += 1)
++    try {
++      const nuevos = await contarResenasPorEstado(supabase)
++      if (gen === generacionConteos.current) setConteos(nuevos)
++    } catch {
++      if (gen === generacionConteos.current) setConteos(null)
+     }
+-    setCargando(false)
+-  }
+-
++  }, [])
+   useEffect(() => {
+-    if (!activo) return
+-    const silencioso = primeraCargaHecha.current
+-    primeraCargaHecha.current = true
+-    cargarResenas(silencioso)
+-    // eslint-disable-next-line react-hooks/exhaustive-deps
+-  }, [activo])
++    if (activo) refrescarConteos()
++  }, [activo, refrescarConteos])
+ 
+   function alternarAbierto(id) {
+     setAbiertos((anterior) => {
+@@ -122,20 +110,10 @@ export default function ResenasWeb({ activo = true }) {
+     }
+ 
+     mostrarToast(estado === 'APROBADA' ? 'Reseña publicada.' : 'Reseña rechazada.', 'exito')
+-    cargarResenas(true)
++    lista.recargar()
++    refrescarConteos()
+   }
+ 
+-  const filtradas = busqueda.trim()
+-    ? resenas.filter((r) => {
+-        const termino = busqueda.trim().toLowerCase()
+-        return (
+-          (r.clientes?.nombre ?? '').toLowerCase().includes(termino) ||
+-          (r.productos?.nombre ?? '').toLowerCase().includes(termino) ||
+-          (r.servicios?.nombre ?? '').toLowerCase().includes(termino)
+-        )
+-      })
+-    : resenas
+-
+   return (
+     <div
+       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
+@@ -151,19 +129,30 @@ export default function ResenasWeb({ activo = true }) {
+         />
+       </div>
+ 
+-      {error && (
+-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+-          {error}
++      <FiltroEstadoContadores
++        etiqueta="Filtrar reseñas por estado"
++        opciones={ESTADOS_RESENA.map((id) => ({ id, label: ETIQUETAS_ESTADO[id].texto }))}
++        valor={estadoFiltro}
++        onCambiar={setEstadoFiltro}
++        conteos={conteos}
++      />
++
++      {lista.fallo && (
++        <p role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
++          No se pudo cargar las reseñas.{' '}
++          <button type="button" onClick={lista.recargar} className="underline">
++            Reintentar
++          </button>
+         </p>
+       )}
+ 
+-      {cargando ? (
++      {lista.cargando ? (
+         <EsqueletoLista columnas={3} />
+-      ) : filtradas.length === 0 ? (
+-        <EstadoVacio icono={Star} mensaje="No hay reseñas todavía." />
++      ) : lista.error ? null : lista.filas.length === 0 ? (
++        <EstadoVacio icono={Star} mensaje={termino || estadoFiltro ? 'Ninguna reseña coincide con la búsqueda o el filtro.' : 'No hay reseñas todavía.'} />
+       ) : (
+-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+-          {filtradas.map((resena) => {
++        <div className={`mt-4 grid grid-cols-1 gap-3 transition-opacity sm:grid-cols-2 lg:grid-cols-3 ${lista.ocupado ? 'opacity-60' : ''}`}>
++          {lista.filas.map((resena) => {
+             const abierto = abiertos.has(`${resena.origen}-${resena.id}`)
+             const etiqueta = ETIQUETAS_ESTADO[resena.estado] ?? ETIQUETAS_ESTADO.PENDIENTE
+ 
+@@ -182,13 +171,13 @@ export default function ResenasWeb({ activo = true }) {
+                   </div>
+                   <div className="min-w-0 flex-1">
+                     <p className="truncate text-sm font-medium text-ink">
+-                      {resena.clientes?.nombre ?? 'Cliente'}
++                      {resena.cliente_nombre ?? 'Cliente'}
+                     </p>
+                     <p className="truncate text-[11px] text-ink/60">
+                       {resena.origen === 'PRODUCTO'
+-                        ? `Producto: ${resena.productos?.nombre ?? 'eliminado'}`
++                        ? `Producto: ${resena.item_nombre ?? 'eliminado'}`
+                         : resena.origen === 'SERVICIO'
+-                          ? `Servicio: ${resena.servicios?.nombre ?? 'eliminado'}`
++                          ? `Servicio: ${resena.item_nombre ?? 'eliminado'}`
+                           : 'Reseña general'}
+                     </p>
+                     <div className="flex gap-0.5">
+@@ -212,7 +201,7 @@ export default function ResenasWeb({ activo = true }) {
+                   />
+                 </div>
+ 
+-                <CampoColapsable abierto={abierto}>
++                <CampoColapsable abierto={abierto} diferido>
+                   <div className="border-t border-border p-3">
+                     <p className="font-mono text-xs text-ink/50">
+                       {formatoFecha.format(new Date(resena.creado_en))}
+@@ -221,9 +210,9 @@ export default function ResenasWeb({ activo = true }) {
+                       <p className="mt-2 text-sm text-ink/80">"{resena.comentario}"</p>
+                     )}
+ 
+-                    {resena.clientes?.telefono && (
++                    {resena.cliente_telefono && (
+                       <a
+-                        href={`https://wa.me/${numeroWhatsapp(resena.clientes.telefono)}`}
++                        href={`https://wa.me/${numeroWhatsapp(resena.cliente_telefono)}`}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="mt-3 flex items-center gap-1.5 text-xs text-green"
+@@ -270,6 +259,18 @@ export default function ResenasWeb({ activo = true }) {
+           })}
+         </div>
+       )}
++
++      {!lista.cargando && !lista.error && (
++        <PaginadorLista
++          pagina={lista.pagina}
++          totalPaginas={lista.totalPaginas}
++          total={lista.total}
++          tam={lista.tam}
++          ocupado={lista.ocupado}
++          onPagina={lista.irA}
++          etiqueta="reseñas"
++        />
++      )}
+     </div>
+   )
+ }
+diff --git a/src/pages/cliente/InicioCliente.jsx b/src/pages/cliente/InicioCliente.jsx
+index dfca4fa..636f3b2 100644
+--- a/src/pages/cliente/InicioCliente.jsx
++++ b/src/pages/cliente/InicioCliente.jsx
+@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { ArrowUpRight, CalendarPlus, MapPin, MessageCircle, Ticket, Users } from 'lucide-react'
+ import { supabase } from '../../lib/supabase.js'
+-import { leerServicios } from '../../lib/buscarServicios.js'
+ import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
++import { COLUMNAS_SERVICIO_TARJETA } from '../../lib/catalogoPublico.js'
++import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
+ import { useAuth } from '../../context/AuthContext.jsx'
+ import { useTemaWeb } from '../../context/TemaWebContext.jsx'
+ import { useToast } from '../../context/ToastContext.jsx'
+ import { usePerfilCliente } from '../../context/PerfilClienteContext.jsx'
+ import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+ import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
++import { useLectura } from '../../hooks/useLectura.js'
+ import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
+ import { useSecuenciaScroll } from '../../hooks/useSecuenciaScroll.js'
+ import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
+@@ -206,6 +208,91 @@ const CHISPAS_PROMO = [
+   { bottom: '-7px', left: '30%', size: 9, delay: '-2.4s' },
+ ]
+ 
++// Fase 5: Inicio pide SOLO lo que muestra, cada cosa por su cuenta (useLectura): ya no se descarga el catálogo completo de servicios
++// para escoger cuatro, ni todas las reseñas y la galería para mostrar tres. Límites de diseño explícitos:
++const DESTACADOS_INICIO = 4 // «Lo más pedido»
++const CANDIDATOS_DESTACADOS = 12 // del ranking se consideran los primeros; basta para saltar los inactivos
++const GALERIA_INICIO = 3 // parejas antes/después
++const TARJETAS_RESENAS_INICIO = 3 // tarjetas de reseñas
++
++async function leerTopServicios() {
++  const { data: ranking, error } = await supabase.rpc('servicios_mas_pedidos', { dias: 30 }).limit(CANDIDATOS_DESTACADOS)
++  if (error) throw error
++  const ids = (ranking ?? []).map((fila) => fila.servicio_id)
++  if (ids.length === 0) return []
++  const { data, error: errorServicios } = await supabase.from('servicios').select(COLUMNAS_SERVICIO_TARJETA).in('id', ids).eq('activo', true)
++  if (errorServicios) throw errorServicios
++  const porId = new Map((data ?? []).map((servicio) => [servicio.id, servicio]))
++  return ids.map((id) => porId.get(id)).filter(Boolean).slice(0, DESTACADOS_INICIO)
++}
++
++// Visitante: sin cita ni consulta alguna. Con sesión, solo la próxima cita pendiente o confirmada de ESTA clienta.
++async function leerProximaCita(usuarioId) {
++  if (!usuarioId) return null
++  const miId = await obtenerMiClienteId()
++  if (!miId) return null
++  const { data, error } = await supabase
++    .from('citas')
++    .select('id, fecha_hora, cita_servicios(servicios(nombre))')
++    .eq('cliente_id', miId)
++    .gte('fecha_hora', new Date().toISOString())
++    .in('estado', ['PENDIENTE', 'CONFIRMADA'])
++    .order('fecha_hora')
++    .limit(1)
++  if (error) throw error
++  return data?.[0] ?? null
++}
++
++async function leerMisPuntos(usuarioId) {
++  if (!usuarioId) return null
++  const { data, error } = await supabase.rpc('mis_puntos')
++  if (error) throw error
++  return data?.[0] ?? null
++}
++
++// La promoción vigente es una sola (la que vence primero; RLS ya filtra activa y en fecha). Si la clienta ya la reclamó se
++// averigua con un filtro por esa promoción (no se baja toda su lista de cupones).
++async function leerPromocionActiva(usuarioId) {
++  const { data, error } = await supabase
++    .from('promociones')
++    .select('id, titulo, descripcion, tipo_descuento, valor, vigente_hasta')
++    .order('vigente_hasta', { ascending: true, nullsFirst: false })
++    .limit(1)
++  if (error) throw error
++  const promo = data?.[0] ?? null
++  if (!promo || !usuarioId) return { promo, cupon: null }
++  // promocion_id solo existe en mis_cupones() desde 127_reclamar_cupon_promocion.sql: sin ese esquema la consulta falla y
++  // el botón parte en «Reclamar cupón», como antes.
++  const { data: cupones } = await supabase.rpc('mis_cupones').eq('promocion_id', promo.id).limit(1)
++  return { promo, cupon: cupones?.[0] ?? null }
++}
++
++// Reseñas: el total y el promedio salen de las calificaciones (una columna entera por reseña aprobada, con conteo exacto del
++// servidor; el servidor entrega como máximo max_rows = 1000, las más recientes) y las tarjetas son solo las 3 últimas con su
++// servicio. Si resenas_inicio() aún no existe en la base, se cae a las reseñas generales (sin servicio).
++async function leerResumenResenas() {
++  const [generales, tarjetas] = await Promise.all([
++    supabase.rpc('resenas_publicas', {}, { count: 'exact' }).select('calificacion'),
++    supabase.rpc('resenas_inicio').limit(TARJETAS_RESENAS_INICIO),
++  ])
++  if (generales.error) throw generales.error
++  let filasTarjetas = tarjetas.data ?? []
++  if (tarjetas.error) {
++    const respaldo = await supabase.rpc('resenas_publicas').limit(TARJETAS_RESENAS_INICIO)
++    filasTarjetas = respaldo.data ?? []
++  }
++  const calificaciones = (generales.data ?? []).map((fila) => fila.calificacion)
++  // Sin conteo exacto del servidor el total NO se presenta como exacto: se marca como «al menos» lo recibido.
++  const exacto = Number.isSafeInteger(generales.count)
++  return { total: exacto ? generales.count : calificaciones.length, exacto, calificaciones, tarjetas: filasTarjetas }
++}
++
++async function leerGaleriaInicio() {
++  const { data, error } = await supabase.rpc('galeria_para_web').limit(GALERIA_INICIO)
++  if (error) throw error
++  return data ?? []
++}
++
+ export default function InicioCliente() {
+   const { mostrarToast } = useToast()
+   const { perfil } = usePerfilCliente()
+@@ -217,124 +304,51 @@ export default function InicioCliente() {
+   const contenedorRef = useRef(null)
+   const { contenedorHeroRef, imagenAntesRef } = useRevelarAntes()
+ 
+-  const [cargando, setCargando] = useState(true)
+-  const [topServicios, setTopServicios] = useState([])
+-  const [proximaCita, setProximaCita] = useState(null)
+-  const [puntosCliente, setPuntosCliente] = useState(null)
+   const { session, usuario } = useAuth()
+   const usuarioId = usuario?.id ?? null
+   const requerirSesion = useRequerirSesion()
+   // Con el programa activo mis_puntos().puntos es el saldo GASTABLE: aquí se muestra como monedas, con su propio nombre.
+   const programa = useProgramaRecompensas(session?.user?.id ?? null)
+   const saldoProg = programa.saldo.estado === 'ok' ? programa.saldo.datos : null
+-  const [promocion, setPromocion] = useState(null)
+-  const [cuponPromocion, setCuponPromocion] = useState(null)
+   const [reclamando, setReclamando] = useState(false)
+-  const [resenas, setResenas] = useState([])
+-  // Tarjetas de "Lo que dicen nuestras clientas": reseñas con fecha y servicio.
+-  const [resenasTarjetas, setResenasTarjetas] = useState([])
+-  const [galeria, setGaleria] = useState([])
+-  const [contacto, setContacto] = useState(null)
+-  const [horario, setHorario] = useState(null)
+-
+-  useEffect(() => {
+-    let vigente = true
+-
+-    async function cargar() {
+-      const ahoraIso = new Date().toISOString()
+-      // Visitante: solo contenido público. Nada de lo personal (próxima cita, puntos,
+-      // cupones) se consulta sin sesión.
+-      const miId = usuarioId ? await obtenerMiClienteId() : null
+-      const [
+-        serviciosRes,
+-        masPedidoRes,
+-        proximaCitaRes,
+-        puntosRes,
+-        promocionesRes,
+-        cuponesRes,
+-        resenasRes,
+-        resenasInicioRes,
+-        galeriaRes,
+-        contactoRes,
+-        horarioRes,
+-      ] = await Promise.all([
+-        leerServicios(supabase, { columnas: 'id, nombre, categoria, precio, duracion_min, foto_url', soloActivos: true }).then(
+-          (data) => ({ data }),
+-          () => ({ data: [] }),
+-        ),
+-        supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
+-        miId
+-          ? supabase
+-              .from('citas')
+-              .select('id, fecha_hora, cita_servicios(servicios(nombre))')
+-              .eq('cliente_id', miId)
+-              .gte('fecha_hora', ahoraIso)
+-              .in('estado', ['PENDIENTE', 'CONFIRMADA'])
+-              .order('fecha_hora')
+-              .limit(1)
+-          : Promise.resolve({ data: [] }),
+-        usuarioId ? supabase.rpc('mis_puntos') : Promise.resolve({ data: [] }),
+-        supabase
+-          .from('promociones')
+-          .select('id, titulo, descripcion, tipo_descuento, valor, vigente_hasta')
+-          .order('vigente_hasta', { ascending: true, nullsFirst: false }),
+-        usuarioId ? supabase.rpc('mis_cupones') : Promise.resolve({ data: [] }),
+-        supabase.rpc('resenas_publicas'),
+-        supabase.rpc('resenas_inicio'),
+-        supabase.rpc('galeria_para_web'),
+-        supabase.rpc('datos_contacto'),
+-        supabase.rpc('horario_atencion'),
+-      ])
+-
+-      if (!vigente) return
+-
+-      const servicios = serviciosRes.data ?? []
+-      const masPedidoIds = (masPedidoRes.data ?? []).map((fila) => fila.servicio_id)
+-      setTopServicios(
+-        masPedidoIds
+-          .map((id) => servicios.find((s) => s.id === id))
+-          .filter(Boolean)
+-          .slice(0, 4),
+-      )
+-
+-      setProximaCita(proximaCitaRes.data?.[0] ?? null)
+-      setPuntosCliente(puntosRes.data?.[0] ?? null)
+-
+-      const promocionActiva = promocionesRes.data?.[0] ?? null
+-      setPromocion(promocionActiva)
+-      if (promocionActiva) {
+-        // promocion_id todavía no existe en mis_cupones() hasta aplicar
+-        // 127_reclamar_cupon_promocion.sql — hasta entonces esto no
+-        // encuentra nada y el botón siempre parte en "Reclamar cupón".
+-        const cuponExistente = (cuponesRes.data ?? []).find((c) => c.promocion_id === promocionActiva.id)
+-        setCuponPromocion(cuponExistente ?? null)
+-      }
+-
+-      setResenas(resenasRes.data ?? [])
+-      // Si resenas_inicio() aún no está aplicada en la base, se cae a las
+-      // reseñas generales (sin servicio) en vez de dejar la sección vacía.
+-      setResenasTarjetas(resenasInicioRes.error ? (resenasRes.data ?? []) : (resenasInicioRes.data ?? []))
+-      // El diseño aprobado son 3 parejas (tope acá), pero el negocio las
+-      // está cargando de a poco en Galería Web — se muestran las que ya
+-      // existan (mínimo 1) en vez de exigir las 3 completas.
+-      setGaleria((galeriaRes.data ?? []).slice(0, 3))
+-      setContacto(contactoRes.data?.[0] ?? null)
+-      setHorario(horarioRes.data?.[0] ?? null)
+-      setCargando(false)
+-    }
+-
+-    cargar()
+-    return () => {
+-      vigente = false
+-    }
+-  }, [usuarioId])
++  // Cupón que la clienta acaba de reclamar en esta pantalla (atado a su cuenta: no sobrevive a un cambio de usuario).
++  const [reclamado, setReclamado] = useState({ dueno: null, cupon: null })
++
++  // Fase 5: lecturas independientes. El hero y la tira se pintan de inmediato; cada sección aparece cuando llega lo suyo y una
++  // dependencia lenta o caída solo oculta su propia sección. Visitante: nada personal se consulta.
++  const topRes = useLectura(leerTopServicios)
++  const citaRes = useLectura(() => leerProximaCita(usuarioId), usuarioId)
++  const puntosRes = useLectura(() => leerMisPuntos(usuarioId), usuarioId)
++  const promoRes = useLectura(() => leerPromocionActiva(usuarioId), usuarioId)
++  const resenasRes = useLectura(leerResumenResenas)
++  const galeriaRes = useLectura(leerGaleriaInicio)
++  // Contacto y horario: lecturas COMPARTIDAS con el pie de página y las demás pantallas (caché de vida corta, sin duplicados).
++  const contactoRes = useLectura(obtenerContacto)
++  const horarioRes = useLectura(obtenerHorario)
++
++  const topServicios = topRes.datos ?? []
++  const proximaCita = citaRes.datos
++  const citaCargando = citaRes.estado === 'cargando'
++  const puntosCliente = puntosRes.datos
++  const promocion = promoRes.datos?.promo ?? null
++  const cuponPromocion = (reclamado.dueno === usuarioId ? reclamado.cupon : null) ?? promoRes.datos?.cupon ?? null
++  const calificaciones = resenasRes.datos?.calificaciones ?? []
++  const totalResenas = resenasRes.datos?.total ?? 0
++  const totalExacto = resenasRes.datos?.exacto ?? true
++  // El servidor entrega como máximo max_rows calificaciones: con más reseñas aprobadas el promedio es el de las más recientes.
++  const promedioParcial = calificaciones.length < totalResenas
++  const resenasTarjetas = resenasRes.datos?.tarjetas ?? []
++  const galeria = galeriaRes.datos ?? []
++  const galeriaLista = galeriaRes.estado === 'ok'
++  const contacto = contactoRes.datos
++  const horario = horarioRes.datos
+ 
+   const ENTRADA_FIJA = esDesktop
+     ? { foto: 200, eyebrow: 150, titulo: 300, subtitulo: 420, botones: 540, confianza: 680, tira: 850, promo: 950 }
+     : { foto: 100, eyebrow: 350, titulo: 480, subtitulo: 560, botones: 650, confianza: 780, tira: 900, promo: 1000 }
+ 
+   const { primeraFotoRef, filaRef, estadoFoto, claseSacudida, enCurso, puntos } = useSecuenciaScroll({
+-    activo: !cargando && galeria.length > 0,
++    activo: galeriaLista && galeria.length > 0,
+     reducirMovimiento,
+     totalFotos: galeria.length * 2,
+   })
+@@ -346,7 +360,7 @@ export default function InicioCliente() {
+   // contenedores tienen alto fijo y fondo, así que no hay salto de diseño.
+   const [galeriaCerca, setGaleriaCerca] = useState(false)
+   useEffect(() => {
+-    if (galeriaCerca || cargando || galeria.length === 0) return undefined
++    if (galeriaCerca || !galeriaLista || galeria.length === 0) return undefined
+     const fila = filaRef.current
+     if (!fila) return undefined
+     const observador = new IntersectionObserver(
+@@ -360,7 +374,7 @@ export default function InicioCliente() {
+     )
+     observador.observe(fila)
+     return () => observador.disconnect()
+-  }, [galeriaCerca, cargando, galeria.length, filaRef])
++  }, [galeriaCerca, galeriaLista, galeria.length, filaRef])
+ 
+   async function reclamarCupon() {
+     if (!promocion || reclamando) return
+@@ -372,22 +386,14 @@ export default function InicioCliente() {
+       mostrarToast(error.message || 'No se pudo reclamar el cupón. Intenta de nuevo.', 'error')
+       return
+     }
+-    setCuponPromocion(data?.[0] ?? null)
++    setReclamado({ dueno: usuarioId, cupon: data?.[0] ?? null })
+     mostrarToast('Cupón guardado en Mis cupones.', 'exito')
+   }
+ 
+-  if (cargando) {
+-    return (
+-      <div className="flex flex-1 items-center justify-center p-6">
+-        <p className="font-mono text-sm text-white/50">Cargando...</p>
+-      </div>
+-    )
+-  }
+-
+   const nombreCliente = perfil?.nombre ? perfil.nombre.trim().split(/\s+/)[0] : null
+   const destinoReservar = serviciosCarrito.size > 0 ? '/citas/carrito' : '/servicios'
+ 
+-  const promedioResenas = resenas.length ? resenas.reduce((suma, r) => suma + r.calificacion, 0) / resenas.length : null
++  const promedioResenas = calificaciones.length ? calificaciones.reduce((suma, c) => suma + c, 0) / calificaciones.length : null
+   const horarioTexto = horario
+     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}${
+         horario.bloque2_inicio ? ` · ${formatearHora(horario.bloque2_inicio)}-${formatearHora(horario.bloque2_fin)}` : ''
+@@ -500,7 +506,9 @@ export default function InicioCliente() {
+           </span>
+           <div className="flex flex-1 flex-col gap-1">
+             <span className="text-base font-semibold text-white">Hola{nombreCliente ? `, ${nombreCliente}` : ''}</span>
+-            {proximaCita ? (
++            {citaCargando ? (
++              <span className="invisible text-[13.5px]" aria-hidden="true">Revisando tus citas…</span>
++            ) : proximaCita ? (
+               <span className="text-[13.5px] text-[#a6a6a6]">
+                 Tu próxima cita:{' '}
+                 <b className="font-semibold text-white">
+@@ -526,7 +534,9 @@ export default function InicioCliente() {
+               <span className="text-[11px] uppercase tracking-widest text-[#a6a6a6]">Mis monedas</span>
+             </div>
+           )}
+-          {proximaCita ? (
++          {citaCargando ? (
++            <span className="invisible shrink-0 rounded-full px-[22px] py-3 text-sm" aria-hidden="true">Reservar</span>
++          ) : proximaCita ? (
+             <Link
+               to="/citas"
+               className="shrink-0 rounded-full border border-white/15 px-[22px] py-3 text-center text-sm text-[#e8e8ea] transition-colors hover:border-white/30"
+@@ -715,7 +725,7 @@ export default function InicioCliente() {
+       )}
+ 
+       {/* 6. RESEÑAS — oculta con menos de 3 aprobadas. */}
+-      {resenas.length >= 3 && (
++      {totalResenas >= 3 && promedioResenas !== null && (
+         <section className="mx-auto mt-24 w-full max-w-[1700px] lw-gutter">
+           <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
+             <div className="flex flex-col gap-3.5">
+@@ -729,7 +739,7 @@ export default function InicioCliente() {
+                 <div className="flex flex-col gap-1.5">
+                   <Estrellas calificacion={Math.round(promedioResenas)} className="h-[15px] w-[15px]" />
+                   <span className="text-[13px] text-[#a6a6a6]">
+-                    {resenas.length} reseñas de clientas que ya vinieron
++                    {totalExacto ? totalResenas : `Al menos ${totalResenas}`} reseñas de clientas que ya vinieron{promedioParcial ? ` (promedio de las ${calificaciones.length} más recientes)` : ''}
+                   </span>
+                 </div>
+               </div>
+diff --git a/src/pages/cliente/RecompensasCliente.jsx b/src/pages/cliente/RecompensasCliente.jsx
+index b7bd012..647f191 100644
+--- a/src/pages/cliente/RecompensasCliente.jsx
++++ b/src/pages/cliente/RecompensasCliente.jsx
+@@ -1,4 +1,4 @@
+-import { useRef, useState } from 'react'
++import { useEffect, useRef, useState } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
+ import { supabase } from '../../lib/supabase.js'
+ import { useAuth } from '../../context/AuthContext.jsx'
+@@ -36,6 +36,27 @@ function PuertaSesion() {
+   )
+ }
+ 
++// Fase 5: recursos personales que necesita cada subpestaña (se piden al entrar, no todos al abrir la pantalla). «Cómo funciona»
++// y el catálogo público no leen nada personal. Mis sellos depende de si el programa nuevo está activo (saldo): con él lee el
++// catálogo y los movimientos de sellos; apagado, la tarjeta heredada (fidelizacion, historial y el % del cupón).
++function recursosDeSeccion(clave, programaReal) {
++  switch (clave) {
++    case 'tarjeta':
++      return ['puntos', 'saldo']
++    case 'canje':
++      return ['puntos', 'saldo', 'catalogoMonedas']
++    case 'sellos':
++      if (programaReal === null) return ['saldo']
++      return programaReal ? ['saldo', 'catalogoSellos', 'sellosMovs'] : ['saldo', 'fidelizacion', 'historial', 'cuponSellos']
++    case 'cupones':
++      return ['saldo', 'cupones', 'promociones']
++    case 'movimientos':
++      return programaReal ? ['saldo', 'movimientos'] : ['saldo']
++    default:
++      return []
++  }
++}
++
+ const idTab = (clave) => `recompensas-tab-${clave}`
+ const idPanel = (clave) => `recompensas-panel-${clave}`
+ 
+@@ -71,9 +92,7 @@ export default function RecompensasCliente({ publico = false }) {
+ 
+   const userId = publico ? null : (session?.user?.id ?? null)
+   const sesion = Boolean(userId)
+-  const { recursos, cargar } = useRecursosRecompensas(userId)
+-  // Catálogo público (QA-037): solo sin sesión; nunca se consulta nada personal.
+-  const { catalogoPublico, recargarCatalogoPublico } = useCatalogoPublico(!sesion)
++  const { recursos, cargar, asegurar } = useRecursosRecompensas(userId)
+   // Reglas vigentes (pública y mínima): «Cómo funciona» y los textos que dependen del programa. Con sesión se lee además el saldo
+   // propio, pero esta pantalla ya lo carga con sus recursos (saldo), así que aquí solo importan las reglas.
+   const programa = useProgramaRecompensas(null)
+@@ -84,6 +103,8 @@ export default function RecompensasCliente({ publico = false }) {
+     SECCIONES.findIndex((s) => s.clave === claveParam),
+   )
+   const seccion = SECCIONES[indiceActivo]
++  // Catálogo público (QA-037): solo sin sesión y solo al entrar a «Canjear puntos»; nunca se consulta nada personal.
++  const { catalogoPublico, recargarCatalogoPublico } = useCatalogoPublico(!sesion && seccion.clave === 'canje')
+ 
+   async function generarCupon() {
+     setGenerando(true)
+@@ -143,6 +164,15 @@ export default function RecompensasCliente({ publico = false }) {
+     tabsRef.current[destino]?.focus()
+   }
+ 
++  // null = todavía no se sabe si el programa nuevo está activo (el saldo no llegó); true / false cuando ya se leyó.
++  const programaReal = recursos.saldo.estado === 'ok' ? Boolean(recursos.saldo.datos?.activo) : null
++  useEffect(() => {
++    if (seccion.personal && !sesion) return
++    asegurar(recursosDeSeccion(seccion.clave, programaReal))
++  // `userId` en las dependencias: si la identidad cambia con la pantalla montada (otra pestaña cierra sesión y entra otra clienta), el
++  // hook olvida lo pedido por la cuenta anterior y esto vuelve a pedir los recursos de la subpestaña a nombre de la nueva.
++  }, [seccion.clave, seccion.personal, sesion, userId, programaReal, asegurar])
++
+   let contenido
+   const { puntos, fidelizacion, historial, cupones, promociones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs, cuponSellos } = recursos
+   // Fase 2: con el programa activo, saldo/sellos/movimientos salen del libro del servidor.
+diff --git a/src/pages/cliente/recompensas/useRecursosRecompensas.js b/src/pages/cliente/recompensas/useRecursosRecompensas.js
+index 77d4292..d045831 100644
+--- a/src/pages/cliente/recompensas/useRecursosRecompensas.js
++++ b/src/pages/cliente/recompensas/useRecursosRecompensas.js
+@@ -62,15 +62,16 @@ const CLAVES = Object.keys(FUENTES)
+ const PENDIENTE = { estado: 'cargando', datos: null }
+ const RECURSOS_INICIALES = Object.fromEntries(CLAVES.map((clave) => [clave, PENDIENTE]))
+ 
+-// Carga los recursos de la clienta `userId` (null = sin sesión: no se
+-// consulta nada). Cada recurso se carga y se reintenta por separado, así
+-// que uno fallido no bloquea a los demás. Los datos quedan atados a la
+-// cuenta que los pidió: si cambia el usuario, lo anterior deja de verse
+-// de inmediato y una respuesta tardía de la cuenta previa se descarta.
++// Recursos de la clienta `userId` (null = sin sesión: no se consulta nada). Fase 5: NO se piden todos al abrir la pantalla; cada
++// subpestaña pide los suyos al entrar (`asegurar`), una sola vez por cuenta, y lo ya leído se conserva al cambiar de subpestaña
++// (los reintentos y las actualizaciones tras un canje usan `cargar`). Cada recurso se carga y se reintenta por separado, así que
++// uno fallido no bloquea a los demás. Los datos quedan atados a la cuenta que los pidió: si cambia el usuario, lo anterior deja de
++// verse de inmediato y una respuesta tardía de la cuenta previa se descarta.
+ export function useRecursosRecompensas(userId) {
+   const [almacen, setAlmacen] = useState({ dueno: null, recursos: RECURSOS_INICIALES })
+   const generacion = useRef(0)
+   const duenoActual = useRef(userId)
++  const pedidas = useRef(new Set())
+   duenoActual.current = userId
+ 
+   const recursos = almacen.dueno === userId ? almacen.recursos : RECURSOS_INICIALES
+@@ -78,6 +79,7 @@ export function useRecursosRecompensas(userId) {
+   const cargar = useCallback(async (clave, { silencioso = false } = {}) => {
+     const dueno = duenoActual.current
+     if (!dueno) return false
++    pedidas.current.add(clave)
+     const gen = generacion.current
+ 
+     const guardar = (valor) =>
+@@ -107,15 +109,25 @@ export function useRecursosRecompensas(userId) {
+     return true
+   }, [])
+ 
++  // Al cambiar de cuenta (o al montar) se invalida lo que volaba y se olvida qué recursos se habían pedido.
+   useEffect(() => {
+     generacion.current += 1
+-    if (userId) CLAVES.forEach((clave) => cargar(clave))
++    pedidas.current = new Set()
+     return () => {
+       generacion.current += 1
+     }
+-  }, [userId, cargar])
++  }, [userId])
+ 
+-  return { recursos, cargar }
++  // Pide los recursos de la subpestaña actual que esta cuenta todavía no pidió.
++  const asegurar = useCallback(
++    (claves) => {
++      if (!duenoActual.current) return
++      for (const clave of claves) if (!pedidas.current.has(clave)) cargar(clave)
++    },
++    [cargar],
++  )
++
++  return { recursos, cargar, asegurar }
+ }
+ 
+ // Catálogo PÚBLICO (QA-037): sin sesión, solo lo publicado, sin datos personales ni
+@@ -123,6 +135,7 @@ export function useRecursosRecompensas(userId) {
+ export function useCatalogoPublico(activo) {
+   const [estado, setEstado] = useState({ estado: 'cargando', datos: null })
+   const generacion = useRef(0)
++  const terminado = useRef(false)
+ 
+   const cargar = useCallback(async () => {
+     const gen = ++generacion.current
+@@ -134,11 +147,15 @@ export function useCatalogoPublico(activo) {
+       r = { error }
+     }
+     if (gen !== generacion.current) return
++    terminado.current = !r.error
+     setEstado(r.error ? { estado: 'error', datos: null } : { estado: 'ok', datos: r.data ?? [] })
+   }, [])
+ 
++  // Solo se vuelve a leer si la lectura anterior NO terminó bien: volver a «Canjear puntos» con el catálogo ya leído no repite la
++  // consulta. Se decide por «terminó», no por «se pidió»: el replay de efectos de StrictMode (desarrollo) invalida la primera
++  // respuesta con el cleanup y la segunda ejecución debe poder volver a pedir.
+   useEffect(() => {
+-    if (activo) cargar()
++    if (activo && !terminado.current) cargar()
+     return () => {
+       generacion.current += 1
+     }

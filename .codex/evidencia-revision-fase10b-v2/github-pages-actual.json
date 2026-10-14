@@ -1,0 +1,13 @@
+{
+  "fecha": "2026-10-13T19:49:53.327Z",
+  "soloLectura": true,
+  "sinLogin": true,
+  "url": "https://tiburoncin26.github.io/PosJaise/",
+  "status": 200,
+  "indexSha256": "9ade57fe755dc95babab5f0b18a5d1a1445dea69b8fe86391c3e10e0c1346353",
+  "coincidePrefijoInformado": true,
+  "bundleInformadoPresente": true,
+  "scripts": [
+    "/PosJaise/assets/index-BYFcUGaT.js"
+  ]
+}

@@ -1,0 +1,133 @@
+{
+ "app": "http://localhost:5192",
+ "fecha": "2026-10-11T16:11:27.949Z",
+ "casos": [
+  {
+   "nombre": "Pedidos Web: 40 filas por página, total y contadores por estado = base de datos",
+   "ok": true,
+   "ms": 2537
+  },
+  {
+   "nombre": "Pedidos Web: recorrer todas las páginas no repite ni omite pedidos y la última tiene el resto",
+   "ok": false,
+   "error": "page.waitForFunction: Timeout 30000ms exceeded.",
+   "ms": 31227
+  },
+  {
+   "nombre": "Pedidos Web: detalles cerrados NO están en el DOM; los ítems se piden al expandir (una vez) y se conservan",
+   "ok": true,
+   "ms": 3721
+  },
+  {
+   "nombre": "Pedidos Web: búsqueda y filtro de estado se resuelven en el servidor con total exacto",
+   "ok": false,
+   "error": "la búsqueda fue al servidor",
+   "ms": 1665
+  },
+  {
+   "nombre": "Pedidos Web: cambiar un estado refresca la fila y los contadores globales",
+   "ok": false,
+   "error": "Command failed: docker exec -i supabase_db_WedJaiseReact psql -U postgres -d postgres -At -v ON_ERROR_STOP=1 | ERROR:  null value in column \"fecha_entrega\" of relation \"pedidos_web\" violates not-null constraint | DETAIL:  Failing row contains (caf2901f-6500-4ace-a859-064ab050d9c8, ba8ae07e-d858-45a9-9e3e-a3ee429b6a3d, RECOJO, null, null, 0.00, 20.00, 20.00, PENDIENTE, 2026-10-11 16:08:34.041192+00, 2026-10-11 16:08:34.041192+00, null, null, null, YAPE, null, null, f, null, null, null, BOLETA, null, null, 0.00, null, null).",
+   "ms": 97
+  },
+  {
+   "nombre": "Promociones: 40 por página con total exacto; crear, editar y eliminar refrescan fila y contador",
+   "ok": true,
+   "ms": 3858
+  },
+  {
+   "nombre": "Reseñas: tres tablas en una lista de 40, contadores globales por estado y moderación que los actualiza",
+   "ok": true,
+   "ms": 6889
+  },
+  {
+   "nombre": "referidos-web: cupones de 40 en 40, contadores globales, búsqueda por código o clienta y filtro de estado",
+   "ok": true,
+   "ms": 35989
+  },
+  {
+   "nombre": "fidelizacion-web: cupones de 40 en 40, contadores globales, búsqueda por código o clienta y filtro de estado",
+   "ok": true,
+   "ms": 35187
+  },
+  {
+   "nombre": "Recompensas Web: al entrar solo se lee la configuración; cada subpestaña pide lo suyo",
+   "ok": true,
+   "ms": 5375
+  },
+  {
+   "nombre": "Recompensas Web › Premios de sellos y Protección de productos: totales exactos y 40 filas",
+   "ok": true,
+   "ms": 1289
+  },
+  {
+   "nombre": "Recompensas Web › Protección de servicios: 40 por página con total exacto y BORRADORES conservados al paginar y buscar",
+   "ok": false,
+   "error": "la página 2 no trae campos abiertos | 6 !== 0",
+   "ms": 4267
+  },
+  {
+   "nombre": "Recompensas Web: el selector de servicio del premio ofrece ≤ 41 opciones y busca en el servidor",
+   "ok": false,
+   "error": "opciones montadas",
+   "ms": 2777
+  },
+  {
+   "nombre": "Inicio: lecturas acotadas (4 destacados, 3 galería, 3 tarjetas, 1 promoción) y sin descargar el catálogo",
+   "ok": true,
+   "ms": 2243
+  },
+  {
+   "nombre": "Inicio: con 1,5 s de demora (o fallo) en las dependencias secundarias el hero permanece disponible",
+   "ok": true,
+   "ms": 4430
+  },
+  {
+   "nombre": "Recompensas (clienta): «Cómo funciona» no lee nada personal; cada subpestaña pide lo suyo una sola vez",
+   "ok": true,
+   "ms": 7098
+  },
+  {
+   "nombre": "Recompensas (visitante): solo el catálogo público y solo al entrar a «Canjear puntos»",
+   "ok": true,
+   "ms": 4213
+  },
+  {
+   "nombre": "Restaurar sesión del personal: un perfil, un estado de negocio y un canal Realtime",
+   "ok": true,
+   "ms": 3550
+  },
+  {
+   "nombre": "Restaurar sesión de la clienta: perfil, estado y canal una sola vez; sin precargar nada del POS",
+   "ok": true,
+   "ms": 2225
+  },
+  {
+   "nombre": "Refrescar el token no reabre el canal Realtime ni repite las lecturas de sesión",
+   "ok": true,
+   "ms": 8000
+  },
+  {
+   "nombre": "El POS no precarga el portal ni Inicio al restaurar la sesión del personal",
+   "ok": true,
+   "ms": 3907
+  },
+  {
+   "nombre": "Login → logout → login de otra clienta: ningún dato de la cuenta anterior",
+   "ok": true,
+   "ms": 6078
+  },
+  {
+   "nombre": "Cambio de cuenta con la pantalla abierta (otra pestaña cierra sesión y entra otra clienta): nunca se ven datos de Alfa después de salir",
+   "ok": false,
+   "error": "page.fill: Timeout 30000ms exceeded. | Call log: | \u001b[2m  - waiting for locator('#email')\u001b[22m",
+   "ms": 31294
+  },
+  {
+   "nombre": "Personal → cerrar sesión → clienta: la lista administrativa anterior no reaparece",
+   "ok": true,
+   "ms": 5007
+  }
+ ],
+ "falloGlobal": null
+}

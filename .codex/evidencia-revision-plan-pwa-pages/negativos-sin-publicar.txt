@@ -1,0 +1,24 @@
+const fs=require('node:fs');const vm=require('node:vm');const path=require('node:path');const assert=require('node:assert/strict');const crypto=require('node:crypto');const {pathToFileURL}=require('node:url');
+const root='C:/WedJaiseReact', G=require(root+'/scripts/lib/guardas-interfaz-r2.cjs');
+const original=fs.readFileSync(root+'/scripts/verificar-actualizacion-pwa-online.cjs','utf8');
+// Solo se sustituye el mecanismo del import EN MEMORIA; se utilizan validadores reales y no cambia la lógica del script.
+const source=original.replace(/const \{ validarSupabase \} = await import[^\n]+/,'const {validarSupabase}=authModule').replace(/const \{ clasificarClave \} = await import[^\n]+/,'const {clasificarClave}=authModule');
+assert.notEqual(source,original);
+(async()=>{
+ const authModule=await import(pathToFileURL(root+'/scripts/lib/entornos-supabase.mjs').href);
+ const resultados=[];
+ for(const op of [{entrega:'r2dev'},{entrega:'otra'},{marca:'12345678'},{proveedor:'supabase'},{worker:'https://otro.workers.dev'},{invertido:true}]){
+  let browserCalls=0,publishCalls=0,result;const requests=[];
+  const env=`VITE_SUPABASE_URL=https://${G.REF_STAGING}.supabase.co\nVITE_SUPABASE_ANON_KEY=sb_publishable_${'x'.repeat(30)}\nQA_ADMIN_EMAIL=admin@staging.test\nQA_ADMIN_PASSWORD=FICTICIA`;
+  const proc={argv:['node','test',`--origen=${G.ALIAS_APROBADO}`,`--permitir-origen=${new URL(G.ALIAS_APROBADO).host}`,`--a=${op.marca||'9bb13306'}`,'--b=11111111',`--entrega=${op.entrega||'pages'}`,'--publicar-cmd=PUBLICACION-FICTICIA','--salida=C:/QA-ficticio/informe.json'],exitCode:undefined};
+  const bundle=`function a(){return{proveedor:\`${op.proveedor||'r2'}\`,apiUrl:t(\`${op.worker||G.WORKER_APROBADO}\`),publicUrl:t(\`${op.invertido?G.PUBLICO_APROBADO:G.ALIAS_APROBADO+'/medios'}\`)}}var b=()=>q(a().publicUrl,\`${op.invertido?G.ALIAS_APROBADO+'/medios':G.PUBLICO_APROBADO}\`);`;
+  const ctx={require:n=>n==='fs'?{readFileSync:()=>env,writeFileSync:(_,s)=>{result=JSON.parse(s);}}:n==='child_process'?{spawnSync:()=>{publishCalls++;return{status:0}}}:n.includes('node_modules')&&n.includes('playwright')?{chromium:{launch:()=>{browserCalls++;throw new Error('NO debe abrir navegador')}}}:n==='./lib/guardas-interfaz-r2.cjs'?G:require(n),__dirname:root+'/scripts',authModule,URL,process:proc,console:{log:()=>{},error:()=>{}},fetch:async(u,options)=>{requests.push({ruta:new URL(u).pathname,metodo:options?.method||'GET'});return new Response(new URL(u).pathname==='/'?'<meta name="build-id" content="9bb13306">':new URL(u).pathname==='/sw.js'?'precacheAndRoute([{url:"assets/index.js",revision:null}])':bundle);}};
+  vm.runInNewContext(source,ctx,{filename:'verificar-actualizacion-pwa-online.cjs'});
+  for(let i=0;i<300&&!result;i++)await new Promise(r=>setImmediate(r));
+  assert.ok(result);assert.equal(proc.exitCode,1);assert.equal(browserCalls,0);assert.equal(publishCalls,0);assert.equal(result.publicadoB,false);assert.ok(requests.every(r=>r.metodo==='GET'));
+  resultados.push({opciones:op,exitCode:proc.exitCode,browserCalls,publishCalls,publicadoB:result.publicadoB,requests,pasosFallidos:result.pasos.filter(p=>!p.ok)});
+ }
+ const informe={nota:'Se ejecuta el script actual con validadores reales, imports adaptados en memoria, env/HTTP/FS/Playwright/publicación ficticios. Sin red, navegador, credenciales reales ni Git. Solo seis casos negativos; no demuestra la transición B.',sha256Script:crypto.createHash('sha256').update(original).digest('hex'),resultados};
+ fs.writeFileSync(path.join(__dirname,'negativos-sin-publicar.json'),JSON.stringify(informe,null,2),{flag:'wx'});
+ console.log(JSON.stringify(resultados.map(r=>({opciones:r.opciones,exitCode:r.exitCode,browserCalls:r.browserCalls,publishCalls:r.publishCalls,publicadoB:r.publicadoB})),null,2));
+})().catch(e=>{console.error(e);process.exitCode=1});

@@ -1,0 +1,11 @@
+{
+  "fecha": "2026-10-10T17:17:30.545Z",
+  "soloLectura": true,
+  "modulosAntes": 139,
+  "modulosAhora": 139,
+  "igualesPorHash": 64,
+  "igualesTrasNormalizar": 75,
+  "diferentes": [],
+  "ausentes": [],
+  "nota": "Comparación textual de módulos por su nombre base: normaliza únicamente sufijos de ocho caracteres de nombres .js/.css. No prueba interacción, ejecución PWA ni equivalencia semántica general."
+}

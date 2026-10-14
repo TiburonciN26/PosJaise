@@ -1,0 +1,58 @@
+[
+ {
+  "tema": "oscuro",
+  "vista": "movil-390",
+  "zona": "arriba",
+  "ssim": 0.985368,
+  "psnr_db": 43.245858
+ },
+ {
+  "tema": "oscuro",
+  "vista": "movil-390",
+  "zona": "mapa",
+  "ssim": 0.995776,
+  "psnr_db": 43.105592
+ },
+ {
+  "tema": "oscuro",
+  "vista": "escritorio-1440",
+  "zona": "arriba",
+  "ssim": 0.98904,
+  "psnr_db": 45.44187
+ },
+ {
+  "tema": "oscuro",
+  "vista": "escritorio-1440",
+  "zona": "mapa",
+  "ssim": 0.997023,
+  "psnr_db": 44.131793
+ },
+ {
+  "tema": "claro",
+  "vista": "movil-390",
+  "zona": "arriba",
+  "ssim": 0.988684,
+  "psnr_db": 42.956715
+ },
+ {
+  "tema": "claro",
+  "vista": "movil-390",
+  "zona": "mapa",
+  "ssim": 0.99834,
+  "psnr_db": 45.298363
+ },
+ {
+  "tema": "claro",
+  "vista": "escritorio-1440",
+  "zona": "arriba",
+  "ssim": 1,
+  "psnr_db": "inf"
+ },
+ {
+  "tema": "claro",
+  "vista": "escritorio-1440",
+  "zona": "mapa",
+  "ssim": 0.845213,
+  "psnr_db": 22.171751
+ }
+]

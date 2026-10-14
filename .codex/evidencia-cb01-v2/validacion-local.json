@@ -1,0 +1,14 @@
+{
+  "fecha": "2026-10-10",
+  "validacion": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "21a5bf",
+      "wall_time_seconds": 0.7436245,
+      "exit_code": 0,
+      "original_token_count": 265,
+      "output": "OK    A con copia caliente y lecturas en el MISMO POP → FALLIDA (rechaza A)\nOK    CB-01: A (revocar:false) con HIT en MIA y 404 desde SCL frío → INCONCLUSA, nunca acreditada\nOK    B con copia caliente y lecturas en el mismo POP → ACREDITADA (6 de 6 ok)\nOK    B con lecturas desde un POP distinto al del HIT → INCONCLUSA (no se acredita la copia caliente)\nOK    POP ausente en las respuestas posteriores → INCONCLUSA\nOK    POP ausente en el HIT previo → INCONCLUSA\nOK    variante g sin HIT previo → INCONCLUSA; m queda acreditada por separado\nOK    variante m sin HIT previo → INCONCLUSA\nOK    un solo condicional de g desde otro POP → INCONCLUSA (5 ok, ninguna acreditación global)\nOK    A: el condicional tras borrar devuelve 304 (bytes reutilizables) → fallo en esa comprobación\nOK    404 con Cache-Control cacheable o HEAD con cuerpo → FALLIDA (2 fallos)\nOK    falta una observación (6.ª comprobación) → INCONCLUSA\nOK    sin ningún dato → INCONCLUSA (la ausencia en R2 no equivale a retirada probada)\n\n13 casos, 0 fallos\n"
+    }
+  },
+  "limites": "13 regresiones de Claude repetidas; 6 escenarios independientes de secciones reales del CLI con dobles. No ejecución completa del CLI ni red."
+}

@@ -1,0 +1,48 @@
+{
+  "fecha": "2026-10-12",
+  "veredicto": "APROBADA CON OBSERVACIONES, SOLO LOCAL",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "checks": 141,
+  "correctos": 141,
+  "fallos": [],
+  "controlNegativo": {
+    "conteoAntiguo": 2,
+    "conteoCorrecto": 1,
+    "detectado": true
+  },
+  "hashesEstables": true,
+  "migracionesIdenticasV1": {
+    "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql": true,
+    "supabase/migrations/20261012000002_indices_listas_medidos.sql": true
+  },
+  "metadatosIguales": {
+    "grants": true,
+    "helpers": true,
+    "rls_activo": true
+  },
+  "conteosIguales": true,
+  "restos": {
+    "clientesQA7": 0,
+    "cuponesQA7": 0,
+    "productosQA7": 0,
+    "serviciosQA7": 0,
+    "promocionesQA7": 0
+  },
+  "observaciones": {
+    "estadistica": {
+      "medianaSinConvencional": 440.5,
+      "medianaConConvencional": 660.5,
+      "diferenciaDeMedianasPct": 49.94324631101021,
+      "mediaParesPct": 62.12500000000001
+    },
+    "indiceFisico": {
+      "bytesAntesV1": 311296,
+      "bytesActuales": 44302336,
+      "MiBActual": 42.25,
+      "mismoNumeroYDefiniciones": true,
+      "atribucion": "Crecimiento observado entre revisiones; no se identifica qué corrida lo produjo. No se modifica ni compacta Local."
+    },
+    "guarda": "Verifica pedidos_web_select como centinela y el prefijo idx_f7; no compara de forma exhaustiva las doce expresiones originales."
+  },
+  "limites": "20 controles de evidencia/SQL generado; 24 SELECTs CTE; 16 lecturas SQL con solicitud app simulada; 4 guardas contra catálogos simulados; 77 lecturas RLS. No se repiten INSERTs, siembra, índices ni rollback."
+}

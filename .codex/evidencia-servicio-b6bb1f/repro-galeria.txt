@@ -1,0 +1,25 @@
+const fs=require('node:fs'),path=require('node:path');
+const G=require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs');
+const source=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-interfaz-r2-preview.cjs','utf8');
+const marker=source.indexOf("    caso('SERVICIO: reemplazo de la foto principal");
+if(marker<0)throw new Error('Caso no encontrado');
+const predicate=source.slice(source.indexOf('\n',marker)+1).split('\n')[0].split(', { anterior:')[0].trim();
+const run=new Function('refS2','refS','inv','grupoDe','galS','antes',`return (${predicate});`);
+const originalPrincipal='r2:fotos-servicios/11111111-1111-1111-1111-111111111111';
+const newPrincipal='r2:fotos-servicios/22222222-2222-2222-2222-222222222222';
+const galleryRef='r2:fotos-servicios/33333333-3333-3333-3333-333333333333';
+const changedGallery='r2:fotos-servicios/44444444-4444-4444-4444-444444444444';
+const group=r=>r.replace(/^r2:/,'');
+const before=[{id:'foto-galeria-original',foto_url:galleryRef,etiqueta:'Frente',orden:0}];
+const scenarios=[
+  {nombre:'Control: galería idéntica',after:before},
+  {nombre:'Galería con referencia reemplazada',after:[{...before[0],foto_url:changedGallery}]},
+  {nombre:'Galería con etiqueta y orden alterados',after:[{...before[0],etiqueta:'Otra',orden:5}]},
+];
+const results=scenarios.map(s=>{
+  const inv=new Set([group(newPrincipal),group(s.after[0].foto_url)]);
+  const ok=run(newPrincipal,originalPrincipal,inv,group,s.after,new Set());
+  return{nombre:s.nombre,asercionOriginalPasa:ok,galeriaRealmenteIdentica:G.iguales(before,s.after),principalNuevaExiste:inv.has(group(newPrincipal)),principalAnteriorAusente:!inv.has(group(originalPrincipal))};
+});
+const result={fecha:new Date().toISOString(),aislado:true,nota:'Predicado original ejecutado con filas e inventario en memoria. Ninguna escritura ni solicitud a staging.',casos:results};
+fs.writeFileSync(path.join(__dirname,'repro-galeria.json'),JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify(result,null,2));

@@ -1,0 +1,645 @@
+{
+ "escala": "reducida (≈10 %)",
+ "fases": [
+  "antes",
+  "despues1",
+  "despues2",
+  "control",
+  "revertida"
+ ],
+ "claves_comparadas": 664,
+ "diferencias": {
+  "despues1": [],
+  "despues2": [],
+  "control": [
+   {
+    "clave": "asistente|c:pedidos_web",
+    "antes": "<null>",
+    "despues": "8914f7bdc1efebf4cbc8148c5c5f2d97"
+   },
+   {
+    "clave": "asistente|p:pedidos_busqueda:0",
+    "antes": "0:",
+    "despues": "425:523133629188e022c9ab077497e2e205"
+   },
+   {
+    "clave": "asistente|p:pedidos_busqueda:40",
+    "antes": "0:",
+    "despues": "425:21e8cdf58c8a19aae69dab870a20d0b1"
+   },
+   {
+    "clave": "asistente|p:pedidos_busqueda:ultima",
+    "antes": "0:",
+    "despues": "425:b1119bab2b2242b1d9b880ca49e832cb"
+   },
+   {
+    "clave": "asistente|p:pedidos_busqueda:vacia",
+    "antes": "0:",
+    "despues": "425:"
+   },
+   {
+    "clave": "asistente|p:pedidos_pendientes:0",
+    "antes": "0:",
+    "despues": "901:be6a16218d75f445edfd6f23ee6f2a76"
+   },
+   {
+    "clave": "asistente|p:pedidos_pendientes:40",
+    "antes": "0:",
+    "despues": "901:a1767006f32bcf94fb2726aed37e509e"
+   },
+   {
+    "clave": "asistente|p:pedidos_pendientes:ultima",
+    "antes": "0:",
+    "despues": "901:ce7c388eb450c1c5eb134a279210055f"
+   },
+   {
+    "clave": "asistente|p:pedidos_pendientes:vacia",
+    "antes": "0:",
+    "despues": "901:"
+   },
+   {
+    "clave": "asistente|p:pedidos:0",
+    "antes": "0:",
+    "despues": "6429:915116e938060fa3e1b57ed23d1d6ff6"
+   },
+   {
+    "clave": "asistente|p:pedidos:40",
+    "antes": "0:",
+    "despues": "6429:af23ba9c2133523fce448a035e40984a"
+   },
+   {
+    "clave": "asistente|p:pedidos:ultima",
+    "antes": "0:",
+    "despues": "6429:6a0ea6a9ee08e31cc054fb52f3d16db1"
+   },
+   {
+    "clave": "asistente|p:pedidos:vacia",
+    "antes": "0:",
+    "despues": "6429:"
+   },
+   {
+    "clave": "asistente|t:pedidos_web",
+    "antes": "0:",
+    "despues": "6429:df4fa64261ff0a95bb2de617fbcc922c"
+   },
+   {
+    "clave": "cajera|c:pedidos_web",
+    "antes": "<null>",
+    "despues": "8914f7bdc1efebf4cbc8148c5c5f2d97"
+   },
+   {
+    "clave": "cajera|p:pedidos_busqueda:0",
+    "antes": "0:",
+    "despues": "425:523133629188e022c9ab077497e2e205"
+   },
+   {
+    "clave": "cajera|p:pedidos_busqueda:40",
+    "antes": "0:",
+    "despues": "425:21e8cdf58c8a19aae69dab870a20d0b1"
+   },
+   {
+    "clave": "cajera|p:pedidos_busqueda:ultima",
+    "antes": "0:",
+    "despues": "425:b1119bab2b2242b1d9b880ca49e832cb"
+   },
+   {
+    "clave": "cajera|p:pedidos_busqueda:vacia",
+    "antes": "0:",
+    "despues": "425:"
+   },
+   {
+    "clave": "cajera|p:pedidos_pendientes:0",
+    "antes": "0:",
+    "despues": "901:be6a16218d75f445edfd6f23ee6f2a76"
+   },
+   {
+    "clave": "cajera|p:pedidos_pendientes:40",
+    "antes": "0:",
+    "despues": "901:a1767006f32bcf94fb2726aed37e509e"
+   },
+   {
+    "clave": "cajera|p:pedidos_pendientes:ultima",
+    "antes": "0:",
+    "despues": "901:ce7c388eb450c1c5eb134a279210055f"
+   },
+   {
+    "clave": "cajera|p:pedidos_pendientes:vacia",
+    "antes": "0:",
+    "despues": "901:"
+   },
+   {
+    "clave": "cajera|p:pedidos:0",
+    "antes": "0:",
+    "despues": "6429:915116e938060fa3e1b57ed23d1d6ff6"
+   },
+   {
+    "clave": "cajera|p:pedidos:40",
+    "antes": "0:",
+    "despues": "6429:af23ba9c2133523fce448a035e40984a"
+   },
+   {
+    "clave": "cajera|p:pedidos:ultima",
+    "antes": "0:",
+    "despues": "6429:6a0ea6a9ee08e31cc054fb52f3d16db1"
+   },
+   {
+    "clave": "cajera|p:pedidos:vacia",
+    "antes": "0:",
+    "despues": "6429:"
+   },
+   {
+    "clave": "cajera|t:pedidos_web",
+    "antes": "0:",
+    "despues": "6429:df4fa64261ff0a95bb2de617fbcc922c"
+   },
+   {
+    "clave": "clienteA|c:pedidos_web",
+    "antes": "ac1c31f430a0ceb05a7fb13f5db5c39d",
+    "despues": "8914f7bdc1efebf4cbc8148c5c5f2d97"
+   },
+   {
+    "clave": "clienteA|c:productos",
+    "antes": "0dde5b27f352903396697e3259183eac",
+    "despues": "20c4a11d44725bf77b3c09e05e82f8b5"
+   },
+   {
+    "clave": "clienteA|p:pedidos_pendientes:0",
+    "antes": "5:17a9368fd0a7a5d3eff7595c08f34e85",
+    "despues": "901:be6a16218d75f445edfd6f23ee6f2a76"
+   },
+   {
+    "clave": "clienteA|p:pedidos_pendientes:40",
+    "antes": "5:",
+    "despues": "901:a1767006f32bcf94fb2726aed37e509e"
+   },
+   {
+    "clave": "clienteA|p:pedidos_pendientes:ultima",
+    "antes": "5:17a9368fd0a7a5d3eff7595c08f34e85",
+    "despues": "901:ce7c388eb450c1c5eb134a279210055f"
+   },
+   {
+    "clave": "clienteA|p:pedidos_pendientes:vacia",
+    "antes": "5:",
+    "despues": "901:"
+   },
+   {
+    "clave": "clienteA|p:pedidos:0",
+    "antes": "44:ffded72c9ed609b5c42f31ee396c36c8",
+    "despues": "6429:915116e938060fa3e1b57ed23d1d6ff6"
+   },
+   {
+    "clave": "clienteA|p:pedidos:40",
+    "antes": "44:0eb36bae4f6e2d8ed5cc22e9ca0e2ae6",
+    "despues": "6429:af23ba9c2133523fce448a035e40984a"
+   },
+   {
+    "clave": "clienteA|p:pedidos:ultima",
+    "antes": "44:0eb36bae4f6e2d8ed5cc22e9ca0e2ae6",
+    "despues": "6429:6a0ea6a9ee08e31cc054fb52f3d16db1"
+   },
+   {
+    "clave": "clienteA|p:pedidos:vacia",
+    "antes": "44:",
+    "despues": "6429:"
+   },
+   {
+    "clave": "clienteA|t:pedidos_web",
+    "antes": "44:5e341859c33d466d9d88f0edc90123db",
+    "despues": "6429:df4fa64261ff0a95bb2de617fbcc922c"
+   },
+   {
+    "clave": "clienteA|t:productos",
+    "antes": "5045:39947f3e16dab8a6274bf81dcecc276d",
+    "despues": "5245:30fb462158a57bda0e24c2f4f7a370c7"
+   },
+   {
+    "clave": "clienteB|c:pedidos_web",
+    "antes": "1489dc1f82e6e80b7c4b8de113ef339c",
+    "despues": "8914f7bdc1efebf4cbc8148c5c5f2d97"
+   },
+   {
+    "clave": "clienteB|c:productos",
+    "antes": "0dde5b27f352903396697e3259183eac",
+    "despues": "20c4a11d44725bf77b3c09e05e82f8b5"
+   },
+   {
+    "clave": "clienteB|p:pedidos_pendientes:0",
+    "antes": "1:52c098e42a2c86336c494d145f7d5aa6",
+    "despues": "901:be6a16218d75f445edfd6f23ee6f2a76"
+   },
+   {
+    "clave": "clienteB|p:pedidos_pendientes:40",
+    "antes": "1:",
+    "despues": "901:a1767006f32bcf94fb2726aed37e509e"
+   },
+   {
+    "clave": "clienteB|p:pedidos_pendientes:ultima",
+    "antes": "1:52c098e42a2c86336c494d145f7d5aa6",
+    "despues": "901:ce7c388eb450c1c5eb134a279210055f"
+   },
+   {
+    "clave": "clienteB|p:pedidos_pendientes:vacia",
+    "antes": "1:",
+    "despues": "901:"
+   },
+   {
+    "clave": "clienteB|p:pedidos:0",
+    "antes": "2:4aeb7ed6f1e482af8ba3239595d094c8",
+    "despues": "6429:915116e938060fa3e1b57ed23d1d6ff6"
+   },
+   {
+    "clave": "clienteB|p:pedidos:40",
+    "antes": "2:",
+    "despues": "6429:af23ba9c2133523fce448a035e40984a"
+   },
+   {
+    "clave": "clienteB|p:pedidos:ultima",
+    "antes": "2:4aeb7ed6f1e482af8ba3239595d094c8",
+    "despues": "6429:6a0ea6a9ee08e31cc054fb52f3d16db1"
+   },
+   {
+    "clave": "clienteB|p:pedidos:vacia",
+    "antes": "2:",
+    "despues": "6429:"
+   },
+   {
+    "clave": "clienteB|t:pedidos_web",
+    "antes": "2:bc7d70a1e0328da821401b97ca2b9aaf",
+    "despues": "6429:df4fa64261ff0a95bb2de617fbcc922c"
+   },
+   {
+    "clave": "clienteB|t:productos",
+    "antes": "5045:39947f3e16dab8a6274bf81dcecc276d",
+    "despues": "5245:30fb462158a57bda0e24c2f4f7a370c7"
+   },
+   {
+    "clave": "inactiva|c:pedidos_web",
+    "antes": "<null>",
+    "despues": "8914f7bdc1efebf4cbc8148c5c5f2d97"
+   },
+   {
+    "clave": "inactiva|c:productos",
+    "antes": "0dde5b27f352903396697e3259183eac",
+    "despues": "20c4a11d44725bf77b3c09e05e82f8b5"
+   },
+   {
+    "clave": "inactiva|p:pedidos_pendientes:0",
+    "antes": "0:",
+    "despues": "901:be6a16218d75f445edfd6f23ee6f2a76"
+   },
+   {
+    "clave": "inactiva|p:pedidos_pendientes:40",
+    "antes": "0:",
+    "despues": "901:a1767006f32bcf94fb2726aed37e509e"
+   },
+   {
+    "clave": "inactiva|p:pedidos_pendientes:ultima",
+    "antes": "0:",
+    "despues": "901:ce7c388eb450c1c5eb134a279210055f"
+   },
+   {
+    "clave": "inactiva|p:pedidos_pendientes:vacia",
+    "antes": "0:",
+    "despues": "901:"
+   },
+   {
+    "clave": "inactiva|p:pedidos:0",
+    "antes": "0:",
+    "despues": "6429:915116e938060fa3e1b57ed23d1d6ff6"
+   },
+   {
+    "clave": "inactiva|p:pedidos:40",
+    "antes": "0:",
+    "despues": "6429:af23ba9c2133523fce448a035e40984a"
+   },
+   {
+    "clave": "inactiva|p:pedidos:ultima",
+    "antes": "0:",
+    "despues": "6429:6a0ea6a9ee08e31cc054fb52f3d16db1"
+   },
+   {
+    "clave": "inactiva|p:pedidos:vacia",
+    "antes": "0:",
+    "despues": "6429:"
+   },
+   {
+    "clave": "inactiva|t:pedidos_web",
+    "antes": "0:",
+    "despues": "6429:df4fa64261ff0a95bb2de617fbcc922c"
+   },
+   {
+    "clave": "inactiva|t:productos",
+    "antes": "5045:39947f3e16dab8a6274bf81dcecc276d",
+    "despues": "5245:30fb462158a57bda0e24c2f4f7a370c7"
+   },
+   {
+    "clave": "nadie|c:pedidos_web",
+    "antes": "<null>",
+    "despues": "8914f7bdc1efebf4cbc8148c5c5f2d97"
+   },
+   {
+    "clave": "nadie|c:productos",
+    "antes": "0dde5b27f352903396697e3259183eac",
+    "despues": "20c4a11d44725bf77b3c09e05e82f8b5"
+   },
+   {
+    "clave": "nadie|p:pedidos_pendientes:0",
+    "antes": "0:",
+    "despues": "901:be6a16218d75f445edfd6f23ee6f2a76"
+   },
+   {
+    "clave": "nadie|p:pedidos_pendientes:40",
+    "antes": "0:",
+    "despues": "901:a1767006f32bcf94fb2726aed37e509e"
+   },
+   {
+    "clave": "nadie|p:pedidos_pendientes:ultima",
+    "antes": "0:",
+    "despues": "901:ce7c388eb450c1c5eb134a279210055f"
+   },
+   {
+    "clave": "nadie|p:pedidos_pendientes:vacia",
+    "antes": "0:",
+    "despues": "901:"
+   },
+   {
+    "clave": "nadie|p:pedidos:0",
+    "antes": "0:",
+    "despues": "6429:915116e938060fa3e1b57ed23d1d6ff6"
+   },
+   {
+    "clave": "nadie|p:pedidos:40",
+    "antes": "0:",
+    "despues": "6429:af23ba9c2133523fce448a035e40984a"
+   },
+   {
+    "clave": "nadie|p:pedidos:ultima",
+    "antes": "0:",
+    "despues": "6429:6a0ea6a9ee08e31cc054fb52f3d16db1"
+   },
+   {
+    "clave": "nadie|p:pedidos:vacia",
+    "antes": "0:",
+    "despues": "6429:"
+   },
+   {
+    "clave": "nadie|t:pedidos_web",
+    "antes": "0:",
+    "despues": "6429:df4fa64261ff0a95bb2de617fbcc922c"
+   },
+   {
+    "clave": "nadie|t:productos",
+    "antes": "5045:39947f3e16dab8a6274bf81dcecc276d",
+    "despues": "5245:30fb462158a57bda0e24c2f4f7a370c7"
+   }
+  ],
+  "revertida": []
+ },
+ "filas_base": "4749,429,3067,3245,144",
+ "filas_tras_rollback": "4749,429,3067,3245,144",
+ "duracion_s": 652,
+ "visibilidad_antes": {
+  "anon": {
+   "pedidos_web": "0",
+   "pedidos_web_items": "0",
+   "resenas": "0",
+   "cupones": "0",
+   "clientes": "0",
+   "productos": "5045",
+   "promociones": "1",
+   "resenas_moderacion": "ERROR",
+   "cupones_gestion": "ERROR"
+  },
+  "nadie": {
+   "pedidos_web": "0",
+   "pedidos_web_items": "0",
+   "resenas": "1024",
+   "cupones": "0",
+   "clientes": "0",
+   "productos": "5045",
+   "promociones": "1",
+   "resenas_moderacion": "3072",
+   "cupones_gestion": "0"
+  },
+  "clienteA": {
+   "pedidos_web": "44",
+   "pedidos_web_items": "84",
+   "resenas": "1024",
+   "cupones": "41",
+   "clientes": "0",
+   "productos": "5045",
+   "promociones": "1",
+   "resenas_moderacion": "3072",
+   "cupones_gestion": "41"
+  },
+  "clienteB": {
+   "pedidos_web": "2",
+   "pedidos_web_items": "2",
+   "resenas": "1025",
+   "cupones": "63",
+   "clientes": "0",
+   "productos": "5045",
+   "promociones": "1",
+   "resenas_moderacion": "3073",
+   "cupones_gestion": "63"
+  },
+  "asistente": {
+   "pedidos_web": "0",
+   "pedidos_web_items": "0",
+   "resenas": "1024",
+   "cupones": "15067",
+   "clientes": "7749",
+   "productos": "5245",
+   "promociones": "1",
+   "resenas_moderacion": "3072",
+   "cupones_gestion": "15067"
+  },
+  "cajera": {
+   "pedidos_web": "0",
+   "pedidos_web_items": "0",
+   "resenas": "1024",
+   "cupones": "15067",
+   "clientes": "7749",
+   "productos": "5245",
+   "promociones": "1",
+   "resenas_moderacion": "3072",
+   "cupones_gestion": "15067"
+  },
+  "inactiva": {
+   "pedidos_web": "0",
+   "pedidos_web_items": "0",
+   "resenas": "1024",
+   "cupones": "0",
+   "clientes": "0",
+   "productos": "5045",
+   "promociones": "1",
+   "resenas_moderacion": "3072",
+   "cupones_gestion": "0"
+  },
+  "admin": {
+   "pedidos_web": "6429",
+   "pedidos_web_items": "12429",
+   "resenas": "2049",
+   "cupones": "15067",
+   "clientes": "7749",
+   "productos": "5245",
+   "promociones": "708",
+   "resenas_moderacion": "6218",
+   "cupones_gestion": "15067"
+  }
+ },
+ "escrituras_antes": {
+  "anon": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "ERROR:42501",
+   "promociones_delete": "ERROR:42501",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "ERROR:42501",
+   "zonas_update": "filas=0"
+  },
+  "nadie": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "filas=0",
+   "promociones_delete": "filas=0",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "filas=0",
+   "zonas_update": "filas=0"
+  },
+  "clienteA": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "filas=0",
+   "promociones_delete": "filas=0",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "filas=0",
+   "zonas_update": "filas=0"
+  },
+  "clienteB": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "filas=0",
+   "promociones_delete": "filas=0",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "filas=0",
+   "zonas_update": "filas=0"
+  },
+  "asistente": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "filas=0",
+   "promociones_delete": "filas=0",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "filas=0",
+   "zonas_update": "filas=0"
+  },
+  "cajera": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "filas=0",
+   "promociones_delete": "filas=0",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "filas=0",
+   "zonas_update": "filas=0"
+  },
+  "inactiva": {
+   "promociones_insert": "ERROR:42501",
+   "promociones_update": "filas=0",
+   "promociones_delete": "filas=0",
+   "resenas_update": "filas=0",
+   "pedidos_update": "filas=0",
+   "clientes_update": "filas=0",
+   "productos_update": "filas=0",
+   "zonas_update": "filas=0"
+  },
+  "admin": {
+   "promociones_insert": "filas=1",
+   "promociones_update": "filas=1",
+   "promociones_delete": "filas=1",
+   "resenas_update": "filas=1",
+   "pedidos_update": "filas=1",
+   "clientes_update": "filas=1",
+   "productos_update": "filas=1",
+   "zonas_update": "filas=1"
+  }
+ },
+ "politicas": {
+  "modificadas": [
+   "clientes.clientes_select",
+   "cupones.cupones_select_propio",
+   "cupones.cupones_select_staff",
+   "pedidos_web.pedidos_web_select",
+   "pedidos_web_items.pedidos_web_items_select",
+   "productos.productos_select",
+   "promociones.promociones_admin_todo",
+   "resenas.resenas_select",
+   "resenas_producto.resenas_producto_select",
+   "resenas_servicio.resenas_servicio_select",
+   "servicios.servicios_select",
+   "zonas_delivery.zonas_delivery_select"
+  ],
+  "estructura_ajena": [],
+  "solo_envoltorio": 24,
+  "no_equivalentes": []
+ },
+ "politicas_revertidas_identicas": true,
+ "politicas_revertidas_distintas": [],
+ "control_politicas_alteradas": [
+  "clientes.clientes_select",
+  "cupones.cupones_select_propio",
+  "cupones.cupones_select_staff",
+  "pedidos_web.pedidos_web_select",
+  "pedidos_web_items.pedidos_web_items_select",
+  "productos.productos_select",
+  "promociones.promociones_admin_todo",
+  "resenas.resenas_select",
+  "resenas_producto.resenas_producto_select",
+  "resenas_servicio.resenas_servicio_select",
+  "servicios.servicios_select",
+  "zonas_delivery.zonas_delivery_select"
+ ],
+ "extra": {
+  "antes": {
+   "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+   "helpers": "f8607987d6af01afbd974b1027da93fe",
+   "indices_f7": "",
+   "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "control": {
+   "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+   "helpers": "f8607987d6af01afbd974b1027da93fe",
+   "indices_f7": "idx_f7_cupones_origen_estado_creado:true,idx_f7_pedidos_web_creado:true,idx_f7_pedidos_web_items_pedido:true",
+   "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "despues1": {
+   "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+   "helpers": "f8607987d6af01afbd974b1027da93fe",
+   "indices_f7": "",
+   "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "despues2": {
+   "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+   "helpers": "f8607987d6af01afbd974b1027da93fe",
+   "indices_f7": "idx_f7_cupones_origen_estado_creado:true,idx_f7_pedidos_web_creado:true,idx_f7_pedidos_web_items_pedido:true",
+   "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "revertida": {
+   "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+   "helpers": "f8607987d6af01afbd974b1027da93fe",
+   "indices_f7": "",
+   "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "ROLLBACK": {}
+ },
+ "grants_y_helpers_sin_cambios": true,
+ "control_negativo_detectado": true,
+ "veredicto": "CORRECTO",
+ "fallos": []
+}

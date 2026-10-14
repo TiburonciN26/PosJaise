@@ -1,0 +1,31 @@
+{
+ "generado": "2026-10-12T18:09:07.632Z",
+ "entradas": 8,
+ "originalesEsperados": 8,
+ "originalesCoinciden": 8,
+ "r2Esperados": 14,
+ "r2Coinciden": 14,
+ "refsEsperadas": 11,
+ "refsComprobadas": 11,
+ "operacionesAbiertas": 0,
+ "cobertura": "completa",
+ "resumen": {
+  "entradas": 8,
+  "porEstado": {
+   "verificada": 7,
+   "error": 1
+  },
+  "referencias": 11,
+  "refsPorEstado": {
+   "revertida": 8,
+   "conflicto": 1,
+   "pendiente": 1,
+   "conflicto-reversion": 1
+  },
+  "operacionesAbiertas": 0,
+  "bytesOrigen": 2386845,
+  "bytesVariantes": 692778
+ },
+ "problemas": [],
+ "ok": true
+}

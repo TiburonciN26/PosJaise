@@ -1,0 +1,180 @@
+{
+  "fecha": "2026-10-13T19:17:52.202Z",
+  "informes": [
+    {
+      "archivo": "roles-staging-05b7be34.json",
+      "sha256": "f0f675e549ef54251ed8e4495ce0cce2e8631cb22721b5b4a0f019519cc7ff4c",
+      "casos": 14,
+      "casosNoOK": 0,
+      "totalDeclarado": 14,
+      "fallosDeclarados": 0,
+      "codigoPsql": null,
+      "completa": null,
+      "intacto": null,
+      "app": "https://43d3eeb4.pos-jaise.pages.dev",
+      "buildId": "05b7be34"
+    },
+    {
+      "archivo": "deudas-dos-frontends-staging.json",
+      "sha256": "b55f64c3079180556d64c3a3ef3ff3cd7923575934b837e5a15477bb316f5710",
+      "casos": 8,
+      "casosNoOK": 0,
+      "totalDeclarado": 8,
+      "fallosDeclarados": 0,
+      "codigoPsql": null,
+      "completa": null,
+      "intacto": null,
+      "app": "https://43d3eeb4.pos-jaise.pages.dev",
+      "buildId": "05b7be34"
+    },
+    {
+      "archivo": "flujos-esenciales-staging.json",
+      "sha256": "27493c918ae4106570a001a90088e27c8eb0b26d9a8ec3d50872ea4ab085af2f",
+      "casos": 10,
+      "casosNoOK": 0,
+      "totalDeclarado": 10,
+      "fallosDeclarados": 0,
+      "codigoPsql": null,
+      "completa": null,
+      "intacto": null,
+      "app": "https://43d3eeb4.pos-jaise.pages.dev",
+      "buildId": "05b7be34"
+    },
+    {
+      "archivo": "reversion-main-venta-staging.json",
+      "sha256": "80a59a8412521ca36cf8fb8f693885b08ecb1ba8dd67a7269af8bf19184865a7",
+      "casos": 4,
+      "casosNoOK": 0,
+      "totalDeclarado": 4,
+      "fallosDeclarados": 0,
+      "codigoPsql": null,
+      "completa": null,
+      "intacto": null,
+      "app": "http://127.0.0.1:5410/PosJaise",
+      "buildId": null
+    },
+    {
+      "archivo": "compat-deudas-staging.json",
+      "sha256": "f3a76a2579fd4ee06d84431336d4312feca75c70f70fe7c3068358fafc256305",
+      "casos": 19,
+      "casosNoOK": 0,
+      "totalDeclarado": null,
+      "fallosDeclarados": null,
+      "codigoPsql": 0,
+      "completa": null,
+      "intacto": true,
+      "app": null,
+      "buildId": null
+    },
+    {
+      "archivo": "compat-deudas-local-instalada.json",
+      "sha256": "ccb9418c9dbce1eb86982bce5ae9cff03f3403a7bf9e674e09735747816e93e5",
+      "casos": 19,
+      "casosNoOK": 0,
+      "totalDeclarado": null,
+      "fallosDeclarados": null,
+      "codigoPsql": 0,
+      "completa": null,
+      "intacto": true,
+      "app": null,
+      "buildId": null
+    },
+    {
+      "archivo": "interfaz-r2-05b7be34/corridas/corrida-a85f6d.json",
+      "sha256": "3ffb62a7f0f7cd096af10cb89e6574a31e19875974ec63680ce6b22012713d80",
+      "casos": 23,
+      "casosNoOK": 0,
+      "totalDeclarado": 23,
+      "fallosDeclarados": 0,
+      "codigoPsql": null,
+      "completa": true,
+      "intacto": null,
+      "app": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "buildId": "05b7be34"
+    }
+  ],
+  "pwa": {
+    "pasos": 37,
+    "noOK": 0,
+    "resultado": "OK",
+    "A": "05b7be34",
+    "B": "169c9985",
+    "swA": "b9ab824a604facadac8d27e41712e28c5165c9905f648fb37f0beafe2057a61d",
+    "swB": "b625045315f6d3ab5d1150a24fbafa4f26ac34f2e4d2907e9db7fb7640a930ac",
+    "trafico": {
+      "tqkdtojnhgykmcbvwdmz.supabase.co": 27
+    }
+  },
+  "rls": {
+    "roles": [
+      {
+        "rol": "anon",
+        "antes": 55,
+        "despues": 57
+      },
+      {
+        "rol": "admin",
+        "antes": 55,
+        "despues": 57
+      },
+      {
+        "rol": "cajera",
+        "antes": 55,
+        "despues": 57
+      },
+      {
+        "rol": "clienta",
+        "antes": 55,
+        "despues": 57
+      }
+    ],
+    "diferenciasExistentes": [],
+    "relacionesNuevas": [
+      {
+        "rol": "anon",
+        "tabla": "cupones_gestion",
+        "valor": "ERR:42501"
+      },
+      {
+        "rol": "anon",
+        "tabla": "resenas_moderacion",
+        "valor": "ERR:42501"
+      },
+      {
+        "rol": "admin",
+        "tabla": "cupones_gestion",
+        "valor": 0
+      },
+      {
+        "rol": "admin",
+        "tabla": "resenas_moderacion",
+        "valor": 0
+      },
+      {
+        "rol": "cajera",
+        "tabla": "cupones_gestion",
+        "valor": 0
+      },
+      {
+        "rol": "cajera",
+        "tabla": "resenas_moderacion",
+        "valor": 0
+      },
+      {
+        "rol": "clienta",
+        "tabla": "cupones_gestion",
+        "valor": 0
+      },
+      {
+        "rol": "clienta",
+        "tabla": "resenas_moderacion",
+        "valor": 0
+      }
+    ]
+  },
+  "securityInvokerEnVistas": 3,
+  "secretos": {
+    "alcance": "Patrones basicos, solo archivos textuales del manifiesto del candidato; no lee .env ni acredita ausencia universal de secretos.",
+    "coincidencias": []
+  }
+}

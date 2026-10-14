@@ -1,0 +1,5 @@
+﻿ESTADO|INCOMPLETO
+CORRIDA|20261013T203841Z-8e25c4
+# Inventario de produccion (solo lectura) - UTC 2026-10-13T20:38:41.9483701Z
+# INCOMPLETO: las ausencias de este informe NO son datos confirmados. Diagnostico:
+# - corrida en curso o interrumpida antes de terminar

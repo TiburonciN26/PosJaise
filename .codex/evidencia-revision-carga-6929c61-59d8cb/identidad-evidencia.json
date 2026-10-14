@@ -1,0 +1,17 @@
+{
+  "fecha": "2026-10-11T03:30:19.126Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "mainLocal": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "corrida": "59d8cb",
+  "informeOriginalSha256": "b4d8ff1f885ea76894c04955a581ad3f812b01cd0e368a408cc6d1e9ca9369f7",
+  "fuentesSha256": {
+    "scripts/ensayo-carga-medios.cjs": "f5e83ffa10ed5d7dca32762f12169f7a8db67718be7edb20b12b936342004339",
+    "scripts/lib/ensayo-carga-flujo.cjs": "559c7fae4c0af3f2df13c2b5b8b9c831f1d575a1a863d85d82a5f43c1f48d758",
+    "scripts/lib/ensayo-carga.cjs": "4804883d1e16503420ef458e0d0d0fe9d1c7694522dafd6f0f9fa30fd6e6975f",
+    "scripts/lib/retirada-b.cjs": "76fa0ac7ac4b860c03148c04898857af07e9354272aa8ba3c507b051b92f0032",
+    "scripts/lib/guardas-interfaz-r2.cjs": "3963afe0e1c1fbb18fb2670cacd1e82cdb440726026708e4f5900a5fed830709"
+  },
+  "veredicto": "Aceptada la evidencia del ensayo acotado 20/20 en staging y retirada B en MIA. Auditoría independiente 29/29, sin repetir carga ni modificar recursos."
+}

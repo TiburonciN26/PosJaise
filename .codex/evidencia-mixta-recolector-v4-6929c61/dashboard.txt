@@ -1,0 +1,48 @@
+
+  - generic: Preview
+  - heading "Deployment details" [level=1]
+  - paragraph: "Deployment ID: c5effd38-500b-4006-9d85-798296a879e5"
+  - paragraph:
+    - text: "Deployment URL:"
+    - link "https://c5effd38.pos-jaise.pages.dev":
+      - /url: https://c5effd38.pos-jaise.pages.dev
+  - generic: "Aliases:"
+  - list:
+    - link "feat-cloudflare-pages.pos-jaise.pages.dev":
+      - /url: https://feat-cloudflare-pages.pos-jaise.pages.dev
+  - button "Manage deployment":
+    - generic: Manage deployment
+  - generic: "Repository:"
+  - link "TiburonciN26/PosJaise":
+    - /url: https://github.com/TiburonciN26/PosJaise
+    - generic: TiburonciN26/PosJaise
+  - generic: "Branch:"
+  - generic: feat/cloudflare-pages
+  - link "6929c61":
+    - /url: https://github.com/TiburonciN26/PosJaise/commit/6929c619e88a91434cb16ee6a8d2de90de94c091
+  - generic: "Fase 3: herramientas de carga, lectura mixta y recolector acotado; lectura de URLs propias de Galería por la base configurada Cambio de aplicación (ML-03): resolverUrlGaleria lee por la base pública configurada las URLs propias de otra base aprobada (r2.dev -> Pages /medios con B), conservando destino, UUID y variante. Recolector habitual: estaReferenciado aborta ante un conteo inválido (RG-03). Nuevas herramientas, probadas solo en memoria y sin ejecución real: ensayo de carga (EC-01/02), constructor y verificador del build de lectura mixta (ML-01/02), harness del recolector acotado (RG-01/02) y entrega «mixta» en las guardas. Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  - generic: "Status:"
+  - generic: success
+  - time: 8:22PM October 10, 2026
+  - generic: "Duration:"
+  - generic: 42s
+  - generic "Build settings 7":
+    - generic: ›
+    - generic: Build settings
+    - generic: "7"
+  - link "Build log":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/c5effd38-500b-4006-9d85-798296a879e5
+    - generic: Build log
+  - link "Assets uploaded":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/c5effd38-500b-4006-9d85-798296a879e5/files
+    - generic: Assets uploaded
+  - link "Functions":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/c5effd38-500b-4006-9d85-798296a879e5/functions
+    - generic: Functions
+  - link "Redirects":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/c5effd38-500b-4006-9d85-798296a879e5/redirects
+    - generic: Redirects
+  - link "Headers":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/c5effd38-500b-4006-9d85-798296a879e5/headers
+    - generic: Headers
+  

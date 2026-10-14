@@ -1,0 +1,54 @@
+{
+  "fecha": "2026-10-10T16:24:01.003Z",
+  "total": 8,
+  "listaExplicita": true,
+  "nota": "Escaneo de adiciones de documentos modificados y contenido íntegro de textos nuevos; coincidencias sin valores. PNG revisados visualmente en la sesión. No es garantía universal de ausencia de secretos.",
+  "hallazgos": [],
+  "archivos": [
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/R2-REAL-RUNBOOK.md",
+      "bytes": 20870,
+      "sha256": "38652584abcd0b9f5fbeb0d47f2d49240b12e82826bff165f80bc2ad28ec6911"
+    },
+    {
+      "archivo": "implementacionesWed.md",
+      "bytes": 431918,
+      "sha256": "c8d30ba61f6b649cd0bd9557d35194f6749f5071000b87eeb73dc2d095ca9698"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/clon-limpio-commit.json",
+      "bytes": 2810,
+      "sha256": "8f8363975fd631cdf76a14aa138dfd27445ddc660733c8b3df6a4fc081471148"
+    },
+    {
+      "archivo": "scripts/verificar-interfaz-r2-preview.cjs",
+      "bytes": 19971,
+      "sha256": "47f8960ea73d89b57faf1a2513cfd9122b615edbcfe18a4974da7f4752cd8623"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/resultados.json",
+      "bytes": 5664,
+      "sha256": "72d96690ca175121aedb8a74cd6e28977cac77f6874c61dfbaf36e789a9440b7"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/producto-antes-de-guardar.png",
+      "bytes": 126616,
+      "sha256": "3457c12083f4cc8067295d0140f1b12faa009d3ad95dd33d625b8df1e7c82693"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/galeria-alta.png",
+      "bytes": 42272,
+      "sha256": "64c10ffa4ca42109f039d1ac17b292a811e9d81996f4cdd9796055e05e3d34ac"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/cliente-detalle-servicio.png",
+      "bytes": 110225,
+      "sha256": "fcb69aa853f3e6de3afc777128938428289a800a9987f3b801152e3e9d71519c"
+    }
+  ],
+  "excluidos": [
+    ".codex/**",
+    "docs/evidencia-rendimiento/fase-1/capturas/*.png no versionados",
+    ".env*"
+  ]
+}

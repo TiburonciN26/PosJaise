@@ -1,0 +1,246 @@
+{
+ "escala": "ampliada",
+ "reps": 3,
+ "migracion": "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql,.codex/evidencia-fase7/borradores/abl-B.sql",
+ "duracion_s": 300,
+ "meta": {
+  "filas_antes": "4749,429,3067,3245,119",
+  "volumen": "60429,120429,123067,20049,20089,20080,5208,23245,23340,34749",
+  "pedidos_clienta": 4,
+  "indices": [
+   "idx_f7_b|3497984"
+  ],
+  "filas_despues": "4749,429,3067,3245,119"
+ },
+ "filas": [
+  {
+   "id": "Q01",
+   "d": "Pedidos Web · primera página (sin filtro)",
+   "rol": "admin",
+   "antes": {
+    "ms": 12961.95,
+    "helpers": 392994,
+    "planificacion_ms": 0.46,
+    "buffers": 518486,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 165.37,
+    "helpers": 9,
+    "planificacion_ms": 0.3,
+    "buffers": 125482,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 167.43,
+    "helpers": 9,
+    "planificacion_ms": 0.38,
+    "buffers": 125482,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q01",
+   "d": "Pedidos Web · primera página (sin filtro)",
+   "rol": "cajera",
+   "antes": {
+    "ms": 10095.06,
+    "helpers": 362576,
+    "planificacion_ms": 0.45,
+    "buffers": 366354,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 9.04,
+    "helpers": 6,
+    "planificacion_ms": 0.3,
+    "buffers": 3786,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 9.37,
+    "helpers": 6,
+    "planificacion_ms": 0.29,
+    "buffers": 3786,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q02",
+   "d": "Pedidos Web · estado PENDIENTE",
+   "rol": "admin",
+   "antes": {
+    "ms": 1683.94,
+    "helpers": 60307,
+    "planificacion_ms": 0.48,
+    "buffers": 98547,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 51.85,
+    "helpers": 9,
+    "planificacion_ms": 0.36,
+    "buffers": 38242,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 4.01,
+    "helpers": 9,
+    "planificacion_ms": 0.33,
+    "buffers": 2132,
+    "seq": [
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_b",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q03",
+   "d": "Pedidos Web · búsqueda de clienta + estado",
+   "rol": "admin",
+   "antes": {
+    "ms": 8166.94,
+    "helpers": 232061,
+    "planificacion_ms": 0.46,
+    "buffers": 339051,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 99.95,
+    "helpers": 9,
+    "planificacion_ms": 0.31,
+    "buffers": 107001,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 11.17,
+    "helpers": 9,
+    "planificacion_ms": 0.38,
+    "buffers": 3606,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_b",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q04",
+   "d": "Pedidos Web · conteo exacto por estado (head)",
+   "rol": "admin",
+   "antes": {
+    "ms": 808.22,
+    "helpers": 25973,
+    "planificacion_ms": 0.37,
+    "buffers": 27863,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.08,
+    "helpers": 6,
+    "planificacion_ms": 0.12,
+    "buffers": 1898,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 3.19,
+    "helpers": 6,
+    "planificacion_ms": 0.12,
+    "buffers": 1953,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "idx_f7_b"
+    ],
+    "filas": 1
+   }
+  }
+ ]
+}

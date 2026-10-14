@@ -1,0 +1,44 @@
+import fs from 'node:fs'
+import vm from 'node:vm'
+import {manejarMedios} from 'file:///C:/WedJaiseReact/cloudflare/medios-pages/entrega.js'
+
+// Sin red: se ejecuta la rama REAL de aserciones del verificador, con la Function real y dos caches en memoria.
+const source=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-medios-pages-cache.cjs','utf8')
+const inicio=source.indexOf("    if (CONTRATO === 'b') {")
+const fin=source.indexOf('    // ---- 8. expiración ----',inicio)
+if(inicio<0||fin<inicio)throw Error('No se identifica la rama de retirada')
+const rama=source.slice(inicio,fin)
+const base='https://qa.example/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+const cuerpo=new Uint8Array([1,2,3])
+const resultados=[]
+async function escenario(nombre,revocar,popPosterior){
+  let presente=true
+  const r2={async get(k){return presente?{httpEtag:k.endsWith('m.webp')?'"m"':'"g"',async arrayBuffer(){return cuerpo.buffer.slice(0)}}:null},async head(k){return presente?{httpEtag:k.endsWith('m.webp')?'"m"':'"g"'}:null}}
+  const maps={MIA:new Map(),SCL:new Map()}
+  function cache(pop){return{async match(req){return maps[pop].get(req.url)?.clone()},async put(req,r){maps[pop].set(req.url,r.clone())},async delete(req){return maps[pop].delete(req.url)}}}
+  async function servir(v,pop,init={}){
+    const pendientes=[]
+    const r=await manejarMedios(new Request(base+'/'+v+'.webp',init),{MEDIOS:r2},{waitUntil(p){pendientes.push(p)}},{cache:cache(pop),revocar})
+    await Promise.all(pendientes)
+    const h=new Headers(r.headers);h.set('CF-Ray','simulado-'+pop)
+    return new Response(r.body,{status:r.status,headers:h})
+  }
+  const cabeceras=r=>({cache:r.headers.get('cache-control'),nosniff:r.headers.get('x-content-type-options'),robots:r.headers.get('x-robots-tag'),medios:r.headers.get('x-medios-cache'),ray:r.headers.get('cf-ray')})
+  const comunes=h=>h.nosniff==='nosniff'&&h.robots==='noindex'
+  for(const v of ['m','g']){await (await servir(v,'MIA')).arrayBuffer();const hit=await servir(v,'MIA');if(hit.headers.get('X-Medios-Cache')!=='HIT')throw Error('No se calentó MIA');await hit.arrayBuffer()}
+  presente=false // DELETE ficticio confirmado: R2 ya no tiene m ni g.
+  const tras=await servir('m',popPosterior)
+  const th=cabeceras(tras)
+  const casos=[]
+  const contexto={CONTRATO:'b',informe:{popHit:'MIA'},tras,th,retenido:tras.status===200&&th.medios==='HIT',hh1:{etag:'"m"'},cabeceras,comunes,pedir:(v,init)=>servir(v,popPosterior,init),caso:(nombre,ok,detalle)=>casos.push({nombre,ok:Boolean(ok),detalle})}
+  await vm.runInNewContext(`(async()=>{${rama}})()`,contexto)
+  resultados.push({nombre,opcionReal:revocar?'B':'A',popHitPrevio:'MIA',popPosterior,aserciones:casos.length,fallos:casos.filter(x=>!x.ok).length,aceptadoPorVerificador:casos.every(x=>x.ok),retencionDeclarada:contexto.informe.retencionObservada,casos})
+}
+await escenario('Control A, mismo POP caliente: el verificador rechaza A',false,'MIA')
+await escenario('REPRODUCCIÓN: A sigue activa, HIT en MIA y lecturas posteriores en SCL frío',false,'SCL')
+await escenario('Control B, mismo POP caliente: retirada real aceptada',true,'MIA')
+const reproducido=resultados[1].aceptadoPorVerificador&&resultados[1].opcionReal==='A'&&resultados[0].fallos>0&&resultados[2].fallos===0
+const informe={fecha:new Date().toISOString(),sinRed:true,hallazgo:'CB-01: un HIT en otro POP no demuestra que el 404 posterior retiró una copia caliente',reproducido,resultados}
+fs.writeFileSync(new URL('./diagnostico-pop.json',import.meta.url),JSON.stringify(informe,null,2),{flag:'wx'})
+console.log(JSON.stringify({reproducido,resultados:resultados.map(({casos,...r})=>r)},null,2))
+if(!reproducido)process.exitCode=1

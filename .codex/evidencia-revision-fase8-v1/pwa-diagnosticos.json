@@ -1,0 +1,80 @@
+{
+  "alcance": "Artefacto real A local con servicio worker real. B virtual coherente: cambia todas las URLs JS y referencias, index y precaché; no conserva chunks A en red. No es un build/deployment real de Pages. Cuenta y producto ficticios Local; ninguna venta guardada.",
+  "casos": [
+    {
+      "nombre": "Cache de imagen firmada mismo origen",
+      "primero": {
+        "status": 200,
+        "bytes": 68
+      },
+      "cache": true,
+      "trasRevocar": {
+        "status": 200,
+        "bytes": 68
+      },
+      "servidorRevocado": 401,
+      "JSON": [
+        {
+          "lectura": 1
+        },
+        {
+          "lectura": 2
+        }
+      ],
+      "medios": {
+        "status": 404,
+        "bytes": 9
+      },
+      "mediosCached": false
+    },
+    {
+      "nombre": "A pendiente + B cambia chunks + Citas nunca visitada",
+      "before": {
+        "meta": "f8-a",
+        "cart": 1,
+        "updateBlocked": true,
+        "citasCached": false
+      },
+      "after": {
+        "errorVisible": true,
+        "cartDOM": 0,
+        "updateVisible": 0,
+        "reloadVisible": 1,
+        "errors": []
+      },
+      "recovered": {
+        "cart": 0,
+        "meta": "f8-a"
+      },
+      "denied": []
+    },
+    {
+      "nombre": "Control B nuevo sí abre Citas",
+      "meta": "f8-b-virtual",
+      "citas": true,
+      "errorBoundary": 0,
+      "denied": []
+    }
+  ],
+  "oldRequests": [
+    "Citas-BW2jo6ac.js",
+    "cake-CZH4OzdQ.js",
+    "calendar-BrwSNqMN.js",
+    "check-check-D48dy4aw.js",
+    "circle-plus-BkQE10Vc.js",
+    "eye-DB38PBw_.js",
+    "pencil-bKiJn8Ie.js",
+    "rotate-ccw-B-MlNNBs.js",
+    "search-BATgNWJb.js",
+    "trash-2-CVgFhhGP.js",
+    "BotonAccion-UJRmMYSa.js",
+    "BotonFlotanteAgregar-HxSj3t-u.js",
+    "plus-8EeP8tIY.js",
+    "fechas-BiD9QY8e.js",
+    "buscarServicios-Vgcjc-CE.js",
+    "ModalServicio-DL6zZ5Nd.js",
+    "galeriaFotos-D1fY-SSU.js",
+    "resultadoBd-BLxhvoIo.js",
+    "ModalRegistroAtencion-4c7t7JCh.js"
+  ]
+}

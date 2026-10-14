@@ -1,0 +1,30 @@
+const fs=require('node:fs'), path=require('node:path'), crypto=require('node:crypto'), cp=require('node:child_process');
+const ROOT='C:/WedJaiseReact', OUT=__dirname;
+const read=f=>JSON.parse(fs.readFileSync(path.join(ROOT,f),'utf8'));
+const sha=f=>crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+const close=read('.codex/evidencia-fase10a/bateria-cierre/resumen.json');
+const later=read('.codex/evidencia-fase10a/bateria-cierre-f5f6/resumen.json');
+const budgets=read('.codex/evidencia-fase10a/rendimiento/presupuestos-resultado.json');
+const vitales=read('.codex/evidencia-fase10a/rendimiento/vitales.json');
+const median=xs=>{const s=[...xs].sort((a,b)=>a-b),mid=Math.floor(s.length/2);return s.length%2?s[mid]:(s[mid-1]+s[mid])/2;};
+const cls=[];
+for(const [esc,r]of Object.entries(vitales.escenarios))for(const modo of ['frio','caliente']){
+  const raw=r[modo==='frio'?'muestrasFrio':'muestrasCaliente'].map(x=>x.cls);
+  const m=median(raw);cls.push({escenario:esc,modo,resumen:r[modo].cls,muestras:raw,medianaExacta:m,cumpleExacto:m<=0.1,cumpleResumen:r[modo].cls<=0.1});
+}
+const hashes=fs.readFileSync(path.join(ROOT,'.codex/evidencia-fase10a/rollback/SHA256-10a.txt'),'utf8').split(/\r?\n/).filter(Boolean).map(line=>{
+  const m=line.match(/^([a-f0-9]{64}) \*(.*)$/);if(!m)throw new Error('Hash ilegible');const actual=sha(path.join(ROOT,m[2]));return{archivo:m[2],esperado:m[1],actual,coincide:actual===m[1]};
+});
+const currentSQL=fs.readFileSync(path.join(ROOT,'supabase/migrations/20261012000003_migracion_medios_cambio_con_plazo.sql'),'utf8');
+const oldSQL=fs.readFileSync(path.join(ROOT,'.codex/evidencia-fase10a/rollback/antes/migracion_20261012000003.sql'),'utf8');
+const withoutComments=x=>x.replace(/--[^\r\n]*/g,'').replace(/\s+/g,' ').trim();
+const budgetDir=path.join(OUT,'evaluador-cls-corregido');fs.mkdirSync(budgetDir,{recursive:true});
+for(const f of ['cupones-reposo.json','busqueda-amplia.json','datos-iniciales.json','sesion-larga.json'])fs.copyFileSync(path.join(ROOT,'.codex/evidencia-fase10a/rendimiento',f),path.join(budgetDir,f));
+const corrected=structuredClone(vitales);for(const c of cls)corrected.escenarios[c.escenario][c.modo].cls=c.medianaExacta;
+fs.writeFileSync(path.join(budgetDir,'vitales.json'),JSON.stringify(corrected,null,2));
+const run=cp.spawnSync(process.execPath,[ROOT+'/scripts/fase10a/medir-rendimiento-10a.mjs','--evaluar','--salida='+budgetDir],{cwd:ROOT,encoding:'utf8'});
+fs.writeFileSync(path.join(budgetDir,'evaluador.log'),run.stdout+run.stderr);
+const correctedBudgets=JSON.parse(fs.readFileSync(path.join(budgetDir,'presupuestos-resultado.json')));
+const report={fecha:new Date().toISOString(),bateriaCierre:{total:close.resultados.length,correctos:close.resultados.filter(r=>r.estado===0).length,fallidos:close.resultados.filter(r=>r.estado!==0).map(r=>({id:r.id,resumen:r.resumen}))},repeticionFinal:later.resultados.map(r=>({id:r.id,estado:r.estado,resumen:r.resumen})),clausula:'Los 20 éxitos son una composición de corridas; no una batería completa 20/20 repetida por Codex.',presupuestos:{total:budgets.total,fallosReportados:budgets.fallos,fallosConClsSinRedondear:correctedBudgets.fallos,exitEvaluadorCorregido:run.status},cls,clsFalsamenteAprobados:cls.filter(c=>!c.cumpleExacto&&c.cumpleResumen),hashes,sqlMediosCambioSoloComentarios:withoutComments(currentSQL)===withoutComments(oldSQL),fuentes:'JSON ya entregados por Claude. Auditoría aritmética y de hashes; no repetición de laboratorio ni de transacciones SQL.'};
+fs.writeFileSync(path.join(OUT,'auditoria-evidencia.json'),JSON.stringify(report,null,2));
+console.log(JSON.stringify({bateriaCierre:report.bateriaCierre,presupuestos:report.presupuestos,clsFalsamenteAprobados:report.clsFalsamenteAprobados,hashes:hashes.length,hashesIncorrectos:hashes.filter(h=>!h.coincide).length,sqlMediosCambioSoloComentarios:report.sqlMediosCambioSoloComentarios},null,2));

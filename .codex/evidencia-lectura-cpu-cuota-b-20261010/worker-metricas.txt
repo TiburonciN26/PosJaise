@@ -1,0 +1,75 @@
+
+  - navigation "breadcrumb":
+    - link "Workers & Pages":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers-and-pages
+      - generic: Workers & Pages
+    - generic: pos-jaise-medios-staging
+    - combobox:
+      - generic: Production
+    - textbox: "{\"kind\":\"production\",\"id\":\"production\",\"name\":\"Production\"}"
+  - button "Ask AI":
+    - generic: Ask AI
+  - link "Support":
+    - /url: /?to=/:account/support
+    - generic: Support
+  - button "User menu":
+- navigation:
+  - tablist:
+    - tab "Overview"
+    - tab "Metrics" [active] [selected]
+    - tab "Deployments"
+    - tab "Observability"
+    - tab "Issues"
+    - tab "Domains"
+    - tab "Access"
+    - tab "Settings"
+  - button:
+  - button:
+  - button "Invite":
+    - button "Invite":
+      - generic: Invite
+  - link "Edit code":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/edit/pos-jaise-medios-staging/production
+    - generic: Edit code
+  - link "Visit ↗":
+    - /url: https://pos-jaise-medios-staging.jdeostuas2.workers.dev
+    - generic: Visit
+    - text: ↗
+- combobox:
+  - generic: All deployed versions
+- textbox: "0"
+- button "Refresh":
+- button "Last 24 hours":
+  - text: Last 24 hours
+- link "Invocations 971 ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/invocations
+  - generic: Invocations
+  - generic: "971"
+  - generic: ↗ 100.0%
+- link "Subrequests 1.77k ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/subrequests
+  - generic: Subrequests
+  - generic: 1.77k
+  - generic: ↗ 100.0%
+- link "Errors 0 No data":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/errors
+  - generic: Errors
+  - generic: "0"
+  - generic: No data
+- link "CPU Time 2 ms ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/cpu-time
+  - generic: CPU Time
+  - generic: 2 ms
+  - generic: ↗ 100.0%
+- link "Wall Time 272 ms ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/wall-time
+  - generic: Wall Time
+  - generic: 272 ms
+  - generic: ↗ 100.0%
+- link "Request duration 272 ms ↗ 100.0%":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics/charts/request-duration
+  - generic: Request duration
+  - generic: 272 ms
+  - generic: ↗ 100.0%
+- button "Show next metrics":
+- generic: Active deployment

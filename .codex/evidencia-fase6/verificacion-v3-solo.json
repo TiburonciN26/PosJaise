@@ -1,0 +1,16 @@
+{
+ "app": "http://localhost:5196",
+ "fecha": "2026-10-11T23:47:57.961Z",
+ "casos": [
+  {
+   "nombre": "F6-01b: un éxito de OTRO flujo (otro formulario) no libera un guardado fallido, rechazado ni en vuelo; el éxito propio libera solo el suyo",
+   "ok": true,
+   "ms": 218031
+  },
+  {
+   "nombre": "F6-01b: dos formularios enviados en la misma pantalla/sesión: el éxito de uno no libera al otro; editar tras enviar invalida la respuesta anterior",
+   "ok": true,
+   "ms": 6312
+  }
+ ]
+}

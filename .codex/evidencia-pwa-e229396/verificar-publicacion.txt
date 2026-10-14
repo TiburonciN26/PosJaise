@@ -1,0 +1,25 @@
+import fs from 'node:fs';import crypto from 'node:crypto';import {escanearTextoSalida} from 'file:///C:/WedJaiseReact/scripts/lib/entornos-supabase.mjs';
+const origin='https://feat-cloudflare-pages.pos-jaise.pages.dev',stage='tqkdtojnhgykmcbvwdmz',worker='https://pos-jaise-medios-staging.jdeostuas2.workers.dev',publico='https://pub-b248edba3e19402382b557a35b33c674.r2.dev';
+async function read(url){const r=await fetch(url,{cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000)});return {status:r.status,text:await r.text(),headers:Object.fromEntries(r.headers)};}
+const html=await read(origin+'/'),sw=await read(origin+'/sw.js');
+if(html.status!==200||sw.status!==200)throw new Error('HTML o SW no responde 200');
+const urls=new Set([...sw.text.matchAll(/["']?url["']?\s*:\s*["']([^"']+\.js(?:\?[^"']*)?)["']/g)].map(m=>m[1]));
+for(const m of html.text.matchAll(/src=["']([^"']+\.js)["']/g))urls.add(m[1]);
+if(urls.size<100)throw new Error('No se encontró el listado completo de scripts precacheados');
+const assets=[...urls],loaded=[],failures=[];let next=0;
+await Promise.all(Array.from({length:8},async()=>{while(next<assets.length){const file=assets[next++];const r=await read(new URL(file,origin+'/'));if(r.status!==200)failures.push({file,status:r.status});loaded.push({file,text:r.text,status:r.status,sha256:crypto.createHash('sha256').update(r.text).digest('hex')});}}));
+const texts=[{file:'index.html',text:html.text},{file:'sw.js',text:sw.text},...loaded];
+const findings=texts.flatMap(x=>escanearTextoSalida(x.text,stage).map(tipo=>({file:x.file,tipo})));
+const all=texts.map(x=>x.text).join('\n');
+const manifest=await read(origin+'/manifest.webmanifest');
+const ventas=await read(origin+'/ventas');
+const noProduction=await read('https://pos-jaise.pages.dev/');
+const configFiles=loaded.filter(x=>x.text.includes(worker)&&x.text.includes(publico));
+const providerR2=configFiles.some(x=>/proveedor\s*:\s*(["'`])r2\1/.test(x.text));
+const checks={buildId:html.text.match(/name=["']build-id["'][^>]*content=["']([^"']+)/)?.[1]??null,workerPresente:all.includes(worker),r2PublicoPresente:all.includes(publico),proveedorR2:providerR2,backendStaging:all.includes(stage),backendNegocioAusente:!all.includes('cmkelllerzjqjbsqsylc'),supabaseLocalAusente:!all.includes('127.0.0.1:54321'),ventasHTTP:ventas.status,produccionHTTP:noProduction.status,manifestRaiz:manifest.status===200&&JSON.parse(manifest.text).scope==='/'&&JSON.parse(manifest.text).start_url==='/',sin404EnPrecache:!sw.text.includes('404.html')};
+const passed=checks.buildId==='e2293968'&&checks.workerPresente&&checks.r2PublicoPresente&&checks.proveedorR2&&checks.backendStaging&&checks.backendNegocioAusente&&checks.supabaseLocalAusente&&checks.ventasHTTP===200&&checks.produccionHTTP===404&&checks.manifestRaiz&&checks.sin404EnPrecache&&findings.length===0&&failures.length===0;
+const result={fecha:new Date().toISOString(),origin,deployment:null,commit:'e2293968fdc3e502bf362b4a891cd691fea839fc',scriptCount:loaded.length,checks,headers:{html:html.headers['cache-control'],sw:sw.headers['cache-control'],robots:html.headers['x-robots-tag']},findings,failures,passed,assets:loaded.map(({file,status,sha256})=>({file,status,sha256})),nota:'Sin login ni escrituras. Se escaneó el JavaScript precacheado servido públicamente; no se imprimen claves.'};
+fs.writeFileSync(new URL('./verificacion-alias-final.json',import.meta.url),JSON.stringify(result,null,2),{flag: 'wx'});
+console.log(JSON.stringify({...result,assets:undefined},null,2));process.exitCode=passed?0:1;
+
+

@@ -1,0 +1,27 @@
+{
+  "fechaUTC": "2026-10-11T04:33:26.944Z",
+  "fechaLocal": "2026-10-10 23:33:26",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "main": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "cli": {
+    "casos": 23,
+    "fallos": 0,
+    "controlNegativo": {
+      "casosCLI": 9,
+      "fallosEsperados": 3
+    },
+    "lint": "sin diagnósticos",
+    "sintaxis": "correcta",
+    "sinRed": true,
+    "sinCredencialesReales": true
+  },
+  "fuentesSha256": {
+    "scripts/lib/huerfanos-medios.mjs": "e54647f75f0c59148de3d66f13c3b259177000b7ddb500bb25e54cc5b8e6fd1c",
+    "scripts/medios-huerfanos.mjs": "8a9de66cdefaef8dcfb66f9416aee58c947d9f065513e80446ce817bd65c596e",
+    "scripts/verificar-cli-huerfanos.mjs": "2e3836d42f10dc797e2442c1254654c1e5c023126b085209f253c642af8b5ac8",
+    "src/pages/cliente/ProductosCliente.jsx": "10b5bcd0f67760dca2961aed7b11d371963ec365d56e4c6c284a496677ffe5b4",
+    "src/pages/cliente/ServiciosCliente.jsx": "abd26e8cfb0381f4fe6fb04d89796b4c9a0aa069cdc3ed40bb010d2e9c898352",
+    "src/lib/buscarServicios.js": "15640695331b608877c076a48a473fa3f68c20b049fe29f4d4fc427e41af955b"
+  },
+  "nota": "QA de solo lectura. Corrección de CLI ya presente en el árbol sin commit; preparación de Fase 4 por código, sin medir nuevas trazas o tocar datos."
+}

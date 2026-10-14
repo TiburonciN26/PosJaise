@@ -1,0 +1,23 @@
+﻿ESTADO|INCOMPLETO
+CORRIDA|20261013T203848Z-cd9879
+# Inventario de produccion (solo lectura) - UTC 2026-10-13T20:41:34.2948412Z
+# INCOMPLETO: las ausencias de este informe NO son datos confirmados. Diagnostico:
+# - psql termino con codigo 2
+# - falta la seccion obligatoria 'servidor'
+# - falta la seccion obligatoria 'solo_lectura'
+# - falta la seccion obligatoria 'migraciones_total'
+# - falta la seccion obligatoria 'objeto'
+# - falta la seccion obligatoria 'funcion'
+# - falta la seccion obligatoria 'trigger_deudas'
+# - falta la seccion obligatoria 'deudas'
+# - falta la seccion obligatoria 'deuda_pagos'
+# - falta la seccion obligatoria 'deudas_incoherentes'
+# - falta la seccion obligatoria 'recompensas_activo'
+# - falta la seccion obligatoria 'conteo'
+# - falta la seccion obligatoria 'fotos_productos'
+# - falta la seccion obligatoria 'fin'
+# - la salida no termina en "fin|ok" (corte o error intermedio)
+# - la sesion no se declaro de solo lectura (solo_lectura|on)
+# Salida recibida (diagnostico):
+#   psql: error: connection to server at "db.cmkelllerzjqjbsqsylc.supabase.co" (2600:1f14:359d:9302:1956:d38:d0fa:41eb), port 5432 failed: Network is unreachable
+#   	Is the server running on that host and accepting TCP/IP connections?

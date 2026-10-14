@@ -1,0 +1,88 @@
+{
+  "fecha": "2026-10-10T03:27:07.800Z",
+  "branch": "feat/cloudflare-pages",
+  "head": "940510543f629df11ce80d558399c7ef32bebb68",
+  "main": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "node": "v24.14.1",
+  "lint": {
+    "errors": 2,
+    "warnings": 54,
+    "lines": [
+      "tests/e2e/fixtures.mjs:11:11: error react-hooks(rules-of-hooks): React Hook \"use\" is called in function \"Anonymous\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \"use\".",
+      "tests/e2e/fixtures.mjs:27:11: error react-hooks(rules-of-hooks): React Hook \"use\" is called in function \"Anonymous\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \"use\"."
+    ]
+  },
+  "sourceHashes": [
+    {
+      "file": "src/lib/galeriaFotos.js",
+      "sha256": "d618052037eaf94ddb2e0c07c1c8283f67a7ee0394c098fc448cc1be03b143f4"
+    },
+    {
+      "file": "src/lib/medios.js",
+      "sha256": "abd8586e8399f0f2c3983000ff52a54d21d0daac9480688ff1647371f0f1a1f6"
+    },
+    {
+      "file": "src/lib/imagenes.js",
+      "sha256": "811a02110bc6796f3bc523431999d6aac4a2bce19b9d757850e2aff0f84cf234"
+    },
+    {
+      "file": "src/components/ModalProducto.jsx",
+      "sha256": "b3ad1a288cdb7f220bf94e0d1462dc1fa5efe0609f7105f5bc075c7100beaa9b"
+    },
+    {
+      "file": "src/components/ModalServicio.jsx",
+      "sha256": "8d124f54a9fbef0b2dea74100b9d39fc7a0312626ea0f39a6ef9063bf31f0bc6"
+    },
+    {
+      "file": "src/components/ModalGaleriaWeb.jsx",
+      "sha256": "ebd7989930579fa537e5fe4740fc18edf3bfc2e4782cb9917b786604bbae45de"
+    },
+    {
+      "file": "scripts/lib/huerfanos-medios.mjs",
+      "sha256": "885712e507509347a9427663c19e85a95f6a410052b5d05fff68cfa2c6693182"
+    },
+    {
+      "file": "scripts/medios-huerfanos.mjs",
+      "sha256": "d03b1e7206405c6c90e7d49b40531570b17209565ff3b82cec72b18a0eaa7ade"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/validar-imagen.js",
+      "sha256": "c0df152ebcd22845615cd7f1bd6cc5322942d751143e916ab5256be60b2eb3fa"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/index.js",
+      "sha256": "11363e0cc62e25c5423f39f5c5a765583a1c16596c8cf20f3b5866655a7dc1f5"
+    },
+    {
+      "file": "scripts/verificar-medios-r2-fase3.cjs",
+      "sha256": "f97d199b2a6f856d00e5cb80fba58fcf953f851af7cbbead02173d61114d0fb4"
+    },
+    {
+      "file": "scripts/verificar-modales-fase3.cjs",
+      "sha256": "21da097440eadd9d98db7c26d154a1838d864b8f3038426059b3a6066878222a"
+    },
+    {
+      "file": "src/lib/resultadoBd.js",
+      "sha256": "79e0f2fdd12b7a86a540950f0a198e512783f582fe4465c8338706965cdeaaa8"
+    }
+  ],
+  "rollbackCheck": "git apply -R --check: exit 0, no aplicado",
+  "adaptaciones": "Copias externas de suites: solo rutas, puertos, lanzadores, caché y limpieza local adaptados. 166 casos originales sin modificación. Diagnóstico propio de cuatro estados, bloqueo y coincidencia parcial separado; en los casos de defensa de lógica se elude explícitamente fieldset disabled en el DOM del arnés, sin cambiar fuentes.",
+  "limitaciones": "R2 simulado. No medicion CPU Cloudflare. No escrituras remotas, migraciones, instalaciones, commit, push o recursos externos.",
+  "lintSinInformes": {
+    "errors": 2,
+    "warnings": 44
+  },
+  "lintNota": "Los 10 warnings extra del lint completo son copias de diagnostico de Codex del informe V2 en .codex; sin esa evidencia son 2 errores/44 warnings.",
+  "archivosCambiadosDesdeV4": [
+    "src/lib/galeriaFotos.js",
+    "src/components/ModalProducto.jsx",
+    "src/components/ModalServicio.jsx",
+    "src/components/ModalGaleriaWeb.jsx",
+    "scripts/verificar-modales-fase3.cjs",
+    "src/lib/resultadoBd.js"
+  ],
+  "fechaCierre": "2026-10-10T03:33:27.113Z",
+  "fuentesEstables": true,
+  "dictamen": "F3-07 cerrado en los casos revisados. Implementación local aceptada con observaciones para continuar la validación de R2 real; Fase 3 completa pendiente de infraestructura/métricas."
+}

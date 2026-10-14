@@ -1,0 +1,69 @@
+{
+  "fecha": "2026-10-12T18:59:52.601Z",
+  "veredicto": "Preparación/implementación y QA local Fase 9 aprobadas con observaciones",
+  "cerrados": [
+    "F9-01",
+    "F9-02",
+    "F9-03",
+    "F9-03b",
+    "F9-04",
+    "F9-05",
+    "F9-06"
+  ],
+  "bloqueantes": [],
+  "unitarios": {
+    "total": 17,
+    "fallos": 0
+  },
+  "cli": {
+    "total": 18,
+    "fallos": 0
+  },
+  "adicional": {
+    "total": 1,
+    "fallos": 0
+  },
+  "funcionesInstaladasCoinciden": true,
+  "funcionesInvoker": true,
+  "funcionesSinAnonPublic": true,
+  "rolesExecute": [
+    {
+      "nombre": "migracion_medios_barrera",
+      "executeRoles": [
+        "authenticated",
+        "postgres",
+        "service_role"
+      ]
+    },
+    {
+      "nombre": "migracion_medios_cambiar",
+      "executeRoles": [
+        "authenticated",
+        "postgres",
+        "service_role"
+      ]
+    },
+    {
+      "nombre": "migracion_medios_columna_permitida",
+      "executeRoles": [
+        "authenticated",
+        "postgres",
+        "service_role"
+      ]
+    }
+  ],
+  "fuentesSinCambios": true,
+  "estadoLocal": {
+    "version": "17.6",
+    "migracion": "20261012000003",
+    "auditoria": 25994,
+    "objetos": 441,
+    "fixtures": [
+      0,
+      0,
+      0
+    ]
+  },
+  "pg7YSim18": "Evidencias de Claude auditadas; no reejecutadas por Codex",
+  "sinEscriturasEnBasesReales": true
+}

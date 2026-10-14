@@ -1,0 +1,64 @@
+{
+  "fecha": "2026-10-10T22:32:46.103Z",
+  "alcance": "Node con dobles en memoria; sin red ni datos externos",
+  "total": 14,
+  "fallos": 0,
+  "resultados": [
+    {
+      "nombre": "A por defecto: conserva HIT tras DELETE, navegador revalida y borde mantiene 300",
+      "ok": true
+    },
+    {
+      "nombre": "B sin head: usa get sin consumir bytes del HIT",
+      "ok": true
+    },
+    {
+      "nombre": "B sin head: objeto borrado y HEAD condicional devuelve 404 sin cuerpo",
+      "ok": true
+    },
+    {
+      "nombre": "B sin head: get falla y no entrega cuerpo viejo",
+      "ok": true
+    },
+    {
+      "nombre": "B ETag cambiado: reemplaza bytes almacenados y siguiente HIT conserva nueva versión",
+      "ok": true
+    },
+    {
+      "nombre": "B ETag cambiado e If-None-Match nuevo: 304 y guarda cuerpo nuevo completo",
+      "ok": true
+    },
+    {
+      "nombre": "B HEAD con ETag nuevo no escribe caché; GET siguiente reemplaza cuerpo antiguo",
+      "ok": true
+    },
+    {
+      "nombre": "B 304 débil en HIT revalida R2 y conserva política de navegador",
+      "ok": true
+    },
+    {
+      "nombre": "B HEAD vivo con HIT consulta metadatos y no agrega lecturas de cuerpo",
+      "ok": true
+    },
+    {
+      "nombre": "B cache.delete fallido: sigue denegando GET y 304 posteriores",
+      "ok": true
+    },
+    {
+      "nombre": "B cache.match fallido y objeto borrado: consulta R2 y devuelve 404",
+      "ok": true
+    },
+    {
+      "nombre": "B head fallido en HEAD condicional: 503 vacío, sin filtrar detalles",
+      "ok": true
+    },
+    {
+      "nombre": "B fallo de cache.put: MISS sano y no evita retirada posterior",
+      "ok": true
+    },
+    {
+      "nombre": "B sin copia y objeto borrado: If-None-Match * no obtiene 304",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),cp=require('node:child_process'),crypto=require('node:crypto');
+const {chromium}=require('C:/WedJaiseReact/node_modules/playwright');
+const ROOT='C:/WedJaiseReact', OUT=__dirname;
+const G=require(ROOT+'/scripts/fase10a/lib/guardas-local-10a.cjs');
+const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',()=>r(s.address().port)));
+const close=s=>new Promise(r=>{s.closeAllConnections?.();s.close(r)});
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const run=args=>new Promise(r=>{const p=cp.spawn(process.execPath,args,{cwd:ROOT});let text='';p.stdout.on('data',b=>text+=b);p.stderr.on('data',b=>text+=b);p.once('close',code=>r({code,text}));});
+const result={fecha:new Date().toISOString(),casos:[]};
+async function redirect(){
+  const hits=[];
+  const sink=http.createServer((req,res)=>{hits.push({method:req.method,path:req.url,claveInventadaEnUrl:req.url.includes('CLAVE_INVENTADA_10A')});res.writeHead(200,{'Access-Control-Allow-Origin':'*'});res.end('SEÑUELO FICTICIO');});const sinkPort=await listen(sink);
+  const app=http.createServer((req,res)=>{
+    if(req.url.startsWith('/rebote')){res.writeHead(302,{Location:`http://127.0.0.1:${sinkPort}/recibido?prueba=CLAVE_INVENTADA_10A`});res.end();return;}
+    res.writeHead(200,{'Content-Type':'text/html'});res.end('<html><body>QA sin credenciales reales</body></html>');
+  });const appPort=await listen(app), origin='http://127.0.0.1:'+appPort;
+  const browser=await chromium.launch({headless:true});
+  try{
+    const guarda=G.crearGuarda(origin),ctx=await G.contextoSeguro(browser,{},guarda),page=await ctx.newPage();
+    await page.goto(origin+'/');
+    const direct=await page.evaluate(url=>fetch(url).then(r=>({status:r.status})).catch(e=>({error:e.message})),`http://127.0.0.1:${sinkPort}/directo`);
+    const before=hits.length;
+    const redirected=await page.evaluate(()=>fetch('/rebote').then(r=>({status:r.status})).catch(e=>({error:e.message})));
+    await page.waitForTimeout(300);
+    result.casos.push({id:'redireccion-runtime',controlDirecto:direct,hitsAntesDeRebote:before,respuestaRedirect:redirected,peticionesSenuelo:hits,violaciones:guarda.violaciones,defectoReproducido:before===0&&hits.length>0,limite:'Guarda real de contextoSeguro, navegador real y dos servidores propios en loopback. Solo una clave inventada; sin Supabase, cuentas ni red externa.'});
+    await ctx.close();
+  }finally{await browser.close();await close(app);await close(sink);}
+}
+function makeBudget(name,mutateData,mutateManifest){
+  const dir=path.join(OUT,name);fs.mkdirSync(dir);
+  const input=JSON.parse(fs.readFileSync(ROOT+'/.codex/evidencia-fase10a-v2/rendimiento-vitales/vitales.json'));
+  input.completo=true;input.errores=[];
+  for(const x of Object.values(input.escenarios))for(const k of ['muestrasFrio','muestrasCaliente'])x[k]=x[k].map(v=>({...v,lcp:1800,cls:0.02,interaccionMs:80,errores:0}));
+  for(const r of Object.values(input.reducido)){r.rafPorSeg=0;r.animacionesEnCurso=0;}
+  mutateData?.(input);
+  const raw=JSON.stringify(input);fs.writeFileSync(path.join(dir,'vitales.json'),raw);
+  const manifest={id:crypto.randomUUID(),inicio:new Date().toISOString(),fin:new Date().toISOString(),alcance:['vitales'],global:false,artefactos:{'http://127.0.0.1:5403':{inicio:'a'.repeat(64),fin:'a'.repeat(64)}},productores:{vitales:{estado:0,archivo:'vitales.json',escritoEnEstaEjecucion:true,sha256:sha(raw)}}};
+  mutateManifest?.(manifest);fs.writeFileSync(path.join(dir,'ejecucion.json'),JSON.stringify(manifest));return dir;
+}
+async function budgets(){
+  for(const [name,data,meta]of [
+    ['control-sano',null,null],
+    ['muestras-invalidas-mixtas',v=>{for(const x of Object.values(v.escenarios))for(const k of ['muestrasFrio','muestrasCaliente']){x[k][1]={...x[k][1],lcp:null,cls:null,interaccionMs:null};x[k][2]={...x[k][2],lcp:'sin-medir',cls:'sin-medir',interaccionMs:'sin-medir'};}},null],
+    ['muestras-con-pageerror',v=>{for(const x of Object.values(v.escenarios))for(const k of ['muestrasFrio','muestrasCaliente'])for(const m of x[k])m.errores=3;},null],
+    ['sin-huella-final',null,m=>{delete m.fin;for(const h of Object.values(m.artefactos))h.fin=null;}],
+    ['sin-artefactos',null,m=>{m.artefactos={};}],
+  ]){
+    const dir=makeBudget(name,data,meta),r=await run([ROOT+'/scripts/fase10a/medir-rendimiento-10a.mjs','--evaluar','--solo=vitales','--salida='+dir]);
+    const report=JSON.parse(fs.readFileSync(path.join(dir,'presupuestos-resultado.json')));fs.writeFileSync(path.join(dir,'cli.log'),r.text);
+    result.casos.push({id:name,exit:r.code,total:report.total,fallos:report.fallos,problemas:report.problemas,veredicto:report.veredicto,defectoReproducido:name!=='control-sano'&&r.code===0,limite:'Fixtures sintéticos de evaluación, derivados del formato real. Manifiesto y hashes coherentes; no son mediciones de rendimiento.'});
+  }
+}
+async function fallback(){
+  const base=path.join(OUT,'fallback-ficticio'), root=path.join(base,'servidor'),other=path.join(base,'ajeno'), moved=path.join(base,'servidor-original');
+  fs.mkdirSync(root,{recursive:true});fs.mkdirSync(other);
+  fs.writeFileSync(path.join(root,'index.html'),'INDICE PROPIO');fs.writeFileSync(path.join(other,'index.html'),'INDICE AJENO FICTICIO');
+  const reserve=http.createServer(),port=await listen(reserve);await close(reserve);
+  const p=cp.spawn(process.execPath,[ROOT+'/scripts/fase10a/servir-como-pages.cjs',root,String(port)],{cwd:ROOT});let text='';p.stdout.on('data',b=>text+=b);
+  try{
+    const end=Date.now()+8000;while(!text.includes('servir-como-pages')&&Date.now()<end)await new Promise(r=>setTimeout(r,50));if(!text.includes('servir-como-pages'))throw new Error('Servidor no arrancó');
+    // Renombrado exclusivamente de una carpeta QA propia, bajo el BASE permitido. Se verifican ambos destinos absolutos.
+    for(const f of [root,moved,other])if(!path.resolve(f).startsWith(path.resolve(base)+path.sep))throw new Error('Ruta de movimiento fuera del fixture propio');
+    fs.renameSync(root,moved);fs.symlinkSync(other,root,'junction');
+    const direct=await fetch(`http://127.0.0.1:${port}/index.html`);const directBody=await direct.text();
+    const fallback=await fetch(`http://127.0.0.1:${port}/ventas`);const body=await fallback.text();
+    result.casos.push({id:'fallback-sin-ruta-real',directo:{status:direct.status,marcaAjena:directBody.includes('INDICE AJENO')},fallback:{status:fallback.status,marcaAjena:body.includes('INDICE AJENO')},defectoReproducido:direct.status===403&&fallback.status===200&&body.includes('INDICE AJENO'),limite:'Raíz QA propia reemplazada por junction a otra carpeta QA después del arranque. No se tocaron archivos del repo ni archivos privados.'});
+  }finally{p.kill();await new Promise(r=>p.exitCode!==null?r():p.once('close',r));}
+}
+async function main(){await redirect();await budgets();await fallback();fs.writeFileSync(path.join(OUT,'diagnosticos-v2.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));}
+main().catch(e=>{console.error(e);fs.writeFileSync(path.join(OUT,'diagnosticos-v2-incompleto.json'),JSON.stringify({...result,error:e.message},null,2));process.exitCode=1;});

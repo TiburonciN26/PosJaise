@@ -1,0 +1,210 @@
+{
+  "fecha": "2026-10-12T16:57:01.714Z",
+  "alcance": "CLI original contra HTTP ficticio en memoria. Ninguna base real, credencial real ni conexión externa. VM con filesystem sustituido para no borrar.",
+  "resultados": [
+    {
+      "caso": "manifiesto de otro ambiente",
+      "manifestAmbiente": "127.0.0.1:1",
+      "backendAmbiente": "127.0.0.1:55133",
+      "exit": 0,
+      "resultado": {
+        "modo": "actualizar",
+        "candidatas": 1,
+        "enEsteLote": 1,
+        "hechas": 1,
+        "conflictos": 0,
+        "simulado": false,
+        "resumen": {
+          "entradas": 1,
+          "porEstado": {
+            "verificada": 1
+          },
+          "referencias": 1,
+          "refsPorEstado": {
+            "actualizada": 1
+          },
+          "bytesOrigen": 32,
+          "bytesVariantes": 0
+        }
+      },
+      "fotoCambio": true,
+      "patches": 1,
+      "logins": 1
+    },
+    {
+      "caso": "PATCH confirmado con respuesta incierta y reversión",
+      "actualizarExit": 2,
+      "error": "medios-migracion: update productos/d9f5df00-bbf5-4c34-a9e4-e97a2bff7345: respuesta ficticia perdida después del commit",
+      "estadoTrasError": "pendiente",
+      "fotoMigradaTrasError": true,
+      "revertirExit": 0,
+      "reversion": {
+        "modo": "revertir",
+        "candidatas": 0,
+        "enEsteLote": 0,
+        "hechas": 0,
+        "conflictos": 0,
+        "simulado": false,
+        "resumen": {
+          "entradas": 1,
+          "porEstado": {
+            "verificada": 1
+          },
+          "referencias": 1,
+          "refsPorEstado": {
+            "pendiente": 1
+          },
+          "bytesOrigen": 32,
+          "bytesVariantes": 0
+        }
+      },
+      "fotoSigueMigrada": true,
+      "patches": 1
+    },
+    {
+      "caso": "control positivo actualizar y revertir",
+      "actualizarExit": 0,
+      "revertirExit": 0,
+      "originalRestaurado": true,
+      "estadoFinal": "revertida"
+    },
+    {
+      "caso": "verificar sin lectura de R2",
+      "sinLectura": {
+        "exit": 0,
+        "resultado": {
+          "ok": true,
+          "entradas": 1,
+          "refsComprobadas": 1,
+          "r2Comprobados": 0,
+          "originalesComprobados": 1,
+          "problemas": []
+        }
+      },
+      "conLectura": {
+        "exit": 1,
+        "resultado": {
+          "ok": false,
+          "entradas": 1,
+          "refsComprobadas": 1,
+          "r2Comprobados": 2,
+          "originalesComprobados": 1,
+          "problemas": [
+            {
+              "tipo": "r2-no-coincide",
+              "id": "ad081420-22a3-54e1-bc21-3375e2087c28",
+              "variante": "m",
+              "estado": 404
+            },
+            {
+              "tipo": "r2-no-coincide",
+              "id": "ad081420-22a3-54e1-bc21-3375e2087c28",
+              "variante": "g",
+              "estado": 404
+            }
+          ]
+        }
+      }
+    },
+    {
+      "caso": "redacción de URLs firmadas privadas",
+      "pruebas": [
+        {
+          "origen": "propio",
+          "formato": "supabase-url-ajena",
+          "privacidad": "publico-catalogo",
+          "migrar": false,
+          "exit": 0,
+          "urlYTokenIncluidosEnInforme": true,
+          "referenciasPublicadas": 1
+        },
+        {
+          "origen": "ajeno",
+          "formato": "supabase-url-ajena",
+          "privacidad": "publico-catalogo",
+          "migrar": false,
+          "exit": 0,
+          "urlYTokenIncluidosEnInforme": true,
+          "referenciasPublicadas": 1
+        }
+      ]
+    },
+    {
+      "caso": "permisos remotos para Worker, Pages y Supabase",
+      "permisos": [
+        {
+          "permiso": "worker.qa.invalid",
+          "permitidos": [
+            "worker.qa.invalid"
+          ],
+          "rechazados": [
+            "pages.qa.invalid",
+            "db.qa.invalid"
+          ]
+        },
+        {
+          "permiso": "pages.qa.invalid",
+          "permitidos": [
+            "pages.qa.invalid"
+          ],
+          "rechazados": [
+            "worker.qa.invalid",
+            "db.qa.invalid"
+          ]
+        },
+        {
+          "permiso": "db.qa.invalid",
+          "permitidos": [
+            "db.qa.invalid"
+          ],
+          "rechazados": [
+            "worker.qa.invalid",
+            "pages.qa.invalid"
+          ]
+        }
+      ]
+    },
+    {
+      "caso": "harness acepta eliminar raíz o carpetas del proyecto",
+      "borrados": [
+        {
+          "entrada": ".",
+          "deleteSolicitado": [
+            {
+              "target": "C:\\WedJaiseReact",
+              "op": {
+                "recursive": true,
+                "force": true
+              }
+            }
+          ]
+        },
+        {
+          "entrada": "C:/WedJaiseReact/.codex",
+          "deleteSolicitado": [
+            {
+              "target": "C:\\WedJaiseReact\\.codex",
+              "op": {
+                "recursive": true,
+                "force": true
+              }
+            }
+          ]
+        },
+        {
+          "entrada": "C:/WedJaiseReact/src",
+          "deleteSolicitado": [
+            {
+              "target": "C:\\WedJaiseReact\\src",
+              "op": {
+                "recursive": true,
+                "force": true
+              }
+            }
+          ]
+        }
+      ],
+      "borradosReales": 0
+    }
+  ]
+}

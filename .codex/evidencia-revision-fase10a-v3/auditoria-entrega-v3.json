@@ -1,0 +1,162 @@
+{
+  "fecha": "2026-10-13T12:06:10.0233983-05:00",
+  "herramientas": {
+    "total": 60,
+    "fallos": 0,
+    "casosOK": 60
+  },
+  "hashesV3": [
+    {
+      "path": "scripts/fase10a/lib/guardas-local-10a.cjs",
+      "esperado": "8aa1355e5af076584bb21136c50e4ba8c6b57bbcb3bd0e53d5d77df4f3bd6960",
+      "actual": "8AA1355E5AF076584BB21136C50E4BA8C6B57BBCB3BD0E53D5D77DF4F3BD6960",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/lib/evaluar-presupuestos.mjs",
+      "esperado": "e60b6807f470b9d5ec496af89d498a501cd1017ae51f3f7e4e4ff55dfe8f8b5e",
+      "actual": "E60B6807F470B9D5EC496AF89D498A501CD1017AE51F3F7E4E4FF55DFE8F8B5E",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/lib/estadistica.cjs",
+      "esperado": "b7157d075de8da7b9da7ffe85bf8de51a31d8d06d7c630ec92334c201b5c6f90",
+      "actual": "B7157D075DE8DA7B9DA7FFE85BF8DE51A31D8D06D7C630EC92334C201B5C6F90",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/medir-rendimiento-10a.mjs",
+      "esperado": "9dfcd5b64597b6a84ef0a35bf15e30436550d331a67541661feba758423c7b34",
+      "actual": "9DFCD5B64597B6A84EF0A35BF15E30436550D331A67541661FEBA758423C7B34",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/servir-como-pages.cjs",
+      "esperado": "638f081d178cc7ca3eaa6c6bcd8266f000f14b9d979a916a75060c356ca7c7e0",
+      "actual": "638F081D178CC7CA3EAA6C6BCD8266F000F14B9D979A916A75060C356CA7C7E0",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/presupuestos-rendimiento.json",
+      "esperado": "fd50c54ed56724f8f234da4e11d494b62dad16b5e7b8af18a05e42fbe65b64ad",
+      "actual": "FD50C54ED56724F8F234DA4E11D494B62DAD16B5E7B8AF18A05E42FBE65B64AD",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/probar-herramientas-10a.mjs",
+      "esperado": "85f0337477f5ed7930961a011293161d0c5ddf9afcdc580f858ba4b913f1697d",
+      "actual": "85F0337477F5ED7930961A011293161D0C5DDF9AFCDC580F858BA4B913F1697D",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/ensayar-compat-deudas.mjs",
+      "esperado": "435f24a5f4a775c7abdfb94dac6e17edc7075ba05135d22ae5bb817185641033",
+      "actual": "435F24A5F4A775C7ABDFB94DAC6E17EDC7075BA05135D22AE5BB817185641033",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/probar-deuda-main-ui.cjs",
+      "esperado": "d4397b54b06b891abb28bded9a88035ca9598f06c40a3568ee319d329b78188c",
+      "actual": "D4397B54B06B891ABB28BDED9A88035CA9598F06C40A3568EE319D329B78188C",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/medir-vitales-10a.cjs",
+      "esperado": "30248afd3444a4bbdfbf17c2e6bd20d407dc48a68ef5edf6616c5b8efdafd483",
+      "actual": "30248AFD3444A4BBDFBF17C2E6BD20D407DC48A68EF5EDF6616C5B8EFDAFD483",
+      "igual": true
+    },
+    {
+      "path": "scripts/fase10a/verificar-roles-rutas.cjs",
+      "esperado": "b65d627560497d8ac3070797f7d55707d3a71e29ee26ef0fed62b90a24e3113e",
+      "actual": "B65D627560497D8AC3070797F7D55707D3A71E29EE26EF0FED62B90A24E3113E",
+      "igual": true
+    },
+    {
+      "path": ".codex/propuesta-f10a-05/compat-deudas-borrador.sql",
+      "esperado": "49f018f0357f19b1ec9b63dcb4d67c4e6dacaa82d62d98635252ad225f462cd0",
+      "actual": "49F018F0357F19B1EC9B63DCB4D67C4E6DACAA82D62D98635252AD225F462CD0",
+      "igual": true
+    },
+    {
+      "path": ".codex/propuesta-f10a-05/ensayo-compat-deudas.sql",
+      "esperado": "24c07cf929496d51d37bf233370e1db644b9959c513e9abc34ba388f0a229783",
+      "actual": "24C07CF929496D51D37BF233370E1DB644B9959C513E9ABC34BA388F0A229783",
+      "igual": true
+    },
+    {
+      "path": ".codex/ENTREGA-FASE10A-CORRECCIONES-V3.md",
+      "esperado": "0baa2080a973baf5ee5b696794a2218aac327bc1706adaa93f56c1a99a4c8cac",
+      "actual": "0BAA2080A973BAF5EE5B696794A2218AAC327BC1706ADAA93F56C1A99A4C8CAC",
+      "igual": true
+    },
+    {
+      "path": ".codex/PLAN-VALIDACION-STAGING-FASE10.md",
+      "esperado": "e8f5e782ce00a54b69e15325567e696d85c014bdb1c08d732609bc46e6a1ce36",
+      "actual": "E8F5E782CE00A54B69E15325567E696D85C014BDB1C08D732609BC46E6A1CE36",
+      "igual": true
+    },
+    {
+      "path": ".codex/PENDIENTES-CONSOLIDADOS-FASE10A.md",
+      "esperado": "21570cf391570beb23601994f55525d294eb33a2fc74eb8e3b6c7e5213388421",
+      "actual": "21570CF391570BEB23601994F55525D294EB33A2FC74EB8E3B6C7E5213388421",
+      "igual": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v3/herramientas.json",
+      "esperado": "88a57c6306d9405238f62934f03a59081c66cb9d9eef8cf8d552e3dae1bacb0e",
+      "actual": "88A57C6306D9405238F62934F03A59081C66CB9D9EEF8CF8D552E3DAE1BACB0E",
+      "igual": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v3/compat-deudas.json",
+      "esperado": "6b7eb846cd42dd420fe7d112fcf737a3eb1c2ee832d7dc0b4cd54e2ce7086ca9",
+      "actual": "6B7EB846CD42DD420FE7D112FCF737A3EB1C2EE832D7DC0B4CD54E2CE7086CA9",
+      "igual": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v3/deuda-main-ui.json",
+      "esperado": "08f13cc7d75fe5482e83d1148e0336a26f181cb94c9e40312b0fff9fac40c588",
+      "actual": "08F13CC7D75FE5482E83D1148E0336A26F181CB94C9E40312B0FFF9FAC40C588",
+      "igual": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v3/roles-control-positivo.json",
+      "esperado": "42e4ba506f75c8ca26cffe004985a7bf74907bdc8f6ea4e9fac063e5f9ec19d0",
+      "actual": "42E4BA506F75C8CA26CFFE004985A7BF74907BDC8F6EA4E9FAC063E5F9EC19D0",
+      "igual": true
+    }
+  ],
+  "compatAutor": {
+    "resultados": 25,
+    "fallos": 0,
+    "intacto": true,
+    "estadoActualLocal": {
+      "deudas": 59,
+      "deudaPagos": 8,
+      "sumaPagos": 79.0,
+      "firmaDeudas": "98734d8454b3fdac9007e277449705c2",
+      "triggersCompat": 0,
+      "funcionesCompat": 0,
+      "deudasPrueba": 0,
+      "asistentesAuth": 0,
+      "asistentesPerfil": 0
+    },
+    "firmaCoincide": true,
+    "nota": "Evidencia del autor y relectura Local; Codex no ejecutó SQL que instala triggers."
+  },
+  "rolesAutor": {
+    "total": 19,
+    "fallos": 0,
+    "visitante": 46,
+    "clienta": 46,
+    "asistente": 46,
+    "cajera": 46,
+    "admin": 46
+  },
+  "reaccionMainAutor": {
+    "avisoDeError": true,
+    "sigue100": true,
+    "siguePendiente": true
+  }
+}

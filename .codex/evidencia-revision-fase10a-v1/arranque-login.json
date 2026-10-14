@@ -1,0 +1,9 @@
+{
+ "fecha": "2026-10-13T05:16:58.116Z",
+ "app": "http://127.0.0.1:61815",
+ "metodo": "CPU 4×, red 150 ms / 1,6 Mbps, SW bloqueado; mediana de muestras",
+ "muestras": 3,
+ "escenarios": {},
+ "reducido": {},
+ "errores": []
+}

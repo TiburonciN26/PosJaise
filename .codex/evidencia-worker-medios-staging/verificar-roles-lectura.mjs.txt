@@ -1,0 +1,20 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+const base='https://pos-jaise-medios-staging.jdeostuas2.workers.dev';
+const origen='https://feat-cloudflare-pages.pos-jaise.pages.dev';
+const env=Object.fromEntries(readFileSync('C:/WedJaiseReact/.env.staging.local','utf8').split(/\r?\n/).map(l=>l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/)).filter(Boolean).map(m=>[m[1],m[2].trim().replace(/^["']|["']$/g,'')]));
+if(env.VITE_SUPABASE_URL!=='https://tqkdtojnhgykmcbvwdmz.supabase.co')throw new Error('Solo staging');
+const casos=[];
+for(const [rol,prefix,expected] of [['admin','ADMIN',200],['cajera','CAJERA',403],['cliente','CLIENTE',403]]){
+  const email=env['QA_'+prefix+'_EMAIL'],password=env['QA_'+prefix+'_PASSWORD'];
+  if(!email?.endsWith('@staging.test')||!password)throw new Error('Cuenta QA de staging requerida');
+  const login=await fetch(env.VITE_SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:env.VITE_SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password}),signal:AbortSignal.timeout(20000)});
+  if(!login.ok)throw new Error('Login QA rechazado: '+login.status);
+  const token=(await login.json()).access_token;
+  const r=await fetch(base+'/v1/inventario/fotos-productos',{headers:{Authorization:'Bearer '+token,Origin:origen},signal:AbortSignal.timeout(20000)});
+  const data=await r.json();
+  const resultado={rol,status:r.status,esperado:expected,ok:r.status===expected,...(rol==='admin'?{objetos:(data.objetos??[]).length}:{}),origenExacto:r.headers.get('access-control-allow-origin')===origen};
+  casos.push(resultado);console.log(JSON.stringify(resultado));
+}
+const informe={fecha:new Date().toISOString(),api:base,supabase:'staging',soloLectura:true,escribio:false,casos,total:casos.length,fallos:casos.filter(c=>!c.ok||!c.origenExacto).length};
+writeFileSync(new URL('./roles-solo-lectura.json',import.meta.url),JSON.stringify(informe,null,2));
+process.exitCode=informe.fallos?1:0;

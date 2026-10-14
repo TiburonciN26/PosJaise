@@ -1,0 +1,87 @@
+[
+  {
+    "test": "retencion-invalida",
+    "value": "NaN",
+    "reads": 0,
+    "deletes": 0,
+    "rejected": true
+  },
+  {
+    "test": "retencion-invalida",
+    "value": "-1",
+    "reads": 0,
+    "deletes": 0,
+    "rejected": true
+  },
+  {
+    "test": "retencion-invalida",
+    "value": "0",
+    "reads": 0,
+    "deletes": 0,
+    "rejected": true
+  },
+  {
+    "test": "retencion-invalida",
+    "value": "Infinity",
+    "reads": 0,
+    "deletes": 0,
+    "rejected": true
+  },
+  {
+    "test": "retencion-invalida",
+    "value": "foo",
+    "reads": 0,
+    "deletes": 0,
+    "rejected": true
+  },
+  {
+    "test": "A-borrada-B-referenciada",
+    "removed": [
+      "fotos-productos/00000001-0000-4000-8000-000000000000"
+    ],
+    "checked": [
+      "fotos-productos/00000001-0000-4000-8000-000000000000",
+      "fotos-productos/00000002-0000-4000-8000-000000000000"
+    ],
+    "BPreserved": true
+  },
+  {
+    "test": "flag-false",
+    "rejected": true,
+    "message": "--aplicar no admite valor (recibió «false»): escríbalo sin «=» para activarlo u omítalo."
+  },
+  {
+    "test": "parser-misma-reproduccion",
+    "runtime": "v24.14.1",
+    "measurements": [
+      {
+        "chunks": 1000,
+        "bytes": 8044,
+        "medianMs": 0.012800000000002143,
+        "verdict": {
+          "ok": false,
+          "motivo": "chunk-repetido"
+        }
+      },
+      {
+        "chunks": 4000,
+        "bytes": 32044,
+        "medianMs": 0.004400000000003956,
+        "verdict": {
+          "ok": false,
+          "motivo": "chunk-repetido"
+        }
+      },
+      {
+        "chunks": 8000,
+        "bytes": 64044,
+        "medianMs": 0.007199999999997431,
+        "verdict": {
+          "ok": false,
+          "motivo": "chunk-repetido"
+        }
+      }
+    ],
+    "cloudflareCPU": false
+  }
+]

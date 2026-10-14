@@ -1,0 +1,177 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "PestanasCacheadas y hooks reales; pantallas de relleno simuladas salvo PuntosWeb y Dashboard. Auth/Supabase simulados; cero mutaciones reales.",
+  "casos": [
+    {
+      "name": "LRU: 27 rutas sin trabajo pendiente",
+      "data": {
+        "max": 6,
+        "final": [
+          "/fidelizacion-web",
+          "/recompensas-web",
+          "/catalogo-web",
+          "/libro-reclamaciones-web",
+          "/galeria-web",
+          "/ventas"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "name": "Puntos Web: error al guardar pierde borrador al desalojar",
+      "data": {
+        "antes": {
+          "valor": "77",
+          "toasts": [
+            [
+              "No se pudo guardar. Intenta de nuevo.",
+              "error"
+            ]
+          ],
+          "configCalls": 1
+        },
+        "sobrevivio": true,
+        "alVolver": "77",
+        "configCalls": 1
+      },
+      "errors": []
+    },
+    {
+      "name": "Puntos Web: validación local rechazada pierde borrador",
+      "data": {
+        "previo": {
+          "premium": "99",
+          "toasts": [
+            [
+              "El umbral de VIP debe ser mayor que el de Premium.",
+              "error"
+            ]
+          ],
+          "writes": 0
+        },
+        "sobrevivio": true,
+        "premiumAlVolver": "99"
+      },
+      "errors": []
+    },
+    {
+      "name": "Puntos Web: guardado en vuelo pierde pantalla",
+      "data": {
+        "durante": {
+          "sobrevivio": true,
+          "pendientes": 1
+        },
+        "alVolver": "77"
+      },
+      "errors": []
+    },
+    {
+      "name": "Cancelar 8 diálogos editados retiene pantallas sin trabajo",
+      "data": {
+        "montadas": [
+          "/servicios",
+          "/mi-panel",
+          "/citas",
+          "/estadisticas",
+          "/clientes",
+          "/mobiliario"
+        ],
+        "formularios": 0,
+        "inputsBorrador": 0
+      },
+      "errors": []
+    },
+    {
+      "name": "Cambio de cuenta conserva filtro anterior",
+      "data": {
+        "inmediatamente": "",
+        "owner": "B",
+        "rol": "ADMINISTRADOR",
+        "montadas": [
+          "/ventas"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "name": "Cambio de rol conserva filtro anterior",
+      "data": {
+        "inmediatamente": "",
+        "owner": "A",
+        "rol": "CAJERA",
+        "montadas": [
+          "/ventas"
+        ]
+      },
+      "errors": []
+    },
+    {
+      "name": "Dashboard: mes pasado se pierde al desalojar",
+      "data": {
+        "opciones": [
+          "Octubre",
+          "Septiembre",
+          "Agosto",
+          "Julio",
+          "Junio",
+          "Mayo",
+          "Abril",
+          "Marzo",
+          "Febrero",
+          "Enero",
+          "Diciembre 2025",
+          "Noviembre 2025",
+          "Octubre 2025"
+        ],
+        "antes": {
+          "etiqueta": "Septiembre",
+          "ultima": {
+            "table": "resumen_dashboard",
+            "kind": "rpc",
+            "args": {
+              "p_desde": "2026-09-01T05:00:00.000Z",
+              "p_hasta": "2026-10-01T05:00:00.000Z"
+            },
+            "write": false,
+            "owner": "A"
+          }
+        },
+        "sobrevivio": false,
+        "despues": {
+          "etiqueta": "Septiembre",
+          "ultima": {
+            "table": "resumen_dashboard",
+            "kind": "rpc",
+            "args": {
+              "p_desde": "2026-09-01T05:00:00.000Z",
+              "p_hasta": "2026-10-01T05:00:00.000Z"
+            },
+            "write": false,
+            "owner": "A"
+          }
+        }
+      },
+      "errors": []
+    },
+    {
+      "name": "Promoción real: cancelar modal editado no libera pantalla",
+      "data": {
+        "despues": {
+          "formularios": 0,
+          "pendientes": [],
+          "writes": 0
+        },
+        "sigueMontada": false,
+        "montadas": [
+          "/historial",
+          "/servicios",
+          "/mi-panel",
+          "/citas",
+          "/estadisticas",
+          "/clientes"
+        ]
+      },
+      "errors": []
+    }
+  ]
+}

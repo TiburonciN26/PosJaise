@@ -1,0 +1,98 @@
+[
+  {
+    "archivo": "control-v1-cache.json",
+    "sha256": "9b0e22235ca3b608b3bd5dbafa211de4ca0c228ea4ad703ac98a25c5e36bd69d"
+  },
+  {
+    "archivo": "control-v1-venta.json",
+    "sha256": "4fae4b36e43c9fbcef7a49f5d7f09f70b22c7d8ab439c4ca6a17777df036d9fe"
+  },
+  {
+    "archivo": "dependencia-control.json",
+    "sha256": "05764b0c7c57b31879c89bddace826ca3cb186f8085f18d063d982c7148222d7"
+  },
+  {
+    "archivo": "dependencia-pos-repetida.json",
+    "sha256": "6f7d6db4780a0f578465b41be6b878d24bc1b1296546e8b09be64efeba124b00"
+  },
+  {
+    "archivo": "dependencia-pos.json",
+    "sha256": "9914ce77451554a47bc5f52c7a7c770696d885f816791fe83ddb0e269ad55ad4"
+  },
+  {
+    "archivo": "dependencia-recuperacion-segura.json",
+    "sha256": "42dfc196b5825a120a5ef32b921eadce246561b0be5698f7e630deb56d4e3c46"
+  },
+  {
+    "archivo": "recompensas-lectura-corregida.json",
+    "sha256": "bc22dd8976f8bdd7782c9b800848897036db2c5b218f1ea0e3b98345a4c13e63"
+  },
+  {
+    "archivo": "recompensas-lectura.json",
+    "sha256": "cd861131b415483607a985bcabc53647f6d3d612e396dc6b1d1155e4239e52a0"
+  },
+  {
+    "archivo": "reglas-y-hashes.json",
+    "sha256": "8f7cb15e6572cbae5fd08a375b83898ae01ad9219ddd3d6d2f5ab6540479a74e"
+  },
+  {
+    "archivo": "regresiones-repetidas.json",
+    "sha256": "108219bca61c007e7b1979794e92a51ad58d9f8d99159f75a8f910a0e3acaa2b"
+  },
+  {
+    "archivo": "resumen-revision.json",
+    "sha256": "4b0398d1168507d05101fc35056738c6d7dc4b9e243a5d1ce929cc0fdb5fa1f3"
+  },
+  {
+    "archivo": "vacio-1.json",
+    "sha256": "b60fb259de135c3d5fd05c58380ca74d72b9e81015257fbb19ad049e5ed7afbe"
+  },
+  {
+    "archivo": "vacio-2.json",
+    "sha256": "ccfff0db417abeb90303537dce7ff13a4d3c2b95c0081e3d464ae68dbc99f139"
+  },
+  {
+    "archivo": "vacio-3.json",
+    "sha256": "b6b82dbe1f5c7bf6157ec78d8fd03fc910393417ea5bdb5e43507a975cc84594"
+  },
+  {
+    "archivo": "vacio-4.json",
+    "sha256": "dced769fa60f0380ada024498dac023c1e8a11a6dd15b88d39d70e95066cf216"
+  },
+  {
+    "archivo": "vacio-5.json",
+    "sha256": "9ce454e460ead4936ab876e0d27ee9c92c660dd6a06f7c1b3918a8a5bc9c27e0"
+  },
+  {
+    "archivo": "repetir-regresiones.cjs.txt",
+    "sha256": "88192d0f72f1c4263d803ae28c7543d6efad1b2b47eea855d186c2fd67fa559e"
+  },
+  {
+    "archivo": "dependencia-pos.cjs.txt",
+    "sha256": "394d207ddaa4d407b4ec157fd4b846a42597ffa2b8f20bc8bf207ee933bf75ae"
+  },
+  {
+    "archivo": "dependencia-control.cjs.txt",
+    "sha256": "078eee099173ab8ead133f0bf7579e40877d6cb107f2cb41cd7781bd7fd522dd"
+  },
+  {
+    "archivo": "dependencia-recuperacion-segura.cjs.txt",
+    "sha256": "40c9b439823700e712572c356d8655db1a6407376e8c58a67eaa12862fd5f54a"
+  },
+  {
+    "archivo": "intermitente.cjs.txt",
+    "sha256": "44312c62c79c384429ccd6b8ce6b34ab72504cdbd41f3b17030c362f5be4ca0b"
+  },
+  {
+    "archivo": "recompensas-lectura.cjs.txt",
+    "sha256": "0c900e303ba454c81fc596cbf63f04512f1339c26ceb8d5dbc23791122a4da4c"
+  },
+  {
+    "archivo": "recompensas-lectura-inicial.cjs.txt",
+    "sha256": "8ddd2063fcd4e1f0e5ebcb2e225b39beb4e1f3a56141c3ad5c3b085a218111ba"
+  },
+  {
+    "archivo": "reglas-y-hashes.cjs.txt",
+    "sha256": "93598b6a04edfbd082db8ad2bbc00f7e530a69dc6fb099aa0ac6fdc22fc8b6ec"
+  }
+]

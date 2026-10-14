@@ -1,0 +1,2 @@
+V1 ms 239 243 244 246 252 mediana 244
+V2-final ms 244 245 246 252 252 mediana 246

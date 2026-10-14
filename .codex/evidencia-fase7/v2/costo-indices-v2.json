@@ -1,0 +1,126 @@
+{
+ "diseno": "orden ABBA ABBA contrabalanceado; estado de índices fijado y validado antes de cada muestra; cada muestra deshecha con ROLLBACK TO SAVEPOINT",
+ "lote": "20.000 pedidos + 20.000 ítems + 40.000 cupones sobre volumen ampliado, filas pre-generadas en tablas temporales; se cronometra solo el INSERT (session_replication_role=replica: sin triggers ni FK)",
+ "muestras": [
+  {
+   "orden": 1,
+   "condicion": "sin",
+   "indices_presentes": 0,
+   "ms": 352
+  },
+  {
+   "orden": 2,
+   "condicion": "con",
+   "indices_presentes": 3,
+   "ms": 590
+  },
+  {
+   "orden": 3,
+   "condicion": "con",
+   "indices_presentes": 3,
+   "ms": 925
+  },
+  {
+   "orden": 4,
+   "condicion": "sin",
+   "indices_presentes": 0,
+   "ms": 512
+  },
+  {
+   "orden": 5,
+   "condicion": "sin",
+   "indices_presentes": 0,
+   "ms": 409
+  },
+  {
+   "orden": 6,
+   "condicion": "con",
+   "indices_presentes": 3,
+   "ms": 623
+  },
+  {
+   "orden": 7,
+   "condicion": "con",
+   "indices_presentes": 3,
+   "ms": 698
+  },
+  {
+   "orden": 8,
+   "condicion": "sin",
+   "indices_presentes": 0,
+   "ms": 472
+  }
+ ],
+ "generacion_de_filas_sin_insertar_ms_diseno_anterior": [
+  28029
+ ],
+ "resumen": {
+  "mediana_sin_ms": 472,
+  "mediana_con_ms": 698,
+  "rango_sin_ms": [
+   352,
+   512
+  ],
+  "rango_con_ms": [
+   590,
+   925
+  ],
+  "diferencia_pareada_pct": [
+   67.6,
+   80.7,
+   52.3,
+   47.9
+  ],
+  "media_diferencia_pareada_pct": 62.1,
+  "rango_diferencia_pareada_pct": [
+   47.9,
+   80.7
+  ]
+ },
+ "pares": [
+  {
+   "sin_ms": 352,
+   "con_ms": 590,
+   "diferencia_ms": 238,
+   "diferencia_pct": 67.6
+  },
+  {
+   "sin_ms": 512,
+   "con_ms": 925,
+   "diferencia_ms": 413,
+   "diferencia_pct": 80.7
+  },
+  {
+   "sin_ms": 409,
+   "con_ms": 623,
+   "diferencia_ms": 214,
+   "diferencia_pct": 52.3
+  },
+  {
+   "sin_ms": 472,
+   "con_ms": 698,
+   "diferencia_ms": 226,
+   "diferencia_pct": 47.9
+  }
+ ],
+ "indices": [
+  {
+   "indice": "idx_f7_cupones_origen_estado_creado",
+   "bytes": 8937472
+  },
+  {
+   "indice": "idx_f7_pedidos_web_creado",
+   "bytes": 2473984
+  },
+  {
+   "indice": "idx_f7_pedidos_web_items_pedido",
+   "bytes": 3006464
+  }
+ ],
+ "tablas_bytes": "15482880,17932288,21004288",
+ "filas_base": "60429,120429,123067",
+ "estado_antes": "ESTADO|4749,429,429,3067,25860|idx=3|marcas=0,0",
+ "estado_despues": "ESTADO|4749,429,429,3067,25860|idx=3|marcas=0,0",
+ "base_intacta": true,
+ "condiciones_validas": true
+}

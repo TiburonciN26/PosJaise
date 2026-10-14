@@ -1,0 +1,30 @@
+[
+  {
+    "archivo": "unitarios-repetidos.json",
+    "sha256": "6b978bbf2a1f8d68b11eb5d9a4f43b5d4f5bf929cb3c07b039732a6484e193bd"
+  },
+  {
+    "archivo": "diagnosticos-cli-y-guardas.json",
+    "sha256": "b2d46ccfe7fe559fbc60526ac889d628f6de928016ed64a34fd56a5e6d88b361"
+  },
+  {
+    "archivo": "inspeccion-local-solo-lectura.json",
+    "sha256": "992dd4118554400d38777675faf943fec575a25b5047495dbd27f5f894d224ae"
+  },
+  {
+    "archivo": "hashes-paquete.json",
+    "sha256": "a10ced61925cb513dbb1300e7ec1ea218d29d91323151539965f267705880831"
+  },
+  {
+    "archivo": "resumen-revision.json",
+    "sha256": "eeb74822b11d42c06a3400c8bfba1d9ab07c082a4ba2a859eae718370cbdd136"
+  },
+  {
+    "archivo": "diagnosticos.mjs.txt",
+    "sha256": "40e00204c716c1ba69c2d754b06aada4ccd49b6c74ea69aad9d1b309975777af"
+  },
+  {
+    "archivo": "inspeccion-lectura.mjs.txt",
+    "sha256": "7b3f639e1f2b97e290e66fc9d3c463f2df4ca5bcad97b759741a83bef5db4ca7"
+  }
+]

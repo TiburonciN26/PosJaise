@@ -1,0 +1,108 @@
+// Verifica el PAQUETE del build de lectura mixta (ML-02) desde una COPIA AISLADA: no usa el checkout actual ni el temporal del constructor.
+//   node scripts/verificar-paquete-lectura-mixta.mjs <carpeta-del-paquete>
+// Comprueba: (1) los hashes del manifiesto coinciden con los archivos, (2) la Function empaquetada resuelve todos sus imports dentro
+// del paquete, (3) con R2 y Cache simulados la revocación B está EFECTIVA (MISS → HIT → borrar en R2 → 404 en GET, HEAD y condicional),
+// (4) el frontend lleva la configuración mixta. Sin red, sin Cloudflare, sin despliegue.
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
+
+const origen = process.argv[2] ? resolve(process.argv[2]) : null
+if (!origen || !existsSync(join(origen, 'manifiesto-lectura-mixta.json'))) { console.error('uso: verificar-paquete-lectura-mixta.mjs <carpeta con manifiesto-lectura-mixta.json>'); process.exit(2) }
+
+const resultados = []
+async function prueba(nombre, fn) {
+  try { await fn(); resultados.push({ nombre, ok: true }); console.log(`OK    ${nombre}`) } catch (e) { resultados.push({ nombre, ok: false }); console.log(`FALLA ${nombre}\n      ${String(e.message).split('\n')[0].slice(0, 300)}`) }
+}
+const archivos = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? archivos(join(d, e.name)) : [join(d, e.name)]))
+const hash = (f) => createHash('sha256').update(readFileSync(f)).digest('hex')
+
+const tmp = mkdtempSync(join("C:/Users/jdeos/.codex/visualizations/2026/10/09/01a11ea8-be2a-7611-8e67-4ded5cca3f25/revision-paquete-v3-ml03", 'verif-paquete-'))
+const copia = join(tmp, 'paquete')
+cpSync(origen, copia, { recursive: true })
+writeFileSync(join(copia, 'servidor', 'package.json'), '{"type":"module"}\n') // solo en la copia aislada: para que Node lea los .js como ESM
+const manifiesto = JSON.parse(readFileSync(join(copia, 'manifiesto-lectura-mixta.json'), 'utf8'))
+const ID = '0f1e2d3c-4b5a-4968-8777-665544332211'
+const RUTA = `https://alias.pages.dev/medios/fotos-galeria/${ID}`
+
+try {
+  await prueba('el manifiesto no declara problemas, B activa y tipo/commit presentes', () => {
+    assert.deepEqual(manifiesto.problemas, [])
+    assert.equal(manifiesto.revocacionBActiva, true)
+    assert.match(manifiesto.commit, /^[0-9a-f]{40}$/)
+    assert.equal(manifiesto.publicado, false)
+  })
+  await prueba('los hashes del manifiesto coinciden EXACTAMENTE con los archivos del servidor empaquetado (sin faltantes ni sobrantes)', () => {
+    const real = Object.fromEntries(archivos(join(copia, 'servidor')).filter((f) => !f.endsWith('package.json')).map((f) => [f.slice(join(copia, 'servidor').length + 1).replaceAll('\\', '/'), hash(f)]))
+    assert.deepEqual(real, manifiesto.servidor)
+    assert.ok(Object.keys(real).includes('functions/medios.js') && Object.keys(real).includes('functions/medios/[[ruta]].js') && Object.keys(real).includes('cloudflare/medios-pages/entrega.js'))
+  })
+  await prueba('el frontend empaquetado: sw.js con el hash del manifiesto, _routes.json limitado a /medios y sin 404.html', () => {
+    assert.equal(hash(join(copia, 'dist/sw.js')), manifiesto.swSha256)
+    const rutas = JSON.parse(readFileSync(join(copia, 'dist/_routes.json'), 'utf8'))
+    assert.deepEqual(rutas.include, ['/medios', '/medios/*'])
+    assert.equal(existsSync(join(copia, 'dist/404.html')), false)
+  })
+
+  // Function empaquetada, importada DESDE LA COPIA, con R2 y Cache simulados.
+  const bytes = new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50])
+  const objetos = { [`fotos-galeria/${ID}/m.webp`]: '"em"' }
+  const env = {
+    MEDIOS: {
+      get: async (k) => (k in objetos ? { httpEtag: objetos[k], arrayBuffer: async () => bytes.buffer.slice(0) } : null),
+      head: async (k) => (k in objetos ? { httpEtag: objetos[k] } : null),
+    },
+  }
+  const almacen = new Map()
+  globalThis.caches = {
+    default: {
+      match: async (req) => { const e = almacen.get(req.url); return e ? new Response(e.buf, { status: 200, headers: e.headers }) : undefined },
+      put: async (req, resp) => { almacen.set(req.url, { buf: await resp.arrayBuffer(), headers: resp.headers }) },
+      delete: async (req) => almacen.delete(req.url),
+    },
+  }
+  const pend = []
+  const llamar = async (modulo, url, init = {}) => {
+    const r = await modulo.onRequest({ request: new Request(url, init), env, waitUntil: (p) => pend.push(p) })
+    await Promise.all(pend.splice(0))
+    return r
+  }
+  await prueba('la Function empaquetada carga desde la copia aislada (imports resueltos dentro del paquete)', async () => {
+    const ruta = await import(pathToFileURL(join(copia, 'servidor/functions/medios/[[ruta]].js')).href)
+    const raiz = await import(pathToFileURL(join(copia, 'servidor/functions/medios.js')).href)
+    assert.equal(typeof ruta.onRequest, 'function')
+    assert.equal(typeof raiz.onRequest, 'function')
+    const e = await import(pathToFileURL(join(copia, 'servidor/cloudflare/medios-pages/entrega.js')).href)
+    assert.equal(e.REVOCAR_CON_R2, true)
+  })
+  await prueba('B EFECTIVA en el paquete: MISS → HIT → borrar en R2 → 404 no-store en GET, HEAD y condicional (nunca HIT ni 304)', async () => {
+    const f = await import(pathToFileURL(join(copia, 'servidor/functions/medios/[[ruta]].js')).href)
+    const url = `${RUTA}/m.webp`
+    const a = await llamar(f, url)
+    const b = await llamar(f, url)
+    assert.equal(a.headers.get('X-Medios-Cache'), 'MISS')
+    assert.equal(b.headers.get('X-Medios-Cache'), 'HIT')
+    assert.equal(b.headers.get('Cache-Control'), 'public, max-age=0, must-revalidate')
+    delete objetos[`fotos-galeria/${ID}/m.webp`]
+    for (const init of [{}, { method: 'HEAD' }, { headers: { 'If-None-Match': '"em"' } }]) {
+      const r = await llamar(f, url, init)
+      assert.equal(r.status, 404, JSON.stringify(init))
+      assert.equal(r.headers.get('Cache-Control'), 'no-store')
+      assert.equal(r.headers.get('X-Content-Type-Options'), 'nosniff')
+    }
+  })
+  await prueba('el frontend empaquetado lleva la configuración mixta (proveedor supabase, lectura por Pages /medios)', () => {
+    const js = archivos(join(copia, 'dist/assets')).filter((f) => f.endsWith('.js')).map((f) => readFileSync(f, 'utf8')).join('\n')
+    assert.match(js, /proveedor:`supabase`/)
+    assert.ok(js.includes(manifiesto.configuracionMedios.publica))
+  })
+} finally {
+  delete globalThis.caches
+  // Copia externa conservada: sin borrado real.
+}
+const fallos = resultados.filter((r) => !r.ok)
+console.log(`\n${resultados.length} casos, ${fallos.length} fallos`)
+process.exitCode = fallos.length ? 1 : 0

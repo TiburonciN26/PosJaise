@@ -1,0 +1,9 @@
+{
+  "endpoint": "http://127.0.0.1:54321/rest/v1/rpc/normalizar_busqueda",
+  "identidad": "anon, sin sesión",
+  "entradaFicticia": "María NFD",
+  "status": 401,
+  "data": null,
+  "error": "42501",
+  "alcance": "RPC puro de lectura/transformación de una constante, sin acceso a filas ni mutación"
+}

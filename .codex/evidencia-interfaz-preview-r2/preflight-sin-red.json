@@ -1,0 +1,31 @@
+{
+  "fecha": "2026-10-10T05:29:21.868Z",
+  "casos": [
+    {
+      "alias": "https://sitio-ajeno.example",
+      "supabase": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "peticionesInterceptadas": [
+        {
+          "host": "tqkdtojnhgykmcbvwdmz.supabase.co",
+          "path": "/auth/v1/token"
+        }
+      ],
+      "abortoAntesDeRed": false,
+      "errorSincrono": null,
+      "nota": "Fetch y filesystem sustituidos; ninguna petición real ni escritura."
+    },
+    {
+      "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "supabase": "https://destino-ajeno.example/?ref=tqkdtojnhgykmcbvwdmz",
+      "peticionesInterceptadas": [
+        {
+          "host": "destino-ajeno.example",
+          "path": "/"
+        }
+      ],
+      "abortoAntesDeRed": false,
+      "errorSincrono": null,
+      "nota": "Fetch y filesystem sustituidos; ninguna petición real ni escritura."
+    }
+  ]
+}

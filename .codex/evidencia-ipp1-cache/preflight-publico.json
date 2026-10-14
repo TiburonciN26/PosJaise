@@ -1,0 +1,54 @@
+{
+  "fecha": "2026-10-10T19:23:49.563Z",
+  "nota": "GET públicos exclusivamente. Sin .env, sin login, sin cookies, sin PUT/DELETE/POST. Para el inmutable anterior se conserva el alias validado en p y el adaptador GET lee las mismas rutas de ese deployment; no se cambia la guarda.",
+  "casos": [
+    {
+      "nombre": "alias-nuevo",
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "entrega": "pages",
+      "aceptada": true,
+      "resultado": {
+        "buildId": "b36e7495",
+        "entrega": "pages",
+        "modulos": [
+          "assets/index-DGsWTpdi.js"
+        ]
+      },
+      "solicitudes": 141,
+      "swSha256": "4c3d38c262bc6f00879681c535548bd45d0e8cf440d2206222df247be39bca42"
+    },
+    {
+      "nombre": "alias-nuevo",
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "entrega": "r2dev",
+      "aceptada": false,
+      "error": "el bundle servido no tiene la entrega de medios \"r2dev\" (publicUrl observada: https://feat-cloudflare-pages.pos-jaise.pages.dev/medios; bases extra: https://pub-b248edba3e19402382b557a35b33c674.r2.dev); no se autentica ni se escribe nada",
+      "solicitudes": 141,
+      "swSha256": "4c3d38c262bc6f00879681c535548bd45d0e8cf440d2206222df247be39bca42"
+    },
+    {
+      "nombre": "inmutable-anterior",
+      "origen": "https://4d334b5d.pos-jaise.pages.dev",
+      "entrega": "pages",
+      "aceptada": false,
+      "error": "el bundle servido no tiene la entrega de medios \"pages\" (publicUrl observada: https://pub-b248edba3e19402382b557a35b33c674.r2.dev; bases extra: ninguna); no se autentica ni se escribe nada",
+      "solicitudes": 141,
+      "swSha256": "64bd81f2c9773b349685f2265bea473ba2d654ee6b3edbe082c45693b6706493"
+    },
+    {
+      "nombre": "inmutable-anterior",
+      "origen": "https://4d334b5d.pos-jaise.pages.dev",
+      "entrega": "r2dev",
+      "aceptada": true,
+      "resultado": {
+        "buildId": "b36e7495",
+        "entrega": "r2dev",
+        "modulos": [
+          "assets/index-BmxprMuZ.js"
+        ]
+      },
+      "solicitudes": 141,
+      "swSha256": "64bd81f2c9773b349685f2265bea473ba2d654ee6b3edbe082c45693b6706493"
+    }
+  ]
+}

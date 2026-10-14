@@ -1,0 +1,297 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "Componentes reales de Vite en Chromium, Supabase/contextos simulados; cero mutaciones de base de datos",
+  "casos": [
+    {
+      "name": "Paginación sana promociones 40/40/1",
+      "resultado": {
+        "primero": "«Página 1 de 3»\n\n1–40 de 81 promociones",
+        "segundo": "«Página 2 de 3»\n\n41–80 de 81 promociones",
+        "tercero": "«Página 3 de 3»\n\n81–81 de 81 promociones",
+        "calls": [
+          {
+            "table": "promociones",
+            "kind": "table",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "promociones",
+            "kind": "table",
+            "owner": "A",
+            "ops": [],
+            "from": 40,
+            "to": 79
+          },
+          {
+            "table": "promociones",
+            "kind": "table",
+            "owner": "A",
+            "ops": [],
+            "from": 80,
+            "to": 119
+          }
+        ]
+      },
+      "errors": []
+    },
+    {
+      "name": "Error 500 simulado al pedir página 2",
+      "resultado": {
+        "paginador": "«Página 2 de 3»\n\n41–80 de 81 promociones",
+        "promo1Visible": 1,
+        "promo41Visible": 0,
+        "alerts": 0,
+        "reintentar": 0
+      },
+      "errors": []
+    },
+    {
+      "name": "Error búsqueda después de carga sana",
+      "resultado": {
+        "paginador": "«Página 1 de 3»\n\n1–40 de 81 promociones",
+        "promo1Visible": 1,
+        "alerts": 0,
+        "reintentar": 0,
+        "search": "nada coincide"
+      },
+      "errors": []
+    },
+    {
+      "name": "Borrador protección servicios al cambiar subpestaña",
+      "resultado": {
+        "alPlegar": "77",
+        "trasOtraSubpestana": ""
+      },
+      "errors": []
+    },
+    {
+      "name": "Borrador protección productos al cambiar subpestaña",
+      "resultado": {
+        "alPlegar": "77",
+        "trasOtraSubpestana": ""
+      },
+      "errors": []
+    },
+    {
+      "name": "Cambio A→B con saldo-error",
+      "resultado": {
+        "antes": [
+          {
+            "table": "recompensas_reglas_publicas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          }
+        ],
+        "despues": [
+          {
+            "table": "recompensas_reglas_publicas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          }
+        ],
+        "trasCambiarDeSeccion": [
+          {
+            "table": "recompensas_reglas_publicas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_puntos",
+            "kind": "rpc",
+            "owner": "B",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "B",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "B",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          }
+        ],
+        "body": "talle 23\n\nPromo 24\n\n10% dcto.\n\nDetalle 24\n\nPromo 25\n\n10% dcto.\n\nDetalle 25\n\nPromo 26\n\n10% dcto.\n\nDetalle 26\n\nPromo 27\n\n10% dcto.\n\nDetalle 27\n\nPromo 28\n\n10% dcto.\n\nDetalle 28\n\nPromo 29\n\n10% dcto.\n\nDetalle 29\n\nPromo 30\n\n10% dcto.\n\nDetalle 30\n\nPromo 31\n\n10% dcto.\n\nDetalle 31\n\nPromo 32\n\n10% dcto.\n\nDetalle 32\n\nPromo 33\n\n10% dcto.\n\nDetalle 33\n\nPromo 34\n\n10% dcto.\n\nDetalle 34\n\nPromo 35\n\n10% dcto.\n\nDetalle 35\n\nPromo 36\n\n10% dcto.\n\nDetalle 36\n\nPromo 37\n\n10% dcto.\n\nDetalle 37\n\nPromo 38\n\n10% dcto.\n\nDetalle 38\n\nPromo 39\n\n10% dcto.\n\nDetalle 39\n\nPromo 40\n\n10% dcto.\n\nDetalle 40\n\nPropuesta pendienteLos cupones nuevos vencerían a los 60 días de emitidos. Los cupones anteriores mantienen su vigencia original."
+      },
+      "errors": []
+    },
+    {
+      "name": "Cambio A→B con saldo-lento",
+      "resultado": {
+        "antes": [
+          {
+            "table": "recompensas_reglas_publicas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          }
+        ],
+        "despues": [
+          {
+            "table": "recompensas_reglas_publicas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          }
+        ],
+        "trasCambiarDeSeccion": [
+          {
+            "table": "recompensas_reglas_publicas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "A",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_puntos",
+            "kind": "rpc",
+            "owner": "B",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mi_saldo_recompensas",
+            "kind": "rpc",
+            "owner": "B",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          },
+          {
+            "table": "mis_cupones",
+            "kind": "rpc",
+            "owner": "B",
+            "ops": [],
+            "from": 0,
+            "to": 39
+          }
+        ],
+        "body": "talle 23\n\nPromo 24\n\n10% dcto.\n\nDetalle 24\n\nPromo 25\n\n10% dcto.\n\nDetalle 25\n\nPromo 26\n\n10% dcto.\n\nDetalle 26\n\nPromo 27\n\n10% dcto.\n\nDetalle 27\n\nPromo 28\n\n10% dcto.\n\nDetalle 28\n\nPromo 29\n\n10% dcto.\n\nDetalle 29\n\nPromo 30\n\n10% dcto.\n\nDetalle 30\n\nPromo 31\n\n10% dcto.\n\nDetalle 31\n\nPromo 32\n\n10% dcto.\n\nDetalle 32\n\nPromo 33\n\n10% dcto.\n\nDetalle 33\n\nPromo 34\n\n10% dcto.\n\nDetalle 34\n\nPromo 35\n\n10% dcto.\n\nDetalle 35\n\nPromo 36\n\n10% dcto.\n\nDetalle 36\n\nPromo 37\n\n10% dcto.\n\nDetalle 37\n\nPromo 38\n\n10% dcto.\n\nDetalle 38\n\nPromo 39\n\n10% dcto.\n\nDetalle 39\n\nPromo 40\n\n10% dcto.\n\nDetalle 40\n\nPropuesta pendienteLos cupones nuevos vencerían a los 60 días de emitidos. Los cupones anteriores mantienen su vigencia original."
+      },
+      "errors": []
+    }
+  ]
+}

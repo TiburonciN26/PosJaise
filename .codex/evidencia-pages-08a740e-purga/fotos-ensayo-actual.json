@@ -1,0 +1,20 @@
+{
+  "fecha": "2026-10-10T22:14:35.492Z",
+  "nota": "GET públicos de las dos fotos g ficticias ya borradas; no purga ni escrituras.",
+  "fotos": [
+    {
+      "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+      "estado": 404,
+      "cache": "no-store",
+      "medios": null,
+      "ray": "a488fa9a59421dd8-MIA"
+    },
+    {
+      "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+      "estado": 404,
+      "cache": "no-store",
+      "medios": null,
+      "ray": "a488fa9c5c898da8-MIA"
+    }
+  ]
+}

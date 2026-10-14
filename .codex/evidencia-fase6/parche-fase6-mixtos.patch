@@ -1,0 +1,276 @@
+--- a/src/pages/PedidosWeb.jsx
++++ b/src/pages/PedidosWeb.jsx
+@@ -14,6 +14,7 @@
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
+ import PaginadorLista from '../components/PaginadorLista.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
+ 
+@@ -55,9 +56,9 @@
+ export default function PedidosWeb({ activo = true }) {
+   const { mostrarToast } = useToast()
+ 
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/pedidos-web:busqueda', '')
+   const termino = useDebounce(busqueda.trim(), 300)
+-  const [estadoFiltro, setEstadoFiltro] = useState(null)
++  const [estadoFiltro, setEstadoFiltro] = useEstadoVista('/pedidos-web:estadoFiltro', null)
+   const [abiertos, setAbiertos] = useState(() => new Set())
+   const [actualizando, setActualizando] = useState(null)
+   const [abriendoComprobante, setAbriendoComprobante] = useState(null)
+--- a/src/pages/Promociones.jsx
++++ b/src/pages/Promociones.jsx
+@@ -19,6 +19,7 @@
+ import EsqueletoLista from '../components/Esqueleto.jsx'
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import PaginadorLista from '../components/PaginadorLista.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ // Acabado rojo «Especial» de los cupones de promoción en la web de clientes.
+ const NIVEL_CUPON = nivelDeCupon({ origen: 'PROMOCION' })
+@@ -47,7 +48,7 @@
+ export default function Promociones({ activo = true }) {
+   const { mostrarToast } = useToast()
+ 
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/promociones:busqueda', '')
+   const termino = useDebounce(busqueda.trim(), 300)
+   const [modalPromocion, setModalPromocion] = useState(null) // null | 'nuevo' | promocion
+   const [promocionAEliminar, setPromocionAEliminar] = useState(null)
+--- a/src/pages/ResenasWeb.jsx
++++ b/src/pages/ResenasWeb.jsx
+@@ -12,6 +12,7 @@
+ import EstadoVacio from '../components/EstadoVacio.jsx'
+ import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
+ import PaginadorLista from '../components/PaginadorLista.jsx'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ 
+ const ETIQUETAS_ESTADO = {
+   PENDIENTE: { texto: 'Pendiente', clase: 'bg-amber/15 text-amber' },
+@@ -57,9 +58,9 @@
+ export default function ResenasWeb({ activo = true }) {
+   const { mostrarToast } = useToast()
+ 
+-  const [busqueda, setBusqueda] = useState('')
++  const [busqueda, setBusqueda] = useEstadoVista('/resenas-web:busqueda', '')
+   const termino = useDebounce(busqueda.trim(), 300)
+-  const [estadoFiltro, setEstadoFiltro] = useState(null)
++  const [estadoFiltro, setEstadoFiltro] = useEstadoVista('/resenas-web:estadoFiltro', null)
+   const [abiertos, setAbiertos] = useState(() => new Set())
+   const [actualizando, setActualizando] = useState(null)
+ 
+--- a/src/hooks/useCuponesAdmin.js
++++ b/src/hooks/useCuponesAdmin.js
+@@ -1,6 +1,7 @@
+ import { useCallback, useEffect, useRef, useState } from 'react'
+ import { supabase } from '../lib/supabase.js'
+ import { contarCuponesPorEstado, leerCupones } from '../lib/listasAdmin.js'
++import { useEstadoVista } from '../lib/estadoVista.js'
+ import { useDebounce } from './useDebounce.js'
+ import { useListaPaginada } from './useListaPaginada.js'
+ 
+@@ -8,9 +9,10 @@
+ // «código o clienta» en el servidor, y contadores GLOBALES (de todos los cupones de esos orígenes, no de la página).
+ //   origenes: arreglo ESTABLE (constante de módulo) con los `origen` que muestra la pantalla.
+ //   filtro:   'RECIENTES' (todos, del más nuevo al más antiguo) | 'DISPONIBLE' | 'CANJEADO'.
+-export function useCuponesAdmin({ origenes, activo = true }) {
+-  const [filtro, setFiltro] = useState('RECIENTES')
+-  const [busqueda, setBusqueda] = useState('')
++export function useCuponesAdmin({ origenes, activo = true, claveVista }) {
++  // Filtro y búsqueda sobreviven a que la caché de pestañas desmonte la pantalla (Fase 6): se guardan por `claveVista`.
++  const [filtro, setFiltro] = useEstadoVista(`${claveVista}:filtro`, 'RECIENTES')
++  const [busqueda, setBusqueda] = useEstadoVista(`${claveVista}:busqueda`, '')
+   const termino = useDebounce(busqueda.trim(), 300)
+   const estado = filtro === 'RECIENTES' ? null : filtro
+ 
+--- a/src/pages/ReferidosWeb.jsx
++++ b/src/pages/ReferidosWeb.jsx
+@@ -4,6 +4,7 @@
+ import SelectorOrden from '../components/SelectorOrden.jsx'
+ import { Gift, ListFilter, Ticket } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
++import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import { formatearSoles } from '../lib/moneda.js'
+ import { nivelDeCupon } from '../lib/cupones.js'
+@@ -55,7 +56,7 @@
+   const [guardando, setGuardando] = useState(false)
+   // Fase 5: los cupones emitidos se leen paginados (hasta 40 por página) con filtro, búsqueda y contadores globales del
+   // servidor; la configuración (crédito de cada lado) es una sola fila y se lee aparte.
+-  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_REFERIDOS, activo })
++  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_REFERIDOS, activo, claveVista: '/referidos-web' })
+ 
+   useEffect(() => {
+     supabase
+@@ -80,6 +81,7 @@
+ 
+   async function guardar(evento) {
+     evento.preventDefault()
++    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
+     setGuardando(true)
+ 
+     const { error } = await supabase
+@@ -98,6 +100,7 @@
+       return
+     }
+ 
++    confirmarGuardado(envio)
+     mostrarToast('Configuración de referidos actualizada.', 'exito')
+   }
+ 
+--- a/src/pages/FidelizacionWeb.jsx
++++ b/src/pages/FidelizacionWeb.jsx
+@@ -4,6 +4,7 @@
+ import SelectorOrden from '../components/SelectorOrden.jsx'
+ import { ListFilter, Stamp, Ticket } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
++import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import { formatearValorCupon, nivelDeCupon } from '../lib/cupones.js'
+ import Etiqueta from '../components/Etiqueta.jsx'
+@@ -49,7 +50,7 @@
+   const [guardando, setGuardando] = useState(false)
+   // Fase 5: los cupones emitidos se leen paginados (hasta 40 por página) con filtro, búsqueda y contadores globales del
+   // servidor; la configuración (% del cupón) es una sola fila y se lee aparte.
+-  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_FIDELIZACION, activo })
++  const { lista, filtro, setFiltro, busqueda, setBusqueda, termino, estado, conteos } = useCuponesAdmin({ origenes: ORIGENES_FIDELIZACION, activo, claveVista: '/fidelizacion-web' })
+ 
+   useEffect(() => {
+     supabase
+@@ -69,6 +70,7 @@
+ 
+   async function guardar(evento) {
+     evento.preventDefault()
++    const envio = envioDe(evento.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
+ 
+     const porcentaje = parseFloat(formulario.porcentajeRecompensa)
+     if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
+@@ -89,6 +91,7 @@
+       return
+     }
+ 
++    confirmarGuardado(envio)
+     mostrarToast('Configuración de fidelización actualizada.', 'exito')
+   }
+ 
+--- a/src/pages/RecompensasWeb.jsx
++++ b/src/pages/RecompensasWeb.jsx
+@@ -2,10 +2,12 @@
+ import { Link, useSearchParams } from 'react-router-dom'
+ import { Coins, Plus, Stamp, ShieldCheck, ShoppingBag, Settings2 } from 'lucide-react'
+ import { supabase } from '../lib/supabase.js'
++import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
+ import { buscarServicios, servicioPorId } from '../lib/buscarServicios.js'
+ import { patronIlike } from '../lib/buscarClientes.js'
+ import { useToast } from '../context/ToastContext.jsx'
+ import { useAuth } from '../context/AuthContext.jsx'
++import { useProtegerPantalla } from '../context/PaginaActivaContext.jsx'
+ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+ import { useModalA11y } from '../hooks/useModalA11y.js'
+ import { useDebounce } from '../hooks/useDebounce.js'
+@@ -872,6 +874,8 @@
+     (tipo, id) => setAlmacen((a) => ({ dueno: duenoId, datos: Object.fromEntries(Object.entries(a.dueno === duenoId ? a.datos : {}).filter(([k]) => k !== `${tipo}:${id}`)) })),
+     [duenoId],
+   )
++  // Fase 6: mientras haya borradores sin guardar, la caché de pestañas no descarta esta pantalla.
++  useProtegerPantalla(Object.keys(datos).length > 0)
+   return { leer, escribir, borrar }
+ }
+ 
+@@ -1062,6 +1066,7 @@
+ 
+   async function guardar(e) {
+     e.preventDefault()
++    const envio = envioDe(e.currentTarget) // Fase 6: la caché de pestañas libera ESTE formulario solo al confirmarse
+     const num = Object.fromEntries(Object.entries(f).map(([k, v]) => [k, Number(v)]))
+     if (Object.values(num).some((x) => !(x > 0))) {
+       mostrarToast('Todas las tasas y umbrales deben ser mayores a 0.', 'error')
+@@ -1089,6 +1094,7 @@
+       mostrarToast('No se pudo guardar la configuración.', 'error')
+       return
+     }
++    confirmarGuardado(envio)
+     mostrarToast('Configuración guardada. Las tasas nuevas aplican a ventas futuras.', 'exito')
+     almacen.borrar('programa', 'config')
+     recargar()
+--- a/src/pages/cliente/InicioCliente.jsx
++++ b/src/pages/cliente/InicioCliente.jsx
+@@ -64,8 +64,13 @@
+     const suave = { x: objetivo.x, y: objetivo.y }
+     let activo = 0
+     let destino = 0
+-    let animId
+-
++    let animId = 0
++
++    // Fase 6: el bucle SOLO corre mientras la máscara se mueve. Cuando el radio ya llegó a su destino (revelada o escondida) y el
++    // punto suave alcanzó al cursor, se detiene (sin rAF pendiente); un movimiento del puntero lo vuelve a despertar.
++    function despertar() {
++      if (!animId && !document.hidden) animId = requestAnimationFrame(tick)
++    }
+     function moverA(clienteX, clienteY) {
+       const rect = contenedor.getBoundingClientRect()
+       objetivo.x = clienteX - rect.left
+@@ -82,13 +87,16 @@
+       if (esTactil(evento)) return
+       moverA(evento.clientX, evento.clientY)
+       destino = 1
++      despertar()
+     }
+     function alSoltar(evento) {
+       if (esTactil(evento)) return
+       destino = 0
++      despertar()
+     }
+ 
+     function tick() {
++      animId = 0
+       suave.x += (objetivo.x - suave.x) * 0.12
+       suave.y += (objetivo.y - suave.y) * 0.12
+       activo += (destino - activo) * 0.12
+@@ -101,8 +109,26 @@
+           : `radial-gradient(circle ${radio}px at ${x}px ${y}px, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%)`
+       imagenAntes.style.maskImage = mascara
+       imagenAntes.style.webkitMaskImage = mascara
++      const enReposo =
++        Math.abs(destino - activo) < 0.003 && Math.abs(objetivo.x - suave.x) < 0.3 && Math.abs(objetivo.y - suave.y) < 0.3
++      if (enReposo) {
++        // Último cuadro exacto y el bucle se duerme.
++        activo = destino
++        suave.x = objetivo.x
++        suave.y = objetivo.y
++        return
++      }
+       animId = requestAnimationFrame(tick)
+     }
++    const alVisibilidad = () => {
++      if (document.hidden) {
++        if (animId) cancelAnimationFrame(animId)
++        animId = 0
++      } else {
++        despertar()
++      }
++    }
++    // Primer cuadro: deja la máscara en su estado inicial (escondida) y, al estar en reposo, el bucle no sigue.
+     animId = requestAnimationFrame(tick)
+ 
+     contenedor.addEventListener('pointermove', alMover)
+@@ -110,13 +136,15 @@
+     contenedor.addEventListener('pointerup', alSoltar)
+     contenedor.addEventListener('pointerleave', alSoltar)
+     contenedor.addEventListener('pointercancel', alSoltar)
++    document.addEventListener('visibilitychange', alVisibilidad)
+     return () => {
+-      cancelAnimationFrame(animId)
++      if (animId) cancelAnimationFrame(animId)
+       contenedor.removeEventListener('pointermove', alMover)
+       contenedor.removeEventListener('pointerdown', alMover)
+       contenedor.removeEventListener('pointerup', alSoltar)
+       contenedor.removeEventListener('pointerleave', alSoltar)
+       contenedor.removeEventListener('pointercancel', alSoltar)
++      document.removeEventListener('visibilitychange', alVisibilidad)
+     }
+   }, [contenedor, imagenAntes])
+ 

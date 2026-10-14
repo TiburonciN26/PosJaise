@@ -1,0 +1,95 @@
+{
+  "alcance": "SDK real con fetch simulado salvo las dos lecturas anon explícitas a Local",
+  "casos": [
+    {
+      "nombre": "Pedidos: rango 40–79, conteo exacto, orden fecha/id y sin ítems",
+      "ok": true,
+      "datos": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes(nombre,telefono)",
+        "order": "creado_en.desc,id.desc",
+        "offset": "40",
+        "limit": "40"
+      }
+    },
+    {
+      "nombre": "Pedidos: nombre buscado con inner join",
+      "ok": true,
+      "datos": {
+        "select": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_comprobante,ruc,razon_social,pago_verificado,zonas_delivery(nombre),clientes!inner(nombre,telefono)",
+        "estado": "eq.LISTO",
+        "clientes.nombre": "ilike.%Ana\\_\\%%",
+        "order": "creado_en.desc,id.desc",
+        "offset": "0",
+        "limit": "40"
+      }
+    },
+    {
+      "nombre": "Promociones: rango acotado y filtro del servidor",
+      "ok": true,
+      "datos": {
+        "select": "id,titulo,descripcion,tipo_descuento,valor,vigente_desde,vigente_hasta,activo",
+        "titulo": "ilike.%QA%",
+        "order": "creado_en.desc,id.desc",
+        "offset": "0",
+        "limit": "40"
+      }
+    },
+    {
+      "nombre": "Reseñas: vista única y orden con desempate origen",
+      "ok": true,
+      "datos": {
+        "select": "origen,id,calificacion,comentario,estado,creado_en,cliente_nombre,cliente_telefono,item_nombre",
+        "estado": "eq.APROBADA",
+        "or": "(cliente_nombre.ilike.\"%QA%\",item_nombre.ilike.\"%QA%\")",
+        "order": "creado_en.desc,id.desc,origen.asc",
+        "offset": "0",
+        "limit": "40"
+      }
+    },
+    {
+      "nombre": "Cupones: código/nombre en OR y filtro de origen",
+      "ok": true,
+      "datos": {
+        "select": "id,codigo,origen,valor,tipo_descuento,estado,creado_en,cliente_nombre",
+        "origen": "in.(FIDELIZACION)",
+        "or": "(codigo.ilike.\"%José, (QA)%\",cliente_nombre.ilike.\"%José, (QA)%\")",
+        "order": "creado_en.desc,id.desc",
+        "offset": "0",
+        "limit": "40"
+      }
+    },
+    {
+      "nombre": "Contadores: HEAD exacto, un valor por estado",
+      "ok": true,
+      "datos": {
+        "PENDIENTE": 81,
+        "LISTO": 81,
+        "ENTREGADO": 81,
+        "CANCELADO": 81
+      }
+    },
+    {
+      "nombre": "Conteo ausente no se acepta en contadores",
+      "ok": true,
+      "datos": {
+        "rechazado": true
+      }
+    },
+    {
+      "nombre": "Anon denegado en resenas_moderacion",
+      "ok": true,
+      "datos": {
+        "code": "42501",
+        "status": 401
+      }
+    },
+    {
+      "nombre": "Anon denegado en cupones_gestion",
+      "ok": true,
+      "datos": {
+        "code": "42501",
+        "status": 401
+      }
+    }
+  ]
+}

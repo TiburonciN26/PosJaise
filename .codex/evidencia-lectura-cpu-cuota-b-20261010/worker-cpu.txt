@@ -1,0 +1,77 @@
+
+  - navigation "breadcrumb":
+    - link "Workers & Pages":
+      - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers-and-pages
+      - generic: Workers & Pages
+    - generic: pos-jaise-medios-staging
+    - combobox:
+      - generic: Production
+    - textbox: "{\"kind\":\"production\",\"id\":\"production\",\"name\":\"Production\"}"
+  - button "Ask AI":
+    - generic: Ask AI
+  - link "Support":
+    - /url: /?to=/:account/support
+    - generic: Support
+  - button "User menu":
+- navigation:
+  - tablist:
+    - tab "Overview"
+    - tab "Metrics" [selected]
+    - tab "Deployments"
+    - tab "Observability"
+    - tab "Issues"
+    - tab "Domains"
+    - tab "Access"
+    - tab "Settings"
+  - button:
+  - button:
+  - button "Invite":
+    - button "Invite":
+      - generic: Invite
+  - link "Edit code":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/edit/pos-jaise-medios-staging/production
+    - generic: Edit code
+  - link "Visit ↗":
+    - /url: https://pos-jaise-medios-staging.jdeostuas2.workers.dev
+    - generic: Visit
+    - text: ↗
+- link "Back to metrics":
+  - /url: /af5ea2cb3f504970fe293b1923cd64d7/workers/services/view/pos-jaise-medios-staging/production/metrics
+  - generic: Back to metrics
+- combobox:
+  - generic: All deployed versions
+- textbox: "0"
+- button "Refresh":
+- button "Last 24 hours":
+  - text: Last 24 hours
+- generic: CPU Time
+- button:
+- button "P50 1.95":
+  - generic: P50
+  - generic: "1.95"
+- button "P90 2.58":
+  - generic: P90
+  - generic: "2.58"
+- button "P99 3.18":
+  - generic: P99
+  - generic: "3.18"
+- button "P999 3.2":
+  - generic: P999
+  - generic: "3.2"
+- contentinfo:
+  - list:
+    - link "Support":
+      - /url: https://support.cloudflare.com
+    - link "System status":
+      - /url: https://www.cloudflarestatus.com
+    - link "Careers":
+      - /url: https://www.cloudflare.com/careers/
+    - link "Terms of Use":
+      - /url: https://www.cloudflare.com/website-terms/
+    - link "Report Security Issues":
+      - /url: https://www.cloudflare.com/disclosure/
+    - link "Privacy Policy":
+      - /url: https://www.cloudflare.com/privacypolicy/
+    - button "Cookie Preferences"
+    - generic: © 2026 Cloudflare, Inc.
+- region "Notifications"

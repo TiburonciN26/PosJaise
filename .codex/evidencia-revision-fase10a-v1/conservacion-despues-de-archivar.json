@@ -1,0 +1,11 @@
+{
+  "fecha": "2026-10-13T00:50:43.0953766-05:00",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "diferenciasGit": [
+    "?? .codex/REVISION-FASE10A-REGRESION-INTEGRADA-V1.md",
+    "?? .codex/evidencia-revision-fase10a-v1/"
+  ],
+  "soloInformesNuevos": true,
+  "fuentesModificadas": 0,
+  "nota": "La conservación anterior se tomó antes de archivar. Las únicas entradas nuevas son el informe y la evidencia QA solicitados."
+}

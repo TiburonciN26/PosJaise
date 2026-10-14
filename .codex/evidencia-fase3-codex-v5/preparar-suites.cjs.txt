@@ -1,0 +1,36 @@
+const fs=require('node:fs'),path=require('node:path');
+const root='C:/WedJaiseReact',base=__dirname,clone=path.join(base,'worker-clon');
+fs.mkdirSync(path.join(clone,'src'),{recursive:true});fs.mkdirSync(path.join(clone,'test'),{recursive:true});
+for(const name of ['index.js','validar-imagen.js'])fs.copyFileSync(path.join(root,'cloudflare/medios-worker/src',name),path.join(clone,'src',name));
+fs.copyFileSync(path.join(root,'cloudflare/medios-worker/wrangler.toml'),path.join(clone,'wrangler.toml'));
+fs.writeFileSync(path.join(clone,'package.json'),JSON.stringify({private:true,type:'module'}));
+let unit=fs.readFileSync(path.join(root,'cloudflare/medios-worker/test/probar-unitario.mjs'),'utf8');
+unit=unit.replace("const raiz = resolve(aqui, '../../..')","const raiz = 'C:/WedJaiseReact'");
+unit=unit.replace("from '../../../scripts/lib/huerfanos-medios.mjs'","from 'file:///C:/WedJaiseReact/scripts/lib/huerfanos-medios.mjs'");
+unit=unit.replace("const carpeta = resolve(raiz, 'docs/evidencia-rendimiento/fase-3')","const carpeta = "+JSON.stringify(base));
+fs.writeFileSync(path.join(clone,'test/probar-unitario.mjs'),unit);
+let ws=fs.readFileSync(path.join(root,'cloudflare/medios-worker/test/probar-worker.mjs'),'utf8');
+ws=ws.replace('mkdirSync, rmSync, existsSync','mkdirSync, rmSync as rmOriginal, existsSync');
+ws=ws.replace("const raiz = resolve(aqui, '../../..')","const raiz = 'C:/WedJaiseReact'\nconst rmSync = () => {}");
+ws=ws.replace('const PUERTO = 8788','const PUERTO = 5510');
+ws=ws.replace("    'npx',","    process.execPath,").replace("      'wrangler', 'dev',","      'C:/WedJaiseReact/cloudflare/medios-worker/node_modules/wrangler/bin/wrangler.js', 'dev',");
+ws=ws.replace("shell: true, stdio: ['ignore', 'pipe', 'pipe']","shell: false, env: { ...process.env, WRANGLER_SEND_METRICS: 'false' }, stdio: ['ignore', 'pipe', 'pipe']");
+ws=ws.replace("const carpeta = resolve(raiz, 'docs/evidencia-rendimiento/fase-3')","const carpeta = "+JSON.stringify(base));
+fs.writeFileSync(path.join(clone,'test/probar-worker.mjs'),ws);
+const cfg=path.join(base,'vite-diagnostico.mjs');
+fs.writeFileSync(cfg,"import original from 'file:///C:/WedJaiseReact/vite.config.js';\nexport default async (args)=>({...await original(args),root:'C:/WedJaiseReact',cacheDir:"+JSON.stringify(path.join(base,'vite-cache'))+"});");
+for(const [file,wport,vport] of [['verificar-medios-r2-fase3.cjs',5511,5521],['verificar-modales-fase3.cjs',5512,5522]]){
+ let src=fs.readFileSync(path.join(root,'scripts',file),'utf8');
+ src=src.replace("const raiz = path.resolve(__dirname, '..')","const raiz = 'C:/WedJaiseReact'");
+ src=src.replace("const carpetaWorker = path.join(raiz, 'cloudflare/medios-worker')","const carpetaWorker = "+JSON.stringify(clone));
+ src=src.replace("require('playwright')","require('C:/WedJaiseReact/node_modules/playwright')");
+ src=src.replace(/const PUERTO_W = \d+/,'const PUERTO_W = '+wport).replace(/const PUERTO_V = \d+/,'const PUERTO_V = '+vport);
+ src=src.replace("const estado = path.join(carpetaWorker, '.estado-local')","const estado = path.join(carpetaWorker, "+JSON.stringify('.estado-'+vport)+")\nconst borrarOriginal = fs.rmSync; fs.rmSync=()=>{}");
+ src=src.replace("spawn('npx', ['wrangler',","spawn(process.execPath, ['C:/WedJaiseReact/cloudflare/medios-worker/node_modules/wrangler/bin/wrangler.js',");
+ src=src.replace("    'npx',\n    ['wrangler',","    process.execPath,\n    ['C:/WedJaiseReact/cloudflare/medios-worker/node_modules/wrangler/bin/wrangler.js',");
+ src=src.replace("spawn('npx', ['vite',","spawn(process.execPath, ['C:/WedJaiseReact/node_modules/vite/bin/vite.js', '--configLoader', 'native', '--config', "+JSON.stringify(cfg)+",");
+ src=src.replaceAll('shell: true','shell: false');
+ src=src.replace("const carpeta = path.join(raiz, 'docs/evidencia-rendimiento/fase-3')","const carpeta = "+JSON.stringify(base));
+ fs.writeFileSync(path.join(base,file),src);
+}
+console.log('Cuatro suites copiadas; solo rutas, puertos, cache y arranque aislados. Sin instalaciones ni borrados de archivos.');

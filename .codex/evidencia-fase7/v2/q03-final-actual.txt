@@ -1,0 +1,28 @@
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+escala=actual volumen(pedidos,items,cupones,res,res_p,res_s,promos,prod,serv,cli)=429,429,3067,49,89,80,208,3245,3340,4749  filas antes/después de la prueba: 4749,429,3067,3245,122 → 4749,429,3067,3245,122
+Q01 admin         93.83 ms h3005 →      2.73 ms h9 →       1.1 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · primera página (sin filtro)
+Q01 cajera       103.55 ms h2576 →       0.4 ms h6 →      0.43 ms h6  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · primera página (sin filtro)
+Q02 admin            11 ms h310 →      0.94 ms h9 →       1.1 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · estado PENDIENTE
+Q03 admin         24.98 ms h722 →      5.84 ms h10 →      5.42 ms h10  seq[pedidos_web] → seq[clientes,pedidos_web,zonas_delivery]  Pedidos Web · búsqueda de clienta (término más frecuente) + estado ENTREGADO
+Q04 admin          7.87 ms h257 →      0.57 ms h6 →      0.48 ms h6  seq[pedidos_web] → seq[pedidos_web]  Pedidos Web · conteo exacto por estado (head)

@@ -1,0 +1,13 @@
+{
+ "fecha": "2026-10-12T17:42:28.916Z",
+ "alcance": "CLI y harness reales contra un servidor HTTP ficticio en memoria; sin red externa, sin Supabase, sin R2 y sin credenciales reales",
+ "total": 1,
+ "fallos": 1,
+ "casos": [
+  {
+   "nombre": "F9-03b · UPDATE incierto en vuelo, lectura previa y reversión antes del commit",
+   "ok": false,
+   "error": "Una reversión no puede declararse completa mientras el UPDATE anterior pueda confirmar después de la lectura\n\ntrue !== false\n"
+  }
+ ]
+}

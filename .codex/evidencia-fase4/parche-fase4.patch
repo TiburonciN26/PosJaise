@@ -1,0 +1,1130 @@
+diff --git a/implementacionesWed.md b/implementacionesWed.md
+index d2a2fb1..42cfbb9 100644
+--- a/implementacionesWed.md
++++ b/implementacionesWed.md
+@@ -6553,3 +6553,26 @@ Implementado y probado en **local** (R2 simulado); sin R2 real, bucket, dominio
+ **Contrato de retirada de medios (2026-10-10).** La Function `/medios` responde al navegador con `public, max-age=0, must-revalidate` y conserva `max-age=300` solo en la copia del borde (opción A); la opción B, que comprueba R2 antes de servir una copia, queda implementada pero desactivada (`REVOCAR_CON_R2=false`). Commit `d16d816`, repetición real en staging con caché 27/27 e interfaz 23/23, aprobada por Codex para staging. La decisión de retirada en producción depende de la clienta. Detalle y límites en el runbook §33.
+ 
+ **Herramientas de carga, lectura mixta y recolector acotado (2026-10-10).** Se prepararon, con revisiones de Codex (EC-01/02, ML-01/02/03, RG-01/02/03, ML-01b), el ensayo de carga de `/medios` con B, el constructor/verificador del build de reversión con lectura mixta y el harness del recolector limitado a UUID propios; ninguno se ha ejecutado contra staging. Cambios de aplicación: `resolverUrlGaleria` lee las URLs propias antiguas de Galería por la base configurada (Pages, con la revocación B). Cambio en el recolector habitual: el conteo de referencias inválido ahora aborta. Detalle y límites en el runbook §35.
++
++## 47. Rendimiento · Fase 4: catálogos públicos escalables (Productos y Servicios) — 2026-10-11 (local, sin commit)
++
++**Problema.** `ProductosCliente` y `ServiciosCliente` descargaban el catálogo completo y filtraban/renderizaban en React. El servidor corta cada respuesta en `max_rows = 1000`, así que en la réplica de escala (3.245 productos, 3.325 servicios activos) la búsqueda no encontraba filas posteriores a la 1.000 y teclear en el buscador bloqueaba el hilo principal ~4 s (CPU 4×).
++
++**Qué cambió.** Los **metadatos** de las categorías (nombre y total de TODAS) salen de `*_categorias_publicas()`; las **tarjetas** de «Todos», de `*_vitrina_publica(por_categoria, grupo_desde, grupos_max)`, que devuelve las primeras 4 de cada categoría pero solo de una **ventana de 10 categorías** (≤ 40 tarjetas), con parámetros acotados en el servidor. «Todos» pagina las ventanas de categorías (paginador «1–10 de N categorías»); la barra de categorías lista todas. Héroe y cintas son consultas con límite y criterio explícitos. Una categoría o una búsqueda piden **una página de 40** (`range()` + conteo exacto + `ilike` escapado) con un paginador que reemplaza la página. Módulos nuevos: `src/lib/catalogoPublico.js`, `src/hooks/useCatalogoPublico.js` (cancelación de respuestas viejas; estados cargando/vacío/error con Reintentar, también para las ventanas de categorías), `src/hooks/usePreciosSeleccion.js`, `src/components/PaginadorCatalogo.jsx`. Migración `20261011000001` (4 funciones `SECURITY INVOKER`, solo aplicada en local). `leerServicios` y los demás helpers de lectura completa **no se tocaron**.
++
++**Revisión de Codex (V1) y correcciones.** F4-01 «Todos» sin ventana global → ventanas de categorías (arriba). F4-02/03/04, las barras flotantes «Tu carrito» / «Tu cita»: antes sumaban lo que la página tenía en memoria. Ahora `usePreciosSeleccion` (a) cuenta cada id una sola vez (un servicio en héroe y fila ya no cuenta doble), (b) cuenta la selección completa aunque falte un precio y, mientras falte, **no presenta un subtotal como total**: dice «calculando total…» o, si la lectura falló (403, 5xx, red), «Total no disponible · Reintentar», y se recupera sola al cambiar la selección, (c) reconcilia su caché con los precios que muestra la página (al limpiar una búsqueda no vuelve al precio viejo) y la caduca a los 60 s, (d) separa la caché por sesión. Un id que la lectura confirma como ya no disponible se excluye del conteo y del total.
++
++**Decisiones que no son obvias en el código.**
++- El texto del buscador vive en `BarraCatalogo` y avisa a la página a los 250 ms: teclear solo repinta la barra (antes repintaba héroe, cintas y filas completos, 210–400 ms por tecla). La confirmación del término y la llegada de resultados/ventanas van en `startTransition`.
++- `TarjetaProductoCliente`/`TarjetaServicioCliente` van en `memo`: el carrusel del héroe repinta la página cada 5 s y arrastraba las 40 tarjetas (~250 ms por tick; ~85 ms con `memo`). Si una foto falla se muestra el degradado.
++- El héroe solo pide las fotos de la diapositiva activa y sus vecinas; sus miniaturas usan la variante `m`.
++- Con empate de reservas en «más pedidos» los servicios comparten posición y se ordenan por nombre/id (antes el orden entre empatados era arbitrario).
++- **Productos sin categoría no forman fila en «Todos»** (comportamiento previo, conservado); siguen alcanzables por búsqueda.
++
++**Resultado final (laboratorio, CPU 4×, 18 muestras por escenario, 0 errores).** Réplica de miles: datos de carga 509 KB → 12 KB (Productos) y 1.649 KB → 15 KB (Servicios); evento más lento al teclear 4.000–4.944 ms → 32–56 ms; tarea larga de búsqueda 3.792–4.635 ms → 60–94 ms; la búsqueda ya encuentra filas posteriores a la 1.000. Tamaño del negocio (300/100): evento 736–1.768 ms → 24–56 ms; tarea larga 707–1.689 ms → 0–83 ms. Pruebas: datos 27/27 (con 25 categorías ficticias sembradas), interfaz 31/31, fotos/sesión 8/8, barras 9/9 (9/9 fallan contra la versión revisada por Codex). Detalle, límites del método y reversión por hunks en `.codex/ENTREGA-FASE4-CORRECCIONES-V1.md`.
++
++**Segunda revisión de Codex (V2) y correcciones.** F4-04b: una fila antigua que sigue en la vitrina ya no pisa una lectura posterior: cada fila (snapshot) conserva la hora en que se vio por primera vez y el precio se resuelve por la hora de LECTURA, no por la de render/copia. F4-05: un dato de la caché vencido (>60 s) es «desconocido» al calcular el total (no solo al decidir si se pide); si la renovación falla la barra dice «Total no disponible · Reintentar» y conserva la cantidad. F4-06: los metadatos de categorías se leen por tramos de 500 con `range()` y conteo exacto (el servidor corta también las funciones en `max_rows`); si un tramo falla o el total no se alcanza, la vitrina falla en vez de mostrar una lista truncada. Regresiones: barras 17/17 (las 8 nuevas fallan contra el hook anterior), `verificar-categorias-completas.mjs` 16/16 (0, 5, 999, 1.000, 1.001 y 2.500 categorías). Detalle en `.codex/ENTREGA-FASE4-CORRECCIONES-V2.md`.
++
++**Tercera revisión (V3).** F4-06b: el conteo exacto es obligatorio y estricto en cada tramo de categorías (entero ≥ 0, igual al del primero); si falta, es `*`/malformado/negativo o cambia, la lectura falla y la vitrina muestra el error con Reintentar, en vez de aceptar `data.length` como total. `verificar-categorias-completas.mjs` 31/31. Detalle en `.codex/ENTREGA-FASE4-CORRECCIONES-V3.md`.
++
++**Pendiente.** Revisión de Codex; commit/push no autorizados; la migración **no** está aplicada en producción (requiere confirmación explícita). Producción y Fase 5 siguen sin tocarse.
+diff --git a/src/components/BarraCatalogo.jsx b/src/components/BarraCatalogo.jsx
+index e949f1a..31fffa9 100644
+--- a/src/components/BarraCatalogo.jsx
++++ b/src/components/BarraCatalogo.jsx
+@@ -1,4 +1,4 @@
+-import { useEffect, useMemo, useRef, useState } from 'react'
++import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
+ import { ArrowBigDown, Search, X } from 'lucide-react'
+ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+ 
+@@ -8,6 +8,12 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+ // elegir una categoría la lista se pliega con la misma animación y la
+ // elegida queda marcada al lado de "Todos".
+ // `categorias` incluye 'todos' primero; `conteos` es { categoria: n }.
++//
++// El texto de búsqueda vive AQUÍ mientras se escribe: teclear solo vuelve a pintar esta barra, no toda la página del catálogo
++// (héroe, cintas, filas), que en un móvil lento costaba cientos de ms por tecla. La página recibe `onBusqueda` recién tras una
++// pausa (RETARDO_BUSQUEDA_MS), una petición por pausa y no por tecla; vaciar el campo avisa al instante para volver a «Todos».
++const RETARDO_BUSQUEDA_MS = 250
++
+ export default function BarraCatalogo({
+   categorias,
+   conteos,
+@@ -22,6 +28,30 @@ export default function BarraCatalogo({
+ }) {
+   const [abierto, setAbierto] = useState(false)
+   const barraRef = useRef(null)
++  const [texto, setTexto] = useState(busqueda)
++  const ultimoEnviado = useRef(busqueda)
++
++  // Si la página cambia el texto por su cuenta (no es el eco de lo que enviamos), la caja lo sigue.
++  useEffect(() => {
++    if (busqueda !== ultimoEnviado.current) {
++      ultimoEnviado.current = busqueda
++      setTexto(busqueda)
++    }
++  }, [busqueda])
++
++  useEffect(() => {
++    if (texto === ultimoEnviado.current) return undefined
++    const enviar = () => {
++      ultimoEnviado.current = texto
++      startTransition(() => onBusqueda(texto)) // la página reacomoda su contenido en rebanadas, sin bloquear la caja
++    }
++    if (!texto.trim()) {
++      enviar()
++      return undefined
++    }
++    const id = setTimeout(enviar, RETARDO_BUSQUEDA_MS)
++    return () => clearTimeout(id)
++  }, [texto, onBusqueda])
+ 
+   useCerrarConEscape(() => setAbierto(false), abierto, { trabajoPendiente: false })
+ 
+@@ -89,14 +119,14 @@ export default function BarraCatalogo({
+           <Search className="h-[15px] w-[15px] shrink-0" />
+           <input
+             type="text"
+-            value={busqueda}
+-            onChange={(evento) => onBusqueda(evento.target.value)}
++            value={texto}
++            onChange={(evento) => setTexto(evento.target.value)}
+             placeholder={placeholder}
+             aria-label={placeholder.replace('…', '')}
+             className="w-full min-w-0 bg-transparent text-[13px] text-white outline-none placeholder:text-white/40"
+           />
+-          {busqueda && (
+-            <button type="button" onClick={() => onBusqueda('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
++          {texto && (
++            <button type="button" onClick={() => setTexto('')} aria-label="Limpiar" className="shrink-0 hover:text-white">
+               <X className="h-3.5 w-3.5" />
+             </button>
+           )}
+diff --git a/src/components/BarraTuCarritoFlotante.jsx b/src/components/BarraTuCarritoFlotante.jsx
+index 8f1691f..351b3f3 100644
+--- a/src/components/BarraTuCarritoFlotante.jsx
++++ b/src/components/BarraTuCarritoFlotante.jsx
+@@ -1,26 +1,34 @@
++import { useMemo } from 'react'
+ import { createPortal } from 'react-dom'
+ import { Link } from 'react-router-dom'
+ import { ArrowRight } from 'lucide-react'
+ import { useCarritoCliente } from '../context/CarritoClienteContext.jsx'
+-import { formatearSoles } from '../lib/moneda.js'
++import { usePreciosSeleccion } from '../hooks/usePreciosSeleccion.js'
++import { formatearSoles, redondear2 } from '../lib/moneda.js'
+ 
+ // Barra flotante "Tu carrito" de Productos y su Detalle
+ // (docs/diseno-productos/README.md, sección 6/11) — mismo patrón que
+ // BarraTuCitaFlotante.jsx (cita de servicios), pero sobre
+ // `productosCarrito` (Map id → cantidad) en vez de `serviciosCarrito`.
+-// `productos` es el catálogo que ya cargó la página, para sacar
+-// nombre/precio de cada id sin una consulta aparte.
++// `productos` son los que la página ya tiene en memoria (no el catálogo completo: desde la Fase 4 los catálogos se leen por
++// páginas). El precio del resto se resuelve por id con usePreciosSeleccion (ver ese hook: caché por sesión, reconciliada con lo que
++// muestra la página y con vigencia). La cantidad cuenta TODO lo seleccionado aunque aún no se conozca su precio; mientras falte alguno
++// el total NO se presenta como completo: dice «calculando…» o, si la lectura falló, ofrece reintentar.
+ export default function BarraTuCarritoFlotante({ productos }) {
+   const { productosCarrito } = useCarritoCliente()
++  const ids = useMemo(() => [...productosCarrito.keys()].sort(), [productosCarrito])
++  const refrescarCon = useMemo(() => [...productosCarrito].sort().join('|'), [productosCarrito])
++  const { precioDe, estado, reintentar } = usePreciosSeleccion({ tabla: 'productos', ids, conocidos: productos, refrescarCon })
+ 
+-  const porId = new Map(productos.map((p) => [p.id, p]))
+   let cantidadTotal = 0
+   let total = 0
++  let pendiente = false
+   for (const [id, cantidad] of productosCarrito) {
+-    const producto = porId.get(id)
+-    if (!producto) continue
++    const precio = precioDe(id)
++    if (precio === null) continue // la lectura funcionó y ese producto ya no está disponible
+     cantidadTotal += cantidad
+-    total += Number(producto.precio) * cantidad
++    if (precio === undefined) pendiente = true
++    else total += precio * cantidad
+   }
+   if (cantidadTotal === 0) return null
+ 
+@@ -31,7 +39,15 @@ export default function BarraTuCarritoFlotante({ productos }) {
+       <div className="lw-barra-flotante pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
+         <span className="text-sm text-white">
+           <b className="font-semibold">{cantidadTotal}</b> <span className="text-white/60">{plural} en tu carrito ·</span>{' '}
+-          <b className="font-semibold">{formatearSoles(total)}</b>
++          {!pendiente ? (
++            <b className="font-semibold">{formatearSoles(redondear2(total))}</b>
++          ) : estado === 'error' ? (
++            <button type="button" onClick={reintentar} className="font-semibold text-[var(--lw-gold)] underline underline-offset-2">
++              Total no disponible · Reintentar
++            </button>
++          ) : (
++            <span className="text-white/60">calculando total…</span>
++          )}
+         </span>
+         <Link
+           to="/carrito"
+diff --git a/src/components/BarraTuCitaFlotante.jsx b/src/components/BarraTuCitaFlotante.jsx
+index 803f158..e9afc93 100644
+--- a/src/components/BarraTuCitaFlotante.jsx
++++ b/src/components/BarraTuCitaFlotante.jsx
+@@ -1,31 +1,54 @@
++import { useMemo } from 'react'
+ import { createPortal } from 'react-dom'
+ import { Link } from 'react-router-dom'
+ import { ArrowRight } from 'lucide-react'
+ import { useCarritoCliente } from '../context/CarritoClienteContext.jsx'
+-import { formatearSoles } from '../lib/moneda.js'
++import { usePreciosSeleccion } from '../hooks/usePreciosSeleccion.js'
++import { formatearSoles, redondear2 } from '../lib/moneda.js'
+ 
+ // Barra flotante "Tu cita" — Servicios y Detalle del servicio comparten el
+ // mismo cálculo y comportamiento (docs/diseno-servicios/README.md): cuenta
+ // y suma los servicios que ya están en el carrito de CITAS
+ // (serviciosCarrito), no el de productos (/carrito, aparte, con su propio
+-// ícono en el header). `servicios` es el catálogo que ya cargó la página
+-// (para sacar nombre/precio de cada id sin una consulta aparte).
++// ícono en el header). `servicios` son los que la página ya tiene en memoria (desde la Fase 4 el catálogo se lee por páginas, no
++// completo): el precio del resto se resuelve por id con usePreciosSeleccion. Cada servicio seleccionado cuenta UNA vez y suma su
++// precio una vez, aunque aparezca en varias piezas de la página (héroe, fila, resultados). La cantidad cuenta toda la selección
++// aunque falte algún precio; mientras falte el total no se presenta como completo («calculando…» o «Reintentar» si la lectura falló).
+ export default function BarraTuCitaFlotante({ servicios }) {
+   const { serviciosCarrito } = useCarritoCliente()
++  const ids = useMemo(() => [...serviciosCarrito].sort(), [serviciosCarrito])
++  const refrescarCon = ids.join('|')
++  const { precioDe, estado, reintentar } = usePreciosSeleccion({ tabla: 'servicios', ids, conocidos: servicios, refrescarCon })
+ 
+-  const seleccionados = servicios.filter((s) => serviciosCarrito.has(s.id))
+-  if (seleccionados.length === 0) return null
++  let cantidad = 0
++  let total = 0
++  let pendiente = false
++  for (const id of ids) {
++    const precio = precioDe(id)
++    if (precio === null) continue // la lectura funcionó y ese servicio ya no está disponible
++    cantidad += 1
++    if (precio === undefined) pendiente = true
++    else total += precio
++  }
++  if (cantidad === 0) return null
+ 
+-  const total = seleccionados.reduce((suma, s) => suma + Number(s.precio), 0)
+-  const plural = seleccionados.length === 1 ? 'servicio' : 'servicios'
++  const plural = cantidad === 1 ? 'servicio' : 'servicios'
+ 
+   const contenido = (
+     <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
+       <div className="lw-barra-flotante pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
+         <span className="text-sm text-white">
+-          <b className="font-semibold">{seleccionados.length}</b>{' '}
++          <b className="font-semibold">{cantidad}</b>{' '}
+           <span className="text-white/60">{plural} en tu cita ·</span>{' '}
+-          <b className="font-semibold">{formatearSoles(total)}</b>
++          {!pendiente ? (
++            <b className="font-semibold">{formatearSoles(redondear2(total))}</b>
++          ) : estado === 'error' ? (
++            <button type="button" onClick={reintentar} className="font-semibold text-[var(--lw-gold)] underline underline-offset-2">
++              Total no disponible · Reintentar
++            </button>
++          ) : (
++            <span className="text-white/60">calculando total…</span>
++          )}
+         </span>
+         <Link
+           to="/citas/carrito"
+diff --git a/src/components/TarjetaProductoCliente.jsx b/src/components/TarjetaProductoCliente.jsx
+index bc3934a..29f8608 100644
+--- a/src/components/TarjetaProductoCliente.jsx
++++ b/src/components/TarjetaProductoCliente.jsx
+@@ -1,3 +1,4 @@
++import { memo, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { ArrowUpRight, Package } from 'lucide-react'
+ import { urlPublicaFoto } from '../lib/imagenes.js'
+@@ -29,8 +30,11 @@ export function porcentajeDescuento(producto) {
+ // por si algo más las sigue usando). La usan ProductosCliente (catálogo
+ // agrupado y grilla plana), la cinta de Ofertas/Destacados y
+ // DetalleProductoCliente ("También te puede interesar").
+-export default function TarjetaProductoCliente({ producto }) {
++// memo: el carrusel del héroe repinta la página entera cada 5 s; sin esto repintaba también hasta 40 tarjetas sin necesidad.
++export default memo(function TarjetaProductoCliente({ producto }) {
+   const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url, 'm')
++  // Si la foto no carga (borrada, sin red) se muestra el degradado de siempre en vez de una imagen rota.
++  const [urlFallida, setUrlFallida] = useState(null)
+   const agotado = producto.stock_actual <= 0
+   const descuento = porcentajeDescuento(producto)
+ 
+@@ -40,11 +44,13 @@ export default function TarjetaProductoCliente({ producto }) {
+         to={`/productos/${producto.id}`}
+         className="group relative block aspect-square overflow-hidden rounded-[10px] bg-[#151517]"
+       >
+-        {urlFoto ? (
++        {urlFoto && urlFoto !== urlFallida ? (
+           <img
+             src={urlFoto}
+             alt=""
+             loading="lazy"
++            decoding="async"
++            onError={() => setUrlFallida(urlFoto)}
+             className={`h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045] ${agotado ? 'opacity-45' : ''}`}
+           />
+         ) : (
+@@ -91,4 +97,4 @@ export default function TarjetaProductoCliente({ producto }) {
+       <span className="-mt-1.5 text-xs text-white/50">{stockTexto(producto)}</span>
+     </article>
+   )
+-}
++})
+diff --git a/src/components/TarjetaServicioCliente.jsx b/src/components/TarjetaServicioCliente.jsx
+index 34f0a1d..66d4316 100644
+--- a/src/components/TarjetaServicioCliente.jsx
++++ b/src/components/TarjetaServicioCliente.jsx
+@@ -1,3 +1,4 @@
++import { memo, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { ArrowUpRight, Sparkles } from 'lucide-react'
+ import { urlPublicaFoto } from '../lib/imagenes.js'
+@@ -13,9 +14,12 @@ const BUCKET_FOTOS = 'fotos-servicios'
+ // tarjeta (foto y nombre) es un solo link a /servicios/:id. La usan
+ // ServiciosCliente (catálogo agrupado y grilla plana) y
+ // DetalleServicioCliente ("También te puede interesar").
+-export default function TarjetaServicioCliente({ servicio }) {
++// memo: el carrusel del héroe repinta la página entera cada 5 s; sin esto repintaba también hasta 40 tarjetas sin necesidad.
++export default memo(function TarjetaServicioCliente({ servicio }) {
+   const urlFoto = urlPublicaFoto(BUCKET_FOTOS, servicio.foto_url, 'm')
+   const duracion = formatearDuracion(servicio.duracion_min)
++  // Si la foto no carga (borrada, sin red) se muestra el degradado de siempre en vez de una imagen rota.
++  const [urlFallida, setUrlFallida] = useState(null)
+ 
+   return (
+     <article className="flex min-w-0 flex-col gap-2.5">
+@@ -23,11 +27,13 @@ export default function TarjetaServicioCliente({ servicio }) {
+         to={`/servicios/${servicio.id}`}
+         className="group relative block aspect-square overflow-hidden rounded-[10px] bg-[#151517]"
+       >
+-        {urlFoto ? (
++        {urlFoto && urlFoto !== urlFallida ? (
+           <img
+             src={urlFoto}
+             alt=""
+             loading="lazy"
++            decoding="async"
++            onError={() => setUrlFallida(urlFoto)}
+             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.045]"
+           />
+         ) : (
+@@ -59,4 +65,4 @@ export default function TarjetaServicioCliente({ servicio }) {
+       {duracion && <span className="-mt-1.5 text-xs text-white/50">{duracion}</span>}
+     </article>
+   )
+-}
++})
+diff --git a/src/pages/cliente/ProductosCliente.jsx b/src/pages/cliente/ProductosCliente.jsx
+index 05028df..82122e1 100644
+--- a/src/pages/cliente/ProductosCliente.jsx
++++ b/src/pages/cliente/ProductosCliente.jsx
+@@ -1,7 +1,10 @@
+-import { useEffect, useMemo, useRef, useState } from 'react'
++import { memo, useEffect, useMemo, useRef, useState } from 'react'
+ import { Link } from 'react-router-dom'
+ import { ArrowRight, HelpCircle, MapPin, MessageCircle, Package, ShoppingBag, Sparkles } from 'lucide-react'
+ import { supabase } from '../../lib/supabase.js'
++import { useAuth } from '../../context/AuthContext.jsx'
++import { COLUMNAS_PRODUCTO_TARJETA, GRUPOS_POR_VENTANA, POR_CATEGORIA, TAMANO_PAGINA_CATALOGO, cargarVentanaGrupos, cargarVitrinaProductos, leerPaginaCatalogo } from '../../lib/catalogoPublico.js'
++import { useCatalogoPublico } from '../../hooks/useCatalogoPublico.js'
+ import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
+ import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+ import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
+@@ -16,11 +19,16 @@ import { useCintaContinua } from '../../hooks/useCintaContinua.js'
+ import TarjetaProductoCliente, { porcentajeDescuento } from '../../components/TarjetaProductoCliente.jsx'
+ import BarraTuCarritoFlotante from '../../components/BarraTuCarritoFlotante.jsx'
+ import BarraCatalogo from '../../components/BarraCatalogo.jsx'
++import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
+ import PieClienteWeb from './PieClienteWeb.jsx'
+ 
+ const BUCKET_FOTOS = 'fotos-productos'
+-const POR_FILA = 4
+-const MAX_HERO = 5
++const POR_FILA = POR_CATEGORIA
++// Constantes estables (no se recrean en cada render): evitan invalidar los useMemo que dependen de ellas.
++const SIN_FILAS = []
++const CINTA_VACIA = { filas: SIN_FILAS, total: 0 }
++const etiquetaOferta = (p) => `Oferta −${porcentajeDescuento(p)}%`
++const etiquetaDestacado = () => 'Destacado'
+ const INTERVALO_HERO_MS = 5000
+ // Cuántas tarjetas DISTINTAS mínimo debe tener una cinta antes de
+ // duplicarla — si hay pocas ofertas, la lista se repite para llenar el
+@@ -59,15 +67,27 @@ export default function ProductosCliente() {
+   const requerirSesion = useRequerirSesion()
+   const { mostrarToast } = useToast()
+ 
+-  const [productos, setProductos] = useState([])
++  const { usuario } = useAuth()
+   const [contacto, setContacto] = useState(null)
+   const [horario, setHorario] = useState(null)
+-  const [cargando, setCargando] = useState(true)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [categoriaActiva, setCategoriaActiva] = useState('todos')
+   const [heroIdx, setHeroIdx] = useState(0)
+   const [heroTick, setHeroTick] = useState(0)
+ 
++  // Fase 4: el catálogo ya no se descarga completo. «Todos» (sin búsqueda) sale de una vitrina acotada (categorías con su total,
++  // primeras tarjetas de cada una, héroe y cintas); una categoría o una búsqueda piden UNA página de hasta 40 tarjetas al servidor.
++  const {
++    vitrina, listado, listadoVigente, categoriaActiva, setCategoriaActiva, busqueda, setBusqueda, termino, agrupado,
++    pagina, totalPaginas, irAPagina, reintentarVitrina, reintentarListado,
++    gruposVisibles, paginaGrupos, totalPaginasGrupos, ventanaOcupada, ventanaConError, irAPaginaGrupos, reintentarVentana,
++  } = useCatalogoPublico({
++    clave: usuario?.id ?? 'anon',
++    cargarVitrina: ({ signal }) => cargarVitrinaProductos(supabase, { signal }),
++    cargarPagina: (parametros) => leerPaginaCatalogo(supabase, { tabla: 'productos', columnas: COLUMNAS_PRODUCTO_TARJETA, ...parametros }),
++    cargarGrupos: (parametros) => cargarVentanaGrupos(supabase, { tabla: 'productos', ...parametros }),
++  })
++  const datos = vitrina.datos
++  const cargando = vitrina.estado === 'cargando'
++
+   // Animación de entrada — mismo patrón que ServiciosCliente.jsx (ver
+   // docs/patrones/animacion-entrada.md), tabla de retrasos propia de
+   // Productos (docs/diseno-productos/README.md, "Animación de entrada").
+@@ -85,27 +105,6 @@ export default function ProductosCliente() {
+   const cintaMedidas = esDesktop ? CINTA_MEDIDAS.desktop : CINTA_MEDIDAS.movil
+   const cintaPasoPx = cintaMedidas.ancho + cintaMedidas.separacion
+ 
+-  useEffect(() => {
+-    let vigente = true
+-
+-    async function cargar() {
+-      const productosRes = await supabase
+-        .from('productos')
+-        .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url, descripcion, destacado, nuevo, en_inicio')
+-        .eq('activo', true)
+-        .order('nombre')
+-
+-      if (!vigente) return
+-      setProductos(productosRes.data ?? [])
+-      setCargando(false)
+-    }
+-
+-    cargar()
+-    return () => {
+-      vigente = false
+-    }
+-  }, [])
+-
+   // QA-022: contacto/horario son secundarios: no bloquean la lista.
+   useEffect(() => {
+     let vigente = true
+@@ -116,13 +115,7 @@ export default function ProductosCliente() {
+     }
+   }, [])
+ 
+-  const conteosCategoria = useMemo(() => {
+-    const conteos = {}
+-    for (const item of productos) {
+-      if (item.categoria) conteos[item.categoria] = (conteos[item.categoria] ?? 0) + 1
+-    }
+-    return conteos
+-  }, [productos])
++  const conteosCategoria = datos?.conteos ?? {}
+ 
+   const listaRef = useRef(null)
+   function elegirCategoria(categoria) {
+@@ -131,16 +124,20 @@ export default function ProductosCliente() {
+     listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+   }
+ 
+-  const categorias = useMemo(
+-    () => ['todos', ...new Set(productos.map((p) => p.categoria).filter(Boolean))],
+-    [productos],
+-  )
++  function cambiarPaginaGrupos(n) {
++    irAPaginaGrupos(n)
++    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
++  }
+ 
+-  // Inicio: productos marcados a mano (productos.en_inicio) con stock.
+-  const heroProductos = useMemo(
+-    () => productos.filter((p) => p.en_inicio && p.stock_actual > 0).slice(0, MAX_HERO),
+-    [productos],
+-  )
++  function cambiarPagina(n) {
++    irAPagina(n)
++    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
++  }
++
++  const categorias = useMemo(() => ['todos', ...(datos?.categorias ?? [])], [datos])
++
++  // Inicio: productos marcados a mano (productos.en_inicio) con stock (hasta 5, ya acotados por el servidor).
++  const heroProductos = useMemo(() => datos?.hero ?? [], [datos])
+   const heroIdxSeguro = heroProductos.length ? heroIdx % heroProductos.length : 0
+   const heroActual = heroProductos[heroIdxSeguro]
+ 
+@@ -164,32 +161,22 @@ export default function ProductosCliente() {
+     mostrarToast(agregado > 0 ? 'Agregado al carrito.' : 'No se pudo agregar — ya no hay stock disponible.', agregado > 0 ? 'exito' : 'error')
+   }
+ 
+-  const ofertas = useMemo(() => productos.filter((p) => p.precio_antes && p.stock_actual > 0), [productos])
+-  const destacados = useMemo(() => productos.filter((p) => p.destacado && p.stock_actual > 0), [productos])
++  // Cintas: hasta 12 tarjetas cada una (orden nombre, id) y el total real de ofertas/destacados para el rótulo.
++  const ofertas = datos?.ofertas ?? CINTA_VACIA
++  const destacados = datos?.destacados ?? CINTA_VACIA
+ 
+-  const terminoQ = busqueda.trim().toLowerCase()
+-  const agrupado = categoriaActiva === 'todos' && !terminoQ
++  // Listado plano: solo las filas que pertenecen a la categoría+texto actuales (si no, se muestra «Buscando…», no resultados viejos).
++  const listaFiltrada = listadoVigente ? listado.filas : SIN_FILAS
++  const listadoOcupado = listado.estado === 'cargando'
+ 
+-  const listaFiltrada = useMemo(
+-    () =>
+-      productos.filter(
+-        (p) =>
+-          (categoriaActiva === 'todos' || p.categoria === categoriaActiva) &&
+-          (!terminoQ || p.nombre.toLowerCase().includes(terminoQ)),
+-      ),
+-    [productos, categoriaActiva, terminoQ],
+-  )
++  // Vista «Todos»: una fila por categoría con su total real y las primeras tarjetas.
++  const grupos = useMemo(() => (agrupado ? gruposVisibles : SIN_FILAS), [agrupado, gruposVisibles])
+ 
+-  const grupos = useMemo(() => {
+-    if (!agrupado) return []
+-    return categorias
+-      .slice(1)
+-      .map((categoria) => {
+-        const todos = productos.filter((p) => p.categoria === categoria)
+-        return { categoria, todos, primeros: todos.slice(0, POR_FILA) }
+-      })
+-      .filter((grupo) => grupo.todos.length > 0)
+-  }, [agrupado, categorias, productos])
++  // Lo que la página tiene en memoria: la barra del carrito pide por id lo que falte (ver BarraTuCarritoFlotante).
++  const conocidos = useMemo(
++    () => [...heroProductos, ...ofertas.filas, ...destacados.filas, ...grupos.flatMap((g) => g.primeros), ...listaFiltrada],
++    [heroProductos, ofertas, destacados, grupos, listaFiltrada],
++  )
+ 
+   const clavesFilas = useMemo(() => grupos.map((grupo) => grupo.categoria), [grupos])
+   const { contenedorRef, refFila, estadoFila } = useRevelarEnPantalla({
+@@ -200,6 +187,7 @@ export default function ProductosCliente() {
+   })
+ 
+   const plural = (n) => `${n} ${n === 1 ? 'producto' : 'productos'}`
++  const totalVisible = agrupado ? (datos?.total ?? null) : listadoVigente && listado.estado === 'ok' ? listado.total : null
+   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
+   const horarioTexto = horario
+     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
+@@ -213,6 +201,17 @@ export default function ProductosCliente() {
+     )
+   }
+ 
++  if (vitrina.estado === 'error') {
++    return (
++      <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
++        <p className="text-sm text-white/70">No se pudo cargar el catálogo de productos.</p>
++        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
++          Reintentar
++        </button>
++      </div>
++    )
++  }
++
+   return (
+     <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+       {/* 0. BARRA DEL CATÁLOGO (fija) — arriba de todo, justo bajo el header. */}
+@@ -224,7 +223,7 @@ export default function ProductosCliente() {
+         busqueda={busqueda}
+         onBusqueda={setBusqueda}
+         placeholder="Buscar producto…"
+-        etiquetaTotal={plural(agrupado ? productos.length : listaFiltrada.length)}
++        etiquetaTotal={totalVisible == null ? 'Buscando…' : plural(totalVisible)}
+         className={reducirMovimiento ? '' : 'in-up'}
+         style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
+       />
+@@ -336,7 +335,7 @@ export default function ProductosCliente() {
+             >
+               <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
+               <span>/</span>
+-              <span className="font-medium text-[#e8e8ea]">{plural(productos.length)}</span>
++              <span className="font-medium text-[#e8e8ea]">{plural(datos?.total ?? 0)}</span>
+               <span>·</span>
+               <span>Recojo en el local</span>
+               <span>·</span>
+@@ -350,7 +349,10 @@ export default function ProductosCliente() {
+           >
+             <div className="relative h-[300px] overflow-hidden rounded-[16px] bg-[#050505] sm:h-[420px]">
+               {heroProductos.map((p, i) => {
+-                const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
++                // Solo se piden las fotos del activo y sus vecinos (anterior/siguiente): las demás se piden cuando les toca.
++                const distancia = Math.abs(i - heroIdxSeguro)
++                const cerca = distancia <= 1 || distancia === heroProductos.length - 1
++                const urlFoto = cerca ? urlPublicaFoto(BUCKET_FOTOS, p.foto_url) : null
+                 return (
+                   <div key={p.id} className="absolute inset-0" style={{ opacity: i === heroIdxSeguro ? 1 : 0, transition: 'opacity 1.1s ease' }}>
+                     {urlFoto ? (
+@@ -402,7 +404,7 @@ export default function ProductosCliente() {
+                 {[1, 2, 3].map((j) => {
+                   const t = (heroIdxSeguro + j) % heroProductos.length
+                   const p = heroProductos[t]
+-                  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url)
++                  const urlFoto = urlPublicaFoto(BUCKET_FOTOS, p.foto_url, 'm')
+                   return (
+                     <button
+                       key={j}
+@@ -428,7 +430,7 @@ export default function ProductosCliente() {
+       )}
+ 
+       {/* 1. OFERTAS Y DESTACADOS: dos cintas en movimiento continuo. */}
+-      {(ofertas.length > 0 || destacados.length > 0) && (
++      {(ofertas.filas.length > 0 || destacados.filas.length > 0) && (
+         <section className="flex flex-col gap-9 py-10">
+           <p
+             className={`mx-auto w-full max-w-[1700px] lw-gutter text-[15px] leading-relaxed text-[#d9d9dc] ${reducirMovimiento ? '' : 'in-left'}`}
+@@ -436,12 +438,13 @@ export default function ProductosCliente() {
+           >
+             Los mismos productos que usamos en el salón, para que tu resultado dure en casa.
+           </p>
+-          {ofertas.length > 0 && (
++          {ofertas.filas.length > 0 && (
+             <FilaCintaProductos
+               titulo="Ofertas"
+               derecha
+-              etiqueta={(p) => `Oferta −${porcentajeDescuento(p)}%`}
+-              productos={ofertas}
++              etiqueta={etiquetaOferta}
++              productos={ofertas.filas}
++              total={ofertas.total}
+               pasoPx={cintaPasoPx}
+               medidas={cintaMedidas}
+               velocidadPxS={cintaMedidas.velocidad}
+@@ -450,12 +453,13 @@ export default function ProductosCliente() {
+               delayEntrada={ENTRADA_FIJA.filaOfertas}
+             />
+           )}
+-          {destacados.length > 0 && (
++          {destacados.filas.length > 0 && (
+             <FilaCintaProductos
+               titulo="Destacados"
+               derecha={false}
+-              etiqueta={() => 'Destacado'}
+-              productos={destacados}
++              etiqueta={etiquetaDestacado}
++              productos={destacados.filas}
++              total={destacados.total}
+               pasoPx={cintaPasoPx}
+               medidas={cintaMedidas}
+               velocidadPxS={cintaMedidas.velocidad}
+@@ -470,7 +474,7 @@ export default function ProductosCliente() {
+       <div ref={listaRef} className="mx-auto w-full max-w-[1700px] scroll-mt-16 lw-gutter">
+         {/* 3a. "Todos": una fila por categoría */}
+         {agrupado && (
+-          <div className="flex flex-col gap-10 pt-8">
++          <div aria-busy={ventanaOcupada} className={`flex flex-col gap-10 pt-8 transition-opacity ${ventanaOcupada ? 'opacity-60' : ''}`}>
+             {grupos.map((grupo, gi) => {
+               const decision = reducirMovimiento ? null : estadoFila(grupo.categoria)
+               const pendiente = !reducirMovimiento && !decision
+@@ -490,14 +494,14 @@ export default function ProductosCliente() {
+                   >
+                     <div className="flex min-w-0 flex-wrap items-baseline gap-3">
+                       <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
+-                      <span className="text-xs text-white/50">{plural(grupo.todos.length)}</span>
++                      <span className="text-xs text-white/50">{plural(grupo.total)}</span>
+                     </div>
+                     <button
+                       type="button"
+                       onClick={() => setCategoriaActiva(grupo.categoria)}
+                       className="flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)]"
+                     >
+-                      Ver todo ({grupo.todos.length}) <ArrowRight className="h-3.5 w-3.5" />
++                      Ver todo ({grupo.total}) <ArrowRight className="h-3.5 w-3.5" />
+                     </button>
+                   </div>
+                   <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
+@@ -510,7 +514,7 @@ export default function ProductosCliente() {
+                         </div>
+                       )
+                     })}
+-                    {grupo.todos.length > POR_FILA && (
++                    {grupo.total > POR_FILA && (
+                       <button
+                         type="button"
+                         onClick={() => setCategoriaActiva(grupo.categoria)}
+@@ -520,23 +524,32 @@ export default function ProductosCliente() {
+                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
+                           <ArrowRight className="h-3.5 w-3.5" />
+                         </span>
+-                        Ver los {grupo.todos.length}
++                        Ver los {grupo.total}
+                       </button>
+                     )}
+                   </div>
+                 </section>
+               )
+             })}
++            {ventanaConError && (
++              <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
++                <p className="text-sm text-white/70">No se pudieron cargar las categorías.</p>
++                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
++                  Reintentar
++                </button>
++              </div>
++            )}
++            <PaginadorCatalogo pagina={paginaGrupos} totalPaginas={totalPaginasGrupos} total={categorias.length - 1} tam={GRUPOS_POR_VENTANA} ocupado={ventanaOcupada} onPagina={cambiarPaginaGrupos} etiqueta="categorías" />
+           </div>
+         )}
+ 
+-        {/* 3b. Una categoría o una búsqueda: grilla completa */}
++        {/* 3b. Una categoría o una búsqueda: UNA página (hasta 40 tarjetas) del listado del servidor */}
+         {!agrupado && (
+           <div className="flex flex-col gap-4 pt-8">
+             <div className="flex flex-wrap items-baseline justify-between gap-3">
+               <div className="flex items-baseline gap-3">
+-                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{terminoQ ? 'Resultados' : categoriaActiva}</h2>
+-                <span className="text-xs text-white/50">{plural(listaFiltrada.length)}</span>
++                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{termino ? 'Resultados' : categoriaActiva}</h2>
++                {totalVisible != null && <span className="text-xs text-white/50">{plural(totalVisible)}</span>}
+               </div>
+               {categoriaActiva !== 'todos' && (
+                 <button
+@@ -548,15 +561,30 @@ export default function ProductosCliente() {
+                 </button>
+               )}
+             </div>
+-            {listaFiltrada.length === 0 ? (
+-              <p className="py-10 text-center text-sm text-white/50">Sin resultados para "{busqueda}".</p>
++            {listado.estado === 'error' ? (
++              <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
++                <p className="text-sm text-white/70">No se pudieron cargar los productos.</p>
++                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
++                  Reintentar
++                </button>
++              </div>
++            ) : !listadoVigente ? (
++              <p role="status" className="py-10 text-center text-sm text-white/50">Buscando…</p>
++            ) : listaFiltrada.length === 0 && listado.estado === 'ok' ? (
++              <p className="py-10 text-center text-sm text-white/50">{termino ? `Sin resultados para "${termino}".` : 'No hay productos en esta categoría.'}</p>
+             ) : (
+-              <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8">
++              <div
++                aria-busy={listadoOcupado}
++                className={`grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8 ${listadoOcupado ? 'opacity-60' : ''}`}
++              >
+                 {listaFiltrada.map((p) => (
+                   <TarjetaProductoCliente key={p.id} producto={p} />
+                 ))}
+               </div>
+             )}
++            {listadoVigente && listado.estado !== 'error' && (
++              <PaginadorCatalogo pagina={pagina} totalPaginas={totalPaginas} total={listado.total} tam={TAMANO_PAGINA_CATALOGO} ocupado={listadoOcupado} onPagina={cambiarPagina} etiqueta="productos" />
++            )}
+           </div>
+         )}
+ 
+@@ -644,7 +672,7 @@ export default function ProductosCliente() {
+ 
+       <PieClienteWeb />
+ 
+-      <BarraTuCarritoFlotante productos={productos} />
++      <BarraTuCarritoFlotante productos={conocidos} />
+     </div>
+   )
+ }
+@@ -653,7 +681,7 @@ export default function ProductosCliente() {
+ // useCintaContinua.js para el mecanismo de desplazamiento. Encapsulada
+ // acá porque necesita su propio par de refs de hover/foco para pausar
+ // SOLO esta fila, sin afectar a la otra.
+-function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medidas, velocidadPxS, activo, claseEntrada, delayEntrada }) {
++const FilaCintaProductos = memo(function FilaCintaProductos({ titulo, derecha, etiqueta, productos, total, pasoPx, medidas, velocidadPxS, activo, claseEntrada, delayEntrada }) {
+   const n = productos.length
+   const k = Math.max(1, Math.ceil(MIN_CINTA / n))
+   const base = useMemo(() => Array.from({ length: k }, () => productos).flat(), [productos, k])
+@@ -679,7 +707,7 @@ function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medi
+     <div className={`flex flex-col ${claseEntrada}`} style={claseEntrada ? { animationDelay: `${delayEntrada}ms` } : undefined}>
+       <div className={`mx-auto flex w-full max-w-[1700px] items-baseline gap-3 lw-gutter ${derecha ? 'justify-start' : 'justify-end'}`}>
+         <h2 className="lw-titulo-heavitas text-xl uppercase sm:text-[30px]">{titulo}</h2>
+-        <span className="text-xs text-white/50">{plural(n)}</span>
++        <span className="text-xs text-white/50">{plural(total ?? n)}</span>
+       </div>
+ 
+       <div className="lw-cinta-mask my-6 overflow-hidden" onMouseOver={alEntrar} onMouseOut={alSalir} onFocus={alEntrar} onBlur={alSalir}>
+@@ -742,7 +770,7 @@ function FilaCintaProductos({ titulo, derecha, etiqueta, productos, pasoPx, medi
+       </div>
+     </div>
+   )
+-}
++})
+ 
+ function plural(n) {
+   return `${n} ${n === 1 ? 'producto' : 'productos'}`
+diff --git a/src/pages/cliente/ServiciosCliente.jsx b/src/pages/cliente/ServiciosCliente.jsx
+index 321cd84..7a19f8a 100644
+--- a/src/pages/cliente/ServiciosCliente.jsx
++++ b/src/pages/cliente/ServiciosCliente.jsx
+@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
+ import { Link, useSearchParams } from 'react-router-dom'
+ import { ArrowRight, CalendarPlus, HelpCircle, MapPin, MessageCircle } from 'lucide-react'
+ import { supabase } from '../../lib/supabase.js'
+-import { leerServicios } from '../../lib/buscarServicios.js'
++import { useAuth } from '../../context/AuthContext.jsx'
++import { COLUMNAS_SERVICIO_TARJETA, GRUPOS_POR_VENTANA, POR_CATEGORIA, TAMANO_PAGINA_CATALOGO, cargarVentanaGrupos, cargarVitrinaServicios, leerPaginaCatalogo } from '../../lib/catalogoPublico.js'
++import { useCatalogoPublico } from '../../hooks/useCatalogoPublico.js'
+ import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
+ import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
+ import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
+@@ -15,12 +17,13 @@ import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
+ import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
+ import BarraTuCitaFlotante from '../../components/BarraTuCitaFlotante.jsx'
+ import BarraCatalogo from '../../components/BarraCatalogo.jsx'
++import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
+ import PieClienteWeb from './PieClienteWeb.jsx'
+ 
+ const BUCKET_FOTOS = 'fotos-servicios'
+-const POR_FILA = 4
+-// Cuántos servicios entran en el carrusel del hero.
+-const MAX_HERO = 3
++const POR_FILA = POR_CATEGORIA
++// Constante estable (no se recrea en cada render): evita invalidar los useMemo que dependen de ella.
++const SIN_FILAS = []
+ const INTERVALO_HERO_MS = 5000
+ 
+ // Catálogo de servicios del rediseño (docs/diseno-servicios/README.md):
+@@ -49,15 +52,27 @@ export default function ServiciosCliente() {
+   const requerirSesion = useRequerirSesion()
+   const [searchParams] = useSearchParams()
+ 
+-  const [servicios, setServicios] = useState([])
+-  const [masPedidoIds, setMasPedidoIds] = useState([])
++  const { usuario } = useAuth()
+   const [contacto, setContacto] = useState(null)
+   const [horario, setHorario] = useState(null)
+-  const [cargando, setCargando] = useState(true)
+-  const [busqueda, setBusqueda] = useState('')
+-  const [categoriaActiva, setCategoriaActiva] = useState(() => searchParams.get('categoria') ?? 'todos')
+   const [heroIdx, setHeroIdx] = useState(0)
+   const [heroTick, setHeroTick] = useState(0)
++
++  // Fase 4: el catálogo ya no se descarga completo. «Todos» (sin búsqueda) sale de una vitrina acotada (categorías con su total,
++  // primeras tarjetas de cada una por «más pedidos» y héroe); una categoría o una búsqueda piden UNA página de hasta 40 tarjetas.
++  const {
++    vitrina, listado, listadoVigente, categoriaActiva, setCategoriaActiva, busqueda, setBusqueda, termino, agrupado,
++    pagina, totalPaginas, irAPagina, reintentarVitrina, reintentarListado,
++    gruposVisibles, paginaGrupos, totalPaginasGrupos, ventanaOcupada, ventanaConError, irAPaginaGrupos, reintentarVentana,
++  } = useCatalogoPublico({
++    clave: usuario?.id ?? 'anon',
++    categoriaInicial: searchParams.get('categoria') ?? 'todos',
++    cargarVitrina: ({ signal }) => cargarVitrinaServicios(supabase, { signal }),
++    cargarPagina: (parametros) => leerPaginaCatalogo(supabase, { tabla: 'servicios', columnas: COLUMNAS_SERVICIO_TARJETA, ...parametros }),
++    cargarGrupos: (parametros) => cargarVentanaGrupos(supabase, { tabla: 'servicios', ...parametros }),
++  })
++  const datos = vitrina.datos
++  const cargando = vitrina.estado === 'cargando'
+   // Animación de entrada (docs/diseno-servicios/README.md, "Animación de
+   // entrada" — patrón estándar de la Web de clientes, ver
+   // docs/patrones/animacion-entrada.md): los retrasos de la tabla son
+@@ -77,34 +92,6 @@ export default function ServiciosCliente() {
+     : { eyebrow: 150, foto: 80, bloque: 200, botones: 280, catalogoLinea: 320, filtros: 380 }
+   const ENTRADA_FILA = { fila: esDesktop ? 400 : 420, paso: 100, carta: 60, entre: 50 }
+ 
+-  useEffect(() => {
+-    let vigente = true
+-
+-    async function cargar() {
+-      const [serviciosRes, masPedidoRes] = await Promise.all([
+-        // Lectura completa por bloques: el servidor corta cada respuesta en 1000 filas (QA-046).
+-        leerServicios(supabase, {
+-          columnas: 'id, nombre, categoria, precio, duracion_min, foto_url, descripcion, en_tendencia',
+-          soloActivos: true,
+-        }).then(
+-          (data) => ({ data }),
+-          () => ({ data: [] }),
+-        ),
+-        supabase.rpc('servicios_mas_pedidos', { dias: 30 }),
+-      ])
+-
+-      if (!vigente) return
+-      setServicios(serviciosRes.data ?? [])
+-      setMasPedidoIds((masPedidoRes.data ?? []).map((fila) => fila.servicio_id))
+-      setCargando(false)
+-    }
+-
+-    cargar()
+-    return () => {
+-      vigente = false
+-    }
+-  }, [])
+-
+   // QA-022: contacto/horario son secundarios: no bloquean la lista.
+   useEffect(() => {
+     let vigente = true
+@@ -115,13 +102,7 @@ export default function ServiciosCliente() {
+     }
+   }, [])
+ 
+-  const conteosCategoria = useMemo(() => {
+-    const conteos = {}
+-    for (const item of servicios) {
+-      if (item.categoria) conteos[item.categoria] = (conteos[item.categoria] ?? 0) + 1
+-    }
+-    return conteos
+-  }, [servicios])
++  const conteosCategoria = datos?.conteos ?? {}
+ 
+   const listaRef = useRef(null)
+   function elegirCategoria(categoria) {
+@@ -130,30 +111,20 @@ export default function ServiciosCliente() {
+     listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
+   }
+ 
+-  const categorias = useMemo(
+-    () => ['todos', ...new Set(servicios.map((s) => s.categoria).filter(Boolean))],
+-    [servicios],
+-  )
+-
+-  const heroServicios = useMemo(() => {
+-    const conFoto = servicios.filter((s) => s.foto_url)
+-    const elegidos = []
+-    const vistos = new Set()
++  function cambiarPaginaGrupos(n) {
++    irAPaginaGrupos(n)
++    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
++  }
+ 
+-    function agregar(servicio, etiquetaHero) {
+-      if (!servicio || vistos.has(servicio.id) || elegidos.length >= MAX_HERO) return
+-      vistos.add(servicio.id)
+-      elegidos.push({ ...servicio, etiquetaHero })
+-    }
++  function cambiarPagina(n) {
++    irAPagina(n)
++    listaRef.current?.scrollIntoView({ block: 'start', behavior: reducirMovimiento ? 'auto' : 'smooth' })
++  }
+ 
+-    conFoto.filter((s) => s.en_tendencia).forEach((s) => agregar(s, 'En tendencia'))
+-    masPedidoIds
+-      .map((id) => conFoto.find((s) => s.id === id))
+-      .forEach((s) => agregar(s, 'Lo más pedido'))
+-    conFoto.forEach((s) => agregar(s, 'Recomendado'))
++  const categorias = useMemo(() => ['todos', ...(datos?.categorias ?? [])], [datos])
+ 
+-    return elegidos
+-  }, [servicios, masPedidoIds])
++  // Héroe (hasta 3, ya compuesto por el servidor con la misma prioridad: en tendencia → más pedidos → con foto).
++  const heroServicios = useMemo(() => datos?.hero ?? [], [datos])
+   const heroIdxSeguro = heroServicios.length ? heroIdx % heroServicios.length : 0
+   const heroActual = heroServicios[heroIdxSeguro]
+ 
+@@ -180,39 +151,19 @@ export default function ServiciosCliente() {
+     if (!yaEsta) await agregarServicio(heroActual.id)
+   }
+ 
+-  const terminoQ = busqueda.trim().toLowerCase()
+-  const agrupado = categoriaActiva === 'todos' && !terminoQ
+-
+-  const listaFiltrada = useMemo(
+-    () =>
+-      servicios.filter(
+-        (s) =>
+-          (categoriaActiva === 'todos' || s.categoria === categoriaActiva) &&
+-          (!terminoQ || s.nombre.toLowerCase().includes(terminoQ)),
+-      ),
+-    [servicios, categoriaActiva, terminoQ],
+-  )
++  // Listado plano: solo las filas que pertenecen a la categoría+texto actuales (si no, se muestra «Buscando…», no resultados viejos).
++  const listaFiltrada = listadoVigente ? listado.filas : SIN_FILAS
++  const listadoOcupado = listado.estado === 'cargando'
+ 
+-  // Orden dentro de cada fila de categoría: el README dejaba pendiente
+-  // elegir entre un campo manual (servicios.orden) o "los más pedidos
+-  // primero" — se optó por la segunda sin sumar una columna nueva,
+-  // reutilizando el mismo ranking de servicios_mas_pedidos() que ya
+-  // trajo el hero (masPedidoIds); el resto se ordena alfabético.
+-  const grupos = useMemo(() => {
+-    if (!agrupado) return []
+-    const rango = new Map(masPedidoIds.map((id, indice) => [id, indice]))
+-    return categorias
+-      .slice(1)
+-      .map((categoria) => {
+-        const todos = [...servicios.filter((s) => s.categoria === categoria)].sort((a, b) => {
+-          const rangoA = rango.has(a.id) ? rango.get(a.id) : Infinity
+-          const rangoB = rango.has(b.id) ? rango.get(b.id) : Infinity
+-          return rangoA !== rangoB ? rangoA - rangoB : a.nombre.localeCompare(b.nombre)
+-        })
+-        return { categoria, todos, primeros: todos.slice(0, POR_FILA) }
+-      })
+-      .filter((grupo) => grupo.todos.length > 0)
+-  }, [agrupado, categorias, servicios, masPedidoIds])
++  // Vista «Todos»: una fila por categoría con su total real y las primeras tarjetas. Dentro de cada fila el servidor ordena por
++  // «más pedidos» (servicios_mas_pedidos, últimos 30 días) y luego por nombre, igual que hacía antes esta página en el navegador.
++  const grupos = useMemo(() => (agrupado ? gruposVisibles : SIN_FILAS), [agrupado, gruposVisibles])
++
++  // Lo que la página tiene en memoria: la barra de la cita pide por id lo que falte (ver BarraTuCitaFlotante).
++  const conocidos = useMemo(
++    () => [...heroServicios, ...grupos.flatMap((g) => g.primeros), ...listaFiltrada],
++    [heroServicios, grupos, listaFiltrada],
++  )
+ 
+   // Clasifica cada fila de categoría UNA sola vez en la vida de esta
+   // instancia (hook genérico, ver docs/patrones/animacion-entrada.md):
+@@ -233,7 +184,8 @@ export default function ServiciosCliente() {
+   })
+ 
+   const plural = (n) => `${n} ${n === 1 ? 'servicio' : 'servicios'}`
+-  const precioDesde = servicios.length ? Math.min(...servicios.map((s) => Number(s.precio))) : null
++  const precioDesde = datos?.precioDesde ?? null
++  const totalVisible = agrupado ? (datos?.total ?? null) : listadoVigente && listado.estado === 'ok' ? listado.total : null
+   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
+   const horarioTexto = horario
+     ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
+@@ -247,6 +199,17 @@ export default function ServiciosCliente() {
+     )
+   }
+ 
++  if (vitrina.estado === 'error') {
++    return (
++      <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
++        <p className="text-sm text-white/70">No se pudo cargar el catálogo de servicios.</p>
++        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
++          Reintentar
++        </button>
++      </div>
++    )
++  }
++
+   return (
+     <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+       {/* 0. BARRA DEL CATÁLOGO (fija) — arriba de todo, justo bajo el header. */}
+@@ -258,7 +221,7 @@ export default function ServiciosCliente() {
+         busqueda={busqueda}
+         onBusqueda={setBusqueda}
+         placeholder="Buscar servicio…"
+-        etiquetaTotal={plural(agrupado ? servicios.length : listaFiltrada.length)}
++        etiquetaTotal={totalVisible == null ? 'Buscando…' : plural(totalVisible)}
+         className={reducirMovimiento ? '' : 'in-up'}
+         style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
+       />
+@@ -393,7 +356,7 @@ export default function ServiciosCliente() {
+             >
+               <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
+               <span>/</span>
+-              <span className="font-medium text-[#e8e8ea]">{plural(servicios.length)}</span>
++              <span className="font-medium text-[#e8e8ea]">{plural(datos?.total ?? 0)}</span>
+               {precioDesde != null && (
+                 <>
+                   <span>·</span>
+@@ -461,7 +424,7 @@ export default function ServiciosCliente() {
+       <div ref={listaRef} className="mx-auto w-full max-w-[1700px] scroll-mt-16 lw-gutter">
+         {/* 3a. "Todos": una fila por categoría */}
+         {agrupado && (
+-          <div className="flex flex-col gap-10 pt-8">
++          <div aria-busy={ventanaOcupada} className={`flex flex-col gap-10 pt-8 transition-opacity ${ventanaOcupada ? 'opacity-60' : ''}`}>
+             {grupos.map((grupo, gi) => {
+               // Clasificación de esta fila (ver el efecto de arriba): sin
+               // decisión todavía = pendiente (oculta, sin parpadeo);
+@@ -487,14 +450,14 @@ export default function ServiciosCliente() {
+                   >
+                     <div className="flex min-w-0 flex-wrap items-baseline gap-3">
+                       <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
+-                      <span className="text-xs text-white/50">{plural(grupo.todos.length)}</span>
++                      <span className="text-xs text-white/50">{plural(grupo.total)}</span>
+                     </div>
+                     <button
+                       type="button"
+                       onClick={() => setCategoriaActiva(grupo.categoria)}
+                       className="flex shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)]"
+                     >
+-                      Ver todo ({grupo.todos.length}) <ArrowRight className="h-3.5 w-3.5" />
++                      Ver todo ({grupo.total}) <ArrowRight className="h-3.5 w-3.5" />
+                     </button>
+                   </div>
+                   <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
+@@ -511,7 +474,7 @@ export default function ServiciosCliente() {
+                         </div>
+                       )
+                     })}
+-                    {grupo.todos.length > POR_FILA && (
++                    {grupo.total > POR_FILA && (
+                       <button
+                         type="button"
+                         onClick={() => setCategoriaActiva(grupo.categoria)}
+@@ -525,25 +488,34 @@ export default function ServiciosCliente() {
+                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black">
+                           <ArrowRight className="h-3.5 w-3.5" />
+                         </span>
+-                        Ver los {grupo.todos.length}
++                        Ver los {grupo.total}
+                       </button>
+                     )}
+                   </div>
+                 </section>
+               )
+             })}
++            {ventanaConError && (
++              <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
++                <p className="text-sm text-white/70">No se pudieron cargar las categorías.</p>
++                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
++                  Reintentar
++                </button>
++              </div>
++            )}
++            <PaginadorCatalogo pagina={paginaGrupos} totalPaginas={totalPaginasGrupos} total={categorias.length - 1} tam={GRUPOS_POR_VENTANA} ocupado={ventanaOcupada} onPagina={cambiarPaginaGrupos} etiqueta="categorías" />
+           </div>
+         )}
+ 
+-        {/* 3b. Una categoría o una búsqueda: grilla completa */}
++        {/* 3b. Una categoría o una búsqueda: UNA página (hasta 40 tarjetas) del listado del servidor */}
+         {!agrupado && (
+           <div className="flex flex-col gap-4 pt-8">
+             <div className="flex flex-wrap items-baseline justify-between gap-3">
+               <div className="flex items-baseline gap-3">
+                 <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">
+-                  {terminoQ ? 'Resultados' : categoriaActiva}
++                  {termino ? 'Resultados' : categoriaActiva}
+                 </h2>
+-                <span className="text-xs text-white/50">{plural(listaFiltrada.length)}</span>
++                {totalVisible != null && <span className="text-xs text-white/50">{plural(totalVisible)}</span>}
+               </div>
+               {categoriaActiva !== 'todos' && (
+                 <button
+@@ -555,15 +527,30 @@ export default function ServiciosCliente() {
+                 </button>
+               )}
+             </div>
+-            {listaFiltrada.length === 0 ? (
+-              <p className="py-10 text-center text-sm text-white/50">Sin resultados para "{busqueda}".</p>
++            {listado.estado === 'error' ? (
++              <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
++                <p className="text-sm text-white/70">No se pudieron cargar los servicios.</p>
++                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
++                  Reintentar
++                </button>
++              </div>
++            ) : !listadoVigente ? (
++              <p role="status" className="py-10 text-center text-sm text-white/50">Buscando…</p>
++            ) : listaFiltrada.length === 0 && listado.estado === 'ok' ? (
++              <p className="py-10 text-center text-sm text-white/50">{termino ? `Sin resultados para "${termino}".` : 'No hay servicios en esta categoría.'}</p>
+             ) : (
+-              <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8">
++              <div
++                aria-busy={listadoOcupado}
++                className={`grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8 ${listadoOcupado ? 'opacity-60' : ''}`}
++              >
+                 {listaFiltrada.map((s) => (
+                   <TarjetaServicioCliente key={s.id} servicio={s} />
+                 ))}
+               </div>
+             )}
++            {listadoVigente && listado.estado !== 'error' && (
++              <PaginadorCatalogo pagina={pagina} totalPaginas={totalPaginas} total={listado.total} tam={TAMANO_PAGINA_CATALOGO} ocupado={listadoOcupado} onPagina={cambiarPagina} etiqueta="servicios" />
++            )}
+           </div>
+         )}
+ 
+@@ -672,7 +659,7 @@ export default function ServiciosCliente() {
+ 
+       <PieClienteWeb />
+ 
+-      <BarraTuCitaFlotante servicios={servicios} />
++      <BarraTuCitaFlotante servicios={conocidos} />
+     </div>
+   )
+ }

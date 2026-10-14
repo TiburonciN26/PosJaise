@@ -1,0 +1,1525 @@
+{
+ "etiqueta": "antes-replica-miles",
+ "fecha": "2026-10-11T05:15:46.087Z",
+ "app": "http://localhost:5173",
+ "api": "http://127.0.0.1:54321",
+ "cpu": "4× (CDP)",
+ "muestrasPorCelda": 3,
+ "nota": "Laboratorio, sesión anónima, red local, imágenes respondidas con PNG 1×1. No son INP/LCP reales.",
+ "resumen": [
+  {
+   "ruta": "productos",
+   "ancho": 390,
+   "muestras": 3,
+   "primeraTarjetaMs": 1908,
+   "tarjetasMontadas": 10,
+   "nodosDom": 2209,
+   "bytesCatalogoCarga": 520876,
+   "pedidosCatalogoCarga": 2,
+   "imagenesCarga": 1,
+   "cargaTareaLargaMaxMs": 692,
+   "busquedaHastaAsentarMs": 88,
+   "busquedaEventoMaxMs": 4000,
+   "busquedaTareaLargaMaxMs": 3824,
+   "busquedaTarjetas": 0,
+   "busquedaEncontroObjetivo": false,
+   "busquedaPedidosCatalogo": 0
+  },
+  {
+   "ruta": "productos",
+   "ancho": 412,
+   "muestras": 3,
+   "primeraTarjetaMs": 1948,
+   "tarjetasMontadas": 10,
+   "nodosDom": 2209,
+   "bytesCatalogoCarga": 520876,
+   "pedidosCatalogoCarga": 2,
+   "imagenesCarga": 1,
+   "cargaTareaLargaMaxMs": 628,
+   "busquedaHastaAsentarMs": 97,
+   "busquedaEventoMaxMs": 4008,
+   "busquedaTareaLargaMaxMs": 3792,
+   "busquedaTarjetas": 0,
+   "busquedaEncontroObjetivo": false,
+   "busquedaPedidosCatalogo": 0
+  },
+  {
+   "ruta": "productos",
+   "ancho": 1440,
+   "muestras": 3,
+   "primeraTarjetaMs": 1932,
+   "tarjetasMontadas": 10,
+   "nodosDom": 2209,
+   "bytesCatalogoCarga": 520876,
+   "pedidosCatalogoCarga": 2,
+   "imagenesCarga": 1,
+   "cargaTareaLargaMaxMs": 566,
+   "busquedaHastaAsentarMs": 88,
+   "busquedaEventoMaxMs": 4216,
+   "busquedaTareaLargaMaxMs": 3993,
+   "busquedaTarjetas": 0,
+   "busquedaEncontroObjetivo": false,
+   "busquedaPedidosCatalogo": 0
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 390,
+   "muestras": 3,
+   "primeraTarjetaMs": 1716,
+   "tarjetasMontadas": 24,
+   "nodosDom": 947,
+   "bytesCatalogoCarga": 1688420,
+   "pedidosCatalogoCarga": 10,
+   "imagenesCarga": 1,
+   "cargaTareaLargaMaxMs": 368,
+   "busquedaHastaAsentarMs": 34,
+   "busquedaEventoMaxMs": 4464,
+   "busquedaTareaLargaMaxMs": 4250,
+   "busquedaTarjetas": 1,
+   "busquedaEncontroObjetivo": true,
+   "busquedaPedidosCatalogo": 0
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 412,
+   "muestras": 3,
+   "primeraTarjetaMs": 1723,
+   "tarjetasMontadas": 24,
+   "nodosDom": 947,
+   "bytesCatalogoCarga": 1688420,
+   "pedidosCatalogoCarga": 10,
+   "imagenesCarga": 1,
+   "cargaTareaLargaMaxMs": 355,
+   "busquedaHastaAsentarMs": 34,
+   "busquedaEventoMaxMs": 4800,
+   "busquedaTareaLargaMaxMs": 4284,
+   "busquedaTarjetas": 1,
+   "busquedaEncontroObjetivo": true,
+   "busquedaPedidosCatalogo": 0
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 1440,
+   "muestras": 3,
+   "primeraTarjetaMs": 1732,
+   "tarjetasMontadas": 24,
+   "nodosDom": 947,
+   "bytesCatalogoCarga": 1688420,
+   "pedidosCatalogoCarga": 10,
+   "imagenesCarga": 1,
+   "cargaTareaLargaMaxMs": 360,
+   "busquedaHastaAsentarMs": 52,
+   "busquedaEventoMaxMs": 4944,
+   "busquedaTareaLargaMaxMs": 4635,
+   "busquedaTarjetas": 1,
+   "busquedaEncontroObjetivo": true,
+   "busquedaPedidosCatalogo": 0
+  }
+ ],
+ "crudas": [
+  {
+   "ruta": "productos",
+   "ancho": 390,
+   "indice": 1,
+   "cargaHastaPrimeraTarjetaMs": 2848,
+   "cargaAsentadaMs": 72,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 6,
+    "maxMs": 692,
+    "totalMs": 1693
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9666,
+    "hastaAsentarMs": 88,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3824,
+     "totalMs": 8996
+    },
+    "eventoMaxMs": 4000,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 390,
+   "indice": 2,
+   "cargaHastaPrimeraTarjetaMs": 1857,
+   "cargaAsentadaMs": 88,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 6,
+    "maxMs": 530,
+    "totalMs": 1383
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9502,
+    "hastaAsentarMs": 102,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3722,
+     "totalMs": 8858
+    },
+    "eventoMaxMs": 3912,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 390,
+   "indice": 3,
+   "cargaHastaPrimeraTarjetaMs": 1908,
+   "cargaAsentadaMs": 79,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 4,
+    "maxMs": 570,
+    "totalMs": 1330
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9269,
+    "hastaAsentarMs": 87,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 15,
+     "maxMs": 3713,
+     "totalMs": 8556
+    },
+    "eventoMaxMs": 3912,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 412,
+   "indice": 1,
+   "cargaHastaPrimeraTarjetaMs": 1948,
+   "cargaAsentadaMs": 80,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 567,
+    "totalMs": 1388
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 11063,
+    "hastaAsentarMs": 106,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3787,
+     "totalMs": 10269
+    },
+    "eventoMaxMs": 4008,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 412,
+   "indice": 2,
+   "cargaHastaPrimeraTarjetaMs": 2058,
+   "cargaAsentadaMs": 81,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 628,
+    "totalMs": 1489
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9558,
+    "hastaAsentarMs": 97,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3685,
+     "totalMs": 8891
+    },
+    "eventoMaxMs": 3880,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 412,
+   "indice": 3,
+   "cargaHastaPrimeraTarjetaMs": 1924,
+   "cargaAsentadaMs": 80,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 560,
+    "totalMs": 1386
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9762,
+    "hastaAsentarMs": 71,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3792,
+     "totalMs": 9063
+    },
+    "eventoMaxMs": 3992,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 1440,
+   "indice": 1,
+   "cargaHastaPrimeraTarjetaMs": 1932,
+   "cargaAsentadaMs": 89,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 549,
+    "totalMs": 1412
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 10256,
+    "hastaAsentarMs": 88,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3993,
+     "totalMs": 9587
+    },
+    "eventoMaxMs": 4216,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 1440,
+   "indice": 2,
+   "cargaHastaPrimeraTarjetaMs": 1927,
+   "cargaAsentadaMs": 97,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 566,
+    "totalMs": 1419
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9435,
+    "hastaAsentarMs": 115,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 15,
+     "maxMs": 3653,
+     "totalMs": 8738
+    },
+    "eventoMaxMs": 3856,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "productos",
+   "ancho": 1440,
+   "indice": 3,
+   "cargaHastaPrimeraTarjetaMs": 1947,
+   "cargaAsentadaMs": 84,
+   "dom": {
+    "nodos": 2209,
+    "tarjetas": 10,
+    "imgs": 72
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    },
+    {
+     "ruta": "productos",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Csubcategoria%2Cprecio%2Cprecio_antes%2Cstock_actual%2Cfoto_url%2Cdescripcion%2Cdestacado%2Cnuevo%2Cen_inicio&activo=eq.true&or",
+     "estado": 200,
+     "bytes": 260438
+    }
+   ],
+   "bytesCatalogoCarga": 520876,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 6,
+    "maxMs": 538,
+    "totalMs": 1452
+   },
+   "busqueda": {
+    "termino": "ULTIMA UNIDAD",
+    "escrituraMs": 9903,
+    "hastaAsentarMs": 76,
+    "encontroObjetivo": false,
+    "tarjetas": 0,
+    "dom": 1981,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 16,
+     "maxMs": 3828,
+     "totalMs": 9221
+    },
+    "eventoMaxMs": 4032,
+    "eventos": 85
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 390,
+   "indice": 1,
+   "cargaHastaPrimeraTarjetaMs": 1750,
+   "cargaAsentadaMs": 59,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 4,
+    "maxMs": 350,
+    "totalMs": 988
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 6656,
+    "hastaAsentarMs": 31,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4250,
+     "totalMs": 6281
+    },
+    "eventoMaxMs": 4464,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 390,
+   "indice": 2,
+   "cargaHastaPrimeraTarjetaMs": 1696,
+   "cargaAsentadaMs": 40,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 368,
+    "totalMs": 998
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 6565,
+    "hastaAsentarMs": 37,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4179,
+     "totalMs": 6186
+    },
+    "eventoMaxMs": 4384,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 390,
+   "indice": 3,
+   "cargaHastaPrimeraTarjetaMs": 1716,
+   "cargaAsentadaMs": 58,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 345,
+    "totalMs": 1036
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 6665,
+    "hastaAsentarMs": 34,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4224,
+     "totalMs": 6295
+    },
+    "eventoMaxMs": 4440,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 412,
+   "indice": 1,
+   "cargaHastaPrimeraTarjetaMs": 1729,
+   "cargaAsentadaMs": 40,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 4,
+    "maxMs": 355,
+    "totalMs": 991
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 6709,
+    "hastaAsentarMs": 42,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4253,
+     "totalMs": 6321
+    },
+    "eventoMaxMs": 4480,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 412,
+   "indice": 2,
+   "cargaHastaPrimeraTarjetaMs": 1723,
+   "cargaAsentadaMs": 42,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 4,
+    "maxMs": 348,
+    "totalMs": 990
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 7073,
+    "hastaAsentarMs": 34,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 11,
+     "maxMs": 4284,
+     "totalMs": 6688
+    },
+    "eventoMaxMs": 4800,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 412,
+   "indice": 3,
+   "cargaHastaPrimeraTarjetaMs": 1678,
+   "cargaAsentadaMs": 38,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 345,
+    "totalMs": 991
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 6774,
+    "hastaAsentarMs": 31,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4209,
+     "totalMs": 6403
+    },
+    "eventoMaxMs": 4424,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 1440,
+   "indice": 1,
+   "cargaHastaPrimeraTarjetaMs": 1732,
+   "cargaAsentadaMs": 61,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 5,
+    "maxMs": 343,
+    "totalMs": 1260
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 7288,
+    "hastaAsentarMs": 59,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4635,
+     "totalMs": 6918
+    },
+    "eventoMaxMs": 4944,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 1440,
+   "indice": 2,
+   "cargaHastaPrimeraTarjetaMs": 1758,
+   "cargaAsentadaMs": 309,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 6,
+    "maxMs": 357,
+    "totalMs": 1320
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 7107,
+    "hastaAsentarMs": 51,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4489,
+     "totalMs": 6712
+    },
+    "eventoMaxMs": 4728,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  },
+  {
+   "ruta": "servicios",
+   "ancho": 1440,
+   "indice": 3,
+   "cargaHastaPrimeraTarjetaMs": 1685,
+   "cargaAsentadaMs": 51,
+   "dom": {
+    "nodos": 947,
+    "tarjetas": 24,
+    "imgs": 1
+   },
+   "pedidosCatalogoCarga": [
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "rpc/servicios_mas_pedidos",
+     "consulta": "",
+     "estado": 200,
+     "bytes": 10506
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=0&limit=1000",
+     "estado": 200,
+     "bytes": 226754
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=1000&limit=1000",
+     "estado": 200,
+     "bytes": 278718
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=2000&limit=1000",
+     "estado": 200,
+     "bytes": 259686
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    },
+    {
+     "ruta": "servicios",
+     "consulta": "?select=id%2Cnombre%2Ccategoria%2Cprecio%2Cduracion_min%2Cfoto_url%2Cdescripcion%2Cen_tendencia&activo=eq.true&order=nombre.asc%2Cid.asc&offset=3000&limit=1000",
+     "estado": 200,
+     "bytes": 68546
+    }
+   ],
+   "bytesCatalogoCarga": 1688420,
+   "imagenesCarga": 1,
+   "cargaTareasLargas": {
+    "n": 6,
+    "maxMs": 360,
+    "totalMs": 1259
+   },
+   "busqueda": {
+    "termino": "PORC muy8",
+    "escrituraMs": 7233,
+    "hastaAsentarMs": 52,
+    "encontroObjetivo": true,
+    "tarjetas": 1,
+    "dom": 328,
+    "pedidosCatalogo": 0,
+    "imagenesPedidas": 0,
+    "tareasLargas": {
+     "n": 10,
+     "maxMs": 4555,
+     "totalMs": 6855
+    },
+    "eventoMaxMs": 4816,
+    "eventos": 57
+   },
+   "errores": [],
+   "origenesBloqueados": [
+    "https://fonts.googleapis.com"
+   ]
+  }
+ ]
+}

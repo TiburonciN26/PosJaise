@@ -1,0 +1,2 @@
+URL que generaría main: http://127.0.0.1:54321/storage/v1/object/public/fotos-productos/r2:fotos-productos/0d1c3a4e-1b2c-4d5e-8f90-123456789abc
+respuesta: 400 application/json; charset=utf-8

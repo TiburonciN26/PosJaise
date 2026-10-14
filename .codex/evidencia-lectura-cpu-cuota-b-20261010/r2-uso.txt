@@ -1,0 +1,77 @@
+
+  - heading "R2 Object Storage" [level=1]
+  - paragraph: High-performance storage for files and objects with zero egress charges.
+  - link "Documentation":
+    - /url: https://developers.cloudflare.com/r2/
+  - button "Create bucket":
+    - text: Create bucket
+  - textbox "Search buckets..."
+  - button "Refresh":
+  - table:
+    - rowgroup:
+      - row "Buckets Objects Size":
+        - columnheader "Buckets":
+          - generic: Buckets
+        - columnheader "Objects":
+          - generic: Objects
+        - columnheader "Size":
+          - generic: Size
+    - rowgroup:
+      - row "pos-jaise-medios-staging 0 0 B":
+        - cell "pos-jaise-medios-staging":
+          - link "pos-jaise-medios-staging":
+            - /url: /af5ea2cb3f504970fe293b1923cd64d7/r2/default/buckets/pos-jaise-medios-staging
+        - cell "0":
+          - generic: "0"
+        - cell "0 B":
+          - generic: 0 B
+  - group "Pagination controls":
+    - button "Go to previous page" [disabled]:
+    - button "Go to next page" [disabled]:
+  - heading "Usage" [level=2]
+  - link "Billing Dashboard":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/billing/billable-usage
+    - generic: Billing Dashboard
+  - generic: Billable usage (current period)
+  - button "Add Budget Alert":
+    - generic: Add Budget Alert
+  - img "$0.00"
+  - generic: $0.00
+  - generic: No billable usage incurred yet
+  - generic: October 10 - November 10
+  - button "Class A Operations 744":
+    - generic: Class A Operations
+    - generic: "744"
+  - button "Class B Operations 752":
+    - generic: Class B Operations
+    - generic: "752"
+  - button "Total storage 0 B":
+    - generic: Total storage
+    - generic: 0 B
+  - heading "Account Details" [level=3]
+  - paragraph: Account ID
+  - paragraph: af5ea2cb3f504970fe293b1923cd64d7
+  - button "Copy Account ID":
+  - paragraph: S3 API
+  - paragraph: https://af5ea2cb3f504970fe293b1923cd64d7.r2.cloudflarestorage.com
+  - button "Copy S3 API":
+  - link "Manage API Tokens":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/r2/api-tokens
+    - text: Manage API Tokens
+- contentinfo:
+  - list:
+    - link "Support":
+      - /url: https://support.cloudflare.com
+    - link "System status":
+      - /url: https://www.cloudflarestatus.com
+    - link "Careers":
+      - /url: https://www.cloudflare.com/careers/
+    - link "Terms of Use":
+      - /url: https://www.cloudflare.com/website-terms/
+    - link "Report Security Issues":
+      - /url: https://www.cloudflare.com/disclosure/
+    - link "Privacy Policy":
+      - /url: https://www.cloudflare.com/privacypolicy/
+    - button "Cookie Preferences"
+    - generic: © 2026 Cloudflare, Inc.
+- region "Notifications"

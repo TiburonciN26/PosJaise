@@ -1,0 +1,1504 @@
+{
+ "fecha": "2026-10-13T01:52:34.569Z",
+ "app": "http://127.0.0.1:5403",
+ "metodo": "CPU 4×, red 150 ms / 1,6 Mbps, SW bloqueado; mediana de muestras",
+ "muestras": 3,
+ "escenarios": {
+  "portal-inicio": {
+   "ruta": "/inicio",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 3272,
+    "lcpPrimero": 1616,
+    "fcp": 1572,
+    "cls": 0.1,
+    "tbt": 293,
+    "tareasLargas": 3,
+    "mayorTareaMs": 343,
+    "nodos": 542,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 2796,
+    "lcpPrimero": 1356,
+    "fcp": 1340,
+    "cls": 0.1,
+    "tbt": 70,
+    "tareasLargas": 1,
+    "mayorTareaMs": 120,
+    "nodos": 542,
+    "interaccionMs": null
+   },
+   "lcpElemento": "IMG",
+   "muestrasFrio": [
+    {
+     "lcp": 3376,
+     "lcpPrimero": 1720,
+     "candidatos": [
+      {
+       "t": 1720,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3376,
+       "tam": 110632,
+       "el": "IMG hero-despues-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1628,
+     "cls": 0.10043430171997483,
+     "tbt": 326,
+     "tareasLargas": 3,
+     "mayorTareaMs": 364,
+     "nodos": 542,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3176,
+     "lcpPrimero": 1600,
+     "candidatos": [
+      {
+       "t": 1600,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3176,
+       "tam": 128700,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1568,
+     "cls": 0.19883589871914378,
+     "tbt": 255,
+     "tareasLargas": 3,
+     "mayorTareaMs": 302,
+     "nodos": 542,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3272,
+     "lcpPrimero": 1616,
+     "candidatos": [
+      {
+       "t": 1616,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3272,
+       "tam": 110632,
+       "el": "IMG hero-despues-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1572,
+     "cls": 0.10043430171997483,
+     "tbt": 293,
+     "tareasLargas": 4,
+     "mayorTareaMs": 343,
+     "nodos": 542,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 2832,
+     "lcpPrimero": 1356,
+     "candidatos": [
+      {
+       "t": 1356,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2832,
+       "tam": 110632,
+       "el": "IMG hero-despues-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1356,
+     "cls": 0.10043430171997483,
+     "tbt": 56,
+     "tareasLargas": 1,
+     "mayorTareaMs": 106,
+     "nodos": 542,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 2796,
+     "lcpPrimero": 1384,
+     "candidatos": [
+      {
+       "t": 1384,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2796,
+       "tam": 110632,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1340,
+     "cls": 0.10043430171997483,
+     "tbt": 71,
+     "tareasLargas": 1,
+     "mayorTareaMs": 121,
+     "nodos": 542,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 2752,
+     "lcpPrimero": 1344,
+     "candidatos": [
+      {
+       "t": 1344,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2752,
+       "tam": 110632,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1328,
+     "cls": 0.10043430171997483,
+     "tbt": 70,
+     "tareasLargas": 1,
+     "mayorTareaMs": 120,
+     "nodos": 542,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "portal-productos": {
+   "ruta": "/productos",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 4508,
+    "lcpPrimero": 1636,
+    "fcp": 1564,
+    "cls": 0,
+    "tbt": 175,
+    "tareasLargas": 5,
+    "mayorTareaMs": 199,
+    "nodos": 1469,
+    "interaccionMs": 72
+   },
+   "caliente": {
+    "lcp": 3984,
+    "lcpPrimero": 1380,
+    "fcp": 1372,
+    "cls": 0,
+    "tbt": 88,
+    "tareasLargas": 2,
+    "mayorTareaMs": 103,
+    "nodos": 1469,
+    "interaccionMs": 72
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 4508,
+     "lcpPrimero": 1636,
+     "candidatos": [
+      {
+       "t": 1636,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4508,
+       "tam": 48432,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1596,
+     "cls": 0,
+     "tbt": 175,
+     "tareasLargas": 5,
+     "mayorTareaMs": 223,
+     "nodos": 1469,
+     "interaccionMs": 88,
+     "errores": 0
+    },
+    {
+     "lcp": 4532,
+     "lcpPrimero": 1596,
+     "candidatos": [
+      {
+       "t": 1596,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4532,
+       "tam": 48433,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1564,
+     "cls": 0,
+     "tbt": 182,
+     "tareasLargas": 6,
+     "mayorTareaMs": 199,
+     "nodos": 1469,
+     "interaccionMs": 72,
+     "errores": 0
+    },
+    {
+     "lcp": 4404,
+     "lcpPrimero": 1640,
+     "candidatos": [
+      {
+       "t": 1640,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4404,
+       "tam": 47226,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1564,
+     "cls": 0,
+     "tbt": 109,
+     "tareasLargas": 4,
+     "mayorTareaMs": 186,
+     "nodos": 1469,
+     "interaccionMs": 72,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 3936,
+     "lcpPrimero": 1372,
+     "candidatos": [
+      {
+       "t": 1372,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3936,
+       "tam": 43500,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1360,
+     "cls": 0,
+     "tbt": 53,
+     "tareasLargas": 2,
+     "mayorTareaMs": 91,
+     "nodos": 1469,
+     "interaccionMs": 80,
+     "errores": 0
+    },
+    {
+     "lcp": 3984,
+     "lcpPrimero": 1380,
+     "candidatos": [
+      {
+       "t": 1380,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3984,
+       "tam": 43500,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1372,
+     "cls": 0,
+     "tbt": 88,
+     "tareasLargas": 2,
+     "mayorTareaMs": 103,
+     "nodos": 1469,
+     "interaccionMs": 72,
+     "errores": 0
+    },
+    {
+     "lcp": 4000,
+     "lcpPrimero": 1384,
+     "candidatos": [
+      {
+       "t": 1384,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4000,
+       "tam": 42558,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1372,
+     "cls": 0,
+     "tbt": 100,
+     "tareasLargas": 2,
+     "mayorTareaMs": 111,
+     "nodos": 1469,
+     "interaccionMs": 64,
+     "errores": 0
+    }
+   ]
+  },
+  "portal-detalle-producto": {
+   "ruta": "/productos/:id",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 4380,
+    "lcpPrimero": 1644,
+    "fcp": 1556,
+    "cls": 0,
+    "tbt": 17,
+    "tareasLargas": 2,
+    "mayorTareaMs": 179,
+    "nodos": 364,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 3936,
+    "lcpPrimero": 1364,
+    "fcp": 1352,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 364,
+    "interaccionMs": null
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 4372,
+     "lcpPrimero": 1636,
+     "candidatos": [
+      {
+       "t": 1636,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4372,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1548,
+     "cls": 0,
+     "tbt": 17,
+     "tareasLargas": 2,
+     "mayorTareaMs": 160,
+     "nodos": 364,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4392,
+     "lcpPrimero": 1692,
+     "candidatos": [
+      {
+       "t": 1692,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4392,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1600,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 1,
+     "mayorTareaMs": 229,
+     "nodos": 364,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4380,
+     "lcpPrimero": 1644,
+     "candidatos": [
+      {
+       "t": 1644,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4380,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1556,
+     "cls": 0,
+     "tbt": 23,
+     "tareasLargas": 3,
+     "mayorTareaMs": 179,
+     "nodos": 364,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 4008,
+     "lcpPrimero": 1456,
+     "candidatos": [
+      {
+       "t": 1456,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4008,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1444,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 364,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3900,
+     "lcpPrimero": 1364,
+     "candidatos": [
+      {
+       "t": 1364,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3900,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1352,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 364,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3936,
+     "lcpPrimero": 1340,
+     "candidatos": [
+      {
+       "t": 1340,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3936,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1340,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 364,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "clienta-inicio": {
+   "ruta": "/inicio",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 3644,
+    "lcpPrimero": 1588,
+    "fcp": 1588,
+    "cls": 0.3,
+    "tbt": 354,
+    "tareasLargas": 2,
+    "mayorTareaMs": 404,
+    "nodos": 560,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 3132,
+    "lcpPrimero": 1368,
+    "fcp": 1368,
+    "cls": 0.3,
+    "tbt": 85,
+    "tareasLargas": 2,
+    "mayorTareaMs": 135,
+    "nodos": 560,
+    "interaccionMs": null
+   },
+   "lcpElemento": "IMG",
+   "muestrasFrio": [
+    {
+     "lcp": 3620,
+     "lcpPrimero": 1596,
+     "candidatos": [
+      {
+       "t": 1596,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3620,
+       "tam": 110632,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1596,
+     "cls": 0.28234849846140025,
+     "tbt": 323,
+     "tareasLargas": 3,
+     "mayorTareaMs": 372,
+     "nodos": 560,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3644,
+     "lcpPrimero": 1576,
+     "candidatos": [
+      {
+       "t": 1576,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3644,
+       "tam": 128700,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1576,
+     "cls": 0.28234849846140025,
+     "tbt": 357,
+     "tareasLargas": 2,
+     "mayorTareaMs": 407,
+     "nodos": 560,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3696,
+     "lcpPrimero": 1588,
+     "candidatos": [
+      {
+       "t": 1588,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3696,
+       "tam": 128700,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1588,
+     "cls": 0.28234849846140025,
+     "tbt": 354,
+     "tareasLargas": 2,
+     "mayorTareaMs": 404,
+     "nodos": 560,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 3120,
+     "lcpPrimero": 1376,
+     "candidatos": [
+      {
+       "t": 1376,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3120,
+       "tam": 110632,
+       "el": "IMG hero-despues-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1376,
+     "cls": 0.28234849846140025,
+     "tbt": 84,
+     "tareasLargas": 2,
+     "mayorTareaMs": 129,
+     "nodos": 560,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3160,
+     "lcpPrimero": 1368,
+     "candidatos": [
+      {
+       "t": 1368,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3160,
+       "tam": 128700,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1368,
+     "cls": 0.27997883021495473,
+     "tbt": 130,
+     "tareasLargas": 2,
+     "mayorTareaMs": 161,
+     "nodos": 560,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 3132,
+     "lcpPrimero": 1348,
+     "candidatos": [
+      {
+       "t": 1348,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 3132,
+       "tam": 110632,
+       "el": "IMG hero-antes-referencia-640.webp"
+      }
+     ],
+     "lcpEl": "IMG",
+     "fcp": 1348,
+     "cls": 0.4460525755428941,
+     "tbt": 85,
+     "tareasLargas": 1,
+     "mayorTareaMs": 135,
+     "nodos": 560,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "clienta-productos": {
+   "ruta": "/productos",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 5044,
+    "lcpPrimero": 1600,
+    "fcp": 1600,
+    "cls": 0,
+    "tbt": 219,
+    "tareasLargas": 6,
+    "mayorTareaMs": 211,
+    "nodos": 1487,
+    "interaccionMs": 80
+   },
+   "caliente": {
+    "lcp": 4408,
+    "lcpPrimero": 1392,
+    "fcp": 1392,
+    "cls": 0,
+    "tbt": 101,
+    "tareasLargas": 3,
+    "mayorTareaMs": 109,
+    "nodos": 1487,
+    "interaccionMs": 72
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 5304,
+     "lcpPrimero": 1508,
+     "candidatos": [
+      {
+       "t": 1508,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 5304,
+       "tam": 48432,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1508,
+     "cls": 0,
+     "tbt": 394,
+     "tareasLargas": 6,
+     "mayorTareaMs": 186,
+     "nodos": 1487,
+     "interaccionMs": 80,
+     "errores": 0
+    },
+    {
+     "lcp": 5044,
+     "lcpPrimero": 1620,
+     "candidatos": [
+      {
+       "t": 1620,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 5044,
+       "tam": 47844,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1620,
+     "cls": 0,
+     "tbt": 219,
+     "tareasLargas": 8,
+     "mayorTareaMs": 216,
+     "nodos": 1487,
+     "interaccionMs": 88,
+     "errores": 0
+    },
+    {
+     "lcp": 4940,
+     "lcpPrimero": 1600,
+     "candidatos": [
+      {
+       "t": 1600,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4940,
+       "tam": 47845,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1600,
+     "cls": 0,
+     "tbt": 129,
+     "tareasLargas": 4,
+     "mayorTareaMs": 211,
+     "nodos": 1487,
+     "interaccionMs": 80,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 4376,
+     "lcpPrimero": 1396,
+     "candidatos": [
+      {
+       "t": 1396,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4376,
+       "tam": 43500,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1396,
+     "cls": 0,
+     "tbt": 56,
+     "tareasLargas": 2,
+     "mayorTareaMs": 79,
+     "nodos": 1487,
+     "interaccionMs": 72,
+     "errores": 0
+    },
+    {
+     "lcp": 4440,
+     "lcpPrimero": 1392,
+     "candidatos": [
+      {
+       "t": 1392,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4440,
+       "tam": 43500,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1392,
+     "cls": 0,
+     "tbt": 130,
+     "tareasLargas": 3,
+     "mayorTareaMs": 118,
+     "nodos": 1487,
+     "interaccionMs": 72,
+     "errores": 0
+    },
+    {
+     "lcp": 4408,
+     "lcpPrimero": 1376,
+     "candidatos": [
+      {
+       "t": 1376,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4408,
+       "tam": 42558,
+       "el": "H1 TEST F2 pos-web prod muufk1z2-"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1376,
+     "cls": 0,
+     "tbt": 101,
+     "tareasLargas": 3,
+     "mayorTareaMs": 109,
+     "nodos": 1487,
+     "interaccionMs": 72,
+     "errores": 0
+    }
+   ]
+  },
+  "clienta-detalle-producto": {
+   "ruta": "/productos/:id",
+   "vista": "390×844",
+   "frio": {
+    "lcp": 4848,
+    "lcpPrimero": 1604,
+    "fcp": 1604,
+    "cls": 0,
+    "tbt": 20,
+    "tareasLargas": 2,
+    "mayorTareaMs": 216,
+    "nodos": 383,
+    "interaccionMs": null
+   },
+   "caliente": {
+    "lcp": 4348,
+    "lcpPrimero": 1376,
+    "fcp": 1376,
+    "cls": 0,
+    "tbt": 0,
+    "tareasLargas": 0,
+    "mayorTareaMs": 0,
+    "nodos": 383,
+    "interaccionMs": null
+   },
+   "lcpElemento": "H1",
+   "muestrasFrio": [
+    {
+     "lcp": 4916,
+     "lcpPrimero": 1656,
+     "candidatos": [
+      {
+       "t": 1656,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4916,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1656,
+     "cls": 0,
+     "tbt": 20,
+     "tareasLargas": 3,
+     "mayorTareaMs": 237,
+     "nodos": 383,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4820,
+     "lcpPrimero": 1604,
+     "candidatos": [
+      {
+       "t": 1604,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4820,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1604,
+     "cls": 0,
+     "tbt": 36,
+     "tareasLargas": 2,
+     "mayorTareaMs": 196,
+     "nodos": 383,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4848,
+     "lcpPrimero": 1580,
+     "candidatos": [
+      {
+       "t": 1580,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4848,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1580,
+     "cls": 0,
+     "tbt": 16,
+     "tareasLargas": 2,
+     "mayorTareaMs": 216,
+     "nodos": 383,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 4288,
+     "lcpPrimero": 1360,
+     "candidatos": [
+      {
+       "t": 1360,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4288,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1360,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 383,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4372,
+     "lcpPrimero": 1436,
+     "candidatos": [
+      {
+       "t": 1436,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4372,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1436,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 383,
+     "interaccionMs": null,
+     "errores": 0
+    },
+    {
+     "lcp": 4348,
+     "lcpPrimero": 1376,
+     "candidatos": [
+      {
+       "t": 1376,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 4348,
+       "tam": 47685,
+       "el": "H1 AAA relleno QA047 muu3tu03 000"
+      }
+     ],
+     "lcpEl": "H1",
+     "fcp": 1376,
+     "cls": 0,
+     "tbt": 0,
+     "tareasLargas": 0,
+     "mayorTareaMs": 0,
+     "nodos": 383,
+     "interaccionMs": null,
+     "errores": 0
+    }
+   ]
+  },
+  "pos-ventas": {
+   "ruta": "/ventas",
+   "vista": "1366×900",
+   "frio": {
+    "lcp": 2252,
+    "lcpPrimero": 1600,
+    "fcp": 1600,
+    "cls": 0,
+    "tbt": 312,
+    "tareasLargas": 2,
+    "mayorTareaMs": 362,
+    "nodos": 346,
+    "interaccionMs": 32
+   },
+   "caliente": {
+    "lcp": 1820,
+    "lcpPrimero": 1372,
+    "fcp": 1372,
+    "cls": 0,
+    "tbt": 60,
+    "tareasLargas": 1,
+    "mayorTareaMs": 110,
+    "nodos": 346,
+    "interaccionMs": 24
+   },
+   "lcpElemento": "P",
+   "muestrasFrio": [
+    {
+     "lcp": 2252,
+     "lcpPrimero": 1556,
+     "candidatos": [
+      {
+       "t": 1556,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2252,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1556,
+     "cls": 0,
+     "tbt": 312,
+     "tareasLargas": 2,
+     "mayorTareaMs": 362,
+     "nodos": 346,
+     "interaccionMs": 32,
+     "errores": 0
+    },
+    {
+     "lcp": 2252,
+     "lcpPrimero": 1604,
+     "candidatos": [
+      {
+       "t": 1604,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2252,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1604,
+     "cls": 0,
+     "tbt": 278,
+     "tareasLargas": 2,
+     "mayorTareaMs": 328,
+     "nodos": 346,
+     "interaccionMs": 32,
+     "errores": 0
+    },
+    {
+     "lcp": 2272,
+     "lcpPrimero": 1600,
+     "candidatos": [
+      {
+       "t": 1600,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2272,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1600,
+     "cls": 0,
+     "tbt": 317,
+     "tareasLargas": 3,
+     "mayorTareaMs": 363,
+     "nodos": 346,
+     "interaccionMs": 32,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 1820,
+     "lcpPrimero": 1368,
+     "candidatos": [
+      {
+       "t": 1368,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1820,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1368,
+     "cls": 0,
+     "tbt": 66,
+     "tareasLargas": 1,
+     "mayorTareaMs": 116,
+     "nodos": 346,
+     "interaccionMs": 24,
+     "errores": 0
+    },
+    {
+     "lcp": 1808,
+     "lcpPrimero": 1372,
+     "candidatos": [
+      {
+       "t": 1372,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1808,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1372,
+     "cls": 0,
+     "tbt": 55,
+     "tareasLargas": 1,
+     "mayorTareaMs": 105,
+     "nodos": 346,
+     "interaccionMs": 24,
+     "errores": 0
+    },
+    {
+     "lcp": 1848,
+     "lcpPrimero": 1392,
+     "candidatos": [
+      {
+       "t": 1392,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1848,
+       "tam": 2771,
+       "el": "P El carrito está vacío"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1392,
+     "cls": 0,
+     "tbt": 60,
+     "tareasLargas": 1,
+     "mayorTareaMs": 110,
+     "nodos": 346,
+     "interaccionMs": 32,
+     "errores": 0
+    }
+   ]
+  },
+  "pos-pedidos-web": {
+   "ruta": "/pedidos-web",
+   "vista": "1366×900",
+   "frio": {
+    "lcp": 3168,
+    "lcpPrimero": 1596,
+    "fcp": 1596,
+    "cls": 0,
+    "tbt": 143,
+    "tareasLargas": 2,
+    "mayorTareaMs": 206,
+    "nodos": 875,
+    "interaccionMs": 48
+   },
+   "caliente": {
+    "lcp": 2780,
+    "lcpPrimero": 1356,
+    "fcp": 1356,
+    "cls": 0,
+    "tbt": 31,
+    "tareasLargas": 1,
+    "mayorTareaMs": 81,
+    "nodos": 875,
+    "interaccionMs": 48
+   },
+   "lcpElemento": "P",
+   "muestrasFrio": [
+    {
+     "lcp": 3092,
+     "lcpPrimero": 1588,
+     "candidatos": [
+      {
+       "t": 1588,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2252,
+       "tam": 1734,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 3092,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1588,
+     "cls": 0.0005127729357557795,
+     "tbt": 133,
+     "tareasLargas": 2,
+     "mayorTareaMs": 189,
+     "nodos": 875,
+     "interaccionMs": 48,
+     "errores": 0
+    },
+    {
+     "lcp": 3168,
+     "lcpPrimero": 1596,
+     "candidatos": [
+      {
+       "t": 1596,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2296,
+       "tam": 1734,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 3168,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1596,
+     "cls": 0.0005127729357557795,
+     "tbt": 143,
+     "tareasLargas": 2,
+     "mayorTareaMs": 206,
+     "nodos": 875,
+     "interaccionMs": 56,
+     "errores": 0
+    },
+    {
+     "lcp": 3224,
+     "lcpPrimero": 1600,
+     "candidatos": [
+      {
+       "t": 1600,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 2312,
+       "tam": 1734,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 3224,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1600,
+     "cls": 0.0005127729357557795,
+     "tbt": 151,
+     "tareasLargas": 3,
+     "mayorTareaMs": 215,
+     "nodos": 875,
+     "interaccionMs": 48,
+     "errores": 0
+    }
+   ],
+   "muestrasCaliente": [
+    {
+     "lcp": 2788,
+     "lcpPrimero": 1356,
+     "candidatos": [
+      {
+       "t": 1356,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1920,
+       "tam": 1734,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 2788,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1356,
+     "cls": 0.0005127729357557795,
+     "tbt": 24,
+     "tareasLargas": 1,
+     "mayorTareaMs": 74,
+     "nodos": 875,
+     "interaccionMs": 48,
+     "errores": 0
+    },
+    {
+     "lcp": 2760,
+     "lcpPrimero": 1364,
+     "candidatos": [
+      {
+       "t": 1364,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1932,
+       "tam": 1734,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 2760,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1364,
+     "cls": 0.0005127729357557795,
+     "tbt": 31,
+     "tareasLargas": 1,
+     "mayorTareaMs": 81,
+     "nodos": 875,
+     "interaccionMs": 48,
+     "errores": 0
+    },
+    {
+     "lcp": 2780,
+     "lcpPrimero": 1356,
+     "candidatos": [
+      {
+       "t": 1356,
+       "tam": 1462,
+       "el": "P Cargando..."
+      },
+      {
+       "t": 1952,
+       "tam": 1734,
+       "el": "SPAN Pedidos Web"
+      },
+      {
+       "t": 2780,
+       "tam": 5004,
+       "el": "P TEST PW muy7yu2a-62jkk Q009 mu"
+      }
+     ],
+     "lcpEl": "P",
+     "fcp": 1356,
+     "cls": 0.0005127729357557795,
+     "tbt": 38,
+     "tareasLargas": 1,
+     "mayorTareaMs": 88,
+     "nodos": 875,
+     "interaccionMs": 40,
+     "errores": 0
+    }
+   ]
+  }
+ },
+ "reducido": {
+  "reducido-inicio": {
+   "ruta": "/inicio",
+   "rafPorSeg": 0,
+   "animacionesEnCurso": 0
+  },
+  "reducido-promociones": {
+   "ruta": "/promociones",
+   "rafPorSeg": 0,
+   "animacionesEnCurso": 0
+  },
+  "reducido-referidos-web": {
+   "ruta": "/referidos-web",
+   "rafPorSeg": 0,
+   "animacionesEnCurso": 0
+  }
+ },
+ "errores": []
+}

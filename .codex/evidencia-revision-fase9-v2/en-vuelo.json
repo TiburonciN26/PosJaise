@@ -1,0 +1,43 @@
+{
+ "fecha": "2026-10-12T17:40:52.904Z",
+ "alcance": "CLI y harness reales contra un servidor HTTP ficticio en memoria; sin red externa, sin Supabase, sin R2 y sin credenciales reales",
+ "total": 1,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "F9-03b · UPDATE incierto en vuelo, lectura previa y reversión antes del commit",
+   "ok": true,
+   "detalle": {
+    "previo": {
+     "exit": 3,
+     "operacion": "incierta",
+     "valorAnterior": true
+    },
+    "trasRollback": {
+     "exit": 0,
+     "completo": true,
+     "operacionesAbiertas": 0,
+     "estado": "pendiente",
+     "operacionBorrada": true,
+     "valorAnterior": true
+    },
+    "despuesCommit": {
+     "fotoMigrada": true,
+     "estado": "pendiente",
+     "operacionAbierta": false
+    },
+    "segundoRollback": {
+     "exit": 0,
+     "completo": true,
+     "fotoSigueMigrada": true,
+     "hechas": 0
+    },
+    "control": {
+     "exit": 0,
+     "originalRestaurado": true,
+     "estado": "revertida"
+    }
+   }
+  }
+ ]
+}

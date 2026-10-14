@@ -1,0 +1,113 @@
+
+  - tablist:
+    - tab "Deployments":
+      - generic: Deployments
+    - tab "Metrics" [selected]:
+      - generic: Metrics
+    - tab "Custom domains":
+      - generic: Custom domains
+    - tab "Settings":
+      - generic: Settings
+  - button:
+  - button:
+  - button "More actions":
+  - combobox "Choose Environment":
+    - generic: Preview
+  - textbox: preview
+  - button "Last 24 hours":
+    - text: Last 24 hours
+  - generic: Requests
+  - button "Metrics information":
+  - button "Expand chart":
+  - button "Success 556":
+    - generic: Success
+    - generic: "556"
+  - button "Errors 0":
+    - generic: Errors
+    - generic: "0"
+  - 'img "This is a chart. It consists of 2 series count. The 0 series is a Line chart representing Success.The first 10 items are: 1791601200000, 0, 1791604800000, 0, 1791608400000, 0, 1791612000000, 0, 1791615600000, 0, 1791619200000, 0, 1791622800000, 0, 1791626400000, 0, 1791630000000, 0, 1791633600000, 0. The 1 series is a Line chart representing Errors.The first 10 items are: 1791601200000, 0, 1791604800000, 0, 1791608400000, 0, 1791612000000, 0, 1791615600000, 0, 1791619200000, 0, 1791622800000, 0, 1791626400000, 0, 1791630000000, 0, 1791633600000, 0."'
+  - generic: Subrequests
+  - button "Metrics information":
+  - button "Expand chart":
+  - button "Subrequests 0":
+    - generic: Subrequests
+    - generic: "0"
+  - generic: No data is available for this time range
+  - generic: Errors
+  - button "Metrics information":
+  - button "Expand chart":
+  - button "Internal 0":
+    - generic: Internal
+    - generic: "0"
+  - button "Script Threw Exception 0":
+    - generic: Script Threw Exception
+    - generic: "0"
+  - button "Exceeded CPU Time Limits 0":
+    - generic: Exceeded CPU Time Limits
+    - generic: "0"
+  - button "Exceeded Memory 0":
+    - generic: Exceeded Memory
+    - generic: "0"
+  - button "Client Disconnected 0":
+    - generic: Client Disconnected
+    - generic: "0"
+  - generic: No data is available for this time range
+  - generic: Median CPU Time
+  - button "Metrics information":
+  - button "Expand chart":
+  - button "50th percentile 1,906":
+    - generic: 50th percentile
+    - generic: 1,906
+  - button "75th percentile 2,505":
+    - generic: 75th percentile
+    - generic: 2,505
+  - button "99th percentile 6,461":
+    - generic: 99th percentile
+    - generic: 6,461
+  - button "99.9th percentile 9,420":
+    - generic: 99.9th percentile
+    - generic: 9,420
+  - generic: Request duration
+  - button "Metrics information":
+  - button "Expand chart":
+  - button "50th percentile 0.008":
+    - generic: 50th percentile
+    - generic: "0.008"
+  - button "75th percentile 0.009":
+    - generic: 75th percentile
+    - generic: "0.009"
+  - button "99th percentile 0.026":
+    - generic: 99th percentile
+    - generic: "0.026"
+  - button "99.9th percentile 0.155":
+    - generic: 99.9th percentile
+    - generic: "0.155"
+  - generic: Web Analytics
+  - paragraph:
+    - text: Web analytics is
+    - strong: disabled
+  - paragraph:
+    - text: Gain visibility into your project’s site traffic with
+    - link "Cloudflare Web Analytics":
+      - /url: https://developers.cloudflare.com/analytics/web-analytics/
+      - generic: Cloudflare Web Analytics
+    - text: .
+  - button "Enable":
+    - generic: Enable
+- contentinfo:
+  - list:
+    - link "Support":
+      - /url: https://support.cloudflare.com
+    - link "System status":
+      - /url: https://www.cloudflarestatus.com
+    - link "Careers":
+      - /url: https://www.cloudflare.com/careers/
+    - link "Terms of Use":
+      - /url: https://www.cloudflare.com/website-terms/
+    - link "Report Security Issues":
+      - /url: https://www.cloudflare.com/disclosure/
+    - link "Privacy Policy":
+      - /url: https://www.cloudflare.com/privacypolicy/
+    - button "Cookie Preferences"
+    - generic: © 2026 Cloudflare, Inc.
+- region "Notifications"

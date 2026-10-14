@@ -1,0 +1,167 @@
+{
+ "app": "http://127.0.0.1:5192",
+ "fecha": "2026-10-12T15:40:21.441Z",
+ "casos": [
+  {
+   "nombre": "Pedidos Web: 40 filas por página, total y contadores por estado = base de datos",
+   "ok": true,
+   "ms": 1939
+  },
+  {
+   "nombre": "Pedidos Web: recorrer todas las páginas no repite ni omite pedidos y la última tiene el resto",
+   "ok": true,
+   "ms": 6425
+  },
+  {
+   "nombre": "Pedidos Web: detalles cerrados NO están en el DOM; los ítems se piden al expandir (una vez) y se conservan",
+   "ok": true,
+   "ms": 3105
+  },
+  {
+   "nombre": "Pedidos Web: búsqueda y filtro de estado se resuelven en el servidor con total exacto",
+   "ok": true,
+   "ms": 4035
+  },
+  {
+   "nombre": "Pedidos Web: cambiar un estado refresca la fila y los contadores globales",
+   "ok": true,
+   "ms": 2782
+  },
+  {
+   "nombre": "Promociones: 40 por página con total exacto; crear, editar y eliminar refrescan fila y contador",
+   "ok": true,
+   "ms": 3376
+  },
+  {
+   "nombre": "Reseñas: tres tablas en una lista de 40, contadores globales por estado y moderación que los actualiza",
+   "ok": true,
+   "ms": 5444
+  },
+  {
+   "nombre": "referidos-web: cupones de 40 en 40, contadores globales, búsqueda por código o clienta y filtro de estado",
+   "ok": true,
+   "ms": 35003
+  },
+  {
+   "nombre": "fidelizacion-web: cupones de 40 en 40, contadores globales, búsqueda por código o clienta y filtro de estado",
+   "ok": true,
+   "ms": 34430
+  },
+  {
+   "nombre": "Recompensas Web: al entrar solo se lee la configuración; cada subpestaña pide lo suyo",
+   "ok": true,
+   "ms": 5845
+  },
+  {
+   "nombre": "Recompensas Web › Premios de sellos y Protección de productos: totales exactos y 40 filas",
+   "ok": true,
+   "ms": 1245
+  },
+  {
+   "nombre": "Recompensas Web › Protección de servicios: 40 por página con total exacto y BORRADORES conservados al paginar y buscar",
+   "ok": true,
+   "ms": 5513
+  },
+  {
+   "nombre": "Recompensas Web: el selector de servicio del premio ofrece ≤ 41 opciones y busca en el servidor",
+   "ok": true,
+   "ms": 3302
+  },
+  {
+   "nombre": "Inicio: lecturas acotadas (4 destacados, 3 galería, 3 tarjetas, 1 promoción) y sin descargar el catálogo",
+   "ok": true,
+   "ms": 2071
+  },
+  {
+   "nombre": "Inicio: con 1,5 s de demora (o fallo) en las dependencias secundarias el hero permanece disponible",
+   "ok": true,
+   "ms": 4248
+  },
+  {
+   "nombre": "Recompensas (clienta): «Cómo funciona» no lee nada personal; cada subpestaña pide lo suyo una sola vez",
+   "ok": true,
+   "ms": 6808
+  },
+  {
+   "nombre": "Recompensas (visitante): solo el catálogo público y solo al entrar a «Canjear puntos»",
+   "ok": true,
+   "ms": 3953
+  },
+  {
+   "nombre": "Restaurar sesión del personal: un perfil, un estado de negocio y un canal Realtime",
+   "ok": true,
+   "ms": 3402
+  },
+  {
+   "nombre": "Restaurar sesión de la clienta: perfil, estado y canal una sola vez; sin precargar nada del POS",
+   "ok": true,
+   "ms": 2110
+  },
+  {
+   "nombre": "Refrescar el token no reabre el canal Realtime ni repite las lecturas de sesión",
+   "ok": true,
+   "ms": 7586
+  },
+  {
+   "nombre": "El POS no precarga el portal ni Inicio al restaurar la sesión del personal",
+   "ok": true,
+   "ms": 3775
+  },
+  {
+   "nombre": "Login → logout → login de otra clienta: ningún dato de la cuenta anterior",
+   "ok": true,
+   "ms": 5894
+  },
+  {
+   "nombre": "Cambio de cuenta con la pantalla abierta (otra pestaña cierra sesión y entra otra clienta): nunca se ven datos de Alfa después de salir",
+   "ok": true,
+   "ms": 7391
+  },
+  {
+   "nombre": "Personal → cerrar sesión → clienta: la lista administrativa anterior no reaparece",
+   "ok": true,
+   "ms": 4407
+  },
+  {
+   "nombre": "F5-01: una página que falla NO se rotula como cargada: aviso, Reintentar y la página confirmada sigue rotulada",
+   "ok": true,
+   "ms": 795
+  },
+  {
+   "nombre": "F5-01: una búsqueda nueva que falla no deja los resultados del filtro anterior; conteo ausente = fallo; reintento sano",
+   "ok": true,
+   "ms": 3983
+  },
+  {
+   "nombre": "F5-01: respuestas fuera de orden (página 2 lenta y luego una búsqueda): gana la última petición",
+   "ok": true,
+   "ms": 5835
+  },
+  {
+   "nombre": "F5-02: los borradores de Protección (servicios y productos) y de Programa sobreviven al cambiar de subpestaña",
+   "ok": true,
+   "ms": 1622
+  },
+  {
+   "nombre": "F5-03: con la pantalla montada, al cambiar A→B (saldo de A fallido o lento) se piden los recursos de B sin tocar pestañas",
+   "ok": true,
+   "ms": 9638
+  },
+  {
+   "nombre": "F5-04: la búsqueda de cupones ignora mayúsculas y tildes (como antes) y trata %, _, comas, paréntesis y comillas como texto",
+   "ok": true,
+   "ms": 10972
+  },
+  {
+   "nombre": "F5-04b: la búsqueda de cupones equivale al normalizador anterior también con texto NFD, Å y comparando contra las cadenas ORIGINALES",
+   "ok": true,
+   "ms": 8840
+  },
+  {
+   "nombre": "F5-02b: al cerrar sesión y entrar OTRA administradora, ni Programa ni Protección muestran los borradores de la anterior",
+   "ok": true,
+   "ms": 3447
+  }
+ ],
+ "falloGlobal": null
+}

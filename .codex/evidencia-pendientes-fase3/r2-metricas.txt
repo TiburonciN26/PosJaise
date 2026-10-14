@@ -1,0 +1,77 @@
+
+  - tablist:
+    - tab "Objects"
+    - tab "Metrics" [active] [selected]
+    - tab "Settings"
+  - button:
+  - button:
+  - button "Last 24 hours":
+    - text: Last 24 hours
+  - heading "Average Storage" [level=2]
+  - paragraph: 0 B
+  - heading "Data Retrieved" [level=2]
+  - paragraph: 0 B
+  - heading "Class A Operations" [level=2]
+  - paragraph: "626"
+  - heading "Class B Operations" [level=2]
+  - paragraph: "375"
+  - heading "Request Distribution" [level=2]
+  - paragraph: "568"
+  - generic: Average Storage
+  - button:
+  - generic: Total
+  - generic: 0 B
+  - generic: Standard
+  - generic: 0 B
+  - generic: Infrequent Access
+  - generic: 0 B
+  - 'img "This is a chart. It consists of 2 series count. The 0 series is a Line chart representing Standard.The first 10 items are: 1791604800000, 0, 1791608400000, 0, 1791612000000, 0, 1791615600000, 0, 1791619200000, 0, 1791622800000, 0, 1791626400000, 0, 1791630000000, 0, 1791633600000, 0, 1791637200000, 0. The 1 series is a Line chart representing Infrequent Access.The first 10 items are: 1791604800000, 0, 1791608400000, 0, 1791612000000, 0, 1791615600000, 0, 1791619200000, 0, 1791622800000, 0, 1791626400000, 0, 1791630000000, 0, 1791633600000, 0, 1791637200000, 0."'
+  - generic: Data Retrieved
+  - button:
+  - status:
+    - generic: No data is available for this time range
+  - generic: Class A Operations
+  - button:
+  - generic: Total
+  - generic: "620"
+  - generic: Standard
+  - generic: "620"
+  - generic: Infrequent Access
+  - generic: "0"
+  - 'img "This is a chart. It consists of 2 series count. The 0 series is a Line chart representing Standard.The first 10 items are: 1791586800000, 0, 1791590400000, 0, 1791594000000, 0, 1791597600000, 0, 1791601200000, 0, 1791604800000, 57, 1791608400000, 119, 1791612000000, 0, 1791615600000, 0, 1791619200000, 0. The 1 series is a Line chart representing Infrequent Access.The data is as follows: ."'
+  - generic: Class B Operations
+  - button:
+  - generic: Total
+  - generic: "373"
+  - generic: Standard
+  - generic: "373"
+  - generic: Infrequent Access
+  - generic: "0"
+  - 'img "This is a chart. It consists of 2 series count. The 0 series is a Line chart representing Standard.The first 10 items are: 1791586800000, 0, 1791590400000, 0, 1791594000000, 0, 1791597600000, 0, 1791601200000, 0, 1791604800000, 187, 1791608400000, 29, 1791612000000, 0, 1791615600000, 0, 1791619200000, 0. The 1 series is a Line chart representing Infrequent Access.The data is as follows: ."'
+  - generic: Request Distribution by Region
+  - button:
+  - region "Map"
+  - button "Toggle attribution"
+  - button "Zoom in"
+  - button "Zoom out"
+  - generic: SAM
+  - generic: 100%
+  - button "Writes":
+    - text: Writes
+- contentinfo:
+  - list:
+    - link "Support":
+      - /url: https://support.cloudflare.com
+    - link "System status":
+      - /url: https://www.cloudflarestatus.com
+    - link "Careers":
+      - /url: https://www.cloudflare.com/careers/
+    - link "Terms of Use":
+      - /url: https://www.cloudflare.com/website-terms/
+    - link "Report Security Issues":
+      - /url: https://www.cloudflare.com/disclosure/
+    - link "Privacy Policy":
+      - /url: https://www.cloudflare.com/privacypolicy/
+    - button "Cookie Preferences"
+    - generic: © 2026 Cloudflare, Inc.
+- region "Notifications"

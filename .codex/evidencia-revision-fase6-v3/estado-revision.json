@@ -1,0 +1,156 @@
+{
+  "fechaCliente": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "src/components/PestanasCacheadas.jsx": "0c6ce7e77522254d7b16922803cef1ffb90aedd5b7cc0592215cac469bc23b97",
+    "src/lib/estadoVista.js": "749e2173a3af492ca48817c7b11134243a1112412edd297747cd3ad908ff317a",
+    "src/lib/formulariosProtegidos.js": "f15cba825502fd61a43018c405e33cbac197d992be75bb604105bf21ebb3b2cf",
+    "src/pages/ContactoWeb.jsx": "51f87ed3637c1ce53aab041301f2b91c83cdb3eeb3beba7ac965c69f1163c84b",
+    "src/pages/FidelizacionWeb.jsx": "4a81c219e8ba2898a04185cd9963cd3c1e19b481929635c0344ddec0ead12e7b",
+    "src/pages/ReferidosWeb.jsx": "859940f27257d0182158d930d20750f0cf0e2dddec0e055f3da07daaeae42137",
+    "src/pages/LibroReclamacionesWeb.jsx": "f57ec17c84a5d66cc77565b9e73874a3504ba40b8c2c6f9066e35b5d38c1eea8",
+    "src/pages/RecompensasWeb.jsx": "67fc41a46f68dcae7cf7893c8bf725ecaf4dbe3b872d24077beda963eca10f62",
+    "src/context/ToastContext.jsx": "81d721755cba65cd42dae058cd6f59bbd549ebfbe1ffcd89ca1984d28c85f437",
+    "src/components/TarjetaPuntos.jsx": "c46611b2951f6eb7c1e969c18297e3441c773ed636bb3f72726cb800e95cb3b6",
+    "src/lib/bucleAnimacion.js": "475012a71097f5d074881a43cb439ed363ab760c4ccf2c0d55ef0ebd6e54faf7",
+    "src/pages/Dashboard.jsx": "fb3ba6a4735e89184d1a34c57a228cb25a50151df722e15fcc4f41988324dbb5",
+    "src/pages/Historial.jsx": "de35d97ffbb4763ce875248a042cd939aa4d37b2a7921e5d9573ebb6434f7ead",
+    "src/pages/MiPanel.jsx": "6040d32c031cbc910db87d62bab643839bfb26a8eb656f27cc8846c638aabd30",
+    "src/pages/Estadisticas.jsx": "f20b1c60bd5e1308b6f4fbe9e65461b891e5200a0cb3c9b0f24e5d37d8d4fc3b",
+    "src/pages/Auditoria.jsx": "a50e8cc6b8dcbf7fa99f90feee01c558f3b4b5e9b2ea3fe3d768208ce184f0db",
+    "src/pages/PuntosWeb.jsx": "900f75edb3a270a76798241b242f7b26175cb55856853131bb26af32f4a57faa",
+    "src/components/ModalPromocion.jsx": "97f370440350a595b839bd26bfec233041b843cea86054f001c1032a00f158b9"
+  },
+  "sinCambiosDesdeV2": {
+    "src/components/PestanasCacheadas.jsx": false,
+    "src/lib/estadoVista.js": true,
+    "src/context/ToastContext.jsx": false,
+    "src/components/TarjetaPuntos.jsx": true,
+    "src/lib/bucleAnimacion.js": true,
+    "src/pages/Dashboard.jsx": true,
+    "src/pages/Historial.jsx": true,
+    "src/pages/MiPanel.jsx": true,
+    "src/pages/Estadisticas.jsx": true,
+    "src/pages/Auditoria.jsx": true,
+    "src/pages/PuntosWeb.jsx": false,
+    "src/components/ModalPromocion.jsx": true
+  },
+  "suitesClaude": {
+    "fase5dev": {
+      "casos": 3,
+      "fallos": 0
+    },
+    "fase6": {
+      "casos": 20,
+      "fallos": 0
+    },
+    "fase5": {
+      "casos": 32,
+      "fallos": 0
+    },
+    "nota": "Solo auditoría del JSON; no nueva ejecución de suites con SQL mutante"
+  },
+  "estabilidadClaude": {
+    "alcance": "Muestras auditadas, no repetidas por Codex",
+    "ciclos": [
+      {
+        "ciclo": 1,
+        "fin": {
+          "heapMB": 7.79,
+          "escuchas": 566,
+          "nodosCDP": 4059,
+          "nodos": 2600,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 182,
+          "estilos": 463,
+          "tarea": 2.343518,
+          "script": 0.602669
+        },
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 1,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 1.4,
+          "scriptMsPorSeg": 0.4,
+          "layoutPorSeg": 0.7,
+          "estilosPorSeg": 0.7
+        }
+      },
+      {
+        "ciclo": 2,
+        "fin": {
+          "heapMB": 8.98,
+          "escuchas": 610,
+          "nodosCDP": 4447,
+          "nodos": 2856,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 627,
+          "estilos": 1252,
+          "tarea": 7.748293,
+          "script": 2.158778
+        },
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 1,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 1.7,
+          "scriptMsPorSeg": 0.2,
+          "layoutPorSeg": 0.7,
+          "estilosPorSeg": 0.7
+        }
+      },
+      {
+        "ciclo": 3,
+        "fin": {
+          "heapMB": 9.09,
+          "escuchas": 610,
+          "nodosCDP": 4448,
+          "nodos": 2856,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 1080,
+          "estilos": 2041,
+          "tarea": 12.939613,
+          "script": 3.664932
+        },
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 0.2,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 0.3,
+          "scriptMsPorSeg": 0,
+          "layoutPorSeg": 0,
+          "estilosPorSeg": 0
+        }
+      }
+    ]
+  },
+  "baseLectura": {
+    "clientesQA": 0,
+    "promocionesQA": 0,
+    "cuponesQA": 0,
+    "resenasQA": 0
+  },
+  "lint": {
+    "errores": 0,
+    "avisos": 0,
+    "exit": 0,
+    "alcance": [
+      "PestanasCacheadas",
+      "estadoVista",
+      "formulariosProtegidos",
+      "ToastContext",
+      "TarjetaPuntos"
+    ]
+  },
+  "rollback": {
+    "exclusivos": 26,
+    "mixtos": 8,
+    "checks": "ambos correctos, sin aplicar"
+  }
+}

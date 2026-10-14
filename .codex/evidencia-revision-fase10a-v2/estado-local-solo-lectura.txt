@@ -1,0 +1,3 @@
+BEGIN
+{"deudas" : 59, "pagos" : 8, "sumaPagos" : 79.00, "firmaDeudas" : "98734d8454b3fdac9007e277449705c2", "triggersCompat" : 0, "funcionesCompat" : 0, "deudasPrueba" : 0, "asistentesAuth" : 0, "asistentesPerfil" : 0}
+ROLLBACK

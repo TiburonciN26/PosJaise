@@ -1,0 +1,219 @@
+{
+ "fecha": "2026-10-13T07:42:34.149Z",
+ "etiqueta": "f10a",
+ "a": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\f10a\\pwa-a",
+  "meta": "f10a-a",
+  "citas": "Citas-BSjxa3uQ.js"
+ },
+ "b": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\f10a\\pwa-b",
+  "meta": "f10a-b"
+ },
+ "archivosComunesAB": 0,
+ "producto": "TEST E2E Stock 10 a 8 - 20260930",
+ "total": 9,
+ "correctos": 9,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "F8-01 · Sin red y Citas NUNCA descargada: el fallo queda en su pestaña; la venta y el menú siguen; al volver la red abre",
+   "ok": true,
+   "ms": 7336,
+   "detalle": {
+    "errorGlobal": 0,
+    "carrito": 1,
+    "menu": 1,
+    "trabajoConservado": true,
+    "recargarVisible": 0,
+    "citasTrasVolverLaRed": true,
+    "reintentos": [
+     "/assets/Citas-BSjxa3uQ.js?reintento=1",
+     "/assets/Citas-BSjxa3uQ.js?reintento=2"
+    ],
+    "carritoFinal": 1,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · O1 (límite): falla una dependencia estática de Citas → el aviso persiste aunque haya red, la venta se conserva; recargar solo tras cancelarla abre Citas",
+   "ok": true,
+   "ms": 8122,
+   "detalle": {
+    "dependencia": "ModalRegistroAtencion-ez1MpKHZ.js",
+    "apertura": {
+     "errorGlobal": 0,
+     "avisoFallo": 1,
+     "carrito": 1
+    },
+    "trasReintentar": {
+     "avisoFallo": 1,
+     "recargar": 0,
+     "carrito": 1
+    },
+    "pedidosDependencia": 1,
+    "carritoEnVentas": 1,
+    "citasTrasRecargaSegura": true,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Sin red DESPUÉS de la precarga en reposo: Citas abre desde memoria y la venta sigue",
+   "ok": true,
+   "ms": 3229,
+   "detalle": {
+    "precargada": true,
+    "citas": {
+     "errorGlobal": 0,
+     "avisoFallo": 0,
+     "carrito": 1
+    },
+    "carrito": 1,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · A→B real (URLs JS distintas, archivos de A retirados) con venta en curso: Citas abre, el escáner falla en su ventana, la venta se conserva; al cancelarla actualiza a B",
+   "ok": true,
+   "ms": 7723,
+   "detalle": {
+    "citasAEnServidor": {
+     "status": 200,
+     "tipo": "text/html",
+     "bytes": 5699
+    },
+    "meta": "f10a-a",
+    "actualizarBloqueado": true,
+    "citas": {
+     "errorGlobal": 0,
+     "avisoFallo": 0,
+     "carrito": 1
+    },
+    "precargada": true,
+    "escaner": {
+     "errorGlobal": 0,
+     "carritoVisible": 1
+    },
+    "escanerEnCache": [],
+    "iconosCobro": [
+     {
+      "src": "/icons/efectivo.svg",
+      "ok": true
+     },
+     {
+      "src": "/icons/transferencia.svg",
+      "ok": true
+     },
+     {
+      "src": "/icons/yape.svg",
+      "ok": true
+     }
+    ],
+    "trasActualizar": {
+     "meta": "f10a-b",
+     "citas": true,
+     "errorGlobal": 0
+    },
+    "bloqueadas": [],
+    "erroresNoCapturados": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Retención: tras publicar B, recargar A (sin trabajo pendiente) sigue funcionando con su código guardado por el SW",
+   "ok": true,
+   "ms": 2716,
+   "detalle": {
+    "meta": "f10a-a",
+    "citas": {
+     "errorGlobal": 0,
+     "avisoFallo": 0,
+     "carrito": 0
+    },
+    "precargada": true,
+    "citasEnCacheSW": true,
+    "pedidosDeAalServidor": 21,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Portal sin red: una página pública no descargada falla dentro del portal (cabecera y menú intactos) y abre al volver la red",
+   "ok": true,
+   "ms": 6150,
+   "detalle": {
+    "errorGlobal": 0,
+    "cabecera": 1,
+    "abreSinRecargar": false,
+    "trabajoPendienteEnAviso": 0,
+    "abreAlVolverLaRed": true
+   }
+  },
+  {
+   "nombre": "F8-01 · Cliente nuevo de B: Inicio, login y Citas sin errores",
+   "ok": true,
+   "ms": 1113,
+   "detalle": {
+    "meta": "f10a-b",
+    "errorGlobal": 0,
+    "bloqueadas": []
+   }
+  },
+  {
+   "nombre": "F8-01 · Caso vacío: sin trabajo pendiente, «Actualizar» está disponible de inmediato",
+   "ok": true,
+   "ms": 2804
+  },
+  {
+   "nombre": "F8-02 · Caché por uso: solo estáticos públicos del build; nunca Storage/datos del proxy, firmados, /medios, otro origen ni errores",
+   "ok": true,
+   "ms": 6880,
+   "detalle": {
+    "privadaAntes": {
+     "status": 200,
+     "bytes": 68
+    },
+    "privadaTrasRevocar": {
+     "status": 401,
+     "bytes": 30
+    },
+    "publicaProxy": {
+     "status": 200,
+     "bytes": 68
+    },
+    "lecturasJson": 2,
+    "otroOrigen": {
+     "status": 200,
+     "bytes": 68
+    },
+    "medios": {
+     "status": 200,
+     "bytes": 68
+    },
+    "imagenInexistente": {
+     "status": 200,
+     "bytes": 5687
+    },
+    "imagen404": {
+     "status": 404,
+     "bytes": 0
+    },
+    "chunkInexistente": {
+     "status": 200,
+     "bytes": 5687
+    },
+    "chunkConQuery": {
+     "status": 200,
+     "bytes": 19379
+    },
+    "iconoSinPrecache": {
+     "status": 200,
+     "bytes": 2478
+    },
+    "caches": {
+     "workbox-precache-v2-http://127.0.0.1:5361/": 37,
+     "assets-por-uso": 42,
+     "imagenes-del-sitio": 3
+    }
+   }
+  }
+ ]
+}

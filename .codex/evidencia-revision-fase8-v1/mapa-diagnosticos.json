@@ -1,0 +1,119 @@
+{
+  "alcance": "MapaDiferido y CSS reales en Vite; Google simulado, sin Supabase ni escrituras.",
+  "casos": [
+    {
+      "mode": "normal",
+      "inicial": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "visible": {
+        "requests": 1,
+        "iframes": 1
+      },
+      "final": {
+        "requests": 1,
+        "iframes": 1,
+        "attrs": [
+          {
+            "title": "Ubicación en el mapa",
+            "loading": "lazy",
+            "referrerPolicy": "no-referrer-when-downgrade"
+          }
+        ]
+      },
+      "ok": true,
+      "errors": []
+    },
+    {
+      "mode": "ahorro",
+      "inicial": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "visible": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "final": {
+        "requests": 1,
+        "iframes": 1,
+        "attrs": [
+          {
+            "title": "Ubicación en el mapa",
+            "loading": "lazy",
+            "referrerPolicy": "no-referrer-when-downgrade"
+          }
+        ]
+      },
+      "ok": true,
+      "errors": []
+    },
+    {
+      "mode": "sin-observer",
+      "inicial": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "visible": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "final": {
+        "requests": 1,
+        "iframes": 1,
+        "attrs": [
+          {
+            "title": "Ubicación en el mapa",
+            "loading": "lazy",
+            "referrerPolicy": "no-referrer-when-downgrade"
+          }
+        ]
+      },
+      "ok": true,
+      "errors": []
+    },
+    {
+      "mode": "sin-direccion",
+      "inicial": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "visible": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "final": {
+        "requests": 0,
+        "iframes": 0,
+        "attrs": []
+      },
+      "ok": true,
+      "errors": []
+    },
+    {
+      "mode": "teclado",
+      "inicial": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "visible": {
+        "requests": 0,
+        "iframes": 0
+      },
+      "final": {
+        "requests": 1,
+        "iframes": 1,
+        "attrs": [
+          {
+            "title": "Ubicación en el mapa",
+            "loading": "lazy",
+            "referrerPolicy": "no-referrer-when-downgrade"
+          }
+        ]
+      },
+      "ok": true,
+      "errors": []
+    }
+  ]
+}

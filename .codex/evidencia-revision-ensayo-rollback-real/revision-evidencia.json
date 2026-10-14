@@ -1,0 +1,186 @@
+{
+  "fecha": "2026-10-10T21:52:30.263Z",
+  "nota": "Auditoría del informe original de Claude y comprobaciones independientes actuales; no se repite rollback ni subidas/borrados. Una sesión QA existente para GET protegidos, sin SQL/escrituras de datos. No se imprime/guarda ningún secreto o bundle.",
+  "input": {
+    "ruta": "C:/WedJaiseReact/.codex/evidencia-rollback-galeria/ensayo-B.json",
+    "sha256": "1acca6e840313b686e84683aca0957060ba2bc6e11fd114895895c9bc9c70d8e"
+  },
+  "fuentes": {
+    "scripts/ensayo-rollback-galeria-pages.cjs": "0654428e0a2cc915ecca08d401a0ea4c0cfbe4879d1ad5f25c489cad62122064",
+    "scripts/lib/ensayo-rollback.cjs": "52c79c7b52dd1bdb866a068f02dcc9bdedfaa5431a2d35908b56e1e2d64b843d",
+    "scripts/lib/ensayo-rollback-reales.cjs": "92c0728d318491f1764b4002f33e46f6762e7e6d992a7e1ea03cd26e41c86f6f"
+  },
+  "checks": [
+    {
+      "n": "informe: 20 pasos correctos y resumen coherente",
+      "ok": true
+    },
+    {
+      "n": "informe: alcance B completo, estado final y sin pendientes",
+      "ok": true
+    },
+    {
+      "n": "informe: marca y alias aprobados",
+      "ok": true
+    },
+    {
+      "n": "fuente idéntica a V3: scripts/ensayo-rollback-galeria-pages.cjs",
+      "ok": true
+    },
+    {
+      "n": "fuente idéntica a V3: scripts/lib/ensayo-rollback.cjs",
+      "ok": true
+    },
+    {
+      "n": "fuente idéntica a V3: scripts/lib/ensayo-rollback-reales.cjs",
+      "ok": true
+    },
+    {
+      "n": "fila propia: id/título/metadata antes/después idénticos",
+      "ok": true
+    },
+    {
+      "n": "conversión exacta preserva grupos/variantes",
+      "ok": true
+    },
+    {
+      "n": "PATCH 1 fila y DELETE confirmado antes de limpiar objetos",
+      "ok": true
+    },
+    {
+      "n": "dos borrados de grupos 200 y estado final idéntico",
+      "ok": true
+    },
+    {
+      "n": "alias actual: marca, entrega y SW B2 conservados",
+      "ok": true,
+      "d": {
+        "pf": {
+          "buildId": "7ee3c78e",
+          "entrega": "pages",
+          "modulos": [
+            "assets/index-DGsWTpdi.js"
+          ]
+        },
+        "swHash": "2a43dbc12adb80f8dcc8afef850c1c65f91691783e3b8c2aa878f8060650ce7e"
+      }
+    },
+    {
+      "n": "lectura actual de filas completa",
+      "ok": true,
+      "d": {
+        "filas": 1,
+        "total": 1
+      }
+    },
+    {
+      "n": "estado actual: fila del ensayo ausente y antigua conservada",
+      "ok": true
+    },
+    {
+      "n": "estado actual: inventario completo de Galería vacío",
+      "ok": true,
+      "d": {
+        "claves": 0
+      }
+    },
+    {
+      "n": "r2.dev actual: cuatro variantes eliminadas devuelven 404",
+      "ok": true,
+      "d": [
+        {
+          "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/m.webp",
+          "estado": 404
+        },
+        {
+          "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+          "estado": 404
+        },
+        {
+          "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/m.webp",
+          "estado": 404
+        },
+        {
+          "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+          "estado": 404
+        }
+      ]
+    },
+    {
+      "n": "Pages actual: 404 o HIT retenido según contrato, no 200 MISS",
+      "ok": true,
+      "d": [
+        {
+          "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+          "estado": 200,
+          "cache": "public, max-age=300",
+          "medios": "HIT"
+        },
+        {
+          "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+          "estado": 200,
+          "cache": "public, max-age=300",
+          "medios": "HIT"
+        }
+      ]
+    },
+    {
+      "n": "solo Auth POST y lecturas, sin operaciones de datos",
+      "ok": true,
+      "d": {
+        "GET": 149,
+        "POST_Auth": 1
+      }
+    }
+  ],
+  "resumen": {
+    "controles": 17,
+    "fallos": 0
+  },
+  "estadoActual": {
+    "filas": [
+      {
+        "id": "4ab5c994-9bb1-40bf-b5ff-186d45603781",
+        "titulo": "Foto de prueba (Inicio)",
+        "antes_url": "inicio-web/hero-antes-referencia.jpg",
+        "despues_url": "inicio-web/hero-despues-referencia.jpg",
+        "orden": 0,
+        "activo": true
+      }
+    ],
+    "inventarioClaves": 0,
+    "publicas": [
+      {
+        "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/m.webp",
+        "estado": 404
+      },
+      {
+        "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+        "estado": 404
+      },
+      {
+        "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/m.webp",
+        "estado": 404
+      },
+      {
+        "url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+        "estado": 404
+      }
+    ],
+    "pages": [
+      {
+        "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/c63ca78a-bc33-4b20-8de9-d3ac2e191131/g.webp",
+        "estado": 200,
+        "cache": "public, max-age=300",
+        "medios": "HIT"
+      },
+      {
+        "url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/5c85eeec-a15e-48e8-9b36-88d3638abf24/g.webp",
+        "estado": 200,
+        "cache": "public, max-age=300",
+        "medios": "HIT"
+      }
+    ]
+  },
+  "swHash": "2a43dbc12adb80f8dcc8afef850c1c65f91691783e3b8c2aa878f8060650ce7e"
+}

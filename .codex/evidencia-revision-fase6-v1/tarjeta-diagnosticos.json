@@ -1,0 +1,201 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "TarjetaPuntos real con props ficticias, CSS real, viewport real; sin Supabase. Visibilitychange simulado solo en el caso indicado.",
+  "casos": [
+    {
+      "name": "Tarjeta fuera del viewport: conteo sigue escribiendo",
+      "data": {
+        "a": {
+          "raf": 42,
+          "m": {
+            "numero": 6,
+            "barra": 6,
+            "transform": 0
+          },
+          "numero": "119",
+          "barra": "4.83698%",
+          "rect": {
+            "x": 0,
+            "y": 2500,
+            "width": 900,
+            "height": 620.6875,
+            "top": 2500,
+            "right": 900,
+            "bottom": 3120.6875,
+            "left": 0
+          }
+        },
+        "b": {
+          "raf": 103,
+          "m": {
+            "numero": 67,
+            "barra": 67,
+            "transform": 0
+          },
+          "numero": "999",
+          "barra": "40.4621%",
+          "rect": {
+            "x": 0,
+            "y": 2500,
+            "width": 900,
+            "height": 620.6875,
+            "top": 2500,
+            "right": 900,
+            "bottom": 3120.6875,
+            "left": 0
+          }
+        },
+        "deltaRaf": 61,
+        "deltaNumero": 61,
+        "deltaTransform": 0
+      },
+      "errors": []
+    },
+    {
+      "name": "Reducido desde el montaje: valor estático",
+      "data": {
+        "a": {
+          "raf": 0,
+          "m": {
+            "numero": 1,
+            "barra": 0,
+            "transform": 0
+          },
+          "numero": "1,234",
+          "barra": "50%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "b": {
+          "raf": 0,
+          "m": {
+            "numero": 1,
+            "barra": 0,
+            "transform": 0
+          },
+          "numero": "1,234",
+          "barra": "50%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "deltaRaf": 0,
+        "deltaNumero": 0
+      },
+      "errors": []
+    },
+    {
+      "name": "Cambiar a reducido durante conteo mantiene RAF",
+      "data": {
+        "a": {
+          "raf": 84,
+          "m": {
+            "numero": 17,
+            "barra": 16,
+            "transform": 12
+          },
+          "numero": "376",
+          "barra": "15.2292%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "b": {
+          "raf": 129,
+          "m": {
+            "numero": 62,
+            "barra": 61,
+            "transform": 12
+          },
+          "numero": "971",
+          "barra": "39.3344%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "deltaRaf": 45,
+        "deltaNumero": 45,
+        "deltaTransform": 0
+      },
+      "errors": []
+    },
+    {
+      "name": "Visibilitychange simulado: conteo sigue pese a document.hidden",
+      "data": {
+        "a": {
+          "raf": 84,
+          "m": {
+            "numero": 16,
+            "barra": 16,
+            "transform": 11
+          },
+          "numero": "352",
+          "barra": "14.2511%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "b": {
+          "raf": 125,
+          "m": {
+            "numero": 57,
+            "barra": 57,
+            "transform": 11
+          },
+          "numero": "968",
+          "barra": "39.2353%",
+          "rect": {
+            "x": 0,
+            "y": 10,
+            "width": 900,
+            "height": 620.6875,
+            "top": 10,
+            "right": 900,
+            "bottom": 630.6875,
+            "left": 0
+          }
+        },
+        "deltaRaf": 41,
+        "deltaNumero": 41,
+        "deltaTransform": 0
+      },
+      "errors": []
+    }
+  ]
+}

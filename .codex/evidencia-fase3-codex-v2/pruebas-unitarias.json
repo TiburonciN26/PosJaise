@@ -1,0 +1,264 @@
+{
+  "fecha": "2026-10-10T00:58:05.534Z",
+  "entorno": "sin red: R2 en memoria + Supabase simulado + Chromium para fixtures",
+  "total": 40,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "validador acepta WebP real opaca lossy y Chromium lo decodifica",
+      "codec": "VP8",
+      "alfa": false,
+      "chunkInicial": "VP8X",
+      "decodificado": [
+        320,
+        320
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "validador acepta WebP real con alfa y Chromium lo decodifica",
+      "codec": "VP8",
+      "alfa": true,
+      "chunkInicial": "VP8X",
+      "decodificado": [
+        320,
+        320
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "validador acepta WebP real lossless y Chromium lo decodifica",
+      "codec": "VP8L",
+      "alfa": false,
+      "chunkInicial": "VP8X",
+      "decodificado": [
+        320,
+        320
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "el fixture con alfa usa el contenedor extendido (VP8X + ALPH)",
+      "ok": true
+    },
+    {
+      "nombre": "los WebP reales de Chromium traen perfil ICC (flag + chunk ICCP) y se aceptan",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: VP8X de 30 bytes sin chunk de imagen (caso F3-01)",
+      "motivo": "sin-imagen",
+      "esperado": "sin-imagen",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: archivo truncado a la mitad",
+      "motivo": "tamano-no-coincide",
+      "esperado": "tamano-no-coincide",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: tamaño RIFF mentiroso",
+      "motivo": "tamano-no-coincide",
+      "esperado": "tamano-no-coincide",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: chunk de imagen con longitud mayor al archivo",
+      "motivo": "chunk-truncado",
+      "esperado": "chunk-truncado",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: VP8X + ALPH sin chunk de imagen",
+      "motivo": "sin-imagen",
+      "esperado": "sin-imagen",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: dos chunks de imagen",
+      "motivo": "varias-imagenes",
+      "esperado": "varias-imagenes",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: chunk ALPH en archivo simple (sin VP8X)",
+      "motivo": "estructura-simple-invalida",
+      "esperado": "estructura-simple-invalida",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: chunk desconocido en contenedor extendido",
+      "motivo": "chunk-no-permitido",
+      "esperado": "chunk-no-permitido",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: flag de animación activado",
+      "motivo": "animado-no-permitido",
+      "esperado": "animado-no-permitido",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: chunk ICCP presente pero flag ICC apagado",
+      "motivo": "flag-icc-incoherente",
+      "esperado": "flag-icc-incoherente",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: flag ICC encendido sin chunk ICCP",
+      "motivo": "flag-icc-incoherente",
+      "esperado": "flag-icc-incoherente",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: lienzo VP8X distinto del bitstream",
+      "motivo": "dimensiones-incoherentes",
+      "esperado": "dimensiones-incoherentes",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: VP8: primera partición mayor que el chunk",
+      "motivo": "vp8-particion-invalida",
+      "esperado": "vp8-particion-invalida",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: VP8: sin código de inicio",
+      "motivo": "vp8-corrupto",
+      "esperado": "vp8-corrupto",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: VP8L con firma inválida",
+      "motivo": "vp8l-corrupto",
+      "esperado": "vp8l-corrupto",
+      "ok": true
+    },
+    {
+      "nombre": "validador rechaza: PNG con cabecera ajena",
+      "motivo": "no-es-webp",
+      "esperado": "no-es-webp",
+      "ok": true
+    },
+    {
+      "nombre": "el VP8X de 30 bytes tampoco lo decodifica Chromium (coincide con el rechazo)",
+      "ok": true
+    },
+    {
+      "nombre": "Worker: VP8X sin píxeles → 415 y NO se almacena nada (F3-01)",
+      "estado": 415,
+      "objetos": 0,
+      "ok": true
+    },
+    {
+      "nombre": "Worker: WebP con alfa válido → 201",
+      "estado": 201,
+      "ok": true
+    },
+    {
+      "nombre": "Worker: reintento idéntico del mismo usuario (respuesta perdida) → 200 reanudado, sin escribir de nuevo (F3-02)",
+      "estado": 200,
+      "j": {
+        "ok": true,
+        "ref": "r2:fotos-productos/7e6c9019-6ac9-4896-a972-d9c40577f3ef",
+        "clave": "fotos-productos/7e6c9019-6ac9-4896-a972-d9c40577f3ef/g.webp",
+        "bytes": 942,
+        "ancho": 320,
+        "alto": 320,
+        "reanudado": true
+      },
+      "ok": true
+    },
+    {
+      "nombre": "Worker: mismo id con contenido DISTINTO → 409 y el original queda intacto",
+      "estado": 409,
+      "ok": true
+    },
+    {
+      "nombre": "Worker: mismo contenido pero OTRO usuario → 409 (no se reclama un objeto ajeno)",
+      "estado": 409,
+      "ok": true
+    },
+    {
+      "nombre": "Worker: cajera → 403",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "nombre": "Worker: inventario admin lista claves con fecha y autor",
+      "n": 3,
+      "ok": true
+    },
+    {
+      "nombre": "Worker: inventario para no-admin → 403",
+      "ok": true
+    },
+    {
+      "nombre": "Worker: inventario de un destino privado → 400",
+      "ok": true
+    },
+    {
+      "nombre": "recolector: clasifica referenciado / protegido-reciente / sin-fecha / candidato",
+      "totales": {
+        "referenciado": 1,
+        "protegido-reciente": 1,
+        "sin-fecha": 1,
+        "candidato": 2
+      },
+      "ok": true
+    },
+    {
+      "nombre": "recolector: una clave ajena al contrato se ignora (nunca candidata)",
+      "ok": true
+    },
+    {
+      "nombre": "recolector: referencias reconocidas (r2:, URL de galería) y rutas antiguas de Supabase no",
+      "ok": true
+    },
+    {
+      "nombre": "recolector: sin --aplicar informa y no borra nada",
+      "ok": true
+    },
+    {
+      "nombre": "recolector: --aplicar borra solo los 2 candidatos (no el referenciado, reciente ni sin fecha)",
+      "eliminadas": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000005"
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "recolector: si un candidato pasa a estar referenciado en la relectura, se omite",
+      "eliminadas": [
+        "fotos-galeria/00000000-0000-4000-8000-000000000005"
+      ],
+      "omitidos": [
+        {
+          "grupo": "fotos-productos/00000000-0000-4000-8000-000000000002",
+          "motivo": "referenciado-en-la-relectura"
+        }
+      ],
+      "ok": true
+    },
+    {
+      "nombre": "recolector: lectura de referencias incompleta → aborta sin borrar nada",
+      "fallo": "lectura incompleta de productos: 1000 de 3245",
+      "ok": true
+    },
+    {
+      "nombre": "recolector: cero referencias con objetos existentes → se niega a borrar",
+      "fallo": "Cero referencias con objetos existentes: lectura sospechosa. No se borra nada (use permitirSinReferencias solo si es correcto).",
+      "ok": true
+    },
+    {
+      "nombre": "recolector: un borrado que falla se informa y no detiene los demás",
+      "errores": [
+        {
+          "grupo": "fotos-productos/00000000-0000-4000-8000-000000000002",
+          "error": "R2 caído"
+        }
+      ],
+      "ok": true
+    }
+  ]
+}

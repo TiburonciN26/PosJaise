@@ -1,0 +1,35 @@
+{
+ "lote": "20.000 pedidos + 20.000 ítems + 40.000 cupones, sobre volumen ampliado",
+ "sin_indices_ms": [
+  31165,
+  31327,
+  31521
+ ],
+ "con_indices_ms": [
+  31245,
+  32266,
+  32311
+ ],
+ "mediana_sin": 31327,
+ "mediana_con": 32266,
+ "sobrecosto_pct": 3,
+ "indices": [
+  {
+   "indice": "idx_f7_cupones_origen_estado_creado",
+   "bytes": 8937472,
+   "tam": "8728 kB"
+  },
+  {
+   "indice": "idx_f7_pedidos_web_creado",
+   "bytes": 2473984,
+   "tam": "2416 kB"
+  },
+  {
+   "indice": "idx_f7_pedidos_web_items_pedido",
+   "bytes": 3006464,
+   "tam": "2936 kB"
+  }
+ ],
+ "tablas": "32784384,26869760,41066496",
+ "filas_base": "60429,120429,123067"
+}

@@ -1,0 +1,45 @@
+{
+ "fecha": "2026-10-13T18:54:00.075Z",
+ "app": "http://127.0.0.1:5410/PosJaise",
+ "total": 4,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "Preflight: Preview aprobado, build-id y backend = staging",
+   "ok": true,
+   "detalle": {
+    "app": "http://127.0.0.1:5410/PosJaise",
+    "buildId": null,
+    "modulos": 123,
+    "backend": "staging (tqkd…)"
+   }
+  },
+  {
+   "nombre": "venta: la CAJERA vende 1 «Agua San Luis 625ml» con Yape → confirmar_venta OK y el stock baja en 1",
+   "ok": true,
+   "detalle": {
+    "codigo": "VEN004",
+    "total": 2,
+    "stockAntes": 40,
+    "stock": 39
+   }
+  },
+  {
+   "nombre": "venta: la CAJERA la anula en Historial → venta ANULADA y stock restituido",
+   "ok": true,
+   "detalle": {
+    "estado": "ANULADA",
+    "stock": 40
+   }
+  },
+  {
+   "nombre": "Guardas: ninguna violación de red en ningún contexto",
+   "ok": true,
+   "detalle": {
+    "contextos": 1,
+    "neutralizadas": 3,
+    "preconexionesRechazadas": 0
+   }
+  }
+ ]
+}

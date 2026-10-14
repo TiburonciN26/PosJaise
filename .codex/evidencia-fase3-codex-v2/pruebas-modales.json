@@ -1,0 +1,139 @@
+{
+  "fecha": "2026-10-10T01:04:59.617Z",
+  "entorno": "Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión",
+  "total": 21,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "PRODUCTO feliz: se guarda, la foto principal nueva existe, la anterior se elimina, la galería suma una foto",
+      "guardados": 1,
+      "antes": 2,
+      "despues": 3,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO insert de galería rechazado (42501): NO se finge éxito, mensaje parcial visible, objeto subido limpiado, referencias intactas",
+      "guardados": 0,
+      "texto": "dido\" (inicio de Productos, Web)\n\nEl producto se guardó, pero la galería quedó incompleta: No se pudo guardar una foto de la galería. Pulsa «Guardar cambios» para reintentar.\n\nCancelar\nGuardar cambios",
+      "antes": 5,
+      "despues": 5,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO reintento tras el fallo: la foto de galería queda guardada una sola vez y el modal informa guardado",
+      "guardados": 1,
+      "filas": 2,
+      "antes": 5,
+      "despues": 6,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO falla el guardado en BD: la foto anterior se conserva, la nueva no queda huérfana, mensaje de error",
+      "antes": 7,
+      "despues": 7,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO reintento tras fallo de BD: la foto nueva se guarda y la anterior se elimina",
+      "foto": "r2:fotos-productos/fda1b0f2-96fc-43e6-a8c3-f489aacb6d3b",
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO principal ya guardada + galería fallida: el reintento reutiliza la subida (sin duplicar ni dejar referencia rota)",
+      "tras1": 8,
+      "final": 9,
+      "filas": 1,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO quitar foto de galería — se elimina la fila y luego el objeto",
+      "filaSigue": false,
+      "objetoExiste": false,
+      "esperaMensaje": false,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO quitar foto de galería — el delete falla (HTTP 500): fila y objeto se conservan",
+      "filaSigue": true,
+      "objetoExiste": true,
+      "esperaMensaje": true,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO quitar foto de galería — el delete no afecta filas (RLS silencioso): el objeto NO se borra",
+      "filaSigue": true,
+      "objetoExiste": true,
+      "esperaMensaje": true,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO 2.ª foto de galería sin red: la 1.ª queda guardada, la 2.ª no deja huérfanos y se informa",
+      "filas": 1,
+      "antes": 11,
+      "despues": 12,
+      "ok": true
+    },
+    {
+      "nombre": "PRODUCTO reintento tras recuperar la red: queda 1 sola fila por foto (sin duplicar la 1.ª)",
+      "filas": 2,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO feliz: foto principal nueva + galería; la anterior se elimina",
+      "texto": "ón\nCuidados después de la cita\n+ Agregar indicación\nDestacar en \"Tendencias y lo más pedido\" (Web)\nSe puede hacer a domicilio\nCancelar\nGuardar cambios",
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO insert de galería rechazado: parcial claro, sin huérfano ni éxito ficticio",
+      "antes": 18,
+      "despues": 18,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO reintento: la foto queda guardada una vez",
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA alta feliz: se suben las dos fotos y se guarda una fila",
+      "filas": 1,
+      "antes": 19,
+      "despues": 21,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA falla la subida de «después»: la de «antes» NO queda huérfana, sin escritura en BD, error visible",
+      "antes": 21,
+      "despues": 21,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA falla el insert en BD: ambas fotos subidas se limpian",
+      "antes": 21,
+      "despues": 21,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA reemplazo de «antes» — update correcto",
+      "antes": 23,
+      "despues": 23,
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA reemplazo de «antes» — update que RLS deja en 0 filas",
+      "antes": 25,
+      "despues": 25,
+      "ok": true
+    },
+    {
+      "nombre": "aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "noSimuladas": [],
+      "supabaseNoAuth": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página en todo el recorrido",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

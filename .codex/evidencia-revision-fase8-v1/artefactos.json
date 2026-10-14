@@ -1,0 +1,53 @@
+{
+  "base": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\4cc4d69e-333e-461c-81a6-816527437289\\scratchpad",
+  "out": [
+    {
+      "n": "dist-f8-a",
+      "entradas": 33,
+      "local": true,
+      "otroSupa": false,
+      "citas": "Citas-BW2jo6ac.js",
+      "main": "/assets/index-BDISJ5Rk.js",
+      "swSha256": "af515b5c6a3e0ed7b410d04eb14fb13eeba005da59bcabac85ec6e0abd84bd0b",
+      "meta": "f8-a"
+    },
+    {
+      "n": "dist-f8-b",
+      "entradas": 33,
+      "local": true,
+      "otroSupa": false,
+      "citas": "Citas-BW2jo6ac.js",
+      "main": "/assets/index-BDISJ5Rk.js",
+      "swSha256": "8da8e627f75ee70dcb08e9df23aba4467b8adf8d14e127d324be402a395ef542",
+      "meta": "f8-b"
+    },
+    {
+      "n": "dist-f8-despues",
+      "entradas": 33,
+      "local": true,
+      "otroSupa": false,
+      "citas": "Citas-BW2jo6ac.js",
+      "main": "/assets/index-BDISJ5Rk.js",
+      "swSha256": "a289436aafa076177b1c7e33eb0dbe90da25d25e06efc11475bc7eef1ea0bbb1"
+    },
+    {
+      "n": "dist-f8-antes",
+      "entradas": 176,
+      "local": true,
+      "otroSupa": false,
+      "citas": "Citas-D3MpFHZz.js",
+      "main": "/assets/index-BfBrOhOF.js",
+      "swSha256": "02c840830c7721dd20ebf177b91629228288120e72ebeb3c5b130aaf7e127adc"
+    },
+    {
+      "n": "dist-f8-ghpages",
+      "entradas": 33,
+      "local": true,
+      "otroSupa": false,
+      "citas": "Citas-B14lgGXU.js",
+      "main": "/PosJaise/assets/index-DxJvHJuC.js",
+      "swSha256": "8c17735d75977e7cfc31872e068b21fc826201f95f51b39cfa7f4c06a65c5b89"
+    }
+  ],
+  "qaValida": true
+}

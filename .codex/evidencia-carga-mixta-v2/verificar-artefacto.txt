@@ -1,0 +1,21 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import {createHash} from 'node:crypto'
+import {execFileSync} from 'node:child_process'
+import {createRequire} from 'node:module'
+import {escanearTextoSalida} from 'file:///C:/WedJaiseReact/scripts/lib/entornos-supabase.mjs'
+import {swExcluyeMedios} from 'file:///C:/WedJaiseReact/scripts/lib/sw-medios.mjs'
+const require=createRequire(import.meta.url),G=require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs')
+const base='C:/WedJaiseReact/.codex/artefacto-lectura-mixta'
+const mf=JSON.parse(fs.readFileSync(base+'/manifiesto-lectura-mixta.json','utf8'))
+const listar=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?listar(path.join(d,e.name)):[path.join(d,e.name)])
+const files=listar(base+'/dist'),hash=b=>createHash('sha256').update(b).digest('hex')
+const sw=fs.readFileSync(base+'/dist/sw.js','utf8')
+const cfg=[];const hallazgos=[]
+for(const f of files.filter(f=>/\.(js|html)$/.test(f))){const t=fs.readFileSync(f,'utf8'),c=G.configuracionDeMediosEnBundle(t);if(c)cfg.push({archivo:path.relative(base,f),config:c});hallazgos.push(...escanearTextoSalida(t,G.REF_STAGING).map(tipo=>({archivo:path.relative(base,f),tipo})))}
+const esperado=G.entregaEsperada('mixta')
+const configsCorrectas=cfg.length>0&&cfg.every(x=>x.config.configs.length===1&&x.config.configs[0].proveedor===esperado.proveedor&&x.config.configs[0].api===esperado.api&&x.config.configs[0].publica===esperado.publica&&x.config.extras[0]===esperado.extras)
+const sources=Object.entries(mf.functions).map(([f,h])=>({archivo:f,shaManifiesto:h,shaCommit:hash(execFileSync('git',['show',mf.commit+':'+f],{cwd:'C:/WedJaiseReact'})),incluidoEnPaquete:fs.existsSync(path.join(base,f))}))
+const informe={fecha:new Date().toISOString(),commit:mf.commit,frontend:{archivos:files.length,swSha256:hash(sw),swCoincide:hash(sw)===mf.swSha256,swExcluyeMedios:swExcluyeMedios(sw),configuracionMixtaCorrecta:configsCorrectas,cfg,hallazgos,rutas:JSON.parse(fs.readFileSync(base+'/dist/_routes.json','utf8')),sin404:!fs.existsSync(base+'/dist/404.html')},servidor:{sources,tieneWorkerCompilado:files.some(f=>f.endsWith('_worker.js')),faltaPayload:!sources.every(s=>s.incluidoEnPaquete)&&!files.some(f=>f.endsWith('_worker.js'))},nota:'Lectura de artefacto existente y git show; sin construir, instalar ni desplegar. Los hashes de fuentes declaradas no sustituyen esos archivos ausentes.'}
+fs.writeFileSync(new URL('./artefacto-revisado.json',import.meta.url),JSON.stringify(informe,null,2),{flag:'wx'})
+console.log(JSON.stringify(informe,null,2))

@@ -1,0 +1,252 @@
+{
+ "escala": "ampliada",
+ "reps": 3,
+ "migracion": "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql,.codex/evidencia-fase7/borradores/abl-A.sql",
+ "duracion_s": 306,
+ "meta": {
+  "filas_antes": "4749,429,3067,3245,122",
+  "linea_base": "revertida dentro de la transaccion",
+  "termino_q03": "Ana|4286",
+  "volumen": "60429,120429,123067,20049,20089,20080,5208,23245,23340,34749",
+  "pedidos_clienta": 4,
+  "indices": [
+   "idx_f7_a|2473984"
+  ],
+  "filas_despues": "4749,429,3067,3245,122"
+ },
+ "filas": [
+  {
+   "id": "Q01",
+   "d": "Pedidos Web · primera página (sin filtro)",
+   "rol": "admin",
+   "antes": {
+    "ms": 11857.81,
+    "helpers": 392994,
+    "planificacion_ms": 0.58,
+    "buffers": 518940,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 164.54,
+    "helpers": 9,
+    "planificacion_ms": 0.37,
+    "buffers": 125936,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 7.18,
+    "helpers": 9,
+    "planificacion_ms": 0.28,
+    "buffers": 2291,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_a",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q01",
+   "d": "Pedidos Web · primera página (sin filtro)",
+   "rol": "cajera",
+   "antes": {
+    "ms": 10209.91,
+    "helpers": 362576,
+    "planificacion_ms": 0.48,
+    "buffers": 366808,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.72,
+    "helpers": 6,
+    "planificacion_ms": 0.31,
+    "buffers": 4240,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 11.06,
+    "helpers": 6,
+    "planificacion_ms": 0.28,
+    "buffers": 4476,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_a",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q02",
+   "d": "Pedidos Web · estado PENDIENTE",
+   "rol": "admin",
+   "antes": {
+    "ms": 1866.67,
+    "helpers": 60307,
+    "planificacion_ms": 0.46,
+    "buffers": 99001,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 47.16,
+    "helpers": 9,
+    "planificacion_ms": 0.35,
+    "buffers": 38696,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 8.85,
+    "helpers": 9,
+    "planificacion_ms": 0.29,
+    "buffers": 2312,
+    "seq": [
+     "pedidos_web",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_a",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q03",
+   "d": "Pedidos Web · búsqueda de clienta (término más frecuente) + estado ENTREGADO",
+   "rol": "admin",
+   "antes": {
+    "ms": 7458.45,
+    "helpers": 266810,
+    "planificacion_ms": 0.6,
+    "buffers": 375004,
+    "seq": [
+     "pedidos_web",
+     "clientes"
+    ],
+    "idx": [
+     "clientes_pkey",
+     "zonas_delivery_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 123.17,
+    "helpers": 10,
+    "planificacion_ms": 0.45,
+    "buffers": 108206,
+    "seq": [
+     "pedidos_web",
+     "clientes",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "clientes_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 36.01,
+    "helpers": 10,
+    "planificacion_ms": 0.51,
+    "buffers": 4658,
+    "seq": [
+     "pedidos_web",
+     "clientes",
+     "zonas_delivery"
+    ],
+    "idx": [
+     "idx_f7_a",
+     "clientes_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q04",
+   "d": "Pedidos Web · conteo exacto por estado (head)",
+   "rol": "admin",
+   "antes": {
+    "ms": 759.15,
+    "helpers": 25973,
+    "planificacion_ms": 0.32,
+    "buffers": 28090,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 8.62,
+    "helpers": 6,
+    "planificacion_ms": 0.09,
+    "buffers": 2125,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 8.15,
+    "helpers": 6,
+    "planificacion_ms": 0.18,
+    "buffers": 2125,
+    "seq": [
+     "pedidos_web"
+    ],
+    "idx": [],
+    "filas": 1
+   }
+  }
+ ]
+}

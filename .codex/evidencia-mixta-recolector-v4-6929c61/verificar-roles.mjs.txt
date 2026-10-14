@@ -1,0 +1,10 @@
+import fs from 'node:fs';import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url);const G=require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs');
+const out='C:/Users/jdeos/.codex/visualizations/2026/10/09/01a11ea8-be2a-7611-8e67-4ded5cca3f25/revision-mixta-recolector-v4-6929c61';
+const datos=JSON.parse(fs.readFileSync(`${out}/verificacion-entrega-pages.json`,'utf8'));
+const candidatos=datos.assets.filter(a=>/^assets\/index-[^/]+\.js$/.test(a.file));
+const hallazgos=[];
+for(const a of candidatos){const u=new URL(a.file,datos.origin+'/');if(u.origin!==G.ALIAS_APROBADO)throw new Error('Origen inesperado');const r=await fetch(u,{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(25000)});if(!r.ok)throw new Error('Bundle no disponible');const c=G.configuracionDeMediosEnBundle(await r.text());if(c)hallazgos.push({archivo:a.file,...c});}
+const esperado=G.entregaEsperada('pages');const coincide=hallazgos.length>0&&hallazgos.every(c=>c.configs.length===1&&c.configs[0].proveedor===esperado.proveedor&&c.configs[0].api===esperado.api&&c.configs[0].publica===esperado.publica&&c.extras.length===1&&c.extras[0]===esperado.extras);
+const resultado={fecha:new Date().toISOString(),lecturaPublica:true,sinLogin:true,buildId:datos.checks.buildId,esperado,hallazgos,coincide};
+fs.writeFileSync(`${out}/configuracion-efectiva.json`,JSON.stringify(resultado,null,2),{flag:'wx'});console.log(JSON.stringify(resultado,null,2));if(!coincide)process.exitCode=1;

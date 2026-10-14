@@ -1,0 +1,95 @@
+{
+  "fecha": "2026-10-11T03:07:06.328Z",
+  "commit": "ec2a3b64b4fe7ad96e29d43bf9aef61ea2aa1c04",
+  "swSha256": "fb19ee995ca5219bedfe6872c4aa8a38973d75180f4b5143897f097f748e371d",
+  "modulos": [
+    "assets/index-sVDesZvw.js"
+  ],
+  "configuracionMedios": {
+    "proveedor": "supabase",
+    "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+    "publica": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios",
+    "basesReconocidas": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+  },
+  "filasSimuladas": [
+    {
+      "id": "a",
+      "titulo": "ML03 r2dev",
+      "antes_url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332201/g.webp",
+      "despues_url": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332202/m.webp"
+    },
+    {
+      "id": "b",
+      "titulo": "ML03 pages",
+      "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332203/g.webp",
+      "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332204/m.webp"
+    },
+    {
+      "id": "c",
+      "titulo": "ML03 ajena y relativa",
+      "antes_url": "https://ajena.example.org/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332209/g.webp",
+      "despues_url": "inicio-web/antes-claro.webp"
+    }
+  ],
+  "imagenesPedidas": [
+    "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332202/m.webp",
+    "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332201/g.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332204/m.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332203/g.webp",
+    "https://ajena.example.org/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332209/g.webp",
+    "http://127.0.0.1:49450/inicio-web/antes-claro.webp"
+  ],
+  "peticionesImagenInterceptadas": [
+    "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332202/m.webp",
+    "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332201/g.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332204/m.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332203/g.webp",
+    "https://ajena.example.org/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332209/g.webp"
+  ],
+  "urlsDom": [
+    "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332202/m.webp",
+    "https://pub-b248edba3e19402382b557a35b33c674.r2.dev/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332201/g.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332204/m.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332203/g.webp",
+    "http://127.0.0.1:49450/inicio-web/antes-claro.webp",
+    "https://ajena.example.org/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332209/g.webp"
+  ],
+  "solicitudesAbortadas": [
+    "stylesheet https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&family=Outfit:wght@600&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+  ],
+  "serviceWorkersBloqueadosPorAuditor": true,
+  "casos": [
+    {
+      "nombre": "el bundle pidió el RPC de galería (la prueba ejercita la ruta real)",
+      "ok": true
+    },
+    {
+      "nombre": "URL antigua r2.dev (destino fotos-galeria, UUID y variante g) → se pide por /medios del alias conservando UUID y variante",
+      "ok": false,
+      "error": "no se pidió la URL reescrita"
+    },
+    {
+      "nombre": "URL antigua r2.dev con variante m → /medios conservando la variante m",
+      "ok": false,
+      "error": "The expression evaluated to a falsy value:"
+    },
+    {
+      "nombre": "URL ya en /medios del alias → intacta",
+      "ok": true
+    },
+    {
+      "nombre": "URL ajena → intacta (no se reescribe a /medios)",
+      "ok": true
+    },
+    {
+      "nombre": "ruta relativa histórica de /public → sigue resolviéndose en el origen del propio sitio",
+      "ok": true
+    },
+    {
+      "nombre": "ninguna petición a destinos no simulados (fuentes, analítica, etc. abortadas) ni errores de página",
+      "ok": true
+    }
+  ],
+  "total": 7,
+  "fallos": 2
+}

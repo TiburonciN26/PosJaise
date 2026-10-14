@@ -1,0 +1,44 @@
+OK    IP-R1: configuración correcta pasa y solo pide el HTML del alias
+OK    IP-R1: alias ajeno aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: alias con la marca esperada pero otro host aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: alias con ruta o query aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: alias http (sin TLS) aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: Supabase ajeno con el ref de staging en el query aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: Supabase del negocio aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: Supabase local aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: cuenta fuera de las QA ficticias aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: clave service_role aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: clave vacía aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: sin --build-id aborta ANTES de cualquier petición (cero login, cero red)
+OK    IP-R1: artefacto con otra marca ABORTA tras leer el HTML y ANTES del login (el llamador no llega a autenticar)
+OK    IP-R1: artefacto sin meta build-id aborta
+OK    IP-R1: clasificación de destinos — aprobados pasan; negocio, local, pasarela, otro Worker/bucket/Preview se prohíben
+OK    IP-R1: el bloqueo se instala en ADMIN y en CLIENTE; el tráfico prohibido del contexto CLIENTE se ABORTA y se registra
+OK    IP-R1: el fetch del propio script lanza ANTES de enviar a un destino no aprobado
+OK    IP-R2: fixtures limpios → precondición sin motivos
+OK    IP-R2: producto con foto previa → precondición NO cumplida (la prueba aborta sin modificar)
+OK    IP-R2: servicio con foto previa → precondición NO cumplida (la prueba aborta sin modificar)
+OK    IP-R2: producto con galería previa → precondición NO cumplida (la prueba aborta sin modificar)
+OK    IP-R2: servicio con galería previa → precondición NO cumplida (la prueba aborta sin modificar)
+OK    IP-R2: galería ilegible (null) → precondición NO cumplida (la prueba aborta sin modificar)
+OK    IP-R2: producto inexistente → precondición NO cumplida (la prueba aborta sin modificar)
+OK    IP-R2: la limpieza borra SOLO la fila propia por id; una fila antigua con el MISMO título se conserva
+OK    IP-R2: solo se consideran propios los grupos de fotos-galeria del dominio público aprobado referenciados por la fila propia
+OK    IP-R1b: una redirección 307 de un origen aprobado a uno NO aprobado se rechaza; el segundo origen recibe CERO peticiones (POST con cabecera y cuerpo ficticios)
+OK    IP-R2: inventario con cursor (paginado) se RECHAZA: no se declara snapshot completo
+OK    IP-R2b: DELETE ok confirmado por relectura → se borran sus objetos y los contadores reflejan lo confirmado
+OK    IP-R2b: DELETE de la fila (rechazo403) → la fila sigue, los objetos se CONSERVAN, nada se cuenta como eliminado y queda pendiente
+OK    IP-R2b: DELETE de la fila (rechazo500) → la fila sigue, los objetos se CONSERVAN, nada se cuenta como eliminado y queda pendiente
+OK    IP-R2b: DELETE de la fila (sin-efecto-204) → la fila sigue, los objetos se CONSERVAN, nada se cuenta como eliminado y queda pendiente
+OK    IP-R2b: respuesta perdida CON commit → la relectura confirma la ausencia y se limpian los objetos
+OK    IP-R2b: respuesta perdida SIN commit → la fila sigue, objetos conservados
+OK    IP-R2b: lectura de reconciliación caída → estado desconocido: objetos conservados y pendiente informado
+OK    IP-R2b: fila borrada pero el Worker falla (500) → fila eliminada, objeto PENDIENTE, contador de objetos en 0
+OK    IP-R2: con lectura fallida (filas = null) no hay limpieza destructiva
+OK    IP-R2: el título lleva una marca por ejecución (dos ejecuciones no comparten título)
+OK    IP-R2: inventario con lectura fallida (500) LANZA, no devuelve lista vacía
+OK    IP-R2: el inventario devuelve claves COMPLETAS y la comparación detecta cambios concurrentes de igual cardinalidad
+OK    IP-R2: snapshot — detecta cambios de fotos/filas, ignora el orden de claves
+OK    IP-S1: galería conservada — idéntica pasa; otra referencia, etiqueta/orden/id u objeto desaparecido fallan
+
+42 casos, 0 fallos

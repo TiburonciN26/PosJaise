@@ -1,0 +1,74 @@
+{
+  "fecha": "2026-10-12T16:15:04.654Z",
+  "veredicto": "Aprobada con observaciones, solo implementación y QA local",
+  "hallazgos": {
+    "F8-01": "cerrado, con límite de dependencia fallida y salida segura",
+    "F8-02": "cerrado, SW corregido y limpieza",
+    "F8-03": "cerrado documentalmente"
+  },
+  "regresiones": {
+    "total": 9,
+    "correctos": 9,
+    "fallos": 0
+  },
+  "cache": {
+    "total": 48,
+    "fallos": 0
+  },
+  "vacio": [
+    {
+      "correctos": 1,
+      "fallos": 0
+    },
+    {
+      "correctos": 1,
+      "fallos": 0
+    },
+    {
+      "correctos": 1,
+      "fallos": 0
+    },
+    {
+      "correctos": 1,
+      "fallos": 0
+    },
+    {
+      "correctos": 1,
+      "fallos": 0
+    }
+  ],
+  "recompensas": {
+    "total": 3,
+    "correctos": 3,
+    "fallos": 0
+  },
+  "controlesNegativos": [
+    {
+      "archivo": "control-v1-venta.json",
+      "falloEsperado": true
+    },
+    {
+      "archivo": "control-v1-cache.json",
+      "falloEsperado": true
+    }
+  ],
+  "dependencia": {
+    "reintentoNoRecuperaPorSiSolo": true,
+    "recargarConVenta": 0,
+    "carritoAlVolverAVentas": 1,
+    "recargarSinVenta": 1,
+    "citasTrasRecargaSegura": true
+  },
+  "integridad": {
+    "todosHashesV1V2Coinciden": true,
+    "sourceSinCambios": true,
+    "rollbackCheck": true
+  },
+  "limitaciones": [
+    "Chromium local",
+    "Dependencia estática fallida puede exigir recarga segura",
+    "Intermitencias no reproducidas, causa no identificada",
+    "Save-Data POS decisión pendiente",
+    "Sin publicación ni autorización de Fase 9"
+  ]
+}

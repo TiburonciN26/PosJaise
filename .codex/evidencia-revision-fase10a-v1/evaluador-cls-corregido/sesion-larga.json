@@ -1,0 +1,773 @@
+{
+ "etiqueta": "f10a",
+ "app": "http://127.0.0.1:5401",
+ "fecha": "2026-10-12T21:25:22.229Z",
+ "rutas": 27,
+ "inicial": {
+  "heapMB": 4.27,
+  "escuchas": 242,
+  "nodosCDP": 869,
+  "nodos": 346,
+  "pantallas": 1,
+  "pantallasVisibles": 1,
+  "intervalos": 1,
+  "layout": 38,
+  "estilos": 46,
+  "tarea": 0.203811,
+  "script": 0.06018
+ },
+ "ciclos": [
+  {
+   "ciclo": 1,
+   "finCiclo": {
+    "heapMB": 8.82,
+    "escuchas": 617,
+    "nodosCDP": 4373,
+    "nodos": 2780,
+    "pantallas": 6,
+    "pantallasVisibles": 1,
+    "intervalos": 1,
+    "layout": 432,
+    "estilos": 765,
+    "tarea": 2.744973,
+    "script": 0.911805
+   },
+   "reposo": {
+    "rafPorSeg": 0,
+    "timeoutsPorSeg": 4.2,
+    "intervalosActivos": 1,
+    "tareaMsPorSeg": 2.4,
+    "scriptMsPorSeg": 0.6,
+    "layoutPorSeg": 4.2,
+    "estilosPorSeg": 4.2
+   },
+   "maxNodos": {
+    "ruta": "/mobiliario",
+    "nodos": 12940
+   },
+   "maxPantallas": 6,
+   "maxHeapMB": 13.59,
+   "msRecorrido": 31402,
+   "porRuta": [
+    {
+     "ruta": "/ventas",
+     "ms": 167,
+     "nodos": 346,
+     "heapMB": 4.29,
+     "pantallas": 1,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/inventario",
+     "ms": 2196,
+     "nodos": 2793,
+     "heapMB": 5.37,
+     "pantallas": 2,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/historial",
+     "ms": 2718,
+     "nodos": 4243,
+     "heapMB": 6.68,
+     "pantallas": 3,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/servicios",
+     "ms": 682,
+     "nodos": 6812,
+     "heapMB": 8.02,
+     "pantallas": 4,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/dashboard",
+     "ms": 3829,
+     "nodos": 6943,
+     "heapMB": 9.07,
+     "pantallas": 5,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/mi-panel",
+     "ms": 1707,
+     "nodos": 7012,
+     "heapMB": 9.25,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/citas",
+     "ms": 939,
+     "nodos": 7057,
+     "heapMB": 9.6,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/estadisticas",
+     "ms": 4729,
+     "nodos": 4847,
+     "heapMB": 8.5,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/auditoria",
+     "ms": 812,
+     "nodos": 4124,
+     "heapMB": 8.08,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/clientes",
+     "ms": 1828,
+     "nodos": 4972,
+     "heapMB": 7.89,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/deudas",
+     "ms": 690,
+     "nodos": 6748,
+     "heapMB": 9.5,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/porcentajes",
+     "ms": 815,
+     "nodos": 7151,
+     "heapMB": 10.81,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/gastos",
+     "ms": 689,
+     "nodos": 8569,
+     "heapMB": 11.33,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/asistentes",
+     "ms": 707,
+     "nodos": 9497,
+     "heapMB": 12.17,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/mobiliario",
+     "ms": 709,
+     "nodos": 12940,
+     "heapMB": 13.59,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/web",
+     "ms": 199,
+     "nodos": 9600,
+     "heapMB": 12.9,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/promociones",
+     "ms": 702,
+     "nodos": 8626,
+     "heapMB": 12.11,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/pedidos-web",
+     "ms": 684,
+     "nodos": 8791,
+     "heapMB": 11.9,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/resenas-web",
+     "ms": 692,
+     "nodos": 8197,
+     "heapMB": 11.55,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/contacto-web",
+     "ms": 705,
+     "nodos": 7226,
+     "heapMB": 11.43,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/puntos-web",
+     "ms": 687,
+     "nodos": 3071,
+     "heapMB": 9.12,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/referidos-web",
+     "ms": 687,
+     "nodos": 3862,
+     "heapMB": 9.39,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/fidelizacion-web",
+     "ms": 703,
+     "nodos": 3797,
+     "heapMB": 9.34,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/recompensas-web",
+     "ms": 1064,
+     "nodos": 3523,
+     "heapMB": 9.24,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/catalogo-web",
+     "ms": 689,
+     "nodos": 2957,
+     "heapMB": 8.71,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/libro-reclamaciones-web",
+     "ms": 688,
+     "nodos": 2792,
+     "heapMB": 8.76,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/galeria-web",
+     "ms": 685,
+     "nodos": 3520,
+     "heapMB": 9.03,
+     "pantallas": 6,
+     "intervalos": 1
+    }
+   ]
+  },
+  {
+   "ciclo": 2,
+   "finCiclo": {
+    "heapMB": 9.08,
+    "escuchas": 617,
+    "nodosCDP": 4372,
+    "nodos": 2780,
+    "pantallas": 6,
+    "pantallasVisibles": 1,
+    "intervalos": 1,
+    "layout": 845,
+    "estilos": 1495,
+    "tarea": 5.263593,
+    "script": 1.720212
+   },
+   "reposo": {
+    "rafPorSeg": 0,
+    "timeoutsPorSeg": 5,
+    "intervalosActivos": 1,
+    "tareaMsPorSeg": 2.5,
+    "scriptMsPorSeg": 0.5,
+    "layoutPorSeg": 4.2,
+    "estilosPorSeg": 4.2
+   },
+   "maxNodos": {
+    "ruta": "/mobiliario",
+    "nodos": 12940
+   },
+   "maxPantallas": 6,
+   "maxHeapMB": 14.67,
+   "msRecorrido": 31444,
+   "porRuta": [
+    {
+     "ruta": "/ventas",
+     "ms": 178,
+     "nodos": 2780,
+     "heapMB": 8.82,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/inventario",
+     "ms": 2206,
+     "nodos": 4372,
+     "heapMB": 9.11,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/historial",
+     "ms": 2689,
+     "nodos": 5449,
+     "heapMB": 10.05,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/servicios",
+     "ms": 692,
+     "nodos": 7585,
+     "heapMB": 10.97,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/dashboard",
+     "ms": 3832,
+     "nodos": 7694,
+     "heapMB": 11.77,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/mi-panel",
+     "ms": 1696,
+     "nodos": 7012,
+     "heapMB": 11.43,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/citas",
+     "ms": 937,
+     "nodos": 7057,
+     "heapMB": 11.65,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/estadisticas",
+     "ms": 4699,
+     "nodos": 4847,
+     "heapMB": 10.38,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/auditoria",
+     "ms": 808,
+     "nodos": 4124,
+     "heapMB": 9.73,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/clientes",
+     "ms": 1814,
+     "nodos": 4972,
+     "heapMB": 9.46,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/deudas",
+     "ms": 689,
+     "nodos": 6748,
+     "heapMB": 10.96,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/porcentajes",
+     "ms": 813,
+     "nodos": 7151,
+     "heapMB": 12.22,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/gastos",
+     "ms": 813,
+     "nodos": 8569,
+     "heapMB": 13.17,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/asistentes",
+     "ms": 690,
+     "nodos": 9497,
+     "heapMB": 13.41,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/mobiliario",
+     "ms": 718,
+     "nodos": 12940,
+     "heapMB": 14.67,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/web",
+     "ms": 209,
+     "nodos": 9600,
+     "heapMB": 13.96,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/promociones",
+     "ms": 699,
+     "nodos": 8626,
+     "heapMB": 13.06,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/pedidos-web",
+     "ms": 685,
+     "nodos": 8791,
+     "heapMB": 12.73,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/resenas-web",
+     "ms": 696,
+     "nodos": 8197,
+     "heapMB": 12.35,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/contacto-web",
+     "ms": 698,
+     "nodos": 7226,
+     "heapMB": 12.12,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/puntos-web",
+     "ms": 684,
+     "nodos": 3071,
+     "heapMB": 9.73,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/referidos-web",
+     "ms": 682,
+     "nodos": 3862,
+     "heapMB": 9.93,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/fidelizacion-web",
+     "ms": 693,
+     "nodos": 3797,
+     "heapMB": 9.81,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/recompensas-web",
+     "ms": 1061,
+     "nodos": 3523,
+     "heapMB": 9.64,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/catalogo-web",
+     "ms": 685,
+     "nodos": 2957,
+     "heapMB": 9.07,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/libro-reclamaciones-web",
+     "ms": 683,
+     "nodos": 2792,
+     "heapMB": 9.11,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/galeria-web",
+     "ms": 695,
+     "nodos": 3520,
+     "heapMB": 9.35,
+     "pantallas": 6,
+     "intervalos": 1
+    }
+   ]
+  },
+  {
+   "ciclo": 3,
+   "finCiclo": {
+    "heapMB": 9.15,
+    "escuchas": 617,
+    "nodosCDP": 4372,
+    "nodos": 2780,
+    "pantallas": 6,
+    "pantallasVisibles": 1,
+    "intervalos": 1,
+    "layout": 1254,
+    "estilos": 2226,
+    "tarea": 7.816943,
+    "script": 2.527456
+   },
+   "reposo": {
+    "rafPorSeg": 0,
+    "timeoutsPorSeg": 4.2,
+    "intervalosActivos": 1,
+    "tareaMsPorSeg": 2.3,
+    "scriptMsPorSeg": 0.5,
+    "layoutPorSeg": 4,
+    "estilosPorSeg": 4
+   },
+   "maxNodos": {
+    "ruta": "/mobiliario",
+    "nodos": 12940
+   },
+   "maxPantallas": 6,
+   "maxHeapMB": 14.8,
+   "msRecorrido": 31447,
+   "porRuta": [
+    {
+     "ruta": "/ventas",
+     "ms": 170,
+     "nodos": 2780,
+     "heapMB": 9.08,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/inventario",
+     "ms": 2194,
+     "nodos": 4372,
+     "heapMB": 9.34,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/historial",
+     "ms": 2824,
+     "nodos": 5449,
+     "heapMB": 10.25,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/servicios",
+     "ms": 696,
+     "nodos": 7585,
+     "heapMB": 11.16,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/dashboard",
+     "ms": 3816,
+     "nodos": 7694,
+     "heapMB": 11.96,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/mi-panel",
+     "ms": 1710,
+     "nodos": 7012,
+     "heapMB": 11.62,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/citas",
+     "ms": 946,
+     "nodos": 7057,
+     "heapMB": 11.82,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/estadisticas",
+     "ms": 4710,
+     "nodos": 4847,
+     "heapMB": 10.53,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/auditoria",
+     "ms": 690,
+     "nodos": 4124,
+     "heapMB": 9.88,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/clientes",
+     "ms": 1823,
+     "nodos": 4972,
+     "heapMB": 9.6,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/deudas",
+     "ms": 685,
+     "nodos": 6748,
+     "heapMB": 11.09,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/porcentajes",
+     "ms": 815,
+     "nodos": 7151,
+     "heapMB": 12.36,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/gastos",
+     "ms": 810,
+     "nodos": 8569,
+     "heapMB": 13.3,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/asistentes",
+     "ms": 688,
+     "nodos": 9497,
+     "heapMB": 13.54,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/mobiliario",
+     "ms": 711,
+     "nodos": 12940,
+     "heapMB": 14.8,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/web",
+     "ms": 206,
+     "nodos": 9600,
+     "heapMB": 14.07,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/promociones",
+     "ms": 702,
+     "nodos": 8626,
+     "heapMB": 13.17,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/pedidos-web",
+     "ms": 689,
+     "nodos": 8791,
+     "heapMB": 12.84,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/resenas-web",
+     "ms": 699,
+     "nodos": 8197,
+     "heapMB": 12.45,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/contacto-web",
+     "ms": 688,
+     "nodos": 7226,
+     "heapMB": 12.21,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/puntos-web",
+     "ms": 676,
+     "nodos": 3071,
+     "heapMB": 9.83,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/referidos-web",
+     "ms": 688,
+     "nodos": 3862,
+     "heapMB": 10.04,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/fidelizacion-web",
+     "ms": 695,
+     "nodos": 3797,
+     "heapMB": 9.9,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/recompensas-web",
+     "ms": 1051,
+     "nodos": 3523,
+     "heapMB": 9.73,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/catalogo-web",
+     "ms": 692,
+     "nodos": 2957,
+     "heapMB": 9.16,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/libro-reclamaciones-web",
+     "ms": 687,
+     "nodos": 2792,
+     "heapMB": 9.2,
+     "pantallas": 6,
+     "intervalos": 1
+    },
+    {
+     "ruta": "/galeria-web",
+     "ms": 686,
+     "nodos": 3520,
+     "heapMB": 9.42,
+     "pantallas": 6,
+     "intervalos": 1
+    }
+   ]
+  }
+ ],
+ "tareasLargasMs": [],
+ "errores": []
+}

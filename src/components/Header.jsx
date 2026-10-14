@@ -25,7 +25,7 @@ export default function Header({ menuAbierto, onToggleMenu }) {
   const colorHamburguesaAbierta = tema === 'claro' ? 'text-purple-300' : 'text-amber'
 
   return (
-    <header className="border-b border-border bg-surface">
+    <header className="tema-negro-fondo border-b border-border bg-surface">
       <div className="flex items-center justify-between gap-4 px-4 py-[7px]">
         <div className="flex min-w-0 items-center">
           <button

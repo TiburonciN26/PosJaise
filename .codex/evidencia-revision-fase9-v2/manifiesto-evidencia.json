@@ -1,0 +1,50 @@
+[
+  {
+    "archivo": "unitarios-repetidos.json",
+    "sha256": "382a513217b8a4742b8382da984696de683a26417b17b95a4a00feeaeacd3f94"
+  },
+  {
+    "archivo": "cli-repetida.json",
+    "sha256": "6e21850c902727076f7414e53df3f245a47a073350da4cbe37ad9eceeaa1f683"
+  },
+  {
+    "archivo": "en-vuelo.json",
+    "sha256": "44b8234a8ecfd6d0fc8f524760e77ad73b893431f4c31ba46c1081834df2934f"
+  },
+  {
+    "archivo": "en-vuelo-temporizado.json",
+    "sha256": "5da1d92a54b83f925fbafdc38a74d3fdc4ad6ab00192e6fc10c1f799d6269b86"
+  },
+  {
+    "archivo": "regresion-en-vuelo.json",
+    "sha256": "a47fb3742e77cbc05e52ad342bd5a12c35a51392e8ba9925ee56c541a26b770e"
+  },
+  {
+    "archivo": "hashes-y-rollback.json",
+    "sha256": "9dea4b92b53f8fdd3ec438c133b3cd588c9327bc9954cd8dcd493ae916f03953"
+  },
+  {
+    "archivo": "inspeccion-local-solo-lectura.json",
+    "sha256": "791f0b2055e882e0d209a0e4c70e9fcd55bb1ceba9dfe7d661f5fc89bda41c65"
+  },
+  {
+    "archivo": "resumen-revision.json",
+    "sha256": "53a9945017fc9199e358bcfb4accbb862b35fb55caaaec1bd6a0a3ad1fff11a9"
+  },
+  {
+    "archivo": "en-vuelo.mjs.txt",
+    "sha256": "e6bf6f5746144a9a5b34d4cba9486b44c6d3749ecc8d09cbcb5945fc8381ba2a"
+  },
+  {
+    "archivo": "en-vuelo-temporizado.mjs.txt",
+    "sha256": "f0f6a8959e729718cf2eed9a8b243d4ce31c776c7737a390a2b1221ddc96334a"
+  },
+  {
+    "archivo": "regresion-en-vuelo.mjs.txt",
+    "sha256": "ea2550a7973891bf65d0864f83b6eb1414c7aa0bc9726dcc60229f3fbf49c16e"
+  },
+  {
+    "archivo": "inspeccion-lectura.mjs.txt",
+    "sha256": "e9c445684b776badc14c4bc49b305ab438c9d5dd9a50dab609714d1167f2693a"
+  }
+]

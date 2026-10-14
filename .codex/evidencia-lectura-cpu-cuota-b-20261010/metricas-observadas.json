@@ -1,0 +1,86 @@
+{
+  "fechaUTC": "2026-10-11T04:04:37.710Z",
+  "fechaLocal": "2026-10-10 23:04:37",
+  "zona": "America/Lima",
+  "fuente": "Panel Cloudflare en navegador integrado, lecturas de UI; sin consultas privadas fuera del navegador ni cambios externos",
+  "pages": {
+    "proyecto": "pos-jaise",
+    "entorno": "Preview",
+    "periodo": "Last 24 hours",
+    "success": 556,
+    "erroresInvocacion": 0,
+    "excesoCpu": 0,
+    "otrosErroresMostrados": 0,
+    "subrequestsMostrados": 0,
+    "cpuValoresRotulados": {
+      "p50": "1,906",
+      "p75": "2,505",
+      "p99": "6,461",
+      "p999": "9,420"
+    },
+    "unidadEje": "ms",
+    "escalaConfirmada": false,
+    "nota": "No convertir estos valores a µs/ms ni compararlos con el límite sin corroborar la escala; son agregados de Preview, no solo del ensayo ni de B."
+  },
+  "worker": {
+    "nombre": "pos-jaise-medios-staging",
+    "versiones": "All deployed versions",
+    "periodo": "Last 24 hours",
+    "invocaciones": 971,
+    "errores": 0,
+    "subrequestsRotulado": "1.77k",
+    "cpuP50Ms": 1.95,
+    "cpuP90Ms": 2.58,
+    "cpuP99Ms": 3.18,
+    "cpuP999Ms": 3.2,
+    "unidadVerificadaEnGrafico": "ms",
+    "nota": "Worker de subidas/borrados, no Pages Function de lectura. Production es la etiqueta interna del recurso staging."
+  },
+  "cuentaWorkers": {
+    "requestsToday": 462,
+    "limiteToday": 100000,
+    "porcentajeUsado": 0.462,
+    "periodoFacturable": "October 10 - November 10",
+    "solicitudesPeriodoRotulado": "1.53k",
+    "cpuTotalPeriodoRotulado": "3.05k ms",
+    "usoFacturableMostradoUSD": 0
+  },
+  "r2": {
+    "periodoFacturable": "October 10 - November 10",
+    "claseA": 744,
+    "claseB": 752,
+    "almacenamientoActualBytes": 0,
+    "objetosBucketStaging": 0,
+    "usoFacturableMostradoUSD": 0,
+    "cuotasStandardMensualesReferencia": {
+      "claseA": 1000000,
+      "claseB": 10000000,
+      "almacenamientoGBmes": 10
+    },
+    "porcentajesOrientativos": {
+      "claseA": 0.0744,
+      "claseB": 0.00752
+    }
+  },
+  "sinAtribucionCausalAEscenarios": true,
+  "sinCambiosConfiguracion": true,
+  "sinEscriturasDatos": true,
+  "referencias": [
+    "https://developers.cloudflare.com/pages/functions/pricing/",
+    "https://developers.cloudflare.com/workers/platform/limits/",
+    "https://developers.cloudflare.com/pages/functions/metrics/",
+    "https://developers.cloudflare.com/r2/pricing/"
+  ],
+  "evidenciasSha256": {
+    "pages-cpu-completo.png": "6f218b34ba22c6aa00e9755fce5262f1a2b9bd19ba82d22275a7d276242ca747",
+    "pages-cpu.png": "9c9235f3df30469ef713ee40eed447cf34c662a4b021ea47527d76b78c63791d",
+    "pages-cpu.txt": "2c805dddeba063c311b39cc271b0564cef60a9031ca64cddbca11428590a070f",
+    "pages-preview.txt": "33959e2d51b1d782e165249268f3a6af3c0bda9b02acf0fcd1ac40d8b0be60c6",
+    "r2-uso.png": "ab10857ad6afeffa7cf39b818bb205701c0e200870aac760b0064311f68d9716",
+    "r2-uso.txt": "6d8923d084950700301267850b04791644e6d5b4e0b921732078bf68b0c99091",
+    "uso-cuenta.txt": "8cbd938900ab9b0e1490568a1b6b16000333576a09d291f7aebb0e9b9618a3e2",
+    "worker-cpu.png": "62a1c938f39d3a58e935c501a0976bd1837791dfd124ad18ed32cc71ffa62433",
+    "worker-cpu.txt": "4f0553323308b85e643fd307df0f620b98af301812a9907ede07498ad4ee8815",
+    "worker-metricas.txt": "05b430ccfcbf19c735874f56d97611e16e6f8f8bd32ce81eb4b9c860d2d54b45"
+  }
+}

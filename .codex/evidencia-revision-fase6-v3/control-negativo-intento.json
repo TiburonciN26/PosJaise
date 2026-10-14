@@ -1,0 +1,21 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "PestanasCacheadas y hooks reales; pantallas de relleno simuladas salvo PuntosWeb y Dashboard. Auth/Supabase simulados; cero mutaciones reales.",
+  "casos": [
+    {
+      "name": "Intento antiguo tras editar y reenviar no confirma el actual",
+      "data": {
+        "tokens": [
+          1,
+          2
+        ],
+        "protegidaTrasAntiguo": false,
+        "retenido": false,
+        "valor": "",
+        "protegidaTrasActual": false,
+        "trasConfirmarActual": false
+      },
+      "errors": []
+    }
+  ]
+}

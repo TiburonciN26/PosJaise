@@ -1,0 +1,299 @@
+{
+  "nota": "Helper, gate A y bloque de publicación extraídos del script actual. Pestaña/HTTP/publicador ficticios; sin navegador, red ni Git reales. La prueba evalúa los fallos de medios, no toda la red del contexto.",
+  "sha256Script": "947c7b1864609e6f5571e664a90d2d64c36c351ba8ee15d8315967acbf029859",
+  "casos": [
+    {
+      "fallo": "control-sano",
+      "publicacionesFicticias": 1,
+      "auxiliarCerrada": 1,
+      "error": null,
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": true
+        },
+        {
+          "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+          "ok": true,
+          "d": {
+            "/medios/x": {
+              "estado": 404,
+              "cache": "no-store",
+              "nosniff": "nosniff",
+              "robots": "noindex",
+              "texto": "No encontrado",
+              "esSpa": false
+            }
+          }
+        },
+        {
+          "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+          "ok": true,
+          "d": {
+            "estado": 404,
+            "texto": "No encontrado",
+            "spa": false
+          }
+        },
+        {
+          "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+          "ok": true,
+          "d": {
+            "estado": 200
+          }
+        },
+        {
+          "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+          "ok": true
+        },
+        {
+          "n": "publicación de B por el comando indicado",
+          "ok": true,
+          "d": 0
+        }
+      ]
+    },
+    {
+      "fallo": "sin-controlador",
+      "publicacionesFicticias": 0,
+      "auxiliarCerrada": 1,
+      "error": "A inválida ficticia",
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": false
+        },
+        {
+          "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+          "ok": true,
+          "d": {
+            "/medios/x": {
+              "estado": 404,
+              "cache": "no-store",
+              "nosniff": "nosniff",
+              "robots": "noindex",
+              "texto": "No encontrado",
+              "esSpa": false
+            }
+          }
+        },
+        {
+          "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+          "ok": true,
+          "d": {
+            "estado": 404,
+            "texto": "No encontrado",
+            "spa": false
+          }
+        },
+        {
+          "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+          "ok": true,
+          "d": {
+            "estado": 200
+          }
+        },
+        {
+          "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "fallo": "404-SPA",
+      "publicacionesFicticias": 0,
+      "auxiliarCerrada": 1,
+      "error": "A inválida ficticia",
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": true
+        },
+        {
+          "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+          "ok": false,
+          "d": {
+            "/medios/x": {
+              "estado": 200,
+              "cache": "no-store",
+              "nosniff": "nosniff",
+              "robots": "noindex",
+              "texto": "<html>",
+              "esSpa": true
+            }
+          }
+        },
+        {
+          "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+          "ok": true,
+          "d": {
+            "estado": 404,
+            "texto": "No encontrado",
+            "spa": false
+          }
+        },
+        {
+          "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+          "ok": true,
+          "d": {
+            "estado": 200
+          }
+        },
+        {
+          "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "fallo": "cabecera-incorrecta",
+      "publicacionesFicticias": 0,
+      "auxiliarCerrada": 1,
+      "error": "A inválida ficticia",
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": true
+        },
+        {
+          "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+          "ok": false,
+          "d": {
+            "/medios/x": {
+              "estado": 404,
+              "cache": "public",
+              "nosniff": "nosniff",
+              "robots": "noindex",
+              "texto": "No encontrado",
+              "esSpa": false
+            }
+          }
+        },
+        {
+          "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+          "ok": true,
+          "d": {
+            "estado": 404,
+            "texto": "No encontrado",
+            "spa": false
+          }
+        },
+        {
+          "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+          "ok": true,
+          "d": {
+            "estado": 200
+          }
+        },
+        {
+          "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "fallo": "navegacion-SPA",
+      "publicacionesFicticias": 0,
+      "auxiliarCerrada": 1,
+      "error": "A inválida ficticia",
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": true
+        },
+        {
+          "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+          "ok": true,
+          "d": {
+            "/medios/x": {
+              "estado": 404,
+              "cache": "no-store",
+              "nosniff": "nosniff",
+              "robots": "noindex",
+              "texto": "No encontrado",
+              "esSpa": false
+            }
+          }
+        },
+        {
+          "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+          "ok": false,
+          "d": {
+            "estado": 200,
+            "texto": "<html>",
+            "spa": true
+          }
+        },
+        {
+          "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+          "ok": true,
+          "d": {
+            "estado": 200
+          }
+        },
+        {
+          "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "fallo": "medios-extra-404",
+      "publicacionesFicticias": 0,
+      "auxiliarCerrada": 1,
+      "error": "A inválida ficticia",
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": true
+        },
+        {
+          "n": "A: /medios (objeto inexistente, /medios/ y /medios) → 404 no-store de la Function, nunca la SPA, con el SW controlando",
+          "ok": true,
+          "d": {
+            "/medios/x": {
+              "estado": 404,
+              "cache": "no-store",
+              "nosniff": "nosniff",
+              "robots": "noindex",
+              "texto": "No encontrado",
+              "esSpa": false
+            }
+          }
+        },
+        {
+          "n": "A: la NAVEGACIÓN a /medios/ no recibe el fallback del SW (404 de la Function, sin la SPA)",
+          "ok": true,
+          "d": {
+            "estado": 404,
+            "texto": "No encontrado",
+            "spa": false
+          }
+        },
+        {
+          "n": "A: /medios-extra sigue siendo la SPA (la exclusión no es por prefijo)",
+          "ok": false,
+          "d": {
+            "estado": 404
+          }
+        },
+        {
+          "n": "A: las comprobaciones de /medios pasaron (si no, NO se publica B)",
+          "ok": false
+        }
+      ]
+    },
+    {
+      "fallo": "fetch-caido",
+      "publicacionesFicticias": 0,
+      "auxiliarCerrada": 1,
+      "error": "fetch ficticio caído",
+      "pasos": [
+        {
+          "n": "A: el service worker controla la pestaña auxiliar",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}

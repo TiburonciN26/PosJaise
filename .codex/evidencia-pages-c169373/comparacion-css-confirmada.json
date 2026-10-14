@@ -1,0 +1,12 @@
+{
+  "fecha": "2026-10-10T17:16:02.400Z",
+  "bytesAntes": 184252,
+  "bytesAhora": 184288,
+  "reglasAgregadas": [
+    ".row-1{grid-row:1}",
+    ".row-2{grid-row:2}"
+  ],
+  "reglasRetiradas": [],
+  "restoDelCssIdentico": true,
+  "nota": "Comparación íntegra de los textos CSS tras retirar únicamente los bloques nuevos identificados."
+}

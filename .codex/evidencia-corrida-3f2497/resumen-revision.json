@@ -1,0 +1,31 @@
+{
+  "fecha": "2026-10-10T17:25:25.956Z",
+  "marca": "c1693734",
+  "idEjecucion": "3f2497",
+  "validacion": {
+    "totalCoherente": true,
+    "casosTodosOk": true,
+    "completa": true,
+    "error": null,
+    "limpieza": null,
+    "bloqueos": 0,
+    "fallos": 0
+  },
+  "coincidenciasFormatosSensibles": 0,
+  "capturas": [
+    {
+      "archivo": "galeria-alta-652b14.png",
+      "origen": "git show c169373:galeria-alta.png",
+      "bytes": 36534,
+      "sha256": "37c162b31a1d1be8020b5319baf9866deed96cfdcb0f895e54031640ce9ff6bd"
+    },
+    {
+      "archivo": "galeria-alta-3f2497.png",
+      "origen": "docs/evidencia-rendimiento/fase-3/interfaz-preview/galeria-alta.png",
+      "bytes": 36616,
+      "sha256": "f202fcff27b847d64a281e4d99103f478389598b8c64fe6edaadc035fcc35254"
+    }
+  ],
+  "sha256Informe": "ca36f1004d3584f95370c3b13a33b7867c676cb3ffffa9198f539cc16bf53652",
+  "nota": "Se preservan dos evidencias de corridas distintas sin restaurar ni modificar el archivo versionado."
+}

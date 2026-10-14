@@ -1,0 +1,73 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "PestanasCacheadas y hooks reales; pantallas de relleno simuladas salvo PuntosWeb y Dashboard. Auth/Supabase simulados; cero mutaciones reales.",
+  "casos": [
+    {
+      "name": "Puntos error + éxito ajeno",
+      "data": {
+        "inicial": {
+          "status": "No se pudo guardar. Intenta de nuevo.",
+          "pendientes": 0,
+          "value": "77"
+        },
+        "protegidoAntes": true,
+        "protegidoDespues": false,
+        "alVolver": "1",
+        "configCalls": 2,
+        "nota": "ToastProvider real; éxito ajeno simulado, sin exportación/descarga real"
+      },
+      "errors": []
+    },
+    {
+      "name": "Puntos validacion + éxito ajeno",
+      "data": {
+        "inicial": {
+          "status": "El umbral de VIP debe ser mayor que el de Premium.",
+          "pendientes": 0,
+          "value": "77"
+        },
+        "protegidoAntes": true,
+        "protegidoDespues": false,
+        "alVolver": "1",
+        "configCalls": 2,
+        "nota": "ToastProvider real; éxito ajeno simulado, sin exportación/descarga real"
+      },
+      "errors": []
+    },
+    {
+      "name": "Puntos lento + éxito ajeno",
+      "data": {
+        "inicial": {
+          "status": "",
+          "pendientes": 1,
+          "value": "77"
+        },
+        "protegidoAntes": true,
+        "protegidoDespues": false,
+        "alVolver": "1",
+        "configCalls": 2,
+        "nota": "ToastProvider real; éxito ajeno simulado, sin exportación/descarga real"
+      },
+      "errors": []
+    },
+    {
+      "name": "Control: guardado propio confirmado libera y conserva valor servidor",
+      "data": {
+        "estado": "Configuración de puntos actualizada.",
+        "retenido": false,
+        "alVolver": "77"
+      },
+      "errors": []
+    },
+    {
+      "name": "Dos formularios enviados: éxito A suelta B pendiente",
+      "data": {
+        "retenido": false,
+        "bAlVolver": "",
+        "submitsB": true,
+        "nota": "Formularios fixture, protección de caché y ToastProvider reales; B nunca confirmó éxito"
+      },
+      "errors": []
+    }
+  ]
+}

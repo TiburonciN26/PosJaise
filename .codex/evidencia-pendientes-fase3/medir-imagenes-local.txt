@@ -1,0 +1,39 @@
+const fs=require('node:fs');const path=require('node:path');const crypto=require('node:crypto')
+process.env.PLAYWRIGHT_BROWSERS_PATH='C:/Users/jdeos/AppData/Local/ms-playwright'
+const {chromium}=require('C:/WedJaiseReact/node_modules/playwright')
+const root='C:/WedJaiseReact'
+const carpeta='C:/Users/jdeos/OneDrive/Pictures/MINECRAFT'
+const salida=__dirname
+const texto=fs.readFileSync(root+'/src/lib/imagenes.js','utf8')
+const medios=fs.readFileSync(root+'/src/lib/medios.js','utf8')
+const procesar=texto.slice(texto.indexOf('export async function procesarImagen('),texto.indexOf('// bucket + ruta')).replace(/^export /,'')
+const miniatura=medios.slice(medios.indexOf('async function miniaturaDe('),medios.indexOf('// Sube las dos variantes'))
+if(!procesar.startsWith('async function procesarImagen')||!miniatura.startsWith('async function miniaturaDe'))throw Error('No se identifican las funciones del proyecto')
+const archivos=fs.readdirSync(carpeta).filter(n=>/\.(png|jpe?g|webp)$/i.test(n)).map(n=>({nombre:n,bytes:fs.statSync(path.join(carpeta,n)).size})).sort((a,b)=>a.bytes-b.bytes)
+const seleccion=[...new Set(Array.from({length:Math.min(30,archivos.length)},(_,i)=>Math.round(i*(archivos.length-1)/(Math.min(30,archivos.length)-1))))].map(i=>archivos[i])
+;(async()=>{
+  const {inspeccionarWebp}=await import('file:///C:/WedJaiseReact/cloudflare/medios-worker/src/validar-imagen.js')
+  const nav=await chromium.launch({headless:true}); const ctx=await nav.newContext();const solicitudes=[]
+  await ctx.route('**/*',r=>{solicitudes.push(r.request().url());return r.abort()})
+  const page=await ctx.newPage();await page.addScriptTag({content:`const LADO_MAXIMO=600,CALIDAD_WEBP=.8,LADO_MINIATURA=320,CALIDAD_MINIATURA=.8;${procesar}\n${miniatura}`})
+  const resultados=[]
+  try{
+    for(let i=0;i<seleccion.length;i++){
+      const foto=seleccion[i];const buf=fs.readFileSync(path.join(carpeta,foto.nombre));const tipo=/\.png$/i.test(foto.nombre)?'image/png':/\.webp$/i.test(foto.nombre)?'image/webp':'image/jpeg'
+      for(const flujo of [{nombre:'Producto',lado:600,calidad:.8},{nombre:'Servicio',lado:900,calidad:.85},{nombre:'Galeria',lado:1400,calidad:.85}]){
+        const r=await page.evaluate(async ({base64,tipo,lado,calidad})=>{
+          const bin=atob(base64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i)
+          const entrada=new Blob([a],{type:tipo});const original=await createImageBitmap(entrada);const dim={ancho:original.width,alto:original.height};original.close()
+          const t=performance.now();const salida=await procesarImagen(entrada,{ladoMaximo:lado,calidad});const m=await miniaturaDe(salida.blob)
+          const convertir=async b=>{const dec=await createImageBitmap(b);const o={tipo:b.type,bytes:b.size,ancho:dec.width,alto:dec.height};dec.close();const data=new Uint8Array(await b.arrayBuffer());let s='';for(const x of data)s+=String.fromCharCode(x);return {...o,base64:btoa(s)}}
+          return {original:dim,detalle:await convertir(salida.blob),miniatura:await convertir(m),ms:performance.now()-t}
+        },{base64:buf.toString('base64'),tipo,lado:flujo.lado,calidad:flujo.calidad})
+        const validaciones={};for(const k of ['detalle','miniatura']){validaciones[k]=inspeccionarWebp(new Uint8Array(Buffer.from(r[k].base64,'base64')));delete r[k].base64}
+        resultados.push({id:`muestra-${String(i+1).padStart(2,'0')}`,archivo:foto.nombre,bytesOriginal:foto.bytes,flujo:flujo.nombre,...r,validaciones})
+      }
+    }
+  }finally{await nav.close()}
+  const resumen=Object.fromEntries(['Producto','Servicio','Galeria'].map(f=>{const xs=resultados.filter(r=>r.flujo===f);return [f,{combinaciones:xs.length,maxDetalleKiB:Math.max(...xs.map(x=>x.detalle.bytes))/1024,maxMiniaturaKiB:Math.max(...xs.map(x=>x.miniatura.bytes))/1024,detallesSobre250KiB:xs.filter(x=>x.detalle.bytes>250*1024).length,miniaturasSobre80KiB:xs.filter(x=>x.miniatura.bytes>80*1024).length,maxProcesamientoMs:Math.max(...xs.map(x=>x.ms)),formatoCorrecto:xs.every(x=>x.detalle.tipo==='image/webp'&&x.miniatura.tipo==='image/webp')}] }))
+  const informe={fecha:new Date().toISOString(),nota:'30 capturas de pantalla arbitrarias, muestra de distintos pesos; solo Chromium local, sin subidas. Funciones extraídas sin cambios del proyecto. No son fotos de catálogo ni tiempos móviles.',carpeta,archivosDisponibles:archivos.length,archivosProbados:seleccion.length,solicitudesExternas:solicitudes.length,fuentes:{imagenes:crypto.createHash('sha256').update(texto).digest('hex'),medios:crypto.createHash('sha256').update(medios).digest('hex')},resumen,resultados}
+  fs.writeFileSync(path.join(salida,'imagenes-local.json'),JSON.stringify(informe,null,2),{flag:'wx'});console.log(JSON.stringify({fecha:informe.fecha,disponibles:archivos.length,probados:seleccion.length,combinaciones:resultados.length,solicitudesExternas:solicitudes.length,resumen},null,2))
+})().catch(e=>{console.error(e.message);process.exitCode=1})

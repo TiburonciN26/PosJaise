@@ -1,0 +1,68 @@
+{
+  "fecha": "2026-10-10T01:05:48.677Z",
+  "branch": "feat/cloudflare-pages",
+  "head": "940510543f629df11ce80d558399c7ef32bebb68",
+  "main": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "node": "v24.14.1",
+  "lint": {
+    "errors": 2,
+    "warnings": 44,
+    "lines": [
+      "tests/e2e/fixtures.mjs:11:11: error react-hooks(rules-of-hooks): React Hook \"use\" is called in function \"Anonymous\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \"use\".",
+      "tests/e2e/fixtures.mjs:27:11: error react-hooks(rules-of-hooks): React Hook \"use\" is called in function \"Anonymous\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \"use\"."
+    ]
+  },
+  "sourceHashes": [
+    {
+      "file": "src/lib/galeriaFotos.js",
+      "sha256": "093089521e47674ebd9c3822c5d462f15c4c9be452807ffa428fc512aeec1fc9"
+    },
+    {
+      "file": "src/lib/medios.js",
+      "sha256": "abd8586e8399f0f2c3983000ff52a54d21d0daac9480688ff1647371f0f1a1f6"
+    },
+    {
+      "file": "src/lib/imagenes.js",
+      "sha256": "811a02110bc6796f3bc523431999d6aac4a2bce19b9d757850e2aff0f84cf234"
+    },
+    {
+      "file": "src/components/ModalProducto.jsx",
+      "sha256": "c1c9e7e5bf3a033c8392d97d37d646922bbc30fcbecf9315c4a30ea41fcbfb6a"
+    },
+    {
+      "file": "src/components/ModalServicio.jsx",
+      "sha256": "489c0d58fabdb039ab5a55605c2590bd9931d26be51fed0cfd385888d8f2150a"
+    },
+    {
+      "file": "src/components/ModalGaleriaWeb.jsx",
+      "sha256": "a69b6965cc699bae4858c748a0cf00f63832cb5b212b62a15fef344bf74e9a84"
+    },
+    {
+      "file": "scripts/lib/huerfanos-medios.mjs",
+      "sha256": "c743c187e2744c0ed208bd15f55391216ad00f7cacb4fde810aef3371fc850ba"
+    },
+    {
+      "file": "scripts/medios-huerfanos.mjs",
+      "sha256": "79c3671c69473d1346805d9b41db3db56913be12aa9b0045c425f2422a73ce7e"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/validar-imagen.js",
+      "sha256": "b682fbff53b0b871ce05c3c88b776741a9e0c2634ccf21d05e775c5d9778ad32"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/index.js",
+      "sha256": "11363e0cc62e25c5423f39f5c5a765583a1c16596c8cf20f3b5866655a7dc1f5"
+    },
+    {
+      "file": "scripts/verificar-medios-r2-fase3.cjs",
+      "sha256": "f97d199b2a6f856d00e5cb80fba58fcf953f851af7cbbead02173d61114d0fb4"
+    },
+    {
+      "file": "scripts/verificar-modales-fase3.cjs",
+      "sha256": "f185f4551d7fd80fea8d46a75c4e58d0a53003a1cb48fb8ce674f94d16603912"
+    }
+  ],
+  "rollbackCheck": "git apply -R --check: exit 0, no aplicado",
+  "adaptaciones": "Copias externas de suites, solo rutas/puertos/lanzadores/cache y cleanup local; casos originales sin cambios. npx sustituido por binarios existentes. Prueba adicional de Servicio separada.",
+  "limitaciones": "R2 simulado. No medicion CPU Cloudflare. No escrituras remotas, migraciones, instalaciones, commit, push o recursos externos."
+}

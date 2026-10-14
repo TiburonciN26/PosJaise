@@ -1,0 +1,15 @@
+{
+  "nota": "Doble local de Cache API: no se ejecuta Cloudflare ni navegador. Se observa reconstrucción de cabeceras; no prueba por sí solo el tiempo de retención real del navegador.",
+  "cacheSimulada": {
+    "age": 299,
+    "date": "Sat, 10 Oct 2026 00:00:00 GMT"
+  },
+  "salida": {
+    "estado": 200,
+    "age": null,
+    "date": null,
+    "cache": "public, max-age=300",
+    "medios": "HIT"
+  },
+  "lecturasR2": 0
+}

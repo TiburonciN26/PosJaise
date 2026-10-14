@@ -1,0 +1,12 @@
+{
+  "fecha": "2026-10-10T05:14:31.161Z",
+  "anterior": {
+    "url": "https://21c2a315.pos-jaise.pages.dev",
+    "swSHA256": "bb8eeb37ec3ef65cc03a8612aa4d36aba57e56aea8607acb6a9c32773f8d4f46"
+  },
+  "actual": {
+    "url": "https://9d206972.pos-jaise.pages.dev",
+    "swSHA256": "cb550bd02f31857e574daef26361b4b19f8f4f1db693c2908388c6d77bc417f5"
+  },
+  "swDistintos": true
+}

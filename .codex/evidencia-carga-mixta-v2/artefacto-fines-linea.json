@@ -1,0 +1,16 @@
+{
+  "fuentes": [
+    {
+      "archivo": "functions/medios/[[ruta]].js",
+      "manifestCoincideConGitTrasCRLF": true
+    },
+    {
+      "archivo": "functions/medios.js",
+      "manifestCoincideConGitTrasCRLF": true
+    },
+    {
+      "archivo": "cloudflare/medios-pages/entrega.js",
+      "manifestCoincideConGitTrasCRLF": true
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "fechaCliente": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "src/hooks/useListaPaginada.js": "24cfe934b86ea332210eb204a99be51f93cbdd08b2dc97dc543f4e3b938c7368",
+    "src/hooks/useCuponesAdmin.js": "c53ea397d6f6c3f41b0fe0fc5fd03130ad5f0e2c55cde45ae5465e727275da46",
+    "src/hooks/useLectura.js": "0829d095e1f84e828ed4e4461f6093d4f65999cd46148b41c32ed285495f1dd5",
+    "src/lib/listasAdmin.js": "ad164583e5786165f4bc0e4dd9d27b9622656c96b3ce75d7034c40f16bfb3952",
+    "src/pages/RecompensasWeb.jsx": "8a33377a1089abe2c933fc9135fc265629728bb8c8af58904d7f33f03fd3db3a",
+    "src/pages/cliente/RecompensasCliente.jsx": "9b76c0f9e026cac7cec98ad8df9bb54ee5ab3b15a5a1a478173d9f3eb830f9a3",
+    "src/pages/cliente/recompensas/useRecursosRecompensas.js": "c4aa1bce7b99b71351849d118c1ddb2e89a7974fb6113c66538a0ccdf697627c",
+    "src/context/AuthContext.jsx": "74dcd5772a31777857d4057ee4f3390ea7054b0568c0f0a00f061438fae28411",
+    "src/context/EstadoNegocioContext.jsx": "49194ee3cebc722371c3393ea2ba6325b3c3a50395ca500874a00461b3cf162d",
+    "src/pages/cliente/InicioCliente.jsx": "d16581521fa2f57c1c472ae1b9cbcb01cfd0e5071a24c74e4330983610478d07",
+    "supabase/migrations/20261011000002_vistas_listas_admin.sql": "2fc7d67f64dd6f057fff8ebfb61207a8a49fe1f64ba4155d45cb0b5dae7df118"
+  },
+  "mediciones": {
+    "fuente": "Claude; auditoría de archivos, NO nueva medición independiente",
+    "observations": [
+      {
+        "escenario": "sesion-staff",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 890,
+        "bytesDespues": 445,
+        "nodosAntes": 369,
+        "nodosDespues": 344,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "pedidos-web",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 342996,
+        "bytesDespues": 23430,
+        "nodosAntes": 18400,
+        "nodosDespues": 1012,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "promociones",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 46822,
+        "bytesDespues": 8910,
+        "nodosAntes": 8956,
+        "nodosDespues": 1287,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "resenas-web",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 74933,
+        "bytesDespues": 14411,
+        "nodosAntes": 7446,
+        "nodosDespues": 1359,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "referidos-web",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 36766,
+        "bytesDespues": 10835,
+        "nodosAntes": 4091,
+        "nodosDespues": 1224,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "fidelizacion-web",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 19065,
+        "bytesDespues": 10827,
+        "nodosAntes": 2266,
+        "nodosDespues": 1219,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "recompensas-web-monedas",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 1123179,
+        "bytesDespues": 22695,
+        "nodosAntes": 8321,
+        "nodosDespues": 733,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "recompensas-web-sellos",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 1123179,
+        "bytesDespues": 22332,
+        "nodosAntes": 1451,
+        "nodosDespues": 733,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "recompensas-web-proteccion",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 1123179,
+        "bytesDespues": 7126,
+        "nodosAntes": 20457,
+        "nodosDespues": 649,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "recompensas-web-proteccion-productos",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 1128017,
+        "bytesDespues": 5146,
+        "nodosAntes": 658,
+        "nodosDespues": 649,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "recompensas-web-programa",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 1123179,
+        "bytesDespues": 308,
+        "nodosAntes": 445,
+        "nodosDespues": 422,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "sesion-cliente",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 599,
+        "bytesDespues": 498,
+        "nodosAntes": 312,
+        "nodosDespues": 312,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "inicio-cliente",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 559051,
+        "bytesDespues": 6168,
+        "nodosAntes": 553,
+        "nodosDespues": 553,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "inicio-visitante",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 558889,
+        "bytesDespues": 6107,
+        "nodosAntes": 535,
+        "nodosDespues": 535,
+        "duplicadasDespues": 0,
+        "canalesDespues": 0
+      },
+      {
+        "escenario": "recompensas-como",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 736,
+        "bytesDespues": 304,
+        "nodosAntes": 250,
+        "nodosDespues": 250,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "recompensas-tarjeta",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 736,
+        "bytesDespues": 308,
+        "nodosAntes": 367,
+        "nodosDespues": 367,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "recompensas-sellos",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 736,
+        "bytesDespues": 439,
+        "nodosAntes": 288,
+        "nodosDespues": 288,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "recompensas-cupones",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 736,
+        "bytesDespues": 492,
+        "nodosAntes": 245,
+        "nodosDespues": 245,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "recompensas-canje",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 736,
+        "bytesDespues": 310,
+        "nodosAntes": 579,
+        "nodosDespues": 579,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      },
+      {
+        "escenario": "recompensas-movimientos",
+        "muestrasAntes": 3,
+        "muestrasDespues": 3,
+        "erroresDespues": 0,
+        "bytesAntes": 736,
+        "bytesDespues": 306,
+        "nodosAntes": 246,
+        "nodosDespues": 246,
+        "duplicadasDespues": 0,
+        "canalesDespues": 1
+      }
+    ]
+  },
+  "suiteClaude": {
+    "casos": 24,
+    "fallos": 0,
+    "falloGlobal": null,
+    "nota": "No ejecutada por Codex: utiliza siembra/borrado SQL y desactiva triggers"
+  },
+  "acentos": {
+    "antesNormalizeJose": true,
+    "antesNormalizePena": true,
+    "postgres": {
+      "joseSinTilde": false,
+      "joseConTilde": true,
+      "penaSinTilde": false
+    }
+  }
+}

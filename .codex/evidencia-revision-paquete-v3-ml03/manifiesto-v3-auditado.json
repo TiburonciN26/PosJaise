@@ -1,0 +1,26 @@
+{
+  "fecha": "2026-10-11T02:49:33.075Z",
+  "commit": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "tipo": "reversión con lectura mixta + B",
+  "publicado": false,
+  "configuracionMedios": {
+    "proveedor": "supabase",
+    "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+    "publica": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios",
+    "basesReconocidas": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+  },
+  "revocacionBActiva": true,
+  "swSha256": "3366f401561636524a06a4665f69dee2902f67c4788795c63464c8470823ea4e",
+  "modulosConConfiguracion": [
+    "assets/index-wNHNGUlW.js"
+  ],
+  "servidor": {
+    "cloudflare/medios-pages/entrega.js": "8302759d8eedfab797731e8c5f695a6297ac977284ebb0deb9d7ab1e34ccf3db",
+    "functions/medios/[[ruta]].js": "e04293be6dd628f18d5827e775982e9f9bf9d3a1feb8e619e3f09117bc51f97c",
+    "functions/medios.js": "db4dcd5f8cc789043f7184bf72dcf8ae33978202cd83fdfced0e0d1e555b7d6c"
+  },
+  "archivosDist": 180,
+  "problemas": [],
+  "diseño": "dist/ = frontend; servidor/functions + servidor/cloudflare = Function del MISMO commit (con B). Pages exige functions/ en la raíz del proyecto desplegado.",
+  "nota": "No se publicó nada. Desplegar dist + servidor del MISMO commit exige autorización aparte. Volver a r2.dev o a una Function con A reabriría el enlace antiguo."
+}

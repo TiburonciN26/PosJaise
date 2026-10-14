@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-10T01:02:57.521Z",
+  "scope": "Codigo original con fuentes en memoria, ninguna escritura remota",
+  "cases": [
+    {
+      "case": "retencion",
+      "retention": "14",
+      "youngAgeDays": 1,
+      "removed": [],
+      "totals": {
+        "referenciado": 0,
+        "protegido-reciente": 1,
+        "sin-fecha": 0,
+        "candidato": 0
+      }
+    },
+    {
+      "case": "retencion",
+      "retention": "NaN",
+      "youngAgeDays": 1,
+      "removed": [
+        "fotos-productos/00000001-0000-4000-8000-000000000000"
+      ],
+      "totals": {
+        "referenciado": 0,
+        "protegido-reciente": 0,
+        "sin-fecha": 0,
+        "candidato": 1
+      }
+    },
+    {
+      "case": "retencion",
+      "retention": "-1",
+      "youngAgeDays": 1,
+      "removed": [
+        "fotos-productos/00000001-0000-4000-8000-000000000000"
+      ],
+      "totals": {
+        "referenciado": 0,
+        "protegido-reciente": 0,
+        "sin-fecha": 0,
+        "candidato": 1
+      }
+    },
+    {
+      "case": "referencia-durante-lote",
+      "reads": 2,
+      "seen": [
+        {
+          "group": "fotos-productos/00000001-0000-4000-8000-000000000000",
+          "referencedAtDeletion": false
+        },
+        {
+          "group": "fotos-productos/00000002-0000-4000-8000-000000000000",
+          "referencedAtDeletion": true
+        }
+      ],
+      "removed": [
+        "fotos-productos/00000001-0000-4000-8000-000000000000",
+        "fotos-productos/00000002-0000-4000-8000-000000000000"
+      ],
+      "skipped": []
+    },
+    {
+      "case": "respuesta-insert-perdida",
+      "rows": [
+        {
+          "id": "row-1",
+          "producto_id": "QA",
+          "foto_url": "r2:fotos-productos/00000001-0000-4000-8000-000000000000",
+          "etiqueta": "QA",
+          "orden": 0
+        },
+        {
+          "id": "row-2",
+          "producto_id": "QA",
+          "foto_url": "r2:fotos-productos/00000002-0000-4000-8000-000000000000",
+          "etiqueta": "QA",
+          "orden": 0
+        }
+      ],
+      "uploads": [
+        "r2:fotos-productos/00000001-0000-4000-8000-000000000000",
+        "r2:fotos-productos/00000002-0000-4000-8000-000000000000"
+      ],
+      "deleted": [
+        "r2:fotos-productos/00000001-0000-4000-8000-000000000000"
+      ],
+      "first": {
+        "fallos": [
+          "No se pudo guardar una foto de la galería."
+        ],
+        "eliminadosOk": [],
+        "resultados": [
+          null
+        ]
+      },
+      "second": {
+        "fallos": [],
+        "eliminadosOk": [],
+        "resultados": [
+          {
+            "id": "row-2",
+            "fotoUrl": "r2:fotos-productos/00000002-0000-4000-8000-000000000000"
+          }
+        ]
+      },
+      "referencedButDeleted": [
+        {
+          "id": "row-1",
+          "producto_id": "QA",
+          "foto_url": "r2:fotos-productos/00000001-0000-4000-8000-000000000000",
+          "etiqueta": "QA",
+          "orden": 0
+        }
+      ]
+    },
+    {
+      "case": "paginacion-concurrente",
+      "expectedRows": 2000,
+      "refsRead": 2000,
+      "targetStillInDatabase": true,
+      "targetFound": false,
+      "guardDidNotThrow": true
+    },
+    {
+      "case": "complejidad-parser",
+      "runtime": "v24.14.1",
+      "measurements": [
+        {
+          "chunks": 1000,
+          "bytes": 8044,
+          "medianMs": 13.698700000000002,
+          "verdict": {
+            "ok": false,
+            "motivo": "chunk-repetido"
+          }
+        },
+        {
+          "chunks": 4000,
+          "bytes": 32044,
+          "medianMs": 207.94510000000002,
+          "verdict": {
+            "ok": false,
+            "motivo": "chunk-repetido"
+          }
+        },
+        {
+          "chunks": 8000,
+          "bytes": 64044,
+          "medianMs": 510.8227999999999,
+          "verdict": {
+            "ok": false,
+            "motivo": "chunk-repetido"
+          }
+        }
+      ],
+      "cloudflareCPU": false
+    }
+  ]
+}

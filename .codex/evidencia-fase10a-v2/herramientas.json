@@ -1,0 +1,380 @@
+{
+ "fecha": "2026-10-13T06:20:20.099Z",
+ "appReal": "http://127.0.0.1:5403",
+ "sinNavegador": false,
+ "total": 38,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "F10A-04: CLS se compara EXACTO: 0.1 cumple; 0.10001, 0.14, 0.149, 0.15, ausente, texto y NaN no",
+   "ok": true,
+   "ms": 0
+  },
+  {
+   "nombre": "F10A-04: la evaluación de vitales usa la mediana EXACTA de las muestras, no el resumen redondeado",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "Mediana: impar, PAR (media de las dos centrales), sin muestras válidas → null; --muestras validado",
+   "ok": true,
+   "ms": 0
+  },
+  {
+   "nombre": "F10A-02: carpeta sin mediciones → INCOMPLETA y código 1 (la V1 daba «0/0» con código 0)",
+   "ok": true,
+   "ms": 52
+  },
+  {
+   "nombre": "F10A-02: el productor FALLA (archivo de cuentas inexistente) → FALLÓ, INCOMPLETA y código 1",
+   "ok": true,
+   "ms": 366,
+   "detalle": {
+    "estadoProductor": 2,
+    "problemas": [
+     "PROBLEMA vitales: el medidor terminó con código 2",
+     "PROBLEMA artefacto http://127.0.0.1:5401: no respondió al empezar",
+     "PROBLEMA vitales: el medidor declaró la medición incompleta (ENOENT: no such file or directory, open 'C:\\Users\\jdeos\\AppData\\Local\\Temp\\qa-f10a-herramientas-vwch06\\no-existe.json')",
+     "PROBLEMA vitales: falta el resultado esperado «portal-inicio»",
+     "PROBLEMA vitales: falta el resultado esperado «portal-productos»",
+     "PROBLEMA vitales: falta el resultado esperado «portal-detalle-producto»",
+     "PROBLEMA vitales: falta el resultado esperado «clienta-inicio»",
+     "PROBLEMA vitales: falta el resultado esperado «clienta-productos»",
+     "PROBLEMA vitales: falta el resultado esperado «clienta-detalle-producto»",
+     "PROBLEMA vitales: falta el resultado esperado «pos-ventas»",
+     "PROBLEMA vitales: falta el resultado esperado «pos-pedidos-web»",
+     "PROBLEMA reducido: falta el resultado esperado «reducido-inicio»",
+     "PROBLEMA reducido: falta el resultado esperado «reducido-promociones»",
+     "PROBLEMA reducido: falta el resultado esperado «reducido-referidos-web»"
+    ]
+   }
+  },
+  {
+   "nombre": "F10A-02: medir en una carpeta con resultados anteriores se rechaza (código 2) y no los reutiliza",
+   "ok": true,
+   "ms": 60
+  },
+  {
+   "nombre": "F10A-02: ejecución SANA completa (5 grupos, manifiesto y hashes correctos) → CUMPLE, alcance global y código 0",
+   "ok": true,
+   "ms": 71
+  },
+  {
+   "nombre": "F10A-02: archivo faltante → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 67
+  },
+  {
+   "nombre": "F10A-02: muestras vacías → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 67
+  },
+  {
+   "nombre": "F10A-02: escenario omitido → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 68
+  },
+  {
+   "nombre": "F10A-02: medición declarada incompleta → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 70
+  },
+  {
+   "nombre": "F10A-02: resultado de iniciales omitido → INCOMPLETA y código 1 aunque las filas presentes cumplan",
+   "ok": true,
+   "ms": 70
+  },
+  {
+   "nombre": "F10A-02: un archivo ALTERADO tras la ejecución (resultado antiguo o ajeno) no coincide con el manifiesto → código 1",
+   "ok": true,
+   "ms": 70
+  },
+  {
+   "nombre": "F10A-02: un productor con código distinto de 0 en el manifiesto → código 1 aunque su archivo cumpla",
+   "ok": true,
+   "ms": 71
+  },
+  {
+   "nombre": "F10A-02: --solo evalúa un alcance menor y lo declara PARCIAL (no es el cierre global)",
+   "ok": true,
+   "ms": 114
+  },
+  {
+   "nombre": "F10A-02/04: la evidencia V1 reevaluada da 18/219 incumplimientos y queda INCOMPLETA por no tener manifiesto",
+   "ok": true,
+   "ms": 59,
+   "detalle": {
+    "incumplimientos": 18
+   }
+  },
+  {
+   "nombre": "F10A-03: servidor V2 — prefijo vecino, traversal codificado, junction, URI malformada y NUL no salen de la carpeta; assets, HEAD, _headers y fallback intactos",
+   "ok": true,
+   "ms": 73,
+   "detalle": {
+    "estados": {
+     "prefijo": 400,
+     "puntos": 200,
+     "barraInvertida": 400,
+     "enlaceArchivo": 403,
+     "enlaceDir": 403,
+     "malformada": 400,
+     "nul": 400,
+     "asset": 200,
+     "ventas": 200,
+     "raiz": 200,
+     "head": 200
+    },
+    "junctionProbada": true
+   }
+  },
+  {
+   "nombre": "F10A-03: reproducción del defecto en la V1 (copia de rollback): el prefijo vecino SÍ devolvía la marca",
+   "ok": true,
+   "ms": 73,
+   "detalle": {
+    "v1": {
+     "prefijo": 200,
+     "puntos": 200,
+     "barraInvertida": 200,
+     "enlaceArchivo": 200,
+     "enlaceDir": 200,
+     "malformada": 0,
+     "nul": 0,
+     "asset": 0,
+     "ventas": 0,
+     "raiz": 0,
+     "head": 0
+    }
+   }
+  },
+  {
+   "nombre": "F10A-01: validación de --app (remota, LAN, el propio Supabase, credenciales, query) y de cuentas (ajena, sin id)",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "F10A-01: backend efectivo del bundle — Local exacto pasa; otro puerto, relativo/proxy, Supabase remoto, dos configuraciones o ninguna se rechazan",
+   "ok": true,
+   "ms": 0
+  },
+  {
+   "nombre": "F10A-01: clasificación de peticiones del navegador (app solo lectura sin rutas de API; Supabase Local; terceros GET neutralizados; lo demás prohibido)",
+   "ok": true,
+   "ms": 1
+  },
+  {
+   "nombre": "F10A-01: CONTROL POSITIVO — preflight de la app real (bundle servido con backend Local exacto y cuentas QA de Local)",
+   "ok": true,
+   "ms": 333,
+   "detalle": {
+    "app": "http://127.0.0.1:5403",
+    "api": "http://127.0.0.1:54321",
+    "indexSha256": "2d83ebf7b6416d4a4be7cc1c6f87018f420bb2dd99eaa59f7303cb8abad68ea9",
+    "modulosRevisados": 143,
+    "configuraciones": 1,
+    "cuentas": [
+     "admin",
+     "cajera",
+     "clienteA"
+    ]
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · app remota → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 466,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "debe ser una app local"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · app remota → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 486,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "debe ser una app local"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · app local con backend ajeno en el bundle → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 588,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "backend efectivo del bundle no es exactamente"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · app local con backend ajeno en el bundle → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 652,
+   "detalle": {
+    "codigo": 3221226505,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "backend efectivo del bundle no es exactamente"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · app local con proxy del mismo origen (/__supabase) → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 570,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "relativo /__supabase"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · app local con proxy del mismo origen (/__supabase) → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 647,
+   "detalle": {
+    "codigo": 3221226505,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "relativo /__supabase"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · cuenta ajena al conjunto QA → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 454,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no es una cuenta QA ficticia"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · cuenta ajena al conjunto QA → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 483,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no es una cuenta QA ficticia"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · cuenta QA que no existe en el Auth de Local → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 641,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no existen en el Auth de Local"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · cuenta QA que no existe en el Auth de Local → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 675,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "no existen en el Auth de Local"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · login redirigido a otro servidor → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 927,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [
+     "GET /login"
+    ],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "página de login no es la de la app aprobada"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · login redirigido a otro servidor → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 50762,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [
+     "GET /login"
+    ],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · credenciales desviadas a otro servidor (y WebSocket) al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 1422,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · credenciales desviadas a otro servidor (y WebSocket) al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 51376,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: medir-vitales · credenciales desviadas por proxy del mismo origen al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 1373,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  },
+  {
+   "nombre": "F10A-01: verificar-roles · credenciales desviadas por proxy del mismo origen al enviar el login → se niega; cero credenciales enviadas, cero escrituras a la app y cero provisiones",
+   "ok": true,
+   "ms": 51276,
+   "detalle": {
+    "codigo": 2,
+    "peticionesAlSenuelo": [],
+    "escriturasALaApp": 0,
+    "asistentesTemporales": "0|0",
+    "motivo": "guarda de red"
+   }
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';import {fileURLToPath,pathToFileURL} from 'node:url';
+import {entornoDeCloudflare,validarSupabase,escanearTextoSalida} from 'file:///C:/WedJaiseReact/scripts/lib/entornos-supabase.mjs';
+const base=path.dirname(fileURLToPath(import.meta.url)),snapshot=path.join(base,'snapshot'),out=path.join(base,'build-candidato');
+const local=Object.fromEntries(fs.readFileSync('C:/WedJaiseReact/.env.staging.local','utf8').split(/\r?\n/).map(l=>l.match(/^\s*(VITE_SUPABASE_[A-Z_]+)\s*=\s*(.*)$/)).filter(Boolean).map(m=>[m[1],m[2].trim().replace(/^["']|["']$/g,'')]));
+const env={...process.env,...local,CF_PAGES:'1',CF_PAGES_BRANCH:'feat/cloudflare-pages',RAMA_PRODUCCION:'main',VITE_BASE_PATH:'/',VITE_BUILD_ID:'fase3-candidato',VITE_CULQI_PUBLIC_KEY:'',VITE_MEDIOS_PROVEEDOR:'r2',VITE_MEDIOS_API_URL:'https://pos-jaise-medios-staging.jdeostuas2.workers.dev',VITE_MEDIOS_PUBLIC_URL:'https://pub-b248edba3e19402382b557a35b33c674.r2.dev'};
+const target=entornoDeCloudflare(env);if(!target.ok)throw new Error(target.motivo);
+const backend=validarSupabase({url:env.VITE_SUPABASE_URL,clave:env.VITE_SUPABASE_ANON_KEY,entorno:target.entorno});if(!backend.ok)throw new Error(backend.motivo);
+const cfg=path.join(base,'vite-candidato.mjs');fs.writeFileSync(cfg,'import original from '+JSON.stringify(pathToFileURL(path.join(snapshot,'vite.config.js')).href)+';\nexport default async args=>({...await original(args),root:'+JSON.stringify(snapshot)+',cacheDir:'+JSON.stringify(path.join(base,'vite-cache'))+'});');
+const r=cp.spawnSync(process.execPath,['C:/WedJaiseReact/node_modules/vite/bin/vite.js','build','--configLoader','native','--config',cfg,'--outDir',out,'--emptyOutDir'],{cwd:snapshot,env,encoding:'utf8',maxBuffer:1<<24});
+fs.writeFileSync(path.join(base,'build-candidato.log'),(r.stdout??'')+(r.stderr??''));if(r.status!==0){console.log((r.stdout+r.stderr).slice(-1400));process.exit(r.status??1);}
+const file404=path.resolve(out,'404.html');if(!file404.startsWith(path.resolve(base)+path.sep))throw new Error('Ruta fuera del diagnóstico');if(fs.existsSync(file404))fs.unlinkSync(file404);
+fs.copyFileSync(path.join(snapshot,'cloudflare/_headers'),path.join(out,'_headers'));
+const list=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?list(path.join(d,e.name)):[path.join(d,e.name)]);
+const files=list(out),findings=[];
+for(const f of files.filter(f=>/\.(js|html|json|webmanifest|css|txt)$/.test(f))){for(const tipo of escanearTextoSalida(fs.readFileSync(f,'utf8'),backend.refEsperado))findings.push({file:path.relative(out,f),tipo});}
+const sw=fs.readFileSync(path.join(out,'sw.js'),'utf8'),html=fs.readFileSync(path.join(out,'index.html'),'utf8');
+const report={fecha:new Date().toISOString(),snapshot:'HEAD + solo los 38 candidatos de Fase 3',dependencies:'Dependencias existentes enlazadas, sin instalar. No es un npm ci nuevo.',nativeConfig:true,exit:r.status,files:files.length,backend:'staging',baseRaiz:!html.includes('/PosJaise/'),sin404:!fs.existsSync(file404)&&!sw.includes('404.html'),findings,hashMatchCommitPending:'Debe repetirse desde el commit exacto antes del push.'};
+fs.writeFileSync(path.join(base,'build-candidato.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));process.exitCode=findings.length||!report.baseRaiz||!report.sin404?1:0;

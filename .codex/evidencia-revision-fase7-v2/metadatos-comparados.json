@@ -1,0 +1,19 @@
+{
+  "alcance": "Hashes actuales coinciden con hashes antes registrados por Claude, no con un snapshot antiguo tomado por Codex.",
+  "actual": {
+    "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+    "helpers": "f8607987d6af01afbd974b1027da93fe",
+    "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "referencia": {
+    "grants": "40fe7b1ea7e406fce24678c2ec284be7",
+    "helpers": "f8607987d6af01afbd974b1027da93fe",
+    "indices_f7": "",
+    "rls_activo": "asistentes:true,auditoria:true,carrito_productos:true,carrito_servicios:true,cita_servicios:true,citas:true,clientes:true,clientes_web:true,config_fidelizacion:true,config_puntos:true,config_referidos:true,cupones:true,deuda_pagos:true,deudas:true,direcciones_cliente:true,estado_negocio:true,favoritos_productos:true,favoritos_servicios:true,galeria_web:true,gastos:true,gastos_recurrentes:true,libro_reclamaciones:true,mobiliario:true,mobiliario_compras:true,movimientos_stock:true,notificaciones:true,pasarela_eventos:true,pedidos_web:true,pedidos_web_items:true,porcentajes:true,producto_fotos:true,producto_variantes:true,productos:true,productos_proteccion:true,promociones:true,recompensas_apertura_aportes:true,recompensas_canjes:true,recompensas_catalogo:true,recompensas_config:true,recompensas_movimientos:true,recompensas_sellos_movs:true,recompensas_venta_detalle:true,recompensas_venta_proteccion:true,registro_servicios:true,resenas:true,resenas_producto:true,resenas_servicio:true,servicio_fotos:true,servicios:true,servicios_proteccion:true,usuarios:true,venta_items:true,ventas:true,zonas_delivery:true"
+  },
+  "iguales": {
+    "grants": true,
+    "helpers": true,
+    "rls_activo": true
+  }
+}

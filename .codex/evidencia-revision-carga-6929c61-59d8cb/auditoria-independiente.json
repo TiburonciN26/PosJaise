@@ -1,0 +1,270 @@
+{
+  "fecha": "2026-10-11T03:27:58.652Z",
+  "buildId": "6929c619",
+  "corrida": "59d8cb",
+  "controles": [
+    {
+      "nombre": "Identidad exacta del informe",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Veinte casos correctos y resultado completo",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "UUIDs A y B distintos",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Inventario inicial vacío y prefijos ausentes",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Cuatro PUT con 201",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Cuatro claves exactamente propias",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Presupuesto y simultaneidad informados respetados",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Duplicado del resumen de carga coincide",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Tres muestras y conteos del nivel 1",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "HIT/MISS, errores y máximos del nivel 1",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Tres muestras y conteos del nivel 5",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "HIT/MISS, errores y máximos del nivel 5",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Tres muestras y conteos del nivel 10",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "HIT/MISS, errores y máximos del nivel 10",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Dos lecturas frías y 300 calientes",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Retirada reevaluada independientemente",
+      "ok": true,
+      "detalle": {
+        "conclusion": "acreditada",
+        "resultados": [
+          {
+            "nombre": "B: GET de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+            "veredicto": "ok",
+            "pop": "MIA"
+          },
+          {
+            "nombre": "B: HEAD de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+            "veredicto": "ok",
+            "pop": "MIA"
+          },
+          {
+            "nombre": "B: If-None-Match con el ETag antiguo de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+            "veredicto": "ok",
+            "pop": "MIA"
+          },
+          {
+            "nombre": "B: GET de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+            "veredicto": "ok",
+            "pop": "MIA"
+          },
+          {
+            "nombre": "B: HEAD de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+            "veredicto": "ok",
+            "pop": "MIA"
+          },
+          {
+            "nombre": "B: If-None-Match con el ETag antiguo de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+            "veredicto": "ok",
+            "pop": "MIA"
+          }
+        ]
+      }
+    },
+    {
+      "nombre": "ETags calientes iguales a los de referencia",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Ambas variantes calientes en MIA y seis 404 desde MIA",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Control B tras borrar A registrado correctamente",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Limpieza confirmada, un borrado de limpieza, sin pendientes",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Marca actual del alias",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "SW coincide con la revisión publicada",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Inventario actual completo y vacío",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Ninguna clave de A o B pendiente actualmente",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "URL eliminada responde 404 ahora A/m",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "URL eliminada responde 404 ahora A/g",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "URL eliminada responde 404 ahora B/m",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "URL eliminada responde 404 ahora B/g",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Auditor solo GET y un login QA",
+      "ok": true,
+      "detalle": {}
+    }
+  ],
+  "casos": 29,
+  "fallos": 0,
+  "retiradaReevaluada": {
+    "conclusion": "acreditada",
+    "resultados": [
+      {
+        "nombre": "B: GET de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      },
+      {
+        "nombre": "B: HEAD de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      },
+      {
+        "nombre": "B: If-None-Match con el ETag antiguo de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      },
+      {
+        "nombre": "B: GET de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      },
+      {
+        "nombre": "B: HEAD de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      },
+      {
+        "nombre": "B: If-None-Match con el ETag antiguo de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    ]
+  },
+  "peticiones": [
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/sw.js"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "POST",
+      "ruta": "/auth/v1/token"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET",
+      "ruta": "/v1/inventario/fotos-galeria"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/e48955b8-2837-4a30-903b-1d67a311bcb1/m.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/e48955b8-2837-4a30-903b-1d67a311bcb1/g.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/bffd54a1-14c7-4ebf-9e60-3638b9c2cdf3/m.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/bffd54a1-14c7-4ebf-9e60-3638b9c2cdf3/g.webp"
+    }
+  ],
+  "inventarioActual": {
+    "objetos": [],
+    "cursor": null
+  },
+  "limites": "No se repite la carga. El informe no incluye las 302 observaciones individuales; los percentiles completos no se pueden recalcular. Los 404 posteriores solo corroboran estado actual. El control de B original solo lee m. No mide CPU/cuota."
+}

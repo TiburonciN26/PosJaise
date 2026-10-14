@@ -1,0 +1,59 @@
+{
+  "descripcion": "Fase 10A · presupuestos de rendimiento de LABORATORIO (Chromium, Supabase Local, réplica de pruebas). Cada límite parte de la medición «después» aceptada de su fase, con margen para el ruido de la máquina; no son LCP/INP/CLS de usuarios reales (eso se mide en 10B con datos de campo). Un presupuesto que falla bloquea la aprobación 10A salvo justificación revisada por Codex.",
+  "cupones_reposo": {
+    "fuente": "docs/evidencia-rendimiento/fase-1/despues.json (mediana TaskDuration 33–152 ms por 2,5 s con CPU 4×; antes ~2.500 ms)",
+    "medidor": "scripts/medir-cupones-reposo.cjs",
+    "mediana_task_ms_max": 400,
+    "animaciones_activas_max": 10,
+    "mayor_tarea_larga_ms_max": 100
+  },
+  "busqueda_amplia": {
+    "fuente": ".codex/evidencia-fase4/despues-replica-miles.json (réplica de miles: 1.402 nodos, 11 tarjetas, 1 imagen en carga, evento de búsqueda ≤ 56 ms, 1 pedido por búsqueda)",
+    "medidor": "scripts/medir-catalogos-fase4.cjs",
+    "nodos_dom_max": 2500,
+    "tarjetas_montadas_max": 60,
+    "imagenes_en_carga_max": 24,
+    "bytes_catalogo_carga_max": 60000,
+    "busqueda_evento_max_ms": 200,
+    "busqueda_pedidos_catalogo_max": 3,
+    "busqueda_encuentra_objetivo": true
+  },
+  "datos_iniciales": {
+    "fuente": ".codex/evidencia-fase5/despues.json (listas admin ≤ 1.359 nodos y ≤ 22,9 KB; 0 duplicadas; ≤ 1 canal Realtime)",
+    "medidor": "scripts/medir-fase5.cjs",
+    "nodos_max": 2500,
+    "bytes_max": 60000,
+    "duplicadas_max": 0,
+    "canales_realtime_max": 1,
+    "tarea_larga_max_ms": 250
+  },
+  "sesion_larga": {
+    "fuente": ".codex/evidencia-fase6/despues-v3.json (6 pantallas montadas, heap tras GC ~9 MB, reposo en Ventas rAF 0/s y 0,2 temporizadores/s)",
+    "medidor": "scripts/medir-fase6.cjs",
+    "pantallas_montadas_max": 8,
+    "heap_tras_gc_mb_max": 20,
+    "crecimiento_heap_ciclo2_a_3_mb_max": 1.5,
+    "crecimiento_nodos_ciclo2_a_3_max": 400,
+    "reposo_raf_por_seg_max": 1,
+    "reposo_temporizadores_por_seg_max": 10,
+    "reposo_tarea_ms_por_seg_max": 10
+  },
+  "movimiento_reducido": {
+    "fuente": "Fases 1 y 6 (prefers-reduced-motion: sin animación continua)",
+    "medidor": "scripts/fase10a/medir-vitales-10a.cjs (escenario movimiento-reducido)",
+    "raf_por_seg_max": 1,
+    "animaciones_en_curso_max": 0
+  },
+  "vitales_laboratorio": {
+    "fuente": "Metas de producto del plan (LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1 en p75 de campo); aquí solo control de laboratorio: CPU 4×, red 4G lenta simulada (150 ms RTT, 1,6 Mbps), 3 muestras frías y 3 calientes, mediana",
+    "medidor": "scripts/fase10a/medir-vitales-10a.cjs",
+    "lcp_ms_max": 2500,
+    "cls_max": 0.1,
+    "interaccion_ms_max": 200
+  },
+  "fotos": {
+    "fuente": "Fase 4 (fotos por tarjeta visible, sin descargar el catálogo completo) y Fase 8 (Inicio)",
+    "medidor": "scripts/medir-catalogos-fase4.cjs (imagenesCarga) y scripts/verificar-catalogos-fotos-sesion.cjs (funcional)",
+    "imagenes_en_carga_max": 24
+  }
+}

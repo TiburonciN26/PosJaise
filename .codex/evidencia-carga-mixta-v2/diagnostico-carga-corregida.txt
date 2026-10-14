@@ -1,0 +1,38 @@
+import fs from 'node:fs'
+import {createRequire} from 'node:module'
+const require=createRequire(import.meta.url)
+const {ejecutarEnsayoCarga}=require('C:/WedJaiseReact/scripts/lib/ensayo-carga-flujo.cjs')
+const ids={A:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',B:'ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee'}
+const destino='fotos-galeria',pre=g=>destino+'/'+ids[g]+'/',ajena='fotos-galeria/00000000-0000-4000-8000-000000000001/m.webp'
+const bytes={m:Buffer.from('miniatura'),g:Buffer.from('detalle')}
+const resultados=[]
+for(const modo of ['sano-con-objeto-ajeno','conflicto-inicial-A','conflicto-inicial-B','primer-PUT-respuesta-perdida','409-tardio-en-B-g','ETag-ausente-en-carga']){
+  const initial=[ajena];if(modo==='conflicto-inicial-A')initial.push(pre('A')+'m.webp');if(modo==='conflicto-inicial-B')initial.push(pre('B')+'g.webp')
+  const objects=new Map(initial.map(k=>[k,Buffer.from('preexistente')]))
+  const ops=[],vistos=new Set();let lecturas=0
+  const deps={espera:async()=>{},fabricarWebp:async n=>n===64?bytes.m:bytes.g,inventario:async()=>new Set(objects.keys()),subir:async(g,v,b)=>{
+    const k=pre(g)+v+'.webp';ops.push({metodo:'PUT',grupo:g,variante:v})
+    if(modo==='409-tardio-en-B-g'&&g==='B'&&v==='g')objects.set(k,Buffer.from('ajeno-tardio'))
+    if(objects.has(k))return 409
+    objects.set(k,b);if(modo==='primer-PUT-respuesta-perdida')throw Error('respuesta perdida ficticia');return 201
+  },borrarPrefijo:async p=>{ops.push({metodo:'DELETE',prefijo:p});for(const k of objects.keys())if(k.startsWith(p))objects.delete(k);return 200},leerUrl:async({grupo,variante,metodo='GET',headers={}})=>{
+    lecturas++;const k=pre(grupo)+variante+'.webp';const h={estado:objects.has(k)?200:404,medios:vistos.has(k)?'HIT':'MISS',pop:'MIA',etag:'"'+variante+'"',cache:objects.has(k)?'public, max-age=0, must-revalidate':'no-store',nosniff:'nosniff',robots:'noindex',ms:1}
+    if(!objects.has(k))return {...h,bytes:Buffer.alloc(0)}
+    const cond=!!headers['If-None-Match'];if(cond)h.estado=304
+    if(metodo==='GET')vistos.add(k)
+    if(modo==='ETag-ausente-en-carga'&&lecturas===3)h.etag=null
+    return {...h,bytes:metodo==='HEAD'||cond?Buffer.alloc(0):objects.get(k)}
+  }}
+  const r=await ejecutarEnsayoCarga({ids,destino,deps})
+  const conflictos=modo==='conflicto-inicial-A'||modo==='conflicto-inicial-B'
+  let ok=objects.get(ajena)?.toString()==='preexistente'
+  if(modo==='sano-con-objeto-ajeno')ok&&=r.completa&&r.estadoFinalConfirmado&&objects.size===1&&r.carga.lecturas===302&&r.carga.porMuestra.length===9
+  else if(conflictos)ok&&=!r.completa&&r.estadoFinalConfirmado&&ops.length===0&&objects.size===initial.length
+  else if(modo==='409-tardio-en-B-g')ok&&=!r.completa&&!r.estadoFinalConfirmado&&r.pendientes.length===1&&objects.get(pre('B')+'g.webp')?.toString()==='ajeno-tardio'&&!ops.some(o=>o.metodo==='DELETE'&&o.prefijo===pre('B'))
+  else ok&&=!r.completa&&r.estadoFinalConfirmado&&objects.size===1
+  resultados.push({modo,ok,completa:r.completa,estadoFinalConfirmado:r.estadoFinalConfirmado,error:r.error,pendientes:r.pendientes,operaciones:ops,clavesFinales:[...objects.keys()],lecturasCarga:r.carga?.lecturas??0})
+}
+const informe={fecha:new Date().toISOString(),sinRed:true,alcance:'Flujo exportado real, dependencias de Worker/lecturas en memoria; fuente ajena inicial conservada. No CLI completo ni autenticación.',casos:resultados.length,fallos:resultados.filter(x=>!x.ok).length,resultados}
+fs.writeFileSync(new URL('./diagnostico-carga-corregida.json',import.meta.url),JSON.stringify(informe,null,2),{flag:'wx'})
+console.log(JSON.stringify({casos:informe.casos,fallos:informe.fallos,resultados:resultados.map(({operaciones,clavesFinales,...r})=>r)},null,2))
+if(informe.fallos)process.exitCode=1

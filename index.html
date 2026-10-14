@@ -23,7 +23,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
     />
-    <meta name="theme-color" content="#0d0d0d" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="color-scheme" content="dark light" />
     <script>
       // Bloqueante a propósito, antes que cualquier CSS/JS del bundle: sin
       // esto, la página pintaría un instante en oscuro (o claro) y recién
@@ -42,7 +43,7 @@
         document.documentElement.dataset.tema = tema
         document
           .querySelector('meta[name="theme-color"]')
-          ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0d0d0d')
+          ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0a0a0a')
       })()
     </script>
     <meta name="mobile-web-app-capable" content="yes" />

@@ -1,0 +1,97 @@
+{
+  "fecha": "2026-10-12T17:47:24.256Z",
+  "localVerificado": true,
+  "referencias": 577,
+  "objetos": 441,
+  "columnas": [
+    {
+      "tabla": "asistentes",
+      "columna": "foto_url",
+      "filas": 12,
+      "noNulos": 3
+    },
+    {
+      "tabla": "citas",
+      "columna": "comprobante_url",
+      "filas": 299,
+      "noNulos": 46
+    },
+    {
+      "tabla": "clientes",
+      "columna": "foto_url",
+      "filas": 4749,
+      "noNulos": 0
+    },
+    {
+      "tabla": "estado_negocio",
+      "columna": "plin_qr_url",
+      "filas": 1,
+      "noNulos": 0
+    },
+    {
+      "tabla": "estado_negocio",
+      "columna": "yape_qr_url",
+      "filas": 1,
+      "noNulos": 1
+    },
+    {
+      "tabla": "galeria_web",
+      "columna": "antes_url",
+      "filas": 39,
+      "noNulos": 39
+    },
+    {
+      "tabla": "galeria_web",
+      "columna": "despues_url",
+      "filas": 39,
+      "noNulos": 39
+    },
+    {
+      "tabla": "mobiliario",
+      "columna": "foto_url",
+      "filas": 43,
+      "noNulos": 0
+    },
+    {
+      "tabla": "pedidos_web",
+      "columna": "comprobante_url",
+      "filas": 429,
+      "noNulos": 429
+    },
+    {
+      "tabla": "producto_fotos",
+      "columna": "foto_url",
+      "filas": 0,
+      "noNulos": 0
+    },
+    {
+      "tabla": "productos",
+      "columna": "foto_url",
+      "filas": 3245,
+      "noNulos": 16
+    },
+    {
+      "tabla": "servicio_fotos",
+      "columna": "foto_url",
+      "filas": 2,
+      "noNulos": 2
+    },
+    {
+      "tabla": "servicios",
+      "columna": "foto_url",
+      "filas": 3340,
+      "noNulos": 1
+    },
+    {
+      "tabla": "usuarios",
+      "columna": "foto_url",
+      "filas": 36,
+      "noNulos": 1
+    }
+  ],
+  "auditoria": 25965,
+  "qaProductos": 0,
+  "qaServicios": 0,
+  "qaGaleria": 0,
+  "hashValoresSoloParaComparar": "71e4af5de1d2b8af0f6fc7dd0613e2151569f10615653671b505ecb0784f165c"
+}

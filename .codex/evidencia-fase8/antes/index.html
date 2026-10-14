@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- El favicon.svg original era un rayo genérico (ni siquiera el logo
+         real) — reemplazado por el logo real, generado a los tamaños que
+         cada contexto necesita: favicon.ico como fallback clásico (algunos
+         navegadores lo piden en /favicon.ico sin importar los <link> de
+         acá), 16/32 para la pestaña en PC, y el apple-touch-icon a 512
+         para cuando se agrega a la pantalla de inicio en iOS. -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <!-- interactive-widget=resizes-visual (el default): al abrir el teclado
+         SOLO se encoge el viewport visual, no el layout — así los elementos
+         position:fixed con bottom:0 (el panel de cobro en Ventas) se quedan
+         anclados al fondo físico de la pantalla y el teclado los tapa, en vez
+         de "subir" por encima del teclado y tapar el resto de la pantalla al
+         buscar un producto. (Con resizes-content el layout se encogía y el
+         panel subía completo — no era lo que se quería.) -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
+    />
+    <meta name="theme-color" content="#0d0d0d" />
+    <script>
+      // Bloqueante a propósito, antes que cualquier CSS/JS del bundle: sin
+      // esto, la página pintaría un instante en oscuro (o claro) y recién
+      // React, ya montado, corregiría al tema guardado — un parpadeo
+      // visible. Misma clave/lógica que ThemeContext.jsx (temaInicial) —
+      // si se cambia acá, cambiar también allá. Va después del <meta
+      // theme-color> de arriba porque necesita que ya exista en el DOM.
+      ;(function () {
+        var guardado = localStorage.getItem('pos-jaise-tema')
+        var tema =
+          guardado === 'claro' || guardado === 'oscuro'
+            ? guardado
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'claro'
+              : 'oscuro'
+        document.documentElement.dataset.tema = tema
+        document
+          .querySelector('meta[name="theme-color"]')
+          ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0d0d0d')
+      })()
+    </script>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Pos Jaise Beauty Academy" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&family=Outfit:wght@600&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Pos Jaise Beauty Academy</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Decodifica la ruta codificada por public/404.html y la restaura con
+      // history.replaceState antes de que React Router monte — ver ese
+      // archivo para el porqué (fallback de SPA en GitHub Pages).
+      ;(function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&')
+            })
+            .join('?')
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash)
+        }
+      })(window.location)
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

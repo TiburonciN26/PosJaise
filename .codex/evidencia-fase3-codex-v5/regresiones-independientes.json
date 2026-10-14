@@ -1,0 +1,148 @@
+{
+  "fecha": "2026-10-10T03:28:23.889Z",
+  "entorno": "Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión",
+  "total": 11,
+  "fallos": 0,
+  "casos": [
+    {
+      "nombre": "estadoFila distingue coincide",
+      "resultado": {
+        "estado": "coincide",
+        "fila": {
+          "id": "cuatro-estados",
+          "titulo": "QA original"
+        }
+      },
+      "ok": true
+    },
+    {
+      "nombre": "estadoFila distingue difiere",
+      "resultado": {
+        "estado": "difiere",
+        "fila": {
+          "id": "cuatro-estados",
+          "titulo": "QA original"
+        }
+      },
+      "ok": true
+    },
+    {
+      "nombre": "estadoFila distingue ausente",
+      "resultado": {
+        "estado": "ausente",
+        "fila": null
+      },
+      "ok": true
+    },
+    {
+      "nombre": "estadoFila: GET fallido es desconocido, no ausente",
+      "resultado": {
+        "estado": "desconocido",
+        "fila": null
+      },
+      "ok": true
+    },
+    {
+      "nombre": "GALERÍA: bloqueo de las dos fotos, título, orden y visibilidad; recuperación habilita todo y emite un solo éxito",
+      "blocked": [
+        {
+          "type": "file",
+          "disabled": true
+        },
+        {
+          "type": "file",
+          "disabled": true
+        },
+        {
+          "type": "search",
+          "disabled": true
+        },
+        {
+          "type": "number",
+          "disabled": true
+        },
+        {
+          "type": "button",
+          "disabled": true
+        }
+      ],
+      "notice": true,
+      "pendingEvents": 0,
+      "enabled": true,
+      "events": 1,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 parcial despues: fila existente conserva ambas referencias tras rechazo y cambio de una foto",
+      "blockedBefore": true,
+      "rows": 1,
+      "dbUnchanged": true,
+      "photosRetained": [
+        true,
+        true
+      ],
+      "http": [
+        200,
+        200
+      ],
+      "events": 0,
+      "message": true,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 parcial antes: fila existente conserva ambas referencias tras rechazo y cambio de una foto",
+      "blockedBefore": true,
+      "rows": 1,
+      "dbUnchanged": true,
+      "photosRetained": [
+        true,
+        true
+      ],
+      "http": [
+        200,
+        200
+      ],
+      "events": 0,
+      "message": true,
+      "ok": true
+    },
+    {
+      "nombre": "F3-07 parcial edicion: fila existente conserva ambas referencias tras rechazo y cambio de una foto",
+      "blockedBefore": true,
+      "rows": 1,
+      "dbUnchanged": true,
+      "photosRetained": [
+        true,
+        true
+      ],
+      "http": [
+        200,
+        200
+      ],
+      "events": 0,
+      "message": true,
+      "ok": true
+    },
+    {
+      "nombre": "SERVICIO: etiqueta cambiada durante la duda se aplica por UPDATE a la misma fila/foto",
+      "rows": 1,
+      "refUnchanged": true,
+      "etiqueta": "Antes",
+      "photoExists": true,
+      "events": 1,
+      "updateCalls": 1,
+      "ok": true
+    },
+    {
+      "nombre": "aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "noSimuladas": [],
+      "supabaseNoAuth": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página en todo el recorrido",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

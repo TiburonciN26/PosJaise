@@ -1,0 +1,77 @@
+{
+  "fecha": "2026-10-10T01:34:35.700Z",
+  "branch": "feat/cloudflare-pages",
+  "head": "940510543f629df11ce80d558399c7ef32bebb68",
+  "main": "0dc629e430ed07eeaccec273d31de93e9717d9bf",
+  "node": "v24.14.1",
+  "lint": {
+    "errors": 2,
+    "warnings": 54,
+    "lines": [
+      "tests/e2e/fixtures.mjs:11:11: error react-hooks(rules-of-hooks): React Hook \"use\" is called in function \"Anonymous\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \"use\".",
+      "tests/e2e/fixtures.mjs:27:11: error react-hooks(rules-of-hooks): React Hook \"use\" is called in function \"Anonymous\" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word \"use\"."
+    ]
+  },
+  "sourceHashes": [
+    {
+      "file": "src/lib/galeriaFotos.js",
+      "sha256": "8d1b5373a57befaa7e81ac28b2a2d22405f7ff08900d4f4560dca187a9c616d8"
+    },
+    {
+      "file": "src/lib/medios.js",
+      "sha256": "abd8586e8399f0f2c3983000ff52a54d21d0daac9480688ff1647371f0f1a1f6"
+    },
+    {
+      "file": "src/lib/imagenes.js",
+      "sha256": "811a02110bc6796f3bc523431999d6aac4a2bce19b9d757850e2aff0f84cf234"
+    },
+    {
+      "file": "src/components/ModalProducto.jsx",
+      "sha256": "e01ee13871fd0270b112131133bf80f5ca790e8eac745e66e42768eb5b7c3bf7"
+    },
+    {
+      "file": "src/components/ModalServicio.jsx",
+      "sha256": "5e9dbde0284e8b470ab056adc15b073dcd81588e412ed5ab536989ec6c0cf338"
+    },
+    {
+      "file": "src/components/ModalGaleriaWeb.jsx",
+      "sha256": "b89c6d60c004ca173e59747350128bb2980d853f87e77b2d73141cc9268c3613"
+    },
+    {
+      "file": "scripts/lib/huerfanos-medios.mjs",
+      "sha256": "885712e507509347a9427663c19e85a95f6a410052b5d05fff68cfa2c6693182"
+    },
+    {
+      "file": "scripts/medios-huerfanos.mjs",
+      "sha256": "d03b1e7206405c6c90e7d49b40531570b17209565ff3b82cec72b18a0eaa7ade"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/validar-imagen.js",
+      "sha256": "c0df152ebcd22845615cd7f1bd6cc5322942d751143e916ab5256be60b2eb3fa"
+    },
+    {
+      "file": "cloudflare/medios-worker/src/index.js",
+      "sha256": "11363e0cc62e25c5423f39f5c5a765583a1c16596c8cf20f3b5866655a7dc1f5"
+    },
+    {
+      "file": "scripts/verificar-medios-r2-fase3.cjs",
+      "sha256": "f97d199b2a6f856d00e5cb80fba58fcf953f851af7cbbead02173d61114d0fb4"
+    },
+    {
+      "file": "scripts/verificar-modales-fase3.cjs",
+      "sha256": "ab1e9e91a3a8a343557d9097ac7e6c1be7392a71681f101afd84342134a3a5d7"
+    },
+    {
+      "file": "src/lib/resultadoBd.js",
+      "sha256": "305eb9fc95d413b5f2d59be7bee233c0134e581d5d4fd9c77aa66fb7984d5dd8"
+    }
+  ],
+  "rollbackCheck": "git apply -R --check: exit 0, no aplicado",
+  "adaptaciones": "Copias externas de suites; rutas, puertos, lanzadores, cache y cleanup local adaptados. Casos originales sin cambios. Reproduccion adicional separada del resultado incierto con reconciliacion inaccesible.",
+  "limitaciones": "R2 simulado. No medicion CPU Cloudflare. No escrituras remotas, migraciones, instalaciones, commit, push o recursos externos.",
+  "lintSinInformes": {
+    "errors": 2,
+    "warnings": 44
+  },
+  "lintNota": "Los 10 warnings extra del lint completo son copias de diagnostico de Codex del informe V2 en .codex; sin esa evidencia son 2 errores/44 warnings."
+}

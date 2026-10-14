@@ -1,0 +1,48 @@
+import fs from 'node:fs'
+import vm from 'node:vm'
+import {createRequire} from 'node:module'
+const require=createRequire(import.meta.url)
+const G=require('C:/WedJaiseReact/scripts/lib/guardas-interfaz-r2.cjs')
+const src=fs.readFileSync('C:/WedJaiseReact/scripts/ensayo-carga-medios.cjs','utf8').replace(/\r\n/g,'\n')
+const a=src.indexOf('    // ---- subida:')
+const b=src.indexOf('    // ---- ETag de referencia',a)
+const c=src.indexOf('    // Limpieza SOLO')
+const d=src.indexOf('    informe.completa = informe.completa &&',c)
+if([a,b,c,d].some(x=>x<0))throw Error('No se identifican bloques del CLI')
+const subida=src.slice(a,b),limpieza=src.slice(c,d)
+const GRUPOS={A:'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',B:'ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee'}
+const oldKey='fotos-galeria/'+GRUPOS.A+'/m.webp'
+const resultados=[]
+for(const modo of ['sano','primer-PUT-confirmado-respuesta-perdida','409-objeto-inicial','inventario-final-caido']){
+  const objetos=new Map(modo==='409-objeto-inicial'?[[oldKey,Buffer.from('foto-anterior')]]:[])
+  const baseClaves=new Set(objetos.keys())
+  const operaciones=[];const casos=[];const informe={}
+  const inventario=async()=>{
+    if(modo==='inventario-final-caido'&&operaciones.some(x=>x.metodo==='DELETE'))throw Error('inventario caído ficticio')
+    return new Set(objetos.keys())
+  }
+  const seguro=async(u,op={})=>{
+    const method=op.method||'GET';const p=new URL(u).pathname;operaciones.push({metodo:method,ruta:p})
+    if(method==='PUT'){
+      const key=p.replace('/v1/medios/','')+'.webp'
+      if(objetos.has(key))return new Response(null,{status:409})
+      objetos.set(key,op.body)
+      if(modo==='primer-PUT-confirmado-respuesta-perdida')throw Error('respuesta perdida ficticia')
+      return new Response(null,{status:201})
+    }
+    if(method==='DELETE'){
+      const prefix=p.replace('/v1/medios/','')+'/'
+      for(const k of objetos.keys())if(k.startsWith(prefix))objetos.delete(k)
+      return new Response(null,{status:200})
+    }
+    throw Error('Método no previsto en el doble')
+  }
+  const contexto={G,GRUPOS,baseClaves,DESTINO:'fotos-galeria',WORKER:'https://qa.example',bytes:{m:Buffer.from('m'),g:Buffer.from('g')},cab:()=>({}),tokenAdmin:'qa-ficticio',inventario,seguro,informe,caso:(nombre,ok,detalle)=>casos.push({nombre,ok:Boolean(ok),detalle}),console:{log(){}}}
+  await vm.runInNewContext(`(async()=>{let subidos=false;try{${subida}}catch(e){informe.error=e.message}finally{${limpieza}}informe.intencionSubida=subidos;})()`,contexto)
+  resultados.push({modo,baseInicial:[...baseClaves],clavesFinales:[...objetos.keys()],objetoInicialConservado:baseClaves.size===0?null:objetos.has(oldKey),operaciones,limpieza:informe.limpieza,estadoFinalConfirmado:informe.estadoFinalConfirmado,error:informe.error??null})
+}
+const reproducido=resultados[2].objetoInicialConservado===false&&resultados[2].operaciones.some(o=>o.metodo==='DELETE')
+const report={fecha:new Date().toISOString(),sinRed:true,alcance:'Bloques reales de subida y finally del CLI + helper real de limpieza; inventario/Worker en memoria. UUID previstos fijados solo en el doble para ejercitar conflicto; no CLI completo.',hallazgo:'EC-02: ante PUT 409 se borra un objeto que ya estaba en el inventario inicial',reproducido,resultados}
+fs.writeFileSync(new URL('./diagnostico-limpieza.json',import.meta.url),JSON.stringify(report,null,2),{flag:'wx'})
+console.log(JSON.stringify({reproducido,resultados:resultados.map(({operaciones,...x})=>({...x,metodos:operaciones.map(o=>o.metodo)}))},null,2))
+if(!reproducido)process.exitCode=1

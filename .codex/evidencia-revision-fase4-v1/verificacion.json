@@ -1,0 +1,57 @@
+{
+  "fecha": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "datos": {
+    "entorno": "Supabase Local 127.0.0.1:54321",
+    "fallos": 0,
+    "casos": 21
+  },
+  "interfaz": {
+    "casos": 25,
+    "fallos": 0
+  },
+  "rendimiento": {
+    "muestras": 6,
+    "viewport": 1440,
+    "cpu": "4x"
+  },
+  "diagnosticos": {
+    "mutacionesReales": 0,
+    "red": "API y carrito simulados; páginas y componentes reales",
+    "reproducciones": 6
+  },
+  "lint": {
+    "advertencias": 2,
+    "errores": 0
+  },
+  "hashes": [
+    {
+      "archivo": "src/lib/catalogoPublico.js",
+      "sha256": "D45E46ADF7A79B9F5E62AA70383678A28EE00075965C151415C2353179C7130D"
+    },
+    {
+      "archivo": "src/hooks/useCatalogoPublico.js",
+      "sha256": "AD8A8A470B6632C95A5191A9BCA11676BCBC3D4ED76CE515C465D34EC317BF77"
+    },
+    {
+      "archivo": "src/components/BarraTuCarritoFlotante.jsx",
+      "sha256": "2CF9D97B2FD592D29AC6E844E91533AF6F90D768BCF61938DB3A11F7D541ADB4"
+    },
+    {
+      "archivo": "src/components/BarraTuCitaFlotante.jsx",
+      "sha256": "503FDAA7127CE1D3DE8206CBF415BCA9ABECDF8057EEE15D8D4BD2698806FA9E"
+    },
+    {
+      "archivo": "src/pages/cliente/ProductosCliente.jsx",
+      "sha256": "03884FF65D57B96C73AB9019384234B18C8BA91FA79096E466A5B61B37C29CFE"
+    },
+    {
+      "archivo": "src/pages/cliente/ServiciosCliente.jsx",
+      "sha256": "EEBF530D22DCED321F36E3991FCE7CCAA085425AA607468F5C57395F9C9B7FA8"
+    },
+    {
+      "archivo": "supabase/migrations/20261011000001_catalogo_publico_vitrina.sql",
+      "sha256": "AF62D6CE24E2D2D308056C8A4A81B3216DF481C00DFE8C5BF98226317F8DCD94"
+    }
+  ]
+}

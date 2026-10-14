@@ -1,0 +1,294 @@
+{
+  "fecha": "2026-10-11T03:39:47.549Z",
+  "buildId": "6929c619",
+  "corrida": "73159d",
+  "controles": [
+    {
+      "nombre": "Identidad exacta de corrida",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Resultado completo, 13 casos correctos",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Tres UUID distintos y precondiciones libres",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Cuatro subidas confirmadas 201",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Fila propia completa y referenciada solo a P",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Retención de 14 días y fuentes limitadas en seco",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Sin errores, abortos u omisiones en seco",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Retención de 14 días y fuentes limitadas en realAplicar",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Sin errores, abortos u omisiones en realAplicar",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Retención de 14 días y fuentes limitadas en secoFuturo",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Sin errores, abortos u omisiones en secoFuturo",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Retención de 14 días y fuentes limitadas en aplicado",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Sin errores, abortos u omisiones en aplicado",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Lectura con reloj real sin candidatos ni borrados",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Aplicar con reloj real conserva el reciente",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Reloj simulado: único candidato H",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Aplicar simulado elimina H y no P",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Objeto reciente según fechas de evidencia",
+      "ok": true,
+      "detalle": {
+        "deltaMs": 27904,
+        "nota": "Consistencia temporal, no envejecimiento real de 15 días"
+      }
+    },
+    {
+      "nombre": "Tras el borrado quedan solo m/g del protegido",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Resumen de seco coincide con su caso",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Resumen de realAplicar coincide con su caso",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Resumen de secoFuturo coincide con su caso",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Resumen de aplicado coincide con su caso",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Limpieza y filas idénticas sin diferencias registradas",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Alias sigue sirviendo 6929c619",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "SW mantiene identidad del deployment revisado",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Sin referencias pendientes propias en productos",
+      "ok": true,
+      "detalle": {
+        "filasLeidas": 6
+      }
+    },
+    {
+      "nombre": "Sin referencias pendientes propias en producto_fotos",
+      "ok": true,
+      "detalle": {
+        "filasLeidas": 0
+      }
+    },
+    {
+      "nombre": "Sin referencias pendientes propias en servicios",
+      "ok": true,
+      "detalle": {
+        "filasLeidas": 3
+      }
+    },
+    {
+      "nombre": "Sin referencias pendientes propias en servicio_fotos",
+      "ok": true,
+      "detalle": {
+        "filasLeidas": 0
+      }
+    },
+    {
+      "nombre": "Sin referencias pendientes propias en galeria_web",
+      "ok": true,
+      "detalle": {
+        "filasLeidas": 1
+      }
+    },
+    {
+      "nombre": "Fila propia ausente y histórica conservada",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Inventario actual completo y vacío",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Objeto propio retirado responde 404 P/m",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Objeto propio retirado responde 404 P/g",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Objeto propio retirado responde 404 H/m",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Objeto propio retirado responde 404 H/g",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Auditor solo GET y un login QA",
+      "ok": true,
+      "detalle": {}
+    }
+  ],
+  "casos": 38,
+  "fallos": 0,
+  "peticiones": [
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/sw.js"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "POST",
+      "ruta": "/auth/v1/token"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/productos"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/producto_fotos"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/servicios"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/servicio_fotos"
+    },
+    {
+      "origen": "https://tqkdtojnhgykmcbvwdmz.supabase.co",
+      "metodo": "GET",
+      "ruta": "/rest/v1/galeria_web"
+    },
+    {
+      "origen": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+      "metodo": "GET",
+      "ruta": "/v1/inventario/fotos-galeria"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/3381083f-991c-4016-bdf1-b14fbb3f2269/m.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/3381083f-991c-4016-bdf1-b14fbb3f2269/g.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0/m.webp"
+    },
+    {
+      "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "metodo": "GET",
+      "ruta": "/medios/fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0/g.webp"
+    }
+  ],
+  "filasGaleriaActual": [
+    {
+      "id": "4ab5c994-9bb1-40bf-b5ff-186d45603781",
+      "titulo": "Foto de prueba (Inicio)",
+      "antes_url": "inicio-web/hero-antes-referencia.jpg",
+      "despues_url": "inicio-web/hero-despues-referencia.jpg",
+      "orden": 0,
+      "activo": true
+    }
+  ],
+  "inventarioActual": {
+    "objetos": [],
+    "cursor": null
+  },
+  "nota": "Auditoría de evidencia y lectura posterior, no segunda ejecución. No se crean ni borran filas u objetos. Los 404 no son una nueva prueba de copia caliente o POP."
+}

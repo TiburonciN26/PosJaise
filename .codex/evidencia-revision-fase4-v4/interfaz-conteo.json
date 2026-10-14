@@ -1,0 +1,122 @@
+{
+  "fecha": "2026-10-11T08:06:34.636Z",
+  "nota": "Componentes y páginas reales servidos por Vite; contexto de carrito y API simulados en navegador. Cero mutaciones de BD.",
+  "casos": [
+    {
+      "name": "F4-06: metadatos truncados con 1001 categorías",
+      "data": {
+        "categorias": 1001,
+        "ultimaDisponible": "CATEGORIA 1000\n· 1",
+        "paginador": "«\nPágina 1 de 101\n»\n\n1–10 de 1001 categorías",
+        "esperado": "1001 categorías y 101 ventanas, incluida Categoria 1000"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-06: metadatos de servicios truncados con 1001 categorías",
+      "data": {
+        "categorias": 1001,
+        "ultimaDisponible": "CATEGORIA 1000\n· 1",
+        "paginador": "«\nPágina 1 de 101\n»\n\n1–10 de 1001 categorías",
+        "esperado": "1001 categorías y 101 ventanas"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-06b: productos, conteo ausente en tramo 0",
+      "data": {
+        "antes": {
+          "alerta": "No se pudo cargar el catálogo de productos.\n\nReintentar",
+          "tarjetas": 0,
+          "selectorCategorias": 0
+        },
+        "despues": {
+          "categorias": 1001,
+          "paginador": "«\nPágina 1 de 101\n»\n\n1–10 de 1001 categorías",
+          "alertas": 0
+        },
+        "ok": true
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "conteoSano": true
+      }
+    },
+    {
+      "name": "F4-06b: productos, conteo ausente en tramo 500",
+      "data": {
+        "antes": {
+          "alerta": "No se pudo cargar el catálogo de productos.\n\nReintentar",
+          "tarjetas": 0,
+          "selectorCategorias": 0
+        },
+        "despues": {
+          "categorias": 1001,
+          "paginador": "«\nPágina 1 de 101\n»\n\n1–10 de 1001 categorías",
+          "alertas": 0
+        },
+        "ok": true
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "conteoSano": true
+      }
+    },
+    {
+      "name": "F4-06b: servicios, conteo ausente en tramo 0",
+      "data": {
+        "antes": {
+          "alerta": "No se pudo cargar el catálogo de servicios.\n\nReintentar",
+          "tarjetas": 0,
+          "selectorCategorias": 0
+        },
+        "despues": {
+          "categorias": 1001,
+          "paginador": "«\nPágina 1 de 101\n»\n\n1–10 de 1001 categorías",
+          "alertas": 0
+        },
+        "ok": true
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "conteoSano": true
+      }
+    },
+    {
+      "name": "F4-06b: servicios, conteo ausente en tramo 500",
+      "data": {
+        "antes": {
+          "alerta": "No se pudo cargar el catálogo de servicios.\n\nReintentar",
+          "tarjetas": 0,
+          "selectorCategorias": 0
+        },
+        "despues": {
+          "categorias": 1001,
+          "paginador": "«\nPágina 1 de 101\n»\n\n1–10 de 1001 categorías",
+          "alertas": 0
+        },
+        "ok": true
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "conteoSano": true
+      }
+    }
+  ]
+}

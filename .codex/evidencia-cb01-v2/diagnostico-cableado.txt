@@ -1,0 +1,52 @@
+import fs from 'node:fs'
+import vm from 'node:vm'
+import path from 'node:path'
+import {createRequire} from 'node:module'
+import {manejarMedios} from 'file:///C:/WedJaiseReact/cloudflare/medios-pages/entrega.js'
+const require=createRequire(import.meta.url)
+const R=require('C:/WedJaiseReact/scripts/lib/retirada-b.cjs')
+const source=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-medios-pages-cache.cjs','utf8').replace(/\r\n/g,'\n')
+const a=source.indexOf('    const calientes = { m: null, g: null }')
+const b=source.indexOf('    const del = await seguro',a)
+const c=source.indexOf("    if (CONTRATO === 'b') {",source.indexOf('    const retenido =',b))
+const d=source.indexOf('    // ---- 8. expiración ----',c)
+const e=source.indexOf('    informe.completa = CONTRATO ===')
+const f=source.indexOf('    informe.completa = informe.completa &&')
+const g=source.indexOf('\n  }\n})()',f)
+if([a,b,c,d,e,f,g].some(x=>x<0))throw Error('No se identifican secciones del CLI')
+const calentar=source.slice(a,b)
+const retirada=source.slice(c,d)
+const completa=source.slice(e,source.indexOf('\n',e))
+const terminar=source.slice(f,g)
+const ruta='https://qa.example/medios/fotos-galeria/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
+const m=Buffer.from([1,2,3]);const imgG=Buffer.from([4,5,6,7]);const resultados=[]
+async function ejecutar(nombre,{revocar,popPosterior='MIA',sinHitG=false,gCondOtroPop=false,limpiezaConfirmada=true}){
+  let vivo=true,calentando=true
+  const maps={MIA:new Map(),SCL:new Map()}
+  const r2={async get(k){const buf=k.endsWith('m.webp')?m:imgG;return vivo?{httpEtag:k.endsWith('m.webp')?'"m"':'"g"',async arrayBuffer(){return buf.buffer.slice(buf.byteOffset,buf.byteOffset+buf.byteLength)}}:null},async head(k){return vivo?{httpEtag:k.endsWith('m.webp')?'"m"':'"g"'}:null}}
+  const casos=[];const proceso={};let informeGuardado=null
+  const cache=p=>({async match(q){if(calentando&&sinHitG&&q.url.endsWith('g.webp'))return undefined;return maps[p].get(q.url)?.clone()},async put(q,r){maps[p].set(q.url,r.clone())},async delete(q){return maps[p].delete(q.url)}})
+  const pedir=async(v,init={})=>{
+    const pop=calentando?'MIA':(gCondOtroPop&&v==='g'&&init.headers?.['If-None-Match']?'SCL':popPosterior)
+    const espera=[];const r=await manejarMedios(new Request(ruta+'/'+v+'.webp',init),{MEDIOS:r2},{waitUntil(p){espera.push(p)}},{cache:cache(pop),revocar})
+    await Promise.all(espera);const h=new Headers(r.headers);h.set('CF-Ray','sim-'+pop)
+    return new Response(r.body,{status:r.status,headers:h})
+  }
+  const cabeceras=r=>({etag:r.headers.get('etag'),medios:r.headers.get('x-medios-cache'),cache:r.headers.get('cache-control'),nosniff:r.headers.get('x-content-type-options'),robots:r.headers.get('x-robots-tag'),ray:r.headers.get('cf-ray')})
+  const contexto={R,Buffer,m,g:imgG,CONTRATO:'b',informe:{completa:false,estadoFinalConfirmado:limpiezaConfirmada,casos},casos,pedir,cabeceras,pop:h=>h.ray?.split('-')[1]??null,igualesBytes:(a,b)=>a.length===b.length&&Buffer.compare(a,b)===0,espera:async()=>{},caso:(nombre,ok,detalle={})=>casos.push({nombre,ok:Boolean(ok),detalle}),borrarFicticio(){vivo=false;calentando=false},hh1:{etag:'"m"'},comunes:h=>h.nosniff==='nosniff'&&h.robots==='noindex',fs:{mkdirSync(){},writeFileSync(p,t){informeGuardado=JSON.parse(t)}},path,ID_EJECUCION:'sin-red',SALIDA:'no-se-escribe-en-disco',process:proceso,console:{log(){}}}
+  const programa=`(async()=>{${calentar}\nborrarFicticio(); const tras=await pedir('m'); const th=cabeceras(tras); const retenido=tras.status===200&&th.medios==='HIT'; ${retirada}\n${completa}\n${terminar}})()`
+  await vm.runInNewContext(programa,contexto)
+  resultados.push({nombre,opcionReal:revocar?'B':'A',popPosterior,conclusion:informeGuardado.retirada.conclusion,completa:informeGuardado.completa,exit:proceso.exitCode,retencion:informeGuardado.retencionObservada,calientes:informeGuardado.retirada.calientes,fallos:informeGuardado.resumen.fallos})
+}
+await ejecutar('A mismo POP: fallo y exit 1',{revocar:false})
+await ejecutar('CB-01 A POP frío distinto: inconclusa y exit 1',{revocar:false,popPosterior:'SCL'})
+await ejecutar('B mismo POP: acreditada y exit 0',{revocar:true})
+await ejecutar('B sin HIT de g: inconclusa y exit 1',{revocar:true,sinHitG:true})
+await ejecutar('B condicional de g cambia POP: inconclusa y exit 1',{revocar:true,gCondOtroPop:true})
+await ejecutar('B acreditada pero limpieza no confirmada: completa false y exit 1',{revocar:true,limpiezaConfirmada:false})
+const expected=[['fallida',false,1],['inconclusa',false,1],['acreditada',true,0],['inconclusa',false,1],['inconclusa',false,1],['acreditada',false,1]]
+const checks=resultados.map((r,i)=>({nombre:r.nombre,ok:r.conclusion===expected[i][0]&&r.completa===expected[i][1]&&r.exit===expected[i][2]}))
+const informe={fecha:new Date().toISOString(),alcance:'Secciones reales del CLI: calentamiento, evaluación, completa y salida. Dobles de R2/Cache/espera/escritura de informe; sin red, env ni autenticación. No es el CLI completo.',checks,fallos:checks.filter(x=>!x.ok).length,resultados}
+fs.writeFileSync(new URL('./diagnostico-cableado.json',import.meta.url),JSON.stringify(informe,null,2),{flag:'wx'})
+console.log(JSON.stringify({checks,fallos:informe.fallos,resultados:resultados.map(({calientes,...x})=>x)},null,2))
+if(informe.fallos)process.exitCode=1

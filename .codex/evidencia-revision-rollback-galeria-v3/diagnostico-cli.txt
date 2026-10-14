@@ -1,0 +1,60 @@
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');const{pathToFileURL}=require('node:url');
+const ROOT='C:/WedJaiseReact',G=require(ROOT+'/scripts/lib/guardas-interfaz-r2.cjs');
+const original=fs.readFileSync(ROOT+'/scripts/ensayo-rollback-galeria-pages.cjs','utf8');
+const source=original.replace(/const U = await import[^\n]+/,'const U = urlsModule').replace("const { clasificarClave } = await import('./lib/entornos-supabase.mjs')",'const {clasificarClave}=authModule');assert.notEqual(source,original);
+const A='00000000-0000-4000-8000-000000000001',D='00000000-0000-4000-8000-000000000002',OWN='00000000-0000-4000-8000-000000000003',OLD='00000000-0000-4000-8000-000000000007';
+const TITLE='QA rollback a1b2c3 (borrar)',PAGES=G.ALIAS_APROBADO+'/medios';
+const dataUrl=(id)=>PAGES+'/fotos-galeria/'+id+'/g.webp';
+async function run(op,authModule,urlsModule){
+ const filas=op.colision?[{id:OLD,titulo:TITLE,antes_url:dataUrl(OLD),despues_url:dataUrl(OLD),orden:9999,activo:false}]:[];
+ const base=structuredClone(filas),objects=new Map(),events=[];let jsonOut,deletedRow=false,uuid=0,putCount=0;
+ const proc={argv:['node','script',`--build-id=${op.marcaIncorrecta?'11111111':'7ee3c78e'}`,...(op.objetos?['--con-objetos']:[]),...(op.sinSalida?[]:['--salida=C:/ficticio/informe.json'])],exitCode:undefined};
+ const response=(v,status=200)=>new Response(JSON.stringify(v),{status,headers:{'content-type':'application/json'}});
+ const snapshot=()=>structuredClone(filas).sort((a,b)=>a.id.localeCompare(b.id));
+ const bundle=`function a(){return{proveedor:\`r2\`,apiUrl:t(\`${G.WORKER_APROBADO}\`),publicUrl:t(\`${PAGES}\`)}}var b=()=>q(a().publicUrl,\`${G.PUBLICO_APROBADO}\`);`;
+ const fetchFake=async(raw,init={})=>{
+  const u=new URL(raw),method=init.method||'GET';events.push({origin:u.origin,path:u.pathname,method,query:u.search,prefer:init.headers?.Prefer});
+  if(u.pathname==='/auth/v1/token')return response({access_token:'TOKEN-FICTICIO'});
+  if(u.pathname==='/rest/v1/galeria_web'){
+   if(method==='GET'){if(deletedRow&&op.relecturaCaida)return response({},503);const rows=snapshot();const total=op.parcial?rows.length+1:rows.length;const h={'content-type':'application/json'};if(!op.sinCount)h['content-range']=`${rows.length?'0-'+(rows.length-1):'*'}/${total}`;return new Response(JSON.stringify(rows),{status:200,headers:h});}
+   if(method==='POST'){
+    if(op.insertRechazado)return response({error:'rechazo ficticio, sin commit'},op.insertRechazado);
+    const f={id:OWN,...JSON.parse(init.body)};filas.push(f);
+    if(op.insertPerdido){if(op.cambioTitulo)f.titulo='Título editado ficticio';if(op.cambioActivo)f.activo=true;if(op.cambioOrden)f.orden=99;throw new Error('respuesta INSERT perdida (commit simulado)');}
+    return response([structuredClone(f)],201);
+   }
+   const id=u.searchParams.get('id')?.replace(/^eq\./,'');const f=filas.find(f=>f.id===id);
+   if(method==='PATCH'){if(op.patch403)return response({error:'rechazo'},403);if(f&&(!u.searchParams.get('titulo')||u.searchParams.get('titulo')==='eq.'+f.titulo))Object.assign(f,JSON.parse(init.body));return response(f?[structuredClone(f)]:[]);}
+   if(method==='DELETE'){if(op.deleteSinEfecto)return new Response(null,{status:204});const i=filas.findIndex(f=>f.id===id);if(i>=0){filas.splice(i,1);deletedRow=true;}return new Response(null,{status:204});}
+  }
+  if(u.pathname.startsWith('/v1/inventario/')){if(op.invModo&&putCount>0){if(op.invModo==='red')throw new Error('inventario ficticio caído');if(op.invModo==='cursor')return response({objetos:[],cursor:'otra-pagina'});return response({malformado:true});}return response({objetos:[...objects.keys()].map(clave=>({clave}))});}
+  if(u.pathname.startsWith('/v1/medios/')){
+   const k=u.pathname.replace('/v1/medios/','');if(method==='PUT'){putCount++;if(op.putAntesDeCommit&&putCount===1)throw new Error('primer PUT caído antes de commit');objects.set(k+'.webp',Buffer.from(init.body));if(op.putPerdido&&putCount===(op.falloPutEn||1))throw new Error('PUT confirmado, respuesta perdida');return response({},201);}
+   if(method==='DELETE'){if(op.grupoRechazado)return response({},500);for(const key of objects.keys())if(key.startsWith(k+'/'))objects.delete(key);return response({});}
+  }
+  if(u.origin===G.ALIAS_APROBADO){if(u.pathname==='/')return new Response('<meta name="build-id" content="7ee3c78e">');if(u.pathname==='/sw.js')return new Response('precacheAndRoute([{url:"assets/index.js",revision:null}])');if(u.pathname==='/assets/index.js')return new Response(bundle);}
+  const k=u.origin===G.PUBLICO_APROBADO?u.pathname.slice(1):u.pathname.replace('/medios/','');
+  if(objects.has(k))return new Response(objects.get(k),{status:200,headers:{'content-type':'image/webp'}});
+  return new Response('No encontrado',{status:404});
+ };
+ const env=`VITE_SUPABASE_URL=https://${G.REF_STAGING}.supabase.co\nVITE_SUPABASE_ANON_KEY=sb_publishable_${'x'.repeat(30)}\nQA_ADMIN_EMAIL=admin@staging.test\nQA_ADMIN_PASSWORD=FICTICIA`;
+ const ctx={require:n=>n==='node:fs'?{readFileSync:()=>env,mkdirSync:()=>{},writeFileSync:(_,s)=>jsonOut=JSON.parse(s)}:n==='node:crypto'?{randomBytes:()=>Buffer.from('a1b2c3','hex'),randomUUID:()=>[OWN,A,D][uuid++]}:n==='playwright'?{chromium:{launch:async()=>({newPage:async()=>({evaluate:async(_,l)=>Buffer.alloc(l+120,42).toString('base64')}),close:async()=>{}})}}:n==='./lib/guardas-interfaz-r2.cjs'?G:n==='./lib/ensayo-rollback.cjs'?require(ROOT+'/scripts/lib/ensayo-rollback.cjs'):n==='./lib/ensayo-rollback-reales.cjs'?require(ROOT+'/scripts/lib/ensayo-rollback-reales.cjs'):require(n),__dirname:ROOT+'/scripts',authModule,urlsModule,process:proc,Set,Buffer,URL,console:{log:()=>{}},fetch:fetchFake,setTimeout:(f)=>queueMicrotask(f)};
+ vm.runInNewContext(source,ctx,{filename:'ensayo-rollback-galeria-pages.cjs'});
+ for(let i=0;i<1000&&proc.exitCode===undefined;i++)await new Promise(r=>setImmediate(r));assert.notEqual(proc.exitCode,undefined,'debe terminar');
+ const broken=filas.filter(f=>[f.antes_url,f.despues_url].some(u=>{const id=urlsModule.referenciaDeUrl(u,[PAGES,G.PUBLICO_APROBADO])?.replace(/^r2:/,'');return id&&[A,D].some(x=>id.endsWith('/'+x))&&!objects.has(id+'/g.webp');}));
+ return{opciones:op,exitCode:proc.exitCode,completa:jsonOut?.completa,estadoFinalConfirmado:jsonOut?.estadoFinalConfirmado,sinEscrituras:jsonOut?.sinEscrituras,pendientes:jsonOut?.pendientes,fallos:jsonOut?.resumen?.fallos,error:jsonOut?.error,casosFallidos:jsonOut?.casos.filter(c=>!c.ok),filasIniciales:base,filasFinales:snapshot(),objetosFinales:[...objects.keys()],referenciasPropiasRotas:op.objetos?broken.length:0,escrituras:events.filter(e=>['PUT','PATCH','DELETE'].includes(e.method)||(e.method==='POST'&&e.path==='/rest/v1/galeria_web')),eventos:events,peticiones:events.length};
+}
+(async()=>{
+ const authModule=await import(pathToFileURL(ROOT+'/scripts/lib/entornos-supabase.mjs').href),urlsModule=await import(pathToFileURL(ROOT+'/src/lib/urlsMedios.js').href);
+ const opciones=[{nombre:'A sano'},{nombre:'B sano',objetos:true},{nombre:'Colisión preexistente, flujo normal',colision:true},{nombre:'Colisión preexistente + INSERT 500 sin commit',colision:true,insertRechazado:500},{nombre:'INSERT perdido sin edición',objetos:true,insertPerdido:true},{nombre:'INSERT perdido + título editado',objetos:true,insertPerdido:true,cambioTitulo:true},{nombre:'INSERT perdido + activo editado',objetos:true,insertPerdido:true,cambioActivo:true},{nombre:'INSERT perdido + orden editado',objetos:true,insertPerdido:true,cambioOrden:true},{nombre:'DELETE sin efecto',objetos:true,deleteSinEfecto:true},{nombre:'Relectura tras DELETE caída',objetos:true,relecturaCaida:true},{nombre:'Marca incorrecta',marcaIncorrecta:true},{nombre:'Sin salida',sinSalida:true},{nombre:'Snapshot parcial declarado',parcial:true},{nombre:'Snapshot sin count',sinCount:true},{nombre:'Primer PUT confirmado, respuesta perdida',objetos:true,putPerdido:true},{nombre:'Primer PUT sin commit',objetos:true,putAntesDeCommit:true},{nombre:'Segundo PUT perdido',objetos:true,putPerdido:true,falloPutEn:2},{nombre:'PUT perdido e inventario caído',objetos:true,putPerdido:true,invModo:'red'},{nombre:'PUT perdido e inventario paginado',objetos:true,putPerdido:true,invModo:'cursor'},{nombre:'PUT perdido e inventario malformado',objetos:true,putPerdido:true,invModo:'json'},{nombre:'PUT perdido y DELETE grupo 500',objetos:true,putPerdido:true,grupoRechazado:true}];
+ const resultados=[];for(const op of opciones)resultados.push(await run(op,authModule,urlsModule));
+ assert.equal(resultados[0].exitCode,0);assert.equal(resultados[1].exitCode,0);
+ for(const r of resultados.slice(2,4)){assert.equal(r.filasIniciales.length,1);assert.equal(r.filasFinales.length,1);assert.equal(r.escrituras.length,0);}
+ for(const r of resultados.slice(4,8)){assert.equal(r.filasFinales.length,0);assert.equal(r.objetosFinales.length,0);assert.equal(r.referenciasPropiasRotas,0);}
+ for(const r of resultados.slice(8,10))assert.equal(r.objetosFinales.length,4);
+ for(const r of resultados.slice(10,14))assert.equal(r.escrituras.length,0);
+ for(const r of resultados.slice(14,17)){assert.equal(r.objetosFinales.length,0);assert.equal(r.estadoFinalConfirmado,true);assert.ok(!r.sinEscrituras);assert.equal(r.exitCode,1);assert.equal(r.escrituras.filter(e=>e.method==='POST'||e.method==='PATCH').length,0);}
+ for(const r of resultados.slice(17)){assert.equal(r.objetosFinales.length,1);assert.equal(r.estadoFinalConfirmado,false);assert.ok(!r.sinEscrituras);assert.ok(r.pendientes.length>0);assert.equal(r.exitCode,1);}
+ const report={nota:'Diagnóstico del CLI completo actual, con cableado REST/Worker real ejecutado contra un fetch falso, núcleo/guardas/validadores/URLs reales, imports adaptados en memoria y FS/Auth/Chromium/crypto ficticios. Sin .env ni red reales, datos o archivos de proyecto modificados. Los fallos son inyecciones, no incidentes observados en staging.',sha256Script:crypto.createHash('sha256').update(original).digest('hex'),sha256Nucleo:crypto.createHash('sha256').update(fs.readFileSync(ROOT+'/scripts/lib/ensayo-rollback.cjs')).digest('hex'),resultados};
+ fs.writeFileSync(path.join(__dirname,'diagnostico-cli.json'),JSON.stringify(report,null,2),{flag:'wx'});console.log(JSON.stringify(resultados.map(r=>({nombre:r.opciones.nombre,exitCode:r.exitCode,fallos:r.fallos,estadoFinal:r.estadoFinalConfirmado,sinEscrituras:r.sinEscrituras,filasFinales:r.filasFinales.length,objetosFinales:r.objetosFinales.length,referenciasRotas:r.referenciasPropiasRotas,escrituras:r.escrituras.length})),null,2));
+})().catch(e=>{console.error(e);process.exitCode=1});

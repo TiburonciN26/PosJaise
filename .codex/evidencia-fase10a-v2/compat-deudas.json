@@ -1,0 +1,132 @@
+{
+ "fecha": "2026-10-13T06:32:28.238Z",
+ "transaccion": "ROLLBACK",
+ "antes": {
+  "deudas": 59,
+  "deudaPagos": 8,
+  "sumaPagos": 79,
+  "firmaDeudas": "98734d8454b3fdac9007e277449705c2",
+  "triggersDeudas": 0,
+  "funcionesCompat": 0,
+  "deudasPrueba": 0
+ },
+ "despues": {
+  "deudas": 59,
+  "deudaPagos": 8,
+  "sumaPagos": 79,
+  "firmaDeudas": "98734d8454b3fdac9007e277449705c2",
+  "triggersDeudas": 0,
+  "funcionesCompat": 0,
+  "deudasPrueba": 0
+ },
+ "intacto": true,
+ "codigoPsql": 0,
+ "errores": [],
+ "resultados": [
+  {
+   "caso": "antes-A1 cobro en main + nota en la UI nueva reabre la deuda (defecto reproducido)",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=0 monto=100.00 pagos=0"
+  },
+  {
+   "caso": "antes-A2 reapertura en main de una deuda pagada deja PENDIENTE con saldo 0 (defecto reproducido)",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=80.00 monto=80.00 pagos=1"
+  },
+  {
+   "caso": "instalacion: borrador aplicado; relleno dirigido e invariante de cierre sin incoherencias",
+   "ok": true,
+   "detalle": "incoherentes=0"
+  },
+  {
+   "caso": "S1a cobro en main registra un pago por el total",
+   "ok": true,
+   "detalle": "COBRADA pagado=100.00 monto=100.00 pagos=1"
+  },
+  {
+   "caso": "S1b guardar solo una nota en la UI nueva NO reabre la deuda",
+   "ok": true,
+   "detalle": "COBRADA pagado=100.00 monto=100.00 pagos=1"
+  },
+  {
+   "caso": "S1c el pago heredado lleva fecha de Lima, nota y autora",
+   "ok": true,
+   "detalle": ""
+  },
+  {
+   "caso": "S2 abono de 30 + cobro en main → pago heredado de 70 (sin duplicar)",
+   "ok": true,
+   "detalle": "COBRADA pagado=100.00 monto=100.00 pagos=2"
+  },
+  {
+   "caso": "S3 reapertura en main de una deuda pagada se RECHAZA y conserva sus pagos",
+   "ok": true,
+   "detalle": "La deuda tiene pagos registrados por el total; para reabrirla, anula el pago en la versión actual. · COBRADA pagado=80.00 monto=80.00 pagos=1"
+  },
+  {
+   "caso": "S4a anular el pago en la UI nueva la reabre",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=0 monto=80.00 pagos=0"
+  },
+  {
+   "caso": "S4b main vuelve a cobrarla con su pago",
+   "ok": true,
+   "detalle": "COBRADA pagado=80.00 monto=80.00 pagos=1"
+  },
+  {
+   "caso": "S5a main sube el monto de una cobrada → PENDIENTE por la diferencia",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=100.00 monto=150.00 pagos=1"
+  },
+  {
+   "caso": "S5b main la cobra → pago heredado de 50",
+   "ok": true,
+   "detalle": "COBRADA pagado=150.00 monto=150.00 pagos=2"
+  },
+  {
+   "caso": "S6 main baja el monto hasta lo pagado → COBRADA sin pago nuevo",
+   "ok": true,
+   "detalle": "COBRADA pagado=60.00 monto=60.00 pagos=1"
+  },
+  {
+   "caso": "S7a UI nueva: abono parcial → PENDIENTE",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=40.00 monto=90.00 pagos=1"
+  },
+  {
+   "caso": "S7b UI nueva: resto → COBRADA",
+   "ok": true,
+   "detalle": "COBRADA pagado=90.00 monto=90.00 pagos=2"
+  },
+  {
+   "caso": "S7c UI nueva: anular un pago → PENDIENTE",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=40.00 monto=90.00 pagos=1"
+  },
+  {
+   "caso": "S8 ediciones sin cambio de estado conservan el abono y el saldo",
+   "ok": true,
+   "detalle": "PENDIENTE pagado=40.00 monto=90.00 pagos=1"
+  },
+  {
+   "caso": "S9 invariante tras todos los escritores: cero deudas incoherentes",
+   "ok": true,
+   "detalle": "incoherentes=0"
+  },
+  {
+   "caso": "R0 una COBRADA sin pagos anterior al mecanismo rompe el invariante",
+   "ok": true,
+   "detalle": "incoherentes=1"
+  },
+  {
+   "caso": "R1 el relleno dirigido inserta 1 pago y repetido inserta 0 (idempotente); invariante limpio",
+   "ok": true,
+   "detalle": "primera=1 segunda=0"
+  },
+  {
+   "caso": "R2 el bloque de relleno original repetido SÍ duplica (por eso nunca se re-ejecuta aislado)",
+   "ok": true,
+   "detalle": "COBRADA pagado=140.00 monto=70.00 pagos=2"
+  }
+ ]
+}

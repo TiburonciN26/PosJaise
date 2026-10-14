@@ -1,0 +1,482 @@
+diff --git a/scripts/migracion-medios/lib.mjs b/scripts/migracion-medios/lib.mjs
+index 99ab82a..b96e9b6 100644
+--- a/scripts/migracion-medios/lib.mjs
++++ b/scripts/migracion-medios/lib.mjs
+@@ -258,8 +258,9 @@ export function parsearArgumentos(argv, { flags = [], textos = [], numeros = {}
+ // Estados del manifiesto. Entrada (un objeto de origen): planificada → copiada → verificada | error.
+ // Referencia: pendiente → actualizada | conflicto ; actualizada → revertida | conflicto-reversion.
+ // Además, una referencia puede tener una `operacion` ABIERTA (F9-03): la intención se guarda ANTES del UPDATE y se cierra al
+-// conocer el resultado. «en-curso» = la ejecución se interrumpió sin saberlo; «incierta» = el UPDATE pudo confirmarse pero
+-// la respuesta y la lectura de reconciliación fallaron. Toda operación abierta se reconcilia con una lectura antes de seguir.
++// conocer el resultado. «en-curso» = la ejecución se interrumpió sin saberlo; «incierta» = el cambio pudo confirmarse o
++// seguir en vuelo. Lleva su plazo (`vence`): solo se cierra al leerla aplicada o cuando la barrera del servidor, vencido el
++// plazo, certifica su desenlace (F9-03b). Una lectura del valor anterior nunca basta para cerrarla.
+ export const ESTADOS_ENTRADA = ['planificada', 'copiada', 'verificada', 'error']
+ export const ESTADOS_REFERENCIA = ['pendiente', 'actualizada', 'conflicto', 'revertida', 'conflicto-reversion']
+ export const ESTADOS_OPERACION = ['en-curso', 'incierta']
+@@ -297,6 +298,8 @@ export function validarManifiesto(m) {
+       if (op !== undefined) {
+         const esperado = op?.modo === 'actualizar' ? [ref.original, ref.nuevo] : op?.modo === 'revertir' ? [ref.nuevo, ref.original] : null
+         if (!esperado || !ESTADOS_OPERACION.includes(op.estado) || op.de !== esperado[0] || op.a !== esperado[1]) errores.push(`${ref.tabla}/${ref.fila}: operación abierta mal formada`)
++        // `vence` (V2.1): plazo del cambio en el servidor; si falta (operación V2), la operación no puede cerrarse sola.
++        if (op?.vence !== undefined && Number.isNaN(Date.parse(op.vence))) errores.push(`${ref.tabla}/${ref.fila}: plazo de la operación inválido`)
+       }
+     }
+   }
+diff --git a/scripts/migracion-medios/medios-migracion.mjs b/scripts/migracion-medios/medios-migracion.mjs
+index cc049a5..2639a6a 100644
+--- a/scripts/migracion-medios/medios-migracion.mjs
++++ b/scripts/migracion-medios/medios-migracion.mjs
+@@ -9,7 +9,9 @@
+ //                autenticado (solo crea; nunca sobrescribe) y verifica por lectura que los bytes servidos coinciden.
+ //   actualizar   con --aplicar, cambia las referencias en lotes con UPDATE CONDICIONAL al valor anterior (si alguien cambió
+ //                la fila entretanto, queda en «conflicto» y no se toca). La INTENCIÓN se guarda en el manifiesto antes de cada
+-//                UPDATE y el resultado después; un resultado incierto queda abierto y se reconcilia con una lectura.
++//                cambio y el resultado después. Cada cambio lleva un PLAZO que el servidor comprueba dentro del UPDATE; un
++//                resultado incierto queda abierto hasta leerlo aplicado o hasta que la barrera del servidor, vencido el
++//                plazo, certifique que ya no puede aplicarse (supabase/migrations/20261012000003).
+ //   verificar    reconcilia manifiesto ↔ base ↔ R2 ↔ originales de Supabase (exige la base de lectura si hay copias).
+ //   revertir     con --aplicar, devuelve cada referencia actualizada a su valor original, también condicional.
+ //
+@@ -352,35 +354,57 @@ async function leerValor(cliente, ref) {
+   if (error) throw new Error(`lectura ${ref.tabla}/${ref.fila}: ${error.message}`)
+   return data ? { existe: true, valor: data[ref.columna] } : { existe: false }
+ }
+-// ¿El fallo del UPDATE es un rechazo DEFINITIVO (PostgREST respondió 4xx: la sentencia no se confirmó) o un resultado
+-// INCIERTO (red, 5xx, 408/429 de un intermediario: pudo confirmarse sin que llegara la respuesta)?
++// ¿El fallo del cambio es un rechazo DEFINITIVO (PostgREST respondió 4xx: la sentencia no se confirmó) o un resultado
++// INCIERTO (red, 5xx, 408/429 de un intermediario: pudo confirmarse, o seguir en vuelo, sin que llegara la respuesta)?
+ const esRechazoDefinitivo = (status) => status >= 400 && status < 500 && status !== 408 && status !== 429
++const PLAZO_MS = 30000, ESPERA_MAX_MS = 120000
++const filaRpc = (ref) => ({ p_tabla: ref.tabla, p_columna: ref.columna, p_fila: ref.fila })
+ 
+-// UPDATE … WHERE id = fila AND columna = de. Si la respuesta no es un «1 fila», se reconcilia con una lectura estricta:
+-//   valor = a   → 'hecho' (la respuesta se perdió después de confirmarse)
+-//   valor = de  → 'rechazado' si el fallo es definitivo o el UPDATE respondió 0 filas (permisos/RLS); si es incierto, 'incierto'
+-//   otro valor  → 'conflicto' (alguien la editó; no se toca) · sin fila → 'fila-inexistente'
+-//   lectura caída → 'incierto': la duda se conserva en el manifiesto y nunca se da por resuelta.
+-async function cambiarCondicional(cliente, ref, de, a) {
+-  const { data, error, status } = await cliente.from(ref.tabla).update({ [ref.columna]: a }).eq('id', ref.fila).eq(ref.columna, de).select('id')
+-  if (!error && data.length === 1) return { resultado: 'hecho' }
+-  const fallo = error ? `UPDATE HTTP ${status || 'sin respuesta'}: ${error.message}` : 'el UPDATE no afectó ninguna fila'
+-  const definitivo = !error || esRechazoDefinitivo(status)
++// Cambio CON PLAZO (F9-03b) por la función del servidor migracion_medios_cambiar (supabase/migrations/20261012000003):
++// UPDATE … WHERE id = fila AND columna = de AND clock_timestamp() < vence. Con una respuesta clara de la sentencia, el
++// resultado es definitivo. Sin ella (red, 5xx, 408/429) el cambio pudo confirmarse o seguir EN VUELO: aquí solo lo resuelve
++// leer el valor de DESTINO; leer el valor anterior no prueba nada (la operación queda abierta hasta la barrera).
++async function cambiarConPlazo(cliente, ref, op) {
++  const { data, error, status } = await cliente.rpc('migracion_medios_cambiar', { ...filaRpc(ref), p_de: op.de, p_a: op.a, p_vence: op.vence })
++  if (!error && data === 'hecho') return { resultado: 'hecho' }
++  // 'sin-cambio' o 'vencida' son respuestas de la sentencia ya terminada: definitivas. Una respuesta desconocida, no.
++  const definitivo = error ? esRechazoDefinitivo(status) : ['sin-cambio', 'vencida'].includes(data)
++  const fallo = error ? `cambio HTTP ${status || 'sin respuesta'}: ${error.message}` : data === 'vencida' ? 'plazo vencido antes de ejecutarse' : data === 'sin-cambio' ? 'el cambio no afectó ninguna fila' : `respuesta inesperada: ${JSON.stringify(data)}`
+   let actual
+-  try { actual = await leerValor(cliente, ref) } catch (e) { return { resultado: 'incierto', detalle: `${fallo}; reconciliación: ${e.message}` } }
+-  if (actual.existe && actual.valor === a) return { resultado: 'hecho', detalle: error ? `confirmado por lectura tras ${fallo}` : 'ya tenía el valor de destino' }
++  try { actual = await leerValor(cliente, ref) } catch (e) { return { resultado: 'incierto', detalle: `${fallo}; lectura: ${e.message}` } }
++  if (actual.existe && actual.valor === op.a) return { resultado: 'hecho', detalle: error ? `confirmado por lectura tras ${fallo}` : 'ya tenía el valor de destino' }
++  if (!definitivo) return { resultado: 'incierto', detalle: `${fallo}; puede seguir en vuelo hasta ${op.vence}` }
+   if (!actual.existe) return { resultado: 'fila-inexistente', detalle: fallo }
+-  if (actual.valor === de) return { resultado: definitivo ? 'rechazado' : 'incierto', detalle: fallo }
++  if (actual.valor === op.de) return { resultado: 'rechazado', detalle: fallo }
+   return { resultado: 'conflicto', detalle: fallo }
+ }
+-// Reconciliación de una operación ABIERTA (intención guardada, resultado desconocido). Solo lee; nunca escribe.
+-async function reconciliar(cliente, ref) {
++// Reconciliación de una operación ABIERTA. Leer el valor de destino prueba que se aplicó. Cualquier otro valor NO prueba que
++// ya no pueda aplicarse: eso solo lo certifica la barrera del servidor (migracion_medios_barrera), que responde una vez
++// vencido el plazo y reescribe la fila con su mismo valor; desde entonces ningún cambio con ese plazo puede confirmarse
++// (los que esperaban el bloqueo re-evalúan el plazo; los que lleguen después lo encuentran vencido). Sin plazo (operación de
++// una versión anterior) no hay evidencia posible: queda abierta para revisión manual. La barrera nunca cambia un valor.
++async function reconciliar(cliente, ref, opciones) {
+   const op = ref.operacion
+   let actual
+   try { actual = await leerValor(cliente, ref) } catch (e) { return { resultado: 'incierto', detalle: `reconciliación: ${e.message}` } }
+   if (actual.existe && actual.valor === op.a) return { resultado: 'hecho', detalle: 'operación abierta confirmada por lectura' }
+-  if (actual.existe && actual.valor === op.de) return { resultado: 'no-aplicada' }
+-  return { resultado: actual.existe ? 'conflicto' : 'fila-inexistente', detalle: 'operación abierta: la fila tiene otro valor' }
++  if (!op.vence) return { resultado: 'incierto', detalle: 'operación sin plazo (versión anterior de la herramienta): ninguna lectura prueba que ya no pueda aplicarse; requiere revisión manual' }
++  const limite = Date.now() + (opciones['espera-max-ms'] ?? ESPERA_MAX_MS)
++  for (;;) {
++    const { data, error } = await cliente.rpc('migracion_medios_barrera', { ...filaRpc(ref), p_vence: op.vence })
++    if (error) return { resultado: 'incierto', detalle: `barrera: ${error.message}` }
++    if (data?.estado === 'esperar') {
++      const faltan = Number(data.faltan_ms) + 250
++      if (!(faltan > 0) || Date.now() + faltan > limite) return { resultado: 'incierto', detalle: `el plazo de la operación sigue abierto (faltan ${data.faltan_ms} ms): se reconciliará en otra ejecución` }
++      await ESPERA(faltan)
++      continue
++    }
++    if (data?.estado !== 'cerrada') return { resultado: 'incierto', detalle: `barrera: respuesta inesperada ${JSON.stringify(data)}` }
++    if (!data.existe) return { resultado: 'fila-inexistente', detalle: 'barrera: la fila no existe' }
++    if (data.valor === op.a) return { resultado: 'hecho', detalle: 'confirmado por la barrera' }
++    if (data.valor === op.de) return { resultado: 'no-aplicada', detalle: 'barrera: plazo vencido sin aplicarse' }
++    return { resultado: 'conflicto', detalle: 'barrera: la fila tiene otro valor' }
++  }
+ }
+ // Cierra (o conserva abierta) la operación de una referencia según su resultado. `modo` es el de LA OPERACIÓN.
+ function cerrarOperacion(ref, modo, r, res, contador = 'hechas') {
+@@ -426,10 +450,11 @@ async function escribirReferencias(opciones, modo) {
+   }
+   const cliente = await sesionAdmin({ supabaseUrl, anon })
+   const res = { modo, simulado: false, reconciliadas: 0, hechas: 0, conflictos: 0, rechazadas: 0, inciertas: 0, noAplicadas: 0, candidatas: 0, enEsteLote: 0 }
+-  // 1) Antes de escribir nada nuevo, se reconcilian las operaciones abiertas (ejecución interrumpida tras el UPDATE, o
+-  //    respuesta y lectura caídas). Así una reversión también recoge lo que una actualización incierta pudo confirmar.
++  // 1) Antes de escribir nada nuevo, se reconcilian las operaciones abiertas (ejecución interrumpida, respuesta incierta o
++  //    lectura caída), con la barrera si hace falta. Así una reversión también recoge lo que una actualización incierta pudo
++  //    confirmar, incluso DESPUÉS de una lectura que aún mostraba el valor anterior.
+   for (const { ref } of abiertas) {
+-    cerrarOperacion(ref, ref.operacion.modo, await reconciliar(cliente, ref), res, 'reconciliadas')
++    cerrarOperacion(ref, ref.operacion.modo, await reconciliar(cliente, ref, opciones), res, 'reconciliadas')
+     escribirJson(opciones.manifiesto, m)
+   }
+   // 2) Lote nuevo, solo si no quedó ninguna duda abierta (con el backend en duda no se acumulan más operaciones inciertas).
+@@ -439,9 +464,10 @@ async function escribirReferencias(opciones, modo) {
+     res.candidatas = pendientes.length; res.enEsteLote = lote.length
+     for (const { ref } of lote) {
+       const [de, a] = modo === 'actualizar' ? [ref.original, ref.nuevo] : [ref.nuevo, ref.original]
+-      ref.operacion = { id: randomUUID(), modo, de, a, estado: 'en-curso', inicio: new Date().toISOString() }
+-      escribirJson(opciones.manifiesto, m) // la INTENCIÓN queda en el diario ANTES del UPDATE
+-      const r = await cambiarCondicional(cliente, ref, de, a)
++      const ahora = Date.now()
++      ref.operacion = { id: randomUUID(), modo, de, a, estado: 'en-curso', inicio: new Date(ahora).toISOString(), vence: new Date(ahora + (opciones['plazo-ms'] ?? PLAZO_MS)).toISOString() }
++      escribirJson(opciones.manifiesto, m) // la INTENCIÓN (con su plazo) queda en el diario ANTES del cambio
++      const r = await cambiarConPlazo(cliente, ref, ref.operacion)
+       cerrarOperacion(ref, modo, r, res)
+       escribirJson(opciones.manifiesto, m) // y el resultado, después de CADA fila
+       if (r.resultado === 'incierto') { m.eventos.push({ en: new Date().toISOString(), tipo: 'parada', motivo: `resultado incierto en ${ref.tabla}/${ref.fila}` }); escribirJson(opciones.manifiesto, m); break }
+@@ -520,7 +546,7 @@ async function verificar(opciones) {
+ const ESPEC = {
+   flags: ['aplicar', 'permitir-produccion', 'reintentar-errores'],
+   textos: ['env-file', 'salida', 'desde-json', 'publica', 'bases-reconocidas', 'contenedor', 'inventario', 'manifiesto', 'cache', 'api', 'lectura', 'filas', ...Object.values(ROLES_DESTINO)],
+-  numeros: { lote: [1, 500], limite: [1, 100000], 'pausa-ms': [0, 60000] },
++  numeros: { lote: [1, 500], limite: [1, 100000], 'pausa-ms': [0, 60000], 'plazo-ms': [1000, 600000], 'espera-max-ms': [0, 900000] },
+ }
+ const REQUERIDOS = {
+   inventariar: ['salida'], planificar: ['inventario', 'manifiesto', 'cache'], copiar: ['manifiesto', 'cache', 'api', 'lectura'],
+diff --git a/scripts/migracion-medios/probar-lib.mjs b/scripts/migracion-medios/probar-lib.mjs
+index fe95b1e..2c32fef 100644
+--- a/scripts/migracion-medios/probar-lib.mjs
++++ b/scripts/migracion-medios/probar-lib.mjs
+@@ -223,10 +223,20 @@ caso('F9-01 · Garantía estática del harness: valida --trabajo antes de cualqu
+   assert.match(cuerpo.slice(guarda, guarda + 400), /process\.exit\(2\)/, 'un rechazo termina el proceso')
+   assert.doesNotMatch(cuerpo, /rmSync\(TRABAJO\b/, 'nunca rmSync de la carpeta de trabajo entera')
+ })
+-caso('Garantía estática: las escrituras de referencias son condicionales al valor esperado', () => {
+-  const s = readFileSync(join(aqui, 'medios-migracion.mjs'), 'utf8')
+-  assert.match(s, /\.update\(\{ \[ref\.columna\]: a \}\)\.eq\('id', ref\.fila\)\.eq\(ref\.columna, de\)/)
+-  assert.equal((s.match(/\.update\(/g) ?? []).length, 1, 'un solo punto de UPDATE en toda la herramienta')
++caso('Garantía estática (V2.1): las escrituras de referencias son condicionales al valor esperado Y a un plazo del servidor', () => {
++  const s = readFileSync(join(aqui, 'medios-migracion.mjs'), 'utf8').replace(/\/\/.*$/gm, '')
++  assert.equal((s.match(/\.update\(/g) ?? []).length, 0, 'la CLI no escribe con UPDATE directo: solo por la función con plazo')
++  assert.equal((s.match(/\.rpc\('migracion_medios_cambiar'/g) ?? []).length, 1, 'un solo punto de cambio')
++  assert.match(s, /\.rpc\('migracion_medios_cambiar', \{ \.\.\.filaRpc\(ref\), p_de: op\.de, p_a: op\.a, p_vence: op\.vence \}\)/)
++  const sql = readFileSync(join(aqui, '..', '..', 'supabase', 'migrations', '20261012000003_migracion_medios_cambio_con_plazo.sql'), 'utf8').replace(/--.*$/gm, '')
++  const updates = sql.match(/update public\.%I set [^']*/g) ?? []
++  assert.equal(updates.length, 2, 'dos UPDATE: el cambio y la barrera')
++  assert.match(updates[0], /set %I = \$1 where id = \$2 and %I = \$3 and clock_timestamp\(\) < \$4/, 'el plazo va DENTRO del WHERE')
++  assert.match(updates[1], /set %I = %I where id = \$1/, 'la barrera reescribe la columna con su mismo valor')
++  assert.match(sql, /if clock_timestamp\(\) < p_vence then\s+return jsonb_build_object\('estado', 'esperar'/, 'la barrera no actúa antes del plazo')
++  assert.doesNotMatch(sql, /\b(delete|truncate|drop)\b/i, 'la migración no borra nada')
++  assert.doesNotMatch(sql, /security definer/i, 'funciones SECURITY INVOKER: aplican RLS de quien llama')
++  assert.match(sql, /revoke execute on function public\.migracion_medios_cambiar\([^)]*\) from public, anon/)
+ })
+ 
+ const fallos = casos.filter((c) => !c.ok)
+diff --git a/scripts/migracion-medios/probar-cli.mjs b/scripts/migracion-medios/probar-cli.mjs
+index 988be7c..1802249 100644
+--- a/scripts/migracion-medios/probar-cli.mjs
++++ b/scripts/migracion-medios/probar-cli.mjs
+@@ -33,7 +33,7 @@ const BYTES = { orig: Buffer.from('original PUBLICO ficticio QA F9'), m: Buffer.
+ const PROD = 'cmkelllerzjqjbsqsylc.supabase.co'
+ 
+ // ---------------- servidor ficticio ----------------
+-const s = { filas: new Map(), objetos: new Map(), registro: [], patch: [], getFalla: 0 }
++const s = { filas: new Map(), objetos: new Map(), registro: [], patch: [], getFalla: 0, barreraFalla: 0, enVuelo: null, liberadas: [], liberarEnMs: undefined }
+ function jwt() {
+   const b = (x) => Buffer.from(JSON.stringify(x)).toString('base64url'), t = Math.floor(Date.now() / 1000)
+   return `${b({ alg: 'HS256', typ: 'JWT' })}.${b({ sub: UID, role: 'authenticated', aud: 'authenticated', exp: t + 3600, iat: t })}.cWE`
+@@ -54,18 +54,37 @@ const srv = http.createServer(async (req, res) => {
+       if (s.getFalla > 0) { s.getFalla -= 1; return json(500, { code: 'QA500', message: 'lectura caída (ficticia)' }) }
+       return json(200, fila ? [{ id, ...fila }] : [])
+     }
+-    if (req.method === 'PATCH') {
+-      const datos = JSON.parse(cuerpo.toString('utf8')), [col] = Object.keys(datos)
+-      const modo = s.patch.shift() ?? 'normal'
+-      if (modo === '403') return json(403, { code: '42501', message: 'permiso denegado (ficticio)' })
+-      if (modo === 'sin-commit-503') return json(503, { code: 'QA503', message: 'caída antes de confirmar (ficticia)' })
+-      if (modo === 'rls') return json(200, [])
+-      const coincide = Boolean(fila) && u.searchParams.get(col) === `eq.${fila[col]}`
+-      if (coincide) fila[col] = datos[col]
+-      if (modo === 'commit-503') return json(503, { code: 'QA503', message: 'respuesta perdida después del commit (ficticia)' })
+-      if (modo === 'commit-corte') { req.socket.destroy(); return }
+-      return json(200, coincide ? [{ id }] : [])
++  }
++  // Funciones del servidor de la migración 20261012000003, con su semántica: el cambio solo aplica si la fila tiene p_de Y el
++  // reloj del servidor no alcanzó p_vence (también cuando una operación «en vuelo» se libera tarde); la barrera solo responde
++  // vencido el plazo, con el valor de la fila.
++  if (u.pathname === '/rest/v1/rpc/migracion_medios_cambiar') {
++    const p = JSON.parse(cuerpo.toString('utf8')), fila = s.filas.get(`${p.p_tabla}/${p.p_fila}`), vence = Date.parse(p.p_vence)
++    const aplicar = () => {
++      if (Date.now() >= vence) return 'vencida'
++      if (!fila || fila[p.p_columna] !== p.p_de) return 'sin-cambio'
++      fila[p.p_columna] = p.p_a; return 'hecho'
++    }
++    const modo = s.patch.shift() ?? 'normal'
++    if (modo === '403') return json(403, { code: '42501', message: 'permiso denegado (ficticio)' })
++    if (modo === 'sin-commit-503') return json(503, { code: 'QA503', message: 'caída antes de confirmar (ficticia)' })
++    if (modo === 'rls') return json(200, 'sin-cambio')
++    if (modo === 'en-vuelo-503') {
++      // El proxy responde 503 pero la sentencia sigue en vuelo: se ejecuta cuando la prueba la libera (o a los N ms).
++      s.enVuelo = { liberar: () => { const r = aplicar(); s.liberadas.push({ en: Date.now(), resultado: r }); s.enVuelo = null; return r } }
++      if (s.liberarEnMs !== undefined) { const t = s.liberarEnMs; s.liberarEnMs = undefined; setTimeout(() => s.enVuelo?.liberar(), t) }
++      return json(503, { code: 'QA503', message: 'proxy devolvió 503; la sentencia sigue en vuelo (ficticia)' })
+     }
++    const r = aplicar()
++    if (modo === 'commit-503') return json(503, { code: 'QA503', message: 'respuesta perdida después del commit (ficticia)' })
++    if (modo === 'commit-corte') { req.socket.destroy(); return }
++    return json(200, r)
++  }
++  if (u.pathname === '/rest/v1/rpc/migracion_medios_barrera') {
++    if (s.barreraFalla > 0) { s.barreraFalla -= 1; return json(500, { code: 'QA500', message: 'barrera caída (ficticia)' }) }
++    const p = JSON.parse(cuerpo.toString('utf8')), fila = s.filas.get(`${p.p_tabla}/${p.p_fila}`), faltan = Date.parse(p.p_vence) - Date.now()
++    if (faltan > 0) return json(200, { estado: 'esperar', faltan_ms: Math.ceil(faltan) })
++    return json(200, { estado: 'cerrada', existe: Boolean(fila), valor: fila ? fila[p.p_columna] : null })
+   }
+   if (req.method === 'PUT' && u.pathname.startsWith('/v1/medios/')) {
+     const [, , , destino, id, v] = u.pathname.split('/')
+@@ -104,7 +123,7 @@ function guardar(nombre, m) { writeFileSync(archivo(nombre), JSON.stringify(m, n
+ const leerM = (ruta) => JSON.parse(readFileSync(ruta, 'utf8'))
+ const refDe = (ruta) => leerM(ruta).entradas[0].referencias[0]
+ function reiniciar({ valor = ORIGINAL, r2 = false, ambiente = BASE } = {}) {
+-  s.filas.clear(); s.objetos.clear(); s.registro.length = 0; s.patch.length = 0; s.getFalla = 0
++  s.filas.clear(); s.objetos.clear(); s.registro.length = 0; s.patch.length = 0; s.getFalla = 0; s.barreraFalla = 0; s.enVuelo = null; s.liberadas.length = 0; s.liberarEnMs = undefined
+   s.filas.set(`productos/${UID}`, { foto_url: valor })
+   s.objetos.set(new URL(urlOrigen(ambiente)).pathname, { bytes: BYTES.orig, tipo: 'image/webp' })
+   if (r2) for (const v of ['m', 'g']) s.objetos.set(`/medios/fotos-productos/${GUID}/${v}.webp`, { bytes: BYTES[v], tipo: 'image/webp' })
+@@ -175,7 +194,7 @@ try {
+   })
+ 
+   // ======================= F9-03 · resultado incierto y diario =======================
+-  await caso('F9-03 · PATCH confirmado + 503: la lectura de reconciliación lo da por hecho; revertir restaura el original', async () => {
++  await caso('F9-03 · Cambio confirmado + 503: la lectura de reconciliación lo da por hecho; revertir restaura el original', async () => {
+     reiniciar(); s.patch.push('commit-503')
+     const p = guardar('f903-a.json', manifiesto())
+     const a = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+@@ -184,7 +203,7 @@ try {
+     assert.equal(r.estado, 0, r.err); assert.equal(valor(), ORIGINAL); assert.equal(refDe(p).estado, 'revertida')
+     return { nota: refDe(p).nota }
+   })
+-  await caso('F9-03 · PATCH confirmado + 503 + lectura caída: la duda queda abierta (exit 3) y revertir nunca da éxito con la fila migrada', async () => {
++  await caso('F9-03 · Cambio confirmado + 503 + lectura caída: la duda queda abierta (exit 3) y revertir nunca da éxito con la fila migrada', async () => {
+     reiniciar(); s.patch.push('commit-503'); s.getFalla = Infinity
+     const p = guardar('f903-b.json', manifiesto())
+     const a = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+@@ -195,7 +214,7 @@ try {
+     const r1 = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+     assert.equal(r1.estado, 3, r1.err); assert.equal(r1.datos.completo, false); assert.equal(r1.datos.operacionesAbiertas, 1); assert.equal(valor(), NUEVO)
+     assert.equal(refDe(p).operacion.id, op.id, 'el id de la operación se conserva')
+-    assert.equal(pedidos((x) => x.metodo === 'PATCH').length, 1, 'con la duda abierta no se envía ningún UPDATE nuevo')
++    assert.equal(pedidos((x) => x.ruta === '/rest/v1/rpc/migracion_medios_cambiar').length, 1, 'con la duda abierta no se envía ningún UPDATE nuevo')
+     // Backend sano: la reversión reconcilia la operación (la da por confirmada) y revierte.
+     s.getFalla = 0
+     const r2 = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+@@ -208,7 +227,7 @@ try {
+     const enCurso = { operacion: { id: 'e7c7a1b2-0000-4000-8000-000000000001', modo: 'actualizar', de: ORIGINAL, a: NUEVO, estado: 'en-curso', inicio: new Date().toISOString() } }
+     const p1 = guardar('f903-c1.json', manifiesto({ ref: enCurso }))
+     const a = await cli(['actualizar', `--manifiesto=${p1}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+-    assert.equal(a.estado, 0, a.err); assert.equal(a.datos.reconciliadas, 1); assert.equal(pedidos((x) => x.metodo === 'PATCH').length, 0, 'no repite el UPDATE')
++    assert.equal(a.estado, 0, a.err); assert.equal(a.datos.reconciliadas, 1); assert.equal(pedidos((x) => x.ruta === '/rest/v1/rpc/migracion_medios_cambiar').length, 0, 'no repite el UPDATE')
+     assert.equal(refDe(p1).estado, 'actualizada')
+     reiniciar({ valor: NUEVO })
+     const p2 = guardar('f903-c2.json', manifiesto({ ref: enCurso }))
+@@ -216,28 +235,32 @@ try {
+     assert.equal(r.estado, 0, r.err); assert.equal(valor(), ORIGINAL); assert.equal(refDe(p2).estado, 'revertida')
+     return { actualizar: a.datos.reconciliadas, revertir: r.datos }
+   })
+-  await caso('F9-03 · Sin commit: 503 deja la duda (exit 3); la siguiente ejecución ve el valor anterior y aplica; interrumpida sin commit, igual', async () => {
++  const PASADO = () => new Date(Date.now() - 1000).toISOString()
++  await caso('F9-03 · Sin commit: 503 deja la duda (exit 3) aunque la lectura vea el valor anterior; la barrera, vencido el plazo, la cierra y se aplica', async () => {
+     reiniciar(); s.patch.push('sin-commit-503')
+     const p = guardar('f903-d.json', manifiesto())
+-    const a1 = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+-    assert.equal(a1.estado, 3, a1.err); assert.equal(valor(), ORIGINAL); assert.equal(refDe(p).operacion.estado, 'incierta')
++    const a1 = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar', '--plazo-ms=1500'])
++    assert.equal(a1.estado, 3, a1.err); assert.equal(valor(), ORIGINAL); assert.equal(refDe(p).operacion.estado, 'incierta'); assert.ok(refDe(p).operacion.vence)
+     const a2 = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+     assert.equal(a2.estado, 0, a2.err); assert.equal(a2.datos.noAplicadas, 1); assert.equal(valor(), NUEVO); assert.equal(refDe(p).estado, 'actualizada')
++    // Interrumpida sin commit (operación en curso con plazo ya vencido): la barrera la cierra y se aplica.
+     reiniciar()
+-    const p2 = guardar('f903-d2.json', manifiesto({ ref: { operacion: { id: 'e7c7a1b2-0000-4000-8000-000000000002', modo: 'actualizar', de: ORIGINAL, a: NUEVO, estado: 'en-curso' } } }))
++    const p2 = guardar('f903-d2.json', manifiesto({ ref: { operacion: { id: 'e7c7a1b2-0000-4000-8000-000000000002', modo: 'actualizar', de: ORIGINAL, a: NUEVO, estado: 'en-curso', vence: PASADO() } } }))
+     const a3 = await cli(['actualizar', `--manifiesto=${p2}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+     assert.equal(a3.estado, 0, a3.err); assert.equal(valor(), NUEVO); assert.equal(refDe(p2).estado, 'actualizada')
+     return { primero: a1.datos.inciertas, segundo: a2.datos.noAplicadas }
+   })
+-  await caso('F9-03 · Edición ajena: con operación abierta o entre UPDATE y lectura, queda en conflicto y no se pisa', async () => {
++  await caso('F9-03 · Edición ajena: con operación abierta o con respuesta incierta, queda en conflicto (tras la barrera) y no se pisa', async () => {
+     reiniciar({ valor: AJENO })
+-    const p = guardar('f903-e.json', manifiesto({ ref: { operacion: { id: 'e7c7a1b2-0000-4000-8000-000000000003', modo: 'actualizar', de: ORIGINAL, a: NUEVO, estado: 'incierta' } } }))
++    const p = guardar('f903-e.json', manifiesto({ ref: { operacion: { id: 'e7c7a1b2-0000-4000-8000-000000000003', modo: 'actualizar', de: ORIGINAL, a: NUEVO, estado: 'incierta', vence: PASADO() } } }))
+     const r = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+-    assert.equal(r.estado, 0, r.err); assert.equal(valor(), AJENO); assert.equal(refDe(p).estado, 'conflicto'); assert.equal(pedidos((x) => x.metodo === 'PATCH').length, 0)
++    assert.equal(r.estado, 0, r.err); assert.equal(valor(), AJENO); assert.equal(refDe(p).estado, 'conflicto'); assert.equal(pedidos((x) => x.ruta === '/rest/v1/rpc/migracion_medios_cambiar').length, 0)
+     reiniciar({ valor: AJENO }); s.patch.push('commit-503')
+     const p2 = guardar('f903-e2.json', manifiesto())
+-    const a = await cli(['actualizar', `--manifiesto=${p2}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
+-    assert.equal(a.estado, 0, a.err); assert.equal(valor(), AJENO); assert.equal(refDe(p2).estado, 'conflicto')
++    const a = await cli(['actualizar', `--manifiesto=${p2}`, `--env-file=${ENV_LOCAL}`, '--aplicar', '--plazo-ms=1000'])
++    assert.equal(a.estado, 3, a.err); assert.equal(refDe(p2).operacion.estado, 'incierta')
++    const a2 = await cli(['actualizar', `--manifiesto=${p2}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(a2.estado, 0, a2.err); assert.equal(valor(), AJENO); assert.equal(refDe(p2).estado, 'conflicto')
+     return { revertir: refDe(p).conflicto, actualizar: refDe(p2).conflicto }
+   })
+   await caso('F9-03 · Rechazos definitivos (403 de PostgREST, RLS con 0 filas) y corte de red tras el commit', async () => {
+@@ -256,6 +279,76 @@ try {
+     return { '403': refDe(p).rechazo.motivo, rls: refDe(p2).rechazo.motivo, corte: refDe(p3).nota }
+   })
+ 
++  // ======================= F9-03b · cambio todavía en vuelo =======================
++  const RPC_CAMBIO = (x) => x.ruta === '/rest/v1/rpc/migracion_medios_cambiar', RPC_BARRERA = (x) => x.ruta === '/rest/v1/rpc/migracion_medios_barrera'
++  await caso('F9-03b · 503 con el cambio EN VUELO y lectura del valor anterior; revertir ANTES del commit; el commit llega DESPUÉS de la reversión', async () => {
++    reiniciar(); s.patch.push('en-vuelo-503')
++    const p = guardar('f903b-1.json', manifiesto())
++    const a = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar', '--plazo-ms=2500'])
++    assert.equal(a.estado, 3, a.err); assert.equal(valor(), ORIGINAL, 'la lectura todavía ve el original'); assert.ok(s.enVuelo, 'el cambio sigue en vuelo')
++    const op = refDe(p).operacion
++    assert.deepEqual([refDe(p).estado, op.estado], ['pendiente', 'incierta'])
++    // La reversión no da nada por cerrado con una lectura: espera el plazo y pasa por la barrera.
++    const t0 = Date.now()
++    const r = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    const finReversion = Date.now()
++    assert.equal(r.estado, 0, r.err)
++    assert.ok(finReversion >= Date.parse(op.vence), 'la reversión terminó solo después del plazo del cambio en vuelo')
++    assert.ok(pedidos(RPC_BARRERA).length >= 1, 'pasó por la barrera')
++    assert.equal(r.datos.completo, true); assert.equal(refDe(p).operacion, undefined); assert.equal(refDe(p).estado, 'pendiente')
++    // El cambio en vuelo se confirma ahora, DESPUÉS de que la reversión respondió: ya no puede aplicar (plazo vencido).
++    assert.equal(s.enVuelo.liberar(), 'vencida'); assert.equal(valor(), ORIGINAL, 'la foto NO queda migrada tras la reversión completa')
++    const r2 = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(r2.estado, 0, r2.err); assert.equal(r2.datos.completo, true); assert.equal(valor(), ORIGINAL)
++    return { esperaReversionMs: finReversion - t0, liberacionTardia: s.liberadas.at(-1).resultado, barreras: pedidos(RPC_BARRERA).length }
++  })
++  await caso('F9-03b · Commit temporizado a los 1.200 ms (antes del plazo) tras una lectura previa: la barrera lo ve y la reversión lo revierte, sin cambio duplicado', async () => {
++    reiniciar(); s.patch.push('en-vuelo-503'); s.liberarEnMs = 1200
++    const p = guardar('f903b-2.json', manifiesto())
++    const a = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar', '--plazo-ms=3000'])
++    assert.equal(a.estado, 3, a.err)
++    const r = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(r.estado, 0, r.err); assert.equal(s.liberadas[0]?.resultado, 'hecho', 'el commit en vuelo sí aplicó antes del plazo')
++    assert.equal(r.datos.reconciliadas, 1); assert.equal(r.datos.hechas, 1); assert.equal(valor(), ORIGINAL); assert.equal(refDe(p).estado, 'revertida')
++    assert.equal(pedidos(RPC_CAMBIO).length, 2, 'un cambio de actualizar (en vuelo) y uno de reversión; ninguno duplicado')
++    return { reconciliadas: r.datos.reconciliadas, cambios: pedidos(RPC_CAMBIO).length }
++  })
++  await caso('F9-03b · Sin evidencia suficiente la operación sigue abierta con su id: plazo aún abierto, barrera caída y operación sin plazo → exit 3', async () => {
++    reiniciar(); s.patch.push('en-vuelo-503')
++    const p = guardar('f903b-3.json', manifiesto())
++    await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar', '--plazo-ms=1500'])
++    const id = refDe(p).operacion.id
++    // Plazo todavía abierto y sin permiso para esperar: no se cierra.
++    const r0 = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar', '--espera-max-ms=0'])
++    assert.equal(r0.estado, 3, r0.err); assert.equal(r0.datos.completo, false); assert.equal(refDe(p).operacion.id, id)
++    // Barrera caída: tampoco.
++    s.barreraFalla = 10
++    const r1 = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(r1.estado, 3, r1.err); assert.equal(r1.datos.completo, false); assert.equal(refDe(p).operacion.id, id, 'se conserva el id')
++    assert.equal(pedidos(RPC_CAMBIO).length, 1, 'con la duda abierta no se envía ningún cambio nuevo')
++    // Barrera sana: cierra (el cambio en vuelo nunca se liberó: no aplicado) y la reversión es completa con la fila original.
++    s.barreraFalla = 0
++    const r2 = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(r2.estado, 0, r2.err); assert.equal(r2.datos.completo, true); assert.equal(valor(), ORIGINAL)
++    assert.equal(s.enVuelo.liberar(), 'vencida')
++    // Operación de la versión anterior (sin plazo) con el valor anterior visible: nunca se cierra sola.
++    reiniciar()
++    const p2 = guardar('f903b-4.json', manifiesto({ ref: { operacion: { id: 'e7c7a1b2-0000-4000-8000-000000000005', modo: 'actualizar', de: ORIGINAL, a: NUEVO, estado: 'incierta' } } }))
++    const r3 = await cli(['revertir', `--manifiesto=${p2}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(r3.estado, 3, r3.err); assert.equal(r3.datos.completo, false); assert.match(refDe(p2).operacion.detalle, /sin plazo/); assert.equal(pedidos(RPC_BARRERA).length, 0)
++    return { plazoAbierto: r0.datos.operacionesAbiertas, barreraCaida: r1.datos.operacionesAbiertas, sinPlazo: refDe(p2).operacion.detalle }
++  })
++  await caso('F9-03b · Control: el commit concluye antes de reconciliar → reversión normal, sin barrera ni cambio duplicado', async () => {
++    reiniciar(); s.patch.push('commit-503')
++    const p = guardar('f903b-5.json', manifiesto())
++    const a = await cli(['actualizar', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(a.estado, 0, a.err); assert.equal(refDe(p).estado, 'actualizada')
++    const r = await cli(['revertir', `--manifiesto=${p}`, `--env-file=${ENV_LOCAL}`, '--aplicar'])
++    assert.equal(r.estado, 0, r.err); assert.equal(valor(), ORIGINAL); assert.equal(refDe(p).estado, 'revertida')
++    assert.equal(pedidos(RPC_CAMBIO).length, 2); assert.equal(pedidos(RPC_BARRERA).length, 0)
++    return { cambios: pedidos(RPC_CAMBIO).length }
++  })
++
+   // ======================= F9-04 · verificación completa =======================
+   await caso('F9-04 · verificar: sin --lectura falla cerrado; m/g ausentes, una sola variante, tipo o lectura caída nunca dan ok', async () => {
+     const p = guardar('f904.json', manifiesto({ ref: { estado: 'actualizada' }, lectura: `${BASE}/medios` }))
+diff --git a/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md b/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md
+index a4617f7..79371b1 100644
+--- a/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md
++++ b/.codex/DISENO-MIGRACION-MEDIOS-FASE9.md
+@@ -1,6 +1,6 @@
+ # Diseño de la migración de medios existentes · Fase 9
+ 
+-Fecha: 2026-10-12. **V2** (correcciones F9-01…F9-06 de `REVISION-FASE9-MEDIOS-V1.md`; entrega en `ENTREGA-FASE9-CORRECCIONES-V2.md`). Estado: **diseño, herramientas y simulación LOCAL**. No se migró ningún dato real, no se tocó ningún recurso remoto (Supabase de staging o del negocio, R2, Worker, Pages, DNS) y no hubo commit ni push. Herramienta: `scripts/migracion-medios/`. Inventario: [INVENTARIO-MEDIOS-FASE9.md](INVENTARIO-MEDIOS-FASE9.md). Plan del cambio público: [PLAN-CAMBIO-PUBLICO-FASE9.md](PLAN-CAMBIO-PUBLICO-FASE9.md).
++Fecha: 2026-10-12. **V2.1** (correcciones F9-01…F9-06 de `REVISION-FASE9-MEDIOS-V1.md` y F9-03b de `REVISION-FASE9-MEDIOS-V2.md`; entregas `ENTREGA-FASE9-CORRECCIONES-V2.md` y `ENTREGA-FASE9-CORRECCIONES-V2.1.md`). Estado: **diseño, herramientas y simulación LOCAL**. No se migró ningún dato real, no se tocó ningún recurso remoto (Supabase de staging o del negocio, R2, Worker, Pages, DNS) y no hubo commit ni push. Herramienta: `scripts/migracion-medios/`. Inventario: [INVENTARIO-MEDIOS-FASE9.md](INVENTARIO-MEDIOS-FASE9.md). Plan del cambio público: [PLAN-CAMBIO-PUBLICO-FASE9.md](PLAN-CAMBIO-PUBLICO-FASE9.md).
+ 
+ ## 1. Alcance
+ 
+@@ -48,26 +48,32 @@ Un JSON por ambiente, reanudable, que se reescribe de forma **atómica** (archiv
+ 
+ ## 5. Actualización de referencias y reversión
+ 
+-- `UPDATE <tabla> SET <col> = nuevo WHERE id = fila AND <col> = original` (PostgREST con la sesión de administración; RLS y GRANTs como en la app). Si no afecta filas se relee: si ya tiene el valor nuevo cuenta como hecho (respuesta perdida); si tiene otro valor queda en **conflicto** y no se toca, porque alguien la editó entretanto.
++- **Cambio con plazo (V2.1).** Cada cambio pasa por la función del servidor `migracion_medios_cambiar` (migración `20261012000003`, SECURITY INVOKER: aplican RLS y GRANTs de la cuenta, además de `es_admin()` y una lista cerrada de tabla/columna): `UPDATE <tabla> SET <col> = a WHERE id = fila AND <col> = de AND clock_timestamp() < vence`. `vence` = inicio + `--plazo-ms` (por defecto 30 s) y se guarda en el diario. Respuestas: `hecho`, `sin-cambio` (la fila no tenía `de`, o RLS) y `vencida`; las tres son de una sentencia ya terminada.
+ - Lotes (`--lote`, `--pausa-ms`).
+-- **Diario e incertidumbre (V2, F9-03).** Corrige la afirmación V1 «el diario nunca queda por detrás de la base», que era falsa: base y archivo no se confirman juntos. Ahora:
+-  1. **Antes** de cada UPDATE se guarda en el manifiesto la intención (`operacion` con id, modo, valor de y valor a, `en-curso`); **después**, el resultado. Si la ejecución se corta entre el commit y el guardado, la intención queda en el diario.
+-  2. Una respuesta que no es «1 fila» se reconcilia con una **lectura estricta**: valor = destino → hecho (respuesta perdida); otro valor → conflicto; valor anterior → **rechazado** si el fallo fue definitivo (4xx de PostgREST, o 0 filas por permisos/RLS) o **incierto** si fue de red/5xx/408/429.
+-  3. Incierto (o lectura caída): la operación queda **abierta** (`incierta`, mismo id), el lote se detiene y el comando termina con **código 3** y `completo: false`.
+-  4. Toda ejecución con `--aplicar`, **antes** de escribir nada nuevo, reconcilia las operaciones abiertas solo leyendo (de cualquier modo: una reversión recoge lo que una actualización incierta pudo confirmar). Si alguna sigue en duda, no envía UPDATE nuevos.
+-  5. `completo: true` solo sin operaciones abiertas, sin rechazos y sin candidatas restantes. Una reversión **nunca** informa éxito con una fila que una operación suya pudo haber migrado.
+-  Límite que se mantiene: si una lectura muestra el valor anterior tras un fallo incierto, la siguiente ejecución lo trata como «no aplicada» y repite el UPDATE condicional (que solo puede aplicarse sobre ese mismo valor). Conviene que entre ambas pase más que el tiempo máximo de una sentencia.
++- **Diario e incertidumbre (V2 F9-03, corregido en V2.1 F9-03b).** Base y archivo no se confirman juntos (la afirmación V1 «el diario nunca queda por detrás de la base» era falsa), y en V2 quedaba otra suposición falsa: que una lectura del valor anterior tras un fallo incierto prueba que el cambio no se aplicará. **No lo prueba:** la sentencia puede seguir en vuelo (encolada en un proxy o en el pool, o esperando un bloqueo) y confirmarse después de la lectura. Protocolo V2.1:
++  1. **Antes** de cada cambio se guarda la intención (`operacion`: id, modo, de, a, `en-curso`, **`vence`**); **después**, el resultado.
++  2. Respuesta de la sentencia (`hecho`, `sin-cambio`, `vencida`) o 4xx de PostgREST → resultado **definitivo** (con una lectura para distinguir hecho, rechazo y conflicto).
++  3. Sin respuesta clara (red, 5xx, 408, 429) → solo leer el valor **de destino** lo resuelve (hecho). Cualquier otro valor, o la lectura caída, deja la operación **abierta** (`incierta`, mismo id, con su plazo), detiene el lote y sale con **código 3**.
++  4. Cerrar una operación abierta exige evidencia del **servidor**: la **barrera** `migracion_medios_barrera`. Solo responde una vez vencido el plazo (por el reloj del servidor; antes devuelve `esperar` con los ms que faltan) y entonces reescribe la columna con su **mismo valor**. Desde ese momento ningún cambio con ese plazo puede confirmarse:
++     - el que ya escribió y no confirmó retiene el bloqueo: la barrera **espera** su commit y devuelve el valor nuevo;
++     - el que evaluó su WHERE antes del plazo y espera un bloqueo vuelve a evaluarlo al ver una versión nueva de la fila (EvalPlanQual) y, con el plazo vencido, no aplica;
++     - el que llega más tarde encuentra el plazo vencido;
++     - si el que esperaba estaba bloqueado por otra transacción que solo hizo `FOR UPDATE` (sin versión nueva, no re-evalúa: **medido**), la barrera queda encolada **detrás** de él y devuelve el valor que realmente quedó.
++     Valor de la barrera = `a` → hecho; = `de` → no aplicada (definitivo: vuelve a ser candidata); otro → conflicto; sin fila → fila inexistente.
++  5. Toda ejecución con `--aplicar` reconcilia **primero** las operaciones abiertas: lee; si no ve `a`, espera el plazo (hasta `--espera-max-ms`, por defecto 120 s) y pasa por la barrera. Si el plazo sigue abierto más allá de esa espera, la barrera falla o la operación no tiene plazo (creada por V2), **sigue abierta** con su id, no se envía ningún cambio nuevo y el comando sale con **código 3**. Una lectura del valor anterior **nunca** cierra una operación.
++  6. `completo: true` solo sin operaciones abiertas, sin rechazos y sin candidatas restantes. Así una reversión no declara éxito mientras un cambio suyo pueda confirmarse después (criterio de aceptación de F9-03b).
++  Medido en Postgres 17 de Local (`probar-plazo-pg.mjs`): cambio en vuelo confirmado después del plazo → la barrera esperó ~1,3 s y devolvió el valor nuevo; bloqueado por una reescritura → `sin-cambio`; bloqueado por `FOR UPDATE` → aplicó tarde y la barrera, detrás, lo vio.
+ - **Reversión** (`revertir --aplicar`): el mismo UPDATE condicional en sentido inverso (`= original WHERE <col> = nuevo`). Una fila editada después de migrar queda `conflicto-reversion` y no se pisa. **Ni los originales de Supabase ni las copias en R2 se borran**: revertir solo cambia referencias. Una copia en R2 que quede sin referencia la recoge, si se decide, el recolector de huérfanos con retención (`scripts/medios-huerfanos.mjs`), fuera de esta herramienta.
+ - `productos` y `servicios` tienen triggers de auditoría: cada cambio de referencia deja una fila en `auditoria` a nombre de la cuenta que ejecuta.
+ 
+ ## 6. Garantías y guardas
+ 
+-1. **Sin borrados:** la herramienta no contiene `storage.remove`, `DELETE` al Worker ni `delete` de filas (comprobado por una prueba estática). Hay un solo punto de `UPDATE` y es condicional (también comprobado).
++1. **Sin borrados:** la herramienta no contiene `storage.remove`, `DELETE` al Worker ni `delete` de filas, y la migración `20261012000003` no contiene `delete`, `truncate` ni `drop` (pruebas estáticas). La CLI ya no tiene `UPDATE` directo: su único punto de escritura es la función con plazo (condicional al valor anterior y al plazo), y la barrera solo reescribe el mismo valor (también comprobado). Las funciones no cambian esquema ni datos fuera de esas seis columnas.
+ 2. **Privados excluidos tres veces:** al clasificar, en las invariantes del manifiesto (solo buckets públicos de catálogo) y en `planificar`. Los informes no copian valores ni rutas de comprobantes, solo conteos.
+ 3. **Ambiente (V2, F9-06):** lo local (loopback) se permite. Un destino remoto exige https y el permiso **de su función** con el host exacto: `--permitir-supabase`, `--permitir-worker` y `--permitir-lectura` (en la arquitectura real son tres hosts distintos). El permiso de una función no habilita otra; no hay comodines; `--permitir-remoto` se retiró y repetir una opción se rechaza. El Supabase del negocio exige además `--permitir-produccion`, llegue por el rol que llegue. Todo se rechaza **antes** de autenticar.
+ 4. **Simulación por defecto:** sin `--aplicar`, `copiar` solo prepara variantes y `actualizar`/`revertir` solo muestran lo que harían.
+ 5. Argumentos estrictos: flags sin valor, números con rango y opciones desconocidas o repetidas rechazadas.
+-6. **Verificación completa (V2, F9-04):** si hay copias en R2, `verificar` exige `--lectura` (fallo cerrado, código 2, sin informe). `ok` exige que coincidan **todos** los originales, **todas** las variantes esperadas (2 por entrada copiada; tipo `image/webp` y SHA-256) y **todas** las referencias, sin operaciones abiertas; si no, `cobertura: incompleta`. Un manifiesto vacío es un caso explícito (`cobertura: vacia`), sin objetos inventados ni login.
++6. **Verificación completa (V2, F9-04):** si hay copias en R2, `verificar` exige `--lectura` (fallo cerrado, código 2, sin informe). `ok` exige que coincidan **todos** los originales, **todas** las variantes esperadas (2 por entrada copiada; tipo `image/webp` y SHA-256) y **todas** las referencias, sin operaciones abiertas; si no, `cobertura: incompleta`. Un manifiesto vacío es un caso explícito (`cobertura: vacia`), sin objetos inventados ni login. Precisión: `refsComprobadas` cuenta **lecturas**; las referencias en `conflicto`/`conflicto-reversion` se leen pero no tienen valor esperado, así que no entran en la comparación y siguen requiriendo revisión del operador.
+ 7. **Privacidad de URLs (V2, F9-05):** en una URL de Storage manda el bucket **real** de la URL, no el de la columna. Endpoints `sign`/`authenticated`, buckets privados y buckets desconocidos se clasifican `privado` (propio, ajeno o tras proxy): no se migran ni salen al informe (ni valor, ni ruta, ni token). En las demás URL no migrables, el informe omite la query (`?<omitido>`).
+ 8. **Carpeta de trabajo de la simulación (V2, F9-01):** `simular-fase9.mjs` valida `--trabajo` antes de cualquier borrado, carpeta, Docker o red (`trabajo-seguro.mjs`): solo `sim-f9` o `sim-f9-<sufijo>` dentro del temporal del sistema, con identidad real (mayúsculas, 8.3, enlaces y junctions resueltos), nunca el proyecto, un ancestro ni algo dentro de él; una carpeta existente solo si lleva la marca de propiedad y no es un enlace. Entre corridas solo se vacía su hijo `corrida/`.
+ 
+@@ -76,7 +82,7 @@ Un JSON por ambiente, reanudable, que se reescribe de forma **atómica** (archiv
+ Cada paso requiere autorización explícita del usuario con su alcance. Codex revisa antes de cualquier escritura remota.
+ 
+ 0. **Puerta de compatibilidad (bloqueante).** Todo frontend que lea los datos de ese ambiente debe entender `r2:` y tener `VITE_MEDIOS_PUBLIC_URL`. Hoy **no se cumple en producción**: `main` (lo que publica GitHub Pages) no tiene `lib/medios.js` y pediría `…/object/public/fotos-productos/r2:fotos-productos/<id>`, que responde **400** (`evidencia-fase9/compatibilidad-main-r2.txt`). Las PWA instaladas con bundles viejos tampoco lo entienden, y un plazo de observación **no demuestra** que todas se hayan actualizado (observación O1 de Codex): 10A/10B deben incluir el tratamiento de clientes instalados (`PLAN-CAMBIO-PUBLICO-FASE9.md` §3 y §7). Consecuencia: **las referencias de producción se actualizan solo después de la Fase 10B** (frontend nuevo publicado y observado, GitHub Pages redirigido o reconstruido con lectura de R2). La copia a R2 (pasos 3–4) sí puede adelantarse sin efecto visible.
+-1. Infraestructura de producción aprobada: bucket R2, Worker y Function `/medios` con revocación B (Fase 3/10). Nada de esto existe hoy en producción.
++1. Infraestructura de producción aprobada: bucket R2, Worker y Function `/medios` con revocación B (Fase 3/10), **y la migración `20261012000003`** (funciones con plazo y barrera; sin ella `actualizar`/`revertir` fallan cerrado). Nada de esto existe hoy en producción; la migración solo está aplicada en Local y exige confirmación explícita antes de aplicarse a staging o producción.
+ 2. `inventariar --desde-json=<salida de inventario.sql>`: el SQL es de solo lectura y lo ejecuta, con autorización, quien tenga acceso al SQL del ambiente. Revisar las clasificaciones.
+ 3. `planificar` con `--permitir-supabase=<host>` (solo lectura HTTP de objetos públicos); revisar el manifiesto, los eventos y una **muestra visual estratificada** (por bucket, tipo y tamaño).
+ 4. `copiar` sin `--aplicar` (variantes) → revisión de muestra → `copiar --aplicar` en lotes pequeños, con `--permitir-supabase`, `--permitir-worker` y `--permitir-lectura` (cada uno con su host exacto). La primera copia fija Worker y lectura en el manifiesto.
+@@ -92,4 +98,7 @@ Cada paso requiere autorización explícita del usuario con su alcance. Codex re
+ - La recodificación es con pérdida: calidad 80, igual que la app. Los WebP ya válidos no se recodifican.
+ - La verificación lee por la base pública. En producción eso es la Function `/medios` con caché de borde, así que una lectura podría venir del borde; el SHA-256 lo comprueba igual.
+ - No hay bloqueo del lado del servidor contra ediciones simultáneas: el UPDATE condicional evita pisar, pero una edición entre la planificación y la actualización deja esa fila en `conflicto`, a resolver a mano. Conviene ejecutar con el catálogo en calma.
++- **Reloj del servidor:** el plazo y la barrera usan `clock_timestamp()` del mismo servidor de base de datos; el reloj del cliente solo decide cuánto esperar. Un salto atrás del reloj del servidor dentro del plazo alargaría la ventana (la barrera seguiría respondiendo `esperar`), no la acortaría.
++- **Plazo y espera:** un plazo corto puede dejar `vencida` un cambio legítimo lento (definitivo, se reintenta en otra ejecución); uno largo alarga la espera de la reconciliación. Por defecto 30 s de plazo y hasta 120 s de espera.
++- **Operaciones abiertas por V2** (sin `vence`, solo posibles en manifiestos de pruebas locales): no hay evidencia para cerrarlas solas; quedan abiertas con código 3 para revisión manual.
+ - `planificar` descarga los originales completos a una caché local. Para miles de objetos hace falta espacio en disco; la caché no contiene nada privado.

@@ -1,0 +1,68 @@
+{
+  "fecha": "2026-10-10",
+  "alcance": "QA local sin escrituras remotas",
+  "outputs": [
+    {
+      "id": 0,
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "2513e0",
+          "wall_time_seconds": 1.3239677,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "id": 1,
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "9fe77e",
+          "wall_time_seconds": 1.311029,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "id": 2,
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "3a6a40",
+          "wall_time_seconds": 1.4743312,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      }
+    },
+    {
+      "id": 3,
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "chunk_id": "22e217",
+          "wall_time_seconds": 1.3929976,
+          "exit_code": 0,
+          "original_token_count": 1274,
+          "output": "OK    IP-R1: configuración correcta pasa y SOLO pide GET al alias (HTML, sw.js y sus módulos)\nOK    IP-R1: alias ajeno aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: alias con la marca esperada pero otro host aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: alias con ruta o query aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: alias http (sin TLS) aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: Supabase ajeno con el ref de staging en el query aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: Supabase del negocio aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: Supabase local aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: cuenta fuera de las QA ficticias aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: clave service_role aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: clave vacía aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: sin --build-id aborta ANTES de cualquier petición (cero login, cero red)\nOK    IP-R1: artefacto con otra marca ABORTA tras leer el HTML y ANTES del login (el llamador no llega a autenticar)\nOK    IP-R1: artefacto sin meta build-id aborta\nOK    IP-R1: clasificación de destinos — aprobados pasan; negocio, local, pasarela, otro Worker/bucket/Preview se prohíben\nOK    IP-R1: el bloqueo se instala en ADMIN y en CLIENTE; el tráfico prohibido del contexto CLIENTE se ABORTA y se registra\nOK    IP-R1: el fetch del propio script lanza ANTES de enviar a un destino no aprobado\nOK    IP-R2: fixtures limpios → precondición sin motivos\nOK    IP-R2: producto con foto previa → precondición NO cumplida (la prueba aborta sin modificar)\nOK    IP-R2: servicio con foto previa → precondición NO cumplida (la prueba aborta sin modificar)\nOK    IP-R2: producto con galería previa → precondición NO cumplida (la prueba aborta sin modificar)\nOK    IP-R2: servicio con galería previa → precondición NO cumplida (la prueba aborta sin modificar)\nOK    IP-R2: galería ilegible (null) → precondición NO cumplida (la prueba aborta sin modificar)\nOK    IP-R2: producto inexistente → precondición NO cumplida (la prueba aborta sin modificar)\nOK    IP-R2: la limpieza borra SOLO la fila propia por id; una fila antigua con el MISMO título se conserva\nOK    IP-R2: solo se consideran propios los grupos de fotos-galeria del dominio público aprobado referenciados por la fila propia\nOK    IP-R1b: una redirección 307 de un origen aprobado a uno NO aprobado se rechaza; el segundo origen recibe CERO peticiones (POST con cabecera y cuerpo ficticios)\nOK    IP-R2: inventario con cursor (paginado) se RECHAZA: no se declara snapshot completo\nOK    IP-R2b: DELETE ok confirmado por relectura → se borran sus objetos y los contadores reflejan lo confirmado\nOK    IP-R2b: DELETE de la fila (rechazo403) → la fila sigue, los objetos se CONSERVAN, nada se cuenta como eliminado y queda pendiente\nOK    IP-R2b: DELETE de la fila (rechazo500) → la fila sigue, los objetos se CONSERVAN, nada se cuenta como eliminado y queda pendiente\nOK    IP-R2b: DELETE de la fila (sin-efecto-204) → la fila sigue, los objetos se CONSERVAN, nada se cuenta como eliminado y queda pendiente\nOK    IP-R2b: respuesta perdida CON commit → la relectura confirma la ausencia y se limpian los objetos\nOK    IP-R2b: respuesta perdida SIN commit → la fila sigue, objetos conservados\nOK    IP-R2b: lectura de reconciliación caída → estado desconocido: objetos conservados y pendiente informado\nOK    IP-R2b: fila borrada pero el Worker falla (500) → fila eliminada, objeto PENDIENTE, contador de objetos en 0\nOK    IP-R2: con lectura fallida (filas = null) no hay limpieza destructiva\nOK    IP-R2: el título lleva una marca por ejecución (dos ejecuciones no comparten título)\nOK    IP-R2: inventario con lectura fallida (500) LANZA, no devuelve lista vacía\nOK    IP-R2: el inventario devuelve claves COMPLETAS y la comparación detecta cambios concurrentes de igual cardinalidad\nOK    IP-R2: snapshot — detecta cambios de fotos/filas, ignora el orden de claves\nOK    IP-S1: galería conservada — idéntica pasa; otra referencia, etiqueta/orden/id u objeto desaparecido fallan\nOK    Entrega Pages: la limpieza reconoce solo los grupos propios bajo /medios (y no los de r2.dev ni de otro host)\nOK    IP-P1: la marca no basta — misma marca con la entrega equivocada o sin las bases aborta SIN login (preflight)\nOK    IP-P1: un build sin la variable de bases extra sigue siendo válido para r2dev (el binding no cambia el texto)\nOK    IP-P1: scriptsDelSw solo admite rutas relativas del alias (nada absoluto, con `..` ni de otro host)\nOK    CP-01: limpiarObjetoPropio — sano confirma; inventario/DELETE/relectura fallidos, cursor o malformado NO confirman y solo se borra el grupo propio\nOK    Rollback de Galería: grupos propios bajo varias bases y limpieza con varios prefijos (solo los propios)\n\n48 casos, 0 fallos\n"
+        }
+      }
+    },
+    {
+      "id": "comparacion",
+      "result": {
+        "chunk_id": "efd42b",
+        "wall_time_seconds": 0.769913,
+        "exit_code": 0,
+        "original_token_count": 50,
+        "output": "{\"comparaciones\":2,\"fallos\":0,\"cache\":\"Solo cabecera, constante, comentarios y etiquetas; resto identico a HEAD\",\"interfaz\":\"Solo el valor esperado de Cache-Control cambia; resto identico a HEAD\"}\n"
+      }
+    }
+  ]
+}

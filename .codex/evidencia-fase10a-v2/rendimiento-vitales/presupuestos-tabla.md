@@ -1,0 +1,50 @@
+Ejecución: cdf364ab-d54d-4d5a-8a53-550fa664363c · alcance: PARCIAL (vitales) · veredicto: **NO CUMPLE** (28/46 cumplen)
+
+| Grupo | Medida | Valor | Presupuesto | ¿Cumple? |
+| --- | --- | ---: | --- | --- |
+| vitales | portal-inicio frio · LCP (ms) | 3020 | <= 2500 | **NO** |
+| vitales | portal-inicio frio · CLS | 0.1004 | <= 0.1 | **NO** |
+| vitales | portal-inicio caliente · LCP (ms) | 2692 | <= 2500 | **NO** |
+| vitales | portal-inicio caliente · CLS | 0.1004 | <= 0.1 | **NO** |
+| vitales | portal-productos frio · LCP (ms) | 4104 | <= 2500 | **NO** |
+| vitales | portal-productos frio · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | portal-productos frio · interacción (ms) | 32 | <= 200 | sí |
+| vitales | portal-productos caliente · LCP (ms) | 3676 | <= 2500 | **NO** |
+| vitales | portal-productos caliente · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | portal-productos caliente · interacción (ms) | 32 | <= 200 | sí |
+| vitales | portal-detalle-producto frio · LCP (ms) | 4116 | <= 2500 | **NO** |
+| vitales | portal-detalle-producto frio · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | portal-detalle-producto caliente · LCP (ms) | 3824 | <= 2500 | **NO** |
+| vitales | portal-detalle-producto caliente · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | clienta-inicio frio · LCP (ms) | 3328 | <= 2500 | **NO** |
+| vitales | clienta-inicio frio · CLS | 0.3344 | <= 0.1 | **NO** |
+| vitales | clienta-inicio caliente · LCP (ms) | 3012 | <= 2500 | **NO** |
+| vitales | clienta-inicio caliente · CLS | 0.3280 | <= 0.1 | **NO** |
+| vitales | clienta-productos frio · LCP (ms) | 4492 | <= 2500 | **NO** |
+| vitales | clienta-productos frio · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | clienta-productos frio · interacción (ms) | 40 | <= 200 | sí |
+| vitales | clienta-productos caliente · LCP (ms) | 4056 | <= 2500 | **NO** |
+| vitales | clienta-productos caliente · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | clienta-productos caliente · interacción (ms) | 40 | <= 200 | sí |
+| vitales | clienta-detalle-producto frio · LCP (ms) | 4496 | <= 2500 | **NO** |
+| vitales | clienta-detalle-producto frio · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | clienta-detalle-producto caliente · LCP (ms) | 4176 | <= 2500 | **NO** |
+| vitales | clienta-detalle-producto caliente · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | pos-ventas frio · LCP (ms) | 2048 | <= 2500 | sí |
+| vitales | pos-ventas frio · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | pos-ventas frio · interacción (ms) | 24 | <= 200 | sí |
+| vitales | pos-ventas caliente · LCP (ms) | 1700 | <= 2500 | sí |
+| vitales | pos-ventas caliente · CLS | 0.0000 | <= 0.1 | sí |
+| vitales | pos-ventas caliente · interacción (ms) | 24 | <= 200 | sí |
+| vitales | pos-pedidos-web frio · LCP (ms) | 2860 | <= 2500 | **NO** |
+| vitales | pos-pedidos-web frio · CLS | 0.0005 | <= 0.1 | sí |
+| vitales | pos-pedidos-web frio · interacción (ms) | 24 | <= 200 | sí |
+| vitales | pos-pedidos-web caliente · LCP (ms) | 2632 | <= 2500 | **NO** |
+| vitales | pos-pedidos-web caliente · CLS | 0.0005 | <= 0.1 | sí |
+| vitales | pos-pedidos-web caliente · interacción (ms) | 32 | <= 200 | sí |
+| reducido | reducido-inicio · rAF/s en reposo | 0 | <= 1 | sí |
+| reducido | reducido-inicio · animaciones en curso | 0 | <= 0 | sí |
+| reducido | reducido-promociones · rAF/s en reposo | 0 | <= 1 | sí |
+| reducido | reducido-promociones · animaciones en curso | 0 | <= 0 | sí |
+| reducido | reducido-referidos-web · rAF/s en reposo | 0 | <= 1 | sí |
+| reducido | reducido-referidos-web · animaciones en curso | 0 | <= 0 | sí |

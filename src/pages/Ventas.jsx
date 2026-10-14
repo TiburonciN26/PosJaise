@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { X, ShoppingCart, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
+import { X, ShoppingCart, Scissors, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -51,24 +51,28 @@ const metodosPago = [
     nombreCorto: 'Efect.',
     icono: `${import.meta.env.BASE_URL}icons/efectivo.svg`,
     clasesActivo: 'border-green bg-green/10 text-green',
+    clasesHover: 'hover:border-green',
   },
   {
     nombre: 'Tarjeta',
     nombreCorto: 'Tarjeta',
     icono: `${import.meta.env.BASE_URL}icons/targueta.svg`,
     clasesActivo: 'border-blue bg-blue/10 text-blue',
+    clasesHover: 'hover:border-blue',
   },
   {
     nombre: 'Transferencia',
     nombreCorto: 'Transf.',
     icono: `${import.meta.env.BASE_URL}icons/transferencia.svg`,
     clasesActivo: 'border-gray-300 bg-gray-300/10 text-gray-300',
+    clasesHover: 'hover:border-gray-300',
   },
   {
     nombre: 'Yape',
     nombreCorto: 'Yape',
     icono: `${import.meta.env.BASE_URL}icons/yape.svg`,
     clasesActivo: 'border-purple-300 bg-purple-300/10 text-purple-300',
+    clasesHover: 'hover:border-purple-300',
   },
 ]
 
@@ -261,7 +265,7 @@ function FilaTicket({
               <button
                 type="button"
                 onClick={() => onCambiarCantidad(item.id, -1)}
-                className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber hover:text-amber"
+                className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber"
               >
                 −
               </button>
@@ -271,7 +275,7 @@ function FilaTicket({
               type="button"
               onClick={() => onCambiarCantidad(item.id, 1)}
               disabled={enElLimite}
-              className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:pointer-events-none disabled:opacity-30"
+              className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber disabled:pointer-events-none disabled:opacity-30"
             >
               +
             </button>
@@ -999,7 +1003,7 @@ export default function Ventas({ activo = true }) {
   return (
     <div className="animate-entrada-pestana flex h-full flex-col">
       {/* Buscador / escáner de código de barras + Agregar servicio */}
-      <div className="border-b border-border bg-surface px-(--separador-vertical) pb-3 pt-(--separador-horizontal)">
+      <div className="tema-negro-fondo border-b border-border bg-surface px-(--separador-vertical) pb-3 pt-(--separador-horizontal)">
         {/* lg: en monitores anchos, el buscador y la fila de cliente/servicio
             se centran en vez de estirarse de borde a borde (la franja de
             fondo sí sigue ocupando todo el ancho). */}
@@ -1021,7 +1025,7 @@ export default function Ventas({ activo = true }) {
             onBlur={() => conTemporizador(() => setMostrarSugerencias(false), 150)}
             textoPlaceholder="Buscar producto o escanear código de barras..."
             animar={activo}
-            className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-8 pr-[41px] font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber disabled:opacity-60"
+            className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-8 pr-[41px] font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 hover:border-amber focus:border-amber disabled:opacity-60"
           />
           {busqueda && (
             <button
@@ -1111,18 +1115,18 @@ export default function Ventas({ activo = true }) {
         </div>
 
         <CampoColapsable abierto={!carritoExpandido} margen>
-          <div className="flex items-center gap-2 pt-1.5">
+          <div className="flex items-center gap-2">
             <div
               className={`flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors ${
                 cliente
                   ? 'border-purple-300 bg-purple-300/10 text-purple-300'
-                  : 'border-dashed border-border-strong text-ink/70'
+                  : 'border-border-strong text-ink/70 hover:border-amber'
               }`}
             >
               <button
                 type="button"
                 onClick={() => setModalClienteAbierto(true)}
-                className="flex min-w-0 flex-1 items-center gap-1.5 transition-colors hover:text-amber"
+                className="flex min-w-0 flex-1 items-center gap-1.5 transition-colors"
               >
                 <User className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">
@@ -1144,16 +1148,20 @@ export default function Ventas({ activo = true }) {
             <button
               type="button"
               onClick={abrirBuscadorAtenciones}
-              className={`relative shrink-0 whitespace-nowrap rounded-lg border border-dashed px-2 py-1.5 text-xs transition-colors ${
+              className={`relative shrink-0 whitespace-nowrap rounded-lg border px-2 py-1.5 text-xs transition-colors ${
                 hayServicioEnCarrito
-                  ? 'border-blue/50 text-blue hover:bg-blue/10'
-                  : 'border-border-strong text-ink/70 hover:border-blue/50 hover:text-blue'
+                  ? 'border-blue bg-blue/10 text-blue'
+                  : 'border-border-strong text-ink/70 hover:border-blue'
               }`}
             >
               {hayAtencionesPendientes && (
-                <span className="absolute -left-1 -top-1 z-10 h-2 w-2 rounded-full bg-blue" />
+                // top-0: más arriba lo recorta el overflow-hidden del CampoColapsable
+                <span className="absolute -left-1 top-0 z-10 h-2 w-2 rounded-full bg-blue" />
               )}
-              + Agregar servicio
+              <span className="flex items-center gap-1.5">
+                <Scissors className="h-3.5 w-3.5 shrink-0" />
+                Agregar servicio
+              </span>
             </button>
 
             <button
@@ -1167,10 +1175,10 @@ export default function Ventas({ activo = true }) {
                     : 'Descuento por monto fijo — cambiar a cupón'
               }
               title="Cambiar tipo de descuento"
-              className={`flex shrink-0 items-center justify-center rounded-lg border border-dashed p-1.5 transition-colors ${
+              className={`flex shrink-0 items-center justify-center rounded-lg border p-1.5 transition-colors ${
                 valorDescuento || codigoCupon
                   ? 'border-red/50 text-red'
-                  : 'border-border-strong text-ink/70 hover:border-red hover:text-red'
+                  : 'border-border-strong text-ink/70 hover:border-red'
               }`}
             >
               {esDescuentoPorcentaje ? (
@@ -1287,8 +1295,8 @@ export default function Ventas({ activo = true }) {
               >
                 {carrito.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-                    <ShoppingCart className="h-10 w-10 text-ink/20" />
-                    <p className="font-mono text-sm text-ink/30">El carrito está vacío</p>
+                    <ShoppingCart className="h-10 w-10 text-white/20" />
+                    <p className="font-mono text-sm text-white/30">El carrito está vacío</p>
                   </div>
                 ) : (
                   carrito.map((item) => (
@@ -1369,7 +1377,7 @@ export default function Ventas({ activo = true }) {
                     className={`rounded-lg border px-1 py-2 text-[11px] transition-colors sm:px-2 sm:text-sm ${
                       metodoPago === metodo.nombre
                         ? metodo.clasesActivo
-                        : 'border-border bg-surface-2 text-ink hover:border-border-strong'
+                        : `border-border bg-bg text-ink ${metodo.clasesHover}`
                     }`}
                   >
                     <span className="flex items-center justify-center gap-1">
@@ -1412,7 +1420,7 @@ export default function Ventas({ activo = true }) {
                       className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
                         montoRecibido === String(total)
                           ? 'border-green bg-green/10 text-green'
-                          : 'border-border-strong text-ink/70 hover:border-amber hover:text-amber'
+                          : 'border-border-strong text-ink/70 hover:border-amber'
                       }`}
                     >
                       Exacto
@@ -1425,7 +1433,7 @@ export default function Ventas({ activo = true }) {
                         className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
                           montoRecibido === String(monto)
                             ? 'border-green bg-green/10 text-green'
-                            : 'border-border-strong text-ink/70 hover:border-amber hover:text-amber'
+                            : 'border-border-strong text-ink/70 hover:border-amber'
                         }`}
                       >
                         {monto}
@@ -1507,7 +1515,7 @@ export default function Ventas({ activo = true }) {
                     className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[11px] transition-colors sm:text-sm ${
                       comprobante?.tipo === opcion.tipo
                         ? 'border-amber bg-amber/10 text-amber'
-                        : 'border-border bg-surface-2 text-ink hover:border-border-strong'
+                        : 'border-border bg-bg text-ink hover:border-border-strong'
                     }`}
                   >
                     <opcion.Icono className="h-4 w-4 shrink-0" />
@@ -1551,7 +1559,7 @@ export default function Ventas({ activo = true }) {
                 type="button"
                 onClick={pedirCancelarVenta}
                 disabled={cobrando}
-                className={`flex-1 whitespace-nowrap rounded-lg border bg-transparent py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
+                className={`flex-1 whitespace-nowrap rounded-lg border bg-bg py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
                   carrito.length > 0
                     ? 'border-red text-red hover:bg-red/10'
                     : 'border-border-strong text-ink/60'
@@ -1564,7 +1572,7 @@ export default function Ventas({ activo = true }) {
                 onClick={confirmarVenta}
                 disabled={!puedeCobrar || cobrando}
                 className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg py-3 text-base font-bold transition-colors sm:text-lg lg:text-base ${
-                  puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-surface-3 text-ink'
+                  puedeCobrar && !cobrando ? 'bg-green text-bg' : 'bg-bg text-ink'
                 }`}
               >
                 <Check className="h-5 w-5" />
@@ -1658,7 +1666,7 @@ export default function Ventas({ activo = true }) {
               <button
                 type="button"
                 onClick={() => setConfirmandoCancelar(false)}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber"
               >
                 Volver
               </button>

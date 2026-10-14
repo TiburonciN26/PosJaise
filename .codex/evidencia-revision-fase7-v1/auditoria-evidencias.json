@@ -1,0 +1,139 @@
+{
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql": "88edc092b10ef2539a2462d6bde9b17f18c25b6ed89c780e848ba4b3620d4e1d",
+    "supabase/migrations/20261012000002_indices_listas_medidos.sql": "eee9963b4f601247b470e4c784331036f493cc3f452c30158874eba14b7b53f0",
+    "scripts/verificar-fase7.cjs": "d1fe043553e01a745881f78cb71cbe47c40216607d248b8f554dca9a815957f7",
+    "scripts/medir-fase7.cjs": "2619bc2036f41cd3c8c467088c454f1e87180406fc891fda49bdc159f42c4e06",
+    "scripts/costo-indices-fase7.cjs": "6cc89a7468b77a88b14387b4f1b17efa075007ea3ff79cac011f054e3ad3b372",
+    "scripts/lib/volumen-fase7.cjs": "dee1d59be89f16bccd3b90dcf593edc2957fbc8d16d162688a8710309362525e"
+  },
+  "evidenciaClaude": {
+    "roles": {
+      "fases": [
+        "antes",
+        "despues1",
+        "despues2",
+        "control",
+        "revertida"
+      ],
+      "claves": 664,
+      "diferencias": {
+        "despues1": 0,
+        "despues2": 0,
+        "control": 76,
+        "revertida": 0
+      },
+      "pol": {
+        "modificadas": [
+          "clientes.clientes_select",
+          "cupones.cupones_select_propio",
+          "cupones.cupones_select_staff",
+          "pedidos_web.pedidos_web_select",
+          "pedidos_web_items.pedidos_web_items_select",
+          "productos.productos_select",
+          "promociones.promociones_admin_todo",
+          "resenas.resenas_select",
+          "resenas_producto.resenas_producto_select",
+          "resenas_servicio.resenas_servicio_select",
+          "servicios.servicios_select",
+          "zonas_delivery.zonas_delivery_select"
+        ],
+        "estructura_ajena": [],
+        "solo_envoltorio": 24,
+        "no_equivalentes": []
+      },
+      "veredicto": "CORRECTO",
+      "filasAntes": "4749,429,3067,3245,144",
+      "filasDespues": "4749,429,3067,3245,144"
+    },
+    "actual": {
+      "reps": 5,
+      "meta": {
+        "filas_antes": "4749,429,3067,3245,119",
+        "volumen": "429,429,3067,49,89,80,208,3245,3340,4749",
+        "pedidos_clienta": 4,
+        "indices": [
+          "idx_f7_cupones_origen_estado_creado|237568",
+          "idx_f7_pedidos_web_creado|40960",
+          "idx_f7_pedidos_web_items_pedido|32768"
+        ],
+        "filas_despues": "4749,429,3067,3245,119"
+      },
+      "consultas": 37
+    },
+    "ampliada": {
+      "reps": 3,
+      "meta": {
+        "filas_antes": "4749,429,3067,3245,119",
+        "volumen": "60429,120429,123067,20049,20089,20080,5208,23245,23340,34749",
+        "pedidos_clienta": 4,
+        "indices": [
+          "idx_f7_cupones_origen_estado_creado|8937472",
+          "idx_f7_pedidos_web_creado|2473984",
+          "idx_f7_pedidos_web_items_pedido|3006464"
+        ],
+        "filas_despues": "4749,429,3067,3245,119"
+      },
+      "consultas": 37
+    },
+    "cost": {
+      "lote": "20.000 pedidos + 20.000 ítems + 40.000 cupones, sobre volumen ampliado",
+      "sin_indices_ms": [
+        31165,
+        31327,
+        31521
+      ],
+      "con_indices_ms": [
+        31245,
+        32266,
+        32311
+      ],
+      "mediana_sin": 31327,
+      "mediana_con": 32266,
+      "sobrecosto_pct": 3,
+      "indices": [
+        {
+          "indice": "idx_f7_cupones_origen_estado_creado",
+          "bytes": 8937472,
+          "tam": "8728 kB"
+        },
+        {
+          "indice": "idx_f7_pedidos_web_creado",
+          "bytes": 2473984,
+          "tam": "2416 kB"
+        },
+        {
+          "indice": "idx_f7_pedidos_web_items_pedido",
+          "bytes": 3006464,
+          "tam": "2936 kB"
+        }
+      ],
+      "tablas": "32784384,26869760,41066496",
+      "filas_base": "60429,120429,123067"
+    }
+  },
+  "q03": {
+    "id": "Q03",
+    "d": "Pedidos Web · búsqueda de clienta + estado",
+    "roles": [
+      "admin"
+    ],
+    "fuente": "select p.id, p.tipo_entrega, p.direccion_entrega, p.celular_entrega, p.costo_delivery, p.subtotal, p.descuento_cupon, p.total, p.estado, p.creado_en, p.metodo_pago, p.comprobante_url, p.cupon_codigo, p.tipo_comprobante, p.ruc, p.razon_social, p.pago_verificado, row_to_json(c1.*)::jsonb clientes, row_to_json(z1.*)::jsonb zonas from public.pedidos_web p\n    inner join lateral (select c.nombre, c.telefono from public.clientes c where c.nombre ilike '%maria%' and c.id = p.cliente_id limit 1) c1 on true\n    left join lateral (select z.nombre from public.zonas_delivery z where z.id = p.zona_delivery_id limit 1) z1 on true\n    where p.estado = 'ENTREGADO' order by p.creado_en desc, p.id desc limit 40 offset 0",
+    "cuenta": "select 1 from public.pedidos_web p where p.estado = 'ENTREGADO'"
+  },
+  "costOrder": {
+    "sinAntesCon": true,
+    "nota": "dos bucles separados, no alternados"
+  },
+  "costPctRecalculado": 2.9974143709898815,
+  "precisiones": {
+    "consultasRol": 37,
+    "paginas": 14,
+    "mutacionesPromocionesPolicyAll": true,
+    "normalizacionPoliticas": 12,
+    "comparacionesPoliticasPorFase": 24,
+    "noEsNumeroExpresionesUnicas": 24
+  },
+  "hashesEstables": true
+}

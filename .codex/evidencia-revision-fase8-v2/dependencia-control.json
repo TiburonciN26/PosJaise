@@ -1,0 +1,48 @@
+{
+ "fecha": "2026-10-12T16:06:58.482Z",
+ "etiqueta": "codex-control",
+ "a": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-a",
+  "meta": "f8v2-a",
+  "citas": "Citas-76JL_qn4.js"
+ },
+ "b": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-b",
+  "meta": "f8v2-b"
+ },
+ "archivosComunesAB": 0,
+ "producto": "TEST E2E Stock 10 a 8 - 20260930",
+ "total": 1,
+ "correctos": 1,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "DEPENDENCIA POS: archivo hijo temporalmente inaccesible, luego red recuperada",
+   "ok": true,
+   "ms": 7302,
+   "detalle": {
+    "dep": "ModalRegistroAtencion-FSTkVtWV.js",
+    "antes": {
+     "carrito": 1,
+     "aviso": 0
+    },
+    "despues": {
+     "carrito": 1,
+     "aviso": 0,
+     "global": 0,
+     "contenido": "Octubre 2026\nHoy\nTodas\nNueva cita\n\nDO\n\nLU\n\nMA\n\nMI\n\nJU\n\nVI\n\nSÁ\n\n27\n28\n29\n30\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n\nTEST PW muxr35hl-mcsmp AUTZ cliente · TEST PW muxr35hl-mcsmp AUTZ Servicio\n\n2:09 a.m.\n\nPendiente\n\nTEST PW muy7yu2a-62jkk AUTZ cliente · TEST PW muy7yu2a-62jkk AUTZ Servicio\n\n10:03 a.m.\n\nPendiente\n\nTEST F2 muxrglz4-6c7e03 · ZZZ TEST F2 serv muxrglz4-30-cwe\n\n11:30 a.m.\n\nPendiente\n\nTEST F2 muy85er8-8e6aa6 · ZZZ TEST F2 serv muy85er8-30-r8o\n\n11:30 a.m.\n\nPendiente"
+    },
+    "segundo": {
+     "aviso": 0,
+     "carrito": 1
+    },
+    "reqs": [
+     "/assets/ModalRegistroAtencion-FSTkVtWV.js",
+     "/assets/Citas-76JL_qn4.js"
+    ],
+    "errores": [],
+    "bloqueadas": []
+   }
+  }
+ ]
+}

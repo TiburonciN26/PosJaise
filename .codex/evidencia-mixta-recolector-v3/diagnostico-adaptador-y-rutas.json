@@ -1,0 +1,38 @@
+{
+  "fecha": "2026-10-11T00:58:01.133Z",
+  "sinRed": true,
+  "sinBorradosReales": true,
+  "rutas": [
+    {
+      "salida": "C:/WedJaiseReact",
+      "resultado": {
+        "ok": false,
+        "motivo": "la salida no puede ser la raíz del proyecto"
+      }
+    },
+    {
+      "salida": "c:/wedjaisereact",
+      "resultado": {
+        "ok": true,
+        "salida": "c:\\wedjaisereact",
+        "reemplazo": true
+      }
+    },
+    {
+      "salida": "C:/WEDJAISEREACT",
+      "resultado": {
+        "ok": true,
+        "salida": "C:\\WEDJAISEREACT",
+        "reemplazo": true
+      }
+    }
+  ],
+  "countAusente": {
+    "resultadoConsulta": false,
+    "headSinContentRange": 10,
+    "borradosSimulados": [
+      "fotos-galeria/22222222-2222-4222-8222-222222222222"
+    ],
+    "abortado": null
+  }
+}

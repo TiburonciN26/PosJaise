@@ -1,0 +1,64 @@
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import vm from 'node:vm';import crypto from 'node:crypto';import {spawn} from 'node:child_process';import {fileURLToPath} from 'node:url';
+import {COLUMNAS,clasificarValor,decidirAlcance,rechazoDeAmbiente,validarManifiesto} from 'file:///C:/WedJaiseReact/scripts/migracion-medios/lib.mjs';
+const OUT=path.dirname(fileURLToPath(import.meta.url)),ROOT='C:/WedJaiseReact',CLI=ROOT+'/scripts/migracion-medios/medios-migracion.mjs';
+const GUID='ad081420-22a3-54e1-bc21-3375e2087c28',UID='d9f5df00-bbf5-4c34-a9e4-e97a2bff7345',ORIGINAL='qa-origen.webp',NUEVO='r2:fotos-productos/'+GUID;
+const payload=Buffer.from('contenido PUBLICO ficticio QA F9');const SHA=crypto.createHash('sha256').update(payload).digest('hex');const logs=[];const s={foto:ORIGINAL,perder:false};
+let BASE;
+const srv=http.createServer(async(req,res)=>{
+ const u=new URL(req.url,BASE);let raw='';for await(const chunk of req)raw+=chunk;logs.push({metodo:req.method,ruta:u.pathname});
+ const json=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data))};
+ if(u.pathname==='/auth/v1/token'){
+ const enc=x=>Buffer.from(JSON.stringify(x)).toString('base64url');const jwt=enc({alg:'HS256',typ:'JWT'})+'.'+enc({sub:UID,role:'authenticated',aud:'authenticated',exp:Math.floor(Date.now()/1000)+3600,iat:Math.floor(Date.now()/1000)})+'.cWE';
+ return json(200,{access_token:jwt,refresh_token:'FICTICIO-NO-CREDENCIAL',expires_in:3600,token_type:'bearer',user:{id:UID,aud:'authenticated',role:'authenticated',email:'qa-f9@test.local',app_metadata:{},user_metadata:{}}});
+ }
+ if(u.pathname==='/rest/v1/rpc/es_admin')return json(200,true);
+ if(u.pathname==='/rest/v1/productos'){
+ if(req.method==='PATCH'){
+  if(u.searchParams.get('foto_url')!=='eq.'+s.foto)return json(200,[]);
+  s.foto=JSON.parse(raw).foto_url;
+  if(s.perder){s.perder=false;return json(503,{code:'QA503',message:'respuesta ficticia perdida después del commit'})}
+  return json(200,[{id:UID}]);
+ }
+ if(req.method==='GET')return json(200,{id:UID,foto_url:s.foto});
+ }
+ if(u.pathname==='/orig.webp'){res.writeHead(200,{'Content-Type':'image/webp'});return res.end(payload)}
+ return json(404,{message:'objeto R2 ficticio inexistente'});
+});await new Promise(r=>srv.listen(0,'127.0.0.1',r));BASE='http://127.0.0.1:'+srv.address().port;
+const ENV=path.join(OUT,'qa-fixture.env');fs.writeFileSync(ENV,'VITE_SUPABASE_URL='+BASE+'\nVITE_SUPABASE_ANON_KEY=ANON-FICTICIA-QA\n');
+const manifiesto=(ambiente=new URL(BASE).host,estadoRef='pendiente')=>({version:1,ambiente,publica:BASE+'/medios',entradas:[{id:GUID,destino:'fotos-productos',estado:'verificada',origen:{bucket:'fotos-productos',ruta:ORIGINAL,url:BASE+'/orig.webp',sha256:SHA,bytes:payload.length},variantes:{m:{sha256:SHA},g:{sha256:SHA}},referencias:[{tabla:'productos',columna:'foto_url',fila:UID,original:ORIGINAL,nuevo:NUEVO,estado:estadoRef}],historial:[]}],eventos:[]});
+const archivo=n=>path.join(OUT,n);function save(n,m){fs.writeFileSync(archivo(n),JSON.stringify(m,null,2));return archivo(n)}
+async function cli(args){return await new Promise((resolve,reject)=>{
+ const p=spawn(process.execPath,[CLI,...args,'--env-file='+ENV],{cwd:ROOT,env:{...process.env,MIGRACION_EMAIL:'qa-f9@test.local',MIGRACION_PASSWORD:'FICTICIA-NO-REAL'}});let out='',err='';p.stdout.on('data',x=>out+=x);p.stderr.on('data',x=>err+=x);p.on('error',reject);p.on('close',code=>{clearTimeout(t);resolve({code,out,err})});const t=setTimeout(()=>{p.kill();reject(Error('Timeout del adaptador CLI ficticio'))},15000);
+ })}
+const read=n=>JSON.parse(fs.readFileSync(archivo(n),'utf8'));const parsed=r=>{try{return JSON.parse(r.out)}catch{return null}};const resultados=[];
+try{
+ // La CLI real, no un helper reconstruido: actualización en backend ficticio B usando manifiesto de A.
+ s.foto=ORIGINAL;const otroAmbiente='127.0.0.1:1';const p=save('fixture-ambiente.json',manifiesto(otroAmbiente));logs.length=0;
+ const r=await cli(['actualizar','--aplicar','--manifiesto='+p]);resultados.push({caso:'manifiesto de otro ambiente',manifestAmbiente:otroAmbiente,backendAmbiente:new URL(BASE).host,exit:r.code,resultado:parsed(r),fotoCambio:s.foto===NUEVO,patches:logs.filter(x=>x.metodo==='PATCH').length,logins:logs.filter(x=>x.ruta==='/auth/v1/token').length});
+ // La base confirma el PATCH pero el cliente recibe 503. Revertir no ve la operación pendiente.
+ s.foto=ORIGINAL;s.perder=true;const p2=save('fixture-incierto.json',manifiesto());logs.length=0;
+ const r2=await cli(['actualizar','--aplicar','--manifiesto='+p2]);const estadoTrasError=read('fixture-incierto.json').entradas[0].referencias[0].estado;const fotoTrasError=s.foto;const r3=await cli(['revertir','--aplicar','--manifiesto='+p2]);resultados.push({caso:'PATCH confirmado con respuesta incierta y reversión',actualizarExit:r2.code,error:r2.err.trim(),estadoTrasError,fotoMigradaTrasError:fotoTrasError===NUEVO,revertirExit:r3.code,reversion:parsed(r3),fotoSigueMigrada:s.foto===NUEVO,patches:logs.filter(x=>x.metodo==='PATCH').length});
+ // Control positivo: respuesta recibida, diario actualizado y reversión sí restaura.
+ s.foto=ORIGINAL;const p3=save('fixture-sano.json',manifiesto());const sanoA=await cli(['actualizar','--aplicar','--manifiesto='+p3]);const sanoR=await cli(['revertir','--aplicar','--manifiesto='+p3]);resultados.push({caso:'control positivo actualizar y revertir',actualizarExit:sanoA.code,revertirExit:sanoR.code,originalRestaurado:s.foto===ORIGINAL,estadoFinal:read('fixture-sano.json').entradas[0].referencias[0].estado});
+ // Verificación sin --lectura omite todos los objetos de R2; con --lectura detecta ambos 404.
+ s.foto=NUEVO;const p4=save('fixture-verificar.json',manifiesto(undefined,'actualizada'));logs.length=0;
+ const r4=await cli(['verificar','--manifiesto='+p4]);const r5=await cli(['verificar','--manifiesto='+p4,'--lectura='+BASE+'/media']);resultados.push({caso:'verificar sin lectura de R2',sinLectura:{exit:r4.code,resultado:parsed(r4)},conLectura:{exit:r5.code,resultado:parsed(r5)}});
+ // Inventario con URL firmada del bucket privado en una columna pública: nunca se descarga.
+ const col=COLUMNAS.find(c=>c.tabla==='galeria_web'&&c.columna==='antes_url');const pruebasPrivadas=[];
+ for(const origin of [BASE,'https://otro-proyecto.qa.invalid']){
+ const valor=origin+'/storage/v1/object/sign/comprobantes-pedidos-web/qa/foto.png?token=FICTICIO';const cls=clasificarValor(col,valor,{supabaseUrl:BASE});const alcance=decidirAlcance(cls,undefined);pruebasPrivadas.push({origen:origin===BASE?'propio':'ajeno',formato:cls.formato,privacidad:alcance.privacidad,migrar:alcance.migrar});
+ const crudo={generado:new Date().toISOString(),columnas:[],referencias:[{tabla:col.tabla,columna:col.columna,fila:UID,valor}],objetos:[],buckets:[]};const name=origin===BASE?'propio':'ajeno';save('fixture-inventario-'+name+'.json',crudo);const salida=archivo('inventario-redaccion-'+name+'.json');const rr=await cli(['inventariar','--desde-json='+archivo('fixture-inventario-'+name+'.json'),'--salida='+salida]);const j=JSON.parse(fs.readFileSync(salida));pruebasPrivadas.at(-1).exit=rr.code;pruebasPrivadas.at(-1).urlYTokenIncluidosEnInforme=JSON.stringify(j).includes(valor);pruebasPrivadas.at(-1).referenciasPublicadas=j.referencias.length;
+ }
+ resultados.push({caso:'redacción de URLs firmadas privadas',pruebas:pruebasPrivadas});
+ // Una sola autorización de host nunca habilita tres orígenes remotos diferentes.
+ const hosts=['worker.qa.invalid','pages.qa.invalid','db.qa.invalid'];const permisos=hosts.map(allow=>({permiso:allow,permitidos:hosts.filter(host=>rechazoDeAmbiente({url:'https://'+host,permitirRemoto:allow})===null),rechazados:hosts.filter(host=>rechazoDeAmbiente({url:'https://'+host,permitirRemoto:allow})!==null)}));resultados.push({caso:'permisos remotos para Worker, Pages y Supabase',permisos});
+ // VM del harness original: fs y Docker son dobles; rmSync lanza ANTES de borrar cualquier archivo.
+ const original=fs.readFileSync(ROOT+'/scripts/migracion-medios/simular-fase9.mjs','utf8').replace(/^import .*$/gm,'');const borrados=[];
+ for(const destino of ['.',ROOT+'/.codex',ROOT+'/src']){
+  const llamadas=[];const ctx={console:{log(){},error(){}},process:{argv:['node','simular','--cuentas=qa.json','--trabajo='+destino],env:{},exit(){},pid:123},Buffer,URL,setTimeout,resolve:path.resolve,join:path.join,readFileSync:f=>f==='qa.json'?JSON.stringify({admin:{email:'qa-a@test.local'},adminB:{email:'qa-b@test.local'}}):'VITE_SUPABASE_URL=http://127.0.0.1:54321\nVITE_SUPABASE_ANON_KEY=FICTICIA\n',execFileSync:()=> '0.0.0.0:54321->8000/tcp',rmSync:(target,op)=>{llamadas.push({target,op});throw Error('DETENIDO ANTES DE BORRAR: doble QA')},mkdirSync(){throw Error('No debe llegar')},createClient(){throw Error('No debe llegar')},spawn(){throw Error('No debe llegar')},spawnSync(){throw Error('No debe llegar')},chromium:{},existsSync(){return false},writeFileSync(){throw Error('No debe llegar')}};
+  vm.runInNewContext(original,ctx);await new Promise(r=>setImmediate(r));borrados.push({entrada:destino,deleteSolicitado:llamadas});
+ }
+ resultados.push({caso:'harness acepta eliminar raíz o carpetas del proyecto',borrados,borradosReales:0});
+ fs.writeFileSync(archivo('diagnosticos-cli-y-guardas.json'),JSON.stringify({fecha:new Date().toISOString(),alcance:'CLI original contra HTTP ficticio en memoria. Ninguna base real, credencial real ni conexión externa. VM con filesystem sustituido para no borrar.',resultados},null,2));console.log(JSON.stringify(resultados.map(r=>({caso:r.caso,...(r.fotoCambio!==undefined?{fotoCambio:r.fotoCambio}:{}),...(r.fotoSigueMigrada!==undefined?{fotoSigueMigrada:r.fotoSigueMigrada}:{}),...(r.sinLectura?{sinLecturaOK:r.sinLectura.resultado?.ok,conLecturaOK:r.conLectura.resultado?.ok}:{})})),null,2));
+}finally{await new Promise(r=>srv.close(r))}
+

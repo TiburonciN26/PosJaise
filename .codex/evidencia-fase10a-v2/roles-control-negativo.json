@@ -1,0 +1,1577 @@
+{
+ "fecha": "2026-10-13T09:49:45.081Z",
+ "app": "http://127.0.0.1:5401",
+ "controlNegativo": true,
+ "total": 19,
+ "fallos": 1,
+ "casos": [
+  {
+   "nombre": "Preflight: app loopback, backend efectivo del bundle = Supabase Local y cuentas QA de Local",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "app": "http://127.0.0.1:5401",
+    "api": "http://127.0.0.1:54321",
+    "indexSha256": "2d83ebf7b6416d4a4be7cc1c6f87018f420bb2dd99eaa59f7303cb8abad68ea9",
+    "modulosRevisados": 143,
+    "configuraciones": 1,
+    "cuentas": [
+     "admin",
+     "cajera",
+     "clienteA"
+    ]
+   }
+  },
+  {
+   "nombre": "La matriz esperada coincide con src/config/navegacion.js (27 rutas, roles y pantalla inicial)",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "rutas": 27
+   }
+  },
+  {
+   "nombre": "visitante: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+   "ok": true,
+   "ms": 59094,
+   "detalle": {
+    "rutas": 46,
+    "permitidas": 11
+   }
+  },
+  {
+   "nombre": "visitante: la guarda de red no registró ninguna violación",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "neutralizadas": 46
+   }
+  },
+  {
+   "nombre": "clienta: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+   "ok": true,
+   "ms": 56281,
+   "detalle": {
+    "rutas": 46,
+    "permitidas": 22
+   }
+  },
+  {
+   "nombre": "clienta: la guarda de red no registró ninguna violación",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "neutralizadas": 47
+   }
+  },
+  {
+   "nombre": "asistente: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+   "ok": true,
+   "ms": 62102,
+   "detalle": {
+    "rutas": 46,
+    "permitidas": 2
+   }
+  },
+  {
+   "nombre": "asistente: el menú del POS no ofrece rutas ajenas al rol y sí su pantalla inicial",
+   "ok": true,
+   "ms": 1341,
+   "detalle": {
+    "enlaces": [
+     "/mi-panel",
+     "/citas"
+    ]
+   }
+  },
+  {
+   "nombre": "asistente: «Cerrar sesión» y después una ruta del POS vuelve a pedir el login",
+   "ok": true,
+   "ms": 3311
+  },
+  {
+   "nombre": "asistente: la guarda de red no registró ninguna violación",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "neutralizadas": 50
+   }
+  },
+  {
+   "nombre": "cajera: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+   "ok": false,
+   "ms": 61833,
+   "error": "[{\"ruta\":\"/dashboard\",\"destino\":\"/ventas\",\"esperado\":\"/dashboard\",\"ok\":false,\"textoError\":false,\"timeout\":false,\"pageerror\":[]}]"
+  },
+  {
+   "nombre": "cajera: el menú del POS no ofrece rutas ajenas al rol y sí su pantalla inicial",
+   "ok": true,
+   "ms": 1097,
+   "detalle": {
+    "enlaces": [
+     "/ventas",
+     "/inventario",
+     "/historial",
+     "/servicios",
+     "/citas",
+     "/gastos"
+    ]
+   }
+  },
+  {
+   "nombre": "cajera: «Cerrar sesión» y después una ruta del POS vuelve a pedir el login",
+   "ok": true,
+   "ms": 3320
+  },
+  {
+   "nombre": "cajera: la guarda de red no registró ninguna violación",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "neutralizadas": 50
+   }
+  },
+  {
+   "nombre": "admin: 46 rutas por URL directa llegan a su destino esperado y se montan sin error",
+   "ok": true,
+   "ms": 61585,
+   "detalle": {
+    "rutas": 46,
+    "permitidas": 27
+   }
+  },
+  {
+   "nombre": "admin: el menú del POS no ofrece rutas ajenas al rol y sí su pantalla inicial",
+   "ok": true,
+   "ms": 1108,
+   "detalle": {
+    "enlaces": [
+     "/ventas",
+     "/inventario",
+     "/historial",
+     "/servicios",
+     "/dashboard",
+     "/mi-panel",
+     "/citas",
+     "/estadisticas",
+     "/auditoria",
+     "/clientes",
+     "/porcentajes",
+     "/gastos",
+     "/asistentes",
+     "/mobiliario",
+     "/web"
+    ]
+   }
+  },
+  {
+   "nombre": "admin: «Cerrar sesión» y después una ruta del POS vuelve a pedir el login",
+   "ok": true,
+   "ms": 3312
+  },
+  {
+   "nombre": "admin: la guarda de red no registró ninguna violación",
+   "ok": true,
+   "ms": 0,
+   "detalle": {
+    "neutralizadas": 50
+   }
+  },
+  {
+   "nombre": "Limpieza: la cuenta ASISTENTE ficticia se eliminó",
+   "ok": true
+  }
+ ],
+ "matriz": {
+  "visitante": [
+   {
+    "ruta": "/ventas",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/inventario",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/historial",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios",
+    "destino": "/servicios",
+    "esperado": "/servicios",
+    "ok": true
+   },
+   {
+    "ruta": "/dashboard",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-panel",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/citas",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/estadisticas",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/auditoria",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/clientes",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/deudas",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/porcentajes",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/gastos",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/asistentes",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mobiliario",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/promociones",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/pedidos-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/resenas-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/contacto-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/puntos-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/referidos-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/fidelizacion-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/catalogo-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-reclamaciones-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/galeria-web",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/inicio",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/productos",
+    "destino": "/productos",
+    "esperado": "/productos",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas",
+    "destino": "/recompensas",
+    "esperado": "/recompensas",
+    "ok": true
+   },
+   {
+    "ruta": "/nosotros",
+    "destino": "/nosotros",
+    "esperado": "/nosotros",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-de-reclamaciones",
+    "destino": "/libro-de-reclamaciones",
+    "esperado": "/libro-de-reclamaciones",
+    "ok": true
+   },
+   {
+    "ruta": "/terminos-y-condiciones",
+    "destino": "/terminos-y-condiciones",
+    "esperado": "/terminos-y-condiciones",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-cambios-y-devoluciones",
+    "destino": "/politica-de-cambios-y-devoluciones",
+    "esperado": "/politica-de-cambios-y-devoluciones",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-privacidad",
+    "destino": "/politica-de-privacidad",
+    "esperado": "/politica-de-privacidad",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/citas/carrito",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/carrito",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mis-resenas",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/direcciones",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/pedidos",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/notificaciones",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/seguridad",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/referidos",
+    "destino": "/login",
+    "esperado": "/login",
+    "ok": true
+   },
+   {
+    "ruta": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "destino": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "esperado": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "destino": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "esperado": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "ok": true
+   }
+  ],
+  "clienta": [
+   {
+    "ruta": "/ventas",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/inventario",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/historial",
+    "destino": "/historial",
+    "esperado": "/historial",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios",
+    "destino": "/servicios",
+    "esperado": "/servicios",
+    "ok": true
+   },
+   {
+    "ruta": "/dashboard",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-panel",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/citas",
+    "destino": "/citas",
+    "esperado": "/citas",
+    "ok": true
+   },
+   {
+    "ruta": "/estadisticas",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/auditoria",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/clientes",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/deudas",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/porcentajes",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/gastos",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/asistentes",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/mobiliario",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/promociones",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/pedidos-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/resenas-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/contacto-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/puntos-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/referidos-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/fidelizacion-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/catalogo-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-reclamaciones-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/galeria-web",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/inicio",
+    "destino": "/inicio",
+    "esperado": "/inicio",
+    "ok": true
+   },
+   {
+    "ruta": "/productos",
+    "destino": "/productos",
+    "esperado": "/productos",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas",
+    "destino": "/recompensas",
+    "esperado": "/recompensas",
+    "ok": true
+   },
+   {
+    "ruta": "/nosotros",
+    "destino": "/nosotros",
+    "esperado": "/nosotros",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-de-reclamaciones",
+    "destino": "/libro-de-reclamaciones",
+    "esperado": "/libro-de-reclamaciones",
+    "ok": true
+   },
+   {
+    "ruta": "/terminos-y-condiciones",
+    "destino": "/terminos-y-condiciones",
+    "esperado": "/terminos-y-condiciones",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-cambios-y-devoluciones",
+    "destino": "/politica-de-cambios-y-devoluciones",
+    "esperado": "/politica-de-cambios-y-devoluciones",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-privacidad",
+    "destino": "/politica-de-privacidad",
+    "esperado": "/politica-de-privacidad",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil",
+    "destino": "/mi-perfil",
+    "esperado": "/mi-perfil",
+    "ok": true
+   },
+   {
+    "ruta": "/citas/carrito",
+    "destino": "/citas/carrito",
+    "esperado": "/citas/carrito",
+    "ok": true
+   },
+   {
+    "ruta": "/carrito",
+    "destino": "/carrito",
+    "esperado": "/carrito",
+    "ok": true
+   },
+   {
+    "ruta": "/mis-resenas",
+    "destino": "/mis-resenas",
+    "esperado": "/mis-resenas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/direcciones",
+    "destino": "/mi-perfil/direcciones",
+    "esperado": "/mi-perfil/direcciones",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/pedidos",
+    "destino": "/mi-perfil/pedidos",
+    "esperado": "/mi-perfil/pedidos",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/notificaciones",
+    "destino": "/mi-perfil/notificaciones",
+    "esperado": "/mi-perfil/notificaciones",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/seguridad",
+    "destino": "/mi-perfil/seguridad",
+    "esperado": "/mi-perfil/seguridad",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/referidos",
+    "destino": "/mi-perfil/referidos",
+    "esperado": "/mi-perfil/referidos",
+    "ok": true
+   },
+   {
+    "ruta": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "destino": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "esperado": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "destino": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "esperado": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "ok": true
+   }
+  ],
+  "asistente": [
+   {
+    "ruta": "/ventas",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/inventario",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/historial",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/dashboard",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-panel",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/citas",
+    "destino": "/citas",
+    "esperado": "/citas",
+    "ok": true
+   },
+   {
+    "ruta": "/estadisticas",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/auditoria",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/clientes",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/deudas",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/porcentajes",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/gastos",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/asistentes",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mobiliario",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/promociones",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/pedidos-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/resenas-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/contacto-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/puntos-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/referidos-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/fidelizacion-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/catalogo-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-reclamaciones-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/galeria-web",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/inicio",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/productos",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/nosotros",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-de-reclamaciones",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/terminos-y-condiciones",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-cambios-y-devoluciones",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-privacidad",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/citas/carrito",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/carrito",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mis-resenas",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/direcciones",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/pedidos",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/notificaciones",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/seguridad",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/referidos",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   }
+  ],
+  "cajera": [
+   {
+    "ruta": "/ventas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/inventario",
+    "destino": "/inventario",
+    "esperado": "/inventario",
+    "ok": true
+   },
+   {
+    "ruta": "/historial",
+    "destino": "/historial",
+    "esperado": "/historial",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios",
+    "destino": "/servicios",
+    "esperado": "/servicios",
+    "ok": true
+   },
+   {
+    "ruta": "/dashboard",
+    "destino": "/ventas",
+    "esperado": "/dashboard",
+    "ok": false
+   },
+   {
+    "ruta": "/mi-panel",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/citas",
+    "destino": "/citas",
+    "esperado": "/citas",
+    "ok": true
+   },
+   {
+    "ruta": "/estadisticas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/auditoria",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/clientes",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/deudas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/porcentajes",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/gastos",
+    "destino": "/gastos",
+    "esperado": "/gastos",
+    "ok": true
+   },
+   {
+    "ruta": "/asistentes",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mobiliario",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/promociones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/pedidos-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/resenas-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/contacto-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/puntos-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/referidos-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/fidelizacion-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/catalogo-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-reclamaciones-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/galeria-web",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/inicio",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/productos",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/nosotros",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-de-reclamaciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/terminos-y-condiciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-cambios-y-devoluciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-privacidad",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/citas/carrito",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/carrito",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mis-resenas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/direcciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/pedidos",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/notificaciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/seguridad",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/referidos",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   }
+  ],
+  "admin": [
+   {
+    "ruta": "/ventas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/inventario",
+    "destino": "/inventario",
+    "esperado": "/inventario",
+    "ok": true
+   },
+   {
+    "ruta": "/historial",
+    "destino": "/historial",
+    "esperado": "/historial",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios",
+    "destino": "/servicios",
+    "esperado": "/servicios",
+    "ok": true
+   },
+   {
+    "ruta": "/dashboard",
+    "destino": "/dashboard",
+    "esperado": "/dashboard",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-panel",
+    "destino": "/mi-panel",
+    "esperado": "/mi-panel",
+    "ok": true
+   },
+   {
+    "ruta": "/citas",
+    "destino": "/citas",
+    "esperado": "/citas",
+    "ok": true
+   },
+   {
+    "ruta": "/estadisticas",
+    "destino": "/estadisticas",
+    "esperado": "/estadisticas",
+    "ok": true
+   },
+   {
+    "ruta": "/auditoria",
+    "destino": "/auditoria",
+    "esperado": "/auditoria",
+    "ok": true
+   },
+   {
+    "ruta": "/clientes",
+    "destino": "/clientes",
+    "esperado": "/clientes",
+    "ok": true
+   },
+   {
+    "ruta": "/deudas",
+    "destino": "/deudas",
+    "esperado": "/deudas",
+    "ok": true
+   },
+   {
+    "ruta": "/porcentajes",
+    "destino": "/porcentajes",
+    "esperado": "/porcentajes",
+    "ok": true
+   },
+   {
+    "ruta": "/gastos",
+    "destino": "/gastos",
+    "esperado": "/gastos",
+    "ok": true
+   },
+   {
+    "ruta": "/asistentes",
+    "destino": "/asistentes",
+    "esperado": "/asistentes",
+    "ok": true
+   },
+   {
+    "ruta": "/mobiliario",
+    "destino": "/mobiliario",
+    "esperado": "/mobiliario",
+    "ok": true
+   },
+   {
+    "ruta": "/web",
+    "destino": "/web",
+    "esperado": "/web",
+    "ok": true
+   },
+   {
+    "ruta": "/promociones",
+    "destino": "/promociones",
+    "esperado": "/promociones",
+    "ok": true
+   },
+   {
+    "ruta": "/pedidos-web",
+    "destino": "/pedidos-web",
+    "esperado": "/pedidos-web",
+    "ok": true
+   },
+   {
+    "ruta": "/resenas-web",
+    "destino": "/resenas-web",
+    "esperado": "/resenas-web",
+    "ok": true
+   },
+   {
+    "ruta": "/contacto-web",
+    "destino": "/contacto-web",
+    "esperado": "/contacto-web",
+    "ok": true
+   },
+   {
+    "ruta": "/puntos-web",
+    "destino": "/puntos-web",
+    "esperado": "/puntos-web",
+    "ok": true
+   },
+   {
+    "ruta": "/referidos-web",
+    "destino": "/referidos-web",
+    "esperado": "/referidos-web",
+    "ok": true
+   },
+   {
+    "ruta": "/fidelizacion-web",
+    "destino": "/fidelizacion-web",
+    "esperado": "/fidelizacion-web",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas-web",
+    "destino": "/recompensas-web",
+    "esperado": "/recompensas-web",
+    "ok": true
+   },
+   {
+    "ruta": "/catalogo-web",
+    "destino": "/catalogo-web",
+    "esperado": "/catalogo-web",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-reclamaciones-web",
+    "destino": "/libro-reclamaciones-web",
+    "esperado": "/libro-reclamaciones-web",
+    "ok": true
+   },
+   {
+    "ruta": "/galeria-web",
+    "destino": "/galeria-web",
+    "esperado": "/galeria-web",
+    "ok": true
+   },
+   {
+    "ruta": "/inicio",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/productos",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/recompensas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/nosotros",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/libro-de-reclamaciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/terminos-y-condiciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-cambios-y-devoluciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/politica-de-privacidad",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/citas/carrito",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/carrito",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mis-resenas",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/direcciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/pedidos",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/notificaciones",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/seguridad",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/mi-perfil/referidos",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/productos/7d302b3d-5a50-4f6f-9687-5b204c842b6c",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   },
+   {
+    "ruta": "/servicios/2e1acaf4-8a61-46e3-ac3b-843a826b6f32",
+    "destino": "/ventas",
+    "esperado": "/ventas",
+    "ok": true
+   }
+  ]
+ }
+}

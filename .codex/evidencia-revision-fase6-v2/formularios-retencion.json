@@ -1,0 +1,83 @@
+{
+  "fechaCliente": "2026-10-11",
+  "alcance": "PestanasCacheadas y hooks reales; pantallas de relleno simuladas salvo PuntosWeb y Dashboard. Auth/Supabase simulados; cero mutaciones reales.",
+  "casos": [
+    {
+      "name": "Cancelaciones repetidas: mapas conservan formularios desconectados",
+      "data": {
+        "series": [
+          {
+            "cancelaciones": 0,
+            "conectados": 0,
+            "desconectados": 0,
+            "mapas": 0,
+            "formsDOM": 0,
+            "montadas": [
+              "/promociones"
+            ],
+            "pendientes": [],
+            "contadores": {
+              "documents": 1,
+              "nodes": 55,
+              "jsEventListeners": 164
+            }
+          },
+          {
+            "cancelaciones": 10,
+            "conectados": 0,
+            "desconectados": 10,
+            "mapas": 1,
+            "formsDOM": 0,
+            "montadas": [
+              "/promociones"
+            ],
+            "pendientes": [],
+            "contadores": {
+              "documents": 2,
+              "nodes": 1121,
+              "jsEventListeners": 277
+            }
+          },
+          {
+            "cancelaciones": 20,
+            "conectados": 0,
+            "desconectados": 20,
+            "mapas": 1,
+            "formsDOM": 0,
+            "montadas": [
+              "/promociones"
+            ],
+            "pendientes": [],
+            "contadores": {
+              "documents": 2,
+              "nodes": 2181,
+              "jsEventListeners": 377
+            }
+          }
+        ],
+        "trasRecorte": {
+          "conectados": 0,
+          "desconectados": 0,
+          "mapas": 0,
+          "formsDOM": 0,
+          "montadas": [
+            "/historial",
+            "/servicios",
+            "/mi-panel",
+            "/citas",
+            "/estadisticas",
+            "/clientes"
+          ],
+          "pendientes": [],
+          "contadores": {
+            "documents": 2,
+            "nodes": 61,
+            "jsEventListeners": 178
+          }
+        },
+        "alcance": "Map instrumentado con Proxy semánticamente transparente y WeakRef (sin referencias fuertes adicionales); se cuentan claves HTMLFormElement con estados editado/enviado. CDP fuerza GC. No se mide heap de producción."
+      },
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+ "app": "http://localhost:5196",
+ "fecha": "2026-10-11T19:33:08.974Z",
+ "casos": [
+  {
+   "nombre": "Caché: recorrer las 27 rutas nunca deja más de 6 pantallas montadas y el regreso a Ventas funciona",
+   "ok": false,
+   "error": "Ventas visible tras el recorrido",
+   "ms": 9047
+  },
+  {
+   "nombre": "Conservación: carrito, búsqueda y orden, y scroll se conservan aunque la pantalla se haya desmontado",
+   "ok": false,
+   "error": "locator.fill: Timeout 30000ms exceeded. | Call log: | \u001b[2m  - waiting for getByPlaceholder(/Buscar/).first()\u001b[22m | \u001b[2m    - locator resolved to <input value=\"\" type=\"search\" autocorrect=\"off\" autocomplete=\"off\" spellcheck=\"false\" autocapitalize=\"off\" placeholder=\"Buscar producto o escanear código de barras...\" class=\"w-full rounded-lg border border-border bg-surface-2 py-2 pl-8 pr-[41px] font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 focus:border-amber disabled:opacity-60\"/>\u001b[22m | \u001b[2m    - fill(\"relleno\")\u001b[22m | \u001b[2m  - attempting fill action\u001b[22m",
+   "ms": 35799
+  },
+  {
+   "nombre": "Protección: un diálogo abierto y un formulario editado impiden desmontar su pantalla; al liberarse vuelve el tope",
+   "ok": false,
+   "error": "el tope es blando mientras haya trabajo pendiente",
+   "ms": 5325
+  },
+  {
+   "nombre": "Protección: un formulario editado sin enviar (Puntos Web) conserva su pantalla; los borradores de Recompensas Web también",
+   "ok": true,
+   "ms": 27113
+  },
+  {
+   "nombre": "Invalidación: al cambiar de cuenta no queda búsqueda, ni pantallas, ni scroll de la anterior",
+   "ok": true,
+   "ms": 6588
+  },
+  {
+   "nombre": "Pausa: los placeholders animados de pantallas ocultas no consumen temporizadores; vuelven al mostrarse",
+   "ok": false,
+   "error": "placeholder visible 8.0/s (solo el suyo)",
+   "ms": 8681
+  },
+  {
+   "nombre": "Pausa: con la pestaña del navegador oculta el placeholder y la máscara no programan trabajo",
+   "ok": true,
+   "ms": 6323
+  },
+  {
+   "nombre": "Movimiento reducido: el placeholder muestra el texto completo sin escribirse",
+   "ok": true,
+   "ms": 4665
+  },
+  {
+   "nombre": "Inicio: la máscara del héroe se duerme en reposo, despierta con el puntero y vuelve a dormirse",
+   "ok": true,
+   "ms": 10031
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento normal): animan solo a la vista, se pausan fuera de pantalla y con la pestaña oculta",
+   "ok": false,
+   "error": "fuera de pantalla 179.7 vs 58.5",
+   "ms": 9405
+  },
+  {
+   "nombre": "TarjetaPuntos y FondoNivel (movimiento reducido): quedan quietas, sin bucle; arrastrar sigue funcionando y luego vuelve a dormir",
+   "ok": false,
+   "error": "33.3 rAF/s tras soltar y volver al reposo",
+   "ms": 18336
+  }
+ ]
+}

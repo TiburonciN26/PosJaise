@@ -1,0 +1,73 @@
+{
+ "fecha": "2026-10-12T06:53:33.630Z",
+ "total": 13,
+ "correctos": 13,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "Mapa de Inicio: sin peticiones a Google al abrir (antes: se descargaba sin llegar a la sección)",
+   "ok": true,
+   "ms": 9663
+  },
+  {
+   "nombre": "Mapa de Inicio: se activa al acercarse a la sección y el diseño no cambia (iframe con los mismos atributos)",
+   "ok": true,
+   "ms": 5529
+  },
+  {
+   "nombre": "Mapa con «ahorrar datos»: no carga al llegar; carga solo con «Ver mapa»; «Cómo llegar» sigue sin cargar nada",
+   "ok": true,
+   "ms": 7816
+  },
+  {
+   "nombre": "Mapa en Nosotros: mismo comportamiento (nada al abrir; se activa al acercarse)",
+   "ok": true,
+   "ms": 35821
+  },
+  {
+   "nombre": "Sin dirección de contacto: marcador sin iframe ni peticiones",
+   "ok": true,
+   "ms": 3287
+  },
+  {
+   "nombre": "Hero oscuro 390×2: WebP de 960 px para ambas fotos (no el JPG de 1680), prioridad alta solo en «después»",
+   "ok": true,
+   "ms": 3279
+  },
+  {
+   "nombre": "Hero claro 390×2 y escritorio 1440×1: variantes adecuadas al viewport",
+   "ok": true,
+   "ms": 13132
+  },
+  {
+   "nombre": "Precarga de pestañas del portal: con Save-Data no se descargan en reposo (≈330 kB menos); con conexión normal sigue igual",
+   "ok": true,
+   "ms": 14509
+  },
+  {
+   "nombre": "Google Fonts: ya no bloquea el render (antes sí), sin la familia Outfit y las familias usadas siguen cargando",
+   "ok": true,
+   "ms": 8622
+  },
+  {
+   "nombre": "Precaché: solo el shell (sin POS, escáner, maquetas HTML ni íconos) y con lo necesario para arrancar offline",
+   "ok": true,
+   "ms": 19
+  },
+  {
+   "nombre": "PWA: instala, tercera visita sirve el shell desde el SW; sin conexión Inicio arranca; Supabase nunca en caché ni por el SW",
+   "ok": true,
+   "ms": 12518
+  },
+  {
+   "nombre": "Actualización A→B: con una venta en curso el botón queda bloqueado y el carrito se conserva; al vaciarlo se habilita y actualiza a B",
+   "ok": true,
+   "ms": 11049
+  },
+  {
+   "nombre": "Actualización A→B sin trabajo pendiente en Inicio público: «Actualizar» disponible de inmediato",
+   "ok": true,
+   "ms": 4277
+  }
+ ]
+}

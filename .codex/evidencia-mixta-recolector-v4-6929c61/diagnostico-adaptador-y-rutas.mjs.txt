@@ -1,0 +1,26 @@
+import fs from 'node:fs';
+import {validarSalida} from 'file:///C:/WedJaiseReact/scripts/lib/salida-segura.mjs';
+import {crearFuentes} from 'file:///C:/WedJaiseReact/scripts/medios-huerfanos.mjs';
+import {recolectar} from 'file:///C:/WedJaiseReact/scripts/lib/huerfanos-medios.mjs';
+const out='C:/Users/jdeos/.codex/visualizations/2026/10/09/01a11ea8-be2a-7611-8e67-4ded5cca3f25/revision-mixta-recolector-v4-6929c61';
+const doble={existe:()=>true,esCarpeta:()=>true,leerMarca:()=>({tipo:'reversión con lectura mixta + B'})};
+const rutas=['C:/WedJaiseReact','c:/wedjaisereact','C:/WEDJAISEREACT'].map(salida=>({salida,resultado:validarSalida({salida,raiz:'C:/WedJaiseReact',reemplazar:true,fs:doble})}));
+const peticiones=[];
+globalThis.fetch=async (u,op={})=>{
+ const url=String(u), met=op.method??'GET';
+ peticiones.push({metodo:met,ruta:new URL(url).pathname});
+ if(url.includes('/auth/v1/token'))return new Response(JSON.stringify({access_token:'jwt-ficticio',token_type:'bearer',refresh_token:'refresh-ficticio',expires_in:3600,user:{id:'33333333-3333-4333-8333-333333333333',aud:'authenticated',email:'qa@staging.test'}}),{status:200,headers:{'Content-Type':'application/json'}});
+ if(met==='HEAD')return new Response(null,{status:200});
+ throw new Error('QA: petición no prevista, sin red');
+};
+const fuentes=await crearFuentes({api:'https://worker.example.test',supabaseUrl:'https://abcdefghij.supabase.co',anonKey:'anon-ficticia',email:'qa@staging.test',password:'ficticia'});
+const grupoH='fotos-galeria/22222222-2222-4222-8222-222222222222';
+const grupoP='fotos-galeria/11111111-1111-4111-8111-111111111111';
+const ausencia=f=>fuentes.estaReferenciado(f);
+let resultadoConsulta;try{resultadoConsulta=await ausencia(grupoH)}catch(e){resultadoConsulta={lanza:true,motivo:e.message}}
+const borrados=[];
+const informe=await recolectar({aplicar:true,ahora:Date.now(),fuentes:{listarReferencias:async()=>new Set([grupoP]),listarObjetos:async()=>[{clave:`${grupoH}/g.webp`,subidoEn:'2020-01-01T00:00:00.000Z',bytes:10}],estaReferenciado:ausencia,eliminar:async g=>borrados.push(g)}});
+const r={fecha:new Date().toISOString(),sinRed:true,sinBorradosReales:true,rutas,countAusente:{resultadoConsulta,headSinContentRange:peticiones.filter(p=>p.metodo==='HEAD').length,borradosSimulados:borrados,abortado:informe.abortado}};
+fs.writeFileSync(`${out}/diagnostico-adaptador-y-rutas.json`,JSON.stringify(r,null,2),{flag:'wx'});
+if(rutas.some(r=>r.resultado.ok)||!resultadoConsulta.lanza||borrados.length||!informe.abortado)throw new Error('La reproducción anterior sigue fallando');console.log(JSON.stringify(r,null,2));
+process.exit(0);

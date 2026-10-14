@@ -1,0 +1,194 @@
+{
+  "fecha": "2026-10-10T23:43:42.880Z",
+  "alcance": "Secciones reales del CLI: calentamiento, evaluación, completa y salida. Dobles de R2/Cache/espera/escritura de informe; sin red, env ni autenticación. No es el CLI completo.",
+  "checks": [
+    {
+      "nombre": "A mismo POP: fallo y exit 1",
+      "ok": true
+    },
+    {
+      "nombre": "CB-01 A POP frío distinto: inconclusa y exit 1",
+      "ok": true
+    },
+    {
+      "nombre": "B mismo POP: acreditada y exit 0",
+      "ok": true
+    },
+    {
+      "nombre": "B sin HIT de g: inconclusa y exit 1",
+      "ok": true
+    },
+    {
+      "nombre": "B condicional de g cambia POP: inconclusa y exit 1",
+      "ok": true
+    },
+    {
+      "nombre": "B acreditada pero limpieza no confirmada: completa false y exit 1",
+      "ok": true
+    }
+  ],
+  "fallos": 0,
+  "resultados": [
+    {
+      "nombre": "A mismo POP: fallo y exit 1",
+      "opcionReal": "A",
+      "popPosterior": "MIA",
+      "conclusion": "fallida",
+      "completa": false,
+      "exit": 1,
+      "retencion": "FALLIDA: tras el DELETE se entregó algo distinto de 404",
+      "calientes": {
+        "m": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"m\"",
+          "bytes": 3,
+          "momento": "2026-10-10T23:43:42.862Z",
+          "intentos": 2
+        },
+        "g": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"g\"",
+          "bytes": 4,
+          "momento": "2026-10-10T23:43:42.865Z",
+          "intentos": 2
+        }
+      },
+      "fallos": 6
+    },
+    {
+      "nombre": "CB-01 A POP frío distinto: inconclusa y exit 1",
+      "opcionReal": "A",
+      "popPosterior": "SCL",
+      "conclusion": "inconclusa",
+      "completa": false,
+      "exit": 1,
+      "retencion": "INCONCLUSA: no se acredita la retirada de una copia caliente (falta HIT previo o el POP no coincide)",
+      "calientes": {
+        "m": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"m\"",
+          "bytes": 3,
+          "momento": "2026-10-10T23:43:42.868Z",
+          "intentos": 2
+        },
+        "g": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"g\"",
+          "bytes": 4,
+          "momento": "2026-10-10T23:43:42.868Z",
+          "intentos": 2
+        }
+      },
+      "fallos": 6
+    },
+    {
+      "nombre": "B mismo POP: acreditada y exit 0",
+      "opcionReal": "B",
+      "popPosterior": "MIA",
+      "conclusion": "acreditada",
+      "completa": true,
+      "exit": 0,
+      "retencion": "sin retención: 404 inmediato en el mismo POP que cada copia caliente (contrato B acreditado SOLO en los POP observados)",
+      "calientes": {
+        "m": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"m\"",
+          "bytes": 3,
+          "momento": "2026-10-10T23:43:42.871Z",
+          "intentos": 2
+        },
+        "g": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"g\"",
+          "bytes": 4,
+          "momento": "2026-10-10T23:43:42.871Z",
+          "intentos": 2
+        }
+      },
+      "fallos": 0
+    },
+    {
+      "nombre": "B sin HIT de g: inconclusa y exit 1",
+      "opcionReal": "B",
+      "popPosterior": "MIA",
+      "conclusion": "inconclusa",
+      "completa": false,
+      "exit": 1,
+      "retencion": "INCONCLUSA: no se acredita la retirada de una copia caliente (falta HIT previo o el POP no coincide)",
+      "calientes": {
+        "m": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"m\"",
+          "bytes": 3,
+          "momento": "2026-10-10T23:43:42.873Z",
+          "intentos": 2
+        },
+        "g": null
+      },
+      "fallos": 4
+    },
+    {
+      "nombre": "B condicional de g cambia POP: inconclusa y exit 1",
+      "opcionReal": "B",
+      "popPosterior": "MIA",
+      "conclusion": "inconclusa",
+      "completa": false,
+      "exit": 1,
+      "retencion": "INCONCLUSA: no se acredita la retirada de una copia caliente (falta HIT previo o el POP no coincide)",
+      "calientes": {
+        "m": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"m\"",
+          "bytes": 3,
+          "momento": "2026-10-10T23:43:42.876Z",
+          "intentos": 2
+        },
+        "g": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"g\"",
+          "bytes": 4,
+          "momento": "2026-10-10T23:43:42.877Z",
+          "intentos": 2
+        }
+      },
+      "fallos": 1
+    },
+    {
+      "nombre": "B acreditada pero limpieza no confirmada: completa false y exit 1",
+      "opcionReal": "B",
+      "popPosterior": "MIA",
+      "conclusion": "acreditada",
+      "completa": false,
+      "exit": 1,
+      "retencion": "sin retención: 404 inmediato en el mismo POP que cada copia caliente (contrato B acreditado SOLO en los POP observados)",
+      "calientes": {
+        "m": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"m\"",
+          "bytes": 3,
+          "momento": "2026-10-10T23:43:42.879Z",
+          "intentos": 2
+        },
+        "g": {
+          "hit": true,
+          "pop": "MIA",
+          "etag": "\"g\"",
+          "bytes": 4,
+          "momento": "2026-10-10T23:43:42.879Z",
+          "intentos": 2
+        }
+      },
+      "fallos": 0
+    }
+  ]
+}

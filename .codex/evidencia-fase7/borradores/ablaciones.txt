@@ -1,0 +1,50 @@
+=== variante A
+Q01 admin 10616.36 ms h392994 → 161.14 ms h9 → 7.24 ms h9 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · primera página (sin filtro)
+Q01 cajera 9052.26 ms h362576 → 8.51 ms h6 → 11.3 ms h6 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · primera página (sin filtro)
+Q02 admin 1605.66 ms h60307 → 45.84 ms h9 → 8.52 ms h9 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · estado PENDIENTE
+Q03 admin 6167.88 ms h232061 → 92.18 ms h9 → 12.64 ms h9 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · búsqueda de clienta + estado
+Q04 admin 717.97 ms h25973 → 8.19 ms h6 → 7.13 ms h6 s[pedidos_web] → s[pedidos_web] Pedidos Web · conteo exacto por estado (head)
+=== variante B
+Q01 admin 12961.95 ms h392994 → 165.37 ms h9 → 167.43 ms h9 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · primera página (sin filtro)
+Q01 cajera 10095.06 ms h362576 → 9.04 ms h6 → 9.37 ms h6 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · primera página (sin filtro)
+Q02 admin 1683.94 ms h60307 → 51.85 ms h9 → 4.01 ms h9 s[pedidos_web] → s[zonas_delivery] Pedidos Web · estado PENDIENTE
+Q03 admin 8166.94 ms h232061 → 99.95 ms h9 → 11.17 ms h9 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · búsqueda de clienta + estado
+Q04 admin 808.22 ms h25973 → 8.08 ms h6 → 3.19 ms h6 s[pedidos_web] → s[pedidos_web] Pedidos Web · conteo exacto por estado (head)
+=== variante C
+Q05 admin 52.93 ms h32 → 53.16 ms h12 → 0.74 ms h12 s[pedidos_web_items] → s[] Pedidos Web · ítems de un pedido
+Q27 cliente 13641.86 ms h362574 → 85.09 ms h8 → 87.32 ms h8 s[pedidos_web_items,pedidos_web] → s[pedidos_web_items,pedidos_web] Clienta · ítems de sus pedidos (RLS con EXISTS)
+=== variante D
+Q12 admin 1785.03 ms h95117 → 56.35 ms h3 → 31.17 ms h3 s[cupones,clientes] → s[clientes] Cupones Referidos · primera página
+Q13 admin 34.18 ms h269 → 34.85 ms h3 → 5.73 ms h3 s[cupones] → s[clientes] Cupones Fidelización · estado DISPONIBLE
+Q14 admin 3205.71 ms h129866 → 691.55 ms h4 → 656.68 ms h4 s[cupones,clientes] → s[clientes] Cupones · búsqueda código o clienta
+Q15 admin 14.14 ms h6 → 14.76 ms h2 → 0.26 ms h2 s[cupones] → s[cupones] Cupones · conteo por estado (head)
+=== variante D2
+Q12 admin 1764.89 ms h95117 → 48.92 ms h3 → 49.45 ms h3 s[cupones,clientes] → s[cupones,clientes] Cupones Referidos · primera página
+Q13 admin 32.05 ms h269 → 34.22 ms h3 → 16.97 ms h3 s[cupones] → s[cupones] Cupones Fidelización · estado DISPONIBLE
+Q14 admin 3062.01 ms h129866 → 669.85 ms h4 → 654.59 ms h4 s[cupones,clientes] → s[cupones,clientes] Cupones · búsqueda código o clienta
+Q15 admin 13.8 ms h6 → 13.8 ms h2 → 8.8 ms h2 s[cupones] → s[cupones] Cupones · conteo por estado (head)
+=== variante D3
+Q12 admin 1779 ms h95117 → 46.77 ms h3 → 32.88 ms h3 s[cupones,clientes] → s[clientes] Cupones Referidos · primera página
+Q13 admin 31.18 ms h269 → 33.25 ms h3 → 14.77 ms h3 s[cupones] → s[clientes] Cupones Fidelización · estado DISPONIBLE
+Q14 admin 3059.72 ms h129866 → 677.46 ms h4 → 648.04 ms h4 s[cupones,clientes] → s[clientes] Cupones · búsqueda código o clienta
+Q15 admin 14.3 ms h6 → 14.34 ms h2 → 5 ms h2 s[cupones] → s[cupones] Cupones · conteo por estado (head)
+=== variante F
+Q01 admin 12073.89 ms h392994 → 181.41 ms h9 → 173.12 ms h9 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · primera página (sin filtro)
+Q01 cajera 10279.97 ms h362576 → 9.9 ms h6 → 10.01 ms h6 s[pedidos_web] → s[pedidos_web,zonas_delivery] Pedidos Web · primera página (sin filtro)
+Q26 cliente 13143.12 ms h362560 → 11.06 ms h6 → 12.57 ms h6 s[pedidos_web] → s[pedidos_web] Clienta · sus pedidos (RLS cliente_id = mi_cliente_id())
+Q27 cliente 13561.88 ms h362574 → 75.72 ms h8 → 83.2 ms h8 s[pedidos_web_items,pedidos_web] → s[pedidos_web_items,pedidos_web] Clienta · ítems de sus pedidos (RLS con EXISTS)
+Q29 cliente 11050.93 ms h492270 → 20.76 ms h4 → 25.79 ms h4 s[cupones] → s[cupones] Clienta · sus cupones (RLS cliente_id = mi_cliente_id())
+=== variante E
+Q17 anon 4.64 ms h0 → 4.58 ms h0 → 0.45 ms h0 s[productos] → s[] Productos · listado por categoría
+Q17 cliente 29.57 ms h668 → 4.99 ms h2 → 0.29 ms h0 s[productos] → s[] Productos · listado por categoría
+Q18 anon 3.66 ms h0 → 3.57 ms h0 → 0.23 ms h0 s[servicios] → s[] Servicios · listado por categoría
+Q18 cliente 49.87 ms h1308 → 3.98 ms h2 → 0.17 ms h0 s[servicios] → s[] Servicios · listado por categoría
+Q22 anon 10.45 ms h0 → 11.41 ms h0 → 10.24 ms h0 s[] → s[] productos_categorias_publicas()
+Q22 cliente 1291.32 ms h36062 → 12.29 ms h2 → 12.25 ms h2 s[] → s[] productos_categorias_publicas()
+Q23 anon 15.2 ms h0 → 16.54 ms h0 → 11.51 ms h0 s[] → s[] productos_vitrina_publica(4,0,10)
+Q23 cliente 1472.73 ms h39276 → 16.4 ms h2 → 12.18 ms h1 s[] → s[] productos_vitrina_publica(4,0,10)
+Q24 anon 10.89 ms h0 → 10.31 ms h0 → 10.43 ms h0 s[] → s[] servicios_categorias_publicas()
+Q24 cliente 1335.68 ms h37352 → 11.05 ms h2 → 10.78 ms h2 s[] → s[] servicios_categorias_publicas()
+Q25 anon 17.16 ms h0 → 16.57 ms h0 → 16.26 ms h0 s[] → s[] servicios_vitrina_publica(4,30,0,10)
+Q25 cliente 1451.01 ms h40001 → 18.13 ms h2 → 17.81 ms h1 s[] → s[] servicios_vitrina_publica(4,30,0,10)
+FIN

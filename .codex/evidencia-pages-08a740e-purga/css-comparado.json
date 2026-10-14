@@ -1,0 +1,18 @@
+{
+  "fecha": "2026-10-10T22:13:36.275Z",
+  "evidencia": [
+    {
+      "origin": "https://90303ee8.pos-jaise.pages.dev",
+      "ruta": "/assets/index-CvFTgvGX.css",
+      "bytes": 184288,
+      "sha256": "df3bfcb68a0e416de64a14167cba07110b4c415aaf9221ac0355a218bc2cb9b7"
+    },
+    {
+      "origin": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+      "ruta": "/assets/index-CvFTgvGX.css",
+      "bytes": 184288,
+      "sha256": "df3bfcb68a0e416de64a14167cba07110b4c415aaf9221ac0355a218bc2cb9b7"
+    }
+  ],
+  "identicos": true
+}

@@ -1,0 +1,20 @@
+{
+  "before": {
+    "authQA": 6,
+    "asistentes10aAuth": 0,
+    "asistentes10aPerfil": 0,
+    "deudas": 59,
+    "auditoria": 26021
+  },
+  "after": {
+    "authQA": 6,
+    "asistentes10aAuth": 0,
+    "asistentes10aPerfil": 0,
+    "deudas": 59,
+    "auditoria": 26023
+  },
+  "cuentasQAIguales": true,
+  "asistentePropioAusente": true,
+  "deudasIguales": true,
+  "exit": 0
+}

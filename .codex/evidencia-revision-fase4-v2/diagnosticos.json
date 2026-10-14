@@ -1,0 +1,196 @@
+{
+  "fecha": "2026-10-11T07:23:13.385Z",
+  "nota": "Componentes y páginas reales servidos por Vite; contexto de carrito y API simulados en navegador. Cero mutaciones de BD.",
+  "casos": [
+    {
+      "name": "F4-01: Todos con 11 categorías",
+      "data": {
+        "primera": 40,
+        "segunda": 4,
+        "paginador": "«\nPágina 2 de 2\n»\n\n11–11 de 11 categorías"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-02: servicio en hero y en categoría",
+      "data": {
+        "barra": "1 servicio en tu cita · S/ 10.00\nReservar",
+        "esperado": "1 servicio, S/ 10.00"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-02: duplicación al buscar un servicio seleccionado",
+      "data": {
+        "barra": "1 servicio en tu cita · S/ 10.00\nReservar",
+        "esperado": "1 servicio, S/ 10.00"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-03: precio faltante falla y cambia cantidad",
+      "data": {
+        "antes": "2 productos en tu carrito · Total no disponible · Reintentar\nVer carrito",
+        "despues": "3 productos en tu carrito · S/ 50.00\nVer carrito",
+        "consultasPrecio": 2,
+        "intentosAntes": 1,
+        "esperado": "3 productos, S/ 50.00; no presentar subtotal como total"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "allowPrice": true
+      }
+    },
+    {
+      "name": "F4-03: precio de cita faltante falla",
+      "data": {
+        "antes": "2 servicios en tu cita · Total no disponible · Reintentar\nReservar",
+        "despues": "2 servicios en tu cita · S/ 30.00\nReservar",
+        "intentosAntes": 1,
+        "consultasPrecio": 2,
+        "esperado": "2 servicios, S/ 30.00; o mostrar estado de error"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "allowPrice": true
+      }
+    },
+    {
+      "name": "F4-04: precio recién visto se pierde al quitar búsqueda",
+      "data": {
+        "antes": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "durante": "1 producto en tu carrito · S/ 25.00\nVer carrito",
+        "despues": "1 producto en tu carrito · S/ 25.00\nVer carrito",
+        "consultasPrecio": 1,
+        "esperado": "Conservar/refrescar precio confirmado 25, sin regresar a 20 al ocultar la tarjeta"
+      },
+      "rec": {
+        "precioRequests": 1,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-04b: productos, vitrina antigua pisa precio actualizado",
+      "data": {
+        "inicial": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "nuevo": "1 producto en tu carrito · S/ 25.00\nVer carrito",
+        "alVolverATodos": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "esperado": "Conservar el precio 25 confirmado por la búsqueda frente al snapshot de vitrina anterior de 20"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-04b: servicios, vitrina antigua pisa precio actualizado",
+      "data": {
+        "inicial": "1 servicio en tu cita · S/ 20.00\nReservar",
+        "nuevo": "1 servicio en tu cita · S/ 25.00\nReservar",
+        "alVolverATodos": "1 servicio en tu cita · S/ 20.00\nReservar",
+        "esperado": "Conservar el precio 25 confirmado por la búsqueda frente al snapshot de vitrina anterior de 20"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-05: precio vencido y renovación 403",
+      "data": {
+        "inicial": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "renovacionFallida": "2 productos en tu carrito · S/ 40.00\nVer carrito",
+        "consultasPrecio": 2,
+        "botonReintentar": 0,
+        "esperado": "Indicar falta de total/reintentar; no presentar 40 con el precio vencido"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "failPrice": true,
+        "errorStatus": 403
+      }
+    },
+    {
+      "name": "F4-05: precio vencido y renovación 500",
+      "data": {
+        "inicial": "1 producto en tu carrito · S/ 20.00\nVer carrito",
+        "renovacionFallida": "2 productos en tu carrito · S/ 40.00\nVer carrito",
+        "consultasPrecio": 2,
+        "botonReintentar": 0,
+        "esperado": "Indicar falta de total/reintentar; no presentar 40 con el precio vencido"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "failPrice": true,
+        "errorStatus": 500
+      }
+    },
+    {
+      "name": "F4-05: precio de servicio vencido y renovación fallida",
+      "data": {
+        "inicial": "1 servicio en tu cita · S/ 20.00\nReservar",
+        "renovacionFallida": "2 servicios en tu cita · S/ 30.00\nReservar",
+        "consultasPrecio": 2,
+        "botonReintentar": 0,
+        "esperado": "Aviso de precio vencido sin un total falsamente completo"
+      },
+      "rec": {
+        "precioRequests": 2,
+        "errors": [],
+        "mutacionesBloqueadas": [],
+        "failPrice": true
+      }
+    },
+    {
+      "name": "F4-06: metadatos truncados con 1001 categorías",
+      "data": {
+        "categorias": 1000,
+        "ultimaDisponible": "CATEGORIA 0999\n· 1",
+        "paginador": "«\nPágina 1 de 100\n»\n\n1–10 de 1000 categorías",
+        "esperado": "1001 categorías y 101 ventanas, incluida Categoria 1000"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    },
+    {
+      "name": "F4-06: metadatos de servicios truncados con 1001 categorías",
+      "data": {
+        "categorias": 1000,
+        "ultimaDisponible": "CATEGORIA 0999\n· 1",
+        "paginador": "«\nPágina 1 de 100\n»\n\n1–10 de 1000 categorías",
+        "esperado": "1001 categorías y 101 ventanas"
+      },
+      "rec": {
+        "precioRequests": 0,
+        "errors": [],
+        "mutacionesBloqueadas": []
+      }
+    }
+  ]
+}

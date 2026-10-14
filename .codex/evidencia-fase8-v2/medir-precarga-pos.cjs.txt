@@ -1,0 +1,17 @@
+// Bytes de JS que el POS descarga en los 40 s siguientes al login (admin y cajera), V1 vs V2. SW bloqueado (primera visita).
+const { spawn } = require('child_process'); const fs = require('fs'); const { chromium } = require('C:/WedJaiseReact/node_modules/playwright')
+const [dist, puerto, etiqueta, cuentasArch] = process.argv.slice(2); const cuentas = JSON.parse(fs.readFileSync(cuentasArch, 'utf8'))
+const srv = spawn(process.execPath, ['C:/WedJaiseReact/scripts/servir-dist-base.cjs', dist, puerto, '/'], { stdio: 'ignore' })
+;(async () => {
+  await new Promise((r) => setTimeout(r, 800)); const b = await chromium.launch(); const out = {}
+  for (const rol of ['admin', 'cajera']) {
+    const ctx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 1440, height: 900 } }); const p = await ctx.newPage()
+    await ctx.route('http://127.0.0.1:54321/**', (r) => (['GET', 'HEAD', 'OPTIONS'].includes(r.request().method()) || /\/auth\/v1\/token|\/rest\/v1\/rpc\//.test(r.request().url()) ? r.continue() : r.abort()))
+    await p.goto(`http://127.0.0.1:${puerto}/login`, { waitUntil: 'load' }); await p.fill('#email', cuentas[rol].email); await p.fill('#password', cuentas[rol].password)
+    await p.click('button[type=submit]'); await p.waitForFunction(() => !location.pathname.endsWith('/login'), null, { timeout: 30000 })
+    const t0 = await p.evaluate(() => performance.now()); await p.waitForTimeout(40000)
+    out[rol] = await p.evaluate((t) => { const js = performance.getEntriesByType('resource').filter((e) => e.startTime >= t && /\/assets\/.+\.js$/.test(e.name)); return { chunks: js.length, bytes: js.reduce((a, e) => a + e.transferSize, 0) } }, t0)
+    await ctx.close()
+  }
+  console.log(etiqueta, JSON.stringify(out)); await b.close(); srv.kill()
+})()

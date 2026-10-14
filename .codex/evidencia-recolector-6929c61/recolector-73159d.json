@@ -1,0 +1,302 @@
+{
+  "fecha": "2026-10-11T03:35:50.294Z",
+  "buildId": "6929c619",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "idEjecucion": "73159d",
+  "ids": {
+    "protegido": "3381083f-991c-4016-bdf1-b14fbb3f2269",
+    "huerfano": "a48176af-a42f-41e0-98fe-8bc76ade05e0",
+    "fila": "08446e4f-305c-4ab8-9f76-6691f76090f4",
+    "titulo": "QA recolector 73159d (borrar)"
+  },
+  "nota": "Reloj simulado SOLO en este harness: no verifica el envejecimiento real en Cloudflare.",
+  "completa": true,
+  "estadoFinalConfirmado": true,
+  "error": null,
+  "casos": [
+    {
+      "nombre": "precondición: ninguno de los dos prefijos ni la fila previstos existen",
+      "ok": true,
+      "detalle": {
+        "ocupados": []
+      }
+    },
+    {
+      "nombre": "subida protegido/m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida protegido/g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida huerfano/m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida huerfano/g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "fila propia creada (activo=false) que REFERENCIA solo el grupo protegido",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "relectura por id: la fila existe con TODOS sus campos y apunta al grupo protegido",
+      "ok": true,
+      "detalle": {
+        "id": "08446e4f-305c-4ab8-9f76-6691f76090f4",
+        "titulo": "QA recolector 73159d (borrar)",
+        "antes_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/3381083f-991c-4016-bdf1-b14fbb3f2269/g.webp",
+        "despues_url": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/3381083f-991c-4016-bdf1-b14fbb3f2269/m.webp",
+        "orden": 9999,
+        "activo": false
+      }
+    },
+    {
+      "nombre": "lectura acotada: 4 objetos propios, 1 referenciado (protegido) y ningún candidato dentro de la retención",
+      "ok": true,
+      "detalle": {
+        "retencionDias": 14,
+        "aplicar": false,
+        "referenciados": 1,
+        "objetos": 4,
+        "totales": {
+          "referenciado": 1,
+          "protegido-reciente": 1,
+          "sin-fecha": 0,
+          "candidato": 0
+        },
+        "candidatos": [],
+        "eliminados": [],
+        "omitidos": [],
+        "errores": [],
+        "abortado": null
+      }
+    },
+    {
+      "nombre": "aplicar con el reloj real: no elimina nada (la retención de 14 días protege al huérfano reciente)",
+      "ok": true,
+      "detalle": {
+        "retencionDias": 14,
+        "aplicar": true,
+        "referenciados": 1,
+        "objetos": 4,
+        "totales": {
+          "referenciado": 1,
+          "protegido-reciente": 1,
+          "sin-fecha": 0,
+          "candidato": 0
+        },
+        "candidatos": [],
+        "eliminados": [],
+        "omitidos": [],
+        "errores": [],
+        "abortado": null
+      }
+    },
+    {
+      "nombre": "con el reloj simulado (+15 días): el único candidato es el grupo SIN referencias",
+      "ok": true,
+      "detalle": {
+        "retencionDias": 14,
+        "aplicar": false,
+        "referenciados": 1,
+        "objetos": 4,
+        "totales": {
+          "referenciado": 1,
+          "protegido-reciente": 0,
+          "sin-fecha": 0,
+          "candidato": 1
+        },
+        "candidatos": [
+          {
+            "grupo": "fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0",
+            "bytes": 1434,
+            "subidoEn": "2026-10-11T03:35:22.390Z"
+          }
+        ],
+        "eliminados": [],
+        "omitidos": [],
+        "errores": [],
+        "abortado": null
+      }
+    },
+    {
+      "nombre": "aplicar (reloj simulado): elimina SOLO el huérfano, sin errores ni abortos ni omitidos",
+      "ok": true,
+      "detalle": {
+        "retencionDias": 14,
+        "aplicar": true,
+        "referenciados": 1,
+        "objetos": 4,
+        "totales": {
+          "referenciado": 1,
+          "protegido-reciente": 0,
+          "sin-fecha": 0,
+          "candidato": 1
+        },
+        "candidatos": [
+          {
+            "grupo": "fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0",
+            "bytes": 1434,
+            "subidoEn": "2026-10-11T03:35:22.390Z"
+          }
+        ],
+        "eliminados": [
+          "fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0"
+        ],
+        "omitidos": [],
+        "errores": [],
+        "abortado": null
+      }
+    },
+    {
+      "nombre": "estado tras el borrado selectivo: huérfano sin claves, protegido con sus 2 variantes, fila propia con TODOS sus campos intactos",
+      "ok": true,
+      "detalle": {
+        "claves": [
+          "fotos-galeria/3381083f-991c-4016-bdf1-b14fbb3f2269/g.webp",
+          "fotos-galeria/3381083f-991c-4016-bdf1-b14fbb3f2269/m.webp"
+        ]
+      }
+    },
+    {
+      "nombre": "ESTADO FINAL confirmado: inventario y filas idénticos a los iniciales, sin pendientes",
+      "ok": true,
+      "detalle": {
+        "limpieza": {
+          "confirmada": true,
+          "necesaria": true,
+          "estadoBorrado": 200,
+          "estadosBorrado": [
+            200
+          ],
+          "pendientes": [],
+          "igualAlInicial": true,
+          "errores": []
+        },
+        "filasIguales": true,
+        "diferencias": [],
+        "pendientes": []
+      }
+    }
+  ],
+  "pendientes": [],
+  "escrituras": true,
+  "recolector": {
+    "seco": {
+      "retencionDias": 14,
+      "aplicar": false,
+      "referenciados": 1,
+      "objetos": 4,
+      "totales": {
+        "referenciado": 1,
+        "protegido-reciente": 1,
+        "sin-fecha": 0,
+        "candidato": 0
+      },
+      "candidatos": [],
+      "eliminados": [],
+      "omitidos": [],
+      "errores": [],
+      "abortado": null
+    },
+    "realAplicar": {
+      "retencionDias": 14,
+      "aplicar": true,
+      "referenciados": 1,
+      "objetos": 4,
+      "totales": {
+        "referenciado": 1,
+        "protegido-reciente": 1,
+        "sin-fecha": 0,
+        "candidato": 0
+      },
+      "candidatos": [],
+      "eliminados": [],
+      "omitidos": [],
+      "errores": [],
+      "abortado": null
+    },
+    "secoFuturo": {
+      "retencionDias": 14,
+      "aplicar": false,
+      "referenciados": 1,
+      "objetos": 4,
+      "totales": {
+        "referenciado": 1,
+        "protegido-reciente": 0,
+        "sin-fecha": 0,
+        "candidato": 1
+      },
+      "candidatos": [
+        {
+          "grupo": "fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0",
+          "bytes": 1434,
+          "subidoEn": "2026-10-11T03:35:22.390Z"
+        }
+      ],
+      "eliminados": [],
+      "omitidos": [],
+      "errores": [],
+      "abortado": null
+    },
+    "aplicado": {
+      "retencionDias": 14,
+      "aplicar": true,
+      "referenciados": 1,
+      "objetos": 4,
+      "totales": {
+        "referenciado": 1,
+        "protegido-reciente": 0,
+        "sin-fecha": 0,
+        "candidato": 1
+      },
+      "candidatos": [
+        {
+          "grupo": "fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0",
+          "bytes": 1434,
+          "subidoEn": "2026-10-11T03:35:22.390Z"
+        }
+      ],
+      "eliminados": [
+        "fotos-galeria/a48176af-a42f-41e0-98fe-8bc76ade05e0"
+      ],
+      "omitidos": [],
+      "errores": [],
+      "abortado": null
+    }
+  },
+  "diferenciasFilas": [],
+  "limpieza": {
+    "confirmada": true,
+    "necesaria": true,
+    "estadoBorrado": 200,
+    "estadosBorrado": [
+      200
+    ],
+    "pendientes": [],
+    "igualAlInicial": true,
+    "errores": []
+  },
+  "resumen": {
+    "casos": 13,
+    "fallos": 0
+  }
+}

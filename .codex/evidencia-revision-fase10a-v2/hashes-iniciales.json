@@ -1,0 +1,74 @@
+[
+  {
+    "Path": "C:\\WedJaiseReact\\src\\index.css",
+    "Hash": "98E5F3EE8FBBBFAEF86B1B7C7754315643AFA11D69FE49F0C4E3DAFA5872B97F"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\.oxlintrc.json",
+    "Hash": "25D339E66A7E3FDA5D21F491EAF72F1629C4DE7211D6EACC3FD130F9DE8F9CAD"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\verificar-catalogos-fotos-sesion.cjs",
+    "Hash": "8E9418BDD769688CACD4AED335D67051BBC45C917AE13C595B5F895BF39DAEF3"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\verificar-fase6.cjs",
+    "Hash": "569D79B6F100363F9B87AB85402B9A103910446D79B41830835DB1B4C1A12C5B"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\supabase\\migrations\\20261012000003_migracion_medios_cambio_con_plazo.sql",
+    "Hash": "764C50B24F30435877A5C46219A487B61F9A9B7D451C960A2B049AEEAE1C26D8"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\bateria-10a.mjs",
+    "Hash": "54E2FF1484E203FC6119527659E83B54269D8B7C82A268605397801F3DDCA9CC"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\ensayar-compat-deudas.mjs",
+    "Hash": "7D6F2012119DC0E85FCF447D99460E706BCCDC36F71211A983140E1FE8E7F157"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\medir-rendimiento-10a.mjs",
+    "Hash": "30432C4CAB87BD9FB1010F2D17F2587D25388B78005720E22CB9D501390240E8"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\medir-vitales-10a.cjs",
+    "Hash": "30248AFD3444A4BBDFBF17C2E6BD20D407DC48A68EF5EDF6616C5B8EFDAFD483"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\presupuestos-rendimiento.json",
+    "Hash": "FDDD8E0AA26B2E216B7FCE8082920B49EC7EFDDF18B4578D4C926436E4093FA4"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\probar-herramientas-10a.mjs",
+    "Hash": "AF2CB0E32FAB8BC9EC9A6D2F45FA5D8C10A3F5A7EFA097917144CC8C8CD92112"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\servir-como-pages.cjs",
+    "Hash": "D8D87E511188365A441AD2CC56E517ED4EEEA03625512C84B7B0C8790FCCC96C"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\verificar-roles-rutas.cjs",
+    "Hash": "B65D627560497D8AC3070797F7D55707D3A71E29EE26EF0FED62B90A24E3113E"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\lib\\estadistica.cjs",
+    "Hash": "B7157D075DE8DA7B9DA7FFE85BF8DE51A31D8D06D7C630EC92334C201B5C6F90"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\lib\\evaluar-presupuestos.mjs",
+    "Hash": "D752B45014D394B052246760C364AEC792F4B290BAB27D54EF543031F829CDA6"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\scripts\\fase10a\\lib\\guardas-local-10a.cjs",
+    "Hash": "91AB799D53D46F622C1712D8C5954F0E3757854E6507BCADC090A80F176CABD2"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\.codex\\propuesta-f10a-05\\compat-deudas-borrador.sql",
+    "Hash": "569CF9843042176DBAB0A06F21AF90EC5889EF5940E972B56CC187104687F171"
+  },
+  {
+    "Path": "C:\\WedJaiseReact\\.codex\\propuesta-f10a-05\\ensayo-compat-deudas.sql",
+    "Hash": "5A6BB1CCB690131BBD0B5BAA705401A11ED492C1F97C17097A5A5BC99C6DF95B"
+  }
+]

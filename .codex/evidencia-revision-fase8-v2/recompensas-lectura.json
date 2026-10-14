@@ -1,0 +1,38 @@
+{
+ "fecha": "2026-10-12T16:10:47.413Z",
+ "etiqueta": "codex-recompensas",
+ "a": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-a",
+  "meta": "f8v2-a",
+  "citas": "Citas-76JL_qn4.js"
+ },
+ "b": {
+  "dir": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\dist-v2-b",
+  "meta": "f8v2-b"
+ },
+ "archivosComunesAB": 0,
+ "producto": "TEST E2E Stock 10 a 8 - 20260930",
+ "total": 3,
+ "correctos": 0,
+ "fallos": 3,
+ "casos": [
+  {
+   "nombre": "CLIENTA RECOMPENSAS lectura 1",
+   "ok": false,
+   "error": "Expected values to be strictly deep-equal: | + actual - expected | + [ | +   'POST /rest/v1/rpc/mi_historial_fidelizacion' | + ] | - []",
+   "ms": 3729
+  },
+  {
+   "nombre": "CLIENTA RECOMPENSAS lectura 2",
+   "ok": false,
+   "error": "Expected values to be strictly deep-equal: | + actual - expected | + [ | +   'POST /rest/v1/rpc/mi_historial_fidelizacion' | + ] | - []",
+   "ms": 3698
+  },
+  {
+   "nombre": "CLIENTA RECOMPENSAS lectura 3",
+   "ok": false,
+   "error": "Expected values to be strictly deep-equal: | + actual - expected | + [ | +   'POST /rest/v1/rpc/mi_historial_fidelizacion' | + ] | - []",
+   "ms": 3701
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+const fs=require('node:fs'); const path=require('node:path');
+const {chromium}=require('C:/WedJaiseReact/node_modules/playwright');
+const APP='http://localhost:5173',API='http://127.0.0.1:54321';
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==','base64');
+const id=n=>`aaaaaaaa-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const prod=(n,cat='QA')=>({id:id(n),nombre:`QA producto ${n}`,categoria:cat,subcategoria:null,precio:10,precio_antes:null,stock_actual:10,foto_url:null,descripcion:'QA',destacado:false,nuevo:false,en_inicio:false,total_categoria:4});
+const serv=(n,cat='QA')=>({id:id(n),nombre:`QA servicio ${n}`,categoria:cat,precio:10,duracion_min:30,foto_url:null,descripcion:'QA',en_tendencia:false,total_categoria:4});
+const contextStub=`import React from'/node_modules/.vite/deps/react.js'; const{useState,useEffect}=React; export function CarritoClienteProvider({children}){return children} export function useCarritoCliente(){const[v,setV]=useState(0);useEffect(()=>{const f=()=>setV(n=>n+1);window.addEventListener('qa-cart',f);return()=>window.removeEventListener('qa-cart',f)},[]);const c=window.__qaCart??{};return{productosCarrito:new Map(c.productos??[]),serviciosCarrito:new Set(c.servicios??[]),cargando:false,agregarProducto:async()=>0,agregarServicio:async()=>false,quitarServicio:async()=>false}}`;
+const out={fecha:new Date().toISOString(),nota:'Componentes y páginas reales servidos por Vite; contexto de carrito y API simulados en navegador. Cero mutaciones de BD.',casos:[]};
+let browser;
+async function run(name,opts,fn){const ctx=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900},reducedMotion:'reduce'});const rec={precioRequests:0,errors:[],mutacionesBloqueadas:[]};const p=await ctx.newPage();p.on('pageerror',e=>rec.errors.push(e.message));
+ await ctx.addInitScript(c=>{localStorage.clear();window.__qaCart=c},opts.cart??{});
+ await ctx.route('**/*',async r=>{const u=new URL(r.request().url()),m=r.request().method();
+  if(u.origin===APP){if(u.pathname==='/src/context/CarritoClienteContext.jsx'){const real=await r.fetch();const text=await real.text();const spec=text.match(/from ["']([^"']*\/react\.js[^"']*)["']/)?.[1];if(!spec)throw new Error('No se reconoció import React');return r.fulfill({contentType:'application/javascript',body:contextStub.replace('/node_modules/.vite/deps/react.js',spec)});}return r.continue()}
+  if(r.request().resourceType()==='image')return r.fulfill({contentType:'image/png',body:png});
+  if(u.origin!==API)return r.abort();
+  const table=u.pathname.split('/').pop();
+  const json=(data,count)=>r.fulfill({status:200,contentType:'application/json',headers:count==null?{}:{'content-range':`0-${Math.max(0,count-1)}/${count}`},body:m==='HEAD'?'':JSON.stringify(data)});
+  if(table==='productos_vitrina_publica')return json(opts.products??[prod(1)]);
+  if(table==='servicios_vitrina_publica')return json(opts.services??[serv(1)]);
+  if(table==='servicios_mas_pedidos')return json([]);
+  if(table==='productos'||table==='servicios'){
+   if(u.searchParams.get('select')==='id,precio' && u.searchParams.has('id')){rec.precioRequests++;if(opts.failPrice&&!rec.allowPrice)return r.fulfill({status:403,contentType:'application/json',body:JSON.stringify({message:'QA precio caído',code:'QA'})});return json([{id:id(999),precio:20}]);}
+   if(m==='HEAD')return json([],opts.total??4);
+   if(table==='productos')return u.searchParams.has('nombre')?json(opts.list??[prod(1)],opts.total??4):json([],0);
+   if(u.searchParams.get('select')==='precio')return json([{precio:10}]);
+   return json(opts.hero??[]);
+  }
+  if(!['GET','HEAD','OPTIONS'].includes(m)&&!(m==='POST'&&u.pathname.startsWith('/rest/v1/rpc/'))){rec.mutacionesBloqueadas.push(u.pathname);return r.abort()}
+  return r.continue();
+ });
+ try{await p.goto(APP+(opts.ruta??'/productos'));await p.locator('article').first().waitFor({timeout:20000});await p.waitForTimeout(600);const data=await fn(p,rec);out.casos.push({name,data,rec});console.log(JSON.stringify({name,data,rec}));}catch(e){const debug={error:e.message,body:(await p.locator('body').innerText()).slice(0,900),rec};out.casos.push({name,debug});console.log(JSON.stringify(debug));throw e}finally{await ctx.close()}}
+(async()=>{browser=await chromium.launch();
+ await run('F4-01: Todos con 11 categorías', {products:Array.from({length:44},(_,i)=>prod(i+1,`Categoria ${Math.floor(i/4)}`)),total:44},async p=>({tarjetas:await p.locator('article').count(),filas:await p.getByRole('heading',{name:/Categoria/}).count()}));
+ const s={...serv(1),foto_url:'qa.webp',en_tendencia:true};
+ await run('F4-02: servicio en hero y en categoría', {ruta:'/servicios',services:[s],hero:[s],cart:{servicios:[id(1)]}},async p=>({barra:await p.locator('.lw-barra-flotante').innerText(),esperado:'1 servicio, S/ 10.00'}));
+ await run('F4-02: duplicación al buscar un servicio seleccionado', {ruta:'/servicios',services:[s],hero:[s],cart:{servicios:[id(1)]}},async p=>{await p.getByLabel('Buscar servicio',{exact:true}).fill('QA');await p.waitForTimeout(800);return{barra:await p.locator('.lw-barra-flotante').innerText(),esperado:'1 servicio, S/ 10.00'}});
+ await run('F4-03: precio faltante falla y cambia cantidad', {products:[prod(1)],cart:{productos:[[id(1),1],[id(999),1]]},failPrice:true},async(p,rec)=>{const antes=await p.locator('.lw-barra-flotante').innerText();const intentosAntes=rec.precioRequests;rec.allowPrice=true;await p.evaluate(a=>{window.__qaCart.productos[1][1]=2;window.dispatchEvent(new Event('qa-cart'))});await p.waitForTimeout(1200);return{antes,despues:await p.locator('.lw-barra-flotante').innerText(),consultasPrecio:rec.precioRequests,intentosAntes,esperado:'3 productos, S/ 50.00; no presentar subtotal como total'}});
+ await run('F4-03: precio de cita faltante falla', {ruta:'/servicios',services:[serv(1)],cart:{servicios:[id(1),id(999)]},failPrice:true},async(p,rec)=>{const antes=await p.locator('.lw-barra-flotante').innerText();const intentosAntes=rec.precioRequests;rec.allowPrice=true;await p.evaluate(()=>window.dispatchEvent(new Event('qa-cart')));await p.waitForTimeout(800);return{antes,despues:await p.locator('.lw-barra-flotante').innerText(),intentosAntes,consultasPrecio:rec.precioRequests,esperado:'2 servicios, S/ 30.00; o mostrar estado de error'}});
+ await run('F4-04: precio recién visto se pierde al quitar búsqueda',{products:[prod(1)],list:[{...prod(999),precio:25}],cart:{productos:[[id(999),1]]}},async(p,rec)=>{const antes=await p.locator('.lw-barra-flotante').innerText();await p.getByLabel('Buscar producto',{exact:true}).fill('QA');await p.waitForTimeout(800);const durante=await p.locator('.lw-barra-flotante').innerText();await p.getByRole('button',{name:'Limpiar',exact:true}).click();await p.waitForTimeout(500);return{antes,durante,despues:await p.locator('.lw-barra-flotante').innerText(),consultasPrecio:rec.precioRequests,esperado:'Conservar/refrescar precio confirmado 25, sin regresar a 20 al ocultar la tarjeta'}});
+})().catch(e=>{out.error=String(e.stack);console.error(String(e.message));process.exitCode=1}).finally(async()=>{if(browser)await browser.close();fs.writeFileSync(path.join(__dirname,'diagnosticos.json'),JSON.stringify(out,null,2));});

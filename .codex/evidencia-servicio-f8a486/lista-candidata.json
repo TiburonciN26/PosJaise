@@ -1,0 +1,63 @@
+{
+  "fecha": "2026-10-10T18:01:06.764Z",
+  "total": 11,
+  "hallazgos": [],
+  "archivos": [
+    {
+      "archivo": "scripts/verificar-interfaz-r2-preview.cjs",
+      "bytes": 25776,
+      "sha256": "f306e75f7d421532a5ac413f5cc25c7e9fada9f5ee742eefae7d1e783049793e"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/R2-REAL-RUNBOOK.md",
+      "bytes": 32859,
+      "sha256": "e86c43b9c6102406fb5d28e3812a6485df193f5d129cbaf64539f93c2589b85c"
+    },
+    {
+      "archivo": "scripts/lib/guardas-interfaz-r2.cjs",
+      "bytes": 11823,
+      "sha256": "820581abbe2bb5ca072a2537f8c421e6c1127d211c46cbe9c36d9a7231b6e809"
+    },
+    {
+      "archivo": "scripts/verificar-guardas-interfaz-r2.cjs",
+      "bytes": 17624,
+      "sha256": "0a2144c747e659198fbff60c98ed79d2a0c45e8c3a4dcad872ec60915ceeb46a"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/corridas/corrida-b6bb1f.json",
+      "bytes": 6612,
+      "sha256": "377c8f2a3ff081e2eecff9411858946629a217a0ab38b2802ecfa645aeba82bd"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/galeria-alta-b6bb1f.png",
+      "bytes": 36349,
+      "sha256": "4b020e60459ebaad4d114b660e31de47f89d0b7bc1ee52dd0f75f5df2e1c975e"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/producto-antes-de-guardar-b6bb1f.png",
+      "bytes": 126595,
+      "sha256": "d9cb482e661bb88482b559a8851caa257947f212aa445e3b412a5f296d48562f"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/corridas/corrida-f8a486.json",
+      "bytes": 7117,
+      "sha256": "e43c2cba43bd38bbe4b0927aa211a40bff880f15a93633d5cf77114c0868e6af"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/galeria-alta-f8a486.png",
+      "bytes": 36639,
+      "sha256": "499f65400068d53da30fb0945c2165b5e1bcb37f925ab0be052935e7f7839cfb"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/interfaz-preview/producto-antes-de-guardar-f8a486.png",
+      "bytes": 126590,
+      "sha256": "0f3a7617e7c09a9ff9c0db9cff0aa737750eacfa8db814b5348bd54f5630def2"
+    },
+    {
+      "archivo": "docs/evidencia-rendimiento/fase-3/pwa-entre-builds-vacio.json",
+      "bytes": 2835,
+      "sha256": "f45846e57a4a04ba070e8fd94acbb16cf00672a1a1ae85caeaf1c5a0fb1fee1b"
+    }
+  ],
+  "nota": "Lista actual, escaneo sin valores sensibles y PNG inspeccionados visualmente; revisar de nuevo si cambian los candidatos. Excluir .codex, .env y capturas antiguas ajenas."
+}

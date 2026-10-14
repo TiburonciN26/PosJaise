@@ -1,0 +1,16 @@
+begin;
+create index idx_f7_pedidos_web_creado on public.pedidos_web (creado_en desc, id desc);
+create index idx_f7_pedidos_web_estado_creado on public.pedidos_web (estado, creado_en desc, id desc);
+create index idx_f7_pedidos_web_cliente on public.pedidos_web (cliente_id, creado_en desc, id desc);
+create index idx_f7_pedidos_web_items_pedido on public.pedidos_web_items (pedido_id);
+create index idx_f7_cupones_origen_estado_creado on public.cupones (origen, estado, creado_en desc, id desc);
+create index idx_f7_resenas_creado on public.resenas (creado_en desc, id desc);
+create index idx_f7_resenas_estado_creado on public.resenas (estado, creado_en desc, id desc);
+create index idx_f7_resenas_producto_creado on public.resenas_producto (creado_en desc, id desc);
+create index idx_f7_resenas_producto_estado_creado on public.resenas_producto (estado, creado_en desc, id desc);
+create index idx_f7_resenas_servicio_creado on public.resenas_servicio (creado_en desc, id desc);
+create index idx_f7_resenas_servicio_estado_creado on public.resenas_servicio (estado, creado_en desc, id desc);
+create index idx_f7_promociones_creado on public.promociones (creado_en desc, id desc);
+create index idx_f7_productos_categoria_nombre on public.productos (categoria, nombre, id) where activo;
+create index idx_f7_servicios_categoria_nombre on public.servicios (categoria, nombre, id) where activo;
+commit;

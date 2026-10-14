@@ -1,0 +1,649 @@
+--- a/index.html
++++ b/index.html
+@@ -1,81 +1,90 @@
+-<!doctype html>
+-<html lang="es">
+-  <head>
+-    <meta charset="UTF-8" />
+-    <!-- El favicon.svg original era un rayo genérico (ni siquiera el logo
+-         real) — reemplazado por el logo real, generado a los tamaños que
+-         cada contexto necesita: favicon.ico como fallback clásico (algunos
+-         navegadores lo piden en /favicon.ico sin importar los <link> de
+-         acá), 16/32 para la pestaña en PC, y el apple-touch-icon a 512
+-         para cuando se agrega a la pantalla de inicio en iOS. -->
+-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+-    <link rel="apple-touch-icon" href="/icon-512.png" />
+-    <!-- interactive-widget=resizes-visual (el default): al abrir el teclado
+-         SOLO se encoge el viewport visual, no el layout — así los elementos
+-         position:fixed con bottom:0 (el panel de cobro en Ventas) se quedan
+-         anclados al fondo físico de la pantalla y el teclado los tapa, en vez
+-         de "subir" por encima del teclado y tapar el resto de la pantalla al
+-         buscar un producto. (Con resizes-content el layout se encogía y el
+-         panel subía completo — no era lo que se quería.) -->
+-    <meta
+-      name="viewport"
+-      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
+-    />
+-    <meta name="theme-color" content="#0d0d0d" />
+-    <script>
+-      // Bloqueante a propósito, antes que cualquier CSS/JS del bundle: sin
+-      // esto, la página pintaría un instante en oscuro (o claro) y recién
+-      // React, ya montado, corregiría al tema guardado — un parpadeo
+-      // visible. Misma clave/lógica que ThemeContext.jsx (temaInicial) —
+-      // si se cambia acá, cambiar también allá. Va después del <meta
+-      // theme-color> de arriba porque necesita que ya exista en el DOM.
+-      ;(function () {
+-        var guardado = localStorage.getItem('pos-jaise-tema')
+-        var tema =
+-          guardado === 'claro' || guardado === 'oscuro'
+-            ? guardado
+-            : window.matchMedia('(prefers-color-scheme: light)').matches
+-              ? 'claro'
+-              : 'oscuro'
+-        document.documentElement.dataset.tema = tema
+-        document
+-          .querySelector('meta[name="theme-color"]')
+-          ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0d0d0d')
+-      })()
+-    </script>
+-    <meta name="mobile-web-app-capable" content="yes" />
+-    <meta name="apple-mobile-web-app-capable" content="yes" />
+-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+-    <meta name="apple-mobile-web-app-title" content="Pos Jaise Beauty Academy" />
+-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+-    <link
+-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&family=Outfit:wght@600&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+-      rel="stylesheet"
+-    />
+-    <title>Pos Jaise Beauty Academy</title>
+-  </head>
+-  <body>
+-    <div id="root"></div>
+-    <script>
+-      // Decodifica la ruta codificada por public/404.html y la restaura con
+-      // history.replaceState antes de que React Router monte — ver ese
+-      // archivo para el porqué (fallback de SPA en GitHub Pages).
+-      ;(function (l) {
+-        if (l.search[1] === '/') {
+-          var decoded = l.search
+-            .slice(1)
+-            .split('&')
+-            .map(function (s) {
+-              return s.replace(/~and~/g, '&')
+-            })
+-            .join('?')
+-          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash)
+-        }
+-      })(window.location)
+-    </script>
+-    <script type="module" src="/src/main.jsx"></script>
+-  </body>
+-</html>
++<!doctype html>
++<html lang="es">
++  <head>
++    <meta charset="UTF-8" />
++    <!-- El favicon.svg original era un rayo genérico (ni siquiera el logo
++         real) — reemplazado por el logo real, generado a los tamaños que
++         cada contexto necesita: favicon.ico como fallback clásico (algunos
++         navegadores lo piden en /favicon.ico sin importar los <link> de
++         acá), 16/32 para la pestaña en PC, y el apple-touch-icon a 512
++         para cuando se agrega a la pantalla de inicio en iOS. -->
++    <link rel="icon" href="/favicon.ico" sizes="48x48" />
++    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
++    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
++    <link rel="apple-touch-icon" href="/icon-512.png" />
++    <!-- interactive-widget=resizes-visual (el default): al abrir el teclado
++         SOLO se encoge el viewport visual, no el layout — así los elementos
++         position:fixed con bottom:0 (el panel de cobro en Ventas) se quedan
++         anclados al fondo físico de la pantalla y el teclado los tapa, en vez
++         de "subir" por encima del teclado y tapar el resto de la pantalla al
++         buscar un producto. (Con resizes-content el layout se encogía y el
++         panel subía completo — no era lo que se quería.) -->
++    <meta
++      name="viewport"
++      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-visual"
++    />
++    <meta name="theme-color" content="#0d0d0d" />
++    <script>
++      // Bloqueante a propósito, antes que cualquier CSS/JS del bundle: sin
++      // esto, la página pintaría un instante en oscuro (o claro) y recién
++      // React, ya montado, corregiría al tema guardado — un parpadeo
++      // visible. Misma clave/lógica que ThemeContext.jsx (temaInicial) —
++      // si se cambia acá, cambiar también allá. Va después del <meta
++      // theme-color> de arriba porque necesita que ya exista en el DOM.
++      ;(function () {
++        var guardado = localStorage.getItem('pos-jaise-tema')
++        var tema =
++          guardado === 'claro' || guardado === 'oscuro'
++            ? guardado
++            : window.matchMedia('(prefers-color-scheme: light)').matches
++              ? 'claro'
++              : 'oscuro'
++        document.documentElement.dataset.tema = tema
++        document
++          .querySelector('meta[name="theme-color"]')
++          ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0d0d0d')
++      })()
++    </script>
++    <meta name="mobile-web-app-capable" content="yes" />
++    <meta name="apple-mobile-web-app-capable" content="yes" />
++    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
++    <meta name="apple-mobile-web-app-title" content="Pos Jaise Beauty Academy" />
++    <link rel="preconnect" href="https://fonts.googleapis.com" />
++    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
++    <!-- Fase 8 (PERF-11): Google Fonts ya no bloquea el primer render. La hoja se pide con media="print" y se activa al cargar
++         (patrón estándar; `display=swap` ya hacía que el texto apareciera con la fuente de reserva y cambiara después, así que el
++         resultado visual final es el mismo). <noscript> conserva la carga normal sin JavaScript. Se quitó Outfit: ninguna regla CSS,
++         componente ni página la usa (solo estaba declarada aquí). El resto de familias y pesos se mantiene tal cual. -->
++    <link
++      rel="stylesheet"
++      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
++      media="print"
++      onload="this.media='all'"
++    />
++    <noscript>
++      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
++    </noscript>
++    <title>Pos Jaise Beauty Academy</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script>
++      // Decodifica la ruta codificada por public/404.html y la restaura con
++      // history.replaceState antes de que React Router monte — ver ese
++      // archivo para el porqué (fallback de SPA en GitHub Pages).
++      ;(function (l) {
++        if (l.search[1] === '/') {
++          var decoded = l.search
++            .slice(1)
++            .split('&')
++            .map(function (s) {
++              return s.replace(/~and~/g, '&')
++            })
++            .join('?')
++          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash)
++        }
++      })(window.location)
++    </script>
++    <script type="module" src="/src/main.jsx"></script>
++  </body>
++</html>
+--- a/vite.config.js
++++ b/vite.config.js
+@@ -4,6 +4,40 @@
+ import tailwindcss from '@tailwindcss/vite'
+ import { VitePWA } from 'vite-plugin-pwa'
+ 
++// Fase 8 (PERF-10): el precaché ya no incluye TODO el build (176 entradas, ~3,5 MB: POS completo, escáner de 480 kB, maquetas HTML de
++// public/…). Solo el SHELL: lo que el navegador necesita para arrancar la app y pintar la ruta de aterrizaje (/inicio) sin red.
++// La lista se calcula del grafo REAL de chunks de Rollup (no por nombres con hash): chunks de entrada + sus importaciones estáticas + su CSS,
++// más los chunks de PortalCliente e InicioCliente con las suyas. El resto (páginas del POS, escáner, páginas del portal, modales) se guarda
++// «por uso» (runtimeCaching CacheFirst: son archivos con hash inmutable) la primera vez que se piden con el service worker activo.
++// Los datos operativos (Supabase) NO pasan por ninguna regla: siempre red.
++const RAICES_DE_ATERRIZAJE = ['/pages/PortalCliente.jsx', '/pages/cliente/InicioCliente.jsx']
++// Los íconos de la PWA (192/512 y maskable) NO se precachean: el navegador los pide por su cuenta al instalar la app desde el manifest.
++const SHELL_FIJO = new Set(['index.html', 'manifest.webmanifest'])
++function cierreDelShell() {
++  const permitidos = new Set()
++  return {
++    name: 'cierre-del-shell-pwa',
++    apply: 'build',
++    generateBundle(_opciones, bundle) {
++      const chunks = Object.values(bundle).filter((x) => x.type === 'chunk')
++      const porNombre = new Map(chunks.map((c) => [c.fileName, c]))
++      const visitar = (nombre) => {
++        if (permitidos.has(nombre) || !porNombre.has(nombre)) return
++        const c = porNombre.get(nombre)
++        permitidos.add(nombre)
++        for (const css of c.viteMetadata?.importedCss ?? []) permitidos.add(css)
++        for (const imp of c.imports ?? []) visitar(imp)
++      }
++      for (const c of chunks) {
++        const id = (c.facadeModuleId ?? '').replace(/\\/g, '/')
++        if (c.isEntry || RAICES_DE_ATERRIZAJE.some((r) => id.endsWith(r))) visitar(c.fileName)
++      }
++      if (permitidos.size < 3) throw new Error('cierre-del-shell-pwa: no se pudo calcular el shell del precaché (grafo vacío)')
++    },
++    incluye: (url) => SHELL_FIJO.has(url) || permitidos.has(url) || /^assets\/geist-latin-wght-normal-[\w-]+\.woff2$/.test(url),
++  }
++}
++
+ // https://vite.dev/config/
+ export default defineConfig(({ command, mode }) => {
+   // GitHub Pages sirve este proyecto bajo /PosJaise/ (Pages de proyecto, no
+@@ -21,6 +55,8 @@
+   // sola presencia DESACTIVA el fallback de SPA, así que ese build lo excluye (y del precache).
+   const esRaiz = base === '/'
+ 
++  const shell = cierreDelShell()
++
+   return {
+     base,
+     // Alias @/ -> src/ (lo exige shadcn; también sirve para imports cortos)
+@@ -39,6 +75,7 @@
+         transformIndexHtml: (html) => (process.env.VITE_BUILD_ID ? html.replace('</head>', `<meta name="build-id" content="${process.env.VITE_BUILD_ID.replace(/[^\w.-]/g, '')}" /></head>`) : html),
+       },
+       tailwindcss(),
++      shell,
+       VitePWA({
+         // A2 de la 4ª auditoría: con 'autoUpdate' la versión nueva se activa
+         // recién al recargar, sin avisar — un POS suele quedar abierto todo
+@@ -49,6 +86,8 @@
+         // control a AvisoActualizacionPWA (src/components), que muestra un
+         // aviso explícito con botón "Actualizar" en vez de actualizar solo.
+         registerType: 'prompt',
++        // Fase 8: sin esto el plugin añade al precaché los íconos del manifest (≈275 kB, con entradas duplicadas).
++        includeManifestIcons: false,
+         injectRegister: false,
+         // Solo precachea el shell estático (JS/CSS/HTML/íconos) generado por
+         // el build. Nunca intercepta las consultas a Supabase — esas siguen
+@@ -56,6 +95,23 @@
+         // negocio (stock, ventas, etc.) al usuario.
+         workbox: {
+           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
++          // Fase 8: del glob completo solo se precachea el shell (ver cierreDelShell arriba).
++          manifestTransforms: [(entradas) => ({ manifest: entradas.filter((e) => shell.incluye(e.url)), warnings: [] })],
++          runtimeCaching: [
++            {
++              // Chunks/CSS/fuentes con hash del propio build que NO están en el shell: se guardan al pedirse por primera vez.
++              // Las funciones de urlPattern se serializan tal cual dentro de sw.js: NO pueden usar variables de este archivo.
++              urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/assets\/[^/]+\.(?:js|css|woff2|ttf)$/.test(url.pathname),
++              handler: 'CacheFirst',
++              options: { cacheName: 'assets-por-uso', expiration: { maxEntries: 160, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }, cacheableResponse: { statuses: [200] } },
++            },
++            {
++              // Imágenes estáticas del sitio (hero, íconos). Nunca /medios (fotos del negocio vía Pages Function/R2).
++              urlPattern: ({ url, sameOrigin }) => sameOrigin && !/\/medios(?:\/|$)/.test(url.pathname) && /\.(?:png|jpe?g|webp|avif|svg)$/.test(url.pathname),
++              handler: 'StaleWhileRevalidate',
++              options: { cacheName: 'imagenes-del-sitio', expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30, purgeOnQuotaError: true }, cacheableResponse: { statuses: [200] } },
++            },
++          ],
+           globIgnores: esRaiz ? ['**/404.html'] : [],
+           // Build de Cloudflare (base /): /medios y /medios/* los sirve una Pages Function (fotos), nunca la SPA.
+           // El SW no debe devolver index.html a una navegación a una foto. `/medios-extra` NO queda excluido.
+--- a/src/pages/cliente/InicioCliente.jsx
++++ b/src/pages/cliente/InicioCliente.jsx
+@@ -22,6 +22,7 @@
+ import { nombrePublico } from '../../lib/resenas.js'
+ import Estrellas from '../../components/Estrellas.jsx'
+ import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
++import MapaDiferido from '../../components/MapaDiferido.jsx'
+ import ShinyText from '../../components/ShinyText.jsx'
+ import PieClienteWeb from './PieClienteWeb.jsx'
+ 
+@@ -34,6 +35,17 @@
+ // Tema claro del portal: mismas tomas con fondo blanco.
+ const FOTO_DESPUES_CLARA = `${import.meta.env.BASE_URL}inicio-web/despues-claro.webp`
+ const FOTO_ANTES_CLARA = `${import.meta.env.BASE_URL}inicio-web/antes-claro.webp`
++// Fase 8 (PERF-11): el hero se sirve en WebP responsivo (640/960/1280/1680 px; scripts/generar-hero-responsivo.mjs). El `src` conserva el
++// original de 1680×944 como reserva para navegadores sin srcset. La imagen «después» es el candidato LCP (prioridad alta); la «antes» es el
++// overlay del efecto y no compite por el ancho de banda inicial.
++const BASE_HERO = `${import.meta.env.BASE_URL}inicio-web/`
++const srcSetHero = (nombre, con1680) =>
++  [640, 960, 1280].map((w) => `${BASE_HERO}${nombre}-${w}.webp ${w}w`).concat(con1680).join(', ')
++const SRCSET_DESPUES = srcSetHero('hero-despues-referencia', `${BASE_HERO}hero-despues-referencia-1680.webp 1680w`)
++const SRCSET_ANTES = srcSetHero('hero-antes-referencia', `${BASE_HERO}hero-antes-referencia-1680.webp 1680w`)
++const SRCSET_DESPUES_CLARA = srcSetHero('despues-claro', `${BASE_HERO}despues-claro.webp 1680w`)
++const SRCSET_ANTES_CLARA = srcSetHero('antes-claro', `${BASE_HERO}antes-claro.webp 1680w`)
++const SIZES_HERO = '(min-width: 1800px) 1800px, 100vw'
+ const RADIO_REVELADO = 340
+ 
+ // Revela la foto "antes" bajo el cursor sin re-renderizar React en cada
+@@ -447,12 +459,24 @@
+         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+           <img
+             src={esClaro ? FOTO_DESPUES_CLARA : FOTO_DESPUES}
++            srcSet={esClaro ? SRCSET_DESPUES_CLARA : SRCSET_DESPUES}
++            sizes={SIZES_HERO}
++            width={1680}
++            height={944}
++            fetchPriority="high"
++            decoding="async"
+             alt="Resultado después del servicio"
+             className="absolute inset-0 h-full w-full object-cover object-[right_center]"
+           />
+           <img
+             ref={imagenAntesRef}
+             src={esClaro ? FOTO_ANTES_CLARA : FOTO_ANTES}
++            srcSet={esClaro ? SRCSET_ANTES_CLARA : SRCSET_ANTES}
++            sizes={SIZES_HERO}
++            width={1680}
++            height={944}
++            fetchPriority="low"
++            decoding="async"
+             alt=""
+             aria-hidden="true"
+             style={{ filter: 'grayscale(0.35) brightness(0.97)' }}
+@@ -902,19 +926,7 @@
+             </div>
+           </div>
+           <div className="min-h-[220px] overflow-hidden rounded-[10px] border border-white/10 bg-[#151517] lg:min-h-[380px]">
+-            {contacto?.direccion ? (
+-              <iframe
+-                title="Ubicación en el mapa"
+-                src={`https://www.google.com/maps?q=${encodeURIComponent(contacto.direccion)}&output=embed`}
+-                className="h-full w-full border-0"
+-                loading="lazy"
+-                referrerPolicy="no-referrer-when-downgrade"
+-              />
+-            ) : (
+-              <div className="flex h-full items-center justify-center text-white/25">
+-                <MapPin className="h-8 w-8" />
+-              </div>
+-            )}
++            <MapaDiferido direccion={contacto?.direccion} />
+           </div>
+         </section>
+       )}
+--- a/src/pages/cliente/NosotrosCliente.jsx
++++ b/src/pages/cliente/NosotrosCliente.jsx
+@@ -11,6 +11,7 @@
+ import { nombrePublico } from '../../lib/resenas.js'
+ import ComparadorAntesDespues from '../../components/ComparadorAntesDespues.jsx'
+ import Estrellas from '../../components/Estrellas.jsx'
++import MapaDiferido from '../../components/MapaDiferido.jsx'
+ import PieClienteWeb from './PieClienteWeb.jsx'
+ 
+ const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
+@@ -537,13 +538,7 @@
+ 
+         {contacto?.direccion && (
+           <div className="mt-4 h-52 overflow-hidden border border-white/10 bg-[#151517]">
+-            <iframe
+-              title="Ubicación en el mapa"
+-              src={`https://www.google.com/maps?q=${encodeURIComponent(contacto.direccion)}&output=embed`}
+-              className="h-full w-full border-0"
+-              loading="lazy"
+-              referrerPolicy="no-referrer-when-downgrade"
+-            />
++            <MapaDiferido direccion={contacto.direccion} />
+           </div>
+         )}
+ 
+--- a/src/config/paginasCliente.js
++++ b/src/config/paginasCliente.js
+@@ -1,136 +1,144 @@
+-import { createElement, use } from 'react'
+-
+-// QA-021: el portal cliente (PortalCliente + ~20 páginas) ya no viaja en el
+-// bundle inicial de todos los roles: cada página es un chunk.
+-//
+-// Por qué no React.lazy a secas: React.lazy suspende SIEMPRE en su primer
+-// render, aunque el módulo ya esté descargado, y React revela con ~300 ms de
+-// retraso un Suspense cuyo fallback ya se mostró. Medido (vite preview): los
+-// chunks terminaban a ~190 ms pero el portal aparecía a ~520 ms. Aquí cada
+-// página es un componente que lee el import con `use()` sobre una promesa a la
+-// que se le registra su estado (status/value, el mecanismo que React usa para
+-// resolver de forma síncrona): tras precargar no hay fallback ni espera.
+-const promesas = new Map()
+-
+-function cargar(clave, importar) {
+-  let promesa = promesas.get(clave)
+-  if (!promesa) {
+-    promesa = importar()
+-    promesa.then(
+-      (modulo) => {
+-        promesa.status = 'fulfilled'
+-        promesa.value = modulo
+-      },
+-      (error) => {
+-        promesa.status = 'rejected'
+-        promesa.reason = error
+-        promesas.delete(clave)
+-      },
+-    )
+-    promesas.set(clave, promesa)
+-  }
+-  return promesa
+-}
+-
+-export function paginaPrecargable(clave, importar) {
+-  function Pagina(props) {
+-    const modulo = use(cargar(clave, importar))
+-    return createElement(modulo.default, props)
+-  }
+-  Pagina.displayName = clave
+-  return Pagina
+-}
+-
+-export const importadores = {
+-  PortalCliente: () => import('../pages/PortalCliente.jsx'),
+-  InicioCliente: () => import('../pages/cliente/InicioCliente.jsx'),
+-  MiPerfil: () => import('../pages/cliente/MiPerfil.jsx'),
+-  ServiciosCliente: () => import('../pages/cliente/ServiciosCliente.jsx'),
+-  DetalleServicioCliente: () => import('../pages/cliente/DetalleServicioCliente.jsx'),
+-  ProductosCliente: () => import('../pages/cliente/ProductosCliente.jsx'),
+-  DetalleProductoCliente: () => import('../pages/cliente/DetalleProductoCliente.jsx'),
+-  CitasCliente: () => import('../pages/cliente/CitasCliente.jsx'),
+-  HistorialCliente: () => import('../pages/cliente/HistorialCliente.jsx'),
+-  RecompensasCliente: () => import('../pages/cliente/RecompensasCliente.jsx'),
+-  NosotrosCliente: () => import('../pages/cliente/NosotrosCliente.jsx'),
+-  PerfilEquipoCliente: () => import('../pages/cliente/PerfilEquipoCliente.jsx'),
+-  CarritoCliente: () => import('../pages/cliente/CarritoCliente.jsx'),
+-  CarritoServiciosCliente: () => import('../pages/cliente/CarritoServiciosCliente.jsx'),
+-  MisResenasCliente: () => import('../pages/cliente/MisResenasCliente.jsx'),
+-  DireccionesCliente: () => import('../pages/cliente/DireccionesCliente.jsx'),
+-  PedidosCliente: () => import('../pages/cliente/PedidosCliente.jsx'),
+-  NotificacionesCliente: () => import('../pages/cliente/NotificacionesCliente.jsx'),
+-  SeguridadCuentaCliente: () => import('../pages/cliente/SeguridadCuentaCliente.jsx'),
+-  ReferidosCliente: () => import('../pages/cliente/ReferidosCliente.jsx'),
+-  LibroReclamacionesCliente: () => import('../pages/cliente/LibroReclamacionesCliente.jsx'),
+-  TerminosCliente: () => import('../pages/cliente/TerminosCliente.jsx'),
+-  PoliticaCambiosCliente: () => import('../pages/cliente/PoliticaCambiosCliente.jsx'),
+-  PrivacidadCliente: () => import('../pages/cliente/PrivacidadCliente.jsx'),
+-}
+-
+-export const pagina = Object.fromEntries(
+-  Object.entries(importadores).map(([clave, importar]) => [clave, paginaPrecargable(clave, importar)]),
+-)
+-
+-const precargar = (clave) => cargar(clave, importadores[clave])
+-
+-const RUTAS = [
+-  [/^\/(inicio)?\/?$/, 'InicioCliente'],
+-  [/^\/mi-perfil\/?$/, 'MiPerfil'],
+-  [/^\/servicios\/?$/, 'ServiciosCliente'],
+-  [/^\/servicios\/[^/]+\/?$/, 'DetalleServicioCliente'],
+-  [/^\/productos\/?$/, 'ProductosCliente'],
+-  [/^\/productos\/[^/]+\/?$/, 'DetalleProductoCliente'],
+-  [/^\/citas\/?$/, 'CitasCliente'],
+-  [/^\/citas\/carrito\/?$/, 'CarritoServiciosCliente'],
+-  [/^\/historial\/?$/, 'HistorialCliente'],
+-  [/^\/recompensas\/?$/, 'RecompensasCliente'],
+-  [/^\/nosotros\/?$/, 'NosotrosCliente'],
+-  [/^\/nosotros\/equipo\/[^/]+\/?$/, 'PerfilEquipoCliente'],
+-  [/^\/carrito\/?$/, 'CarritoCliente'],
+-  [/^\/mis-resenas\/?$/, 'MisResenasCliente'],
+-  [/^\/mi-perfil\/direcciones\/?$/, 'DireccionesCliente'],
+-  [/^\/mi-perfil\/pedidos\/?$/, 'PedidosCliente'],
+-  [/^\/mi-perfil\/notificaciones\/?$/, 'NotificacionesCliente'],
+-  [/^\/mi-perfil\/seguridad\/?$/, 'SeguridadCuentaCliente'],
+-  [/^\/mi-perfil\/referidos\/?$/, 'ReferidosCliente'],
+-  [/^\/libro-de-reclamaciones\/?$/, 'LibroReclamacionesCliente'],
+-  [/^\/terminos-y-condiciones\/?$/, 'TerminosCliente'],
+-  [/^\/politica-de-cambios-y-devoluciones\/?$/, 'PoliticaCambiosCliente'],
+-  [/^\/politica-de-privacidad\/?$/, 'PrivacidadCliente'],
+-]
+-
+-// Carga el portal y la página de la URL actual (más Inicio, aterrizaje de la
+-// clienta) en paralelo; la app espera esa promesa antes de montar el portal.
+-export function precargarPortalYRuta() {
+-  const base = import.meta.env.BASE_URL
+-  const ruta = window.location.pathname.slice(Math.max(base.length - 1, 0)) || '/'
+-  const nombre = RUTAS.find(([patron]) => patron.test(ruta))?.[1] ?? 'InicioCliente'
+-  return Promise.all([precargar('PortalCliente'), precargar(nombre), precargar('InicioCliente')])
+-}
+-
+-// Mientras se muestra el formulario de login (aún sin saber el rol) se
+-// descargan en reposo, con prioridad baja, el portal y su página de aterrizaje:
+-// medido con red limitada, sin esto el CLIENTE esperaba ~0,6 s más tras "Entrar"
+-// porque esa descarga se había movido del arranque a después del login. El POS
+-// paga ~45 kB de transferencia a cambio de no cargar ~115 kB que antes sí.
+-export function precargarPortalEnReposo() {
+-  const lanzar = () => {
+-    precargar('PortalCliente').catch(() => {})
+-    precargar('InicioCliente').catch(() => {})
+-  }
+-  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 3000 })
+-  else setTimeout(lanzar, 1000)
+-}
+-
+-// Con el portal ya visible, en reposo se descargan las pestañas más usadas:
+-// navegar entre ellas no suspende (ni muestra el fallback).
+-const PRINCIPALES = [
+-  'ServiciosCliente', 'ProductosCliente', 'CitasCliente', 'NosotrosCliente',
+-  'DetalleServicioCliente', 'DetalleProductoCliente', 'RecompensasCliente', 'CarritoCliente',
+-]
+-export function precargarPestanasPrincipales() {
+-  const lanzar = () => PRINCIPALES.forEach((nombre) => precargar(nombre).catch(() => {}))
+-  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 4000 })
+-  else setTimeout(lanzar, 1500)
+-}
++import { createElement, use } from 'react'
++
++// QA-021: el portal cliente (PortalCliente + ~20 páginas) ya no viaja en el
++// bundle inicial de todos los roles: cada página es un chunk.
++//
++// Por qué no React.lazy a secas: React.lazy suspende SIEMPRE en su primer
++// render, aunque el módulo ya esté descargado, y React revela con ~300 ms de
++// retraso un Suspense cuyo fallback ya se mostró. Medido (vite preview): los
++// chunks terminaban a ~190 ms pero el portal aparecía a ~520 ms. Aquí cada
++// página es un componente que lee el import con `use()` sobre una promesa a la
++// que se le registra su estado (status/value, el mecanismo que React usa para
++// resolver de forma síncrona): tras precargar no hay fallback ni espera.
++const promesas = new Map()
++
++function cargar(clave, importar) {
++  let promesa = promesas.get(clave)
++  if (!promesa) {
++    promesa = importar()
++    promesa.then(
++      (modulo) => {
++        promesa.status = 'fulfilled'
++        promesa.value = modulo
++      },
++      (error) => {
++        promesa.status = 'rejected'
++        promesa.reason = error
++        promesas.delete(clave)
++      },
++    )
++    promesas.set(clave, promesa)
++  }
++  return promesa
++}
++
++export function paginaPrecargable(clave, importar) {
++  function Pagina(props) {
++    const modulo = use(cargar(clave, importar))
++    return createElement(modulo.default, props)
++  }
++  Pagina.displayName = clave
++  return Pagina
++}
++
++export const importadores = {
++  PortalCliente: () => import('../pages/PortalCliente.jsx'),
++  InicioCliente: () => import('../pages/cliente/InicioCliente.jsx'),
++  MiPerfil: () => import('../pages/cliente/MiPerfil.jsx'),
++  ServiciosCliente: () => import('../pages/cliente/ServiciosCliente.jsx'),
++  DetalleServicioCliente: () => import('../pages/cliente/DetalleServicioCliente.jsx'),
++  ProductosCliente: () => import('../pages/cliente/ProductosCliente.jsx'),
++  DetalleProductoCliente: () => import('../pages/cliente/DetalleProductoCliente.jsx'),
++  CitasCliente: () => import('../pages/cliente/CitasCliente.jsx'),
++  HistorialCliente: () => import('../pages/cliente/HistorialCliente.jsx'),
++  RecompensasCliente: () => import('../pages/cliente/RecompensasCliente.jsx'),
++  NosotrosCliente: () => import('../pages/cliente/NosotrosCliente.jsx'),
++  PerfilEquipoCliente: () => import('../pages/cliente/PerfilEquipoCliente.jsx'),
++  CarritoCliente: () => import('../pages/cliente/CarritoCliente.jsx'),
++  CarritoServiciosCliente: () => import('../pages/cliente/CarritoServiciosCliente.jsx'),
++  MisResenasCliente: () => import('../pages/cliente/MisResenasCliente.jsx'),
++  DireccionesCliente: () => import('../pages/cliente/DireccionesCliente.jsx'),
++  PedidosCliente: () => import('../pages/cliente/PedidosCliente.jsx'),
++  NotificacionesCliente: () => import('../pages/cliente/NotificacionesCliente.jsx'),
++  SeguridadCuentaCliente: () => import('../pages/cliente/SeguridadCuentaCliente.jsx'),
++  ReferidosCliente: () => import('../pages/cliente/ReferidosCliente.jsx'),
++  LibroReclamacionesCliente: () => import('../pages/cliente/LibroReclamacionesCliente.jsx'),
++  TerminosCliente: () => import('../pages/cliente/TerminosCliente.jsx'),
++  PoliticaCambiosCliente: () => import('../pages/cliente/PoliticaCambiosCliente.jsx'),
++  PrivacidadCliente: () => import('../pages/cliente/PrivacidadCliente.jsx'),
++}
++
++export const pagina = Object.fromEntries(
++  Object.entries(importadores).map(([clave, importar]) => [clave, paginaPrecargable(clave, importar)]),
++)
++
++const precargar = (clave) => cargar(clave, importadores[clave])
++
++const RUTAS = [
++  [/^\/(inicio)?\/?$/, 'InicioCliente'],
++  [/^\/mi-perfil\/?$/, 'MiPerfil'],
++  [/^\/servicios\/?$/, 'ServiciosCliente'],
++  [/^\/servicios\/[^/]+\/?$/, 'DetalleServicioCliente'],
++  [/^\/productos\/?$/, 'ProductosCliente'],
++  [/^\/productos\/[^/]+\/?$/, 'DetalleProductoCliente'],
++  [/^\/citas\/?$/, 'CitasCliente'],
++  [/^\/citas\/carrito\/?$/, 'CarritoServiciosCliente'],
++  [/^\/historial\/?$/, 'HistorialCliente'],
++  [/^\/recompensas\/?$/, 'RecompensasCliente'],
++  [/^\/nosotros\/?$/, 'NosotrosCliente'],
++  [/^\/nosotros\/equipo\/[^/]+\/?$/, 'PerfilEquipoCliente'],
++  [/^\/carrito\/?$/, 'CarritoCliente'],
++  [/^\/mis-resenas\/?$/, 'MisResenasCliente'],
++  [/^\/mi-perfil\/direcciones\/?$/, 'DireccionesCliente'],
++  [/^\/mi-perfil\/pedidos\/?$/, 'PedidosCliente'],
++  [/^\/mi-perfil\/notificaciones\/?$/, 'NotificacionesCliente'],
++  [/^\/mi-perfil\/seguridad\/?$/, 'SeguridadCuentaCliente'],
++  [/^\/mi-perfil\/referidos\/?$/, 'ReferidosCliente'],
++  [/^\/libro-de-reclamaciones\/?$/, 'LibroReclamacionesCliente'],
++  [/^\/terminos-y-condiciones\/?$/, 'TerminosCliente'],
++  [/^\/politica-de-cambios-y-devoluciones\/?$/, 'PoliticaCambiosCliente'],
++  [/^\/politica-de-privacidad\/?$/, 'PrivacidadCliente'],
++]
++
++// Carga el portal y la página de la URL actual (más Inicio, aterrizaje de la
++// clienta) en paralelo; la app espera esa promesa antes de montar el portal.
++export function precargarPortalYRuta() {
++  const base = import.meta.env.BASE_URL
++  const ruta = window.location.pathname.slice(Math.max(base.length - 1, 0)) || '/'
++  const nombre = RUTAS.find(([patron]) => patron.test(ruta))?.[1] ?? 'InicioCliente'
++  return Promise.all([precargar('PortalCliente'), precargar(nombre), precargar('InicioCliente')])
++}
++
++// Mientras se muestra el formulario de login (aún sin saber el rol) se
++// descargan en reposo, con prioridad baja, el portal y su página de aterrizaje:
++// medido con red limitada, sin esto el CLIENTE esperaba ~0,6 s más tras "Entrar"
++// porque esa descarga se había movido del arranque a después del login. El POS
++// paga ~45 kB de transferencia a cambio de no cargar ~115 kB que antes sí.
++export function precargarPortalEnReposo() {
++  const lanzar = () => {
++    precargar('PortalCliente').catch(() => {})
++    precargar('InicioCliente').catch(() => {})
++  }
++  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 3000 })
++  else setTimeout(lanzar, 1000)
++}
++
++// Con el portal ya visible, en reposo se descargan las pestañas más usadas:
++// navegar entre ellas no suspende (ni muestra el fallback).
++const PRINCIPALES = [
++  'ServiciosCliente', 'ProductosCliente', 'CitasCliente', 'NosotrosCliente',
++  'DetalleServicioCliente', 'DetalleProductoCliente', 'RecompensasCliente', 'CarritoCliente',
++]
++// Fase 8: con «ahorrar datos» (Save-Data) o una conexión 2G no se precargan en reposo las 8 pestañas (~330 kB de JS que quizá no se usen);
++// cada una se descarga al navegar a ella, como siempre ocurría con las demás páginas del portal. Con una conexión normal no cambia nada.
++function conexionLimitada() {
++  const c = typeof navigator !== 'undefined' ? navigator.connection : undefined
++  return c?.saveData === true || /(^|-)2g$/.test(c?.effectiveType ?? '')
++}
++
++export function precargarPestanasPrincipales() {
++  if (conexionLimitada()) return
++  const lanzar = () => PRINCIPALES.forEach((nombre) => precargar(nombre).catch(() => {}))
++  if ('requestIdleCallback' in window) window.requestIdleCallback(lanzar, { timeout: 4000 })
++  else setTimeout(lanzar, 1500)
++}

@@ -1,0 +1,439 @@
+{
+  "fecha": "2026-10-10T23:51:30.366Z",
+  "buildId": "ec2a3b64",
+  "contrato": "b",
+  "alias": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+  "idEjecucion": "b397f6",
+  "objeto": "fotos-galeria/570a5ace-71ed-40e5-8c87-c2e5548b7801",
+  "ttlSegundos": 300,
+  "completa": true,
+  "estadoFinalConfirmado": true,
+  "error": null,
+  "casos": [
+    {
+      "nombre": "preflight: el alias sirve ec2a3b64 con la entrega de medios «pages» efectiva (antes de autenticar)",
+      "ok": true,
+      "detalle": {
+        "buildId": "ec2a3b64",
+        "entrega": "pages",
+        "modulos": [
+          "assets/index-DGsWTpdi.js"
+        ]
+      }
+    },
+    {
+      "nombre": "inventario inicial de fotos-galeria leído (lectura estricta, sin cursor)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "WebP de prueba fabricados (m 64 px, g 128 px)",
+      "ok": true,
+      "detalle": {
+        "m": 646,
+        "g": 788
+      }
+    },
+    {
+      "nombre": "objeto inexistente → 404 no-store con nosniff/noindex (el 404 no se cachea)",
+      "ok": true,
+      "detalle": {
+        "estado": 404,
+        "tipo": "text/plain; charset=utf-8",
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": null,
+        "etag": null,
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988b2fdd13341-MIA"
+      }
+    },
+    {
+      "nombre": "subida de la variante m por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "subida de la variante g por el Worker (201)",
+      "ok": true,
+      "detalle": {
+        "estado": 201
+      }
+    },
+    {
+      "nombre": "el inventario del Worker muestra exactamente las 2 claves propias nuevas",
+      "ok": true,
+      "detalle": {
+        "nuevas": [
+          "fotos-galeria/570a5ace-71ed-40e5-8c87-c2e5548b7801/g.webp",
+          "fotos-galeria/570a5ace-71ed-40e5-8c87-c2e5548b7801/m.webp"
+        ]
+      }
+    },
+    {
+      "nombre": "HEAD: 200 sin cuerpo, image/webp, ETag, Cache-Control del navegador (revalidar), nosniff/noindex",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988c27e823341-MIA"
+      }
+    },
+    {
+      "nombre": "HEAD no puebla la caché: un segundo HEAD sigue siendo MISS",
+      "ok": true,
+      "detalle": {
+        "primero": "MISS",
+        "segundo": "MISS"
+      }
+    },
+    {
+      "nombre": "GET: 200 image/webp con los bytes EXACTOS subidos, Cache-Control del navegador (revalidar), nosniff/noindex, ETag igual al de HEAD",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988c68ff1a67b-MIA",
+        "bytes": 646
+      }
+    },
+    {
+      "nombre": "primer GET tras subir (sin entrada previa en este centro de datos) → X-Medios-Cache MISS",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "MISS",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988c68ff1a67b-MIA"
+      }
+    },
+    {
+      "nombre": "GET posterior → HIT (la escritura por waitUntil es asíncrona y por centro de datos: 1 intento(s))",
+      "ok": true,
+      "detalle": {
+        "intentos": 1,
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "el HIT conserva bytes, ETag y la política del navegador y recalcula X-Medios-Cache",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988cc6c1b4f26-MIA"
+      }
+    },
+    {
+      "nombre": "If-None-Match coincidente → 304 sin cuerpo, con ETag, política del navegador y nosniff/noindex",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988ce8983204d-MIA"
+      }
+    },
+    {
+      "nombre": "If-None-Match distinto → 200 completo",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "If-None-Match: * → 304",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "Range se ignora: 200 completo, sin Content-Range",
+      "ok": true,
+      "detalle": {
+        "tipo": "image/webp",
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "medios": "HIT",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "cf": null,
+        "range": null,
+        "allow": null,
+        "ray": "a48988d19ac64f26-MIA"
+      }
+    },
+    {
+      "nombre": "la variante g se sirve con sus bytes exactos",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "POST → 405 con Allow: GET, HEAD, no-store",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "rutas inválidas → 404 no-store con nosniff/noindex (no la SPA)",
+      "ok": true,
+      "detalle": []
+    },
+    {
+      "nombre": "/medios-extra sigue siendo la SPA (200 HTML)",
+      "ok": true,
+      "detalle": {}
+    },
+    {
+      "nombre": "B: copia caliente de m confirmada antes de borrar (HIT con bytes exactos y POP)",
+      "ok": true,
+      "detalle": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "bytes": 646,
+        "momento": "2026-10-10T23:51:41.690Z",
+        "intentos": 1
+      }
+    },
+    {
+      "nombre": "B: copia caliente de g confirmada antes de borrar (HIT con bytes exactos y POP)",
+      "ok": true,
+      "detalle": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"79cc581c04c0552b3308996da5bbc654\"",
+        "bytes": 788,
+        "momento": "2026-10-10T23:51:42.238Z",
+        "intentos": 1
+      }
+    },
+    {
+      "nombre": "borrado por el Worker (200)",
+      "ok": true,
+      "detalle": {
+        "estado": 200
+      }
+    },
+    {
+      "nombre": "R2: el inventario del Worker ya NO contiene las claves propias (ausencia en R2 confirmada)",
+      "ok": true,
+      "detalle": {
+        "claves": 0
+      }
+    },
+    {
+      "nombre": "B: GET de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: GET de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: HEAD de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: HEAD de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: If-None-Match con el ETag antiguo de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: If-None-Match con el ETag antiguo de m tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: GET de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: GET de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: HEAD de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: HEAD de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "B: If-None-Match con el ETag antiguo de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+      "ok": true,
+      "detalle": {
+        "nombre": "B: If-None-Match con el ETag antiguo de g tras el DELETE → 404 no-store en el mismo POP que su copia caliente",
+        "veredicto": "ok",
+        "pop": "MIA"
+      }
+    },
+    {
+      "nombre": "ESTADO FINAL confirmado: inventario de fotos-galeria idéntico al inicial, sin claves propias pendientes y sin errores de limpieza",
+      "ok": true,
+      "detalle": {
+        "confirmada": true,
+        "necesaria": false,
+        "estadoBorrado": null,
+        "estadosBorrado": [],
+        "pendientes": [],
+        "igualAlInicial": true,
+        "errores": []
+      }
+    }
+  ],
+  "medidas": [
+    {
+      "etiqueta": "HEAD-1",
+      "ms": 168
+    },
+    {
+      "etiqueta": "GET-MISS",
+      "ms": 444
+    },
+    {
+      "etiqueta": "GET-intento-1",
+      "ms": 349
+    }
+  ],
+  "nota": "HIT por centro de datos; head() inferido; tiempos del cliente, no CPU/cuota.",
+  "popHit": "MIA",
+  "retirada": {
+    "conclusion": "acreditada",
+    "calientes": {
+      "m": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"afa89848690a3ad2eb6e738ee5df324a\"",
+        "bytes": 646,
+        "momento": "2026-10-10T23:51:41.690Z",
+        "intentos": 1
+      },
+      "g": {
+        "hit": true,
+        "pop": "MIA",
+        "etag": "\"79cc581c04c0552b3308996da5bbc654\"",
+        "bytes": 788,
+        "momento": "2026-10-10T23:51:42.238Z",
+        "intentos": 1
+      }
+    },
+    "despues": [
+      {
+        "variante": "m",
+        "metodo": "GET",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA"
+      },
+      {
+        "variante": "g",
+        "metodo": "GET",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA"
+      },
+      {
+        "variante": "m",
+        "metodo": "HEAD",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": true
+      },
+      {
+        "variante": "m",
+        "metodo": "COND",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA"
+      },
+      {
+        "variante": "g",
+        "metodo": "HEAD",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA",
+        "cuerpoVacio": true
+      },
+      {
+        "variante": "g",
+        "metodo": "COND",
+        "estado": 404,
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex",
+        "pop": "MIA"
+      }
+    ]
+  },
+  "retencionObservada": "sin retención: 404 inmediato en el mismo POP que cada copia caliente (contrato B acreditado SOLO en los POP observados)",
+  "expiracionProbada": false,
+  "limpieza": {
+    "confirmada": true,
+    "necesaria": false,
+    "estadoBorrado": null,
+    "estadosBorrado": [],
+    "pendientes": [],
+    "igualAlInicial": true,
+    "errores": []
+  },
+  "resumen": {
+    "casos": 32,
+    "fallos": 0
+  }
+}

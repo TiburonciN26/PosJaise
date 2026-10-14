@@ -1,0 +1,15 @@
+const fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync('C:/WedJaiseReact/scripts/verificar-interfaz-r2-preview.cjs','utf8');
+const a=source.indexOf('    // ---------- verificación final del estado y limpieza de emergencia ----------');
+const b=source.indexOf('    await navegador.close().catch',a);
+if(a<0||b<0)throw new Error('No se encontró el bloque original');
+const block=source.slice(a,b);const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+const execute=new AsyncFunction('PRODUCTO','SERVICIO','filaProducto','filaServicio','galeriaDe','galeriaWeb','inventario','base','TITULO_GALERIA','caso','rest','console',block);
+(async()=>{
+  const deleted=[],cases=[];
+  const original={id:'fila-qa-anterior',titulo:'QA R2 UI (borrar)'},created={id:'fila-creada-por-esta-prueba',titulo:'QA R2 UI (borrar)'};
+  await execute('p-qa','s-qa',async()=>({foto_url:null}),async()=>({foto_url:null}),async()=>[],async()=>[original,created],async()=>new Set(),new Set(),'QA R2 UI (borrar)',(nombre,ok)=>cases.push({nombre,ok}),async(route,options)=>{deleted.push({route,method:options.method});return{estado:204};},{log(){}});
+  const result={fecha:new Date().toISOString(),aislado:true,nota:'Bloque de limpieza original ejecutado con REST/BD en memoria; ningún borrado real.',filaPreexistente:original.id,filaPropia:created.id,borradosIntentados:deleted,borraFilaAjena:deleted.some(x=>x.route.endsWith(original.id)),cases};
+  fs.writeFileSync(path.join(__dirname,'limpieza-sin-red.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+})();
+

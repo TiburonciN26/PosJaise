@@ -1,0 +1,75 @@
+{
+ "fecha": "2026-10-12T17:38:43.972Z",
+ "total": 17,
+ "fallos": 0,
+ "casos": [
+  {
+   "nombre": "UUID v5: vector conocido de RFC 9562 (espacio DNS, \"www.example.com\")",
+   "ok": true
+  },
+  {
+   "nombre": "UUID v5: determinista por fuente y distinto si cambia ambiente, bucket, ruta o contenido",
+   "ok": true
+  },
+  {
+   "nombre": "Clasificación: formatos vistos en Local y en el contrato de la Fase 3",
+   "ok": true
+  },
+  {
+   "nombre": "Alcance: solo públicos de catálogo existentes y de tipo imagen; privados y perfiles nunca",
+   "ok": true
+  },
+  {
+   "nombre": "Valor nuevo: «r2:…» en columnas de ruta y URL completa de la variante g en galería (como guarda la app)",
+   "ok": true
+  },
+  {
+   "nombre": "Guarda de ambiente: local libre; remoto exige host exacto; producción exige además su permiso",
+   "ok": true
+  },
+  {
+   "nombre": "F9-06 · Permisos por función: tres hosts distintos se autorizan a la vez; intercambio de roles y rol desconocido fallan",
+   "ok": true
+  },
+  {
+   "nombre": "F9-02 · Identidad canónica y vínculo manifiesto ↔ ambiente (Supabase, Worker y base de lectura)",
+   "ok": true
+  },
+  {
+   "nombre": "F9-05 · URLs de Storage: manda el bucket REAL; firmadas/autenticadas, privadas o desconocidas son privadas y no salen al informe",
+   "ok": true
+  },
+  {
+   "nombre": "F9-01 · Carpeta de trabajo: raíz, ancestro, proyecto, .codex, src, ajena, alias y enlace se rechazan con CERO borrados",
+   "ok": true
+  },
+  {
+   "nombre": "Argumentos estrictos: --aplicar sin valor, números validados, opciones desconocidas rechazadas",
+   "ok": true
+  },
+  {
+   "nombre": "Rutas seguras dentro de un bucket",
+   "ok": true
+  },
+  {
+   "nombre": "Manifiesto: rechaza destinos/buckets fuera del catálogo, ids duplicados y referencias de otra columna",
+   "ok": true
+  },
+  {
+   "nombre": "Tabla de privacidad: los destinos R2 son exactamente los públicos de catálogo; comprobantes privados",
+   "ok": true
+  },
+  {
+   "nombre": "Garantía estática: la herramienta no tiene operaciones de borrado (Storage remove, DELETE al Worker, delete de filas)",
+   "ok": true
+  },
+  {
+   "nombre": "F9-01 · Garantía estática del harness: valida --trabajo antes de cualquier efecto y nunca borra la carpeta entera",
+   "ok": true
+  },
+  {
+   "nombre": "Garantía estática: las escrituras de referencias son condicionales al valor esperado",
+   "ok": true
+  }
+ ]
+}

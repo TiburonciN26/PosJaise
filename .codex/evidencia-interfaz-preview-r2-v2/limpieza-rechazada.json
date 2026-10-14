@@ -1,0 +1,23 @@
+{
+  "fecha": "2026-10-10T16:41:46.329Z",
+  "aislado": true,
+  "nota": "Bloque de emergencia original; REST y Worker sustituidos, ningún DELETE real.",
+  "peticiones": [
+    {
+      "tipo": "Worker",
+      "metodo": "DELETE",
+      "estado": 200
+    },
+    {
+      "tipo": "BD",
+      "metodo": "DELETE",
+      "estado": 403
+    }
+  ],
+  "filaPermanece": true,
+  "objetoEliminado": true,
+  "filaConReferenciaRota": true,
+  "mensajes": [
+    "AVISO: el estado final difiere del inicial. Filas propias eliminadas: 1; grupos de objetos propios eliminados: 1. Otras claves nuevas/faltantes NO se tocan: revisar a mano (ver informe)."
+  ]
+}

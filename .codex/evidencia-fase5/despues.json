@@ -1,0 +1,3432 @@
+{
+ "etiqueta": "despues",
+ "app": "http://localhost:5192",
+ "fecha": "2026-10-11T16:02:49.223Z",
+ "repeticiones": 3,
+ "resultados": {
+  "sesion-staff": {
+   "mediana": {
+    "peticiones": 3,
+    "bytes": 445,
+    "mayorRespuestaBytes": 274,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 2536,
+    "nodos": 344,
+    "expandibles": 1,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 3,
+     "bytes": 445,
+     "mayorRespuestaBytes": 274,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2515,
+     "nodos": 344,
+     "expandibles": 1,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "HEAD registro_servicios": 1
+     }
+    },
+    {
+     "peticiones": 3,
+     "bytes": 445,
+     "mayorRespuestaBytes": 274,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2686,
+     "nodos": 344,
+     "expandibles": 1,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "HEAD registro_servicios": 1
+     }
+    },
+    {
+     "peticiones": 3,
+     "bytes": 445,
+     "mayorRespuestaBytes": 274,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2536,
+     "nodos": 344,
+     "expandibles": 1,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "HEAD registro_servicios": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.45419cb5-9f78-4acb-bd89-e96835803187",
+     "estado": 200,
+     "bytes": 171
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 274
+    },
+    {
+     "m": "HEAD",
+     "ruta": "registro_servicios",
+     "sel": "id",
+     "q": "estado=eq.ACTIVO&venta_id=is.null",
+     "estado": 206,
+     "bytes": 0
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "HEAD registro_servicios": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "pedidos-web": {
+   "mediana": {
+    "peticiones": 5,
+    "bytes": 23430,
+    "mayorRespuestaBytes": 23430,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1800,
+    "nodos": 1012,
+    "expandibles": 41,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 5,
+     "bytes": 23430,
+     "mayorRespuestaBytes": 23430,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1800,
+     "nodos": 1012,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "HEAD pedidos_web": 4,
+      "GET pedidos_web": 1
+     }
+    },
+    {
+     "peticiones": 5,
+     "bytes": 23430,
+     "mayorRespuestaBytes": 23430,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1807,
+     "nodos": 1012,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "HEAD pedidos_web": 4,
+      "GET pedidos_web": 1
+     }
+    },
+    {
+     "peticiones": 5,
+     "bytes": 23430,
+     "mayorRespuestaBytes": 23430,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1782,
+     "nodos": 1012,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "HEAD pedidos_web": 4,
+      "GET pedidos_web": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "HEAD",
+     "ruta": "pedidos_web",
+     "sel": "id",
+     "q": "estado=eq.PENDIENTE",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "pedidos_web",
+     "sel": "id",
+     "q": "estado=eq.ENTREGADO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "pedidos_web",
+     "sel": "id",
+     "q": "estado=eq.LISTO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "pedidos_web",
+     "sel": "id",
+     "q": "estado=eq.CANCELADO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "pedidos_web",
+     "sel": "id,tipo_entrega,direccion_entrega,celular_entrega,costo_delivery,subtotal,descuento_cupon,total,estado,creado_en,metodo_pago,comprobante_url,cupon_codigo,tipo_c",
+     "q": "",
+     "estado": 206,
+     "bytes": 23430
+    }
+   ],
+   "porRuta": {
+    "HEAD pedidos_web": 4,
+    "GET pedidos_web": 1
+   },
+   "canalesPorTema": {}
+  },
+  "promociones": {
+   "mediana": {
+    "peticiones": 1,
+    "bytes": 8910,
+    "mayorRespuestaBytes": 8910,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1469,
+    "nodos": 1287,
+    "expandibles": 41,
+    "cupones": 40,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 1,
+     "bytes": 8910,
+     "mayorRespuestaBytes": 8910,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1485,
+     "nodos": 1287,
+     "expandibles": 41,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET promociones": 1
+     }
+    },
+    {
+     "peticiones": 1,
+     "bytes": 8910,
+     "mayorRespuestaBytes": 8910,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1455,
+     "nodos": 1287,
+     "expandibles": 41,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET promociones": 1
+     }
+    },
+    {
+     "peticiones": 1,
+     "bytes": 8910,
+     "mayorRespuestaBytes": 8910,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1469,
+     "nodos": 1287,
+     "expandibles": 41,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET promociones": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "promociones",
+     "sel": "id,titulo,descripcion,tipo_descuento,valor,vigente_desde,vigente_hasta,activo",
+     "q": "order=creado_en.desc%2Cid.desc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 8910
+    }
+   ],
+   "porRuta": {
+    "GET promociones": 1
+   },
+   "canalesPorTema": {}
+  },
+  "resenas-web": {
+   "mediana": {
+    "peticiones": 4,
+    "bytes": 14411,
+    "mayorRespuestaBytes": 14411,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1833,
+    "nodos": 1359,
+    "expandibles": 41,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 4,
+     "bytes": 14411,
+     "mayorRespuestaBytes": 14411,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1833,
+     "nodos": 1359,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "HEAD resenas_moderacion": 3,
+      "GET resenas_moderacion": 1
+     }
+    },
+    {
+     "peticiones": 4,
+     "bytes": 14411,
+     "mayorRespuestaBytes": 14411,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1856,
+     "nodos": 1359,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "HEAD resenas_moderacion": 3,
+      "GET resenas_moderacion": 1
+     }
+    },
+    {
+     "peticiones": 4,
+     "bytes": 14411,
+     "mayorRespuestaBytes": 14411,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1832,
+     "nodos": 1359,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "HEAD resenas_moderacion": 3,
+      "GET resenas_moderacion": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "HEAD",
+     "ruta": "resenas_moderacion",
+     "sel": "id",
+     "q": "estado=eq.APROBADA",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "resenas_moderacion",
+     "sel": "id",
+     "q": "estado=eq.PENDIENTE",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "resenas_moderacion",
+     "sel": "id",
+     "q": "estado=eq.RECHAZADA",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "resenas_moderacion",
+     "sel": "origen,id,calificacion,comentario,estado,creado_en,cliente_nombre,cliente_telefono,item_nombre",
+     "q": "order=creado_en.desc%2Cid.desc%2Corigen.asc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 14411
+    }
+   ],
+   "porRuta": {
+    "HEAD resenas_moderacion": 3,
+    "GET resenas_moderacion": 1
+   },
+   "canalesPorTema": {}
+  },
+  "referidos-web": {
+   "mediana": {
+    "peticiones": 5,
+    "bytes": 10835,
+    "mayorRespuestaBytes": 10783,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1492,
+    "nodos": 1224,
+    "expandibles": 3,
+    "cupones": 40,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 5,
+     "bytes": 10835,
+     "mayorRespuestaBytes": 10783,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1492,
+     "nodos": 1224,
+     "expandibles": 3,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET config_referidos": 1,
+      "HEAD cupones_gestion": 3,
+      "GET cupones_gestion": 1
+     }
+    },
+    {
+     "peticiones": 5,
+     "bytes": 10835,
+     "mayorRespuestaBytes": 10783,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1496,
+     "nodos": 1224,
+     "expandibles": 3,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET config_referidos": 1,
+      "HEAD cupones_gestion": 3,
+      "GET cupones_gestion": 1
+     }
+    },
+    {
+     "peticiones": 5,
+     "bytes": 10835,
+     "mayorRespuestaBytes": 10783,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1478,
+     "nodos": 1224,
+     "expandibles": 3,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET config_referidos": 1,
+      "HEAD cupones_gestion": 3,
+      "GET cupones_gestion": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "config_referidos",
+     "sel": "credito_referidor,credito_referido",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 52
+    },
+    {
+     "m": "HEAD",
+     "ruta": "cupones_gestion",
+     "sel": "id",
+     "q": "origen=in.%28REFERIDO_BIENVENIDA%2CREFERIDO_RECOMPENSA%29&estado=eq.CANJEADO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "cupones_gestion",
+     "sel": "id",
+     "q": "origen=in.%28REFERIDO_BIENVENIDA%2CREFERIDO_RECOMPENSA%29&estado=eq.ANULADO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "cupones_gestion",
+     "sel": "id",
+     "q": "origen=in.%28REFERIDO_BIENVENIDA%2CREFERIDO_RECOMPENSA%29&estado=eq.DISPONIBLE",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "cupones_gestion",
+     "sel": "id,codigo,origen,valor,tipo_descuento,estado,creado_en,cliente_nombre",
+     "q": "origen=in.%28REFERIDO_BIENVENIDA%2CREFERIDO_RECOMPENSA%29&order=creado_en.desc%2Cid.desc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 10783
+    }
+   ],
+   "porRuta": {
+    "GET config_referidos": 1,
+    "HEAD cupones_gestion": 3,
+    "GET cupones_gestion": 1
+   },
+   "canalesPorTema": {}
+  },
+  "fidelizacion-web": {
+   "mediana": {
+    "peticiones": 5,
+    "bytes": 10827,
+    "mayorRespuestaBytes": 10796,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1491,
+    "nodos": 1219,
+    "expandibles": 3,
+    "cupones": 40,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 5,
+     "bytes": 10827,
+     "mayorRespuestaBytes": 10796,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1491,
+     "nodos": 1219,
+     "expandibles": 3,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET config_fidelizacion": 1,
+      "HEAD cupones_gestion": 3,
+      "GET cupones_gestion": 1
+     }
+    },
+    {
+     "peticiones": 5,
+     "bytes": 10827,
+     "mayorRespuestaBytes": 10796,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1491,
+     "nodos": 1219,
+     "expandibles": 3,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET config_fidelizacion": 1,
+      "HEAD cupones_gestion": 3,
+      "GET cupones_gestion": 1
+     }
+    },
+    {
+     "peticiones": 5,
+     "bytes": 10827,
+     "mayorRespuestaBytes": 10796,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1482,
+     "nodos": 1219,
+     "expandibles": 3,
+     "cupones": 40,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET config_fidelizacion": 1,
+      "HEAD cupones_gestion": 3,
+      "GET cupones_gestion": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "config_fidelizacion",
+     "sel": "porcentaje_recompensa",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 31
+    },
+    {
+     "m": "HEAD",
+     "ruta": "cupones_gestion",
+     "sel": "id",
+     "q": "origen=in.%28FIDELIZACION%29&estado=eq.ANULADO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "cupones_gestion",
+     "sel": "id",
+     "q": "origen=in.%28FIDELIZACION%29&estado=eq.CANJEADO",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "HEAD",
+     "ruta": "cupones_gestion",
+     "sel": "id",
+     "q": "origen=in.%28FIDELIZACION%29&estado=eq.DISPONIBLE",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "cupones_gestion",
+     "sel": "id,codigo,origen,valor,tipo_descuento,estado,creado_en,cliente_nombre",
+     "q": "origen=in.%28FIDELIZACION%29&order=creado_en.desc%2Cid.desc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 10796
+    }
+   ],
+   "porRuta": {
+    "GET config_fidelizacion": 1,
+    "HEAD cupones_gestion": 3,
+    "GET cupones_gestion": 1
+   },
+   "canalesPorTema": {}
+  },
+  "recompensas-web-monedas": {
+   "mediana": {
+    "peticiones": 2,
+    "bytes": 22695,
+    "mayorRespuestaBytes": 22387,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1748,
+    "nodos": 733,
+    "expandibles": 41,
+    "cupones": 0,
+    "itemsPanel": 40,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 2,
+     "bytes": 22695,
+     "mayorRespuestaBytes": 22387,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1753,
+     "nodos": 733,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET recompensas_catalogo": 1
+     }
+    },
+    {
+     "peticiones": 2,
+     "bytes": 22695,
+     "mayorRespuestaBytes": 22387,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1748,
+     "nodos": 733,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET recompensas_catalogo": 1
+     }
+    },
+    {
+     "peticiones": 2,
+     "bytes": 22695,
+     "mayorRespuestaBytes": 22387,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1747,
+     "nodos": 733,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET recompensas_catalogo": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "recompensas_config",
+     "sel": "*",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 308
+    },
+    {
+     "m": "GET",
+     "ruta": "recompensas_catalogo",
+     "sel": "*",
+     "q": "origen=eq.MONEDAS&order=creado_en.desc%2Cid.desc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 22387
+    }
+   ],
+   "porRuta": {
+    "GET recompensas_config": 1,
+    "GET recompensas_catalogo": 1
+   },
+   "canalesPorTema": {}
+  },
+  "recompensas-web-sellos": {
+   "mediana": {
+    "peticiones": 2,
+    "bytes": 22332,
+    "mayorRespuestaBytes": 22024,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1454,
+    "nodos": 733,
+    "expandibles": 41,
+    "cupones": 0,
+    "itemsPanel": 40,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 2,
+     "bytes": 22332,
+     "mayorRespuestaBytes": 22024,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1454,
+     "nodos": 733,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET recompensas_catalogo": 1
+     }
+    },
+    {
+     "peticiones": 2,
+     "bytes": 22332,
+     "mayorRespuestaBytes": 22024,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1453,
+     "nodos": 733,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET recompensas_catalogo": 1
+     }
+    },
+    {
+     "peticiones": 2,
+     "bytes": 22332,
+     "mayorRespuestaBytes": 22024,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1456,
+     "nodos": 733,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET recompensas_catalogo": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "recompensas_config",
+     "sel": "*",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 308
+    },
+    {
+     "m": "GET",
+     "ruta": "recompensas_catalogo",
+     "sel": "*",
+     "q": "origen=eq.SELLOS&order=creado_en.desc%2Cid.desc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 22024
+    }
+   ],
+   "porRuta": {
+    "GET recompensas_config": 1,
+    "GET recompensas_catalogo": 1
+   },
+   "canalesPorTema": {}
+  },
+  "recompensas-web-proteccion": {
+   "mediana": {
+    "peticiones": 3,
+    "bytes": 7126,
+    "mayorRespuestaBytes": 4699,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 2692,
+    "nodos": 649,
+    "expandibles": 41,
+    "cupones": 0,
+    "itemsPanel": 40,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 3,
+     "bytes": 7126,
+     "mayorRespuestaBytes": 4699,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2690,
+     "nodos": 649,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET servicios": 1,
+      "GET servicios_proteccion": 1
+     }
+    },
+    {
+     "peticiones": 3,
+     "bytes": 7126,
+     "mayorRespuestaBytes": 4699,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2692,
+     "nodos": 649,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET servicios": 1,
+      "GET servicios_proteccion": 1
+     }
+    },
+    {
+     "peticiones": 3,
+     "bytes": 7126,
+     "mayorRespuestaBytes": 4699,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2693,
+     "nodos": 649,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET servicios": 1,
+      "GET servicios_proteccion": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "recompensas_config",
+     "sel": "*",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 308
+    },
+    {
+     "m": "GET",
+     "ruta": "servicios",
+     "sel": "id,nombre,precio,activo",
+     "q": "order=nombre.asc%2Cid.asc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 4699
+    },
+    {
+     "m": "GET",
+     "ruta": "servicios_proteccion",
+     "sel": "servicio_id,materiales,asistente,asistente_pct,otros,total,actualizado_en",
+     "q": "servicio_id=in.%282e1acaf4-8a61-46e3-ac3b-843a826b6f32%2Ce737858a-a462-4a62-83d8-f96318b7d75a%2C96267155-7457-4866-b1bf-2517a48436f9%2C35ee68dd-178c-4a80-841b-f82b9595",
+     "estado": 200,
+     "bytes": 2119
+    }
+   ],
+   "porRuta": {
+    "GET recompensas_config": 1,
+    "GET servicios": 1,
+    "GET servicios_proteccion": 1
+   },
+   "canalesPorTema": {}
+  },
+  "recompensas-web-proteccion-productos": {
+   "mediana": {
+    "peticiones": 3,
+    "bytes": 5146,
+    "mayorRespuestaBytes": 4836,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1448,
+    "nodos": 649,
+    "expandibles": 41,
+    "cupones": 0,
+    "itemsPanel": 40,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 3,
+     "bytes": 5146,
+     "mayorRespuestaBytes": 4836,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1455,
+     "nodos": 649,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET productos_vista": 1,
+      "GET productos_proteccion": 1
+     }
+    },
+    {
+     "peticiones": 3,
+     "bytes": 5146,
+     "mayorRespuestaBytes": 4836,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1448,
+     "nodos": 649,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET productos_vista": 1,
+      "GET productos_proteccion": 1
+     }
+    },
+    {
+     "peticiones": 3,
+     "bytes": 5146,
+     "mayorRespuestaBytes": 4836,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1443,
+     "nodos": 649,
+     "expandibles": 41,
+     "cupones": 0,
+     "itemsPanel": 40,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1,
+      "GET productos_vista": 1,
+      "GET productos_proteccion": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "recompensas_config",
+     "sel": "*",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 308
+    },
+    {
+     "m": "GET",
+     "ruta": "productos_vista",
+     "sel": "id,nombre,precio,costo",
+     "q": "order=nombre.asc%2Cid.asc&offset=0&limit=40",
+     "estado": 206,
+     "bytes": 4836
+    },
+    {
+     "m": "GET",
+     "ruta": "productos_proteccion",
+     "sel": "producto_id,transporte,otros,costo_confirmado,actualizado_en",
+     "q": "producto_id=in.%287d302b3d-5a50-4f6f-9687-5b204c842b6c%2C374b475b-e628-4ac6-9026-d24229e93812%2C09f6847a-1bbf-4f8b-84b6-8eba24c6be5f%2C3bae5d4a-ddc6-4c91-a848-aff102a6e193%2C71110b5b-a",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET recompensas_config": 1,
+    "GET productos_vista": 1,
+    "GET productos_proteccion": 1
+   },
+   "canalesPorTema": {}
+  },
+  "recompensas-web-programa": {
+   "mediana": {
+    "peticiones": 1,
+    "bytes": 308,
+    "mayorRespuestaBytes": 308,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1446,
+    "nodos": 422,
+    "expandibles": 1,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 1,
+     "bytes": 308,
+     "mayorRespuestaBytes": 308,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1440,
+     "nodos": 422,
+     "expandibles": 1,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1
+     }
+    },
+    {
+     "peticiones": 1,
+     "bytes": 308,
+     "mayorRespuestaBytes": 308,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1446,
+     "nodos": 422,
+     "expandibles": 1,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1
+     }
+    },
+    {
+     "peticiones": 1,
+     "bytes": 308,
+     "mayorRespuestaBytes": 308,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1447,
+     "nodos": 422,
+     "expandibles": 1,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "GET recompensas_config": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "recompensas_config",
+     "sel": "*",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 308
+    }
+   ],
+   "porRuta": {
+    "GET recompensas_config": 1
+   },
+   "canalesPorTema": {}
+  },
+  "sesion-cliente": {
+   "mediana": {
+    "peticiones": 10,
+    "bytes": 498,
+    "mayorRespuestaBytes": 181,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1294,
+    "nodos": 312,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 10,
+     "bytes": 498,
+     "mayorRespuestaBytes": 181,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1294,
+     "nodos": 312,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/datos_proveedor_reclamos": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    },
+    {
+     "peticiones": 10,
+     "bytes": 498,
+     "mayorRespuestaBytes": 181,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1283,
+     "nodos": 312,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/datos_proveedor_reclamos": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    },
+    {
+     "peticiones": 10,
+     "bytes": 498,
+     "mayorRespuestaBytes": 181,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1294,
+     "nodos": 312,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/datos_proveedor_reclamos": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_productos": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/datos_contacto",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 181
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/horario_atencion",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 139
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/datos_proveedor_reclamos",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 71
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/datos_contacto": 1,
+    "POST rpc/horario_atencion": 1,
+    "POST rpc/datos_proveedor_reclamos": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_servicios": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "inicio-cliente": {
+   "mediana": {
+    "peticiones": 19,
+    "bytes": 6168,
+    "mayorRespuestaBytes": 2482,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 2342,
+    "nodos": 553,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 19,
+     "bytes": 6168,
+     "mayorRespuestaBytes": 2482,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2357,
+     "nodos": 553,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/servicios_mas_pedidos": 1,
+      "POST rpc/mi_cliente_id": 1,
+      "POST rpc/galeria_para_web": 1,
+      "POST rpc/resenas_publicas": 1,
+      "POST rpc/resenas_inicio": 1,
+      "GET servicios": 1,
+      "GET promociones": 1,
+      "POST rpc/mis_cupones": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    },
+    {
+     "peticiones": 19,
+     "bytes": 6168,
+     "mayorRespuestaBytes": 2482,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2195,
+     "nodos": 553,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 1,
+     "tareaMaxMs": 54,
+     "tareasLargasTotalMs": 54,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "GET carrito_servicios": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/mi_cliente_id": 1,
+      "POST rpc/servicios_mas_pedidos": 1,
+      "POST rpc/resenas_publicas": 1,
+      "POST rpc/resenas_inicio": 1,
+      "POST rpc/galeria_para_web": 1,
+      "GET servicios": 1,
+      "GET promociones": 1,
+      "POST rpc/mis_cupones": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    },
+    {
+     "peticiones": 19,
+     "bytes": 6168,
+     "mayorRespuestaBytes": 2482,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2342,
+     "nodos": 553,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "HEAD notificaciones": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/servicios_mas_pedidos": 1,
+      "POST rpc/mi_cliente_id": 1,
+      "POST rpc/galeria_para_web": 1,
+      "POST rpc/resenas_publicas": 1,
+      "POST rpc/resenas_inicio": 1,
+      "GET servicios": 1,
+      "GET promociones": 1,
+      "POST rpc/mis_cupones": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/datos_contacto",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 181
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/horario_atencion",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 139
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/servicios_mas_pedidos",
+     "sel": null,
+     "q": "limit=12",
+     "estado": 200,
+     "bytes": 850
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_cliente_id",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 4
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/galeria_para_web",
+     "sel": null,
+     "q": "limit=3",
+     "estado": 200,
+     "bytes": 813
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/resenas_publicas",
+     "sel": "calificacion",
+     "q": "",
+     "estado": 200,
+     "bytes": 526
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/resenas_inicio",
+     "sel": null,
+     "q": "limit=3",
+     "estado": 200,
+     "bytes": 681
+    },
+    {
+     "m": "GET",
+     "ruta": "servicios",
+     "sel": "id,nombre,categoria,precio,duracion_min,foto_url,descripcion,en_tendencia",
+     "q": "id=in.%28ecee242d-6a39-4810-b9cd-149413062c72%2Cbe72c577-fcf4-437c-9b59-549b31ab36e2%2Cd6a7a05f-679d-4d4e-96af-5ad5f7a26e2f%2C53bde280-93a7-462a-a86a-4f34362f336c%2C",
+     "estado": 200,
+     "bytes": 2482
+    },
+    {
+     "m": "GET",
+     "ruta": "promociones",
+     "sel": "id,titulo,descripcion,tipo_descuento,valor,vigente_hasta",
+     "q": "order=vigente_hasta.asc.nullslast&limit=1",
+     "estado": 200,
+     "bytes": 184
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mis_cupones",
+     "sel": null,
+     "q": "promocion_id=eq.17a135e4-2b05-4f52-9160-4da466e68239&limit=1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mis_puntos",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/datos_contacto": 1,
+    "POST rpc/horario_atencion": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_servicios": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1,
+    "POST rpc/servicios_mas_pedidos": 1,
+    "POST rpc/mi_cliente_id": 1,
+    "POST rpc/galeria_para_web": 1,
+    "POST rpc/resenas_publicas": 1,
+    "POST rpc/resenas_inicio": 1,
+    "GET servicios": 1,
+    "GET promociones": 1,
+    "POST rpc/mis_cupones": 1,
+    "POST rpc/mis_puntos": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "inicio-visitante": {
+   "mediana": {
+    "peticiones": 10,
+    "bytes": 6107,
+    "mayorRespuestaBytes": 2482,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 2416,
+    "nodos": 535,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 0
+   },
+   "muestras": [
+    {
+     "peticiones": 10,
+     "bytes": 6107,
+     "mayorRespuestaBytes": 2482,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2737,
+     "nodos": 535,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "POST rpc/politicas_cita_publicas": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/servicios_mas_pedidos": 1,
+      "GET promociones": 1,
+      "POST rpc/resenas_publicas": 1,
+      "POST rpc/galeria_para_web": 1,
+      "POST rpc/resenas_inicio": 1,
+      "GET servicios": 1
+     }
+    },
+    {
+     "peticiones": 10,
+     "bytes": 6107,
+     "mayorRespuestaBytes": 2482,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2416,
+     "nodos": 535,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "POST rpc/politicas_cita_publicas": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "GET promociones": 1,
+      "POST rpc/servicios_mas_pedidos": 1,
+      "POST rpc/resenas_publicas": 1,
+      "POST rpc/galeria_para_web": 1,
+      "POST rpc/resenas_inicio": 1,
+      "GET servicios": 1
+     }
+    },
+    {
+     "peticiones": 10,
+     "bytes": 6107,
+     "mayorRespuestaBytes": 2482,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 2276,
+     "nodos": 535,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 0,
+     "canalesPorTema": {},
+     "porRuta": {
+      "POST rpc/politicas_cita_publicas": 1,
+      "POST rpc/datos_contacto": 1,
+      "POST rpc/horario_atencion": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/servicios_mas_pedidos": 1,
+      "GET promociones": 1,
+      "POST rpc/resenas_publicas": 1,
+      "POST rpc/galeria_para_web": 1,
+      "POST rpc/resenas_inicio": 1,
+      "GET servicios": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "POST",
+     "ruta": "rpc/politicas_cita_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 54
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/datos_contacto",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 181
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/horario_atencion",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 139
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/servicios_mas_pedidos",
+     "sel": null,
+     "q": "limit=12",
+     "estado": 200,
+     "bytes": 850
+    },
+    {
+     "m": "GET",
+     "ruta": "promociones",
+     "sel": "id,titulo,descripcion,tipo_descuento,valor,vigente_hasta",
+     "q": "order=vigente_hasta.asc.nullslast&limit=1",
+     "estado": 200,
+     "bytes": 184
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/resenas_publicas",
+     "sel": "calificacion",
+     "q": "",
+     "estado": 200,
+     "bytes": 526
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/galeria_para_web",
+     "sel": null,
+     "q": "limit=3",
+     "estado": 200,
+     "bytes": 813
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/resenas_inicio",
+     "sel": null,
+     "q": "limit=3",
+     "estado": 200,
+     "bytes": 681
+    },
+    {
+     "m": "GET",
+     "ruta": "servicios",
+     "sel": "id,nombre,categoria,precio,duracion_min,foto_url,descripcion,en_tendencia",
+     "q": "id=in.%28ecee242d-6a39-4810-b9cd-149413062c72%2Cbe72c577-fcf4-437c-9b59-549b31ab36e2%2Cd6a7a05f-679d-4d4e-96af-5ad5f7a26e2f%2C53bde280-93a7-462a-a86a-4f34362f336c%2C",
+     "estado": 200,
+     "bytes": 2482
+    }
+   ],
+   "porRuta": {
+    "POST rpc/politicas_cita_publicas": 1,
+    "POST rpc/datos_contacto": 1,
+    "POST rpc/horario_atencion": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "POST rpc/servicios_mas_pedidos": 1,
+    "GET promociones": 1,
+    "POST rpc/resenas_publicas": 1,
+    "POST rpc/galeria_para_web": 1,
+    "POST rpc/resenas_inicio": 1,
+    "GET servicios": 1
+   },
+   "canalesPorTema": {}
+  },
+  "recompensas-como": {
+   "mediana": {
+    "peticiones": 8,
+    "bytes": 304,
+    "mayorRespuestaBytes": 197,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1355,
+    "nodos": 250,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 8,
+     "bytes": 304,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1238,
+     "nodos": 250,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "GET carrito_servicios": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    },
+    {
+     "peticiones": 8,
+     "bytes": 304,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1385,
+     "nodos": 250,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET carrito_productos": 1
+     }
+    },
+    {
+     "peticiones": 8,
+     "bytes": 304,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1355,
+     "nodos": 250,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "GET carrito_servicios": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "recompensas-tarjeta": {
+   "mediana": {
+    "peticiones": 10,
+    "bytes": 308,
+    "mayorRespuestaBytes": 197,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1396,
+    "nodos": 367,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 7,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 10,
+     "bytes": 308,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1415,
+     "nodos": 367,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 7,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "HEAD notificaciones": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    },
+    {
+     "peticiones": 10,
+     "bytes": 308,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1396,
+     "nodos": 367,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 7,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "HEAD notificaciones": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    },
+    {
+     "peticiones": 10,
+     "bytes": 308,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1371,
+     "nodos": 367,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 7,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "GET carrito_servicios": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_saldo_recompensas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mis_puntos",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "HEAD notificaciones": 1,
+    "POST rpc/mi_saldo_recompensas": 1,
+    "GET carrito_servicios": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1,
+    "POST rpc/mis_puntos": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "recompensas-sellos": {
+   "mediana": {
+    "peticiones": 12,
+    "bytes": 439,
+    "mayorRespuestaBytes": 197,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1378,
+    "nodos": 288,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 5,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 12,
+     "bytes": 439,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1395,
+     "nodos": 288,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 5,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET config_fidelizacion": 1,
+      "POST rpc/mi_fidelizacion": 1,
+      "POST rpc/mi_historial_fidelizacion": 1
+     }
+    },
+    {
+     "peticiones": 12,
+     "bytes": 439,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1378,
+     "nodos": 288,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 5,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET carrito_productos": 1,
+      "GET config_fidelizacion": 1,
+      "POST rpc/mi_historial_fidelizacion": 1,
+      "POST rpc/mi_fidelizacion": 1
+     }
+    },
+    {
+     "peticiones": 12,
+     "bytes": 439,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1236,
+     "nodos": 288,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 5,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET config_fidelizacion": 1,
+      "POST rpc/mi_historial_fidelizacion": 1,
+      "POST rpc/mi_fidelizacion": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_saldo_recompensas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "config_fidelizacion",
+     "sel": "porcentaje_recompensa",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 33
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_fidelizacion",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 98
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_historial_fidelizacion",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "POST rpc/mi_saldo_recompensas": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_servicios": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1,
+    "GET config_fidelizacion": 1,
+    "POST rpc/mi_fidelizacion": 1,
+    "POST rpc/mi_historial_fidelizacion": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "recompensas-cupones": {
+   "mediana": {
+    "peticiones": 11,
+    "bytes": 492,
+    "mayorRespuestaBytes": 197,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1371,
+    "nodos": 245,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 11,
+     "bytes": 492,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1386,
+     "nodos": 245,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "POST rpc/mis_cupones": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET promociones": 1
+     }
+    },
+    {
+     "peticiones": 11,
+     "bytes": 492,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1254,
+     "nodos": 245,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "POST rpc/mis_cupones": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_productos": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET promociones": 1
+     }
+    },
+    {
+     "peticiones": 11,
+     "bytes": 492,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1371,
+     "nodos": 245,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "POST rpc/mis_cupones": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET promociones": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_saldo_recompensas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mis_cupones",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "promociones",
+     "sel": "id,titulo,descripcion,tipo_descuento,valor,vigente_hasta",
+     "q": "order=creado_en.desc",
+     "estado": 200,
+     "bytes": 184
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "POST rpc/mi_saldo_recompensas": 1,
+    "POST rpc/mis_cupones": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_servicios": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1,
+    "GET promociones": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "recompensas-canje": {
+   "mediana": {
+    "peticiones": 11,
+    "bytes": 310,
+    "mayorRespuestaBytes": 197,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1258,
+    "nodos": 579,
+    "expandibles": 8,
+    "cupones": 8,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 11,
+     "bytes": 310,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1258,
+     "nodos": 579,
+     "expandibles": 8,
+     "cupones": 8,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_catalogo_recompensas": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    },
+    {
+     "peticiones": 11,
+     "bytes": 310,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1244,
+     "nodos": 579,
+     "expandibles": 8,
+     "cupones": 8,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_catalogo_recompensas": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    },
+    {
+     "peticiones": 11,
+     "bytes": 310,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1356,
+     "nodos": 579,
+     "expandibles": 8,
+     "cupones": 8,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "GET carrito_servicios": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_catalogo_recompensas": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "POST rpc/mis_puntos": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_saldo_recompensas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_catalogo_recompensas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mis_puntos",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "POST rpc/mi_saldo_recompensas": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_servicios": 1,
+    "POST rpc/mi_catalogo_recompensas": 1,
+    "GET carrito_productos": 1,
+    "POST rpc/mi_perfil_cliente": 1,
+    "POST rpc/mis_puntos": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  },
+  "recompensas-movimientos": {
+   "mediana": {
+    "peticiones": 9,
+    "bytes": 306,
+    "mayorRespuestaBytes": 197,
+    "duplicadas": 0,
+    "errores": 0,
+    "msListo": 1379,
+    "nodos": 246,
+    "expandibles": 0,
+    "cupones": 0,
+    "itemsPanel": 0,
+    "selectOpciones": 0,
+    "tareasLargas": 0,
+    "tareaMaxMs": 0,
+    "tareasLargasTotalMs": 0,
+    "canalesRealtime": 1
+   },
+   "muestras": [
+    {
+     "peticiones": 9,
+     "bytes": 306,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1356,
+     "nodos": 246,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "POST rpc/mi_perfil_cliente": 1,
+      "GET carrito_productos": 1
+     }
+    },
+    {
+     "peticiones": 9,
+     "bytes": 306,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1383,
+     "nodos": 246,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    },
+    {
+     "peticiones": 9,
+     "bytes": 306,
+     "mayorRespuestaBytes": 197,
+     "duplicadas": 0,
+     "errores": 0,
+     "erroresPagina": [],
+     "msListo": 1379,
+     "nodos": 246,
+     "expandibles": 0,
+     "cupones": 0,
+     "itemsPanel": 0,
+     "selectOpciones": 0,
+     "tareasLargas": 0,
+     "tareaMaxMs": 0,
+     "tareasLargasTotalMs": 0,
+     "canalesRealtime": 1,
+     "canalesPorTema": {
+      "phx_join": 1
+     },
+     "porRuta": {
+      "GET usuarios": 1,
+      "GET estado_negocio": 1,
+      "GET clientes_web": 1,
+      "POST rpc/recompensas_reglas_publicas": 1,
+      "POST rpc/mi_saldo_recompensas": 1,
+      "HEAD notificaciones": 1,
+      "GET carrito_servicios": 1,
+      "GET carrito_productos": 1,
+      "POST rpc/mi_perfil_cliente": 1
+     }
+    }
+   ],
+   "detalle": [
+    {
+     "m": "GET",
+     "ruta": "usuarios",
+     "sel": "id,email,nombre_completo,rol,activo,foto_url",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "estado_negocio",
+     "sel": "abierto,cuenta_transferencia,yape_numero,yape_titular,yape_qr_url,plin_numero,plin_titular,plin_qr_url,adelanto_minimo,cancelacion_plazo_horas",
+     "q": "id=eq.1",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "clientes_web",
+     "sel": "id,email,activo",
+     "q": "id=eq.bcf77f3c-5cc7-437c-9b39-94ae595b359c",
+     "estado": 200,
+     "bytes": 97
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/recompensas_reglas_publicas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 197
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_saldo_recompensas",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "HEAD",
+     "ruta": "notificaciones",
+     "sel": "id",
+     "q": "leida=eq.false",
+     "estado": 200,
+     "bytes": 0
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_servicios",
+     "sel": "servicio_id",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "POST",
+     "ruta": "rpc/mi_perfil_cliente",
+     "sel": null,
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    },
+    {
+     "m": "GET",
+     "ruta": "carrito_productos",
+     "sel": "producto_id,cantidad",
+     "q": "",
+     "estado": 200,
+     "bytes": 2
+    }
+   ],
+   "porRuta": {
+    "GET usuarios": 1,
+    "GET estado_negocio": 1,
+    "GET clientes_web": 1,
+    "POST rpc/recompensas_reglas_publicas": 1,
+    "POST rpc/mi_saldo_recompensas": 1,
+    "HEAD notificaciones": 1,
+    "GET carrito_servicios": 1,
+    "POST rpc/mi_perfil_cliente": 1,
+    "GET carrito_productos": 1
+   },
+   "canalesPorTema": {
+    "phx_join": 1
+   }
+  }
+ }
+}

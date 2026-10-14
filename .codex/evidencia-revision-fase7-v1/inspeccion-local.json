@@ -1,0 +1,1504 @@
+{
+  "alcance": "Local verificado; exclusivamente transacciones READ ONLY. Esperado es evaluación de predicados antiguos bajo postgres, no cambio de políticas ni repetición del motor RLS antiguo. No se escribe ni cambia esquema.",
+  "before": {
+    "clientes": 4749,
+    "pedidos_web": 429,
+    "pedidos_web_items": 429,
+    "cupones": 3067,
+    "productos": 3245,
+    "servicios": 3340,
+    "promociones": 208,
+    "resenas": 49,
+    "resenas_producto": 89,
+    "resenas_servicio": 80,
+    "auditoria": 25860
+  },
+  "after": {
+    "clientes": 4749,
+    "pedidos_web": 429,
+    "pedidos_web_items": 429,
+    "cupones": 3067,
+    "productos": 3245,
+    "servicios": 3340,
+    "promociones": 208,
+    "resenas": 49,
+    "resenas_producto": 89,
+    "resenas_servicio": 80,
+    "auditoria": 25860
+  },
+  "metadata": {
+    "helpers": [
+      {
+        "nombre": "es_admin",
+        "estable": true,
+        "definer": true,
+        "argumentos": 0,
+        "definicion": "CREATE OR REPLACE FUNCTION public.es_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select coalesce(public.rol_actual() = 'ADMINISTRADOR', false);\n$function$\n"
+      },
+      {
+        "nombre": "mi_cliente_id",
+        "estable": true,
+        "definer": true,
+        "argumentos": 0,
+        "definicion": "CREATE OR REPLACE FUNCTION public.mi_cliente_id()\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select id from public.clientes where cliente_web_id = auth.uid();\n$function$\n"
+      },
+      {
+        "nombre": "rol_actual",
+        "estable": true,
+        "definer": true,
+        "argumentos": 0,
+        "definicion": "CREATE OR REPLACE FUNCTION public.rol_actual()\n RETURNS text\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select rol\n  from public.usuarios\n  where id = auth.uid()\n    and activo = true;\n$function$\n"
+      }
+    ],
+    "politicas": [
+      {
+        "schemaname": "public",
+        "tablename": "clientes",
+        "policyname": "clientes_insert_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "clientes",
+        "policyname": "clientes_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "(es_admin() AND (cliente_web_id IS NULL))",
+        "with_check": "(es_admin() AND (cliente_web_id IS NULL))"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "clientes",
+        "policyname": "clientes_delete_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "DELETE",
+        "qual": "(es_admin() AND (cliente_web_id IS NULL))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "clientes",
+        "policyname": "clientes_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(( SELECT rol_actual() AS rol_actual) IS NOT NULL)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "cupones",
+        "policyname": "cupones_select_propio",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(cliente_id = ( SELECT mi_cliente_id() AS mi_cliente_id))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "cupones",
+        "policyname": "cupones_select_staff",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(( SELECT rol_actual() AS rol_actual) IS NOT NULL)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "pedidos_web",
+        "policyname": "pedidos_web_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "pedidos_web",
+        "policyname": "pedidos_web_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((cliente_id = ( SELECT mi_cliente_id() AS mi_cliente_id)) OR ( SELECT es_admin() AS es_admin))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "pedidos_web_items",
+        "policyname": "pedidos_web_items_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM pedidos_web p\n  WHERE ((p.id = pedidos_web_items.pedido_id) AND ((p.cliente_id = ( SELECT mi_cliente_id() AS mi_cliente_id)) OR ( SELECT es_admin() AS es_admin)))))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "productos",
+        "policyname": "productos_insert_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "productos",
+        "policyname": "productos_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "productos",
+        "policyname": "productos_delete_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "DELETE",
+        "qual": "es_admin()",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "productos",
+        "policyname": "productos_select_anon",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "anon"
+        ],
+        "cmd": "SELECT",
+        "qual": "(activo = true)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "productos",
+        "policyname": "productos_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((( SELECT rol_actual() AS rol_actual) IS NOT NULL) OR (activo = true))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "promociones",
+        "policyname": "promociones_select_web",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((activo = true) AND ((vigente_desde IS NULL) OR (vigente_desde <= ((now() AT TIME ZONE 'America/Lima'::text))::date)) AND ((vigente_hasta IS NULL) OR (vigente_hasta >= ((now() AT TIME ZONE 'America/Lima'::text))::date)))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "promociones",
+        "policyname": "promociones_select_anon",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "anon"
+        ],
+        "cmd": "SELECT",
+        "qual": "((activo = true) AND ((vigente_desde IS NULL) OR (vigente_desde <= ((now() AT TIME ZONE 'America/Lima'::text))::date)) AND ((vigente_hasta IS NULL) OR (vigente_hasta >= ((now() AT TIME ZONE 'America/Lima'::text))::date)))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "promociones",
+        "policyname": "promociones_admin_todo",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "ALL",
+        "qual": "( SELECT es_admin() AS es_admin)",
+        "with_check": "( SELECT es_admin() AS es_admin)"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "resenas",
+        "policyname": "resenas_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "resenas",
+        "policyname": "resenas_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((cliente_id = ( SELECT mi_cliente_id() AS mi_cliente_id)) OR (estado = 'APROBADA'::text) OR ( SELECT es_admin() AS es_admin))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "resenas_producto",
+        "policyname": "resenas_producto_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "resenas_producto",
+        "policyname": "resenas_producto_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((cliente_id = ( SELECT mi_cliente_id() AS mi_cliente_id)) OR (estado = 'APROBADA'::text) OR ( SELECT es_admin() AS es_admin))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "resenas_servicio",
+        "policyname": "resenas_servicio_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "resenas_servicio",
+        "policyname": "resenas_servicio_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((cliente_id = ( SELECT mi_cliente_id() AS mi_cliente_id)) OR (estado = 'APROBADA'::text) OR ( SELECT es_admin() AS es_admin))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "servicios",
+        "policyname": "servicios_insert_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "servicios",
+        "policyname": "servicios_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "servicios",
+        "policyname": "servicios_delete_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "DELETE",
+        "qual": "es_admin()",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "servicios",
+        "policyname": "servicios_select_anon",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "anon"
+        ],
+        "cmd": "SELECT",
+        "qual": "(activo = true)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "servicios",
+        "policyname": "servicios_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((( SELECT rol_actual() AS rol_actual) IS NOT NULL) OR (activo = true))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "zonas_delivery",
+        "policyname": "zonas_delivery_insert_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "zonas_delivery",
+        "policyname": "zonas_delivery_update_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "es_admin()",
+        "with_check": "es_admin()"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "zonas_delivery",
+        "policyname": "zonas_delivery_delete_admin",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "DELETE",
+        "qual": "es_admin()",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "zonas_delivery",
+        "policyname": "zonas_delivery_select",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "((activo = true) OR ( SELECT es_admin() AS es_admin))",
+        "with_check": null
+      }
+    ],
+    "indices": [
+      {
+        "nombre": "idx_f7_pedidos_web_creado",
+        "valid": true,
+        "ready": true,
+        "bytes": 40960,
+        "definicion": "CREATE INDEX idx_f7_pedidos_web_creado ON public.pedidos_web USING btree (creado_en DESC, id DESC)"
+      },
+      {
+        "nombre": "idx_f7_pedidos_web_items_pedido",
+        "valid": true,
+        "ready": true,
+        "bytes": 32768,
+        "definicion": "CREATE INDEX idx_f7_pedidos_web_items_pedido ON public.pedidos_web_items USING btree (pedido_id)"
+      },
+      {
+        "nombre": "idx_f7_cupones_origen_estado_creado",
+        "valid": true,
+        "ready": true,
+        "bytes": 237568,
+        "definicion": "CREATE INDEX idx_f7_cupones_origen_estado_creado ON public.cupones USING btree (origen, estado, creado_en DESC, id DESC)"
+      }
+    ],
+    "ultimaMigracion": "20261012000002",
+    "rls": [
+      {
+        "tabla": "estado_negocio",
+        "activa": true
+      },
+      {
+        "tabla": "deuda_pagos",
+        "activa": true
+      },
+      {
+        "tabla": "pedidos_web",
+        "activa": true
+      },
+      {
+        "tabla": "pasarela_eventos",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_config",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_movimientos",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_sellos_movs",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_apertura_aportes",
+        "activa": true
+      },
+      {
+        "tabla": "servicios_proteccion",
+        "activa": true
+      },
+      {
+        "tabla": "usuarios",
+        "activa": true
+      },
+      {
+        "tabla": "asistentes",
+        "activa": true
+      },
+      {
+        "tabla": "porcentajes",
+        "activa": true
+      },
+      {
+        "tabla": "ventas",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_catalogo",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_canjes",
+        "activa": true
+      },
+      {
+        "tabla": "movimientos_stock",
+        "activa": true
+      },
+      {
+        "tabla": "clientes",
+        "activa": true
+      },
+      {
+        "tabla": "auditoria",
+        "activa": true
+      },
+      {
+        "tabla": "servicios",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_venta_detalle",
+        "activa": true
+      },
+      {
+        "tabla": "productos",
+        "activa": true
+      },
+      {
+        "tabla": "gastos_recurrentes",
+        "activa": true
+      },
+      {
+        "tabla": "gastos",
+        "activa": true
+      },
+      {
+        "tabla": "favoritos_servicios",
+        "activa": true
+      },
+      {
+        "tabla": "clientes_web",
+        "activa": true
+      },
+      {
+        "tabla": "cita_servicios",
+        "activa": true
+      },
+      {
+        "tabla": "venta_items",
+        "activa": true
+      },
+      {
+        "tabla": "registro_servicios",
+        "activa": true
+      },
+      {
+        "tabla": "citas",
+        "activa": true
+      },
+      {
+        "tabla": "deudas",
+        "activa": true
+      },
+      {
+        "tabla": "favoritos_productos",
+        "activa": true
+      },
+      {
+        "tabla": "carrito_servicios",
+        "activa": true
+      },
+      {
+        "tabla": "mobiliario",
+        "activa": true
+      },
+      {
+        "tabla": "mobiliario_compras",
+        "activa": true
+      },
+      {
+        "tabla": "carrito_productos",
+        "activa": true
+      },
+      {
+        "tabla": "promociones",
+        "activa": true
+      },
+      {
+        "tabla": "zonas_delivery",
+        "activa": true
+      },
+      {
+        "tabla": "config_puntos",
+        "activa": true
+      },
+      {
+        "tabla": "config_referidos",
+        "activa": true
+      },
+      {
+        "tabla": "pedidos_web_items",
+        "activa": true
+      },
+      {
+        "tabla": "resenas",
+        "activa": true
+      },
+      {
+        "tabla": "notificaciones",
+        "activa": true
+      },
+      {
+        "tabla": "direcciones_cliente",
+        "activa": true
+      },
+      {
+        "tabla": "resenas_producto",
+        "activa": true
+      },
+      {
+        "tabla": "servicio_fotos",
+        "activa": true
+      },
+      {
+        "tabla": "productos_proteccion",
+        "activa": true
+      },
+      {
+        "tabla": "resenas_servicio",
+        "activa": true
+      },
+      {
+        "tabla": "config_fidelizacion",
+        "activa": true
+      },
+      {
+        "tabla": "galeria_web",
+        "activa": true
+      },
+      {
+        "tabla": "producto_variantes",
+        "activa": true
+      },
+      {
+        "tabla": "producto_fotos",
+        "activa": true
+      },
+      {
+        "tabla": "libro_reclamaciones",
+        "activa": true
+      },
+      {
+        "tabla": "cupones",
+        "activa": true
+      },
+      {
+        "tabla": "recompensas_venta_proteccion",
+        "activa": true
+      }
+    ]
+  },
+  "contextosSinIdentificadores": [
+    {
+      "rol": "anon",
+      "tabla": "clientes",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "cupones",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "pedidos_web",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "pedidos_web_items",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "promociones",
+      "esperado": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "actual": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "resenas",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "resenas_producto",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "resenas_servicio",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "servicios",
+      "esperado": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "actual": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "iguales": true
+    },
+    {
+      "rol": "anon",
+      "tabla": "zonas_delivery",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "clientes",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "cupones",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "pedidos_web",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "pedidos_web_items",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "promociones",
+      "esperado": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "actual": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "resenas",
+      "esperado": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "actual": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "resenas_producto",
+      "esperado": "24:4321fc055b80bc19d948665a60e2162a",
+      "actual": "24:4321fc055b80bc19d948665a60e2162a",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "resenas_servicio",
+      "esperado": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "actual": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "servicios",
+      "esperado": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "actual": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "iguales": true
+    },
+    {
+      "rol": "nadie",
+      "tabla": "zonas_delivery",
+      "esperado": "36:d77d618a95213c50331b38befa710725",
+      "actual": "36:d77d618a95213c50331b38befa710725",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "clientes",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "cupones",
+      "esperado": "1:314f669c00ae1219818c3e7111aa187e",
+      "actual": "1:314f669c00ae1219818c3e7111aa187e",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "pedidos_web",
+      "esperado": "4:a10d971d07d302871b20efae03ea9bd5",
+      "actual": "4:a10d971d07d302871b20efae03ea9bd5",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "pedidos_web_items",
+      "esperado": "4:d5e0d5084534ef8eb1aa0ac4e8dc732b",
+      "actual": "4:d5e0d5084534ef8eb1aa0ac4e8dc732b",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "promociones",
+      "esperado": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "actual": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "resenas",
+      "esperado": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "actual": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "resenas_producto",
+      "esperado": "24:4321fc055b80bc19d948665a60e2162a",
+      "actual": "24:4321fc055b80bc19d948665a60e2162a",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "resenas_servicio",
+      "esperado": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "actual": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "servicios",
+      "esperado": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "actual": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "iguales": true
+    },
+    {
+      "rol": "clienteA",
+      "tabla": "zonas_delivery",
+      "esperado": "36:d77d618a95213c50331b38befa710725",
+      "actual": "36:d77d618a95213c50331b38befa710725",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "clientes",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "cupones",
+      "esperado": "1:9d43b3e56adbad03b9ab09b623ff9c18",
+      "actual": "1:9d43b3e56adbad03b9ab09b623ff9c18",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "pedidos_web",
+      "esperado": "3:a04a061bc60534045b8aa0d3fa36919b",
+      "actual": "3:a04a061bc60534045b8aa0d3fa36919b",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "pedidos_web_items",
+      "esperado": "3:a9f82f7b08fa83d59739e9a09d02faa0",
+      "actual": "3:a9f82f7b08fa83d59739e9a09d02faa0",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "promociones",
+      "esperado": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "actual": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "resenas",
+      "esperado": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "actual": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "resenas_producto",
+      "esperado": "24:4321fc055b80bc19d948665a60e2162a",
+      "actual": "24:4321fc055b80bc19d948665a60e2162a",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "resenas_servicio",
+      "esperado": "25:77239c3fe815a7c260321a1487bfe43d",
+      "actual": "25:77239c3fe815a7c260321a1487bfe43d",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "servicios",
+      "esperado": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "actual": "3325:03ef233232ed1a14cc2a39febc7287bc",
+      "iguales": true
+    },
+    {
+      "rol": "clienteB",
+      "tabla": "zonas_delivery",
+      "esperado": "36:d77d618a95213c50331b38befa710725",
+      "actual": "36:d77d618a95213c50331b38befa710725",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "clientes",
+      "esperado": "4749:396ea969e7bad355771542c96e453a13",
+      "actual": "4749:396ea969e7bad355771542c96e453a13",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "cupones",
+      "esperado": "3067:a422c386fc41bce04ff5be2688bf646f",
+      "actual": "3067:a422c386fc41bce04ff5be2688bf646f",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "pedidos_web",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "pedidos_web_items",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "promociones",
+      "esperado": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "actual": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "resenas",
+      "esperado": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "actual": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "resenas_producto",
+      "esperado": "24:4321fc055b80bc19d948665a60e2162a",
+      "actual": "24:4321fc055b80bc19d948665a60e2162a",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "resenas_servicio",
+      "esperado": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "actual": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "servicios",
+      "esperado": "3340:69860f3e5c920e67f38b3808ea66ea0e",
+      "actual": "3340:69860f3e5c920e67f38b3808ea66ea0e",
+      "iguales": true
+    },
+    {
+      "rol": "asistente",
+      "tabla": "zonas_delivery",
+      "esperado": "36:d77d618a95213c50331b38befa710725",
+      "actual": "36:d77d618a95213c50331b38befa710725",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "clientes",
+      "esperado": "4749:396ea969e7bad355771542c96e453a13",
+      "actual": "4749:396ea969e7bad355771542c96e453a13",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "cupones",
+      "esperado": "3067:a422c386fc41bce04ff5be2688bf646f",
+      "actual": "3067:a422c386fc41bce04ff5be2688bf646f",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "pedidos_web",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "pedidos_web_items",
+      "esperado": "0:",
+      "actual": "0:",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "promociones",
+      "esperado": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "actual": "1:dcc7f2e01ec5c71280f93ca68344998f",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "resenas",
+      "esperado": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "actual": "24:0c8ea9e9b1cf7a60fcd8262f80027ab2",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "resenas_producto",
+      "esperado": "24:4321fc055b80bc19d948665a60e2162a",
+      "actual": "24:4321fc055b80bc19d948665a60e2162a",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "resenas_servicio",
+      "esperado": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "actual": "24:bdc4a9c946a9f4a6479baae0b311802f",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "servicios",
+      "esperado": "3340:69860f3e5c920e67f38b3808ea66ea0e",
+      "actual": "3340:69860f3e5c920e67f38b3808ea66ea0e",
+      "iguales": true
+    },
+    {
+      "rol": "cajera",
+      "tabla": "zonas_delivery",
+      "esperado": "36:d77d618a95213c50331b38befa710725",
+      "actual": "36:d77d618a95213c50331b38befa710725",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "clientes",
+      "esperado": "4749:396ea969e7bad355771542c96e453a13",
+      "actual": "4749:396ea969e7bad355771542c96e453a13",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "cupones",
+      "esperado": "3067:a422c386fc41bce04ff5be2688bf646f",
+      "actual": "3067:a422c386fc41bce04ff5be2688bf646f",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "pedidos_web",
+      "esperado": "429:d496499177dd8380f0f624c02aefecf7",
+      "actual": "429:d496499177dd8380f0f624c02aefecf7",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "pedidos_web_items",
+      "esperado": "429:e3388b1bcd8b5738b658aecb6ab2cf17",
+      "actual": "429:e3388b1bcd8b5738b658aecb6ab2cf17",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "productos",
+      "esperado": "3245:418bd82a2b25df694580bc97d655f17d",
+      "actual": "3245:418bd82a2b25df694580bc97d655f17d",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "promociones",
+      "esperado": "208:ff39eca84218528ae5e5aaa152087717",
+      "actual": "208:ff39eca84218528ae5e5aaa152087717",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "resenas",
+      "esperado": "49:68b4f385cdfd78d1b4b66c5febd252d5",
+      "actual": "49:68b4f385cdfd78d1b4b66c5febd252d5",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "resenas_producto",
+      "esperado": "89:96928a66ff89e020b9e9df8b9d00466c",
+      "actual": "89:96928a66ff89e020b9e9df8b9d00466c",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "resenas_servicio",
+      "esperado": "80:6680c49967151b5d6c5b62554e6f2414",
+      "actual": "80:6680c49967151b5d6c5b62554e6f2414",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "servicios",
+      "esperado": "3340:69860f3e5c920e67f38b3808ea66ea0e",
+      "actual": "3340:69860f3e5c920e67f38b3808ea66ea0e",
+      "iguales": true
+    },
+    {
+      "rol": "admin",
+      "tabla": "zonas_delivery",
+      "esperado": "70:48df0e78cf0abb4079f521107da57db4",
+      "actual": "70:48df0e78cf0abb4079f521107da57db4",
+      "iguales": true
+    }
+  ],
+  "inactiva": {
+    "disponibles": 0,
+    "nota": "No se altera ningún perfil para crear contexto inactivo; ese caso solo se audita en la evidencia de Claude."
+  },
+  "planes": [
+    {
+      "rol": "clienteA",
+      "consulta": "select id,nombre,precio from public.productos where activo and nombre ilike '%shampoo%' order by nombre,id limit 40",
+      "ms": 4.64,
+      "initPlans": [
+        {
+          "nombre": "InitPlan 1",
+          "loops": 1
+        }
+      ],
+      "indices": [],
+      "plan": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 179.83,
+          "Total Cost": 179.84,
+          "Plan Rows": 1,
+          "Plan Width": 53,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 301,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Result",
+              "Parent Relationship": "InitPlan",
+              "Subplan Name": "InitPlan 1",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 0,
+              "Total Cost": 0.26,
+              "Plan Rows": 1,
+              "Plan Width": 32,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 156,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            },
+            {
+              "Node Type": "Sort",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 179.57,
+              "Total Cost": 179.58,
+              "Plan Rows": 1,
+              "Plan Width": 53,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Sort Key": [
+                "productos.nombre",
+                "productos.id"
+              ],
+              "Sort Method": "quicksort",
+              "Sort Space Used": 25,
+              "Sort Space Type": "Memory",
+              "Shared Hit Blocks": 301,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Seq Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Relation Name": "productos",
+                  "Alias": "productos",
+                  "Startup Cost": 0,
+                  "Total Cost": 179.56,
+                  "Plan Rows": 1,
+                  "Plan Width": 53,
+                  "Actual Rows": 1,
+                  "Actual Loops": 1,
+                  "Filter": "((((InitPlan 1).col1 IS NOT NULL) OR activo) AND activo AND (nombre ~~* '%shampoo%'::text))",
+                  "Rows Removed by Filter": 3244,
+                  "Shared Hit Blocks": 295,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 147,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.464,
+        "Triggers": [],
+        "Execution Time": 4.64
+      }
+    },
+    {
+      "rol": "admin",
+      "consulta": "select id,estado,total,creado_en from public.pedidos_web order by creado_en desc,id desc limit 40",
+      "ms": 1.021,
+      "initPlans": [
+        {
+          "nombre": "InitPlan 1",
+          "loops": 1
+        },
+        {
+          "nombre": "InitPlan 2",
+          "loops": 1
+        }
+      ],
+      "indices": [
+        "idx_f7_pedidos_web_creado"
+      ],
+      "plan": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 0.79,
+          "Total Cost": 14.4,
+          "Plan Rows": 40,
+          "Plan Width": 38,
+          "Actual Rows": 40,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 302,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Result",
+              "Parent Relationship": "InitPlan",
+              "Subplan Name": "InitPlan 1",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 0,
+              "Total Cost": 0.26,
+              "Plan Rows": 1,
+              "Plan Width": 16,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 201,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            },
+            {
+              "Node Type": "Result",
+              "Parent Relationship": "InitPlan",
+              "Subplan Name": "InitPlan 2",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 0,
+              "Total Cost": 0.26,
+              "Plan Rows": 1,
+              "Plan Width": 1,
+              "Actual Rows": 1,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 93,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            },
+            {
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "idx_f7_pedidos_web_creado",
+              "Relation Name": "pedidos_web",
+              "Alias": "pedidos_web",
+              "Startup Cost": 0.27,
+              "Total Cost": 73.44,
+              "Plan Rows": 215,
+              "Plan Width": 38,
+              "Actual Rows": 40,
+              "Actual Loops": 1,
+              "Filter": "((cliente_id = (InitPlan 1).col1) OR (InitPlan 2).col1)",
+              "Rows Removed by Filter": 0,
+              "Shared Hit Blocks": 302,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 146,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.336,
+        "Triggers": [],
+        "Execution Time": 1.021
+      }
+    }
+  ],
+  "q03": {
+    "medidorCuenta": 90,
+    "cuentaConBusqueda": 0
+  },
+  "leftovers": {
+    "clientesQA7": 0,
+    "cuponesQA7": 0,
+    "productosQA7": 0,
+    "serviciosQA7": 0,
+    "promocionesQA7": 0
+  }
+}

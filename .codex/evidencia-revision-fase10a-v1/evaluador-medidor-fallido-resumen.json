@@ -1,0 +1,10 @@
+{
+  "exitFinal": 0,
+  "resultado": {
+    "fecha": "2026-10-13T05:29:37.008Z",
+    "presupuestos": "scripts/fase10a/presupuestos-rendimiento.json",
+    "total": 0,
+    "fallos": 0,
+    "filas": []
+  }
+}

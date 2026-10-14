@@ -1,0 +1,49 @@
+{
+  "fecha": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "categorias": {
+    "sdkReal": true,
+    "fallos": 0,
+    "casos": 31,
+    "fetchSimulado": true
+  },
+  "datos": {
+    "url": "http://127.0.0.1:54321",
+    "fallos": 0,
+    "casos": 27,
+    "mutaciones": 0
+  },
+  "reproduccionesSDK": {
+    "casos": 7,
+    "esperadosCorrectos": 7
+  },
+  "interfazDirigida": {
+    "esperadosCorrectos": 6,
+    "mutaciones": 0,
+    "casos": 6
+  },
+  "lintSinDiagnosticos": true,
+  "rollbackInversoCheck": true,
+  "hashes": [
+    {
+      "archivo": "src/lib/catalogoPublico.js",
+      "sha256": "34A0B3CC0C344E89591B14CA41945A6C85F9A8FE1D24E037A475EE10BC34C3A8"
+    },
+    {
+      "archivo": "scripts/verificar-categorias-completas.mjs",
+      "sha256": "37EAE55FD9310C5301D3826ABBD8707F9D51F634B12A458C498E2CC91EDDE4B8"
+    },
+    {
+      "archivo": "scripts/verificar-catalogo-publico.mjs",
+      "sha256": "3E08F1870F17B7E52E23235C478EA7F7CA5704C122C30BB50C091FD9885D4E4C"
+    },
+    {
+      "archivo": "src/hooks/usePreciosSeleccion.js",
+      "sha256": "0070CA75900AD7A0E51E1BB5FF3987F1D128E59456F0C7581BC9F7437C6B17AA"
+    },
+    {
+      "archivo": "supabase/migrations/20261011000001_catalogo_publico_vitrina.sql",
+      "sha256": "BA876F01057710F2982B937281E8AD6307851C6B2621B9DEAA7347A50B39653F"
+    }
+  ]
+}

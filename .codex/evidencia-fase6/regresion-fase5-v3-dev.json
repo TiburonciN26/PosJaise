@@ -1,0 +1,22 @@
+{
+ "app": "http://localhost:5193",
+ "fecha": "2026-10-12T00:37:16.019Z",
+ "casos": [
+  {
+   "nombre": "F5-01: una página que falla NO se rotula como cargada: aviso, Reintentar y la página confirmada sigue rotulada",
+   "ok": true,
+   "ms": 2161
+  },
+  {
+   "nombre": "F5-01: una búsqueda nueva que falla no deja los resultados del filtro anterior; conteo ausente = fallo; reintento sano",
+   "ok": true,
+   "ms": 5260
+  },
+  {
+   "nombre": "F5-01: respuestas fuera de orden (página 2 lenta y luego una búsqueda): gana la última petición",
+   "ok": true,
+   "ms": 6996
+  }
+ ],
+ "falloGlobal": null
+}

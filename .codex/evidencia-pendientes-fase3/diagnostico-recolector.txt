@@ -1,0 +1,31 @@
+import fs from 'node:fs'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+const root='C:/WedJaiseReact'
+const require=createRequire(import.meta.url)
+const G=require(root+'/scripts/lib/guardas-interfaz-r2.cjs')
+const {clasificarClave}=await import(pathToFileURL(root+'/scripts/lib/entornos-supabase.mjs').href)
+const original=globalThis.fetch
+const eventos=[]
+const env={}
+const permitidas=new Set(['VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY','QA_ADMIN_EMAIL','QA_ADMIN_PASSWORD'])
+for(const l of fs.readFileSync(root+'/.env.staging.local','utf8').split(/\r?\n/)) { const m=l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/); if(m&&permitidas.has(m[1]))env[m[1]]=m[2].trim().replace(/^["']|["']$/g,'') }
+if(env.VITE_SUPABASE_URL!=='https://tqkdtojnhgykmcbvwdmz.supabase.co'||!env.QA_ADMIN_EMAIL?.endsWith('@staging.test'))throw Error('Entorno o cuenta QA no aprobados')
+const clase=clasificarClave(env.VITE_SUPABASE_ANON_KEY,G.REF_STAGING)
+if(!clase.ok)throw Error('Clave pública no aprobada')
+globalThis.fetch=async (u,op={})=>{
+  const url=new URL(typeof u==='string'?u:u.url);const method=op.method??(typeof u==='string'?'GET':u.method)
+  if(![env.VITE_SUPABASE_URL,G.WORKER_APROBADO].includes(url.origin))throw Error('Origen no permitido')
+  if(!['GET','HEAD'].includes(method)&&!(method==='POST'&&url.origin===env.VITE_SUPABASE_URL&&url.pathname==='/auth/v1/token'&&url.search==='?grant_type=password'))throw Error('Auditoría sin escrituras: método bloqueado')
+  eventos.push({origen:url.origin,metodo:method})
+  return original(u,{...op,redirect:'error',signal:AbortSignal.timeout(30000)})
+}
+const {crearFuentes}=await import(pathToFileURL(root+'/scripts/medios-huerfanos.mjs').href)
+const {recolectar}=await import(pathToFileURL(root+'/scripts/lib/huerfanos-medios.mjs').href)
+const fuentes=await crearFuentes({api:G.WORKER_APROBADO,supabaseUrl:env.VITE_SUPABASE_URL,anonKey:env.VITE_SUPABASE_ANON_KEY,email:env.QA_ADMIN_EMAIL,password:env.QA_ADMIN_PASSWORD})
+const informe=await recolectar({fuentes,aplicar:false,retencionDias:14})
+if(informe.aplicar||informe.eliminados.length)throw Error('El diagnóstico debe ser de solo lectura')
+const resultado={fecha:new Date().toISOString(),entorno:'staging aprobado',modo:'recolector solo lectura, retención 14 días',informe,peticiones:eventos,resumen:{postAuth:eventos.filter(e=>e.metodo==='POST').length,get:eventos.filter(e=>e.metodo==='GET').length,head:eventos.filter(e=>e.metodo==='HEAD').length,escriturasDatos:0}}
+fs.writeFileSync(new URL('./recolector-solo-lectura.json',import.meta.url),JSON.stringify(resultado,null,2),{flag:'wx'})
+console.log(JSON.stringify({fecha:resultado.fecha,informe,resumen:resultado.resumen},null,2))
+process.exit(0)

@@ -1,0 +1,238 @@
+{
+  "fecha": "2026-10-13T15:34:01.546Z",
+  "hashesV2": {
+    "total": 23,
+    "fallos": []
+  },
+  "controladosSinCambiosDesdeV1": [
+    {
+      "hash": "98e5f3ee8fbbbfaef86b1b7c7754315643afa11d69fe49f0c4e3dafa5872b97f",
+      "path": "src/index.css",
+      "actual": "98e5f3ee8fbbbfaef86b1b7c7754315643afa11d69fe49f0c4e3dafa5872b97f",
+      "ok": true
+    },
+    {
+      "hash": "20d3ec50cce5f3b137e4f83818152de03674827d64741a30a6eea0d272c5a69c",
+      "path": "src/components/PestanasCacheadas.jsx",
+      "actual": "20d3ec50cce5f3b137e4f83818152de03674827d64741a30a6eea0d272c5a69c",
+      "ok": true
+    },
+    {
+      "hash": "25d339e66a7e3fda5d21f491eaf72f1629c4de7211d6eacc3fd130f9de8f9cad",
+      "path": ".oxlintrc.json",
+      "actual": "25d339e66a7e3fda5d21f491eaf72f1629c4de7211d6eacc3fd130f9de8f9cad",
+      "ok": true
+    },
+    {
+      "hash": "8e9418bdd769688cacd4aed335d67051bbc45c917ae13c595b5f895bf39daef3",
+      "path": "scripts/verificar-catalogos-fotos-sesion.cjs",
+      "actual": "8e9418bdd769688cacd4aed335d67051bbc45c917ae13c595b5f895bf39daef3",
+      "ok": true
+    },
+    {
+      "hash": "569d79b6f100363f9b87ab85402b9a103910446d79b41830835db1b4c1a12c5b",
+      "path": "scripts/verificar-fase6.cjs",
+      "actual": "569d79b6f100363f9b87ab85402b9a103910446d79b41830835db1b4c1a12c5b",
+      "ok": true
+    },
+    {
+      "hash": "764c50b24f30435877a5c46219a487b61f9a9b7d451c960a2b049aeeae1c26d8",
+      "path": "supabase/migrations/20261012000003_migracion_medios_cambio_con_plazo.sql",
+      "actual": "764c50b24f30435877a5c46219a487b61f9a9b7d451c960a2b049aeeae1c26d8",
+      "ok": true
+    }
+  ],
+  "restauracionHerramientasV1": [
+    {
+      "path": ".codex/evidencia-fase10a-v2/rollback/v1/bateria-10a.mjs",
+      "expected": "040b43c72cfa28d998b9d76523827ec8b8de5ab6a77ff58618d689ae8f16c503",
+      "actual": "040b43c72cfa28d998b9d76523827ec8b8de5ab6a77ff58618d689ae8f16c503",
+      "ok": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v2/rollback/v1/medir-rendimiento-10a.mjs",
+      "expected": "9a1cdc6a1bf0ea915d28061b025da0013244e14ee632dd761960a6e352a595b7",
+      "actual": "9a1cdc6a1bf0ea915d28061b025da0013244e14ee632dd761960a6e352a595b7",
+      "ok": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v2/rollback/v1/medir-vitales-10a.cjs",
+      "expected": "51b7bbb5c9a71424883ef0c822fdfe5c94e0095da9943d53026948be8c5c4d29",
+      "actual": "51b7bbb5c9a71424883ef0c822fdfe5c94e0095da9943d53026948be8c5c4d29",
+      "ok": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v2/rollback/v1/presupuestos-rendimiento.json",
+      "expected": "5f5223f68800291f919480c872136813aaf81d6dbe5455a6e4ab1196c676bdde",
+      "actual": "5f5223f68800291f919480c872136813aaf81d6dbe5455a6e4ab1196c676bdde",
+      "ok": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v2/rollback/v1/servir-como-pages.cjs",
+      "expected": "9198302b66e8049406ed660cacb8b22f5cc5871ad48d528114c7c964527de298",
+      "actual": "9198302b66e8049406ed660cacb8b22f5cc5871ad48d528114c7c964527de298",
+      "ok": true
+    },
+    {
+      "path": ".codex/evidencia-fase10a-v2/rollback/v1/verificar-roles-rutas.cjs",
+      "expected": "b723b6c8270a625625f54296bf5af1f081e61f06bb2b7a0e3561f85b80035c94",
+      "actual": "b723b6c8270a625625f54296bf5af1f081e61f06bb2b7a0e3561f85b80035c94",
+      "ok": true
+    }
+  ],
+  "bateriaAutor": {
+    "total": 22,
+    "correctos": 22,
+    "resultados": [
+      {
+        "id": "f2-salvaguardas-entornos",
+        "estado": 0,
+        "resumen": "43/43"
+      },
+      {
+        "id": "f3-urls-medios",
+        "estado": 0,
+        "resumen": "16/16"
+      },
+      {
+        "id": "f3-lectura-mixta",
+        "estado": 0,
+        "resumen": "7/7"
+      },
+      {
+        "id": "f3-salida-segura",
+        "estado": 0,
+        "resumen": "9/9"
+      },
+      {
+        "id": "f3-fuentes-huerfanos",
+        "estado": 0,
+        "resumen": "9/9"
+      },
+      {
+        "id": "f3-cli-huerfanos",
+        "estado": 0,
+        "resumen": "23/23"
+      },
+      {
+        "id": "f3-guardas-interfaz-r2",
+        "estado": 0,
+        "resumen": "49/49"
+      },
+      {
+        "id": "f4-categorias-completas",
+        "estado": 0,
+        "resumen": "31/31"
+      },
+      {
+        "id": "f4-catalogo-publico",
+        "estado": 0,
+        "resumen": "27/27"
+      },
+      {
+        "id": "f7-conteos",
+        "estado": 0,
+        "resumen": "CORRECTO"
+      },
+      {
+        "id": "f9-lib",
+        "estado": 0,
+        "resumen": "17/17"
+      },
+      {
+        "id": "f9-cli",
+        "estado": 0,
+        "resumen": "18/18"
+      },
+      {
+        "id": "f1-cupones",
+        "estado": 0,
+        "resumen": null
+      },
+      {
+        "id": "f4-catalogos-interfaz",
+        "estado": 0,
+        "resumen": "31/31"
+      },
+      {
+        "id": "f4-barras-seleccion",
+        "estado": 0,
+        "resumen": "17/17"
+      },
+      {
+        "id": "f4-fotos-sesion",
+        "estado": 0,
+        "resumen": "8/8"
+      },
+      {
+        "id": "f5-listas-sesion",
+        "estado": 0,
+        "resumen": "32/32"
+      },
+      {
+        "id": "f6-sesion-larga",
+        "estado": 0,
+        "resumen": "21/21"
+      },
+      {
+        "id": "f8-pwa-v2",
+        "estado": 0,
+        "resumen": "9/9"
+      },
+      {
+        "id": "f10a-herramientas",
+        "estado": 0,
+        "resumen": "38/38"
+      },
+      {
+        "id": "f10a-compat-deudas",
+        "estado": 0,
+        "resumen": "22/22"
+      },
+      {
+        "id": "f10a-roles-rutas",
+        "estado": 0,
+        "resumen": "19/19"
+      }
+    ]
+  },
+  "rolesAutor": {
+    "total": 19,
+    "fallos": 0,
+    "rutas": {
+      "visitante": 46,
+      "clienta": 46,
+      "asistente": 46,
+      "cajera": 46,
+      "admin": 46
+    }
+  },
+  "compatAutor": {
+    "casos": 21,
+    "intacto": true,
+    "codigoPsql": 0,
+    "errores": [],
+    "casosFallidos": [],
+    "estadoActualLocal": {
+      "deudas": 59,
+      "pagos": 8,
+      "sumaPagos": 79,
+      "firmaDeudas": "98734d8454b3fdac9007e277449705c2",
+      "triggersCompat": 0,
+      "funcionesCompat": 0,
+      "deudasPrueba": 0,
+      "asistentesAuth": 0,
+      "asistentesPerfil": 0
+    },
+    "coincidenFirmaConteos": true
+  },
+  "rendimientoAutor": {
+    "total": 46,
+    "fallos": 18,
+    "veredicto": "NO CUMPLE",
+    "problemas": [],
+    "global": false,
+    "erroresMuestras": 0
+  },
+  "limites": "Corroboración de hashes/aritmética y lectura actual de Local. No repite la batería completa ni el SQL mutante del borrador; no hay snapshot V1 de todo src, solo de los archivos controlados listados."
+}

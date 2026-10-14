@@ -1,0 +1,68 @@
+{
+  "fecha": "2026-10-11T03:07:44.766Z",
+  "commit": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "identidadCommit": true,
+  "servidor": [
+    {
+      "archivo": "cloudflare/medios-pages/entrega.js",
+      "hashManifiesto": "8302759d8eedfab797731e8c5f695a6297ac977284ebb0deb9d7ab1e34ccf3db",
+      "hashArchivo": "8302759d8eedfab797731e8c5f695a6297ac977284ebb0deb9d7ab1e34ccf3db",
+      "hashGit": "8f2e452eadc33283485156bdf5ed05a9a0dad4005b53cc6473817801c3acbcf4",
+      "coincide": false
+    },
+    {
+      "archivo": "functions/medios/[[ruta]].js",
+      "hashManifiesto": "e04293be6dd628f18d5827e775982e9f9bf9d3a1feb8e619e3f09117bc51f97c",
+      "hashArchivo": "e04293be6dd628f18d5827e775982e9f9bf9d3a1feb8e619e3f09117bc51f97c",
+      "hashGit": "64fe96159bcd4203c6a37cbd16d556c1f006b745129983568a208f6a94c98d87",
+      "coincide": false
+    },
+    {
+      "archivo": "functions/medios.js",
+      "hashManifiesto": "db4dcd5f8cc789043f7184bf72dcf8ae33978202cd83fdfced0e0d1e555b7d6c",
+      "hashArchivo": "db4dcd5f8cc789043f7184bf72dcf8ae33978202cd83fdfced0e0d1e555b7d6c",
+      "hashGit": "960af9ad8c67cdcd1a934a7ae1463e85a52d913131fd61166ed2ef0e3fec4eff",
+      "coincide": false
+    }
+  ],
+  "configuracionMixta": true,
+  "configuraciones": [
+    {
+      "archivo": "dist/assets/index-wNHNGUlW.js",
+      "configs": [
+        {
+          "proveedor": "supabase",
+          "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+          "publica": "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios"
+        }
+      ],
+      "extras": [
+        "https://pub-b248edba3e19402382b557a35b33c674.r2.dev"
+      ]
+    }
+  ],
+  "hallazgos": [],
+  "archivosDist": 180,
+  "swSha256": "3366f401561636524a06a4665f69dee2902f67c4788795c63464c8470823ea4e",
+  "swCoincideManifiesto": true,
+  "swExcluyeMedios": true,
+  "ml03PeticionesInterceptadas": true,
+  "peticionesInterceptadas": [
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332202/m.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332201/g.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332204/m.webp",
+    "https://feat-cloudflare-pages.pos-jaise.pages.dev/medios/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332203/g.webp",
+    "https://ajena.example.org/fotos-galeria/0f1e2d3c-4b5a-4968-8777-665544332209/g.webp"
+  ],
+  "ml03Nuevo": {
+    "casos": 7,
+    "fallos": 0
+  },
+  "controlNegativo": true,
+  "negativos": [
+    "URL antigua r2.dev (destino fotos-galeria, UUID y variante g) → se pide por /medios del alias conservando UUID y variante",
+    "URL antigua r2.dev con variante m → /medios conservando la variante m"
+  ],
+  "nota": "Comparación servidor contra git show del commit exacto; frontend evaluado por roles y en navegador. No reconstruye ni publica. La red externa del navegador se simula/aborta y los SW se bloquearon explícitamente en la copia del auditor.",
+  "aceptado": false
+}

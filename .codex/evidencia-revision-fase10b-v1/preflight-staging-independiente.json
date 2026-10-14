@@ -1,0 +1,73 @@
+{
+  "fecha": "2026-10-13T19:12:51.454Z",
+  "soloLectura": true,
+  "sinLogin": true,
+  "preflight": {
+    "app": "https://43d3eeb4.pos-jaise.pages.dev",
+    "buildId": "05b7be34",
+    "modulos": 143,
+    "backend": "staging (tqkd…)"
+  },
+  "observaciones": [
+    {
+      "ruta": "/",
+      "status": 200,
+      "sha256": "839cd059449ee6038432a3bcde20bb24e7157d86f44af7a8c554492e959afe19",
+      "buildId": "05b7be34",
+      "headers": {
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex"
+      },
+      "esSpa": true
+    },
+    {
+      "ruta": "/sw.js",
+      "status": 200,
+      "sha256": "b9ab824a604facadac8d27e41712e28c5165c9905f648fb37f0beafe2057a61d",
+      "buildId": null,
+      "headers": {
+        "cache": "no-cache",
+        "nosniff": "nosniff",
+        "robots": "noindex"
+      },
+      "esSpa": false
+    },
+    {
+      "ruta": "/medios",
+      "status": 404,
+      "sha256": "003cb16205827f027fe5903a1ed9fdc53d46a3bdd3e067390a010e136cacb76b",
+      "buildId": null,
+      "headers": {
+        "cache": "no-store",
+        "nosniff": "nosniff",
+        "robots": "noindex"
+      },
+      "esSpa": false
+    },
+    {
+      "ruta": "/ventas",
+      "status": 200,
+      "sha256": "839cd059449ee6038432a3bcde20bb24e7157d86f44af7a8c554492e959afe19",
+      "buildId": "05b7be34",
+      "headers": {
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex"
+      },
+      "esSpa": true
+    },
+    {
+      "ruta": "/productos",
+      "status": 200,
+      "sha256": "839cd059449ee6038432a3bcde20bb24e7157d86f44af7a8c554492e959afe19",
+      "buildId": "05b7be34",
+      "headers": {
+        "cache": "public, max-age=0, must-revalidate",
+        "nosniff": "nosniff",
+        "robots": "noindex"
+      },
+      "esSpa": true
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+const cp = require('node:child_process');
+const root = 'C:/WedJaiseReact';
+const out = __dirname;
+const listen = s => new Promise(resolve => s.listen(0, '127.0.0.1', () => resolve(s.address().port)));
+const close = s => new Promise(resolve => s.close(resolve));
+const run = (args, options = {}) => new Promise(resolve => {
+  const p = cp.spawn(process.execPath, args, { cwd: root, ...options });
+  let text = '';
+  p.stdout.on('data', b => text += b);
+  p.stderr.on('data', b => text += b);
+  p.on('close', code => resolve({ code, text }));
+});
+async function main() {
+  const result = { fecha: new Date().toISOString(), pruebas: [] };
+  const budgetOut = path.join(out, 'evaluador-vacio');
+  const budget = await run([root + '/scripts/fase10a/medir-rendimiento-10a.mjs', '--evaluar', '--salida=' + budgetOut]);
+  const empty = JSON.parse(fs.readFileSync(path.join(budgetOut, 'presupuestos-resultado.json')));
+  result.pruebas.push({ id: 'evaluacion-sin-mediciones', exit: budget.code, total: empty.total, fallos: empty.fallos, stdout: budget.text.trim(), defectoReproducido: budget.code === 0 && empty.total === 0 });
+
+  const fixture = path.join(out, 'servidor-fixture');
+  const sibling = fixture + '-ajeno';
+  fs.mkdirSync(fixture, { recursive: true }); fs.mkdirSync(sibling, { recursive: true });
+  fs.writeFileSync(path.join(fixture, 'index.html'), '<html><body>SITIO QA PROPIO</body></html>');
+  fs.writeFileSync(path.join(sibling, 'marca.txt'), 'MARCA_FICTICIA_FUERA_DE_LA_RAIZ');
+  const reserve = http.createServer(); const port = await listen(reserve); await close(reserve);
+  const server = cp.spawn(process.execPath, [root + '/scripts/fase10a/servir-como-pages.cjs', fixture, String(port)], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] });
+  let ready = ''; server.stdout.on('data', b => ready += b);
+  try {
+    const deadline = Date.now() + 10000;
+    while (!ready.includes('http://127.0.0.1:') && Date.now() < deadline) await new Promise(r => setTimeout(r, 50));
+    if (!ready.includes('http://127.0.0.1:')) throw new Error('No arrancó el servidor QA propio');
+    const url = `http://127.0.0.1:${port}/..%2fservidor-fixture-ajeno%2fmarca.txt`;
+    const response = await fetch(url); const body = await response.text();
+    result.pruebas.push({ id: 'servidor-escape-prefijo', ruta: '/..%2fservidor-fixture-ajeno%2fmarca.txt', status: response.status, leeMarcaAjena: body === 'MARCA_FICTICIA_FUERA_DE_LA_RAIZ', defectoReproducido: response.status === 200 && body === 'MARCA_FICTICIA_FUERA_DE_LA_RAIZ' });
+    const healthy = await fetch(`http://127.0.0.1:${port}/ventas`);
+    result.pruebas.push({ id: 'control-fallback-propio', status: healthy.status, ok: (await healthy.text()).includes('SITIO QA PROPIO') });
+  } finally { server.kill(); await new Promise(resolve => server.exitCode !== null ? resolve() : server.once('close', resolve)); }
+
+  const posts = [];
+  const sink = http.createServer(async (req, res) => {
+    if (req.method === 'OPTIONS') { res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type' }); res.end(); return; }
+    let body = ''; for await (const b of req) body += b;
+    if (req.method === 'POST') {
+      const values = new URLSearchParams(body);
+      posts.push({ ruta: req.url, metodo: req.method, emailFicticio: values.get('email')?.endsWith('@test.invalid') === true, passwordFicticiaRecibida: values.get('password') === 'CLAVE-FICTICIA-SOLO-DIAGNOSTICO' });
+    }
+    res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }); res.end('{}');
+  });
+  const sinkPort = await listen(sink);
+  const app = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<html><body><form><input id="email" name="email"><input id="password" name="password" type="password"><button type="submit">Entrar</button></form><script>document.querySelector('form').addEventListener('submit', async e => { e.preventDefault(); await fetch('http://127.0.0.1:${sinkPort}/auth/token', { method: 'POST', body: new URLSearchParams(new FormData(e.target)) }); location.href='/inicio'; });</script></body></html>`);
+  });
+  const appPort = await listen(app);
+  const accountFile = path.join(out, 'cuentas-totalmente-ficticias.json');
+  fs.writeFileSync(accountFile, JSON.stringify({ admin: { email: 'qa-admin@test.invalid', password: 'CLAVE-FICTICIA-SOLO-DIAGNOSTICO' }, clienteA: { email: 'qa-clienta@test.invalid', password: 'CLAVE-FICTICIA-SOLO-DIAGNOSTICO' } }));
+  // Copia diagnóstica externa: las guardas iniciales y sesionDe se conservan literalmente.
+  // Solo resuelve Playwright fuera del repo y termina después de ambos logins, antes de medir.
+  const original = fs.readFileSync(root + '/scripts/fase10a/medir-vitales-10a.cjs', 'utf8');
+  const cut = '    const estadoDe = (e) =>';
+  if (!original.includes(cut)) throw new Error('Cambió la forma del medidor; no se adapta');
+  const copy = original.replace("require('playwright')", "require('C:/WedJaiseReact/node_modules/playwright')").replace(cut, '    return;\n' + cut);
+  const diagnosticFile = path.join(out, 'arranque-login-diagnostico.cjs');
+  fs.writeFileSync(diagnosticFile, copy);
+  try {
+    const login = await run([diagnosticFile, '--app=http://127.0.0.1:' + appPort, '--cuentas=' + accountFile, '--salida=' + path.join(out, 'arranque-login.json')]);
+    result.pruebas.push({ id: 'login-a-backend-no-aprobado', exit: login.code, backendPermitidoPorContrato: 'http://127.0.0.1:54321', backendFicticioObservado: 'http://127.0.0.1:' + sinkPort, appFicticia: 'http://127.0.0.1:' + appPort, posts, defectoReproducido: login.code === 0 && posts.length === 2 && posts.every(p => p.emailFicticio && p.passwordFicticiaRecibida), stderr: login.code ? login.text.slice(0, 1500) : undefined, limites: 'Copia de diagnóstico del arranque, con dos cuentas inventadas y dos servidores de loopback. Sin Supabase Auth real ni red externa. Docker/psql originales solo leen Local.' });
+  } finally { await close(app); await close(sink); }
+  fs.writeFileSync(path.join(out, 'diagnosticos-herramientas.json'), JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result, null, 2));
+}
+main().catch(e => { console.error(e); process.exitCode = 1; });

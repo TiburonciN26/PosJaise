@@ -1,0 +1,43 @@
+{
+ "fecha": "2026-10-13T16:36:55.262Z",
+ "build": {
+  "dist": "C:\\Users\\jdeos\\AppData\\Local\\Temp\\claude\\c--WedJaiseReact\\11cf04d8-3d08-4875-b1f5-84eda8bf65da\\scratchpad\\f10a\\dist-main",
+  "indexSha256": "240caac1e95ced938d88fcb1fc8f9a368c828b0119646074a9148379a64a06f1"
+ },
+ "metodo": "UI compilada de main contra Supabase Local (login QA). Deuda ficticia y respuesta del PATCH servidas por el interceptor: ninguna escritura llega a la base.",
+ "deuda": {
+  "monto": 100,
+  "abonoPrevioSupuesto": 30,
+  "saldoReal": 70
+ },
+ "visibleEnMainAntes": {
+  "muestra100": true,
+  "muestraSaldo70": false,
+  "pendiente": true
+ },
+ "intentoDeCobro": {
+  "parches": [
+   {
+    "consulta": "?id=eq.f1020000-0000-4000-8000-000000000001",
+    "cuerpo": {
+     "estado": "COBRADA",
+     "cobrado_en": "2026-10-13T16:36:54.380Z"
+    }
+   }
+  ],
+  "autorizaImporte": false
+ },
+ "respuestaSimulada": {
+  "status": 400,
+  "code": "P0001",
+  "message": "La deuda tiene abonos registrados (S/ 30.00 de S/ 100.00); cóbrala en la versión actual, que muestra el saldo.",
+  "origen": "ensayo SQL S2b (mismo UPDATE, administradora QA con RLS, borrador V3)"
+ },
+ "reaccionDeMain": {
+  "avisoDeError": true,
+  "sigue100": true,
+  "siguePendiente": true
+ },
+ "escriturasAbortadas": [],
+ "ok": true
+}

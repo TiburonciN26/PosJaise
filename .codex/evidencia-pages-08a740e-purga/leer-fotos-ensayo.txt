@@ -1,0 +1,5 @@
+import fs from 'node:fs';
+const r=JSON.parse(fs.readFileSync('C:/WedJaiseReact/.codex/evidencia-rollback-galeria/ensayo-B.json'));
+const antes=r.casos.find(c=>c.nombre.startsWith('relectura: la fila tiene exactamente')).detalle;
+const fotos=[];for(const url of [antes.antes_url,antes.despues_url]){const u=new URL(url);if(u.origin!=='https://feat-cloudflare-pages.pos-jaise.pages.dev'||!u.pathname.startsWith('/medios/fotos-galeria/'))throw new Error('URL no aprobada');const x=await fetch(url,{redirect:'error'});fotos.push({url,estado:x.status,cache:x.headers.get('cache-control'),medios:x.headers.get('x-medios-cache'),ray:x.headers.get('cf-ray')});await x.arrayBuffer();}
+const result={fecha:new Date().toISOString(),nota:'GET públicos de las dos fotos g ficticias ya borradas; no purga ni escrituras.',fotos};fs.writeFileSync(new URL('./fotos-ensayo-actual.json',import.meta.url),JSON.stringify(result,null,2),{flag:'wx'});console.log(JSON.stringify(result,null,2));

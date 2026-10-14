@@ -1,0 +1,102 @@
+[
+  {
+    "file": "solo-lectura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+    "fecha": "2026-10-10T04:28:00.976Z",
+    "total": 8,
+    "fallos": 0,
+    "escribio": false,
+    "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+    "publico": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+    "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+    "ok": true,
+    "fotos": [],
+    "advertencias": [
+      "El dominio público es r2.dev: la guía lo reserva para desarrollo; producción debe usar un dominio propio con caché de Cloudflare."
+    ]
+  },
+  {
+    "file": "con-escritura-pos-jaise-medios-staging.jdeostuas2.workers.dev.json",
+    "fecha": "2026-10-10T04:27:00.415Z",
+    "total": 30,
+    "fallos": 0,
+    "escribio": true,
+    "api": "https://pos-jaise-medios-staging.jdeostuas2.workers.dev",
+    "publico": "https://pub-b248edba3e19402382b557a35b33c674.r2.dev",
+    "origen": "https://feat-cloudflare-pages.pos-jaise.pages.dev",
+    "ok": true,
+    "fotos": [
+      {
+        "foto": "hero-antes-referencia.jpg",
+        "mKiB": 3.8,
+        "gKiB": 8.3,
+        "medianaMs": 147,
+        "cache": {
+          "sin-cabecera": 8
+        },
+        "cumple": true
+      },
+      {
+        "foto": "hero-despues-referencia.jpg",
+        "mKiB": 4.4,
+        "gKiB": 9.5,
+        "medianaMs": 138,
+        "cache": {
+          "sin-cabecera": 8
+        },
+        "cumple": true
+      },
+      {
+        "foto": "antes-claro.webp",
+        "mKiB": 9.3,
+        "gKiB": 22.2,
+        "medianaMs": 140,
+        "cache": {
+          "sin-cabecera": 8
+        },
+        "cumple": true
+      },
+      {
+        "foto": "foto-login.jpeg",
+        "mKiB": 7.5,
+        "gKiB": 15.5,
+        "medianaMs": 138,
+        "cache": {
+          "sin-cabecera": 8
+        },
+        "cumple": true
+      }
+    ],
+    "borrado": [
+      {
+        "grupo": "fotos-productos/30c72668-2421-47d9-a149-b96cdbe14961",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/a8f5dfc4-15e7-4220-8902-992987944f94",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/1aff2a0a-e376-481b-88ad-5b709aff8359",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      },
+      {
+        "grupo": "fotos-productos/12cc57dd-cf42-4eaa-9ac9-ceba9ea96cc3",
+        "delete": 200,
+        "lecturaPublicaTrasBorrar": 404,
+        "cache": null
+      }
+    ],
+    "advertencias": [
+      "El dominio público es r2.dev: la guía lo reserva para desarrollo; producción debe usar un dominio propio con caché de Cloudflare.",
+      "Se usaron las fotos de referencia del repositorio, NO fotos de catálogo: el peso real del catálogo sigue sin medirse (use --fotos-dir).",
+      "r2.dev no envía X-Content-Type-Options: nosniff; configurarlo en el dominio propio (Transform Rule de cabecera de respuesta) antes de producción.",
+      "El dominio público no devuelve cf-cache-status: no hay caché de Cloudflare delante (r2.dev); HIT/MISS solo se puede validar con un dominio propio."
+    ]
+  }
+]

@@ -1,0 +1,247 @@
+{
+  "fechaCliente": "2026-10-11",
+  "head": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "hashes": {
+    "src/components/PestanasCacheadas.jsx": "430aba54c3a304c2ede7919acaf28a2ae0b9dec28c35978109e5c53f061d3b7b",
+    "src/lib/estadoVista.js": "4eaba6e22342e05447762d850631073951e7ee6a088f4e6233bac08cd68a776e",
+    "src/context/PaginaActivaContext.jsx": "0f9f036ce615d67ac02f35d1d2823430f9e48f222a9700abdf0ebf43b81494b6",
+    "src/hooks/useCerrarConEscape.js": "7aabd6f9639d98bb8074f76df0ab6205b532037d5283d6b85a4472346f194a58",
+    "src/hooks/useTextoEscritura.js": "e66d7e72e2031fd94a6b9e38eed787488ba8deb8e378c532caaa80fc3a35e5f8",
+    "src/hooks/usePreferenciasMovimiento.js": "335dbc6483380a3cdef7a70c21de2170c4286f5c7476eeb1e1dc96730363e9e3",
+    "src/lib/bucleAnimacion.js": "475012a71097f5d074881a43cb439ed363ab760c4ccf2c0d55ef0ebd6e54faf7",
+    "src/components/TarjetaPuntos.jsx": "3401aed169310dfd40cd520d002c4baf4c515bb75c9da2b85e47ef0716cb9561",
+    "src/components/FondoNivel.jsx": "f2058e912739d71c75f7ec230439a6b0790c066fd319a036941c9cd326be8008",
+    "src/pages/Dashboard.jsx": "da1cefe8b16bd6646c90010a7e5bdd7f31febe50722f7e811b985eef32e7d78e",
+    "src/pages/Historial.jsx": "eff36d5678737aa154ad7b7695a8259a70281319c596c95f674818010845ab23",
+    "src/pages/Auditoria.jsx": "8a83b8da301fad6e87ba9a7a13789a65ae5dbe3cec46e20d23dab6a0139cd652",
+    "src/pages/Estadisticas.jsx": "bb9ef7ab647e40a845cd192f18a69d2bb827c52f0e103742320cec6053e9efc8",
+    "src/pages/MiPanel.jsx": "c2e921db32d715577748818d0600f29369bb855a429792ddc52c0de56f8dd072",
+    "src/pages/PuntosWeb.jsx": "eaab9a21995a892f18931e0f1971e6837906850138a68f81e7d5eba05a6ec4b1",
+    "src/pages/Promociones.jsx": "3994b9607edd7501b414510fdc1e7069862d974da56478bbfa36c14b80a8fe58",
+    "src/pages/RecompensasWeb.jsx": "faa4ef0ea4135273f55c9251c439263592c22f518e468a4c0e99ba5443d7409a",
+    "src/pages/cliente/InicioCliente.jsx": "5b352c9997b56998917bd32c2f1e220618cad9b7700a5d6632f0034560fc7079"
+  },
+  "medicionesClaude": {
+    "alcance": "Auditoría de muestras guardadas, NO repetición de rendimiento por Codex",
+    "antes": [
+      {
+        "ciclo": 1,
+        "fin": {
+          "heapMB": 10.14,
+          "escuchas": 927,
+          "nodosCDP": 7826,
+          "nodos": 5675,
+          "pantallas": 27,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 179,
+          "estilos": 424,
+          "tarea": 1.9868,
+          "script": 0.672826
+        },
+        "maxNodos": {
+          "ruta": "/galeria-web",
+          "nodos": 4938
+        },
+        "maxHeap": 9.88,
+        "ms": 9422,
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 74,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 13.8,
+          "scriptMsPorSeg": 9.4,
+          "layoutPorSeg": 2,
+          "estilosPorSeg": 2
+        }
+      },
+      {
+        "ciclo": 2,
+        "fin": {
+          "heapMB": 24.6,
+          "escuchas": 2740,
+          "nodosCDP": 33750,
+          "nodos": 26392,
+          "pantallas": 27,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 436,
+          "estilos": 1049,
+          "tarea": 7.878988,
+          "script": 2.472309
+        },
+        "maxNodos": {
+          "ruta": "/recompensas-web",
+          "nodos": 26483
+        },
+        "maxHeap": 24.61,
+        "ms": 39592,
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 78.9,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 12.8,
+          "scriptMsPorSeg": 8.6,
+          "layoutPorSeg": 2,
+          "estilosPorSeg": 2
+        }
+      },
+      {
+        "ciclo": 3,
+        "fin": {
+          "heapMB": 25.05,
+          "escuchas": 2740,
+          "nodosCDP": 33751,
+          "nodos": 26392,
+          "pantallas": 27,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 675,
+          "estilos": 1881,
+          "tarea": 17.060855,
+          "script": 5.206689
+        },
+        "maxNodos": {
+          "ruta": "/promociones",
+          "nodos": 26404
+        },
+        "maxHeap": 25.11,
+        "ms": 42851,
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 84,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 12.7,
+          "scriptMsPorSeg": 9,
+          "layoutPorSeg": 1,
+          "estilosPorSeg": 1
+        }
+      }
+    ],
+    "despues": [
+      {
+        "ciclo": 1,
+        "fin": {
+          "heapMB": 7.79,
+          "escuchas": 566,
+          "nodosCDP": 4059,
+          "nodos": 2600,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 175,
+          "estilos": 444,
+          "tarea": 1.68867,
+          "script": 0.439969
+        },
+        "maxNodos": {
+          "ruta": "/catalogo-web",
+          "nodos": 1880
+        },
+        "maxHeap": 7.44,
+        "ms": 9377,
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 2.2,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 2,
+          "scriptMsPorSeg": 0.4,
+          "layoutPorSeg": 2.2,
+          "estilosPorSeg": 2.2
+        }
+      },
+      {
+        "ciclo": 2,
+        "fin": {
+          "heapMB": 8.97,
+          "escuchas": 610,
+          "nodosCDP": 4447,
+          "nodos": 2856,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 622,
+          "estilos": 1242,
+          "tarea": 5.66153,
+          "script": 1.664383
+        },
+        "maxNodos": {
+          "ruta": "/mobiliario",
+          "nodos": 13016
+        },
+        "maxHeap": 14.37,
+        "ms": 40569,
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 2.2,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 2.7,
+          "scriptMsPorSeg": 0.4,
+          "layoutPorSeg": 2,
+          "estilosPorSeg": 2
+        }
+      },
+      {
+        "ciclo": 3,
+        "fin": {
+          "heapMB": 9.08,
+          "escuchas": 610,
+          "nodosCDP": 4447,
+          "nodos": 2856,
+          "pantallas": 6,
+          "pantallasVisibles": 1,
+          "intervalos": 1,
+          "layout": 1072,
+          "estilos": 2043,
+          "tarea": 9.57991,
+          "script": 2.783854
+        },
+        "maxNodos": {
+          "ruta": "/mobiliario",
+          "nodos": 13016
+        },
+        "maxHeap": 14.7,
+        "ms": 40970,
+        "reposo": {
+          "rafPorSeg": 0,
+          "timeoutsPorSeg": 2.5,
+          "intervalosActivos": 1,
+          "tareaMsPorSeg": 2.1,
+          "scriptMsPorSeg": 0.5,
+          "layoutPorSeg": 2.2,
+          "estilosPorSeg": 2.2
+        }
+      }
+    ],
+    "erroresAntes": [],
+    "erroresDespues": []
+  },
+  "suitesClaude": {
+    "fase6": {
+      "casos": 11,
+      "fallos": 0
+    },
+    "fase5": {
+      "casos": 34,
+      "fallos": 0
+    },
+    "nota": "No ejecutadas: emplean siembra/limpieza SQL mutante"
+  },
+  "baseLectura": {
+    "clientesQA": 0,
+    "promocionesQA": 0,
+    "cuponesQA": 0,
+    "reseñasQA": 0
+  },
+  "rollback": {
+    "exclusivos": 24,
+    "checkInverso": "pasa, no aplicado",
+    "mixtos": "receta manual, observación en informe"
+  },
+  "lint": {
+    "exit": 0,
+    "errores": 0,
+    "avisos": 11,
+    "alcance": "JS/JSX del parche de exclusivos y archivos compartidos/nuevos indicados; no se acredita aquí que todos los avisos sean previos"
+  }
+}

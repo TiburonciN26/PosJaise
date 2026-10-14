@@ -1,0 +1,8 @@
+{
+  "fecha": "2026-10-13T19:47:18.9752417Z",
+  "adaptador": "Original sin -EjecutorPsql; alias temporal docker apunta a ejecutable inexistente en la carpeta QA",
+  "sinRed": true,
+  "error": "The term 'C:\\Users\\jdeos\\.codex\\visualizations\\2026\\10\\09\\01a11ea8-be2a-7611-8e67-4ded5cca3f25\\revision-fase10b-v2\\docker-qa-inexistente.exe' is not recognized as a name of a cmdlet, function, script file, or executable program.\r\nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.",
+  "archivoAnteriorIntacto": true,
+  "primeraLinea": "ESTADO|COMPLETO"
+}

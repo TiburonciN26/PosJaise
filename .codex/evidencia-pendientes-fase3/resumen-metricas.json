@@ -1,0 +1,53 @@
+{
+  "fecha": "2026-10-10T23:17:07.592Z",
+  "referencia": {
+    "commit": "d16d816f4d64cde80c230092126ed8204c6ce0e9",
+    "build": "d16d816f"
+  },
+  "cuenta": {
+    "requestsToday": 1015,
+    "limite": 100000,
+    "porcentaje": 1.015,
+    "usoFacturableWorkersUSD": 0,
+    "periodo": "10 oct - 10 nov; lectura de panel"
+  },
+  "worker": {
+    "horas": 24,
+    "invocaciones": 855,
+    "errores": 0,
+    "p50CPUms": 1.88,
+    "p90CPUms": 2.5,
+    "p99CPUms": 3.06,
+    "p999CPUms": 3.08,
+    "medianaVersionActivaMs": 1.97
+  },
+  "pages": {
+    "entorno": "Preview",
+    "horas": 24,
+    "success": 160,
+    "errores": 0,
+    "cpuLiteral": {
+      "p50": "2,020",
+      "p75": "2,907",
+      "p99": "8,760",
+      "p999": "9,346"
+    },
+    "unidades": "ambiguas: eje dice ms y árbol accesible usa valores 2020..9346; no normalizar para aceptación sin confirmación"
+  },
+  "r2": {
+    "bucket": "pos-jaise-medios-staging",
+    "horas": 24,
+    "claseA_Tarjeta": 626,
+    "claseB_Tarjeta": 375,
+    "claseA_Grafica": 620,
+    "claseB_Grafica": 373,
+    "bytesActuales": 0
+  },
+  "navegadores": {
+    "chromium": true,
+    "firefoxPlaywright": false,
+    "webkitPlaywright": false,
+    "dispositivoUsuario": "Samsung S23 Ultra",
+    "safariFisicoDisponible": false
+  }
+}

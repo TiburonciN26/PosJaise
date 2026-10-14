@@ -1,0 +1,39 @@
+{
+  "fecha": "2026-10-10T02:43:37.941Z",
+  "entorno": "Modales reales + simulador REST en memoria + Worker local con R2 simulado; Supabase staging solo para iniciar sesión",
+  "total": 3,
+  "fallos": 1,
+  "casos": [
+    {
+      "nombre": "F3-07 GALERÍA: una lectura con par distinto NO autoriza borrar la foto antes todavía referenciada",
+      "http": [
+        404,
+        200
+      ],
+      "rows": 1,
+      "dbUnchanged": true,
+      "before": [
+        true,
+        true
+      ],
+      "after": [
+        false,
+        true
+      ],
+      "events": 0,
+      "text": "Nueva foto de galería\nFoto de antes *\nCambiar foto\nFoto de después *\nCambiar foto\nTítulo\nOrden\n\nLas fotos con número más chico van primero.\n\nVisible en la Web\n\nNo se pudo guardar. Intenta de nuevo.\n\nCancelar\nGuardar",
+      "ok": false
+    },
+    {
+      "nombre": "aislamiento: ninguna petición REST/Storage fuera de las tablas simuladas llegó a Supabase",
+      "noSimuladas": [],
+      "supabaseNoAuth": [],
+      "ok": true
+    },
+    {
+      "nombre": "sin errores de página en todo el recorrido",
+      "errores": [],
+      "ok": true
+    }
+  ]
+}

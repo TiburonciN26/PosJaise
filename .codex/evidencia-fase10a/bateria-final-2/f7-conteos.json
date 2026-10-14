@@ -1,0 +1,189 @@
+{
+ "parteA": {
+  "todos/-": {
+   "CONTEO": 432,
+   "PAGINA": 432
+  },
+  "todos/zzqf7": {
+   "CONTEO": 3,
+   "PAGINA": 3
+  },
+  "todos/zzqf7 maria": {
+   "CONTEO": 2,
+   "PAGINA": 2
+  },
+  "todos/maria": {
+   "CONTEO": 2,
+   "PAGINA": 2
+  },
+  "todos/ana": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "todos/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "ENTREGADO/-": {
+   "CONTEO": 92,
+   "PAGINA": 92
+  },
+  "ENTREGADO/zzqf7": {
+   "CONTEO": 2,
+   "PAGINA": 2
+  },
+  "ENTREGADO/zzqf7 maria": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "ENTREGADO/maria": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "ENTREGADO/ana": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "ENTREGADO/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "LISTO/-": {
+   "CONTEO": 85,
+   "PAGINA": 85
+  },
+  "LISTO/zzqf7": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "LISTO/zzqf7 maria": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "LISTO/maria": {
+   "CONTEO": 1,
+   "PAGINA": 1
+  },
+  "LISTO/ana": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "LISTO/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "PENDIENTE/-": {
+   "CONTEO": 44,
+   "PAGINA": 44
+  },
+  "PENDIENTE/zzqf7": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "PENDIENTE/zzqf7 maria": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "PENDIENTE/maria": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "PENDIENTE/ana": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  },
+  "PENDIENTE/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0
+  }
+ },
+ "parteB": {
+  "todos/-": {
+   "CONTEO": 429,
+   "PAGINA": 429,
+   "app": 429
+  },
+  "todos/TEST": {
+   "CONTEO": 429,
+   "PAGINA": 429,
+   "app": 429
+  },
+  "todos/clienteWebTest01": {
+   "CONTEO": 2,
+   "PAGINA": 2,
+   "app": 2
+  },
+  "todos/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0,
+   "app": 0
+  },
+  "ENTREGADO/-": {
+   "CONTEO": 90,
+   "PAGINA": 90,
+   "app": 90
+  },
+  "ENTREGADO/TEST": {
+   "CONTEO": 90,
+   "PAGINA": 90,
+   "app": 90
+  },
+  "ENTREGADO/clienteWebTest01": {
+   "CONTEO": 0,
+   "PAGINA": 0,
+   "app": 0
+  },
+  "ENTREGADO/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0,
+   "app": 0
+  },
+  "LISTO/-": {
+   "CONTEO": 84,
+   "PAGINA": 84,
+   "app": 84
+  },
+  "LISTO/TEST": {
+   "CONTEO": 84,
+   "PAGINA": 84,
+   "app": 84
+  },
+  "LISTO/clienteWebTest01": {
+   "CONTEO": 0,
+   "PAGINA": 0,
+   "app": 0
+  },
+  "LISTO/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0,
+   "app": 0
+  },
+  "PENDIENTE/-": {
+   "CONTEO": 44,
+   "PAGINA": 44,
+   "app": 44
+  },
+  "PENDIENTE/TEST": {
+   "CONTEO": 44,
+   "PAGINA": 44,
+   "app": 44
+  },
+  "PENDIENTE/clienteWebTest01": {
+   "CONTEO": 1,
+   "PAGINA": 1,
+   "app": 1
+  },
+  "PENDIENTE/noexistexyz": {
+   "CONTEO": 0,
+   "PAGINA": 0,
+   "app": 0
+  }
+ },
+ "control_negativo": {
+  "conteo_antiguo_del_medidor": 2,
+  "conteo_correcto": 1,
+  "discrepa": true
+ },
+ "fallos": [],
+ "veredicto": "CORRECTO"
+}

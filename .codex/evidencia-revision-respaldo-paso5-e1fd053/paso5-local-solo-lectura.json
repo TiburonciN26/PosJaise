@@ -1,0 +1,12 @@
+{
+  "correcto": true,
+  "error": null,
+  "soloLectura": true,
+  "contenedor": "supabase_db_WedJaiseReact",
+  "politicaAusenteRegistrada": true,
+  "migracion08Registrada": true,
+  "politicasPresentes": 1,
+  "funciones": 14,
+  "tablasHuella": 17,
+  "marcadorAusencia": true
+}

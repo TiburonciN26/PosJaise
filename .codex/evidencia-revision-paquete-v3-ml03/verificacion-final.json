@@ -1,0 +1,36 @@
+{
+  "fecha": "2026-10-11T03:10:28.285Z",
+  "fechaLocal": "2026-10-10",
+  "zona": "America/Lima",
+  "commit": "6929c619e88a91434cb16ee6a8d2de90de94c091",
+  "paqueteAceptadoLocalmente": true,
+  "ml03CompiladoCerrado": true,
+  "paquete": {
+    "casos": 6,
+    "fallos": 0
+  },
+  "ml03": {
+    "casos": 7,
+    "fallos": 0,
+    "exitCode": 0
+  },
+  "negativo": {
+    "casos": 7,
+    "fallosEsperados": 2,
+    "exitCode": 1
+  },
+  "servidorMismoContenidoGit": true,
+  "servidorHashesManifiestoCorrectos": true,
+  "configuracionMixta": true,
+  "peticionesML03Interceptadas": true,
+  "hashesFuentes": {
+    "scripts/verificar-ml03-bundle.cjs": "843281eb31419293ed7edc636ccd8ddbb78fcaffcc3e2009de799210a3dd7b1d",
+    "scripts/verificar-paquete-lectura-mixta.mjs": "38c210928b02739be855d34538ed2f05f5bed65ca8e40defc81cdd37052a06fd"
+  },
+  "hashesEvidenciaOriginal": {
+    "positivo": "08487111ad9e943f16493141fb341229473d6500d3c1e10dfbb9d5c2b50faa35",
+    "negativo": "ea1ddb7f3cf530b9bb55b72b2c6c8c2d0e0a9400a2893a2d362bc7821338cb7d",
+    "manifiesto": "667cd7d66c8b1bb8f582185a1646734f82785cc463e58ae5c5ddcfdbebba2abf"
+  },
+  "nota": "Aprobación del paquete local y cierre funcional de ML-03; no despliegue real ni autorización de carga/recolector. El diagnóstico inicial compara bytes exactos con git y da false por CRLF/LF, aclarado en la comprobación final."
+}

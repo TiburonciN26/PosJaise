@@ -1,0 +1,1541 @@
+{
+ "fecha": "2026-10-13T01:59:42.238Z",
+ "presupuestos": "scripts/fase10a/presupuestos-rendimiento.json",
+ "total": 219,
+ "fallos": 16,
+ "filas": [
+  {
+   "grupo": "cupones",
+   "que": "/promociones oscuro · TaskDuration mediana (ms/2,5 s)",
+   "valor": 243.3,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/promociones oscuro · animaciones activas",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/promociones oscuro · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 100",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/referidos-web oscuro · TaskDuration mediana (ms/2,5 s)",
+   "valor": 131.3,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/referidos-web oscuro · animaciones activas",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/referidos-web oscuro · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 100",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/fidelizacion-web oscuro · TaskDuration mediana (ms/2,5 s)",
+   "valor": 113.9,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/fidelizacion-web oscuro · animaciones activas",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/fidelizacion-web oscuro · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 100",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/promociones claro · TaskDuration mediana (ms/2,5 s)",
+   "valor": 62.4,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/promociones claro · animaciones activas",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/promociones claro · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 100",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/referidos-web claro · TaskDuration mediana (ms/2,5 s)",
+   "valor": 87.4,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/referidos-web claro · animaciones activas",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/referidos-web claro · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 100",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/fidelizacion-web claro · TaskDuration mediana (ms/2,5 s)",
+   "valor": 116.4,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/fidelizacion-web claro · animaciones activas",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "cupones",
+   "que": "/fidelizacion-web claro · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 100",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 390px · nodos DOM",
+   "valor": 1403,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 390px · tarjetas montadas",
+   "valor": 11,
+   "limite": "<= 60",
+   "ok": true
+  },
+  {
+   "grupo": "fotos",
+   "que": "productos 390px · imágenes pedidas en la carga",
+   "valor": 1,
+   "limite": "<= 24",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 390px · bytes del catálogo en la carga",
+   "valor": 11984,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 390px · evento de búsqueda máx. (ms)",
+   "valor": 48,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 390px · pedidos al catálogo por búsqueda",
+   "valor": 1,
+   "limite": "<= 3",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 390px · encuentra el objetivo",
+   "valor": true,
+   "limite": "=== true",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 412px · nodos DOM",
+   "valor": 1403,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 412px · tarjetas montadas",
+   "valor": 11,
+   "limite": "<= 60",
+   "ok": true
+  },
+  {
+   "grupo": "fotos",
+   "que": "productos 412px · imágenes pedidas en la carga",
+   "valor": 1,
+   "limite": "<= 24",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 412px · bytes del catálogo en la carga",
+   "valor": 11984,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 412px · evento de búsqueda máx. (ms)",
+   "valor": 48,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 412px · pedidos al catálogo por búsqueda",
+   "valor": 1,
+   "limite": "<= 3",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 412px · encuentra el objetivo",
+   "valor": true,
+   "limite": "=== true",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 1440px · nodos DOM",
+   "valor": 1403,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 1440px · tarjetas montadas",
+   "valor": 11,
+   "limite": "<= 60",
+   "ok": true
+  },
+  {
+   "grupo": "fotos",
+   "que": "productos 1440px · imágenes pedidas en la carga",
+   "valor": 1,
+   "limite": "<= 24",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 1440px · bytes del catálogo en la carga",
+   "valor": 11984,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 1440px · evento de búsqueda máx. (ms)",
+   "valor": 56,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 1440px · pedidos al catálogo por búsqueda",
+   "valor": 1,
+   "limite": "<= 3",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "productos 1440px · encuentra el objetivo",
+   "valor": true,
+   "limite": "=== true",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 390px · nodos DOM",
+   "valor": 733,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 390px · tarjetas montadas",
+   "valor": 16,
+   "limite": "<= 60",
+   "ok": true
+  },
+  {
+   "grupo": "fotos",
+   "que": "servicios 390px · imágenes pedidas en la carga",
+   "valor": 1,
+   "limite": "<= 24",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 390px · bytes del catálogo en la carga",
+   "valor": 15465,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 390px · evento de búsqueda máx. (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 390px · pedidos al catálogo por búsqueda",
+   "valor": 1,
+   "limite": "<= 3",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 390px · encuentra el objetivo",
+   "valor": true,
+   "limite": "=== true",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 412px · nodos DOM",
+   "valor": 733,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 412px · tarjetas montadas",
+   "valor": 16,
+   "limite": "<= 60",
+   "ok": true
+  },
+  {
+   "grupo": "fotos",
+   "que": "servicios 412px · imágenes pedidas en la carga",
+   "valor": 1,
+   "limite": "<= 24",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 412px · bytes del catálogo en la carga",
+   "valor": 15465,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 412px · evento de búsqueda máx. (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 412px · pedidos al catálogo por búsqueda",
+   "valor": 1,
+   "limite": "<= 3",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 412px · encuentra el objetivo",
+   "valor": true,
+   "limite": "=== true",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 1440px · nodos DOM",
+   "valor": 733,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 1440px · tarjetas montadas",
+   "valor": 16,
+   "limite": "<= 60",
+   "ok": true
+  },
+  {
+   "grupo": "fotos",
+   "que": "servicios 1440px · imágenes pedidas en la carga",
+   "valor": 1,
+   "limite": "<= 24",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 1440px · bytes del catálogo en la carga",
+   "valor": 15465,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 1440px · evento de búsqueda máx. (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 1440px · pedidos al catálogo por búsqueda",
+   "valor": 1,
+   "limite": "<= 3",
+   "ok": true
+  },
+  {
+   "grupo": "busqueda",
+   "que": "servicios 1440px · encuentra el objetivo",
+   "valor": true,
+   "limite": "=== true",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-staff · nodos",
+   "valor": 346,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-staff · bytes del API",
+   "valor": 445,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-staff · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-staff · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-staff · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "pedidos-web · nodos",
+   "valor": 1005,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "pedidos-web · bytes del API",
+   "valor": 23430,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "pedidos-web · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "pedidos-web · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "pedidos-web · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "promociones · nodos",
+   "valor": 1277,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "promociones · bytes del API",
+   "valor": 8910,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "promociones · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "promociones · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "promociones · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "resenas-web · nodos",
+   "valor": 1354,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "resenas-web · bytes del API",
+   "valor": 14411,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "resenas-web · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "resenas-web · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "resenas-web · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "referidos-web · nodos",
+   "valor": 1217,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "referidos-web · bytes del API",
+   "valor": 10835,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "referidos-web · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "referidos-web · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "referidos-web · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "fidelizacion-web · nodos",
+   "valor": 1212,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "fidelizacion-web · bytes del API",
+   "valor": 10827,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "fidelizacion-web · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "fidelizacion-web · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "fidelizacion-web · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-monedas · nodos",
+   "valor": 731,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-monedas · bytes del API",
+   "valor": 22695,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-monedas · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-monedas · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-monedas · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-sellos · nodos",
+   "valor": 731,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-sellos · bytes del API",
+   "valor": 22332,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-sellos · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-sellos · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-sellos · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion · nodos",
+   "valor": 647,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion · bytes del API",
+   "valor": 7126,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion-productos · nodos",
+   "valor": 647,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion-productos · bytes del API",
+   "valor": 5146,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion-productos · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion-productos · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-proteccion-productos · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-programa · nodos",
+   "valor": 420,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-programa · bytes del API",
+   "valor": 308,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-programa · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-programa · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-web-programa · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-cliente · nodos",
+   "valor": 313,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-cliente · bytes del API",
+   "valor": 498,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-cliente · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-cliente · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "sesion-cliente · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-cliente · nodos",
+   "valor": 560,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-cliente · bytes del API",
+   "valor": 6168,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-cliente · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-cliente · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-cliente · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-visitante · nodos",
+   "valor": 542,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-visitante · bytes del API",
+   "valor": 6107,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-visitante · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-visitante · canales Realtime",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "inicio-visitante · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-como · nodos",
+   "valor": 251,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-como · bytes del API",
+   "valor": 304,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-como · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-como · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-como · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-tarjeta · nodos",
+   "valor": 368,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-tarjeta · bytes del API",
+   "valor": 308,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-tarjeta · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-tarjeta · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-tarjeta · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-sellos · nodos",
+   "valor": 289,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-sellos · bytes del API",
+   "valor": 439,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-sellos · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-sellos · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-sellos · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-cupones · nodos",
+   "valor": 246,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-cupones · bytes del API",
+   "valor": 492,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-cupones · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-cupones · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-cupones · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-canje · nodos",
+   "valor": 580,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-canje · bytes del API",
+   "valor": 310,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-canje · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-canje · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-canje · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-movimientos · nodos",
+   "valor": 247,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-movimientos · bytes del API",
+   "valor": 306,
+   "limite": "<= 60000",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-movimientos · peticiones duplicadas",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-movimientos · canales Realtime",
+   "valor": 1,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "iniciales",
+   "que": "recompensas-movimientos · mayor tarea larga (ms)",
+   "valor": 0,
+   "limite": "<= 250",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "pantallas montadas (máx.)",
+   "valor": 6,
+   "limite": "<= 8",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "heap tras GC al final (MB)",
+   "valor": 9.15,
+   "limite": "<= 20",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "crecimiento de heap ciclo 2→3 (MB)",
+   "valor": 0.07,
+   "limite": "<= 1.5",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "crecimiento de nodos ciclo 2→3",
+   "valor": 0,
+   "limite": "<= 400",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 1 · reposo en Ventas rAF/s",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 1 · reposo temporizadores/s",
+   "valor": 4.2,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 1 · reposo tarea ms/s",
+   "valor": 2.4,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 2 · reposo en Ventas rAF/s",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 2 · reposo temporizadores/s",
+   "valor": 5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 2 · reposo tarea ms/s",
+   "valor": 2.5,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 3 · reposo en Ventas rAF/s",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 3 · reposo temporizadores/s",
+   "valor": 4.2,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "sesion",
+   "que": "ciclo 3 · reposo tarea ms/s",
+   "valor": 2.3,
+   "limite": "<= 10",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio frio · LCP (ms)",
+   "valor": 3272,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio frio · CLS",
+   "valor": 0.1,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio caliente · LCP (ms)",
+   "valor": 2796,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-inicio caliente · CLS",
+   "valor": 0.1,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · LCP (ms)",
+   "valor": 4508,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos frio · interacción (ms)",
+   "valor": 72,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · LCP (ms)",
+   "valor": 3984,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-productos caliente · interacción (ms)",
+   "valor": 72,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto frio · LCP (ms)",
+   "valor": 4380,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto caliente · LCP (ms)",
+   "valor": 3936,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "portal-detalle-producto caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio frio · LCP (ms)",
+   "valor": 3644,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio frio · CLS",
+   "valor": 0.3,
+   "limite": "<= 0.1",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio caliente · LCP (ms)",
+   "valor": 3132,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-inicio caliente · CLS",
+   "valor": 0.3,
+   "limite": "<= 0.1",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · LCP (ms)",
+   "valor": 5044,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos frio · interacción (ms)",
+   "valor": 80,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · LCP (ms)",
+   "valor": 4408,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-productos caliente · interacción (ms)",
+   "valor": 72,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto frio · LCP (ms)",
+   "valor": 4848,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto caliente · LCP (ms)",
+   "valor": 4348,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "clienta-detalle-producto caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · LCP (ms)",
+   "valor": 2252,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas frio · interacción (ms)",
+   "valor": 32,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · LCP (ms)",
+   "valor": 1820,
+   "limite": "<= 2500",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-ventas caliente · interacción (ms)",
+   "valor": 24,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · LCP (ms)",
+   "valor": 3168,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web frio · interacción (ms)",
+   "valor": 48,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · LCP (ms)",
+   "valor": 2780,
+   "limite": "<= 2500",
+   "ok": false
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · CLS",
+   "valor": 0,
+   "limite": "<= 0.1",
+   "ok": true
+  },
+  {
+   "grupo": "vitales",
+   "que": "pos-pedidos-web caliente · interacción (ms)",
+   "valor": 48,
+   "limite": "<= 200",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-inicio · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-inicio · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-promociones · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-promociones · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-referidos-web · rAF/s en reposo",
+   "valor": 0,
+   "limite": "<= 1",
+   "ok": true
+  },
+  {
+   "grupo": "reducido",
+   "que": "reducido-referidos-web · animaciones en curso",
+   "valor": 0,
+   "limite": "<= 0",
+   "ok": true
+  }
+ ]
+}

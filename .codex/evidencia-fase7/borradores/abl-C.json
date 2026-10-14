@@ -1,0 +1,109 @@
+{
+ "escala": "ampliada",
+ "reps": 3,
+ "migracion": "supabase/migrations/20261012000001_rls_helpers_una_vez_por_consulta.sql,.codex/evidencia-fase7/borradores/abl-C.sql",
+ "duracion_s": 233,
+ "meta": {
+  "filas_antes": "4749,429,3067,3245,119",
+  "volumen": "60429,120429,123067,20049,20089,20080,5208,23245,23340,34749",
+  "pedidos_clienta": 4,
+  "indices": [
+   "idx_f7_c|3006464"
+  ],
+  "filas_despues": "4749,429,3067,3245,119"
+ },
+ "filas": [
+  {
+   "id": "Q05",
+   "d": "Pedidos Web · ítems de un pedido",
+   "rol": "admin",
+   "antes": {
+    "ms": 52.93,
+    "helpers": 32,
+    "planificacion_ms": 0.94,
+    "buffers": 123208,
+    "seq": [
+     "pedidos_web_items"
+    ],
+    "idx": [
+     "pedidos_web_pkey",
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 53.16,
+    "helpers": 12,
+    "planificacion_ms": 0.32,
+    "buffers": 123196,
+    "seq": [
+     "pedidos_web_items"
+    ],
+    "idx": [
+     "pedidos_web_pkey",
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 0.74,
+    "helpers": 12,
+    "planificacion_ms": 0.23,
+    "buffers": 37,
+    "seq": [],
+    "idx": [
+     "idx_f7_c",
+     "pedidos_web_pkey"
+    ],
+    "filas": 1
+   }
+  },
+  {
+   "id": "Q27",
+   "d": "Clienta · ítems de sus pedidos (RLS con EXISTS)",
+   "rol": "cliente",
+   "antes": {
+    "ms": 13641.86,
+    "helpers": 362574,
+    "planificacion_ms": 0.91,
+    "buffers": 610396,
+    "seq": [
+     "pedidos_web_items",
+     "pedidos_web"
+    ],
+    "idx": [
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues1": {
+    "ms": 85.09,
+    "helpers": 8,
+    "planificacion_ms": 0.28,
+    "buffers": 126962,
+    "seq": [
+     "pedidos_web_items",
+     "pedidos_web"
+    ],
+    "idx": [
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   },
+   "despues2": {
+    "ms": 87.32,
+    "helpers": 8,
+    "planificacion_ms": 0.35,
+    "buffers": 126962,
+    "seq": [
+     "pedidos_web_items",
+     "pedidos_web"
+    ],
+    "idx": [
+     "pedidos_web_items_pkey"
+    ],
+    "filas": 1
+   }
+  }
+ ]
+}

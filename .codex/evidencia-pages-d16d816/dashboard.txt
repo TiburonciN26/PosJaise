@@ -1,0 +1,48 @@
+
+  - generic: Preview
+  - heading "Deployment details" [level=1]
+  - paragraph: "Deployment ID: 2d701280-e72e-45da-9833-39bc25b5debe"
+  - paragraph:
+    - text: "Deployment URL:"
+    - link "https://2d701280.pos-jaise.pages.dev":
+      - /url: https://2d701280.pos-jaise.pages.dev
+  - generic: "Aliases:"
+  - list:
+    - link "feat-cloudflare-pages.pos-jaise.pages.dev":
+      - /url: https://feat-cloudflare-pages.pos-jaise.pages.dev
+  - button "Manage deployment":
+    - generic: Manage deployment
+  - generic: "Repository:"
+  - link "TiburonciN26/PosJaise":
+    - /url: https://github.com/TiburonciN26/PosJaise
+    - generic: TiburonciN26/PosJaise
+  - generic: "Branch:"
+  - generic: feat/cloudflare-pages
+  - link "d16d816":
+    - /url: https://github.com/TiburonciN26/PosJaise/commit/d16d816f4d64cde80c230092126ed8204c6ce0e9
+  - generic: "Fase 3: contrato de retirada de medios (política de navegador separada; opción B desactivada) La Function /medios responde al navegador con \"public, max-age=0, must-revalidate\" y conserva max-age=300 solo en la copia del borde. Se añade la opción B (comprobar R2 antes de HIT/304), desactivada por defecto (REVOCAR_CON_R2=false). Verificadores de caché e interfaz adaptados a la nueva cabecera y diseño del contrato documentado. Probado solo en local (48/48). Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+  - generic: "Status:"
+  - generic: success
+  - time: 5:47PM October 10, 2026
+  - generic: "Duration:"
+  - generic: 54s
+  - generic "Build settings 7":
+    - generic: ›
+    - generic: Build settings
+    - generic: "7"
+  - link "Build log":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/2d701280-e72e-45da-9833-39bc25b5debe
+    - generic: Build log
+  - link "Assets uploaded":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/2d701280-e72e-45da-9833-39bc25b5debe/files
+    - generic: Assets uploaded
+  - link "Functions":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/2d701280-e72e-45da-9833-39bc25b5debe/functions
+    - generic: Functions
+  - link "Redirects":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/2d701280-e72e-45da-9833-39bc25b5debe/redirects
+    - generic: Redirects
+  - link "Headers":
+    - /url: /af5ea2cb3f504970fe293b1923cd64d7/pages/view/pos-jaise/2d701280-e72e-45da-9833-39bc25b5debe/headers
+    - generic: Headers
+  

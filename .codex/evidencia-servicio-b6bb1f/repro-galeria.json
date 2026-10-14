@@ -1,0 +1,28 @@
+{
+  "fecha": "2026-10-10T17:49:02.602Z",
+  "aislado": true,
+  "nota": "Predicado original ejecutado con filas e inventario en memoria. Ninguna escritura ni solicitud a staging.",
+  "casos": [
+    {
+      "nombre": "Control: galería idéntica",
+      "asercionOriginalPasa": true,
+      "galeriaRealmenteIdentica": true,
+      "principalNuevaExiste": true,
+      "principalAnteriorAusente": true
+    },
+    {
+      "nombre": "Galería con referencia reemplazada",
+      "asercionOriginalPasa": true,
+      "galeriaRealmenteIdentica": false,
+      "principalNuevaExiste": true,
+      "principalAnteriorAusente": true
+    },
+    {
+      "nombre": "Galería con etiqueta y orden alterados",
+      "asercionOriginalPasa": true,
+      "galeriaRealmenteIdentica": false,
+      "principalNuevaExiste": true,
+      "principalAnteriorAusente": true
+    }
+  ]
+}

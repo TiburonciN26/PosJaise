@@ -1,0 +1,39 @@
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+WARNING:  permission denied to analyze "pg_authid", skipping it
+WARNING:  permission denied to analyze "pg_subscription", skipping it
+WARNING:  permission denied to analyze "pg_database", skipping it
+WARNING:  permission denied to analyze "pg_db_role_setting", skipping it
+WARNING:  permission denied to analyze "pg_tablespace", skipping it
+WARNING:  permission denied to analyze "pg_auth_members", skipping it
+WARNING:  permission denied to analyze "pg_shdepend", skipping it
+WARNING:  permission denied to analyze "pg_shdescription", skipping it
+WARNING:  permission denied to analyze "pg_replication_origin", skipping it
+WARNING:  permission denied to analyze "pg_shseclabel", skipping it
+WARNING:  permission denied to analyze "pg_parameter_acl", skipping it
+escala=ampliada volumen(pedidos,items,cupones,res,res_p,res_s,promos,prod,serv,cli)=60429,120429,123067,20049,20089,20080,5208,23245,23340,34749  filas antes/después de la prueba: 4749,429,3067,3245,122 → 4749,429,3067,3245,122
+Q01 admin      11857.81 ms h392994 →    164.54 ms h9 →      7.18 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · primera página (sin filtro)
+Q01 cajera     10209.91 ms h362576 →      8.72 ms h6 →     11.06 ms h6  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · primera página (sin filtro)
+Q02 admin       1866.67 ms h60307 →     47.16 ms h9 →      8.85 ms h9  seq[pedidos_web] → seq[pedidos_web,zonas_delivery]  Pedidos Web · estado PENDIENTE
+Q03 admin       7458.45 ms h266810 →    123.17 ms h10 →     36.01 ms h10  seq[pedidos_web,clientes] → seq[pedidos_web,clientes,zonas_delivery]  Pedidos Web · búsqueda de clienta (término más frecuente) + estado ENTREGADO
+Q04 admin        759.15 ms h25973 →      8.62 ms h6 →      8.15 ms h6  seq[pedidos_web] → seq[pedidos_web]  Pedidos Web · conteo exacto por estado (head)

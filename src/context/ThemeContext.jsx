@@ -7,7 +7,7 @@ const ThemeContext = createContext(null)
 // tema incorrecto al cargar) — si se cambia acá, cambiar también allá.
 const CLAVE_STORAGE = 'pos-jaise-tema'
 
-const COLOR_BARRA_NAVEGADOR = { oscuro: '#0d0d0d', claro: '#f5f4f1' }
+const COLOR_BARRA_NAVEGADOR = { oscuro: '#0a0a0a', claro: '#f5f4f1' }
 
 function temaDelSistema() {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro'

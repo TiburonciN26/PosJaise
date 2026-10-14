@@ -1,0 +1,108 @@
+import assert from 'node:assert/strict'
+import { writeFile } from 'node:fs/promises'
+import { manejarMedios } from 'file:///C:/WedJaiseReact/cloudflare/medios-pages/entrega.js'
+
+// Diagnóstico independiente SIN red. Solo dobles en memoria y escritura de evidencia externa.
+const url = 'https://qa.example/medios/fotos-productos/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/m.webp'
+const navegador = 'public, max-age=0, must-revalidate'
+const resultados = []
+async function caso(nombre, probar) {
+  try { await probar(); resultados.push({ nombre, ok: true }) }
+  catch (e) { resultados.push({ nombre, ok: false, error: e.message }) }
+}
+function entorno({ sinHead = false } = {}) {
+  const s = { vivo: true, etag: '"A"', bytes: new Uint8Array([1, 2, 3]), get: 0, head: 0, consumidos: 0, put: 0, borrar: 0, fallaHead: false, fallaGet: false, fallaMatch: false, fallaPut: false, fallaDelete: false, cache: null }
+  const r2 = {
+    async get() {
+      s.get++
+      if (s.fallaGet) throw Error('fallo de get ficticio')
+      if (!s.vivo) return null
+      const bytes = s.bytes.slice()
+      return { httpEtag: s.etag, async arrayBuffer() { s.consumidos++; return bytes.buffer } }
+    },
+    async head() { s.head++; if (s.fallaHead) throw Error('fallo de head ficticio'); return s.vivo ? { httpEtag: s.etag } : null },
+  }
+  if (sinHead) delete r2.head
+  const cache = {
+    async match() { if (s.fallaMatch) throw Error('fallo de match ficticio'); return s.cache?.clone() },
+    async put(k, r) { s.put++; if (s.fallaPut) throw Error('fallo de put ficticio'); s.cache = r.clone() },
+    async delete() { s.borrar++; if (s.fallaDelete) throw Error('fallo de delete ficticio'); s.cache = null; return true },
+  }
+  async function pedir({ revocar, method = 'GET', etag } = {}) {
+    const pendientes = []
+    const res = await manejarMedios(new Request(url, { method, ...(etag ? { headers: { 'If-None-Match': etag } } : {}) }), { MEDIOS: r2 }, { waitUntil(p) { pendientes.push(p) } }, { cache, ...(revocar === undefined ? {} : { revocar }) })
+    await Promise.all(pendientes)
+    return res
+  }
+  return { s, pedir }
+}
+await caso('A por defecto: conserva HIT tras DELETE, navegador revalida y borde mantiene 300', async () => {
+  const e = entorno(); await e.pedir(); e.s.vivo = false
+  const r = await e.pedir(); assert.equal(r.status, 200); assert.equal(r.headers.get('Cache-Control'), navegador)
+  assert.equal(e.s.cache.headers.get('Cache-Control'), 'public, max-age=300'); assert.equal(e.s.head, 0); assert.equal(e.s.get, 1)
+})
+await caso('B sin head: usa get sin consumir bytes del HIT', async () => {
+  const e = entorno({ sinHead: true }); await e.pedir(); const r = await e.pedir({ revocar: true })
+  assert.equal(r.headers.get('X-Medios-Cache'), 'HIT'); assert.equal(e.s.get, 2); assert.equal(e.s.consumidos, 1)
+  assert.deepEqual([...new Uint8Array(await r.arrayBuffer())], [1, 2, 3])
+})
+await caso('B sin head: objeto borrado y HEAD condicional devuelve 404 sin cuerpo', async () => {
+  const e = entorno({ sinHead: true }); await e.pedir(); e.s.vivo = false
+  const r = await e.pedir({ revocar: true, method: 'HEAD', etag: '"A"' })
+  assert.equal(r.status, 404); assert.equal(await r.text(), ''); assert.equal(r.headers.get('Cache-Control'), 'no-store'); assert.equal(e.s.cache, null)
+})
+await caso('B sin head: get falla y no entrega cuerpo viejo', async () => {
+  const e = entorno({ sinHead: true }); await e.pedir(); e.s.fallaGet = true
+  const r = await e.pedir({ revocar: true }); assert.equal(r.status, 503); assert.equal(r.headers.get('Cache-Control'), 'no-store')
+})
+await caso('B ETag cambiado: reemplaza bytes almacenados y siguiente HIT conserva nueva versión', async () => {
+  const e = entorno(); await e.pedir(); e.s.etag = '"B"'; e.s.bytes = new Uint8Array([8, 9])
+  const r = await e.pedir({ revocar: true, etag: '"A"' }); assert.equal(r.status, 200); assert.equal(r.headers.get('X-Medios-Cache'), 'MISS')
+  assert.deepEqual([...new Uint8Array(await r.arrayBuffer())], [8, 9]); assert.equal(e.s.cache.headers.get('ETag'), '"B"')
+  const hit = await e.pedir({ revocar: true }); assert.equal(hit.headers.get('X-Medios-Cache'), 'HIT')
+  assert.deepEqual([...new Uint8Array(await hit.arrayBuffer())], [8, 9]); assert.equal(e.s.get, 2)
+})
+await caso('B ETag cambiado e If-None-Match nuevo: 304 y guarda cuerpo nuevo completo', async () => {
+  const e = entorno(); await e.pedir(); e.s.etag = '"B"'; e.s.bytes = new Uint8Array([8, 9])
+  const r = await e.pedir({ revocar: true, etag: '"B"' }); assert.equal(r.status, 304); assert.equal(await r.text(), '')
+  assert.equal(r.headers.get('Cache-Control'), navegador); assert.deepEqual([...new Uint8Array(await e.s.cache.clone().arrayBuffer())], [8, 9])
+})
+await caso('B HEAD con ETag nuevo no escribe caché; GET siguiente reemplaza cuerpo antiguo', async () => {
+  const e = entorno(); await e.pedir(); e.s.etag = '"B"'; e.s.bytes = new Uint8Array([8, 9])
+  const r = await e.pedir({ revocar: true, method: 'HEAD' }); assert.equal(r.status, 200); assert.equal(await r.text(), '')
+  assert.equal(r.headers.get('ETag'), '"B"'); assert.equal(e.s.put, 1)
+  const get = await e.pedir({ revocar: true }); assert.deepEqual([...new Uint8Array(await get.arrayBuffer())], [8, 9]); assert.equal(e.s.put, 2)
+})
+await caso('B 304 débil en HIT revalida R2 y conserva política de navegador', async () => {
+  const e = entorno(); await e.pedir(); const r = await e.pedir({ revocar: true, etag: 'W/"A"' })
+  assert.equal(r.status, 304); assert.equal(e.s.head, 1); assert.equal(r.headers.get('Cache-Control'), navegador)
+})
+await caso('B HEAD vivo con HIT consulta metadatos y no agrega lecturas de cuerpo', async () => {
+  const e = entorno(); await e.pedir(); const r = await e.pedir({ revocar: true, method: 'HEAD' })
+  assert.equal(r.status, 200); assert.equal(await r.text(), ''); assert.equal(e.s.head, 1); assert.equal(e.s.consumidos, 1); assert.equal(e.s.put, 1)
+})
+await caso('B cache.delete fallido: sigue denegando GET y 304 posteriores', async () => {
+  const e = entorno(); await e.pedir(); e.s.vivo = false; e.s.fallaDelete = true
+  for (const etag of [undefined, '"A"', '*']) { const r = await e.pedir({ revocar: true, etag }); assert.equal(r.status, 404); assert.equal(r.headers.get('Cache-Control'), 'no-store') }
+  assert.ok(e.s.cache); assert.equal(e.s.borrar, 3)
+})
+await caso('B cache.match fallido y objeto borrado: consulta R2 y devuelve 404', async () => {
+  const e = entorno(); await e.pedir(); e.s.vivo = false; e.s.fallaMatch = true
+  assert.equal((await e.pedir({ revocar: true, etag: '"A"' })).status, 404)
+})
+await caso('B head fallido en HEAD condicional: 503 vacío, sin filtrar detalles', async () => {
+  const e = entorno(); await e.pedir(); e.s.fallaHead = true
+  const r = await e.pedir({ revocar: true, method: 'HEAD', etag: '*' }); assert.equal(r.status, 503); assert.equal(await r.text(), '')
+  assert.equal(r.headers.get('X-Content-Type-Options'), 'nosniff'); assert.equal(r.headers.get('X-Robots-Tag'), 'noindex')
+})
+await caso('B fallo de cache.put: MISS sano y no evita retirada posterior', async () => {
+  const e = entorno(); e.s.fallaPut = true; assert.equal((await e.pedir({ revocar: true })).status, 200)
+  e.s.vivo = false; assert.equal((await e.pedir({ revocar: true })).status, 404)
+})
+await caso('B sin copia y objeto borrado: If-None-Match * no obtiene 304', async () => {
+  const e = entorno(); e.s.vivo = false; assert.equal((await e.pedir({ revocar: true, etag: '*' })).status, 404)
+})
+const informe = { fecha: new Date().toISOString(), alcance: 'Node con dobles en memoria; sin red ni datos externos', total: resultados.length, fallos: resultados.filter(x => !x.ok).length, resultados }
+await writeFile(new URL('./diagnostico.json', import.meta.url), JSON.stringify(informe, null, 2), { flag: 'wx' })
+console.log(JSON.stringify(informe, null, 2))
+if (informe.fallos) process.exitCode = 1
