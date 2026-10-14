@@ -71,6 +71,7 @@ export const secciones = [
   },
   { path: '/porcentajes', label: 'Porcentajes', icono: Percent, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ['ADMINISTRADOR', 'CAJERA'], tema: 'rosa' },
+  { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   { path: '/asistentes', label: 'Asistentes', icono: UserCog, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   {
     path: '/mobiliario',
