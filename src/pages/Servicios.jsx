@@ -14,6 +14,7 @@ import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
+import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalServicio from '../components/ModalServicio.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
@@ -158,10 +159,12 @@ export default function Servicios({ activo = true }) {
   const filtrados = servicios
   const filtradosOrdenados = servicios
 
+  const { barraRef, encabezadoRef, claseTh, estiloTh } = useEncabezadoTablaPegado([servicios, cargando])
+
   return (
     <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
       {/* Buscador + Nuevo servicio: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
+      <div ref={barraRef} className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
@@ -283,24 +286,24 @@ export default function Servicios({ activo = true }) {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-3 hidden overflow-x-auto rounded-lg border border-border lg:block">
+          <div className="mt-3 hidden overflow-x-clip border-y border-border lg:block">
             <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
-                  <th className="px-3 py-2 font-normal">Servicio</th>
-                  <th className="px-3 py-2 font-normal">Categoría</th>
-                  <th className="px-3 py-2 text-right font-normal">Precio</th>
-                  <th className="px-3 py-2 text-right font-normal">Duración</th>
-                  <th className="px-3 py-2 text-right font-normal">Estado</th>
-                  {esAdmin && <th className="px-3 py-2 text-right font-normal">Acciones</th>}
+              <thead ref={encabezadoRef}>
+                <tr className="font-mono text-xs uppercase tracking-wider text-ink/60">
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Servicio</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Categoría</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Precio</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Duración</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Estado</th>
+                  {esAdmin && <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Acciones</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filtradosOrdenados.map((servicio) => (
-                  <tr key={servicio.id} className="bg-surface">
+                  <tr key={servicio.id} className="bg-tabla">
                     <td className="px-3 py-2.5 text-ink">{servicio.nombre}</td>
                     <td className="px-3 py-2.5 text-ink/60">{servicio.categoria || '—'}</td>
-                    <td className="px-3 py-2.5 text-right font-mono text-amber">
+                    <td className="px-3 py-2.5 text-right font-mono text-ink">
                       {formatearSoles(servicio.precio)}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono text-ink/60">
@@ -319,12 +322,16 @@ export default function Servicios({ activo = true }) {
                       <td className="px-3 py-2.5">
                         <div className="flex justify-end gap-2">
                           <BotonAccion
+                            plano
+                            sinBorde
                             icono={Pencil}
                             texto="Editar"
                             color="celeste"
                             onClick={() => setModalServicio(servicio)}
                           />
                           <BotonAccion
+                            plano
+                            sinBorde
                             icono={Trash2}
                             texto="Eliminar"
                             color="rojo"

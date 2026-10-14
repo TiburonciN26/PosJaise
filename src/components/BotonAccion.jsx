@@ -5,7 +5,17 @@ const COLORES_ICONO_ACCION = {
   verde: 'text-green',
 }
 
+// Variante "plana": ícono blanco que toma su color solo en hover; el fondo
+// (--color-boton-icono) y el borde no cambian.
+const COLORES_ICONO_HOVER = {
+  morado: 'hover:text-purple-300',
+  celeste: 'hover:text-blue',
+  rojo: 'hover:text-red',
+  verde: 'hover:text-green',
+}
+
 export default function BotonAccion({
+  plano,
   icono: Icono,
   texto,
   color,
@@ -18,9 +28,13 @@ export default function BotonAccion({
   // min-h-10/min-w-10 (40px): mínimo táctil — antes el botón solo icono
   // (móvil, sin el texto de lg:inline) quedaba en ~28px; 40px se mantiene
   // cómodo para tocar sin el padding extra de la versión anterior (44px).
-  const clases = `flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg bg-transparent px-1.5 py-1 text-xs transition-colors hover:bg-surface-2 ${
+  const clases = `flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg px-1.5 py-1 text-xs transition-colors ${
     sinBorde ? '' : 'border border-border-strong'
-  } ${COLORES_ICONO_ACCION[color]}`
+  } ${
+    plano
+      ? `bg-boton-icono text-ink ${COLORES_ICONO_HOVER[color]}`
+      : `bg-transparent hover:bg-surface-2 ${COLORES_ICONO_ACCION[color]}`
+  }`
 
   // Solo ícono, en cualquier tamaño de pantalla — el texto queda como
   // title (tooltip) para accesibilidad. Antes se revelaba como texto en

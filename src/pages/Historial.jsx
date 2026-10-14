@@ -12,6 +12,7 @@ import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
+import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
@@ -669,10 +670,12 @@ export default function Historial({ activo = true }) {
     : ventas
   const ventasOrdenadas = ordenarVentas(filtrarPorMetodo(ventasFiltradas, filtroMetodo), orden)
 
+  const { barraRef, encabezadoRef, claseTh, estiloTh } = useEncabezadoTablaPegado([ventas, cargando])
+
   return (
     <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
       {/* Buscador + orden: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
+      <div ref={barraRef} className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
@@ -848,16 +851,16 @@ export default function Historial({ activo = true }) {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
+          <div className="mt-4 hidden overflow-x-clip border-y border-border lg:block">
             <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
-                  <th className="px-3 py-2 font-normal">Código</th>
-                  <th className="px-3 py-2 font-normal">Fecha</th>
-                  <th className="px-3 py-2 font-normal">Método</th>
-                  <th className="px-3 py-2 text-right font-normal">Items</th>
-                  <th className="px-3 py-2 text-right font-normal">Total</th>
-                  <th className="px-3 py-2 text-right font-normal" />
+              <thead ref={encabezadoRef}>
+                <tr className="font-mono text-xs uppercase tracking-wider text-ink/60">
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Código</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Fecha</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Método</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Items</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Total</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -875,7 +878,7 @@ export default function Historial({ activo = true }) {
                         role="button"
                         tabIndex={0}
                         aria-expanded={abierto}
-                        className={`cursor-pointer bg-surface transition-colors hover:bg-surface-2 ${
+                        className={`cursor-pointer bg-tabla transition-colors hover:bg-surface-2 ${
                           anulada ? 'bg-red/5' : ''
                         }`}
                       >
@@ -928,7 +931,7 @@ export default function Historial({ activo = true }) {
                           />
                         </td>
                       </tr>
-                      <tr className="bg-surface">
+                      <tr className="bg-tabla">
                         <td colSpan={6} className="p-0">
                           <CampoColapsable abierto={abierto}>
                             {(abierto || detalles[venta.id]) && (

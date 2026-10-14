@@ -15,6 +15,7 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
+import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import ModalGasto, { MESES } from '../components/ModalGasto.jsx'
 import ModalPlantillasGasto from '../components/ModalPlantillasGasto.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
@@ -83,12 +84,12 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
       <div className="col-start-2 row-start-2 flex shrink-0 items-center gap-0 lg:row-span-2 lg:row-start-1">
         {!cancelado && (
           <>
-            <BotonAccion icono={Pencil} texto="Editar" color="celeste" sinBorde onClick={onEditar} />
-            <BotonAccion icono={Ban} texto="Cancelar" color="rojo" sinBorde onClick={onCancelar} />
+            <BotonAccion plano icono={Pencil} texto="Editar" color="celeste" sinBorde onClick={onEditar} />
+            <BotonAccion plano icono={Ban} texto="Cancelar" color="rojo" sinBorde onClick={onCancelar} />
           </>
         )}
         {esAdmin && (
-          <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" sinBorde onClick={onEliminar} />
+          <BotonAccion plano icono={Trash2} texto="Eliminar" color="rojo" sinBorde onClick={onEliminar} />
         )}
       </div>
     </div>
@@ -351,6 +352,8 @@ export default function Gastos({ activo = true }) {
     (g) => g.monto,
   )
 
+  const { barraRef, encabezadoRef, claseTh, estiloTh } = useEncabezadoTablaPegado([gastos, cargando])
+
   return (
     <div
       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-(--separador-horizontal) lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
@@ -380,7 +383,7 @@ export default function Gastos({ activo = true }) {
       </div>
 
       {/* Filtro de período + Nuevo gasto: fijos arriba al hacer scroll */}
-      <div className="sticky top-0 z-10 -mx-(--separador-vertical) mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto bg-bg px-(--separador-vertical) py-2">
+      <div ref={barraRef} className="sticky top-0 z-10 -mx-(--separador-vertical) mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto bg-bg px-(--separador-vertical) py-2">
         <div className="relative min-w-0 flex-1 md:flex-none">
           <button
             ref={botonMesRef}
@@ -595,21 +598,21 @@ export default function Gastos({ activo = true }) {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
+          <div className="mt-4 hidden overflow-x-clip border-y border-border lg:block">
             <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
-                  <th className="px-3 py-2 font-normal">Gasto</th>
-                  <th className="px-3 py-2 font-normal">Período</th>
-                  <th className="px-3 py-2 text-right font-normal">Monto</th>
-                  <th className="px-3 py-2 text-right font-normal">Acciones</th>
+              <thead ref={encabezadoRef}>
+                <tr className="font-mono text-xs uppercase tracking-wider text-ink/60">
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Gasto</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Período</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Monto</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {fijos.length > 0 && (
                   <>
                     <tr
-                      className="cursor-pointer bg-surface hover:bg-surface-2"
+                      className="cursor-pointer bg-tabla hover:bg-surface-2"
                       onClick={() => setFijosAbiertos((abierto) => !abierto)}
                       onKeyDown={manejarActivacionTeclado(() => setFijosAbiertos((abierto) => !abierto))}
                       role="button"
@@ -665,7 +668,7 @@ export default function Gastos({ activo = true }) {
                 {variables.length > 0 && (
                   <>
                     <tr
-                      className="cursor-pointer bg-surface hover:bg-surface-2"
+                      className="cursor-pointer bg-tabla hover:bg-surface-2"
                       onClick={() => setVariablesAbiertos((abierto) => !abierto)}
                       onKeyDown={manejarActivacionTeclado(() => setVariablesAbiertos((abierto) => !abierto))}
                       role="button"

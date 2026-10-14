@@ -1156,7 +1156,7 @@ export default function Ventas({ activo = true }) {
             >
               {hayAtencionesPendientes && (
                 // top-0: más arriba lo recorta el overflow-hidden del CampoColapsable
-                <span className="absolute -left-1 top-0 z-10 h-2 w-2 rounded-full bg-blue" />
+                <span className="absolute -left-1 top-0 h-2 w-2 rounded-full bg-blue" />
               )}
               <span className="flex items-center gap-1.5">
                 <Scissors className="h-3.5 w-3.5 shrink-0" />

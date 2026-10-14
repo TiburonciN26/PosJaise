@@ -36,7 +36,8 @@ const ETIQUETA_COBERTURA = {
   personalizado: 'Gastos del período cubiertos',
 }
 
-const VERDE = '#3ecf6a'
+// En claro el verde de texto se oscurece (--color-green-texto); en oscuro no existe y cae al verde de marca.
+const VERDE_TEXTO = 'var(--color-green-texto, #3ecf6a)'
 
 function Brillo({ activo }) {
   if (!activo) return null
@@ -130,23 +131,23 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
       <div className="flex items-center justify-between gap-2">
         <TextoBrillante
           activo={llegoAlTope}
-          color="#ffffff"
+          color="var(--color-ink)"
           className="text-sm font-semibold"
-          claseColorInactiva="text-white"
+          claseColorInactiva="text-ink"
         >
           Punto de equilibrio
         </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-white">
+        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink">
           {superado && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
           <span>
           <TextoBrillante
             activo={llegoAlTope}
-            color={superado ? VERDE : '#ffffff'}
-            claseColorInactiva={superado ? 'text-green' : 'text-white'}
+            color={superado ? VERDE_TEXTO : 'var(--color-ink)'}
+            claseColorInactiva={superado ? 'text-green' : 'text-ink'}
           >
             {ingresoBruto.toFixed(2)}
           </TextoBrillante>
-          <TextoBrillante activo={llegoAlTope} color="#ffffff" claseColorInactiva="text-white">
+          <TextoBrillante activo={llegoAlTope} color="var(--color-ink)" claseColorInactiva="text-ink">
             {' - '}
             {meta.toFixed(2)}
           </TextoBrillante>
@@ -163,20 +164,20 @@ function BarraTermometro({ filtro, ingresoBruto, meta }) {
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <TextoBrillante activo={llegoAlTope} color="#ffffff" claseColorInactiva="text-white" className="text-xs">
+        <TextoBrillante activo={llegoAlTope} color="var(--color-ink)" claseColorInactiva="text-ink" className="text-xs">
           {ETIQUETA_COBERTURA[filtro]}
         </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-white">
+        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink">
           {porcentaje > 100 && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
           <span>
           <TextoBrillante
             activo={llegoAlTope}
-            color={porcentaje > 100 ? VERDE : '#ffffff'}
-            claseColorInactiva={porcentaje > 100 ? 'text-green' : 'text-white'}
+            color={porcentaje > 100 ? VERDE_TEXTO : 'var(--color-ink)'}
+            claseColorInactiva={porcentaje > 100 ? 'text-green' : 'text-ink'}
           >
             {Math.round(porcentaje)}%
           </TextoBrillante>
-          <TextoBrillante activo={llegoAlTope} color="#ffffff" claseColorInactiva="text-white">
+          <TextoBrillante activo={llegoAlTope} color="var(--color-ink)" claseColorInactiva="text-ink">
             {' - 100%'}
           </TextoBrillante>
           </span>

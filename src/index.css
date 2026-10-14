@@ -38,6 +38,10 @@
   --color-surface-2: #141414;
   --color-surface-3: #1c1c1c;
 
+  /* Filas de tabla/buscador (--color-tabla) y botones de ícono (--color-boton-icono) */
+  --color-tabla: #0a0a0a;
+  --color-boton-icono: #101010;
+
   /* Bordes */
   --color-border: #2a2a2a;
   --color-border-strong: #363636;
@@ -536,19 +540,22 @@
   --color-surface: #ffffff;
   --color-surface-2: #f1f5f9;
   --color-surface-3: #e2e8f0;
+  --color-tabla: #ffffff;
+  --color-boton-icono: #f1f5f9;
 
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
 
-  /* Base slate-900 (antes un negro cálido) — texto principal. */
-  --color-ink: #0f172a;
+  /* Texto principal en negro puro (pedido explícito: en claro todas las
+     letras negras, salvo las de color y los placeholders). */
+  --color-ink: #000000;
 
   /* A1 de la auditoría frontend — texto secundario (etiquetas,
      subtítulos, metadatos): slate-600 real, no opacidad sobre ink.
      Legible (7.6:1 sobre blanco, pasa AAA) pero visualmente distinto
      del texto principal, así la jerarquía no se aplana. Lo consume la
      regla [class*='text-ink/'] de abajo. */
-  --color-ink-secundario: #475569;
+  --color-ink-secundario: #000000;
 
   /* Único acento que sí cambia entre temas (pedido explícito): el
      "rosa pastel" (Asistentes/Porcentajes) pasa a #ED8BAC solo en

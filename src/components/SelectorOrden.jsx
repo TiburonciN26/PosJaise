@@ -51,10 +51,10 @@ export default function SelectorOrden({
         className={`flex items-center justify-center rounded-lg border p-2.5 transition-colors ${
           abierto
             ? sinBorde
-              ? 'border-transparent text-amber'
+              ? 'border-transparent bg-boton-icono text-amber'
               : clases.activo
             : sinBorde
-              ? `border-transparent text-ink/70 ${clases.hover}`
+              ? `border-transparent bg-boton-icono text-ink/70 ${clases.hover}`
               : `border-dashed border-border-strong text-ink/70 ${clases.hover}`
         }`}
       >

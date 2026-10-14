@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
+import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
@@ -114,6 +115,7 @@ export default function Inventario({ activo = true }) {
   // filtro/búsqueda que ya no está activo (ver Historial.jsx).
   const vigenteRef = useRef({ actual: true })
   const panelEliminarRef = useRef(null)
+  const { barraRef, encabezadoRef, claseTh, estiloTh } = useEncabezadoTablaPegado([productos, cargando])
 
   useCerrarConEscape(() => setProductoAEliminar(null), Boolean(productoAEliminar))
   useModalA11y(panelEliminarRef, Boolean(productoAEliminar))
@@ -228,10 +230,11 @@ export default function Inventario({ activo = true }) {
   const capitalInvertido = resumen.capitalInvertido
   const categoriasExistentes = resumen.categorias
 
+
   return (
     <div className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)">
       {/* Buscador + Nuevo producto: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
+      <div ref={barraRef} className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
           onCambiar={setBusqueda}
@@ -317,7 +320,7 @@ export default function Inventario({ activo = true }) {
             <TarjetaResumen
               etiqueta="Valor total"
               valor={formatearSoles(valorTotal)}
-              claseValor="text-amber"
+              claseValor="text-ink"
             />
             <TarjetaResumen
               etiqueta="Ganancias"
@@ -377,6 +380,7 @@ export default function Inventario({ activo = true }) {
                     </span>
                     <div onClick={(evento) => evento.stopPropagation()}>
                       <BotonAccion
+                        plano
                         icono={Plus}
                         texto="Agregar stock"
                         color="morado"
@@ -406,17 +410,17 @@ export default function Inventario({ activo = true }) {
           </div>
 
           {/* Tabla: tablet y desktop */}
-          <div className="mt-4 hidden overflow-x-auto rounded-lg border border-border lg:block">
+          <div className="mt-4 hidden overflow-x-clip border-y border-border lg:block">
             <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border font-mono text-xs uppercase tracking-wider text-ink/60">
-                  <th className="px-3 py-2 font-normal">Producto</th>
-                  <th className="px-3 py-2 font-normal">Categoría</th>
-                  {esAdmin && <th className="px-3 py-2 text-right font-normal">Costo</th>}
-                  <th className="px-3 py-2 text-right font-normal">Precio</th>
-                  {esAdmin && <th className="px-3 py-2 text-right font-normal">Ganancia</th>}
-                  <th className="px-3 py-2 text-right font-normal">Stock</th>
-                  <th className="px-3 py-2 text-right font-normal">Acciones</th>
+              <thead ref={encabezadoRef}>
+                <tr className="font-mono text-xs uppercase tracking-wider text-ink/60">
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Producto</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Categoría</th>
+                  {esAdmin && <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Costo</th>}
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Precio</th>
+                  {esAdmin && <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Ganancia</th>}
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Stock</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -424,7 +428,7 @@ export default function Inventario({ activo = true }) {
                   <tr
                     key={producto.id}
                     onClick={() => setProductoDetalle({ producto, mostrarAcciones: false })}
-                    className="cursor-pointer touch-manipulation bg-surface hover:bg-surface-2/60"
+                    className="cursor-pointer touch-manipulation bg-tabla hover:bg-surface-2/60"
                   >
                     <td className="px-3 py-2.5">
                       <p className="text-ink">
@@ -445,7 +449,7 @@ export default function Inventario({ activo = true }) {
                         {formatearSoles(producto.costo ?? 0)}
                       </td>
                     )}
-                    <td className="px-3 py-2.5 text-right font-mono text-amber">
+                    <td className="px-3 py-2.5 text-right font-mono text-ink">
                       {formatearSoles(producto.precio)}
                     </td>
                     {esAdmin && (
@@ -459,6 +463,8 @@ export default function Inventario({ activo = true }) {
                     <td className="px-3 py-2.5" onClick={(evento) => evento.stopPropagation()}>
                       <div className="flex justify-end gap-2">
                         <BotonAccion
+                          plano
+                          sinBorde
                           icono={Plus}
                           texto="Agregar stock"
                           color="morado"
@@ -467,12 +473,16 @@ export default function Inventario({ activo = true }) {
                         {esAdmin && (
                           <>
                             <BotonAccion
+                              plano
+                              sinBorde
                               icono={Pencil}
                               texto="Editar"
                               color="celeste"
                               onClick={() => setModalProducto(producto)}
                             />
                             <BotonAccion
+                              plano
+                              sinBorde
                               icono={Trash2}
                               texto="Eliminar"
                               color="rojo"

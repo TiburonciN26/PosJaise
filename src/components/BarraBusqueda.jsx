@@ -57,7 +57,7 @@ export default function BarraBusqueda({ valor, onCambiar, placeholder, tema = 'a
             if (evento.key === 'Escape') onCambiar('')
           }}
           textoPlaceholder={placeholder}
-          className={`w-full rounded-lg border border-border bg-surface-2 py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 ${clases.focus}`}
+          className={`w-full rounded-lg border border-border ${sinBorde ? 'bg-tabla' : 'bg-surface-2'} py-2.5 pl-10 pr-9 font-mono text-sm text-ink outline-none placeholder:text-xs placeholder:text-ink/60 ${clases.focus}`}
         />
         {valor && (
           <button
@@ -80,7 +80,7 @@ export default function BarraBusqueda({ valor, onCambiar, placeholder, tema = 'a
             escuchando
               ? 'animate-pulse border-red bg-red/10 text-red'
               : sinBorde
-                ? 'border-transparent text-ink/70 hover:text-amber'
+                ? 'border-transparent bg-boton-icono text-ink/70 hover:text-amber'
                 : clases.micHover
           }`}
         >
