@@ -65,10 +65,15 @@ src/assets/*
 !src/assets/fonts/Heavitas.ttf
 # Foto de la pantalla de login (Login.jsx la importa: sin ella el build de otra
 # máquina/CI/Cloudflare FALLA con UNRESOLVED_IMPORT). Se versiona SOLO este
-# archivo; el resto de src/assets/login/ y de src/assets/ sigue ignorado.
+# archivo y los recursos del nuevo diseño; el resto de src/assets/ sigue ignorado.
 !src/assets/login/
 src/assets/login/*
 !src/assets/login/foto-login.jpeg
+!src/assets/login/manicure-detalle.jpeg
+!src/assets/login/manicure-diseno.jpeg
+!src/assets/login/orbitron-latin.woff2
+!src/assets/login/jakarta-latin.woff2
+!src/assets/login/syne-latin.woff2
 headerYServicios.html
 
 # Preview de Cloudflare Pages (artefacto de scripts/build-preview-staging.mjs)

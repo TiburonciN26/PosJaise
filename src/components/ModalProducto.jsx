@@ -6,6 +6,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
+import AyudaCampo from './AyudaCampo.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
 import SelectorProductoBuscable from './SelectorProductoBuscable.jsx'
 import { datosPosProducto, datosWebProducto } from '../lib/catalogoCampos.js'
@@ -469,13 +470,14 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+    <div className={`fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4 ${esWeb ? 'modal-producto-web-overlay lg:px-(--separador-vertical)' : ''}`}>
       <form
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
+        className={`max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) ${esWeb ? 'modal-producto-web' : ''}`}
       >
+        <div className={esWeb ? 'modal-producto-web__cabecera' : undefined}>
         <h2 className="text-base font-semibold text-ink">
           {esWeb ? 'Contenido Web del producto' : esEdicion ? 'Editar producto' : 'Nuevo producto'}
         </h2>
@@ -485,7 +487,9 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             {producto.nombre} · precio real {Number(producto.precio).toFixed(2)} (se cambia en Inventario)
           </p>
         )}
+        </div>
 
+        <div className={esWeb ? 'modal-producto-web__cuerpo' : undefined}>
         <div className="mt-4 space-y-3">
           {!esWeb && (
           <>
@@ -616,6 +620,17 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
 
           {esWeb && (
           <>
+          <div className="modal-producto-web__principal space-y-3">
+          <section className="modal-producto-web__datos space-y-3" aria-label="Información y oferta">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-ink">Información y oferta</h3>
+            <AyudaCampo etiqueta="Ayuda sobre información y oferta">
+              <strong className="mb-1 block">Precio antes de la oferta</strong>
+              El monto normal, antes del descuento — tiene que ser mayor al precio de venta actual, que es el que ya
+              incluye la oferta.
+            </AyudaCampo>
+          </div>
+          <div className="modal-producto-web__datos-campos space-y-3">
           <div>
             <Etiqueta htmlFor={`${idBase}-precio-antes`}>Precio antes de la oferta</Etiqueta>
             {/* Aclaración pedida por el usuario: el campo de arriba
@@ -625,10 +640,6 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
                 SIEMPRE por encima del precio de venta, nunca por debajo
                 (ver validación más abajo). Para terminar una oferta: subir
                 "Precio de venta" al monto normal y vaciar este campo. */}
-            <p className="mb-1.5 text-xs text-ink/50">
-              El monto normal, antes del descuento — tiene que ser mayor al "Precio de venta" de arriba, que es el que ya
-              incluye la oferta.
-            </p>
             <input
               id={`${idBase}-precio-antes`}
               type="search"
@@ -653,26 +664,6 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             )}
           </div>
 
-          </>
-          )}
-
-          {!esWeb && (
-          <div>
-            <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
-            <input
-              id={`${idBase}-proveedor`}
-              type="search"
-              autoComplete="new-password"
-              value={formulario.proveedor}
-              onChange={(evento) => actualizarCampo('proveedor', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
-            />
-          </div>
-
-          )}
-
-          {esWeb && (
-          <>
           <div>
             <Etiqueta htmlFor={`${idBase}-combo`}>Combo sugerido ("se suele comprar junto con")</Etiqueta>
             <SelectorProductoBuscable
@@ -684,7 +675,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             />
           </div>
 
-          <div>
+          <div className="modal-producto-web__descripcion">
             <Etiqueta htmlFor={`${idBase}-descripcion`}>Descripción</Etiqueta>
             <textarea
               id={`${idBase}-descripcion`}
@@ -736,6 +727,10 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             />
           </div>
 
+          </div>
+          </section>
+          <section className="modal-producto-web__medios space-y-3" aria-label="Fotos del producto">
+          <h3 className="hidden text-sm font-semibold text-ink lg:block">Fotos del producto</h3>
           <div>
             <Etiqueta>Foto</Etiqueta>
             <div className="flex items-center gap-3">
@@ -787,7 +782,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             {cargandoGaleria ? (
               <p className="text-xs text-ink/50">Cargando galería...</p>
             ) : (
-              <div className="space-y-2">
+              <div className="modal-producto-web__galeria space-y-2">
                 {fotosGaleria.map((foto, indice) => (
                   <div key={foto.id ?? foto.previewUrl} className="flex items-center gap-2">
                     <img
@@ -830,11 +825,15 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             )}
             {errorGaleria && <p className="mt-1 text-xs text-red">{errorGaleria}</p>}
           </div>
+          </section>
+          </div>
 
+          <section className="space-y-3" aria-label="Contenido del detalle del producto">
           <p className="border-t border-border pt-3 text-xs font-medium uppercase tracking-wide text-ink/50">
             Contenido del Detalle del producto (Web)
           </p>
 
+          <div className="modal-producto-web__detalle space-y-3">
           <EditorListaJson
             etiqueta="Cómo se usa (pasos)"
             items={modoUso}
@@ -897,7 +896,10 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             textoAgregar="+ Agregar"
             campos={[{ clave: 'texto', placeholder: 'Ej. Sulfatos' }]}
           />
+          </div>
+          </section>
 
+          <div className="modal-producto-web__visibilidad space-y-3">
           <label className="flex items-center gap-2 text-sm text-ink">
             <input
               type="checkbox"
@@ -927,7 +929,22 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             />
             Mostrar en "Novedades y lo más vendido" (inicio de Productos, Web)
           </label>
+          </div>
           </>
+          )}
+
+          {!esWeb && (
+          <div>
+            <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
+            <input
+              id={`${idBase}-proveedor`}
+              type="search"
+              autoComplete="new-password"
+              value={formulario.proveedor}
+              onChange={(evento) => actualizarCampo('proveedor', evento.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
+            />
+          </div>
           )}
         </div>
 
@@ -956,8 +973,9 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             Protección económica (Recompensas Web)
           </button>
         )}
+        </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className={`mt-4 flex gap-2 ${esWeb ? 'modal-producto-web__acciones' : ''}`}>
           <button
             type="button"
             onClick={onCerrar}

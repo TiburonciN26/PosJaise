@@ -1,8 +1,8 @@
-import { Menu, ShoppingCart, X } from 'lucide-react'
+import { Menu, Moon, ShoppingCart, Sun, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Suspense, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { TemaWebProvider, useTemaWeb } from '../context/TemaWebContext.jsx'
+import { useTemaWeb } from '../context/TemaWebContext.jsx'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
 import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
@@ -68,7 +68,7 @@ function BotonChanchito({ estaEnPuntos }) {
         type="button"
         onClick={() => navigate(-1)}
         aria-label="Volver"
-        className="-mr-2 flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+        className="-mr-2 max-sm:mr-0 flex max-sm:hidden h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
       >
         <IconoChanchito />
       </button>
@@ -79,7 +79,7 @@ function BotonChanchito({ estaEnPuntos }) {
     <Link
       to="/recompensas?seccion=tarjeta"
       aria-label="Tus puntos"
-      className="-mr-2 flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+      className="-mr-2 max-sm:mr-0 flex max-sm:hidden h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
     >
       <IconoChanchito />
     </Link>
@@ -130,7 +130,7 @@ function BotonCarrito({ estaEnCarrito }) {
         type="button"
         onClick={() => navigate(-1)}
         aria-label="Volver"
-        className="relative flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+        className="relative flex h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
       >
         {contenido}
       </button>
@@ -141,7 +141,7 @@ function BotonCarrito({ estaEnCarrito }) {
     <Link
       to="/carrito"
       aria-label="Tu carrito"
-      className="relative flex h-11 w-11 items-center justify-center text-white/80 transition-colors hover:text-white"
+      className="relative flex h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
     >
       {contenido}
     </Link>
@@ -173,7 +173,7 @@ function BotonNotificaciones({ estaEnNotificaciones }) {
         contador={noLeidas}
         onClick={() => navigate(-1)}
         ariaLabel="Volver"
-        className="h-11 w-11 text-white/80 hover:text-white"
+        className="h-11 w-11 max-sm:w-9 text-white/80 hover:text-white"
         estiloBadge={estiloBadge}
       />
     )
@@ -184,7 +184,7 @@ function BotonNotificaciones({ estaEnNotificaciones }) {
       contador={noLeidas}
       onClick={() => navigate('/mi-perfil/notificaciones')}
       ariaLabel="Notificaciones"
-      className="h-11 w-11 text-white/80 hover:text-white"
+      className="h-11 w-11 max-sm:w-9 text-white/80 hover:text-white"
       estiloBadge={estiloBadge}
     />
   )
@@ -267,16 +267,8 @@ function migajasDeRuta(pathname) {
 // esta pestaña de ahora en más, así que cualquier página nueva que se
 // agregue después la hereda automáticamente sin tocar este archivo.
 export default function PortalCliente() {
-  return (
-    <TemaWebProvider>
-      <PortalClienteContenido />
-    </TemaWebProvider>
-  )
-}
-
-function PortalClienteContenido() {
   const location = useLocation()
-  const { tema } = useTemaWeb()
+  const { tema, alternarTema } = useTemaWeb()
   // Visitante (sin sesión): ve "Iniciar sesión" / "Crear cuenta" en vez del carrito,
   // las notificaciones y el menú de la cuenta, que son personales.
   const { usuario } = useAuth()
@@ -306,7 +298,7 @@ function PortalClienteContenido() {
                 no se salta en /inicio) — toda la estructura, hero
                 incluido, arranca debajo del header otra vez, como en
                 el resto de la Web. */}
-            <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center bg-[#0b0b0c] lw-gutter pt-2 sm:h-[90px]">
+            <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center bg-[#0b0b0c] lw-gutter lw-gutter-sep pt-2 sm:h-[90px]">
               <div className="mx-auto flex w-full max-w-[1700px] items-center gap-1">
                 <button
                   type="button"
@@ -331,7 +323,7 @@ function PortalClienteContenido() {
                     sincronizado a mano con el alto del header en cada
                     breakpoint (eso era lo que se desalineaba al achicar/
                     agrandar la pantalla, bug reportado por el usuario). */}
-                <div className="relative flex shrink-0 flex-col items-center gap-0.5 leading-none">
+                <div className="relative max-sm:static flex shrink-0 flex-col items-center gap-0.5 leading-none">
                   <Link to="/inicio" aria-label="Jaise Beauty Academy — inicio" className="flex flex-col items-center gap-0.5 leading-none">
                     <span
                       className="pl-[0.15em] text-[14px] font-black tracking-[0.19em] text-white sm:text-[24px]"
@@ -345,7 +337,9 @@ function PortalClienteContenido() {
                     </span>
                   </Link>
 
-                  {/* Migaja de pan ("Inicio | <pestaña actual>") — pegada
+                  {/* En móvil, la migaja se ancla al header y usa su mismo
+                      separador lateral global. En tablet/PC sigue al logo.
+                      Migaja de pan ("Inicio | <pestaña actual>") — pegada
                       justo debajo del logo (`top-full`) y alineada a su
                       borde izquierdo (`left-0`), inmune al tamaño de
                       pantalla porque es 100% relativa a ESTE contenedor, no
@@ -372,7 +366,7 @@ function PortalClienteContenido() {
                   {migajas.length > 0 && !menuAbierto && (
                     <nav
                       aria-label="Ubicación actual"
-                      className="absolute left-0 top-full mt-3 flex items-center gap-2 whitespace-nowrap text-xs font-medium max-lg:left-[-36px]"
+                      className="absolute left-0 top-full mt-3 max-sm:mt-[3px] max-sm:right-0 max-sm:px-(--separador-vertical) flex items-center gap-2 whitespace-nowrap text-xs font-medium sm:max-lg:left-[-36px]"
                     >
                       <Link
                         to="/inicio"
@@ -421,7 +415,7 @@ function PortalClienteContenido() {
                     derecho retrocede primero, así que "se achica de
                     derecha a izquierda"), sin cambiar el origen entre una
                     animación y otra. */}
-                <nav className="hidden items-center gap-6 lg:ml-12 lg:flex">
+                <nav className="hidden items-center gap-4 lg:ml-6 lg:flex xl:ml-12 xl:gap-6">
                   {seccionesCliente.map((seccion) => (
                     <NavLink key={seccion.path} to={seccion.path} className="relative py-1">
                       {({ isActive }) => (
@@ -452,7 +446,20 @@ function PortalClienteContenido() {
   
                 <div className="flex-1" />
   
-                <div className="flex shrink-0 items-center gap-1 sm:gap-3">
+                <div className="flex shrink-0 items-center gap-0 sm:gap-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={tema === 'oscuro'}
+                    aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+                    title={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+                    onClick={alternarTema}
+                    className="flex h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
+                  >
+                    {tema === 'oscuro'
+                      ? <Moon className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden="true" />
+                      : <Sun className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden="true" />}
+                  </button>
                   <BotonChanchito estaEnPuntos={location.pathname === '/recompensas'} />
   
                   {usuario ? (

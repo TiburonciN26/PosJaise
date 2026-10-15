@@ -1,12 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, Pause, Play, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
+import { useTemaWeb } from '../context/TemaWebContext.jsx'
 import AceptoTerminos from '../components/AceptoTerminos.jsx'
 import { precargarPortalEnReposo } from '../config/paginasCliente.js'
 import { resolverDestino, rutaInternaSegura } from '../lib/destinoLogin.js'
+import { obtenerContacto } from '../lib/datosNegocioWeb.js'
+import { useLectura } from '../hooks/useLectura.js'
 import fotoLogin from '../assets/login/foto-login.jpeg'
+import fotoManicureDetalle from '../assets/login/manicure-detalle.jpeg'
+import fotoManicureDiseno from '../assets/login/manicure-diseno.jpeg'
+import './Login.css'
+
+function MarcaLogin({ className = '' }) {
+  return (
+    <div className={`lgn-marca ${className}`}>
+      <span className="lgn-marca__nombre">JAISE<span className="lgn-marca__grado">˚</span></span>
+      <span className="lgn-marca__academia">BEAUTY ACADEMY</span>
+    </div>
+  )
+}
 
 // Hallazgo crítico reportado por el usuario (no numerado en ninguna
 // auditoría formal): al cerrar sesión, el navegador autocompletaba el
@@ -24,6 +39,9 @@ import fotoLogin from '../assets/login/foto-login.jpeg'
 // un dispositivo compartido conviene además que el personal rechace el
 // "¿Guardar contraseña?" del navegador.
 export default function Login() {
+  const { tema } = useTemaWeb()
+  const contacto = useLectura(obtenerContacto).datos
+  const [fotosPausadas, setFotosPausadas] = useState(false)
   useEffect(() => {
     precargarPortalEnReposo()
   }, [])
@@ -38,6 +56,8 @@ export default function Login() {
   const [modo, setModo] = useState(params.get('modo') === 'registro' ? 'registro' : 'login') // 'login' | 'registro'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const emailRef = useRef(null)
+  const passwordRef = useRef(null)
   const [passwordConfirmar, setPasswordConfirmar] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [error, setError] = useState('')
@@ -126,223 +146,179 @@ export default function Login() {
   }
 
   const esLogin = modo === 'login'
+  const redes = [
+    { nombre: 'Instagram', url: contacto?.instagram_url, icono: 'InstagramColor.svg' },
+    { nombre: 'Facebook', url: contacto?.facebook_url, icono: 'facebookColor.svg' },
+    { nombre: 'TikTok', url: contacto?.tiktok_url, icono: 'tiktokColor.svg' },
+  ].filter((red) => /^https?:\/\//i.test(red.url ?? ''))
 
   return (
-    <main
-      className="lgn flex min-h-svh flex-col md:flex-row"
-      style={{ '--lgn-foto': `url(${fotoLogin})` }}
-    >
-      {/* Foto: arriba en móvil, columna izquierda en escritorio */}
-      <section
-        role="img"
-        aria-label="Clienta sonriente en el salón Jaise"
-        className="lgn-foto relative h-[290px] shrink-0 overflow-hidden md:h-auto md:flex-[57_1_0%]"
-      >
-        {/* Logo sobre la foto: solo móvil (en escritorio va dentro de la tarjeta) */}
-        <div className="absolute left-[22px] top-[22px] flex flex-col items-center gap-[5px] text-[#0b0b0c] md:hidden">
-          <span
-            className="flex items-start pl-[0.15em] text-[20px] font-black leading-none tracking-[0.15em]"
-            style={{ fontFamily: "'Orbitron', sans-serif" }}
-          >
-            JAISE<span className="ml-px mt-[-2px] text-[9px]">˚</span>
-          </span>
-          <span className="pl-[0.3em] text-[8px] font-bold leading-none tracking-[0.3em]">
-            BEAUTY ACADEMY
-          </span>
-        </div>
-
-        {/* Titular móvil (blanco) */}
-        <div
-          className="absolute bottom-12 left-[22px] right-[22px] text-[30px] uppercase leading-none tracking-[0.01em] text-white md:hidden"
-          style={{ fontFamily: "'Kunaroh', 'Orbitron', sans-serif", textShadow: '0 2px 18px rgba(0,0,0,.32)' }}
-        >
-          <div className="lgn-a-hl1">Tu academia</div>
-          <div className="lgn-a-hl2 mt-1">de belleza</div>
-        </div>
-
-        {/* Titular escritorio (oscuro, sobre la foto) */}
-        <div
-          className="absolute bottom-14 left-8 hidden whitespace-nowrap text-[62px] lowercase leading-none tracking-[0.02em] text-[#0b0b0c] md:block"
-          style={{ fontFamily: "'Kunaroh', 'Orbitron', sans-serif" }}
-        >
-          <div className="lgn-a-hl1">tu salon</div>
-          <div className="lgn-a-hl2 mt-5">de belleza</div>
-        </div>
-      </section>
-
-      {/* Tarjeta de login */}
-      <section className="flex grow md:flex-[43_1_0%] md:py-[14px] md:pl-px">
-        <form
-          onSubmit={manejarSubmit}
-          autoComplete="off"
-          className="lgn-a-card relative flex w-full flex-col justify-center gap-3 bg-[#0b0b0c] px-7 pb-[26px] pt-[30px] md:justify-start md:gap-0 md:overflow-hidden md:rounded-[26px] md:px-[62px] md:pb-9 md:pt-14 md:shadow-[1px_10px_24px_rgba(0,0,0,0.5),0_1px_3px_rgba(10,14,20,0.05)]"
-        >
-          {/* Logo en la tarjeta: solo escritorio */}
-          <div className="lgn-a-logo hidden flex-col items-center gap-[7px] text-[#f5f5f4] md:flex">
-            <span
-              className="flex items-start pl-[0.15em] text-[26px] font-black leading-none tracking-[0.15em]"
-              style={{ fontFamily: "'Orbitron', sans-serif" }}
-            >
-              JAISE<span className="ml-0.5 mt-[-2px] text-[11px]">˚</span>
-            </span>
-            <span className="pl-[0.3em] text-[9px] font-bold leading-none tracking-[0.3em]">
-              BEAUTY ACADEMY
-            </span>
-          </div>
-
-          <h1
-            className="lgn-a-h1 m-0 text-center text-[27px] uppercase leading-[1.05] tracking-[0.02em] text-[#f5f5f4] md:mt-[70px] md:text-[40px] md:leading-none"
-            style={{ fontFamily: "'Kunaroh', 'Orbitron', sans-serif", fontWeight: 400 }}
-          >
-            {esLogin ? '¡Bienvenida!' : 'Crea tu cuenta'}
-          </h1>
-          <p className="lgn-a-sub m-0 mb-2.5 text-center text-[15px] leading-[1.4] text-[#a1a1aa] md:mb-0 md:mt-3.5 md:text-[19px] md:tracking-[-0.2px]">
-            <b className="font-bold text-[#f5f5f4]">{esLogin ? 'Inicia sesión' : 'Regístrate'}</b>{' '}
-            para gestionar tus citas.
-          </p>
-          {desde && (
-            <p className="m-0 mb-2.5 text-center text-[13px] leading-[1.4] text-[#a1a1aa] md:mb-0 md:mt-3">
-              Necesitas una cuenta para continuar con lo que estabas haciendo.
-            </p>
+    <main className="lgn" data-tema-login={tema} style={{ '--lgn-foto': `url(${fotoLogin})` }}>
+      <div className="lgn-intro" aria-hidden="true">
+        <MarcaLogin className="lgn-marca--intro" />
+      </div>
+      <div className="lgn-distribucion" data-fotos-pausadas={fotosPausadas}>
+        <section className="lgn-fotos" aria-label="Fotos y redes sociales de Jaise">
+          <div className="lgn-diapositiva lgn-diapositiva--primera" style={{ backgroundImage: `url(${fotoLogin})` }} aria-hidden="true" />
+          <div className="lgn-diapositiva lgn-diapositiva--segunda" style={{ backgroundImage: `url(${fotoManicureDetalle})` }} aria-hidden="true" />
+          <div className="lgn-diapositiva lgn-diapositiva--tercera" style={{ backgroundImage: `url(${fotoManicureDiseno})` }} aria-hidden="true" />
+          <div className="lgn-fotos__velo" aria-hidden="true" />
+          {redes.length > 0 && (
+            <nav className="lgn-redes" aria-label="Redes sociales de Jaise">
+              {redes.map(({ nombre, url, icono }) => (
+                <a key={nombre} href={url} target="_blank" rel="noopener noreferrer" aria-label={nombre} className="lgn-red-social">
+                  <img src={`${import.meta.env.BASE_URL}icons/${icono}`} alt="" />
+                </a>
+              ))}
+            </nav>
           )}
+          <button
+            type="button"
+            className="lgn-pausa"
+            onClick={() => setFotosPausadas((anterior) => !anterior)}
+            aria-label={fotosPausadas ? 'Reanudar presentación de fotos' : 'Pausar presentación de fotos'}
+            aria-pressed={fotosPausadas}
+          >
+            {fotosPausadas ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+          </button>
+        </section>
 
-          <label htmlFor="email" className="sr-only">
-            Correo electrónico
-          </label>
-          <div className="lgn-campo lgn-a-email box-border flex h-[54px] items-center rounded-xl border-[1.5px] border-[#3f3f46] bg-[#18181b] px-4 md:mt-[52px] md:h-[61px] md:px-[17px]">
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="off"
-              value={email}
-              onChange={(evento) => setEmail(evento.target.value)}
-              placeholder="Ej. maria@gmail.com"
-            />
-          </div>
-
-          <label htmlFor="password" className="sr-only">
-            Contraseña
-          </label>
-          <div className="lgn-campo lgn-a-pw box-border flex h-[54px] items-center rounded-xl border-[1.5px] border-[#1f1f23] bg-[#1f1f23] px-4 md:mt-2 md:h-[59px] md:px-[18px]">
-            <input
-              id="password"
-              type={mostrarPassword ? 'text' : 'password'}
-              required
-              autoComplete="new-password"
-              value={password}
-              onChange={(evento) => setPassword(evento.target.value)}
-              placeholder="Contraseña"
-            />
-            <button
-              type="button"
-              onClick={() => setMostrarPassword((valorAnterior) => !valorAnterior)}
-              aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              className="-mr-2 shrink-0 p-2 text-[#a1a1aa] transition-colors hover:text-[#f5f5f4]"
-            >
-              {mostrarPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {!esLogin && (
-            <>
-              <label htmlFor="password-confirmar" className="sr-only">
-                Confirmar contraseña
-              </label>
-              <div className="lgn-campo box-border flex h-[54px] items-center rounded-xl border-[1.5px] border-[#1f1f23] bg-[#1f1f23] px-4 md:mt-2 md:h-[59px] md:px-[18px]">
+        <section className="lgn-panel" aria-labelledby="login-titulo">
+          <form onSubmit={manejarSubmit} autoComplete="off" className="lgn-formulario" aria-busy={enviando}>
+            <Link to="/inicio" aria-label="Jaise Beauty Academy — inicio" className="lgn-logo">
+              <MarcaLogin />
+            </Link>
+            <h1 id="login-titulo" className="lgn-titulo">{esLogin ? 'Bienvenida de nuevo' : 'Crea tu cuenta'}</h1>
+            <div className="lgn-grupo lgn-grupo--primero">
+              <label htmlFor="email">Email</label>
+              <div className="lgn-campo">
+                <Mail className="lgn-campo__icono" aria-hidden="true" />
                 <input
-                  id="password-confirmar"
+                  id="email"
+                  ref={emailRef}
+                  type="email"
+                  required
+                  autoComplete="off"
+                  value={email}
+                  onChange={(evento) => setEmail(evento.target.value)}
+                  placeholder="Ej. maria@gmail.com"
+                  aria-invalid={mensajeError ? true : undefined}
+                  aria-describedby={mensajeError ? 'login-error' : undefined}
+                />
+                {email && (
+                  <div className="lgn-campo__acciones">
+                    <button
+                      type="button"
+                      className="lgn-borrar"
+                      aria-label="Borrar correo"
+                      onClick={() => {
+                        setEmail('')
+                        emailRef.current?.focus({ preventScroll: true })
+                      }}
+                    >
+                      <X aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="lgn-grupo">
+              <label htmlFor="password">Contraseña</label>
+              <div className="lgn-campo">
+                <LockKeyhole className="lgn-campo__icono" aria-hidden="true" />
+                <input
+                  id="password"
+                  ref={passwordRef}
                   type={mostrarPassword ? 'text' : 'password'}
                   required
                   autoComplete="new-password"
-                  value={passwordConfirmar}
-                  onChange={(evento) => setPasswordConfirmar(evento.target.value)}
-                  placeholder="Confirmar contraseña"
+                  value={password}
+                  onChange={(evento) => setPassword(evento.target.value)}
+                  placeholder="Contraseña"
+                  aria-invalid={mensajeError ? true : undefined}
+                  aria-describedby={mensajeError ? 'login-error' : undefined}
                 />
+                <div className="lgn-campo__acciones">
+                  {password && (
+                    <button
+                      type="button"
+                      className="lgn-borrar"
+                      aria-label="Borrar contraseña"
+                      onClick={() => {
+                        setPassword('')
+                        passwordRef.current?.focus({ preventScroll: true })
+                      }}
+                    >
+                      <X aria-hidden="true" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setMostrarPassword((valorAnterior) => !valorAnterior)}
+                    aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    className="lgn-ojo"
+                  >
+                    {mostrarPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                  </button>
+                </div>
               </div>
-              <div className="md:mt-3">
-                <AceptoTerminos
-                  id="registro-acepto-terminos"
-                  aceptado={terminosAceptados}
-                  onCambiar={setTerminosAceptados}
-                />
-              </div>
-            </>
-          )}
+            </div>
 
-          {mensajeError && (
-            <p
-              role="alert"
-              className="m-0 rounded-xl border border-red/40 bg-red/10 px-3 py-2 text-sm text-red md:mt-4"
-            >
-              {mensajeError}
-            </p>
-          )}
+            {!esLogin && (
+              <>
+                <div className="lgn-grupo">
+                  <label htmlFor="password-confirmar">Confirmar contraseña</label>
+                  <div className="lgn-campo">
+                    <LockKeyhole className="lgn-campo__icono" aria-hidden="true" />
+                    <input
+                      id="password-confirmar"
+                      type={mostrarPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="new-password"
+                      value={passwordConfirmar}
+                      onChange={(evento) => setPasswordConfirmar(evento.target.value)}
+                      placeholder="Confirmar contraseña"
+                    />
+                  </div>
+                </div>
+                <div className="lgn-terminos">
+                  <AceptoTerminos id="registro-acepto-terminos" aceptado={terminosAceptados} onCambiar={setTerminosAceptados} />
+                </div>
+              </>
+            )}
 
-          <button
-            type="submit"
-            disabled={enviando}
-            className="lgn-btn lgn-a-btn mt-1 flex h-14 cursor-pointer items-center justify-center gap-2.5 rounded-full border-0 bg-[#f5f5f4] text-base font-medium text-[#0b0b0c] shadow-[0_8px_20px_rgba(18,26,34,.16),0_2px_5px_rgba(18,26,34,.10)] disabled:cursor-default disabled:opacity-50 md:mt-[34px] md:h-[65px] md:text-[16.4px] md:tracking-[0.2px]"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            <span>
-              {esLogin
-                ? enviando
-                  ? 'Entrando...'
-                  : 'Ingresar'
-                : enviando
-                  ? 'Creando cuenta...'
-                  : 'Crear cuenta'}
-            </span>
-            <svg className="lgn-flecha" width="13" height="13" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-              <path d="M3 11h15.4M11 3.3l7.7 7.7-7.7 7.7" stroke="#0b0b0c" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+            <p id="login-error" role="alert" className="lgn-error">{mensajeError}</p>
 
-          <div className="lgn-a-div my-0.5 flex items-center gap-3.5 md:my-0 md:mt-[34px]" aria-hidden="true">
-            <i className="h-[1.5px] flex-1 bg-[#3f3f46]" />
-            <b className="text-[11px] font-bold tracking-[0.8px] text-[#a1a1aa]">O</b>
-            <i className="h-[1.5px] flex-1 bg-[#3f3f46]" />
-          </div>
-
-          {/* Todavía sin implementar: a pedido, no hace nada al presionarlo. */}
-          <button
-            type="button"
-            className="lgn-google lgn-a-g box-border flex h-[54px] cursor-pointer items-center justify-center gap-3.5 rounded-full border-[1.5px] border-[#3f3f46] bg-[#18181b] text-base text-[#f5f5f4] shadow-[0_1px_2px_rgba(0,0,0,.03)] md:mt-[34px] md:h-[59px] md:gap-[17px] md:text-[17px] md:tracking-[-0.2px]"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-            </svg>
-            <span>Continuar con Google</span>
-          </button>
-
-          <p className="lgn-a-bottom m-0 mt-2 text-center text-sm text-[#e4e4e7] md:mt-[17px] md:text-[16.4px] md:tracking-[-0.2px]">
-            {esLogin ? '¿No tienes una cuenta? ' : '¿Ya tienes una cuenta? '}
-            <button
-              type="button"
-              onClick={() => cambiarModo(esLogin ? 'registro' : 'login')}
-              className="cursor-pointer border-0 bg-transparent p-0 font-bold text-[#f5f5f4] underline decoration-2 underline-offset-[3px] hover:text-[#a1a1aa]"
-              style={{ font: 'inherit', fontWeight: 700 }}
-            >
-              {esLogin ? 'Regístrate' : 'Inicia sesión'}
+            <button type="submit" disabled={enviando} className="lgn-btn" data-cargando={enviando}>
+              <span className="lgn-btn__texto">
+                {esLogin
+                  ? enviando ? 'Entrando...' : 'Ingresar'
+                  : enviando ? 'Creando cuenta...' : 'Crear cuenta'}
+              </span>
+              {enviando && <LoaderCircle className="lgn-cargando" aria-hidden="true" />}
             </button>
-          </p>
-
-          <p className="m-0 mt-2 text-center text-sm md:mt-4">
-            <Link to="/inicio" className="text-[#a1a1aa] underline underline-offset-[3px] transition-colors hover:text-[#f5f5f4]">
-              Seguir explorando sin cuenta
-            </Link>
-          </p>
-
-          <p className="m-0 mt-auto hidden pt-8 text-center text-[10px] uppercase tracking-[0.2em] text-[#a1a1aa] md:block">
-            Jaise Beauty Academy © 2026
-          </p>
-        </form>
-      </section>
+            <div className="lgn-divisor" aria-hidden="true"><i /><b>O</b><i /></div>
+            {/* Conserva el botón existente; su integración con Google es independiente del diseño. */}
+            <button type="button" className="lgn-google">
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+              </svg>
+              <span>Continuar con Google</span>
+            </button>
+            <p className="lgn-cambiar-modo">
+              {esLogin ? '¿No tienes una cuenta? ' : '¿Ya tienes una cuenta? '}
+              <button type="button" onClick={() => cambiarModo(esLogin ? 'registro' : 'login')}>
+                {esLogin ? 'Regístrate' : 'Inicia sesión'}
+              </button>
+            </p>
+            <p className="lgn-explorar"><Link to="/inicio">Seguir explorando sin cuenta</Link></p>
+          </form>
+          <p className="lgn-copyright">Jaise Beauty Academy © 2026</p>
+        </section>
+      </div>
     </main>
   )
 }

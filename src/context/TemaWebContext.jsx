@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 
 const TemaWebContext = createContext(null)
 
-// Preferencia PROPIA del portal cliente, independiente del tema del POS
+// Preferencia compartida por el portal cliente y el login (provider en main.jsx),
+// independiente del tema del POS
 // (ThemeContext.jsx, clave 'pos-jaise-tema'): el portal es oscuro por
 // defecto y solo pasa a claro si la clienta lo elige a mano.
 const CLAVE_STORAGE = 'jaise-tema-web'

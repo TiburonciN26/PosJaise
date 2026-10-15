@@ -1,0 +1,387 @@
+/* Diseño de docs/diseño-login-nuevo/loginNuevo.html, adaptado a contenido
+   real y pantallas variables. Las fuentes e imágenes viajan con el login. */
+@font-face {
+  font-family: 'Login Jakarta';
+  src: url('../assets/login/jakarta-latin.woff2') format('woff2');
+  font-weight: 400 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Login Orbitron';
+  src: url('../assets/login/orbitron-latin.woff2') format('woff2');
+  font-weight: 600 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Login Syne';
+  src: url('../assets/login/syne-latin.woff2') format('woff2');
+  font-weight: 600 800;
+  font-display: swap;
+}
+
+.lgn {
+  --lw-gold: #a9c6ec;
+  --lgn-fin-logo: 2.16s;
+  --lgn-fondo-rgb: 10 10 10;
+  --lgn-fondo: rgb(var(--lgn-fondo-rgb));
+  --lgn-texto: #f5f5f4;
+  --lgn-secundario: #e4e4e7;
+  --lgn-muted: #a1a1aa;
+  --lgn-icono: #8b8b93;
+  --lgn-borde: #3f3f46;
+  --lgn-campo-base: #18181b;
+  --lgn-campo-activo: #111113;
+  --lgn-error: #fca5a5;
+  --lgn-error-borde: #f87171;
+  --lgn-accion-fondo: #f5f5f4;
+  --lgn-accion-texto: #0b0b0c;
+  --lgn-accion-sombra: 0 8px 20px rgb(0 0 0 / .35), 0 2px 5px rgb(0 0 0 / .25);
+  --lgn-google-hover: #27272a;
+  --lgn-enlace-hover: #fff;
+  --lgn-foco: #a9c6ec;
+  position: relative;
+  min-height: 100svh;
+  /* El zoom de entrada no debe ampliar el área desplazable de la página. */
+  overflow: clip;
+  background: var(--lgn-fondo);
+  color: var(--lgn-texto);
+  color-scheme: dark;
+  font-family: 'Login Jakarta', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.lgn[data-tema-login='claro'] {
+  --lw-gold: #315985;
+  --lgn-fondo-rgb: 245 245 244;
+  --lgn-texto: #18181b;
+  --lgn-secundario: #3f3f46;
+  --lgn-muted: #52525b;
+  --lgn-icono: #71717a;
+  --lgn-borde: #8b8b93;
+  --lgn-campo-base: #fff;
+  --lgn-campo-activo: #fff;
+  --lgn-error: #b91c1c;
+  --lgn-error-borde: #dc2626;
+  --lgn-accion-fondo: #18181b;
+  --lgn-accion-texto: #fff;
+  --lgn-accion-sombra: 0 8px 20px rgb(15 23 42 / .1), 0 2px 5px rgb(15 23 42 / .06);
+  --lgn-google-hover: #e7e7e5;
+  --lgn-enlace-hover: #000;
+  --lgn-foco: #315985;
+  color-scheme: light;
+}
+.lgn-distribucion {
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  transform-origin: center;
+  background: var(--lgn-fondo);
+  animation: lgnRevelar 1s cubic-bezier(.16, 1, .3, 1) var(--lgn-fin-logo) both;
+}
+.lgn-fotos {
+  --lgn-angulo-borde: 0deg;
+  --lgn-mascara-borde: linear-gradient(var(--lgn-angulo-borde),
+    transparent,
+    rgb(0 0 0 / .156) 4px,
+    rgb(0 0 0 / .5) 8px,
+    rgb(0 0 0 / .844) 12px,
+    #000 16px);
+  position: relative;
+  height: 250px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--lgn-foto) 50% 22% / cover no-repeat;
+  /* Desvanece también la opacidad de los últimos 16px junto al formulario. */
+  -webkit-mask-image: var(--lgn-mascara-borde);
+  mask-image: var(--lgn-mascara-borde);
+}
+.lgn-diapositiva {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  animation: lgnDiapositiva 18s linear infinite;
+}
+.lgn-diapositiva--primera { background-position: 50% 22%; animation-delay: -1.2s; }
+.lgn-diapositiva--segunda { background-position: 50% 50%; animation-delay: 4.8s; }
+.lgn-diapositiva--tercera { background-position: 50% 56%; animation-delay: 10.8s; }
+.lgn-distribucion[data-fotos-pausadas='true'] .lgn-diapositiva { animation-play-state: paused; }
+.lgn-fotos__velo {
+  --lgn-angulo-velo: 0deg;
+  position: absolute;
+  inset: auto 0 0;
+  height: min(60%, 200px);
+  /* Curva de opacidad suave: comienza y termina sin cambios bruscos de
+     pendiente. El tramo opaco junto al formulario conserva la unión. */
+  background: linear-gradient(var(--lgn-angulo-velo),
+    var(--lgn-fondo) 6%,
+    rgb(var(--lgn-fondo-rgb) / .9904) 11.875%,
+    rgb(var(--lgn-fondo-rgb) / .9619) 17.75%,
+    rgb(var(--lgn-fondo-rgb) / .9157) 23.625%,
+    rgb(var(--lgn-fondo-rgb) / .8536) 29.5%,
+    rgb(var(--lgn-fondo-rgb) / .7778) 35.375%,
+    rgb(var(--lgn-fondo-rgb) / .6913) 41.25%,
+    rgb(var(--lgn-fondo-rgb) / .5975) 47.125%,
+    rgb(var(--lgn-fondo-rgb) / .5) 53%,
+    rgb(var(--lgn-fondo-rgb) / .4025) 58.875%,
+    rgb(var(--lgn-fondo-rgb) / .3087) 64.75%,
+    rgb(var(--lgn-fondo-rgb) / .2222) 70.625%,
+    rgb(var(--lgn-fondo-rgb) / .1464) 76.5%,
+    rgb(var(--lgn-fondo-rgb) / .0843) 82.375%,
+    rgb(var(--lgn-fondo-rgb) / .0381) 88.25%,
+    rgb(var(--lgn-fondo-rgb) / .0096) 94.125%,
+    rgb(var(--lgn-fondo-rgb) / 0));
+  pointer-events: none;
+}
+.lgn-redes {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: translateY(-50%);
+}
+.lgn-red-social {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  transition: transform .2s ease;
+}
+.lgn-red-social img { width: 18px; height: 18px; object-fit: contain; }
+.lgn-red-social:hover { transform: translateY(-2px); }
+.lgn-pausa {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--lgn-texto);
+  cursor: pointer;
+}
+.lgn-pausa svg { width: 14px; height: 14px; }
+.lgn-panel {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 28px;
+  background: var(--lgn-fondo);
+}
+/* Solapa la unión sin cambiar medidas: evita una costura de subpíxel
+   cuando el zoom de entrada transforma las dos secciones. */
+.lgn-panel::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0 auto;
+  height: 4px;
+  background: var(--lgn-fondo);
+  pointer-events: none;
+}
+.lgn-formulario {
+  display: flex;
+  width: 100%;
+  max-width: 489px;
+  flex-direction: column;
+  margin-inline: auto;
+}
+.lgn-logo { align-self: center; margin-bottom: 14px; color: inherit; text-decoration: none; }
+.lgn-marca { display: flex; flex-direction: column; align-items: center; gap: 5px; line-height: 1; }
+.lgn-marca__nombre {
+  display: flex;
+  align-items: flex-start;
+  padding-left: .15em;
+  font-family: 'Login Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: .15em;
+}
+.lgn-marca__grado { margin: -2px 0 0 1px; font-size: 9px; }
+.lgn-marca__academia { padding-left: .3em; font-size: 8px; font-weight: 700; letter-spacing: .3em; white-space: nowrap; }
+.lgn-titulo {
+  margin: 0;
+  color: var(--lgn-texto);
+  font-family: 'Login Syne', 'Login Jakarta', sans-serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -.01em;
+  text-align: center;
+  text-wrap: balance;
+}
+.lgn-grupo { min-width: 0; margin-top: 12px; }
+.lgn-grupo--primero { margin-top: 22px; }
+.lgn-grupo > label { display: block; margin-bottom: 7px; font-size: 13px; font-weight: 600; line-height: 1; letter-spacing: .02em; }
+.lgn-campo {
+  --lgn-fondo-campo: var(--lgn-campo-base);
+  display: flex;
+  height: 46px;
+  align-items: center;
+  gap: 11px;
+  padding-inline: 16px;
+  border: 1.5px solid var(--lgn-borde);
+  border-radius: 12px;
+  background: var(--lgn-fondo-campo);
+  transition: border-color .18s ease, background .18s ease;
+}
+.lgn-campo:focus-within { --lgn-fondo-campo: var(--lgn-campo-activo); border-color: var(--lgn-texto); }
+.lgn-campo:has([aria-invalid='true']) { border-color: var(--lgn-error-borde); }
+.lgn-campo__icono { width: 18px; height: 18px; flex: none; color: var(--lgn-icono); }
+.lgn-campo input {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  color: var(--lgn-texto);
+  font: 16px 'Login Jakarta', sans-serif;
+}
+.lgn-campo input::placeholder { color: var(--lgn-icono); opacity: 1; }
+.lgn .lgn-campo input:focus,
+.lgn .lgn-campo input:focus-visible { outline: none; box-shadow: none; }
+/* El navegador pinta su propio fondo al autocompletar credenciales.
+   La sombra interior conserva el mismo fondo del campo, incluso enfocado. */
+.lgn .lgn-campo input:is(:autofill, :-webkit-autofill) {
+  -webkit-box-shadow: 0 0 0 1000px var(--lgn-fondo-campo) inset;
+  box-shadow: 0 0 0 1000px var(--lgn-fondo-campo) inset;
+  -webkit-text-fill-color: var(--lgn-texto);
+  caret-color: var(--lgn-texto);
+}
+.lgn-campo__acciones { display: flex; flex: none; align-items: center; gap: 2px; margin-right: -6px; }
+.lgn-ojo, .lgn-borrar { display: grid; width: 32px; height: 32px; flex: none; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--lgn-icono); cursor: pointer; }
+.lgn-ojo svg { width: 18px; height: 18px; }
+.lgn-borrar svg { width: 16px; height: 16px; }
+.lgn-ojo:hover, .lgn-borrar:hover { color: var(--lgn-texto); }
+.lgn-terminos { margin-top: 14px; }
+.lgn[data-tema-login='claro'] .lgn-terminos label { color: var(--lgn-secundario); }
+.lgn .lgn-terminos a:hover { color: var(--lgn-enlace-hover); }
+/* Conserva espacio para dos líneas durante la validación y sus reintentos. */
+.lgn-error { min-height: 2.8em; margin: 8px 0 0; color: var(--lgn-error); font-size: 13px; line-height: 1.4; }
+.lgn-btn, .lgn-google {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+.lgn-btn {
+  height: 50px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 0;
+  background: var(--lgn-accion-fondo);
+  color: var(--lgn-accion-texto);
+  font-size: 17.5px;
+  font-weight: 800;
+  box-shadow: var(--lgn-accion-sombra);
+  transition: transform .18s ease, filter .18s ease;
+}
+.lgn-btn:hover:not(:disabled) { filter: brightness(1.12); }
+.lgn-btn:active:not(:disabled), .lgn-google:active { transform: translateY(1px); }
+.lgn-btn:disabled { cursor: wait; }
+.lgn-btn__texto { transition: opacity .2s ease, transform .2s ease; }
+.lgn-btn[data-cargando='true'] .lgn-btn__texto { opacity: 0; transform: scale(.8); }
+.lgn-cargando { position: absolute; width: 26px; height: 26px; animation: lgnGirar .75s linear infinite; }
+.lgn-divisor { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.lgn-divisor i { height: 1.5px; flex: 1; background: var(--lgn-borde); }
+.lgn-divisor b { color: var(--lgn-muted); font-size: 11px; font-weight: 700; letter-spacing: .8px; }
+.lgn-google { height: 46px; gap: 14px; margin-top: 14px; border: 1.5px solid var(--lgn-borde); background: var(--lgn-campo-base); color: var(--lgn-texto); font-size: 16px; transition: background .18s ease, transform .18s ease; }
+.lgn-google:hover { background: var(--lgn-google-hover); }
+.lgn-cambiar-modo { margin: 14px 0 0; color: var(--lgn-secundario); font-size: 14px; text-align: center; }
+.lgn-cambiar-modo button { padding: 0; color: var(--lgn-texto); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; cursor: pointer; }
+.lgn-cambiar-modo button:hover, .lgn-explorar a:hover { color: var(--lgn-enlace-hover); }
+.lgn-explorar { margin: 10px 0 0; color: var(--lgn-muted); font-size: 13.5px; text-align: center; }
+.lgn-copyright { display: none; }
+.lgn :focus-visible { outline: 2px solid var(--lgn-foco); outline-offset: 3px; }
+
+/* El revelado comienza después de que el logo termina y queda oculto.
+   La navegación y el envío del formulario no dependen de estas animaciones. */
+.lgn-intro { position: fixed; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; pointer-events: none; animation: lgnOcultar 0s var(--lgn-fin-logo) forwards; }
+.lgn-marca--intro { gap: 12px; animation: lgnIntro .5s cubic-bezier(.22, 1, .36, 1) .05s both; }
+.lgn-marca--intro .lgn-marca__nombre { font-size: 44px; transform-origin: right center; animation: lgnSalidaIzquierda 1.05s cubic-bezier(.5, 0, .86, .4) 1s forwards; }
+.lgn-marca--intro .lgn-marca__grado { margin: -3px 0 0 3px; font-size: 18px; }
+.lgn-marca--intro .lgn-marca__academia { font-size: 12.5px; transform-origin: left center; animation: lgnSalidaDerecha 1.1s cubic-bezier(.5, 0, .86, .4) 1.06s forwards; }
+@keyframes lgnIntro { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes lgnSalidaIzquierda { 0% { transform: none; opacity: 1; } 15% { transform: translateX(8px) skewX(1deg); } 72% { opacity: 1; } 100% { transform: translateX(-100vw) skewX(-18deg) scaleX(1.9); opacity: 0; } }
+@keyframes lgnSalidaDerecha { 0% { transform: none; opacity: 1; } 17% { transform: translateX(-8px) skewX(-1deg); } 74% { opacity: 1; } 100% { transform: translateX(100vw) skewX(19deg) scaleX(2); opacity: 0; } }
+@keyframes lgnOcultar { to { visibility: hidden; } }
+@keyframes lgnRevelar { from { transform: scale(1.5); opacity: 0; filter: blur(14px); } to { transform: none; opacity: 1; filter: none; } }
+@keyframes lgnDiapositiva { 0%, 100% { opacity: 0; } 6.667%, 33.333% { opacity: 1; } 40% { opacity: 0; } }
+@keyframes lgnGirar { to { transform: rotate(360deg); } }
+
+@media (max-width: 767px) {
+  /* La foto ocupa el espacio libre y cede sitio al formulario en pantallas bajas.
+     Si el contenido
+     realmente no cabe (registro o teclado abierto), sigue siendo accesible. */
+  .lgn-distribucion {
+    display: grid;
+    height: 100svh;
+    min-height: min-content;
+    grid-template-rows: minmax(100px, 1fr) auto;
+  }
+  .lgn-fotos { height: 100%; min-height: 0; }
+  .lgn-panel { padding-inline: var(--separador-horizontal); padding-bottom: var(--separador-vertical); }
+}
+
+@media (min-width: 768px) {
+  .lgn-distribucion { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lgn-fotos { --lgn-angulo-borde: 270deg; position: sticky; top: 0; height: 100svh; align-self: start; background-position: 50% 30%; }
+  .lgn-diapositiva--primera { background-position: 50% 30%; }
+  .lgn-diapositiva--tercera { background-position: 50% 55%; }
+  .lgn-fotos__velo { --lgn-angulo-velo: 270deg; inset: 0 0 0 auto; width: min(55%, 420px); height: auto; }
+  .lgn-redes { top: auto; right: 0; bottom: 56px; left: 0; flex-direction: row; justify-content: center; gap: 44px; transform: none; }
+  .lgn-red-social { width: 52px; height: 52px; }
+  .lgn-red-social img { width: 22px; height: 22px; }
+  .lgn-pausa { bottom: 20px; left: 20px; }
+  .lgn-panel { min-height: 100svh; padding: clamp(24px, 5svh, 80px) 40px; }
+  .lgn-panel::before { inset: 0 auto 0 -2px; width: 4px; height: auto; }
+  .lgn-logo { margin-bottom: 44px; }
+  .lgn-marca { gap: 7px; }
+  .lgn-marca__nombre { font-size: 26px; }
+  .lgn-marca__grado { margin-left: 2px; font-size: 11px; }
+  .lgn-marca__academia { font-size: 9px; }
+  .lgn-titulo { font-size: clamp(30px, 2.74vw, 40px); }
+  .lgn-grupo { margin-top: 18px; }
+  .lgn-grupo--primero { margin-top: 40px; }
+  .lgn-grupo > label { margin-bottom: 8px; font-size: 14px; }
+  .lgn-campo { height: 52px; gap: 12px; padding-inline: 17px; }
+  .lgn-campo__icono { width: 20px; height: 20px; }
+  .lgn-ojo, .lgn-borrar { width: 34px; height: 34px; }
+  .lgn-ojo svg { width: 20px; height: 20px; }
+  .lgn-btn { height: 56px; margin-top: 12px; font-size: 18.5px; letter-spacing: .2px; }
+  .lgn-divisor { gap: 16px; margin-top: 28px; }
+  .lgn-divisor b { font-size: 11.5px; }
+  .lgn-google { height: 52px; gap: 17px; margin-top: 28px; font-size: 17px; letter-spacing: -.2px; }
+  .lgn-cambiar-modo { margin-top: 26px; font-size: 16.4px; letter-spacing: -.2px; }
+  .lgn-explorar { margin-top: 14px; font-size: 14.5px; }
+  .lgn-copyright { position: absolute; right: 0; bottom: 30px; left: 0; display: block; margin: 0; color: var(--lgn-muted); font-size: 10px; letter-spacing: .2em; text-align: center; text-transform: uppercase; }
+  .lgn-marca--intro { gap: 16px; }
+  .lgn-marca--intro .lgn-marca__nombre { font-size: 68px; }
+  .lgn-marca--intro .lgn-marca__grado { margin-top: -4px; font-size: 28px; }
+  .lgn-marca--intro .lgn-marca__academia { font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lgn *, .lgn { animation: none !important; transition: none !important; }
+  .lgn-intro, .lgn-pausa { display: none; }
+  .lgn-distribucion { opacity: 1; transform: none; filter: none; }
+  .lgn-diapositiva { opacity: 0; }
+  .lgn-diapositiva--primera { opacity: 1; }
+}

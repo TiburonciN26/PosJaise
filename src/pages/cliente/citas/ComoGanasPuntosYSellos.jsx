@@ -10,7 +10,7 @@ import { formatearCantidad, textoTasa } from '../../../lib/programaRecompensas.j
 // Mientras las reglas cargan no hay cifras; si fallan, un aviso con reintento — nunca una tasa de reemplazo.
 // `heredado` trae lo leído del programa antiguo (null en cada dato si no se pudo leer): { cfg, umbrales, sellosMeta }.
 function Caja({ children }) {
-  return <div className="flex flex-col gap-3.5 pt-8 first:pt-0 lg:pt-0">{children}</div>
+  return <div className="flex flex-col gap-3.5 max-sm:gap-1 pt-8 first:pt-0 lg:pt-0">{children}</div>
 }
 
 function Titulo({ icono: Icono, children }) {
@@ -30,13 +30,13 @@ const B = ({ children }) => <strong className="text-white">{children}</strong>
 function Niveles({ premium, vip }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
+      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
         <strong className="text-[13px] text-white">Básico</strong>desde 0 pts
       </div>
-      <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
+      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
         <strong className="text-[13px] text-white">Premium</strong>desde {formatearCantidad(premium)} pts
       </div>
-      <div className="flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
+      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
         <strong className="text-[13px] text-white">VIP</strong>desde {formatearCantidad(vip)} pts
       </div>
     </div>
@@ -64,7 +64,7 @@ function Paso({ titulo, texto, ultimo = false, completado = false }) {
 
 function Nota({ children }) {
   return (
-    <div className="mt-8 flex gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-[13px] leading-relaxed text-white/60">
+    <div className="citas-cliente-tarjeta mt-8 max-sm:mt-(--separador-horizontal) flex gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-[13px] leading-relaxed text-white/60">
       <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
       <span>{children}</span>
     </div>
@@ -83,7 +83,7 @@ export default function ComoGanasPuntosYSellos({ programa, heredado, reducirMovi
   return (
     <section
       aria-labelledby="citas-como-ganas-titulo"
-      className={`mt-8 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-8 ${
+      className={`citas-cliente-tarjeta mt-8 max-sm:mt-(--separador-horizontal) rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-8 ${
         reducirMovimiento ? '' : 'in-up'
       }`}
       style={reducirMovimiento ? undefined : { animationDelay: `${retrasoMs}ms` }}
@@ -91,16 +91,16 @@ export default function ComoGanasPuntosYSellos({ programa, heredado, reducirMovi
       <h2 id="citas-como-ganas-titulo" className="lw-titulo-heavitas text-xl uppercase">
         {activo ? 'Cómo ganas monedas y sellos' : 'Cómo ganas puntos y sellos'}
       </h2>
-      <p className="mt-1.5 text-[13px] text-white/50">Así funciona tu tarjeta de fidelización en Jaise.</p>
+      <p className="mt-1.5 max-sm:mt-1 text-[13px] text-white/50">Así funciona tu tarjeta de fidelización en Jaise.</p>
 
       {programa.estado === 'cargando' && (
-        <p aria-busy="true" className="mt-6 text-[13px] text-white/50">
+        <p aria-busy="true" className="mt-6 max-sm:mt-1 text-[13px] text-white/50">
           Cargando las reglas del programa…
         </p>
       )}
 
       {programa.estado === 'error' && (
-        <div className="mt-6">
+        <div className="mt-6 max-sm:mt-1">
           <AvisoError
             titulo="No pudimos cargar las reglas del programa"
             texto="No mostramos tasas ni beneficios hasta poder leerlos; así evitamos decirte algo que no es. Inténtalo de nuevo."
@@ -111,7 +111,7 @@ export default function ComoGanasPuntosYSellos({ programa, heredado, reducirMovi
 
       {apagado && (
         <>
-          <div className="mt-6 grid grid-cols-1 gap-8 divide-y divide-white/10 lg:grid-cols-3 lg:gap-10 lg:divide-y-0">
+          <div className="mt-6 max-sm:mt-(--separador-horizontal) grid grid-cols-1 gap-8 divide-y divide-white/10 lg:grid-cols-3 lg:gap-10 lg:divide-y-0">
             <Caja>
               <Titulo icono={Sparkles}>Puntos</Titulo>
               {puntosPorDia !== null ? (
@@ -194,7 +194,7 @@ export default function ComoGanasPuntosYSellos({ programa, heredado, reducirMovi
 
       {activo && (
         <>
-          <div className="mt-6 grid grid-cols-1 gap-8 divide-y divide-white/10 lg:grid-cols-3 lg:gap-10 lg:divide-y-0">
+          <div className="mt-6 max-sm:mt-(--separador-horizontal) grid grid-cols-1 gap-8 divide-y divide-white/10 lg:grid-cols-3 lg:gap-10 lg:divide-y-0">
             <Caja>
               <Titulo icono={Sparkles}>Monedas y nivel</Titulo>
               <P>

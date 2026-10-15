@@ -2,6 +2,126 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+/* Catálogo Web: el editor de producto usa el ancho de la tabla solo en PC.
+   La ficha de Inventario y la disposición móvil conservan su ancho compacto. */
+.modal-producto-web-overlay {
+  top: 59px;
+  align-items: flex-start;
+  padding-block: var(--separador-horizontal);
+}
+
+/* El scroll de las pestañas vive en main, no en body. Al abrir la ficha,
+   se retira su barra para que tabla y modal compartan el mismo centro. */
+main:has(.modal-producto-web:not(.hidden *)) {
+  overflow-y: hidden;
+}
+
+:root:not([data-tema='claro']) .modal-producto-web :is(input:not([type='checkbox']):not([type='file']):not([type='hidden']), textarea) {
+  background-color: #0a0a0a;
+  color: #f5f5f5;
+  color-scheme: dark;
+}
+
+:root:not([data-tema='claro']) .modal-producto-web :is(input, textarea)::placeholder {
+  color: #a3a3a3;
+}
+
+@media (min-width: 64rem) {
+  .modal-producto-web {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(var(--ancho-pestana) - 2 * var(--separador-vertical));
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .modal-producto-web__cabecera,
+  .modal-producto-web__acciones {
+    flex-shrink: 0;
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-producto-web__cabecera {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .modal-producto-web__cuerpo {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding: 0 1.25rem 1rem;
+  }
+
+  .modal-producto-web__principal {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(20rem, 1fr);
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .modal-producto-web__principal > *,
+  .modal-producto-web__datos-campos > *,
+  .modal-producto-web__detalle > *,
+  .modal-producto-web__visibilidad > * {
+    min-width: 0;
+    margin-block: 0;
+  }
+
+  .modal-producto-web__datos,
+  .modal-producto-web__medios,
+  .modal-producto-web__detalle > * {
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 0.875rem;
+  }
+
+  .modal-producto-web__datos-campos,
+  .modal-producto-web__detalle {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .modal-producto-web__descripcion {
+    grid-column: 1 / -1;
+  }
+
+  .modal-producto-web__galeria select {
+    min-width: 0;
+  }
+
+  .modal-producto-web__visibilidad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    border-top: 1px solid var(--color-border);
+    padding-top: 1rem;
+  }
+
+  .modal-producto-web__visibilidad input {
+    flex-shrink: 0;
+  }
+
+  .modal-producto-web__acciones {
+    justify-content: flex-end;
+    margin-top: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .modal-producto-web__acciones button {
+    flex: 0 1 11rem;
+    padding-inline: 1rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  .modal-producto-web__detalle {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 /*
  ---break---
  */
@@ -342,14 +462,81 @@
      una pestaña (formularios, tarjetas de lista). Variables propias para poder
      ajustarlos sin mover los márgenes de pantalla de arriba. `horizontal` =
      arriba/abajo, `vertical` = izquierda/derecha (misma convención). */
-  --separador-horizontal-secundario: 12px;
-  --separador-vertical-secundario: 12px;
+  --separador-horizontal-secundario: 10px;
+  --separador-vertical-secundario: 10px;
   /* Padding interno de BOTONES (celular): `verical` = arriba/abajo, `horizontal` = laterales
      (mismos nombres que se pidieron, con la errata incluida). Se aplican con
      `max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton)`. */
   --pading-verical-boton: 3px;
   --pading-horizontal-boton: 7px;
 }
+/* Los separadores internos compactos se aplican solo en móvil. */
+@media (min-width: 40rem) {
+  :root {
+    --separador-horizontal-secundario: 12px;
+    --separador-vertical-secundario: 12px;
+  }
+}
+
+/* El scroll se conserva al desplegar contenido: el navegador no debe
+   anclarse a los bloques inferiores y desplazar el título pulsado. */
+.citas-cliente-scroll {
+  overflow-anchor: none;
+}
+
+.citas-desplegable {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 280ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 220ms ease;
+}
+
+.citas-desplegable[data-abierto='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.citas-desplegable__recorte {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .citas-desplegable {
+    transition: none;
+  }
+
+  .citas-cliente-contenido button[aria-expanded] > svg {
+    transition: none;
+  }
+}
+
+@media (width < 40rem) {
+  .landing-web .citas-cliente-contenido.lw-gutter-detalle {
+    padding-inline: var(--separador-vertical);
+  }
+
+  .citas-cliente-contenido h2 {
+    font-size: 0.75rem;
+  }
+
+  .citas-cliente-contenido .citas-cliente-tarjeta {
+    padding-block: var(--separador-horizontal-secundario);
+    padding-inline: var(--separador-vertical-secundario);
+  }
+
+  /* El encabezado conserva su altura al abrir y cerrar. Los paddings
+     interiores del encabezado y el contenido suman 4 px en la unión. */
+  .citas-cliente-contenido .citas-cliente-historial > button {
+    padding-bottom: 0.125rem;
+  }
+
+  .citas-cliente-contenido .citas-cliente-historial .citas-desplegable__recorte > p,
+  .citas-cliente-contenido .citas-cliente-historial .citas-desplegable__recorte > div > :first-child {
+    padding-top: 0.125rem;
+  }
+}
+
 /* En lg+ (PC) se mantienen los 0.75rem originales; los 10px son solo móvil. */
 @media (min-width: 64rem) {
   :root {
@@ -2092,65 +2279,6 @@ input[type='search']::-webkit-search-decoration {
 }
 .tn-contenido {
   position: relative;
-}
-
-/* ───────── Login (diseño oscuro propio: public/diseñosPropios/Login.html) ─────────
-   Colores fijos a propósito: el login es oscuro siempre, no sigue el tema
-   claro/oscuro de la app. Escritorio: foto a la izquierda + tarjeta; móvil
-   (<768px): foto arriba + formulario abajo. Las animaciones de entrada
-   escalonadas son las del diseño. */
-.lgn {
-  background: #0b0b0c;
-  color: #f5f5f4;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-.lgn-foto {
-  background-image: var(--lgn-foto);
-  background-size: cover;
-  background-position: 50% 22%;
-  background-repeat: no-repeat;
-}
-@media (min-width: 768px) {
-  .lgn-foto { background-position: 50% 30%; }
-}
-.lgn-campo input {
-  all: unset;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 16px;
-  color: #f5f5f4;
-}
-.lgn-campo input::placeholder { color: #8b8b93; opacity: 1; }
-.lgn-campo:focus-within { border-color: #f5f5f4 !important; background: #111113 !important; }
-.lgn-btn { transition: transform .18s cubic-bezier(.2,.7,.3,1), filter .18s ease; }
-.lgn-btn:hover:not(:disabled) { filter: brightness(1.12); }
-.lgn-btn:active:not(:disabled) { transform: translateY(1px); }
-.lgn-btn:hover:not(:disabled) .lgn-flecha { transform: translateX(3px); }
-.lgn-flecha { transition: transform .18s ease; }
-.lgn-google { transition: background .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2,.7,.3,1); }
-.lgn-google:hover { background: #27272a !important; box-shadow: 0 3px 10px rgba(0,0,0,.4) !important; }
-.lgn-google:active { transform: translateY(1px); }
-.lgn :focus-visible { outline: 2px solid #2b6cb0; outline-offset: 2px; }
-@keyframes lgnIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes lgnCard { from { opacity: 0; transform: translateY(12px) scale(.988); } to { opacity: 1; transform: none; } }
-@keyframes lgnHl { from { opacity: 0; transform: translateY(16px); clip-path: inset(100% 0 0 0); } to { opacity: 1; transform: none; clip-path: inset(0 0 0 0); } }
-.lgn-a-card { animation: lgnCard .82s cubic-bezier(.16,1,.3,1) 40ms both; }
-.lgn-a-hl1 { animation: lgnHl .76s cubic-bezier(.16,1,.3,1) 240ms both; }
-.lgn-a-hl2 { animation: lgnHl .76s cubic-bezier(.16,1,.3,1) 330ms both; }
-.lgn-a-logo { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 400ms both; }
-.lgn-a-h1 { animation: lgnIn .62s cubic-bezier(.16,1,.3,1) 470ms both; }
-.lgn-a-sub { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 570ms both; }
-.lgn-a-email { animation: lgnIn .52s cubic-bezier(.22,1,.36,1) 720ms both; }
-.lgn-a-pw { animation: lgnIn .52s cubic-bezier(.22,1,.36,1) 790ms both; }
-.lgn-a-btn { animation: lgnIn .56s cubic-bezier(.16,1,.3,1) 930ms both; }
-.lgn-a-div { animation: lgnIn .44s cubic-bezier(.22,1,.36,1) 1060ms both; }
-.lgn-a-g { animation: lgnIn .54s cubic-bezier(.16,1,.3,1) 1150ms both; }
-.lgn-a-bottom { animation: lgnIn .5s cubic-bezier(.22,1,.36,1) 1260ms both; }
-@media (prefers-reduced-motion: reduce) {
-  .lgn *, .lgn { transition: none !important; animation: none !important; }
 }
 
 /* ===== Paleta oscura del POS (la "nueva" oscuro: fondo #0A0A0A, secundario
