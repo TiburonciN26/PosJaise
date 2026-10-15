@@ -97,15 +97,16 @@
 .lgn-diapositiva {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   opacity: 0;
-  animation: lgnDiapositiva 18s linear infinite;
+  transition: opacity 1.2s linear;
 }
-.lgn-diapositiva--primera { background-position: 50% 22%; animation-delay: -1.2s; }
-.lgn-diapositiva--segunda { background-position: 50% 50%; animation-delay: 4.8s; }
-.lgn-diapositiva--tercera { background-position: 50% 56%; animation-delay: 10.8s; }
-.lgn-distribucion[data-fotos-pausadas='true'] .lgn-diapositiva { animation-play-state: paused; }
+.lgn-diapositiva[data-activa='true'] { opacity: 1; }
+.lgn-diapositiva--primera { object-position: 50% 22%; }
+.lgn-diapositiva--tercera { object-position: 50% 56%; }
 .lgn-fotos__velo {
   --lgn-angulo-velo: 0deg;
   position: absolute;
@@ -323,7 +324,6 @@
 @keyframes lgnSalidaDerecha { 0% { transform: none; opacity: 1; } 17% { transform: translateX(-8px) skewX(-1deg); } 74% { opacity: 1; } 100% { transform: translateX(100vw) skewX(19deg) scaleX(2); opacity: 0; } }
 @keyframes lgnOcultar { to { visibility: hidden; } }
 @keyframes lgnRevelar { from { transform: scale(1.5); opacity: 0; filter: blur(14px); } to { transform: none; opacity: 1; filter: none; } }
-@keyframes lgnDiapositiva { 0%, 100% { opacity: 0; } 6.667%, 33.333% { opacity: 1; } 40% { opacity: 0; } }
 @keyframes lgnGirar { to { transform: rotate(360deg); } }
 
 @media (max-width: 767px) {
@@ -343,8 +343,8 @@
 @media (min-width: 768px) {
   .lgn-distribucion { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lgn-fotos { --lgn-angulo-borde: 270deg; position: sticky; top: 0; height: 100svh; align-self: start; background-position: 50% 30%; }
-  .lgn-diapositiva--primera { background-position: 50% 30%; }
-  .lgn-diapositiva--tercera { background-position: 50% 55%; }
+  .lgn-diapositiva--primera { object-position: 50% 30%; }
+  .lgn-diapositiva--tercera { object-position: 50% 55%; }
   .lgn-fotos__velo { --lgn-angulo-velo: 270deg; inset: 0 0 0 auto; width: min(55%, 420px); height: auto; }
   .lgn-redes { top: auto; right: 0; bottom: 56px; left: 0; flex-direction: row; justify-content: center; gap: 44px; transform: none; }
   .lgn-red-social { width: 52px; height: 52px; }
@@ -382,6 +382,4 @@
   .lgn *, .lgn { animation: none !important; transition: none !important; }
   .lgn-intro, .lgn-pausa { display: none; }
   .lgn-distribucion { opacity: 1; transform: none; filter: none; }
-  .lgn-diapositiva { opacity: 0; }
-  .lgn-diapositiva--primera { opacity: 1; }
 }

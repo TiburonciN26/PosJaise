@@ -33,10 +33,17 @@ async function adaptador(respuestaConteo) {
   return { fuentes, peticiones }
 }
 
-await prueba('conteo cero confirmado en las cinco tablas → false (única respuesta que apoya «sin referencias»)', async () => {
+await prueba('conteo cero confirmado en las seis tablas → false (única respuesta que apoya «sin referencias»)', async () => {
   const { fuentes, peticiones } = await adaptador(() => ({ rango: '*/0' }))
   assert.equal(await fuentes.estaReferenciado(GRUPO), false)
-  assert.equal(peticiones.filter((p) => p.url.includes('/rest/v1/')).length, 5)
+  assert.equal(peticiones.filter((p) => p.url.includes('/rest/v1/')).length, 6)
+})
+await prueba('una foto referenciada solo por el login permanece protegida, incluso si está desactivada', async () => {
+  const { fuentes, peticiones } = await adaptador((tabla) => ({ rango: tabla === 'login_web_fotos' ? '*/1' : '*/0' }))
+  assert.equal(await fuentes.estaReferenciado(GRUPO), true)
+  const consulta = peticiones.find((p) => p.url.includes('/rest/v1/login_web_fotos'))
+  assert.ok(consulta)
+  assert.equal(new URL(consulta.url).searchParams.has('activo'), false)
 })
 await prueba('conteo positivo en alguna tabla → true', async () => {
   const { fuentes } = await adaptador((tabla) => ({ rango: tabla === 'servicios' ? '*/2' : '*/0' }))
@@ -48,6 +55,7 @@ for (const [nombre, respuesta] of [
   ['Content-Range con total desconocido', () => ({ rango: '*/*' })],
   ['error 500 del servidor', () => ({ estado: 500, rango: undefined })],
   ['solo la tercera tabla sin conteo', (tabla) => ({ rango: tabla === 'servicios' ? undefined : '*/0' })],
+  ['solo login_web_fotos sin conteo', (tabla) => ({ rango: tabla === 'login_web_fotos' ? undefined : '*/0' })],
 ]) {
   await prueba(`RG-03: ${nombre} → estaReferenciado LANZA (lectura incierta), nunca false`, async () => {
     const { fuentes } = await adaptador(respuesta)

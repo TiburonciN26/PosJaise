@@ -110,6 +110,13 @@ export default function Web() {
         <Image className="h-4 w-4" />
         Ir a Galería Web
       </Link>
+      <Link
+        to="/login-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-azul-metal/40 bg-azul-metal/10 px-4 py-3 text-sm font-medium text-azul-metal transition-colors hover:bg-azul-metal/15"
+      >
+        <Image className="h-4 w-4" />
+        Ir a Login Web
+      </Link>
     </div>
   )
 }

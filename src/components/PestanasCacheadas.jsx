@@ -47,6 +47,7 @@ const ReferidosWeb = componenteDiferido(() => import('../pages/ReferidosWeb.jsx'
 const FidelizacionWeb = componenteDiferido(() => import('../pages/FidelizacionWeb.jsx'), 'FidelizacionWeb')
 const RecompensasWeb = componenteDiferido(() => import('../pages/RecompensasWeb.jsx'), 'RecompensasWeb')
 const GaleriaWeb = componenteDiferido(() => import('../pages/GaleriaWeb.jsx'), 'GaleriaWeb')
+const LoginWeb = componenteDiferido(() => import('../pages/LoginWeb.jsx'), 'LoginWeb')
 const CatalogoWeb = componenteDiferido(() => import('../pages/CatalogoWeb.jsx'), 'CatalogoWeb')
 const LibroReclamacionesWeb = componenteDiferido(() => import('../pages/LibroReclamacionesWeb.jsx'), 'LibroReclamacionesWeb')
 
@@ -77,6 +78,7 @@ const PAGINAS = {
   '/fidelizacion-web': FidelizacionWeb,
   '/recompensas-web': RecompensasWeb,
   '/galeria-web': GaleriaWeb,
+  '/login-web': LoginWeb,
   '/catalogo-web': CatalogoWeb,
   '/libro-reclamaciones-web': LibroReclamacionesWeb,
 }

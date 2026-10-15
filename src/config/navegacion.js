@@ -187,6 +187,14 @@ export const secciones = [
     tema: 'azul-metal',
     padre: '/web',
   },
+  {
+    path: '/login-web',
+    label: 'Login Web',
+    icono: Image,
+    roles: ['ADMINISTRADOR'],
+    tema: 'azul-metal',
+    padre: '/web',
+  },
 ]
 
 // Ruta de aterrizaje por rol — antes App.jsx/PestanasCacheadas.jsx tenían

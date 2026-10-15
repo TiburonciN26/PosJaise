@@ -32,6 +32,7 @@ const TABLAS = [
   ['servicios', ['foto_url']],
   ['servicio_fotos', ['foto_url']],
   ['galeria_web', ['antes_url', 'despues_url']],
+  ['login_web_fotos', ['foto_url']],
 ]
 const PAGINA = 1000
 

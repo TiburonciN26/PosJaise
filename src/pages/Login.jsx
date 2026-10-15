@@ -9,9 +9,9 @@ import { precargarPortalEnReposo } from '../config/paginasCliente.js'
 import { resolverDestino, rutaInternaSegura } from '../lib/destinoLogin.js'
 import { obtenerContacto } from '../lib/datosNegocioWeb.js'
 import { useLectura } from '../hooks/useLectura.js'
-import fotoLogin from '../assets/login/foto-login.jpeg'
-import fotoManicureDetalle from '../assets/login/manicure-detalle.jpeg'
-import fotoManicureDiseno from '../assets/login/manicure-diseno.jpeg'
+import { FOTOS_LOGIN_RESPALDO } from '../config/fotosLogin.js'
+import { obtenerFotosLogin } from '../lib/fotosLogin.js'
+import FotosLogin from '../components/FotosLogin.jsx'
 import './Login.css'
 
 function MarcaLogin({ className = '' }) {
@@ -41,6 +41,7 @@ function MarcaLogin({ className = '' }) {
 export default function Login() {
   const { tema } = useTemaWeb()
   const contacto = useLectura(obtenerContacto).datos
+  const fotos = useLectura(obtenerFotosLogin).datos
   const [fotosPausadas, setFotosPausadas] = useState(false)
   useEffect(() => {
     precargarPortalEnReposo()
@@ -153,16 +154,12 @@ export default function Login() {
   ].filter((red) => /^https?:\/\//i.test(red.url ?? ''))
 
   return (
-    <main className="lgn" data-tema-login={tema} style={{ '--lgn-foto': `url(${fotoLogin})` }}>
+    <main className="lgn" data-tema-login={tema} style={{ '--lgn-foto': `url(${FOTOS_LOGIN_RESPALDO[0].url})` }}>
       <div className="lgn-intro" aria-hidden="true">
         <MarcaLogin className="lgn-marca--intro" />
       </div>
       <div className="lgn-distribucion" data-fotos-pausadas={fotosPausadas}>
-        <section className="lgn-fotos" aria-label="Fotos y redes sociales de Jaise">
-          <div className="lgn-diapositiva lgn-diapositiva--primera" style={{ backgroundImage: `url(${fotoLogin})` }} aria-hidden="true" />
-          <div className="lgn-diapositiva lgn-diapositiva--segunda" style={{ backgroundImage: `url(${fotoManicureDetalle})` }} aria-hidden="true" />
-          <div className="lgn-diapositiva lgn-diapositiva--tercera" style={{ backgroundImage: `url(${fotoManicureDiseno})` }} aria-hidden="true" />
-          <div className="lgn-fotos__velo" aria-hidden="true" />
+        <FotosLogin fotos={fotos} pausadas={fotosPausadas}>
           {redes.length > 0 && (
             <nav className="lgn-redes" aria-label="Redes sociales de Jaise">
               {redes.map(({ nombre, url, icono }) => (
@@ -181,7 +178,7 @@ export default function Login() {
           >
             {fotosPausadas ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
           </button>
-        </section>
+        </FotosLogin>
 
         <section className="lgn-panel" aria-labelledby="login-titulo">
           <form onSubmit={manejarSubmit} autoComplete="off" className="lgn-formulario" aria-busy={enviando}>
