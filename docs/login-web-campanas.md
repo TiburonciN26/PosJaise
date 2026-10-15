@@ -14,10 +14,11 @@ suben mediante el Worker R2 existente al destino editorial `fotos-galeria`. No
 se modifica `galeria_web` ni se mezclan sus filas con las del login. Los archivos
 en R2 tienen UUID propio y las dos variantes habituales `m` y `g`.
 
-## Activación pendiente
+## Activación
 
-La implementación y el SQL están preparados en el repositorio. No se han aplicado
-estos cambios a las bases Supabase existentes ni se ha publicado la web.
+La implementación y el SQL están preparados en el repositorio. El usuario informó
+el 2026-10-15 que publicó la web y aplicó la migración en Supabase Cloud. Los
+procedimientos de abajo sirven también para preparar otros entornos.
 
 1. Revisar y aplicar `supabase/migrations/20261015150644_login_web_fotos.sql`
    en el entorno que se vaya a activar, siguiendo el procedimiento de despliegue
@@ -35,7 +36,48 @@ edición hasta poder leerla. El login público continúa con las tres fotos incl
 en el proyecto. También usa ese respaldo si no hay fotos activas o ninguna foto
 de campaña se puede cargar. Una lectura lenta no bloquea el formulario de acceso.
 
+## Corrección 2026-10-15: DELETE requires a WHERE clause
+
+El guardado fallaba en Supabase Cloud porque la definición original de
+`guardar_login_web_fotos` ejecutaba `DELETE FROM public.login_web_fotos` sin
+`WHERE`. El PostgreSQL desechable usado en las pruebas originales no tenía cargado
+`safeupdate`, por lo que esas pruebas no detectaron el bloqueo de producción.
+
+Se corrigió **el mismo archivo**
+`supabase/migrations/20261015150644_login_web_fotos.sql`, por petición del usuario:
+
+- El DELETE de la función usa `WHERE orden BETWEEN 0 AND 7`. El CHECK de la tabla
+  restringe todas las filas a ese rango; se conserva el reemplazo atómico de la
+  campaña y no se desactiva `safeupdate`.
+- `CREATE TABLE IF NOT EXISTS`, recreación de las cinco políticas conocidas y
+  `CREATE OR REPLACE FUNCTION` permiten ejecutar el archivo completo de nuevo
+  sobre la versión original, dentro de una transacción y conservando las filas.
+- Permanecen la validación de administrador, RLS, `SECURITY INVOKER`, los permisos
+  y la comparación de la versión base para evitar sobrescrituras concurrentes.
+
+**Para una base donde ya se ejecutó la versión original:** abrir una consulta
+nueva en SQL Editor de ese proyecto Supabase, pegar el contenido completo del
+archivo corregido y ejecutarlo. No ejecutar un DELETE aislado ni el fixture de
+pruebas. Después, volver al panel y reintentar Guardar cambios. Esta corrección
+SQL no necesita otro despliegue de Cloudflare.
+
+**Nota para Claude Code y despliegues por CLI:** modificar un archivo ya aplicado
+no hace que `supabase db push` vuelva a ejecutarlo. Esta reparación se entrega
+para reaplicación manual en SQL Editor. Si se utiliza un proceso que aplica solo
+migraciones pendientes, registrar una migración correctiva nueva siguiendo ese
+proceso; no borrar ni falsificar el historial para forzar la repetición.
+
+La corrección queda preparada localmente; no se ha ejecutado contra Supabase Cloud.
+
 ## Permisos y guardado
+
+Corrección visual 2026-10-15: se retiró la foto de ejemplo usada como fondo fijo
+en `.lgn-fotos` y la variable `--lgn-foto` de las dos vistas. Durante la transición
+de opacidad entre fotos de campaña se transparentaba ese fondo y aparecía una
+tercera imagen. El fondo ahora utiliza el color del tema; `FotosLogin` mantiene
+las imágenes de respaldo únicamente cuando no hay fotos de campaña disponibles.
+Aplica al login público y a la vista previa, en ambos temas y tamaños de pantalla.
+Este cambio visual requiere publicar la web; no requiere cambios en Supabase.
 
 - `anon` y los clientes autenticados solo leen filas activas. Solo un
   administrador activo puede leer las desactivadas y escribir configuración.
@@ -66,11 +108,14 @@ node scripts/verificar-urls-medios.mjs
 La prueba SQL necesita Docker y la imagen local
 `public.ecr.aws/supabase/postgres:17.11.0.002`. Arranca su propio PostgreSQL sin
 red, puertos ni volúmenes, carga las funciones reales de roles con usuarios
-ficticios, prueba RLS, conflictos y atomicidad y elimina su contenedor al terminar.
+ficticios, carga la biblioteca real `safeupdate`, comprueba que bloquea el DELETE
+sin filtro, reaplica la corrección sobre una campaña existente, prueba RLS,
+conflictos y atomicidad y elimina su contenedor al terminar.
 No conecta con Supabase Local ni con producción. Las otras pruebas usan dobles
 sin red y no escriben ni borran objetos reales.
 
 Se verificó además en navegador local el panel a 360/1280 px con base y R2
 simulados y compresión real, los reintentos, la respuesta perdida, conflictos,
-pausa, movimiento reducido y respaldo por error de imágenes. La activación real
-requiere el paso SQL y el despliegue indicados arriba.
+pausa, movimiento reducido y respaldo por error de imágenes. La validación del
+guardado contra el entorno publicado corresponde realizarla después de reaplicar
+el SQL corregido.

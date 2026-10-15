@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import GuiaPestana from '../components/GuiaPestana.jsx'
 import FotosLogin from '../components/FotosLogin.jsx'
-import { FOTOS_LOGIN_RESPALDO, MAX_FOTOS_LOGIN } from '../config/fotosLogin.js'
+import { MAX_FOTOS_LOGIN } from '../config/fotosLogin.js'
 import { BUCKET_LOGIN, guardarFotosLogin, leerFotosLogin, prepararFotoLogin, subirFotoLogin } from '../lib/fotosLogin.js'
 import { urlPublicaFoto } from '../lib/imagenes.js'
 import { confirmarGuardado, envioDe, formularioEditado, formularioEnviado } from '../lib/formulariosProtegidos.js'
@@ -177,7 +177,7 @@ export default function LoginWeb() {
           </fieldset>
           <section className="min-w-0 rounded-lg border border-border bg-surface p-3" aria-label="Vista previa del login">
             <div className="mb-3 flex flex-wrap items-center gap-2"><h2 className="mr-auto text-sm font-semibold text-ink">Vista previa</h2><button type="button" className={BOTON} onClick={() => setTemaVista((t) => t === 'oscuro' ? 'claro' : 'oscuro')}>{temaVista === 'oscuro' ? 'Ver en claro' : 'Ver en oscuro'}</button><button type="button" className={BOTON} aria-label={pausaVista ? 'Reanudar vista previa' : 'Pausar vista previa'} onClick={() => setPausaVista((p) => !p)}>{pausaVista ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}</button></div>
-            <div className="lgn grid overflow-hidden rounded-lg sm:grid-cols-2" data-tema-login={temaVista} style={{ minHeight: 0, '--lgn-foto': `url(${FOTOS_LOGIN_RESPALDO[0].url})` }}>
+            <div className="lgn grid overflow-hidden rounded-lg sm:grid-cols-2" data-tema-login={temaVista} style={{ minHeight: 0 }}>
               <FotosLogin fotos={activas} pausadas={pausaVista} style={{ position: 'relative', height: '100%', minHeight: 260 }} />
               <div className="lgn-panel gap-4" style={{ padding: 18, minHeight: 0 }} aria-hidden="true"><p className="text-center font-bold">JAISE</p><p className="text-center text-lg font-semibold">Bienvenida de nuevo</p><div className="lgn-campo" /><div className="lgn-campo" /><span className="lgn-btn" style={{ fontSize: 14, marginTop: 0 }}>Ingresar</span></div>
             </div>

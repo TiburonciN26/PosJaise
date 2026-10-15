@@ -1,5 +1,15 @@
 -- Solo para el contenedor desechable de scripts/probar-login-web-sql.cjs.
 -- No ejecutar este fixture en una base del negocio.
+-- Verificar que la protección está realmente cargada, aun con tabla vacía.
+do $$ begin
+ begin
+   delete from public.login_web_fotos;
+ exception when others then
+   if sqlerrm = 'DELETE requires a WHERE clause' then return; end if;
+   raise;
+ end;
+ raise exception 'safeupdate no bloqueó el DELETE sin filtro';
+end $$;
 set role authenticated;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
 select * from public.guardar_login_web_fotos('[
@@ -11,8 +21,8 @@ set role anon;
 do $$ begin
  if (select count(*) from public.login_web_fotos) <> 1 then raise exception 'Anon ve fotos ocultas'; end if;
  begin perform public.guardar_login_web_fotos('[]','[]'); raise exception 'Anon pudo publicar'; exception when insufficient_privilege then null; end;
- begin delete from public.login_web_fotos; raise exception 'Anon pudo borrar'; exception when insufficient_privilege then null; end;
- begin update public.login_web_fotos set titulo='ajeno'; raise exception 'Anon pudo actualizar'; exception when insufficient_privilege then null; end;
+ begin delete from public.login_web_fotos where orden between 0 and 7; raise exception 'Anon pudo borrar'; exception when insufficient_privilege then null; end;
+ begin update public.login_web_fotos set titulo='ajeno' where orden between 0 and 7; raise exception 'Anon pudo actualizar'; exception when insufficient_privilege then null; end;
  begin insert into public.login_web_fotos values(gen_random_uuid(),'ajena','r2:fotos-galeria/20000000-0000-0000-0000-000000000003',2,true); raise exception 'Anon pudo insertar'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
@@ -28,9 +38,9 @@ do $$ declare uid text; n integer; begin
    if (select count(*) from public.login_web_fotos) <> 1 then raise exception 'Otro rol ve fotos ocultas'; end if;
    begin perform public.guardar_login_web_fotos('[]','[]'); raise exception 'Otro rol pudo publicar'; exception when insufficient_privilege then null; end;
    begin insert into public.login_web_fotos values(gen_random_uuid(),'ajena','r2:fotos-galeria/20000000-0000-0000-0000-000000000003',2,true); raise exception 'Otro rol pudo insertar'; exception when insufficient_privilege then null; end;
-   update public.login_web_fotos set titulo='ajeno'; get diagnostics n = row_count;
+   update public.login_web_fotos set titulo='ajeno' where orden between 0 and 7; get diagnostics n = row_count;
    if n <> 0 then raise exception 'Otro rol pudo actualizar'; end if;
-   delete from public.login_web_fotos; get diagnostics n = row_count;
+   delete from public.login_web_fotos where orden between 0 and 7; get diagnostics n = row_count;
    if n <> 0 then raise exception 'Otro rol pudo borrar'; end if;
  end loop;
 end $$;

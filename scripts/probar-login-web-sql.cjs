@@ -41,8 +41,32 @@ async function ejecutar() {
     `
     const migracion = readFileSync(resolve(raiz, 'supabase/migrations/20261015150644_login_web_fotos.sql'), 'utf8')
     const pruebas = readFileSync(resolve(raiz, 'tests/sql/login-web-fotos.sql'), 'utf8')
-    docker(['exec', '-i', nombre, 'psql', '-h', '/tmp', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], { input: prefijo + migracion + pruebas })
-    console.log('PASS: SQL real, RLS anon/cliente/cajera/asistente/admin inactivo, guardado atómico, conflictos y validación. Sin conexiones a Supabase.')
+    const biblioteca = docker(['exec', nombre, 'find', '/nix/store', '-path', '*/lib/safeupdate.so', '-print', '-quit']).trim()
+    if (!/^\/nix\/store\/[a-z0-9-]+\/lib\/safeupdate\.so$/.test(biblioteca)) throw new Error('No se encontró safeupdate en la imagen de pruebas.')
+    const sinFiltro = 'delete from public.login_web_fotos;'
+    const conFiltro = 'delete from public.login_web_fotos where orden between 0 and 7;'
+    if (!migracion.includes(conFiltro)) throw new Error('La migración no contiene el filtro esperado.')
+    // Simula la definición defectuosa ya aplicada y una campaña preexistente.
+    // Solo se instala en este PostgreSQL desechable, nunca en Supabase.
+    const anterior = migracion.replace(conFiltro, sinFiltro)
+    const antesDeReaplicar = `
+      insert into public.login_web_fotos values
+        ('10000000-0000-0000-0000-000000000007','Campaña conservada','r2:fotos-galeria/20000000-0000-0000-0000-000000000007',7,false);
+      create temp table qa_campana_original as select * from public.login_web_fotos;
+    `
+    const despuesDeReaplicar = `
+      do $$ begin
+        if exists (select * from public.login_web_fotos except select * from qa_campana_original)
+           or exists (select * from qa_campana_original except select * from public.login_web_fotos) then
+          raise exception 'Reaplicar la migración alteró la campaña existente';
+        end if;
+      end $$;
+      delete from public.login_web_fotos where orden = 7;
+    `
+    docker(['exec', '-i', nombre, 'psql', '-h', '/tmp', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], {
+      input: `LOAD '${biblioteca}';\n` + prefijo + anterior + antesDeReaplicar + migracion + despuesDeReaplicar + pruebas,
+    })
+    console.log('PASS: safeupdate activo, reaplicación sin pérdida de fotos, SQL real, RLS anon/cliente/cajera/asistente/admin inactivo, guardado atómico, conflictos y validación. Sin conexiones a Supabase.')
   } finally {
     // Solo el contenedor creado por ESTA ejecución, nunca un Supabase existente.
     if (creado) docker(['rm', '--force', nombre])

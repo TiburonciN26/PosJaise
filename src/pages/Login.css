@@ -89,7 +89,9 @@
   height: 250px;
   flex-shrink: 0;
   overflow: hidden;
-  background: var(--lgn-foto) 50% 22% / cover no-repeat;
+  /* Las fotos de respaldo también son diapositivas: una imagen fija debajo
+     del carrusel se colaría cuando las dos capas se desvanecen al cambiar. */
+  background: var(--lgn-fondo);
   /* Desvanece también la opacidad de los últimos 16px junto al formulario. */
   -webkit-mask-image: var(--lgn-mascara-borde);
   mask-image: var(--lgn-mascara-borde);
@@ -342,7 +344,7 @@
 
 @media (min-width: 768px) {
   .lgn-distribucion { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lgn-fotos { --lgn-angulo-borde: 270deg; position: sticky; top: 0; height: 100svh; align-self: start; background-position: 50% 30%; }
+  .lgn-fotos { --lgn-angulo-borde: 270deg; position: sticky; top: 0; height: 100svh; align-self: start; }
   .lgn-diapositiva--primera { object-position: 50% 30%; }
   .lgn-diapositiva--tercera { object-position: 50% 55%; }
   .lgn-fotos__velo { --lgn-angulo-velo: 270deg; inset: 0 0 0 auto; width: min(55%, 420px); height: auto; }

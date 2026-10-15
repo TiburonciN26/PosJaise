@@ -9,7 +9,6 @@ import { precargarPortalEnReposo } from '../config/paginasCliente.js'
 import { resolverDestino, rutaInternaSegura } from '../lib/destinoLogin.js'
 import { obtenerContacto } from '../lib/datosNegocioWeb.js'
 import { useLectura } from '../hooks/useLectura.js'
-import { FOTOS_LOGIN_RESPALDO } from '../config/fotosLogin.js'
 import { obtenerFotosLogin } from '../lib/fotosLogin.js'
 import FotosLogin from '../components/FotosLogin.jsx'
 import './Login.css'
@@ -154,7 +153,7 @@ export default function Login() {
   ].filter((red) => /^https?:\/\//i.test(red.url ?? ''))
 
   return (
-    <main className="lgn" data-tema-login={tema} style={{ '--lgn-foto': `url(${FOTOS_LOGIN_RESPALDO[0].url})` }}>
+    <main className="lgn" data-tema-login={tema}>
       <div className="lgn-intro" aria-hidden="true">
         <MarcaLogin className="lgn-marca--intro" />
       </div>
