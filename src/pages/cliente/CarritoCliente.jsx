@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowBigDown,
   ArrowRight,
   Bike,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -170,7 +170,7 @@ function SelectorDia({ diaSeleccionado, onElegir }) {
   }
 
   return (
-    <div className="lw-panel p-3">
+    <div className="lw-panel p-3 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
       <div className="flex items-center justify-between px-1 pb-2">
         <button type="button" onClick={() => cambiarMes(-1)} aria-label="Mes anterior" className="p-1.5 text-white/70 transition-colors hover:text-[var(--lw-gold)]">
           <ChevronLeft className="h-4 w-4" />
@@ -222,12 +222,9 @@ function SelectorDia({ diaSeleccionado, onElegir }) {
   )
 }
 
-// Íconos reales en public/icons/ — Plin no tiene uno todavía (solo existe
-// yape.svg/transferencia.svg/efectivo.svg/targueta.svg), así que se queda
-// con un ícono genérico (Wallet, de lucide) hasta que exista el real.
+// Métodos de pago disponibles en el carrito de productos.
 const METODOS_PAGO = [
   { id: 'YAPE', nombre: 'Yape', conQR: true, icono: 'icons/yape.svg' },
-  { id: 'PLIN', nombre: 'Plin', conQR: true, icono: null },
   { id: 'TRANSFERENCIA', nombre: 'Transferencia', conQR: false, icono: 'icons/transferencia.svg' },
   { id: 'TARJETA', nombre: 'Tarjeta', conQR: false, icono: 'icons/targueta.svg' },
 ]
@@ -273,7 +270,7 @@ function TarjetaDireccion({ direccion, seleccionada, mostrarRadio, onElegir }) {
   // predeterminada (cerrado) no hay nada que resaltar contra, así que se
   // ve como una tarjeta de info plana, con el mismo borde gris del panel.
   return (
-    <label className={`lw-tarjeta-direccion ${mostrarRadio && seleccionada ? 'on' : ''}`}>
+    <label className={`lw-tarjeta-direccion max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) ${mostrarRadio && seleccionada ? 'on' : ''}`}>
       {mostrarRadio && (
         <input
           type="radio"
@@ -309,34 +306,29 @@ function TarjetaDireccion({ direccion, seleccionada, mostrarRadio, onElegir }) {
 }
 
 function SeccionDireccion({ direcciones, direccionId, abierta, onAbrir, onCerrar, onElegir }) {
-  const visibles = abierta ? direcciones : direcciones.filter((d) => d.id === direccionId)
+  const direccionSeleccionada = direcciones.find(direccion => direccion.id === direccionId)
   return (
-    <section aria-labelledby="carrito-dir-titulo" className="lw-panel flex flex-col gap-3 p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="carrito-dir-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
-          <MapPin className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
-          Dirección de entrega
-        </h2>
-        {!abierta ? (
-          <button type="button" onClick={onAbrir} className="text-[13px] font-medium text-[var(--lw-gold)] hover:text-[#d3e4f8]">
-            Cambiar
-          </button>
-        ) : (
-          <span className="flex items-center gap-4">
+    <section aria-labelledby="carrito-dir-titulo" className="lw-panel flex flex-col p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
+      <h2 id="carrito-dir-titulo">
+        <button type="button" onClick={abierta ? onCerrar : onAbrir} aria-expanded={abierta} aria-controls="carrito-dir-contenido"
+          className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white">
+          <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
+          <span className="min-w-0 flex-1 break-words">{direccionSeleccionada ? `Enviar a ${direccionSeleccionada.direccion}` : 'Selecciona una dirección'}</span>
+          <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
+        </button>
+      </h2>
+      <div id="carrito-dir-contenido" aria-hidden={!abierta} inert={!abierta}
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${abierta ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-3 pt-3">
             <Link
               to="/mi-perfil/direcciones"
-              className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]"
+              className="flex w-fit items-center gap-1.5 text-[13px] font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]"
             >
               <Plus className="h-3.5 w-3.5" />
               Agregar
             </Link>
-            <button type="button" onClick={onCerrar} className="text-[13px] font-medium text-white/60 hover:text-white">
-              Cancelar
-            </button>
-          </span>
-        )}
-      </div>
-      {abierta && <p className="text-[13px] text-white/60">Elige dónde quieres recibir este pedido.</p>}
+      <p className="text-[13px] text-white/60">Elige dónde quieres recibir este pedido.</p>
       {direcciones.length === 0 ? (
         <Link
           to="/mi-perfil/direcciones"
@@ -346,27 +338,39 @@ function SeccionDireccion({ direcciones, direccionId, abierta, onAbrir, onCerrar
           Agrega una dirección para poder pedir delivery
         </Link>
       ) : (
-        visibles.map((direccion) => (
+        direcciones.map((direccion) => (
           <TarjetaDireccion
             key={direccion.id}
             direccion={direccion}
             seleccionada={direccion.id === direccionId}
-            mostrarRadio={abierta}
+            mostrarRadio
             onElegir={() => onElegir(direccion.id)}
           />
         ))
       )}
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
 
 function SeccionComprobante({ comprobante, onCambiar, ruc, onRuc, razonSocial, onRazonSocial }) {
+  const [abierta, setAbierta] = useState(false)
   return (
-    <section aria-labelledby="carrito-comp-titulo" className="lw-panel flex flex-col gap-4 p-6">
-      <h2 id="carrito-comp-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
-        <Receipt className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
-        Comprobante
+    <section aria-labelledby="carrito-comp-titulo" className="lw-panel flex flex-col p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
+      <h2 id="carrito-comp-titulo">
+        <button type="button" onClick={() => setAbierta(valor => !valor)} aria-expanded={abierta} aria-controls="carrito-comp-contenido"
+          className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white">
+          <Receipt aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
+          <span className="flex-1">{comprobante === 'BOLETA' ? 'Boleta' : 'Factura'}</span>
+          <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
+        </button>
       </h2>
+      <div id="carrito-comp-contenido" aria-hidden={!abierta} inert={!abierta}
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${abierta ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-4 pt-4">
       <div role="group" aria-label="Tipo de comprobante" className="flex gap-2.5">
         <button
           type="button"
@@ -420,6 +424,9 @@ function SeccionComprobante({ comprobante, onCambiar, ruc, onRuc, razonSocial, o
           <p className="text-[13px] text-white/60">La factura te llega por WhatsApp.</p>
         </>
       )}
+          </div>
+        </div>
+      </div>
     </section>
   )
 }
@@ -432,36 +439,36 @@ function FilaProducto({ producto, onAlternar, onCantidad, onQuitar }) {
     <div className="relative flex gap-3 border-t border-[#1f1f22] py-4 sm:gap-4 sm:py-5">
       {agotado && <span className="lw-capsula-agotado">Producto no disponible</span>}
 
-      <div className={`flex items-center ${agotado ? 'opacity-30' : ''}`}>
+      <div className="relative h-28 w-28 shrink-0 sm:h-32 sm:w-32">
+        <Link
+          to={`/productos/${producto.id}`}
+          aria-label={`Ver ${producto.nombre}`}
+          className={`flex h-full w-full items-center justify-center overflow-hidden rounded-[5px] border border-[#1f1f22] bg-[#141416] text-[#4a4a4f] ${agotado ? 'opacity-30' : ''}`}
+        >
+          {producto.fotoUrl ? (
+            <img src={producto.fotoUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <ShoppingBag className="h-8 w-8" />
+          )}
+        </Link>
         <input
           type="checkbox"
-          className="h-[18px] w-[18px] shrink-0 accent-[var(--lw-gold)]"
+          className="absolute left-1.5 top-1.5 z-10 h-[18px] w-[18px] cursor-pointer accent-[var(--lw-gold)] disabled:cursor-not-allowed"
           checked={!agotado && producto.marcado}
           disabled={agotado}
           onChange={onAlternar}
           aria-label={`Incluir ${producto.nombre} en el pedido`}
         />
-      </div>
-
-      <div
-        className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[5px] border border-[#1f1f22] bg-[#141416] text-[#4a4a4f] sm:h-[84px] sm:w-[84px] ${agotado ? 'opacity-30' : ''}`}
-      >
         {conDescuento && (
-          <span className="lw-etq-desc">−{Math.round((1 - producto.precio / producto.precioAntes) * 100)}%</span>
+          <span className="lw-etq-desc pointer-events-none">−{Math.round((1 - producto.precio / producto.precioAntes) * 100)}%</span>
         )}
-        <span className="lw-etq-stock">Stock: {producto.stock}</span>
-        {producto.fotoUrl ? (
-          <img src={producto.fotoUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <ShoppingBag className="h-6 w-6" />
-        )}
+        <span className="lw-etq-stock pointer-events-none">Stock: {producto.stock}</span>
       </div>
 
       <div className={`flex min-w-0 flex-1 flex-col gap-1 ${agotado ? 'opacity-30' : ''}`}>
         <span className="text-sm font-semibold text-white sm:text-[15px]">{producto.nombre}</span>
-        <span className="text-xs text-white/60 sm:text-[13px]">{producto.detalle}</span>
         <div className="mt-2">
-          <div className="lw-stepper" role="group" aria-label={`Cantidad de ${producto.nombre}`}>
+          <div className="lw-stepper lw-stepper-productos" role="group" aria-label={`Cantidad de ${producto.nombre}`}>
             <button
               type="button"
               onClick={() => onCantidad(producto.cantidad - 1)}
@@ -511,7 +518,7 @@ function SeccionProductos({ productos, onAlternar, onCantidad, onQuitar }) {
   const ordenados = [...productos].sort((a, b) => Number(a.stock <= 0) - Number(b.stock <= 0))
 
   return (
-    <section aria-labelledby="carrito-prod-titulo" className="lw-panel flex flex-col p-6">
+    <section aria-labelledby="carrito-prod-titulo" className="lw-panel flex flex-col p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
       <div className="flex items-center justify-between gap-3 pb-1">
         <h2 id="carrito-prod-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
           <ShoppingBag className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
@@ -553,7 +560,7 @@ function PanelCupones({ errorLectura, disponibles, usados, cuponAplicadoCodigo, 
         role="dialog"
         aria-modal="true"
         aria-labelledby="carrito-cupones-titulo"
-        className="lw-panel-cupones relative flex max-h-[85vh] w-full flex-col gap-6 overflow-y-auto rounded-t-2xl border-t border-[#232326] bg-[#0f0f11] p-6 lg:max-h-none lg:h-full lg:w-full lg:max-w-[500px] lg:rounded-none lg:border-l lg:border-t-0 lg:p-8"
+        className="lw-panel-cupones relative flex max-h-[85vh] w-full flex-col gap-6 overflow-y-auto rounded-t-2xl border-t border-[#232326] bg-[#0f0f11] p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) lg:max-h-none lg:h-full lg:w-full lg:max-w-[500px] lg:rounded-none lg:border-l lg:border-t-0 lg:p-8"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
@@ -1004,9 +1011,7 @@ export default function CarritoCliente() {
   const datosMetodoActual =
     metodoPago === 'YAPE'
       ? { numero: pagos.yapeNumero, titular: pagos.yapeTitular, qrUrl: pagos.yapeQrUrl }
-      : metodoPago === 'PLIN'
-        ? { numero: pagos.plinNumero, titular: pagos.plinTitular, qrUrl: pagos.plinQrUrl }
-        : { numero: cuentaTransferencia, titular: '', qrUrl: null }
+      : { numero: cuentaTransferencia, titular: '', qrUrl: null }
   const instruccionPago = !datosMetodoActual.numero
     ? `El negocio todavía no configuró ${metodoActual.nombre} — escríbenos por WhatsApp antes de pagar.`
     : metodoPago === 'TRANSFERENCIA'
@@ -1080,7 +1085,7 @@ export default function CarritoCliente() {
   }
 
   return (
-    <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] p-4 md:p-8 lg:p-10">
+    <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8 lg:pb-10">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="mb-6 flex items-end justify-between gap-3 lg:mb-8">
           <h1 className="lw-titulo-heavitas text-[28px]">Tu carrito</h1>
@@ -1125,11 +1130,10 @@ export default function CarritoCliente() {
 
           {/* Columna derecha */}
           <div className="flex flex-col gap-6">
-            <aside className="lw-panel flex flex-col gap-6 p-6 lg:p-7">
+            <aside className="lw-panel flex flex-col gap-6 p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) lg:p-7">
               <h2 className="text-lg font-semibold text-white">Resumen del pedido</h2>
 
               <div className="flex flex-col gap-2.5">
-                <span className="text-xs uppercase tracking-wider text-white/60">Entrega</span>
                 <div className="flex gap-2.5">
                   <button
                     type="button"
@@ -1159,15 +1163,18 @@ export default function CarritoCliente() {
                     type="button"
                     onClick={() => setDiaAbierto((anterior) => !anterior)}
                     aria-expanded={diaAbierto}
+                    aria-controls="carrito-selector-dia"
                     className="lw-campo flex items-center justify-between text-left"
                   >
                     <span className={dia ? 'text-white' : 'text-white/40'}>
                       {dia ? formatearClaveDia(dia) : 'Elige el día'}
                     </span>
-                    <ArrowBigDown className={`h-4 w-4 shrink-0 text-white/40 transition-transform ${diaAbierto ? 'rotate-180' : ''}`} />
+                    <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-300 motion-reduce:transition-none ${diaAbierto ? 'rotate-180' : ''}`} />
                   </button>
-                  {diaAbierto && (
-                    <div className="mt-2">
+                  <div id="carrito-selector-dia" aria-hidden={!diaAbierto} inert={!diaAbierto}
+                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${diaAbierto ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="min-h-0 overflow-hidden">
+                    <div className="pt-2">
                       <SelectorDia
                         diaSeleccionado={dia}
                         onElegir={(clave) => {
@@ -1176,7 +1183,8 @@ export default function CarritoCliente() {
                         }}
                       />
                     </div>
-                  )}
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <span className="mb-1.5 block text-xs text-white/60">
@@ -1187,13 +1195,16 @@ export default function CarritoCliente() {
                     type="button"
                     onClick={() => setHoraAbierta((anterior) => !anterior)}
                     aria-expanded={horaAbierta}
+                    aria-controls="carrito-selector-hora"
                     className="lw-campo flex items-center justify-between text-left"
                   >
                     <span className={hora ? 'text-white font-mono' : 'text-white/40'}>{hora || 'Elige la hora'}</span>
-                    <ArrowBigDown className={`h-4 w-4 shrink-0 text-white/40 transition-transform ${horaAbierta ? 'rotate-180' : ''}`} />
+                    <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-300 motion-reduce:transition-none ${horaAbierta ? 'rotate-180' : ''}`} />
                   </button>
-                  {horaAbierta && (
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                  <div id="carrito-selector-hora" aria-hidden={!horaAbierta} inert={!horaAbierta}
+                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${horaAbierta ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="min-h-0 overflow-hidden">
+                    <div className="grid grid-cols-3 gap-2 pt-2">
                       {HORAS_EJEMPLO.map((h) => (
                         <button
                           key={h}
@@ -1213,7 +1224,8 @@ export default function CarritoCliente() {
                         </button>
                       ))}
                     </div>
-                  )}
+                    </div>
+                  </div>
                 </div>
                 {entrega === 'DELIVERY' ? (
                   <div>
@@ -1373,7 +1385,7 @@ export default function CarritoCliente() {
                   <CreditCard className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                   Método de pago
                 </h2>
-                <div role="group" aria-label="Elige cómo pagar" className={`grid gap-2.5 ${METODOS_VISIBLES.length > 3 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                <div role="group" aria-label="Elige cómo pagar" className={`grid gap-2.5 ${METODOS_VISIBLES.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                   {METODOS_VISIBLES.map((metodo) => (
                     <button
                       key={metodo.id}
@@ -1395,7 +1407,7 @@ export default function CarritoCliente() {
                   ))}
                 </div>
                 {esTarjeta ? (
-                  <div className="flex flex-col gap-2 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5">
+                  <div className="flex flex-col gap-2 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
                     <p className="text-[15px] font-semibold leading-snug text-white">
                       Paga con tu tarjeta de débito o crédito{totalConfirmado ? ` (${formatearSoles(total)})` : ''}.
                     </p>
@@ -1405,7 +1417,7 @@ export default function CarritoCliente() {
                     </p>
                   </div>
                 ) : (
-                <div className="flex flex-col items-center gap-4 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5 sm:flex-row">
+                <div className="flex flex-col items-center gap-4 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) sm:flex-row">
                   {metodoActual.conQR && (
                     datosMetodoActual.qrUrl ? (
                       <img

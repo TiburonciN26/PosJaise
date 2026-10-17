@@ -17,6 +17,7 @@ import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
 import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
 import BarraTuCitaFlotante from '../../components/BarraTuCitaFlotante.jsx'
 import BarraCatalogo from '../../components/BarraCatalogo.jsx'
+import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
@@ -222,6 +223,17 @@ export default function ServiciosCliente() {
         onBusqueda={setBusqueda}
         placeholder="Buscar servicio…"
         etiquetaTotal={totalVisible == null ? 'Buscando…' : plural(totalVisible)}
+        selectorCategoriasMovil={
+          <SelectorDesplegable
+            opciones={categorias.map(categoria => ({ clave: categoria, label: categoria === 'todos' ? 'Todas' : categoria }))}
+            valor={categoriaActiva}
+            onSeleccionar={elegirCategoria}
+            etiqueta="Categoría de servicios"
+            etiquetaLista="Categorías de servicios"
+            alineacion="izquierda"
+            className="w-[45%] shrink-0"
+          />
+        }
         className={reducirMovimiento ? '' : 'in-up'}
         style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
       />
@@ -231,7 +243,7 @@ export default function ServiciosCliente() {
         <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter pb-6 pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:pt-10">
           <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
             <span
-              className={`text-[11px] font-semibold uppercase tracking-widest text-white/60 ${reducirMovimiento ? '' : 'in-left'}`}
+              className={`hidden text-[11px] font-semibold uppercase tracking-widest text-white/60 sm:block ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
             >
               Tendencias y lo más pedido
@@ -297,7 +309,7 @@ export default function ServiciosCliente() {
                   >
                     <span
                       style={estiloEtiqueta}
-                      className="inline-flex w-fit items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-[#e8e8ea]"
+                      className="hidden w-fit items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-[#e8e8ea] sm:inline-flex"
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                       {s.etiquetaHero}
@@ -337,7 +349,7 @@ export default function ServiciosCliente() {
                 className="flex items-center justify-between gap-3 rounded-full py-1.5 pl-6 pr-1.5 text-sm font-semibold text-black"
                 style={{ background: 'var(--lw-gold)' }}
               >
-                Reservar cita
+                Reservar
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0b0b0c] text-[var(--lw-gold)]">
                   <CalendarPlus className="h-[15px] w-[15px]" />
                 </span>
@@ -390,6 +402,11 @@ export default function ServiciosCliente() {
               </div>
             ))}
             <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/70" />
+
+            <span className="absolute left-4 top-9 inline-flex items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-[#e8e8ea] sm:hidden">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
+              {heroActual.etiquetaHero}
+            </span>
 
             {heroServicios.length > 1 && (
               <div className="absolute inset-x-4 top-3.5 flex gap-1.5">
@@ -460,7 +477,7 @@ export default function ServiciosCliente() {
                       Ver todo ({grupo.total}) <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
+                  <div className="-mx-(--separador-vertical) flex gap-3 overflow-x-auto px-(--separador-vertical) sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
                     {grupo.primeros.map((s, k) => {
                       const claseTarjeta = listo ? (esDesktop ? (k < 2 ? 'in-left' : 'in-right') : 'in-right') : ''
                       const delayTarjeta = delayBase + ENTRADA_FILA.carta + k * ENTRADA_FILA.entre
@@ -470,7 +487,7 @@ export default function ServiciosCliente() {
                           className={`w-[150px] shrink-0 sm:w-auto ${claseTarjeta}`}
                           style={listo ? { animationDelay: `${delayTarjeta}ms` } : undefined}
                         >
-                          <TarjetaServicioCliente servicio={s} />
+                          <TarjetaServicioCliente servicio={s} mostrarCategoria={false} precioPrimero />
                         </div>
                       )
                     })}
@@ -544,7 +561,7 @@ export default function ServiciosCliente() {
                 className={`grid grid-cols-2 gap-x-3 gap-y-6 transition-opacity sm:grid-cols-4 sm:gap-x-5 sm:gap-y-8 ${listadoOcupado ? 'opacity-60' : ''}`}
               >
                 {listaFiltrada.map((s) => (
-                  <TarjetaServicioCliente key={s.id} servicio={s} />
+                  <TarjetaServicioCliente key={s.id} servicio={s} mostrarCategoria={false} precioPrimero />
                 ))}
               </div>
             )}

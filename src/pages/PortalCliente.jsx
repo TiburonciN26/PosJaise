@@ -1,6 +1,6 @@
 import { Menu, Moon, ShoppingCart, Sun, X } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTemaWeb } from '../context/TemaWebContext.jsx'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
@@ -208,13 +208,10 @@ function BotonNotificaciones({ estaEnNotificaciones }) {
 // se queda solo para tarjetas/paneles de contenido, no para el
 // cromo del header). Es `fixed` (no un bloque más del flujo) a
 // propósito: flotando encima, el contenido de cada pestaña pasa por
-// debajo al hacer scroll. `pt-16 sm:pt-[72px]` en el contenedor de abajo
-// compensa SOLO el alto real del header — el contenido de cada pestaña
-// (el video de Inicio incluido) arranca justo debajo, sin ningún hueco
-// extra reservado para la migaja de abajo: si hubiera un hueco ahí, en
-// ese tramo no pasaría nada por detrás y tanto el header como la migaja
-// se verían con un fondo negro sólido en vez de flotar de verdad sobre
-// el contenido (bug reportado por el usuario con captura).
+// debajo al hacer scroll. `pt-(--alto-header-cliente)` en el contenedor de abajo
+// compensa el alto real del header. El main reserva además la parte de
+// la migaja que sobresale y --separador-horizontal, para que ninguna
+// pestaña se superponga con ella. Inicio no muestra migaja ni esa reserva.
 //
 // El drawer móvil (`MenuLateralCliente`, z-20) queda por debajo del
 // header (z-50) a propósito: el botón de hamburguesa sigue visible/
@@ -273,6 +270,8 @@ export default function PortalCliente() {
   // las notificaciones y el menú de la cuenta, que son personales.
   const { usuario } = useAuth()
   const [menuAbierto, setMenuAbierto] = useState(false)
+  const migajaRef = useRef(null)
+  const contenidoRef = useRef(null)
 
   // QA-021: con el portal ya visible, se descargan en reposo las pestañas más usadas.
   useEffect(() => {
@@ -282,23 +281,46 @@ export default function PortalCliente() {
   const esInicio = location.pathname === '/inicio'
   const migajas = esInicio ? [] : migajasDeRuta(location.pathname)
 
+  // La migaja es absoluta y no reserva espacio en el flujo. Medir solo
+  // cuánto sobresale del header evita depender de una altura de texto fija.
+  useLayoutEffect(() => {
+    const migaja = migajaRef.current
+    const header = migaja?.closest('header')
+    const contenido = contenidoRef.current
+    if (!migaja || !header || !contenido) return undefined
+    const medir = () => {
+      const salida = Math.max(0, migaja.getBoundingClientRect().bottom - header.getBoundingClientRect().bottom)
+      contenido.style.setProperty('--salida-migaja-cliente', `${salida}px`)
+    }
+    medir()
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', medir)
+      return () => window.removeEventListener('resize', medir)
+    }
+    const observador = new ResizeObserver(medir)
+    observador.observe(migaja)
+    observador.observe(header)
+    observador.observe(migaja.parentElement)
+    return () => observador.disconnect()
+  }, [location.pathname, menuAbierto])
+
   return (
     <PerfilClienteProvider>
       <CarritoClienteProvider>
         <NotificacionesClienteProvider>
-          <div className={`landing-web flex h-svh flex-col ${tema === 'claro' ? 'lw-claro' : ''}`}>
+          <div className={`landing-web flex h-svh flex-col [--alto-header-cliente:48px] sm:[--alto-header-cliente:90px] ${tema === 'claro' ? 'lw-claro' : ''}`}>
             {/* Fondo sólido (§7.51, antes transparente/flotante desde
                 §7.36): a pedido del usuario, para que el header no se
                 "mezcle" con lo que pasa por detrás al hacer scroll. Esto
                 deshace el bleed de la foto de Inicio bajo el header
                 (§7.37) — si el header ahora es opaco, dejar que la foto
                 siga detrás solo tapaba la punta de la cabeza de la
-                clienta con una franja negra sólida. Por eso el `pt-16
-                sm:pt-[72px]` de acá abajo volvió a aplicarse SIEMPRE (ya
+                clienta con una franja negra sólida. Por eso la reserva
+                del alto del header de acá abajo se aplica SIEMPRE (ya
                 no se salta en /inicio) — toda la estructura, hero
                 incluido, arranca debajo del header otra vez, como en
                 el resto de la Web. */}
-            <header className="fixed inset-x-0 top-0 z-50 flex h-12 items-center bg-[#0b0b0c] lw-gutter lw-gutter-sep pt-2 sm:h-[90px]">
+            <header className="fixed inset-x-0 top-0 z-50 flex h-(--alto-header-cliente) items-center bg-[#0b0b0c] lw-gutter lw-gutter-sep pt-2">
               <div className="mx-auto flex w-full max-w-[1700px] items-center gap-1">
                 <button
                   type="button"
@@ -365,6 +387,7 @@ export default function PortalCliente() {
                       de hamburguesa, sin agregar estado nuevo). */}
                   {migajas.length > 0 && !menuAbierto && (
                     <nav
+                      ref={migajaRef}
                       aria-label="Ubicación actual"
                       className="absolute left-0 top-full mt-3 max-sm:mt-[3px] max-sm:right-0 max-sm:px-(--separador-vertical) flex items-center gap-2 whitespace-nowrap text-xs font-medium sm:max-lg:left-[-36px]"
                     >
@@ -477,25 +500,15 @@ export default function PortalCliente() {
               </div>
             </header>
 
-            {/* pt-12/72px SIEMPRE (§7.51, antes se saltaba en /inicio
-                desde §7.37): el header ahora tiene fondo sólido (ver su
-                comentario arriba), así que ya no tiene sentido que el
-                hero de Inicio arranque detrás de él — con header opaco,
-                "detrás" es "tapado". Todas las rutas, Inicio incluida,
-                reservan este espacio otra vez, igual que el resto de la
-                Web.
-                pt-12, no pt-16 (§7.52): tiene que calzar EXACTO con el
-                alto real del <header> en cada breakpoint (`h-12
-                sm:h-[72px]` de arriba) — con `pt-16` (64px) en celular
-                sobraban 16px de hueco vacío del mismo color que el
-                header, dando la sensación de un header más alto/ancho
-                de lo que realmente es (bug reportado). Si el `h-*` del
-                <header> cambia, este valor hay que actualizarlo junto
-                (no hay forma de derivarlo solo sin tocar el <header>). */}
+            {/* La misma variable fija el alto del header, la reserva de
+                contenido y el inicio del menú lateral con su overlay.
+                Los hijos absolutos no respetan este padding: el menú
+                también debe aplicar el desplazamiento explícitamente.
+                48px en móvil y 90px desde sm, en todas las rutas. */}
             <div
-              className="relative flex flex-1 flex-col overflow-hidden pt-12 sm:pt-[72px]"
+              className="relative flex flex-1 flex-col overflow-hidden pt-(--alto-header-cliente)"
             >
-              <main className="flex flex-1 flex-col overflow-hidden">
+              <main ref={contenidoRef} className={`flex flex-1 flex-col overflow-hidden ${migajas.length > 0 ? 'pt-[calc(var(--salida-migaja-cliente,0px)+var(--separador-horizontal))]' : ''}`}>
                 {/* F8-01: una página cuyo código no llega (sin red, versión retirada) falla AQUÍ, con el header, el menú y
                     los providers de la clienta montados; al cambiar de ruta o volver la red se reintenta. */}
                 <LimiteCargaDiferida tono="portal" clave={location.pathname} onReintentar={reintentarPaginasFallidas}>

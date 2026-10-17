@@ -109,7 +109,7 @@ export default function ReferidosCliente() {
 
   if (sinPerfil || !estado) {
     return (
-      <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
+      <div className="animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">
         <div className="mx-auto w-full max-w-lg">
           <div className="liquid-glass flex flex-col items-center gap-2 rounded-none p-8 text-center">
             <UserCircle className="h-8 w-8 text-white/30" />
@@ -133,7 +133,7 @@ export default function ReferidosCliente() {
   )
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-lg">
         <div className="liquid-glass rounded-none p-5 text-center">
           <Gift className="mx-auto h-8 w-8 text-[var(--lw-gold)]" />

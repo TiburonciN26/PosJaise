@@ -134,7 +134,7 @@ if (!args.escribir) {
     fuentes = readdirSync(resolve(args['fotos-dir'])).filter((f) => ['.jpg', '.jpeg', '.png', '.webp'].includes(extname(f).toLowerCase())).map((f) => resolve(args['fotos-dir'], f))
     if (fuentes.length === 0) throw new Error('--fotos-dir no contiene imágenes jpg/png/webp')
   } else {
-    fuentes = ['public/inicio-web/hero-antes-referencia.jpg', 'public/inicio-web/hero-despues-referencia.jpg', 'public/inicio-web/antes-claro.webp', 'src/assets/login/foto-login.jpeg'].map((f) => resolve(raiz, f))
+    fuentes = ['public/inicio-web/hero-antes-oscuro.webp', 'public/inicio-web/hero-despues-oscuro.webp', 'public/inicio-web/hero-antes-claro.webp', 'src/assets/login/foto-login.jpeg'].map((f) => resolve(raiz, f))
     informe.advertencias.push('Se usaron las fotos de referencia del repositorio, NO fotos de catálogo: el peso real del catálogo sigue sin medirse (use --fotos-dir).')
   }
 

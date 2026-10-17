@@ -141,6 +141,9 @@ function App() {
             {/* Sin sesión muestra el catálogo y «Cómo funciona»; las secciones
                 personales piden iniciar sesión sin consultar nada (QA-037). */}
             <Route path="recompensas" element={<RecompensasCliente publico={!usuario} />} />
+            {/* Visitantes: información básica sin montar las consultas personales.
+                CitasCliente decide entre la vista pública y la agenda con sesión. */}
+            <Route path="citas" element={<CitasCliente />} />
             {/* Rutas viejas de Fidelización / Cupones y ofertas / Mis puntos: ahora
                 son subpestañas de /recompensas (se dejan para no romper enlaces). */}
             <Route path="fidelizacion" element={<Navigate to="/recompensas?seccion=sellos" replace />} />
@@ -156,7 +159,6 @@ function App() {
 
             <Route element={<RutaPrivada />}>
               <Route path="mi-perfil" element={<MiPerfil />} />
-              <Route path="citas" element={<CitasCliente />} />
               <Route path="citas/carrito" element={<CarritoServiciosCliente />} />
               <Route path="historial" element={<HistorialCliente />} />
               <Route path="carrito" element={<CarritoCliente />} />

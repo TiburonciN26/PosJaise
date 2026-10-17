@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react'
-import { Pencil, Trash2, Plus, Ticket, Calendar, ArrowBigDown } from 'lucide-react'
+import { Pencil, Trash2, Plus, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
-import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { nivelDeCupon } from '../lib/cupones.js'
 import { leerPromociones } from '../lib/listasAdmin.js'
@@ -14,7 +13,6 @@ import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalPromocion from '../components/ModalPromocion.jsx'
-import CampoColapsable from '../components/CampoColapsable.jsx'
 import EnvolturaCupon from '../components/EnvolturaCupon.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
@@ -136,54 +134,17 @@ export default function Promociones({ activo = true }) {
           {lista.filas.map((promocion) => {
             const abierta = abiertos.has(promocion.id)
             return (
-              <EnvolturaCupon key={promocion.id} nivel={NIVEL_CUPON} apagada={!promocion.activo}>
-                <div
-                  onClick={() => alternarAbierto(promocion.id)}
-                  onKeyDown={manejarActivacionTeclado(() => alternarAbierto(promocion.id))}
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={abierta}
-                  className="relative flex cursor-pointer items-center gap-3 p-3"
-                >
-                  <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
-                  <div className="min-w-0 flex-1">
-                    <p className={`truncate text-sm font-semibold ${NIVEL_CUPON.claseTexto}`}>{promocion.titulo}</p>
-                    <p className="text-[11px] text-white/50">{promocion.activo ? 'Activa' : 'Inactiva'}</p>
-                  </div>
-                  <p className={`shrink-0 font-semibold ${NIVEL_CUPON.claseTexto}`}>{formatearValor(promocion)}</p>
-                  <ArrowBigDown
-                    className={`h-3.5 w-3.5 shrink-0 text-white/40 transition-transform duration-300 ${
-                      abierta ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-
-                <CampoColapsable abierto={abierta} diferido>
-                  <div className="relative mx-2.5 mb-2.5 border border-white/10 bg-black/25 p-3">
-                    {promocion.descripcion && (
-                      <p className="text-sm text-white/70">{promocion.descripcion}</p>
-                    )}
-                    <p className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-white/50">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {formatearVigencia(promocion)}
-                    </p>
-
-                    <div className="mt-3 flex gap-2">
-                      <BotonAccion
-                        icono={Pencil}
-                        texto="Editar"
-                        color="celeste"
-                        onClick={() => setModalPromocion(promocion)}
-                      />
-                      <BotonAccion
-                        icono={Trash2}
-                        texto="Eliminar"
-                        color="rojo"
-                        onClick={() => setPromocionAEliminar(promocion)}
-                      />
-                    </div>
-                  </div>
-                </CampoColapsable>
+              <EnvolturaCupon key={promocion.id} nivel={NIVEL_CUPON} apagada={!promocion.activo}
+                abierto={abierta} onToggle={() => alternarAbierto(promocion.id)}
+                titulo={promocion.titulo} estado={promocion.activo ? 'Activa' : 'Inactiva'}
+                subtitulo={formatearVigencia(promocion)}
+                valor={<span className={`cpi-valor${promocion.tipo_descuento === 'PORCENTAJE' ? '' : ' cpi-valor-monto'}`}>{formatearValor(promocion)}</span>}
+                pie={<div className="flex flex-wrap gap-2">
+                  <BotonAccion icono={Pencil} texto="Editar" color="celeste" onClick={() => setModalPromocion(promocion)} />
+                  <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" onClick={() => setPromocionAEliminar(promocion)} />
+                </div>}>
+                {promocion.descripcion && <p className="cpi-descripcion">{promocion.descripcion}</p>}
+                <dl className="cpi-vigencia"><dt>Vigencia</dt><dd>{formatearVigencia(promocion)}</dd></dl>
               </EnvolturaCupon>
             )
           })}

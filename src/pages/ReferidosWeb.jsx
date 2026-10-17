@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import AyudaCampo from '../components/AyudaCampo.jsx'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
-import { Gift, ListFilter, Ticket } from 'lucide-react'
+import { Gift, ListFilter } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -205,20 +205,11 @@ export default function ReferidosWeb({ activo = true }) {
           {lista.filas.map((cupon) => {
             const etiquetaEstado = ETIQUETAS_ESTADO[cupon.estado] ?? ETIQUETAS_ESTADO.DISPONIBLE
             return (
-              <EnvolturaCupon key={cupon.id} nivel={NIVEL_CUPON} apagada={cupon.estado !== 'DISPONIBLE'}>
-                <div className="relative flex items-center gap-3 p-3">
-                  <Ticket className={`h-5 w-5 shrink-0 ${NIVEL_CUPON.claseIcono}`} />
-                  <div className="min-w-0 flex-1">
-                    <p className={`font-mono text-base font-semibold tracking-widest ${NIVEL_CUPON.claseTexto}`}>{cupon.codigo}</p>
-                    <p className="truncate text-xs text-white/50">
-                      {cupon.cliente_nombre ?? '—'} · {ETIQUETAS_ORIGEN[cupon.origen] ?? cupon.origen}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className={`font-semibold ${NIVEL_CUPON.claseTexto}`}>{formatearSoles(cupon.valor)}</p>
-                    <p className="text-[11px] text-white/50">{etiquetaEstado.texto}</p>
-                  </div>
-                </div>
+              <EnvolturaCupon key={cupon.id} nivel={NIVEL_CUPON}
+                apagada={cupon.estado !== 'DISPONIBLE'} titulo={cupon.codigo}
+                estado={etiquetaEstado.texto} subtitulo={`${cupon.cliente_nombre ?? '—'} · ${ETIQUETAS_ORIGEN[cupon.origen] ?? cupon.origen}`}
+                valor={<span className="cpi-valor cpi-valor-monto">{formatearSoles(cupon.valor)}</span>}>
+                <dl className="cpi-datos"><dt>Clienta</dt><dd>{cupon.cliente_nombre ?? '—'}</dd><dt>Estado</dt><dd>{etiquetaEstado.texto}</dd></dl>
               </EnvolturaCupon>
             )
           })}

@@ -94,7 +94,7 @@ const caso = (nombre, fn) => {
   caso('URL antigua r2.dev con variante m → /medios conservando la variante m', () => assert.ok(tiene(`${PAGES}/fotos-galeria/${U(2)}/m.webp`)))
   caso('URL ya en /medios del alias → intacta', () => assert.ok(tiene(`${PAGES}/fotos-galeria/${U(3)}/g.webp`) && tiene(`${PAGES}/fotos-galeria/${U(4)}/m.webp`)))
   caso('URL ajena → intacta (no se reescribe a /medios)', () => { assert.ok(tiene(AJENA)); assert.ok(![...pedidas].some((u) => u.startsWith(PAGES) && u.includes(U(9)))) })
-  caso('ruta relativa histórica de /public → sigue resolviéndose en el origen del propio sitio', () => assert.ok(tiene(`${origen}/inicio-web/antes-claro.webp`)))
+  caso('ruta relativa histórica de /public → foto actual en el origen del propio sitio', () => assert.ok(tiene(`${origen}/inicio-web/hero-antes-claro.webp`)))
   caso('el DOM coincide con las peticiones: ninguna <img> apunta a r2.dev y las reescritas aparecen también como src', () => {
     assert.ok(![...enDom].some((u) => u.startsWith(R2DEV)))
     assert.ok(enDom.has(`${PAGES}/fotos-galeria/${U(1)}/g.webp`) && enDom.has(`${PAGES}/fotos-galeria/${U(2)}/m.webp`))

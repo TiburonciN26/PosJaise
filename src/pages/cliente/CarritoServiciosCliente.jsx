@@ -115,7 +115,7 @@ function FilaServicio({ servicio, onAlternar, onQuitar }) {
 // resolvió con el mismo patrón).
 function BarraConfirmarMovil({ monto, recompensa, deshabilitado, enviando, onConfirmar }) {
   const contenido = (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center p-4 lg:hidden">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-(--separador-vertical) py-4 lg:hidden">
       <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-full border border-white/10 bg-[#141417]/95 py-1.5 pl-5 pr-1.5 shadow-2xl backdrop-blur-xl">
         <span className="min-w-0 flex-1 truncate text-sm text-white">
           <b className="font-semibold">{formatearSoles(monto)}</b>{' '}
@@ -483,8 +483,8 @@ export default function CarritoServiciosCliente() {
 
   if (servicios.length === 0) {
     return (
-      <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] p-4 md:p-8">
-        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 py-20 text-center">
+      <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 pb-20 text-center">
           <Sparkles className="h-9 w-9 text-white/25" />
           <h1 className="lw-titulo-heavitas text-xl uppercase">Todavía no agregaste servicios</h1>
           <p className="text-sm text-white/60">Elige tus servicios favoritos y vuelve para reservar tu cita.</p>
@@ -497,7 +497,7 @@ export default function CarritoServiciosCliente() {
   }
 
   return (
-    <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] p-4 pb-24 md:p-8 lg:pb-10 lg:p-10">
+    <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-24 md:pb-8 lg:pb-10">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="mb-6 flex items-end justify-between gap-3 lg:mb-8">
           <h1 className="lw-titulo-heavitas text-[28px] uppercase">Carrito de servicios</h1>

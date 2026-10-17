@@ -324,7 +324,7 @@ async function esperar(url, estadoEsperado) {
     caso('el objeto sigue existiendo mientras el borrado está pendiente; el reintento del diario lo elimina y lo vacía', antesDelReintento.estado === 200 && recuperado.eliminadas === 1 && recuperado.pendientes.length === 0 && tras.estado === 404, { ...recuperado, antes: antesDelReintento.estado, despues: tras.estado })
 
     // ---- 10. peso real con FOTOS REALES del repositorio (no el degradado sintético) ----
-    const fotosReales = ['/inicio-web/hero-antes-referencia.jpg', '/inicio-web/hero-despues-referencia.jpg', '/inicio-web/hero-despues-referencia2.jpg', '/inicio-web/antes-claro.webp', '/src/assets/login/foto-login.jpeg']
+    const fotosReales = ['/inicio-web/hero-antes-oscuro.webp', '/inicio-web/hero-despues-oscuro.webp', '/inicio-web/hero-despues-claro.webp', '/inicio-web/hero-antes-claro.webp', '/src/assets/login/foto-login.jpeg']
     const perfiles = [
       { nombre: 'producto (600 px, q0.8)', bucket: 'fotos-productos', opciones: {} },
       { nombre: 'servicio (900 px, q0.85)', bucket: 'fotos-servicios', opciones: { ladoMaximo: 900, calidad: 0.85 } },

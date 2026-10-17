@@ -6,7 +6,7 @@ import { useCerrarConEscape } from '../../../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../../../hooks/useModalA11y.js'
 import { ETIQUETAS_ORIGEN_CUPON, estadoEfectivoCupon, formatearValorCupon } from '../../../lib/cupones.js'
 import { formatearSoles } from '../../../lib/moneda.js'
-import { AvisoError, Encabezado, Filtro, Pildora } from './ui.jsx'
+import { AvisoError, Filtro, Pildora } from './ui.jsx'
 import { REGLA_CUPONES, REGLA_PROTECCION, fechaLima } from './lib.js'
 
 const SIN_CUPONES = []
@@ -69,7 +69,7 @@ function ModalCaja({ cupon, onCerrar }) {
 }
 
 // Mis cupones — las mismas tarjetas de siempre (TarjetaCupon, con sus
-// efectos por nivel) en 2 columnas de máx. 420 px, datos reales de
+// efectos por nivel) en 2 columnas de máx. 440 px, datos reales de
 // mis_cupones(). Los estados que el backend todavía no tiene (vencido)
 // no se muestran. Al final, las "Ofertas del salón" (tabla promociones)
 // que antes vivían en "Cupones y ofertas".
@@ -116,11 +116,6 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
 
   return (
     <section className="flex flex-col gap-5">
-      <Encabezado
-        titulo="Mis cupones"
-        texto="Aquí están todos tus cupones: por sellos, referidos y promociones. Muéstralos en caja al pagar."
-      />
-
       {recursoCupones.estado === 'error' && (
         <AvisoError
           titulo="No pudimos cargar tus cupones"
@@ -130,7 +125,7 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
       )}
 
       {recursoCupones.estado === 'cargando' && (
-        <div aria-busy="true" aria-label="Cargando tus cupones" className="grid justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),420px))]">
+        <div aria-busy="true" aria-label="Cargando tus cupones" className="grid justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),440px))]">
           <div className="h-16 animate-pulse bg-white/5" />
           <div className="h-16 animate-pulse bg-white/5" />
         </div>
@@ -151,7 +146,7 @@ export default function SeccionCupones({ cupones: recursoCupones, promociones: r
               No tienes cupones en esta vista. Obtén uno completando tu tarjeta de sellos.
             </div>
           ) : (
-            <div className="grid items-start justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),420px))]">
+            <div className="grid items-start justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),440px))]">
               {visibles.map((cupon) => (
                 <div key={cupon.id} className="min-w-0">
                   <TarjetaCupon

@@ -15,7 +15,7 @@ const BUCKET_FOTOS = 'fotos-servicios'
 // ServiciosCliente (catálogo agrupado y grilla plana) y
 // DetalleServicioCliente ("También te puede interesar").
 // memo: el carrusel del héroe repinta la página entera cada 5 s; sin esto repintaba también hasta 40 tarjetas sin necesidad.
-export default memo(function TarjetaServicioCliente({ servicio }) {
+export default memo(function TarjetaServicioCliente({ servicio, mostrarCategoria = true, precioPrimero = false }) {
   const urlFoto = urlPublicaFoto(BUCKET_FOTOS, servicio.foto_url, 'm')
   const duracion = formatearDuracion(servicio.duracion_min)
   // Si la foto no carga (borrada, sin red) se muestra el degradado de siempre en vez de una imagen rota.
@@ -45,7 +45,7 @@ export default memo(function TarjetaServicioCliente({ servicio }) {
           </div>
         )}
 
-        {servicio.categoria && (
+        {mostrarCategoria && servicio.categoria && (
           <span className="absolute bottom-2.5 left-2.5 right-[46px] truncate rounded-[5px] bg-black/70 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-white">
             {servicio.categoria}
           </span>
@@ -56,6 +56,16 @@ export default memo(function TarjetaServicioCliente({ servicio }) {
         </span>
       </Link>
 
+      {precioPrimero ? (
+        <>
+          <div className="flex items-baseline justify-between gap-2.5">
+            <span className="text-xs text-white/65">desde <b className="text-[13px] font-semibold text-white">{formatearSoles(servicio.precio)}</b></span>
+            {duracion && <span className="shrink-0 text-xs text-white/50">{duracion}</span>}
+          </div>
+          <Link to={`/servicios/${servicio.id}`} className="text-[15px] font-bold text-white">{servicio.nombre}</Link>
+        </>
+      ) : (
+        <>
       <Link to={`/servicios/${servicio.id}`} className="flex items-baseline justify-between gap-2.5">
         <span className="truncate text-[15px] font-bold text-white">{servicio.nombre}</span>
         <span className="shrink-0 text-xs text-white/65">
@@ -63,6 +73,8 @@ export default memo(function TarjetaServicioCliente({ servicio }) {
         </span>
       </Link>
       {duracion && <span className="-mt-1.5 text-xs text-white/50">{duracion}</span>}
+        </>
+      )}
     </article>
   )
 })

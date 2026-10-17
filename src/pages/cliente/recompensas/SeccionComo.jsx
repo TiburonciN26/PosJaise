@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Encabezado, AvisoError, Cargando } from './ui.jsx'
+import { AvisoError, Cargando } from './ui.jsx'
 import { REGLA_CUPONES, REGLA_MONEDAS, REGLA_PROTECCION } from './lib.js'
 import { formatearCantidad, reglaSellos, textoTasa } from '../../../lib/programaRecompensas.js'
 
@@ -60,7 +60,7 @@ export default function SeccionComo({ programa }) {
   const reglas = programa.reglas
   return (
     <section className="flex flex-col gap-6">
-      <Encabezado titulo="Cómo funciona Club Jaise" texto="En cuatro pasos." />
+      <p className="text-[13px] leading-relaxed text-white/60">En cuatro pasos.</p>
 
       {programa.estado === 'cargando' && <Cargando />}
 

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { ArrowBigDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import EnvolturaCupon from '../../../components/EnvolturaCupon.jsx'
-import CampoColapsable from '../../../components/CampoColapsable.jsx'
-import { estiloNivelDeNegocio } from '../../../lib/cupones.js'
+import { estiloNivelDeNegocio, nivelDeCupon } from '../../../lib/cupones.js'
 import { CATEGORIAS, NOMBRES_NIVEL, ORDEN_NIVEL, RECOMPENSAS } from './datos.js'
-import { AvisoError, AvisoProximamente, Cargando, Encabezado, Filtro, Pildora } from './ui.jsx'
+import { AvisoError, AvisoProximamente, Cargando, Filtro } from './ui.jsx'
 import { REGLA_CUPONES, REGLA_MONEDAS, REGLA_PROTECCION, formatearMonedas, premioAItem } from './lib.js'
 import ConfirmarCanje from './ConfirmarCanje.jsx'
+import SelectorDesplegable from './SelectorDesplegable.jsx'
 
 // Estado visible de una recompensa para ESTA clienta. Mientras no exista
 // el RPC de canje (Fase 2), ninguna se puede canjear de verdad: aunque
@@ -36,10 +36,13 @@ function estadoRecompensa(r, { saldo, nivelIdx }) {
   }
 }
 
+function nivelDeItem(r) {
+  return nivelDeCupon({ origen: r.premio?.origen ?? r.origen, nivel_minimo: ORDEN_NIVEL[r.nivelMin] })
+}
+
 function Fila({ r, estado, abierta, onToggle, onObtener }) {
   // QA-064: el color es el nivel de negocio del premio (el que decide quién lo canjea), no su costo.
-  const nivel = estiloNivelDeNegocio(ORDEN_NIVEL[r.nivelMin])
-  const Icono = r.icono
+  const nivel = nivelDeItem(r)
   const apagada = r.estado === 'vencida' || r.estado === 'agotada'
   const etiqueta = r.real
     ? 'Recompensa publicada'
@@ -50,92 +53,60 @@ function Fila({ r, estado, abierta, onToggle, onObtener }) {
         : 'Ejemplo editable · pendiente de aprobación'
 
   return (
-    <EnvolturaCupon nivel={nivel} apagada={apagada}>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={abierta}
-        className="relative flex min-h-11 w-full items-center gap-3 p-3 text-left"
-      >
-        <Icono className={`h-5 w-5 shrink-0 ${nivel.claseIcono}`} />
-        <div className="min-w-0 flex-1">
-          <p className={`text-sm font-semibold leading-snug ${nivel.claseTexto}`}>{r.nombre}</p>
-          <p className="mt-0.5 truncate text-xs text-white/50">
-            {etiqueta.split(' · ')[0]} · {nivel.nombre}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className={`font-semibold ${nivel.claseTexto}`}>
-            {r.real ? `${formatearMonedas(r.precio)} monedas` : `${r.precio} pts`}
-          </p>
-          <p className="text-[11px] text-white/50">{estado.chip}</p>
-        </div>
-        <ArrowBigDown
-          className={`h-3.5 w-3.5 shrink-0 text-white/40 transition-transform duration-300 ${
-            abierta ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
-
-      <CampoColapsable abierto={abierta}>
-        <div
-          data-premio-id={r.real ? r.id : undefined}
-          className="relative mx-2.5 mb-2.5 flex flex-col gap-2.5 border border-white/10 bg-black/25 p-3"
-        >
-          <p className="text-[13px] leading-relaxed text-white/70">{r.desc}</p>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs leading-snug text-white/50">
+    <EnvolturaCupon nivel={nivel} apagada={apagada} abierto={abierta} onToggle={onToggle}
+      titulo={r.nombre} subtitulo={etiqueta.split(' · ')[0]} estado={estado.chip}
+      etiquetaBeneficio={r.real ? 'Monedas' : 'Puntos'}
+      valor={<span className="cpi-valor cpi-valor-monto">{r.real ? formatearMonedas(r.precio) : r.precio}</span>}
+      pie={<div className="flex flex-col gap-2">
+        <button type="button" disabled={!r.real || !r.canjeable}
+          onClick={r.real && r.canjeable ? () => onObtener(r.premio) : undefined}
+          className="cpi-reclamar">Obtener cupón</button>
+        {!r.real && <span className="cpi-ayuda">{etiqueta}</span>}
+      </div>}>
+      <div data-premio-id={r.real ? r.id : undefined}>
+          <p className="cpi-descripcion">{r.desc}</p>
+          <dl className="cpi-datos">
             <dt>Beneficio</dt>
-            <dd className="text-white/80">{r.beneficio}</dd>
+            <dd>{r.beneficio}</dd>
             <dt>Compra mínima</dt>
-            <dd className="text-white/80">{r.minimo}</dd>
+            <dd>{r.minimo}</dd>
             <dt>Aplica en</dt>
-            <dd className="text-white/80">{r.aplica}</dd>
+            <dd>{r.aplica}</dd>
             <dt>Nivel</dt>
-            <dd className="text-white/80">
+            <dd>
               {r.nivelMin === 0 ? 'Todos los niveles' : `Desde ${NOMBRES_NIVEL[ORDEN_NIVEL[r.nivelMin]]}`}
             </dd>
             <dt>Disponibilidad</dt>
-            <dd className="text-white/80">{r.stock === null ? 'Sin límite' : `Quedan ${r.stock}`}</dd>
+            <dd>{r.stock === null ? 'Sin límite' : `Quedan ${r.stock}`}</dd>
             <dt>Vigencia</dt>
-            <dd className="text-white/80">{r.vigencia}</dd>
+            <dd>{r.vigencia}</dd>
             <dt>Combinación</dt>
-            <dd className="text-white/80">{r.comb}</dd>
+            <dd>{r.comb}</dd>
             {r.real && (
               <>
                 <dt>Reclamo</dt>
-                <dd className="text-white/80">{r.reclamo}</dd>
+                <dd>{r.reclamo}</dd>
               </>
             )}
             {r.pagoMinimo && (
               <>
                 <dt>Pago mínimo</dt>
-                <dd className="text-white/80">{r.pagoMinimo}</dd>
+                <dd>{r.pagoMinimo}</dd>
               </>
             )}
             <dt>Uso</dt>
-            <dd className="text-white/80">Se obtiene un cupón; el beneficio se aplica en una compra posterior.</dd>
+            <dd>Se obtiene un cupón; el beneficio se aplica en una compra posterior.</dd>
           </dl>
-          <p className="text-xs leading-relaxed text-white/70">{estado.msg}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={!r.real || !r.canjeable}
-              onClick={r.real && r.canjeable ? () => onObtener(r.premio) : undefined}
-              className="flex w-fit items-center gap-1.5 rounded-lg border border-[var(--lw-gold)] bg-transparent px-3 py-2 text-xs font-semibold text-[var(--lw-gold)] disabled:opacity-40"
-            >
-              Obtener cupón
-            </button>
-            {!r.real && <Pildora>{etiqueta}</Pildora>}
-          </div>
-        </div>
-      </CampoColapsable>
+          <p className="cpi-descripcion">{estado.msg}</p>
+
+      </div>
     </EnvolturaCupon>
   )
 }
 
 // Canjear puntos — el catálogo usa el mismo diseño de las tarjetas de
 // cupón por nivel (EnvolturaCupon, con todos sus efectos), en 2
-// columnas de máx. 420 px.
+// columnas de máx. 440 px.
 //
 // Dos modos, según el backend:
 //  * REAL (Fase 2): el programa está activo y hay catálogo publicado. Con sesión se
@@ -158,9 +129,13 @@ export default function SeccionCanje({
   onCanjeExitoso,
 }) {
   const [busqueda, setBusqueda] = useState('')
-  const [categoria, setCategoria] = useState('todas')
+  const [filtroElegido, setFiltroElegido] = useState(null)
   const [abierta, setAbierta] = useState(null)
   const [confirmando, setConfirmando] = useState(null)
+
+  function elegirCategoria(clave) {
+    setFiltroElegido({ cuenta: userId ?? null, categoria: clave })
+  }
 
   const saldoReal = sesion && recursoSaldo?.estado === 'ok' ? recursoSaldo.datos : null
   const programaActivo = Boolean(saldoReal?.activo)
@@ -177,6 +152,11 @@ export default function SeccionCanje({
   const datosPuntos = saldoConocido ? recursoPuntos.datos : null
   const saldo = saldoConocido ? (datosPuntos?.puntos ?? 0) : null
   const nivelIdx = saldoConocido ? Math.max(0, ORDEN_NIVEL.indexOf(datosPuntos?.nivel ?? 'BASICO')) : null
+  const nivelActual = sesion ? (programaActivo ? saldoReal.nivel : datosPuntos?.nivel) : null
+  const categoriaInicial = ORDEN_NIVEL.includes(nivelActual) ? estiloNivelDeNegocio(nivelActual).categoria : 'todas'
+  // El nivel puede llegar después del catálogo. Solo determina la selección
+  // inicial: una elección manual nunca se pisa al terminar una lectura.
+  const categoria = filtroElegido?.cuenta === (userId ?? null) ? filtroElegido.categoria : categoriaInicial
 
   const items = useMemo(() => {
     if (!modoReal) return RECOMPENSAS
@@ -184,17 +164,13 @@ export default function SeccionCanje({
     return catalogoPublico.datos.filter((p) => p.origen === 'MONEDAS').map((p) => premioAItem(p, { publico: true }))
   }, [modoReal, sesion, recursoCatalogo, catalogoPublico])
 
-  // En modo real solo se ofrecen los filtros que tienen respaldo en los premios publicados.
-  const categorias = useMemo(
-    () => (modoReal ? CATEGORIAS.filter((c) => c.clave === 'todas' || items.some((r) => r.cat === c.clave)) : CATEGORIAS),
-    [modoReal, items],
-  )
+  const categorias = CATEGORIAS
 
   const visibles = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
     return items.filter(
       (r) =>
-        (categoria === 'todas' || r.cat === categoria) &&
+        (categoria === 'todas' || nivelDeItem(r).categoria === categoria) &&
         (!texto || `${r.nombre} ${r.desc}`.toLowerCase().includes(texto)),
     )
   }, [items, busqueda, categoria])
@@ -210,11 +186,8 @@ export default function SeccionCanje({
 
   return (
     <section className="flex flex-col gap-5">
+      {(Boolean(modoReal && saldoReal) || saldoConocido) && (
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <Encabezado
-          titulo={modoReal ? 'Canjear monedas' : 'Canjear puntos'}
-          texto="Canjear obtiene un cupón. El beneficio se aplica cuando lo uses en una compra posterior."
-        />
         {modoReal && saldoReal ? (
           <span className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-white">
             Tienes <span className="text-[var(--lw-gold)]">{formatearMonedas(saldoReal.monedas)} monedas</span> disponibles
@@ -227,6 +200,7 @@ export default function SeccionCanje({
           )
         )}
       </div>
+      )}
 
       {sesion && errorModo && (
         <AvisoError
@@ -284,8 +258,8 @@ export default function SeccionCanje({
 
       {!cargandoModo && !(sesion && errorModo) && !(!sesion && errorModo) && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex min-h-11 max-w-[420px] flex-[1_1_260px] items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3.5">
+          <div className="flex items-center gap-3 sm:flex-wrap">
+            <label className="flex min-h-11 min-w-0 max-w-[420px] flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3.5 sm:flex-[1_1_260px]">
               <Search className="h-4 w-4 shrink-0 text-white/50" aria-hidden="true" />
               <span className="sr-only">Buscar recompensas</span>
               <input
@@ -293,12 +267,14 @@ export default function SeccionCanje({
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar recompensas"
-                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/40"
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-white outline-none placeholder:text-white/40 max-sm:placeholder:text-transparent"
               />
             </label>
-            <div className="flex flex-wrap gap-2">
+            <SelectorDesplegable className="shrink-0" opciones={categorias} valor={categoria}
+              onSeleccionar={elegirCategoria} etiqueta="Filtrar recompensas" etiquetaLista="Categorías de recompensas" />
+            <div className="hidden flex-wrap gap-2 sm:flex">
               {categorias.map((c) => (
-                <Filtro key={c.clave} activo={categoria === c.clave} onClick={() => setCategoria(c.clave)}>
+                <Filtro key={c.clave} activo={categoria === c.clave} onClick={() => elegirCategoria(c.clave)}>
                   {c.label}
                 </Filtro>
               ))}
@@ -318,7 +294,7 @@ export default function SeccionCanje({
                 type="button"
                 onClick={() => {
                   setBusqueda('')
-                  setCategoria('todas')
+                  elegirCategoria('todas')
                 }}
                 className="min-h-11 rounded-full border border-[#3a3a3f] px-5 text-sm font-semibold text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)]"
               >
@@ -326,7 +302,7 @@ export default function SeccionCanje({
               </button>
             </div>
           ) : (
-            <div className="grid items-start justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),420px))]">
+            <div className="grid items-start justify-center gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),440px))]">
               {visibles.map((r) => (
                 <Fila
                   key={r.id}

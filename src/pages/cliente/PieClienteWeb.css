@@ -1,0 +1,107 @@
+/* Referencia visual del footer: columnas abiertas, alineación a la izquierda
+   y copyright al pie. Usa la paleta del portal en ambos temas. */
+.pie-cliente {
+  margin-top: 40px;
+  border-top: 1px solid color-mix(in srgb, var(--lw-fg) 10%, transparent);
+  padding: 64px var(--lw-gutter) 24px;
+  color: var(--lw-muted);
+  font-size: 13px;
+  line-height: 1.75;
+}
+.pie-cliente__interior { width: 100%; max-width: 1200px; margin-inline: auto; }
+.pie-cliente__columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+.pie-cliente__columnas > * { min-width: 0; }
+.pie-cliente__nombre {
+  max-width: 230px;
+  margin: 0;
+  color: var(--lw-fg);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -.025em;
+}
+.pie-cliente__redes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.pie-cliente__red {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.pie-cliente__seccion { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.pie-cliente__red img { width: 15px; height: 15px; flex: none; object-fit: contain; }
+.pie-cliente__titulo {
+  margin: 0 0 2px;
+  color: var(--lw-fg);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.pie-cliente__dato { display: flex; align-items: flex-start; gap: 9px; margin: 0; overflow-wrap: anywhere; }
+.pie-cliente__contacto-datos { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; max-width: 100%; }
+.pie-cliente__contacto-datos > * { max-width: 100%; }
+.pie-cliente__dato p { margin: 0; }
+.pie-cliente__horario { display: block; }
+.pie-cliente__turnos { display: block; }
+.pie-cliente__icono-contacto { width: 15px; height: 15px; flex: none; margin-top: 4px; object-fit: contain; }
+.pie-cliente__ubicacion {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 2px;
+  background-color: #ef4444;
+  /* El SVG original incluye espacio alrededor del pin. La máscara permite
+     pintarlo de rojo solo aquí, sin modificar el archivo compartido. */
+  -webkit-mask: var(--pie-ubicacion) center / 150% no-repeat;
+  mask: var(--pie-ubicacion) center / 150% no-repeat;
+}
+.pie-cliente svg { width: 15px; height: 15px; flex: none; }
+.pie-cliente a { color: inherit; text-decoration: none; transition: color .2s, border-color .2s; }
+.pie-cliente a:hover { color: var(--lw-fg); }
+.pie-cliente a:focus-visible { outline: 2px solid var(--lw-gold); outline-offset: 4px; }
+.pie-cliente__enlace { max-width: 100%; overflow-wrap: anywhere; }
+.pie-cliente__reclamos {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--lw-border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.pie-cliente__reclamos:hover { border-color: var(--lw-muted); }
+.pie-cliente__copyright { margin: 56px 0 0; font-size: 11px; }
+
+@media (max-width: 639px) {
+  .pie-cliente {
+    margin-top: var(--separador-horizontal);
+    padding: 32px var(--separador-vertical) 20px;
+    text-align: center;
+  }
+  .pie-cliente__nombre { margin-inline: auto; }
+  .pie-cliente__redes { justify-content: center; margin-top: 16px; }
+  .pie-cliente__red-nombre { display: none; }
+  .pie-cliente__seccion { align-items: center; }
+  .pie-cliente__dato { justify-content: center; }
+  .pie-cliente__contacto-datos { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .pie-cliente__turnos { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 4px; }
+  .pie-cliente__turnos > .pie-cliente__horario { white-space: nowrap; }
+  .pie-cliente__copyright { margin-top: 32px; }
+}
+@media (min-width: 640px) {
+  .pie-cliente__columnas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+}
+@media (min-width: 1024px) {
+  .pie-cliente__columnas { grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 1fr)) minmax(0, 1.3fr); gap: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pie-cliente a { transition: none; }
+}

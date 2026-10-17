@@ -88,7 +88,7 @@ export default function DireccionesCliente() {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-lg">
         <div className="flex justify-end">
           <button

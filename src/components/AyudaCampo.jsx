@@ -44,14 +44,14 @@ export default function AyudaCampo({ children, etiqueta = 'Ver ayuda' }) {
   }
 
   return (
-    <span ref={raiz} className="relative inline-flex items-center">
+    <span ref={raiz} className="ayuda-campo relative inline-flex items-center">
       <button
         type="button"
         onClick={() => setAbierto((anterior) => !anterior)}
         aria-label={etiqueta}
         aria-expanded={abierto}
         aria-controls={abierto ? idMensaje : undefined}
-        className={`flex items-center rounded-full transition-colors hover:text-azul-metal ${abierto ? 'text-azul-metal' : 'text-ink/50'}`}
+        className={`ayuda-campo__boton flex items-center rounded-full transition-colors hover:text-azul-metal ${abierto ? 'text-azul-metal' : 'text-ink/50'}`}
       >
         <CircleAlert className="h-3.5 w-3.5" />
       </button>
@@ -60,7 +60,7 @@ export default function AyudaCampo({ children, etiqueta = 'Ver ayuda' }) {
           ref={ajustarAlViewport}
           id={idMensaje}
           role="note"
-          className="absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-border bg-surface-2 p-2.5 text-xs font-normal text-ink/70 shadow-lg transition-[opacity,transform] duration-200 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none"
+          className="ayuda-campo__mensaje absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-border bg-surface-2 p-2.5 text-xs font-normal text-ink/70 shadow-lg transition-[opacity,transform] duration-200 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none"
         >
           {children}
         </span>

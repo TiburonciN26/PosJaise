@@ -101,7 +101,21 @@ export function urlPublicaFoto(bucket, ruta, variante = 'g') {
 export function resolverUrlGaleria(url) {
   if (!url) return null
   if (/^https?:\/\//.test(url)) return urlDeLecturaPropia(url, configuracionMedios().publicUrl, basesDeMedios()) ?? url
-  return `${import.meta.env.BASE_URL}${url.replace(/^\//, '')}`
+  let ruta = url.replace(/^\//, '')
+  // La fila de ejemplo de la migración 98 usa los nombres anteriores del
+  // hero. Mantenerla legible tras retirar esos archivos, sin cambiar la BD.
+  const antigua = ruta.match(/^inicio-web\/(hero-antes-referencia|hero-despues-referencia2?|antes-claro|despues-claro)(?:-(?:640|960|1280|1680))?\.(?:jpg|webp)$/)
+  if (antigua) {
+    const actuales = {
+      'hero-antes-referencia': 'hero-antes-oscuro.webp',
+      'hero-despues-referencia': 'hero-despues-oscuro.webp',
+      'hero-despues-referencia2': 'hero-despues-oscuro.webp',
+      'antes-claro': 'hero-antes-claro.webp',
+      'despues-claro': 'hero-despues-claro.webp',
+    }
+    ruta = `inicio-web/${actuales[antigua[1]]}`
+  }
+  return `${import.meta.env.BASE_URL}${ruta}`
 }
 
 // Ruta/referencia a eliminar a partir de la URL completa que guarda la galería (ver urlsMedios.js):

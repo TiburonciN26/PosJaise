@@ -1,8 +1,11 @@
+-- Corrección 2026-10-15: DELETE filtrado para pg-safeupdate.
+-- Reejecutable desde SQL Editor: conserva filas existentes y actualiza la
+-- función y sus políticas dentro de la misma transacción.
 begin;
 
 -- Configuración editorial: lectura pública solo de imágenes activas.
 -- El destino R2 es el ya autorizado para imágenes editoriales (fotos-galeria).
-create table public.login_web_fotos (
+create table if not exists public.login_web_fotos (
   id uuid primary key,
   titulo text not null default '' check (char_length(titulo) <= 120),
   foto_url text not null check (foto_url ~ '^r2:fotos-galeria/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
@@ -13,6 +16,11 @@ alter table public.login_web_fotos enable row level security;
 revoke all on public.login_web_fotos from public, anon, authenticated;
 grant select on public.login_web_fotos to anon, authenticated;
 grant insert, update, delete on public.login_web_fotos to authenticated;
+drop policy if exists login_fotos_lectura_publica on public.login_web_fotos;
+drop policy if exists login_fotos_lectura_admin on public.login_web_fotos;
+drop policy if exists login_fotos_alta_admin on public.login_web_fotos;
+drop policy if exists login_fotos_cambio_admin on public.login_web_fotos;
+drop policy if exists login_fotos_baja_admin on public.login_web_fotos;
 create policy login_fotos_lectura_publica on public.login_web_fotos
   for select to anon, authenticated using (activo);
 create policy login_fotos_lectura_admin on public.login_web_fotos
@@ -26,7 +34,7 @@ create policy login_fotos_baja_admin on public.login_web_fotos
 
 -- Publicación atómica; la comparación del borrador original evita que un
 -- segundo administrador sobrescriba una configuración que acaba de cambiar.
-create function public.guardar_login_web_fotos(p_fotos jsonb, p_base jsonb)
+create or replace function public.guardar_login_web_fotos(p_fotos jsonb, p_base jsonb)
 returns setof public.login_web_fotos
 language plpgsql security invoker set search_path = '' as $$
 declare actual jsonb;
@@ -44,7 +52,9 @@ begin
   if actual <> p_base then
     raise exception 'La configuración cambió en otra sesión. Recarga antes de guardar.';
   end if;
-  delete from public.login_web_fotos;
+  -- El CHECK de orden limita todas las filas a estas ocho posiciones.
+  -- Filtro explícito compatible con pg-safeupdate; no desactivar la protección.
+  delete from public.login_web_fotos where orden between 0 and 7;
   insert into public.login_web_fotos (id, titulo, foto_url, orden, activo)
     select id, titulo, foto_url, orden, activo
     from jsonb_to_recordset(p_fotos) as f(id uuid, titulo text, foto_url text, orden integer, activo boolean);

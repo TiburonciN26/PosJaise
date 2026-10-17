@@ -1,68 +1,60 @@
-// Posiciones de las "chispas" del nivel Oro — mismo patrón que la
-// referencia HTML que pasó el usuario, con menos elementos para no
-// saturar una tarjeta angosta de lista (la referencia tenía 5, en un
-// showcase de una sola tarjeta grande).
-const CHISPAS_ORO = [
-  { top: '-8px', left: '30px', size: 12 },
-  { top: '10px', right: '-10px', size: 9, delay: '-0.9s' },
-  { bottom: '-8px', right: '70px', size: 10, delay: '-1.8s' },
-]
+import { useEffect, useId, useRef, useState } from 'react'
+import { Check, ChevronDown } from 'lucide-react'
+import './CuponPromocionInicio.css'
 
-function Chispa({ estilo, size, delay, variante }) {
-  return (
-    <svg
-      className={`cupon-chispa cupon-chispa-lista ${variante === 'roja' ? 'cupon-chispa-roja' : ''} ${variante === 'diamante' ? 'cupon-chispa-diamante' : ''} ${variante === 'verde' ? 'cupon-chispa-verde' : ''}`}
-      style={{ ...estilo, width: size, height: size, animationDelay: delay }}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 0C13 8 16 11 24 12C16 13 13 16 12 24C11 16 8 13 0 12C8 11 11 8 12 0Z" />
-    </svg>
-  )
-}
+// Presentación compartida; cada pantalla conserva sus permisos, datos y acciones.
+export default function EnvolturaCupon({
+  nivel, valor, titulo, subtitulo, estado, confirmado = false, reclamado = false,
+  etiquetaBeneficio = 'Descuento', apagada = false, esNuevo = false,
+  abierto: abiertoControlado, onToggle, pie, children,
+}) {
+  const [abiertoLocal, setAbiertoLocal] = useState(false)
+  const abierto = abiertoControlado ?? abiertoLocal
+  const id = useId()
+  const envolturaRef = useRef(null)
+  const talonRef = useRef(null)
+  const tienePie = Boolean(pie)
 
-// Envoltura visual de una tarjeta de cupón por nivel (Plata/Oro/Diamante + Especial,
-// §7.35): la tarjeta con su acabado (`nivel.claseTarjeta`, ver
-// lib/cupones.js), la etiqueta "Nuevo" y las chispas de Oro. Se extrajo
-// de TarjetaCupon para que las filas de "Canjear puntos" (Recompensas)
-// usen EXACTAMENTE el mismo acabado y las mismas animaciones con otro
-// contenido, sin duplicar clases.
-//
-// Fase 1 de rendimiento: en reposo el destello y las chispas NO se animan (con
-// cientos de cupones saturaban el renderizado); solo hay una pasada breve al
-// pasar el puntero / enfocar (`.cupon-envoltura` en index.css), y las chispas
-// del cupón apagado ni se muestran (`.cupon-envoltura-apagada`).
-//
-// La etiqueta "Nuevo" y las chispas de Oro van FUERA del div con
-// overflow:hidden (el de `.cupon-tarjeta`) — si estuvieran adentro, ese
-// overflow (necesario para recortar el brillo/degradado a la forma de
-// la tarjeta) las cortaría, igual que en la referencia HTML (ahí viven
-// como hermanas de `.card`, no adentro).
-export default function EnvolturaCupon({ nivel, apagada = false, esNuevo = false, children }) {
+  useEffect(() => {
+    const talon = talonRef.current
+    if (!talon) return undefined
+    const medir = () => envolturaRef.current?.style.setProperty('--cpi-corte', `${talon.offsetHeight + .5}px`)
+    medir()
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observador = new ResizeObserver(medir)
+    observador.observe(talon)
+    return () => observador.disconnect()
+  }, [tienePie])
 
   return (
-    <div className={`cupon-envoltura relative ${apagada ? 'cupon-envoltura-apagada opacity-50' : ''}`}>
-      {esNuevo && (
-        <span className="cupon-etiqueta-nueva">
-          <span>Nuevo</span>
-        </span>
-      )}
-
-      {nivel.chispas &&
-        CHISPAS_ORO.map((c, indice) => (
-          <Chispa
-            key={indice}
-            estilo={{ position: 'absolute', top: c.top, left: c.left, right: c.right, bottom: c.bottom }}
-            size={c.size}
-            delay={c.delay}
-            variante={nivel.chispas}
-          />
-        ))}
-
-      <div className={`${nivel.claseTarjeta} rounded-none`}>
-        {children}
-      </div>
+    <div ref={envolturaRef} className="cpi-envoltura">
+      <article className="cpi" data-nivel={nivel?.nombre ?? 'Oferta'} data-categoria={nivel?.categoria ?? 'oferta'} data-abierto={abierto}
+        data-reclamado={reclamado && Boolean(pie)} data-confirmado={confirmado}
+        data-apagada={apagada} data-sin-talon={!tienePie} aria-labelledby={`${id}-titulo`}>
+        <button type="button" className="cpi-resumen" aria-expanded={abierto}
+          aria-controls={`${id}-detalle`} onClick={onToggle ?? (() => setAbiertoLocal(v => !v))}>
+          <span className="cpi-beneficio">
+            {valor}
+            <span className="cpi-etiqueta">{etiquetaBeneficio}</span>
+          </span>
+          <span className="cpi-textos">
+            <span className="cpi-encabezado">
+              <span className="cpi-categoria">Cupón {nivel?.nombre ?? 'oferta'}</span>
+              {estado && <span className="cpi-sello" role="status">{confirmado && <Check aria-hidden="true" />}{estado}</span>}
+              {esNuevo && <span className="cpi-sello cpi-nuevo">Nuevo</span>}
+            </span>
+            <span id={`${id}-titulo`} className="cpi-titulo">{titulo}</span>
+            {subtitulo && <span className="cpi-fecha-resumen">{subtitulo}</span>}
+          </span>
+          <span className="cpi-accion" aria-hidden="true"><ChevronDown strokeWidth={2.6} /><span>{abierto ? 'Cerrar' : 'Ver'}</span></span>
+        </button>
+        <div id={`${id}-detalle`} className="cpi-desplegable" role="region" aria-labelledby={`${id}-titulo`} aria-hidden={!abierto} inert={!abierto}>
+          <div className="cpi-recorte">
+            <div className="cpi-cuerpo">{children}</div>
+            {pie && <footer ref={talonRef} className="cpi-talon">{pie}</footer>}
+          </div>
+        </div>
+      </article>
     </div>
   )
 }

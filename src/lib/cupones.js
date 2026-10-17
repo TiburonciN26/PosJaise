@@ -36,7 +36,7 @@ export function formatearFechaCupon(fechaIso) {
 // el mismo que decide quién puede canjearlo y que el cupón emitido
 // congela—, así catálogo, permiso y cupón siempre coinciden.
 // BASICO = Plata, PREMIUM = Oro, VIP = Diamante; los cupones de
-// promociones por fechas (origen PROMOCION) son «Especial», fuera de la
+// promociones por fechas (origen PROMOCION) son «Oferta», fuera de la
 // escala. Cada clienta puede canjear su nivel y los inferiores.
 const NIVELES_CUPON = {
   // Acabado metálico igual al de las tarjetas de puntos (.cupon-metal en
@@ -44,6 +44,7 @@ const NIVELES_CUPON = {
   // y Diamante el de mayor valor. `chispas` solo en los de arriba.
   Diamante: {
     nombre: 'Diamante',
+    categoria: 'diamante',
     claseTarjeta: 'cupon-tarjeta cupon-metal cupon-iri cupon-n-diamante',
     claseTexto: 'cupon-metal-texto',
     claseIcono: 'cupon-metal-icono',
@@ -52,6 +53,7 @@ const NIVELES_CUPON = {
   },
   Oro: {
     nombre: 'Oro',
+    categoria: 'oro',
     claseTarjeta: 'cupon-tarjeta cupon-metal cupon-n-oro',
     claseTexto: 'cupon-metal-texto',
     claseIcono: 'cupon-metal-icono',
@@ -59,6 +61,7 @@ const NIVELES_CUPON = {
   },
   Plata: {
     nombre: 'Plata',
+    categoria: 'plata',
     claseTarjeta: 'cupon-tarjeta cupon-metal cupon-n-plata',
     claseTexto: 'cupon-metal-texto',
     claseIcono: 'cupon-metal-icono',
@@ -66,19 +69,21 @@ const NIVELES_CUPON = {
   },
   // Cupones de bienvenida, referido y fidelización: acabado verde (diamante verde de
   // public/diseñosPropios), fuera de la escala Plata/Oro/Diamante.
-  Verde: {
-    nombre: 'Verde',
+  Especial: {
+    nombre: 'Especial',
+    categoria: 'especial',
     claseTarjeta: 'cupon-tarjeta cupon-metal cupon-iri cupon-n-verde',
     claseTexto: 'cupon-metal-texto',
     claseIcono: 'cupon-metal-icono',
     claseBoton: 'cupon-metal-boton',
     chispas: 'verde',
   },
-  // Categoría ESPECIAL, fuera de la escala Plata/Oro/Diamante: la reciben
+  // Categoría OFERTA, fuera de la escala Plata/Oro/Diamante: la reciben
   // los cupones de ofertas (origen PROMOCION) sin importar su valor — ver
   // nivelDeCupon(). Acabado rubí (la tarjeta "Rubí élite" de la referencia).
-  Especial: {
-    nombre: 'Especial',
+  Oferta: {
+    nombre: 'Oferta',
+    categoria: 'oferta',
     claseTarjeta: 'cupon-tarjeta cupon-metal cupon-iri cupon-n-rubi',
     claseTexto: 'cupon-metal-texto',
     claseIcono: 'cupon-metal-icono',
@@ -89,7 +94,7 @@ const NIVELES_CUPON = {
 
 // Nombre visual de cada nivel de negocio (el mismo `nivel_minimo` del
 // catálogo, del cupón emitido y del permiso de canje).
-const ORIGENES_VERDES = new Set(['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION'])
+const ORIGENES_ESPECIALES = new Set(['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION'])
 
 export const NOMBRE_VISUAL_NIVEL = { BASICO: 'Plata', PREMIUM: 'Oro', VIP: 'Diamante' }
 
@@ -102,10 +107,11 @@ export function estiloNivelDeNegocio(nivelMinimo) {
 }
 
 // Nivel de un cupón concreto: los de oferta (PROMOCION) son siempre
-// «Especial»; el resto sigue el nivel mínimo congelado en el cupón.
+// «Oferta»; bienvenida, referidos y fidelización son «Especial» (verde).
+// El resto sigue el nivel mínimo congelado en el cupón.
 export function nivelDeCupon(cupon) {
-  if (cupon.origen === 'PROMOCION') return NIVELES_CUPON.Especial
-  if (ORIGENES_VERDES.has(cupon.origen)) return NIVELES_CUPON.Verde
+  if (cupon.origen === 'PROMOCION') return NIVELES_CUPON.Oferta
+  if (ORIGENES_ESPECIALES.has(cupon.origen)) return NIVELES_CUPON.Especial
   return estiloNivelDeNegocio(cupon.nivel_minimo)
 }
 

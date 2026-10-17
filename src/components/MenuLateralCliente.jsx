@@ -17,7 +17,7 @@ export default function MenuLateralCliente({ abierto, onCerrar }) {
   const { usuario } = useAuth()
   return (
     <div
-      className={`absolute inset-0 z-20 lg:hidden ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={`absolute inset-x-0 bottom-0 top-(--alto-header-cliente) z-20 overflow-hidden lg:hidden ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`}
       aria-hidden={!abierto}
     >
       <button

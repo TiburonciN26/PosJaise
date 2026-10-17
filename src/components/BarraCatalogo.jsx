@@ -23,6 +23,7 @@ export default function BarraCatalogo({
   onBusqueda,
   placeholder,
   etiquetaTotal,
+  selectorCategoriasMovil,
   className = '',
   style,
 }) {
@@ -82,11 +83,12 @@ export default function BarraCatalogo({
   return (
     <div
       ref={barraRef}
-      className={`sticky top-0 z-10 border-y border-white/10 bg-[#0b0b0c]/90 lw-gutter pb-3 pt-5 backdrop-blur sm:pt-[26px] ${className}`}
+      className={`sticky top-0 z-10 border-y border-white/10 bg-[#0b0b0c]/90 lw-gutter pb-3 backdrop-blur ${className}`}
       style={style}
     >
       <div className="mx-auto flex w-full max-w-[1700px] flex-wrap items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        {selectorCategoriasMovil}
+        <div className={`min-w-0 flex-1 items-center gap-2 ${selectorCategoriasMovil ? 'hidden sm:flex' : 'flex'}`}>
           <button
             type="button"
             onClick={() => setAbierto((anterior) => !anterior)}
@@ -115,7 +117,7 @@ export default function BarraCatalogo({
             )}
           </div>
         </div>
-        <label className="lw-buscador flex h-[38px] w-full items-center gap-2 rounded-full bg-[#18181b] px-3.5 text-white/50 sm:w-[230px]">
+        <label className={`lw-buscador flex h-[38px] items-center gap-2 rounded-full bg-[#18181b] px-3.5 text-white/50 sm:w-[230px] ${selectorCategoriasMovil ? 'min-w-0 flex-1 sm:flex-none' : 'w-full'}`}>
           <Search className="h-[15px] w-[15px] shrink-0" />
           <input
             type="text"
@@ -142,7 +144,7 @@ export default function BarraCatalogo({
       <div
         id="lista-categorias"
         inert={!abierto}
-        className={`mx-auto grid w-full max-w-[1700px] transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+        className={`mx-auto w-full max-w-[1700px] transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${selectorCategoriasMovil ? 'hidden sm:grid' : 'grid'} ${
           abierto ? 'mt-3 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'
         }`}
       >

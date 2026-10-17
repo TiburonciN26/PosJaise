@@ -29,7 +29,7 @@ export default function PerfilEquipoCliente() {
   const urlFoto = persona?.foto_url ? urlPublicaFoto('fotos-asistentes', persona.foto_url) : null
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto py-4 md:py-8">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         <Link to="/nosotros" className="mb-6 inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white">
           <ArrowLeft className="h-3.5 w-3.5" /> Volver a Nuestro equipo

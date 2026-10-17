@@ -464,11 +464,13 @@ main:has(.modal-producto-web:not(.hidden *)) {
      arriba/abajo, `vertical` = izquierda/derecha (misma convención). */
   --separador-horizontal-secundario: 10px;
   --separador-vertical-secundario: 10px;
-  /* Padding interno de BOTONES (celular): `verical` = arriba/abajo, `horizontal` = laterales
-     (mismos nombres que se pidieron, con la errata incluida). Se aplican con
-     `max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton)`. */
-  --pading-verical-boton: 3px;
+  /* Padding interno de botones en móvil. El nombre anterior se conserva
+     como alias para las clases que ya lo utilizan. */
+  --pading-vertical-boton: 3px;
+  --pading-verical-boton: var(--pading-vertical-boton);
   --pading-horizontal-boton: 7px;
+  /* Tamaño de los h1 del portal cliente en móvil (excepto el hero de Inicio). */
+  --fontzise-h1: 20px;
 }
 /* Los separadores internos compactos se aplican solo en móvil. */
 @media (min-width: 40rem) {
@@ -1275,31 +1277,17 @@ input[type='search']::-webkit-search-decoration {
      comentarios puntuales en PortalCliente.jsx. */
   --lw-gold: #a9c6ec;
   --lw-rose: #ff85a1;
-  /* Margen lateral ÚNICO del portal cliente: lo usan el header y todos
-     los bloques de contenido vía la clase `.lw-gutter`. Para separar o
-     acercar todo de los bordes, se cambia SOLO este valor. Fluido:
-     16px en móvil, crece con el ancho hasta 72px. */
-  --lw-gutter: clamp(1rem, 4vw, 4.5rem);
+  /* Alias del separador global para el portal, incluido su footer. */
+  --lw-gutter: var(--separador-vertical);
   background: var(--lw-bg);
   color: var(--lw-fg);
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-.landing-web .lw-gutter {
-  padding-inline: var(--lw-gutter);
-}
-
-/* Inicio (celular): los bloques bajo el hero usan el padding lateral global
-   de las pestañas (--separador-vertical) en vez del gutter fluido. */
-@media (max-width: 639px) {
-  .landing-web .lw-gutter.lw-gutter-sep {
-    padding-inline: var(--separador-vertical);
-  }
-}
-
-/* Detalle de servicio/producto: margen lateral más corto que el resto del portal. */
-.landing-web .lw-gutter-detalle {
-  padding-inline: clamp(1rem, 2.5vw, 3rem);
+/* Un único padding lateral en pestañas, detalles, header y subpáginas.
+   Los anchos máximos y el padding interno de las tarjetas se conservan. */
+.landing-web :is(.lw-gutter, .lw-gutter-detalle) {
+  padding-inline: var(--separador-vertical);
 }
 
 .landing-web .lw-serif {
@@ -2534,6 +2522,21 @@ input[type='search']::-webkit-search-decoration {
   border-color: var(--lw-gold);
 }
 
+/* Carrusel de reseñas de Inicio: recorrido lento y pausa para leer. */
+.landing-web .inicio-resenas-cinta {
+  animation: inicio-resenas-deslizar 120s linear infinite;
+}
+.landing-web .inicio-resenas-carrusel:is(:hover, :focus-within, :active) .inicio-resenas-cinta {
+  animation-play-state: paused;
+}
+@keyframes inicio-resenas-deslizar {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .inicio-resenas-cinta { animation: none; }
+  .landing-web .inicio-resenas-grupo[aria-hidden='true'] { display: none; }
+}
+
 .landing-web .lw-stepper {
   display: inline-flex;
   align-items: center;
@@ -2561,6 +2564,22 @@ input[type='search']::-webkit-search-decoration {
 .landing-web .lw-stepper button:disabled {
   color: #555;
   cursor: default;
+}
+
+@media (width < 40rem) {
+  .landing-web .lw-stepper.lw-stepper-productos {
+    width: 105px;
+    height: 26px;
+    max-height: 26px;
+    justify-content: space-between;
+    padding: 0 3px;
+  }
+  .landing-web .lw-stepper.lw-stepper-productos button {
+    width: 26px;
+    height: 24px;
+    min-height: 0;
+    padding: 0;
+  }
 }
 
 .landing-web .lw-chip {
@@ -2619,7 +2638,7 @@ input[type='search']::-webkit-search-decoration {
 .landing-web .lw-etq-desc {
   position: absolute;
   top: 6px;
-  left: 6px;
+  right: 6px;
   padding: 3px 7px;
   border-radius: 999px;
   background: #ff85a1;
@@ -3610,5 +3629,73 @@ input[type='search']::-webkit-search-decoration {
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* La ayuda de visitas puede salir de la tarjeta y cubrir el historial. */
+.landing-web .sellos-tarjeta {
+  overflow: visible;
+  z-index: 10;
+}
+
+/* Los selectores desplazan la lista completa, sin revelar filas por altura. */
+.landing-web .recompensas-selector__lista {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: transform 180ms ease-out, opacity 180ms ease-out, visibility 0s 180ms;
+}
+.landing-web .recompensas-selector__lista[data-abierto='true'] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .recompensas-selector__lista { transition: none; }
+}
+
+/* AyudaCampo respeta el tema propio del portal, independiente del POS. */
+.landing-web .ayuda-campo__boton { color: var(--lw-muted); }
+.landing-web .ayuda-campo__boton:hover,
+.landing-web .ayuda-campo__boton[aria-expanded='true'] { color: var(--lw-gold); }
+.landing-web .ayuda-campo__mensaje {
+  color: var(--lw-fg);
+  background-color: var(--lw-card);
+  border-color: var(--lw-border);
+}
+
+/* Botones con borde de todo el portal cliente, incluidas tarjetas,
+   subpestañas y diálogos. El padding de PC se conserva.
+   Los selectores de clase completa distinguen border de border-t/border-b,
+   que también se usan en encabezados desplegables y filas de contenido. */
+@media (width < 40rem) {
+  .landing-web h1:not(.inicio-hero-titulo) {
+    font-size: var(--fontzise-h1);
+  }
+
+  .landing-web :is(button, a, [role='button']):is(
+    [class~='border'], [class~='border-2'], [class~='border-4'],
+    .lw-cta-hero, .lw-seg, .lw-pago-opcion, .lw-comprobante-opcion,
+    .lw-wa-ayuda, .cpi-reclamar, .pie-cliente__reclamos
+  ),
+  .landing-web .lw-subir-captura {
+    padding-block: var(--pading-vertical-boton);
+    padding-inline: var(--pading-horizontal-boton);
+  }
+
+  /* En botones de texto, el contenido y el padding determinan el alto.
+     Los controles de solo icono y el avatar conservan su geometría. */
+  .landing-web :is(button, a, [role='button']):is(
+    [class~='border'], [class~='border-2'], [class~='border-4'],
+    .lw-cta-hero, .lw-seg, .lw-pago-opcion, .lw-comprobante-opcion,
+    .lw-wa-ayuda, .cpi-reclamar, .pie-cliente__reclamos
+  ):not([aria-label='Menú de cuenta']):not(:has(> svg:only-child, > img:only-child)),
+  .landing-web .lw-subir-captura {
+    height: auto;
+    min-height: 0;
+    line-height: normal;
   }
 }

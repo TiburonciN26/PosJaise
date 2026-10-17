@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
-// Guard de las rutas PRIVADAS de la web de clientas (perfil, historial, citas,
+// Guard de las rutas PRIVADAS de la web de clientas (perfil, historial, carrito de citas,
 // pedidos, direcciones, notificaciones, seguridad…). Un visitante nunca monta la
 // pantalla —por eso tampoco dispara sus consultas—: va a /login guardando en
 // location.state.desde la ruta pedida para continuar ahí tras iniciar sesión.

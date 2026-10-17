@@ -4,6 +4,8 @@ import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePerfilClienteOpcional } from '../../context/PerfilClienteContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import AyudaCampo from '../../components/AyudaCampo.jsx'
+import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
 import { SECCIONES } from './recompensas/datos.js'
 import { useCatalogoPublico, useRecursosRecompensas } from './recompensas/useRecursosRecompensas.js'
@@ -283,27 +285,21 @@ export default function RecompensasCliente({ publico = false }) {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto py-4 md:py-8">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
-        <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 pb-6 pt-2 md:pt-6">
-          <div className="flex flex-col gap-3.5">
-            <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Club Jaise</span>
+        <header className="flex items-center justify-between gap-2 pb-6 sm:justify-start">
+          <div className="flex shrink-0 items-center gap-2">
             <h1 className="lw-titulo-heavitas text-4xl uppercase md:text-5xl">Recompensas</h1>
-            <p className="max-w-[560px] text-[15px] leading-relaxed text-white/60">
-              {programaActivo
-                ? 'Tus compras confirmadas suman monedas y clasificación; las ventas con servicios dan sellos. Cámbialos por cupones y beneficios.'
-                : 'Tus visitas y compras suman puntos y sellos. Cámbialos por cupones y beneficios.'}
-            </p>
+            <AyudaCampo etiqueta="Cómo funcionan las recompensas">
+              Tus visitas y compras suman puntos y sellos. Cámbialos por cupones y beneficios.
+            </AyudaCampo>
           </div>
-          {sesion && perfil?.nombre && (
-            <div className="flex flex-col gap-1 text-right">
-              <span className="text-xs text-white/50">Sesión iniciada como</span>
-              <span className="text-base font-semibold text-white">{perfil.nombre}</span>
-            </div>
-          )}
+          <SelectorDesplegable className="max-w-[45%]" valor={seccion.clave} onSeleccionar={irA}
+            etiqueta="Sección de recompensas" etiquetaLista="Secciones de recompensas"
+            opciones={SECCIONES.map(s => ({ ...s, label: programaActivo && s.clave === 'canje' ? 'Canjear monedas' : s.label }))} />
         </header>
 
-        <div role="tablist" aria-label="Secciones de Recompensas" className="mb-6 flex flex-wrap gap-2">
+        <div role="tablist" aria-label="Secciones de Recompensas" className="mb-6 hidden flex-wrap gap-2 sm:flex">
           {SECCIONES.map((s, indice) => {
             const activa = indice === indiceActivo
             return (

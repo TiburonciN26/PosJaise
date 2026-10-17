@@ -19,6 +19,7 @@ import { useCintaContinua } from '../../hooks/useCintaContinua.js'
 import TarjetaProductoCliente, { porcentajeDescuento } from '../../components/TarjetaProductoCliente.jsx'
 import BarraTuCarritoFlotante from '../../components/BarraTuCarritoFlotante.jsx'
 import BarraCatalogo from '../../components/BarraCatalogo.jsx'
+import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
@@ -224,6 +225,17 @@ export default function ProductosCliente() {
         onBusqueda={setBusqueda}
         placeholder="Buscar producto…"
         etiquetaTotal={totalVisible == null ? 'Buscando…' : plural(totalVisible)}
+        selectorCategoriasMovil={
+          <SelectorDesplegable
+            opciones={categorias.map(categoria => ({ clave: categoria, label: categoria === 'todos' ? 'Todas' : categoria }))}
+            valor={categoriaActiva}
+            onSeleccionar={elegirCategoria}
+            etiqueta="Categoría de productos"
+            etiquetaLista="Categorías de productos"
+            alineacion="izquierda"
+            className="w-[45%] shrink-0"
+          />
+        }
         className={reducirMovimiento ? '' : 'in-up'}
         style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.filtros}ms` }}
       />
@@ -233,7 +245,7 @@ export default function ProductosCliente() {
         <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter pb-6 pt-6 lg:grid-cols-[1fr_1.12fr] lg:gap-16 lg:pt-10">
           <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
             <span
-              className={`text-[11px] font-semibold uppercase tracking-widest text-white/60 ${reducirMovimiento ? '' : 'in-left'}`}
+              className={`hidden text-[11px] font-semibold uppercase tracking-widest text-white/60 sm:block ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
             >
               Novedades y lo más vendido
@@ -248,20 +260,9 @@ export default function ProductosCliente() {
                 const saliente = heroProductos.length > 2 && i === (heroIdxSeguro - 1 + heroProductos.length) % heroProductos.length
                 const y = activo ? 0 : saliente ? -16 : 16
                 const blur = activo ? 0 : 8
-                const dEtiqueta = activo ? 250 : 0
                 const dTitulo = activo ? 350 : 0
                 const dResto = activo ? 480 : 0
                 const desc = p.descripcion || `Uno de nuestros productos de ${p.categoria ?? 'catálogo'} favoritos entre nuestras clientas.`
-                const descuento = porcentajeDescuento(p)
-                const etiquetaHero = descuento != null ? `En oferta −${descuento}%` : p.nuevo ? 'Nuevo' : p.destacado ? 'Destacado' : 'Novedad'
-
-                const estiloEtiqueta = reducirMovimiento
-                  ? { opacity: activo ? 1 : 0, transition: 'none' }
-                  : {
-                      opacity: activo ? 1 : 0,
-                      transform: `translateY(${y}px)`,
-                      transition: `opacity 0.6s ease ${dEtiqueta}ms, transform 0.6s ease ${dEtiqueta}ms`,
-                    }
                 const estiloTitulo = reducirMovimiento
                   ? { opacity: activo ? 1 : 0, filter: 'none', transform: 'none', transition: 'none' }
                   : {
@@ -283,13 +284,6 @@ export default function ProductosCliente() {
 
                 return (
                   <div key={p.id} style={{ gridArea: '1 / 1' }} aria-hidden={!activo} className={`flex flex-col ${activo ? '' : 'pointer-events-none'}`}>
-                    <span
-                      style={estiloEtiqueta}
-                      className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[#0b0b0c]"
-                    >
-                      <Sparkles className="h-[13px] w-[13px]" />
-                      {etiquetaHero}
-                    </span>
                     <h1 style={estiloTitulo} className="lw-titulo-heavitas mt-4 text-[34px] uppercase leading-[1.02] sm:text-[56px]">
                       {p.nombre}
                     </h1>
@@ -371,6 +365,19 @@ export default function ProductosCliente() {
                 )
               })}
               <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/60" />
+
+              {heroProductos.map((producto, indice) => {
+                const descuento = porcentajeDescuento(producto)
+                const etiqueta = descuento != null ? `En oferta −${descuento}%` : producto.nuevo ? 'Nuevo' : producto.destacado ? 'Destacado' : 'Novedad'
+                return (
+                  <span key={producto.id} aria-hidden={indice !== heroIdxSeguro}
+                    className="pointer-events-none absolute left-4 top-9 inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[#0b0b0c] transition-opacity duration-300 motion-reduce:transition-none"
+                    style={{ opacity: indice === heroIdxSeguro ? 1 : 0 }}>
+                    <Sparkles aria-hidden="true" className="h-[13px] w-[13px]" />
+                    {etiqueta}
+                  </span>
+                )
+              })}
 
               {heroProductos.length > 1 && (
                 <div className="absolute inset-x-4 top-3.5 flex gap-1.5">
@@ -504,7 +511,7 @@ export default function ProductosCliente() {
                       Ver todo ({grupo.total}) <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="-mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
+                  <div className="-mx-(--separador-vertical) flex gap-3 overflow-x-auto px-(--separador-vertical) sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-5 sm:overflow-visible sm:px-0">
                     {grupo.primeros.map((p, k) => {
                       const claseTarjeta = listo ? (esDesktop ? (k < 2 ? 'in-left' : 'in-right') : 'in-right') : ''
                       const delayTarjeta = delayBase + ENTRADA_FILA.carta + k * ENTRADA_FILA.entre

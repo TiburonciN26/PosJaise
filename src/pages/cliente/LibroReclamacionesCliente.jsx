@@ -181,8 +181,8 @@ export default function LibroReclamacionesCliente() {
 
   if (constancia) {
     return (
-      <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="mx-auto w-full max-w-2xl space-y-4">
+      <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
+        <div className="mx-auto w-full max-w-2xl space-y-4 lw-gutter-detalle">
           <div className="liquid-glass rounded-none p-6 text-center">
             <CheckCircle2 className="mx-auto h-10 w-10 text-[var(--lw-gold)]" />
             <h1 className="mt-3 text-lg font-semibold text-white">Tu hoja de reclamación fue registrada</h1>
@@ -215,8 +215,8 @@ export default function LibroReclamacionesCliente() {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
-      <form onSubmit={enviar} className="mx-auto w-full max-w-2xl space-y-4">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
+      <form onSubmit={enviar} className="mx-auto w-full max-w-2xl space-y-4 lw-gutter-detalle">
         <div className="liquid-glass flex items-start gap-3 rounded-none p-5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[var(--lw-gold)]">
             <BookOpen className="h-4 w-4" />

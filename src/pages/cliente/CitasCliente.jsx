@@ -45,6 +45,7 @@ import {
 import ModalReprogramarCitaCliente from '../../components/ModalReprogramarCitaCliente.jsx'
 import AyudaCampo from '../../components/AyudaCampo.jsx'
 import ComoGanasPuntosYSellos from './citas/ComoGanasPuntosYSellos.jsx'
+import CitasPublicasCliente from './CitasPublicasCliente.jsx'
 
 const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -324,6 +325,13 @@ function BotonAgendar({ destino }) {
 // idéntico, "Próximas citas" se ve siempre (consulta aparte, sin límite
 // de mes) y tocar un día solo filtra la lista — no reemplaza a "Próximas".
 export default function CitasCliente() {
+  const { usuario } = useAuth()
+  // Nunca montar hooks ni consultas de agenda/saldo para un visitante. La clave
+  // descarta el estado anterior si cambia la cuenta con la pantalla abierta.
+  return usuario ? <CitasConSesion key={usuario.id} /> : <CitasPublicasCliente />
+}
+
+function CitasConSesion() {
   const { mostrarToast } = useToast()
   const { serviciosCarrito, agregarServicio } = useCarritoCliente()
   const { cancelacionPlazoHoras } = useEstadoNegocio()
@@ -857,11 +865,11 @@ export default function CitasCliente() {
   }
 
   return (
-    <div className="citas-cliente-scroll animate-entrada-pestana flex-1 overflow-y-auto py-4 md:py-8">
+    <div className="citas-cliente-scroll animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="citas-cliente-contenido mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         {/* Encabezado */}
         <div
-          className={`flex flex-col gap-4 max-sm:flex-row max-sm:items-center max-sm:justify-between sm:flex-row sm:items-end sm:justify-between pt-2 ${reducirMovimiento ? '' : 'in-left'}`}
+          className={`flex flex-col gap-4 max-sm:flex-row max-sm:items-center max-sm:justify-between sm:flex-row sm:items-end sm:justify-between ${reducirMovimiento ? '' : 'in-left'}`}
           style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.header}ms` }}
         >
           <div className="flex flex-col gap-2 max-sm:shrink-0">

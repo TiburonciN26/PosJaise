@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ArrowBigDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
+import { ChevronDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
+import AyudaCampo from '../../../components/AyudaCampo.jsx'
 import { formatearFechaSoloDia } from '../../../lib/fechas.js'
 import { AvisoError, Pildora } from './ui.jsx'
 import { formatearCantidad } from '../../../lib/programaRecompensas.js'
@@ -33,7 +34,6 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
   // especial se leería como "recién empezaste" en vez de "¡la llenaste!".
   const tarjetaLlena = visitasTotales > 0 && sellos === 0
   const sellosEnTarjeta = tarjetaLlena ? VISITAS_POR_RECOMPENSA : sellos
-  const faltan = VISITAS_POR_RECOMPENSA - sellosEnTarjeta
 
   // `historial` viene del más nuevo al más viejo; la tarjeta actual
   // muestra las últimas `sellosEnTarjeta` visitas, de la más vieja a la
@@ -55,14 +55,7 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
     <section className="flex flex-col gap-6">
       <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
         <div className="flex w-full max-w-sm flex-col gap-3 justify-self-center lg:justify-self-end">
-          <div className="liquid-glass rounded-none p-5 text-center">
-            <p className="text-sm text-white/60">
-              Cada {VISITAS_POR_RECOMPENSA} visitas completadas ganas{' '}
-              <span className="font-semibold text-[var(--lw-gold)]">
-                {Number.isFinite(porcentajeCupon) ? `${formatearCantidad(porcentajeCupon)}% de descuento` : 'un cupón de descuento'}
-              </span>{' '}
-              en tu próximo servicio.
-            </p>
+          <div className="sellos-tarjeta liquid-glass rounded-none p-5 text-center">
             <p className="mt-2">
               <Pildora envolver>Recompensa de la nueva tarjeta: propuesta (20 %, máx. S/5)</Pildora>
             </p>
@@ -91,20 +84,17 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
               })}
             </div>
 
-            <p className="mt-3 text-sm font-medium text-white">
-              {tarjetaLlena ? '¡Tarjeta completa!' : `${sellos} de ${VISITAS_POR_RECOMPENSA} visitas`}
-            </p>
-            <p className="mt-1 text-xs text-white/60">
-              {visitasTotales === 0
-                ? 'Todavía no tienes visitas registradas.'
-                : `${visitasTotales} ${visitasTotales === 1 ? 'visita completada' : 'visitas completadas'} en total.`}
-            </p>
-            {visitasTotales > 0 && !tarjetaLlena && (
-              <p className="mt-2 text-xs text-white/50">
-                Te {faltan === 1 ? 'falta' : 'faltan'} {faltan} {faltan === 1 ? 'visita' : 'visitas'} para tu
-                recompensa.
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <p className="text-sm font-medium text-white">
+                {tarjetaLlena ? '¡Tarjeta completa!' : `${sellos} de ${VISITAS_POR_RECOMPENSA} visitas`}
               </p>
-            )}
+              <AyudaCampo etiqueta="Cómo se obtiene la recompensa por visitas">
+                Cada {VISITAS_POR_RECOMPENSA} visitas completadas ganas{' '}
+                <strong>
+                  {Number.isFinite(porcentajeCupon) ? `${formatearCantidad(porcentajeCupon)}% de descuento` : 'un cupón de descuento'}
+                </strong>{' '}en tu próximo servicio.
+              </AyudaCampo>
+            </div>
           </div>
 
           {recompensas > 0 && (
@@ -148,7 +138,7 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
                 className="flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white"
               >
                 Ver historial de visitas
-                <ArrowBigDown
+                <ChevronDown
                   className={`h-3 w-3 transition-transform duration-300 ${historialAbierto ? 'rotate-180' : ''}`}
                 />
               </button>

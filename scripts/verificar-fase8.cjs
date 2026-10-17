@@ -1,4 +1,4 @@
-// Fase 8 · verificación funcional: mapa diferido, hero responsivo, fuentes, contenido del precaché, PWA (instalación, sin conexión, frescura de
+// Fase 8 · verificación funcional: mapa diferido, hero WebP directo (actualización 2026-10-15), fuentes, contenido del precaché, PWA (instalación, sin conexión, frescura de
 // datos) y actualización A→B con trabajo pendiente. Todo contra el Supabase LOCAL (el build lo incrusta) y servidores estáticos locales.
 //
 // Uso: node scripts/verificar-fase8.cjs --antes=<dist> --despues=<dist> --a=<dist build-id f8-a> --b=<dist build-id f8-b> --cuentas=<json> [--salida=ruta.json]
@@ -118,7 +118,7 @@ async function desplazarHastaMapa(page, bloque = 'center') {
     await ctx.close()
   })
 
-  // ---------------- Hero responsivo ----------------
+  // ---------------- Hero: cuatro WebP originales, sin variantes ----------------
   async function heroPedido(base, vp, dpr, tema) {
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: dpr, isMobile: vp.width < 600, serviceWorkers: 'block', reducedMotion: 'reduce' })
     await ctx.addInitScript((t) => { localStorage.setItem('pos-jaise-tema', t); localStorage.setItem('jaise-tema-web', t) }, tema)
@@ -126,26 +126,26 @@ async function desplazarHastaMapa(page, bloque = 'center') {
     const pedidos = []
     page.on('response', async (r) => { if (r.url().includes('/inicio-web/')) pedidos.push({ url: new URL(r.url()).pathname.split('/').pop(), bytes: (await r.body().catch(() => Buffer.alloc(0))).length }) })
     await page.goto(`${base}/inicio`, { waitUntil: 'load' }); await page.waitForSelector('h1'); await ESPERA(3000)
-    const attrs = await page.evaluate(() => [...document.querySelectorAll('section img[srcset]')].map((i) => ({ fp: i.getAttribute('fetchpriority'), alt: i.getAttribute('alt'), actual: i.currentSrc.split('/').pop() })))
+    const attrs = await page.evaluate(() => [...document.querySelectorAll('section img[fetchpriority]')].map((i) => ({ fp: i.getAttribute('fetchpriority'), alt: i.getAttribute('alt'), actual: i.currentSrc.split('/').pop(), srcset: i.getAttribute('srcset'), ancho: i.naturalWidth, alto: i.naturalHeight })))
     await ctx.close()
     return { pedidos, attrs }
   }
-  await caso('Hero oscuro 390×2: WebP de 960 px para ambas fotos (no el JPG de 1680), prioridad alta solo en «después»', async () => {
+  await caso('Hero oscuro 390×2: dos WebP de 3024 px intactos, prioridad alta solo en «después»', async () => {
     const r = await heroPedido(baseD, { width: 390, height: 844 }, 2, 'oscuro')
     const nombres = r.pedidos.map((p) => p.url).sort()
-    assert.deepEqual(nombres, ['hero-antes-referencia-960.webp', 'hero-despues-referencia-960.webp'], `pedidos: ${nombres}`)
-    assert.ok(r.pedidos.every((p) => p.bytes < 20000), JSON.stringify(r.pedidos))
+    assert.deepEqual(nombres, ['hero-antes-oscuro.webp', 'hero-despues-oscuro.webp'], `pedidos: ${nombres}`)
+    assert.ok(r.pedidos.every((p) => p.bytes < 500 * 1024), JSON.stringify(r.pedidos))
+    assert.ok(r.attrs.every((a) => a.srcset === null && a.ancho === 3024 && a.alto === 1698), JSON.stringify(r.attrs))
     const despues = r.attrs.find((a) => a.alt === 'Resultado después del servicio'), antes = r.attrs.find((a) => a.alt === '')
     assert.equal(despues.fp, 'high'); assert.equal(antes.fp, 'low')
   })
-  await caso('Hero claro 390×2 y escritorio 1440×1: variantes adecuadas al viewport', async () => {
+  await caso('Hero claro 390×2 y oscuro 1440×1: los mismos WebP originales sin srcset', async () => {
     const m = await heroPedido(baseD, { width: 390, height: 844 }, 2, 'claro')
-    assert.deepEqual(m.pedidos.map((p) => p.url).sort(), ['antes-claro-960.webp', 'despues-claro-960.webp'])
+    assert.deepEqual(m.pedidos.map((p) => p.url).sort(), ['hero-antes-claro.webp', 'hero-despues-claro.webp'])
     const e = await heroPedido(baseD, { width: 1440, height: 900 }, 1, 'oscuro')
-    assert.deepEqual(e.pedidos.map((p) => p.url).sort(), ['hero-antes-referencia-1680.webp', 'hero-despues-referencia-1680.webp'])
-    const ant = await heroPedido(baseAnt, { width: 390, height: 844 }, 2, 'oscuro')
-    const bytesAnt = ant.pedidos.reduce((a, p) => a + p.bytes, 0), bytesNue = (await heroPedido(baseD, { width: 390, height: 844 }, 2, 'oscuro')).pedidos.reduce((a, p) => a + p.bytes, 0)
-    assert.ok(bytesNue < bytesAnt / 4, `hero 390: ${bytesAnt} → ${bytesNue}`)
+    assert.deepEqual(e.pedidos.map((p) => p.url).sort(), ['hero-antes-oscuro.webp', 'hero-despues-oscuro.webp'])
+    assert.ok([...m.attrs, ...e.attrs].every((a) => a.srcset === null && a.ancho === 3024 && a.alto === 1698))
+    assert.ok([...m.pedidos, ...e.pedidos].every((p) => p.bytes < 500 * 1024))
   })
 
   await caso('Precarga de pestañas del portal: con Save-Data no se descargan en reposo (≈330 kB menos); con conexión normal sigue igual', async () => {

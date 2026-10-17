@@ -31,7 +31,6 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
   const faltan = real
     ? Math.max(0, Math.ceil((nivel === 'PREMIUM' ? umbralVip : umbralPremium) - clasificacion))
     : (datos?.puntos_para_siguiente ?? 0)
-  const unidad = real ? 'puntos de clasificación' : 'puntos'
   const umbrales = { BASICO: 0, PREMIUM: umbralPremium, VIP: umbralVip }
 
   let piso = 0
@@ -47,8 +46,6 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
     siguienteEtiqueta = 'NIVEL MÁXIMO'
   }
   const progresoPct = techo > piso ? Math.min(100, Math.max(0, ((avance - piso) / (techo - piso)) * 100)) : 100
-  const barraPct = Math.min(100, Math.max(0, Math.round((avance / umbralVip) * 100)))
-  const tickPremium = Math.min(100, Math.round((umbralPremium / umbralVip) * 100))
   const siguiente = nivel === 'BASICO' ? 'Premium' : nivel === 'PREMIUM' ? 'VIP' : null
 
   return (
@@ -78,38 +75,10 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
             <strong className="text-white">{real ? 'Gastar tus monedas no hace bajar tu nivel.' : 'Usar tus puntos no hace bajar tu nivel.'}</strong>
           </p>
         </div>
-      </div>
-
-      <div className="liquid-glass mx-auto flex w-full max-w-[640px] flex-col gap-3 rounded-none p-6">
-        <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Progreso de clasificación</span>
-        <p className="text-lg font-semibold leading-snug text-white">
-          {siguiente
-            ? `${formatearMonedas(avance)} de ${umbralVip} ${unidad} hacia VIP`
-            : `${formatearMonedas(avance)} ${unidad} · nivel máximo alcanzado`}
-        </p>
-        <div className="relative pb-9">
-          <div className="relative h-3 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="absolute inset-y-0 left-0 bg-[var(--lw-gold)] transition-[width] duration-700"
-              style={{ width: `${barraPct}%` }}
-            />
-          </div>
-          <span className="absolute left-0 top-[18px] text-xs text-white/50">0 · Básico</span>
-          <span
-            className="absolute top-[18px] -translate-x-1/2 whitespace-nowrap text-xs text-white/50"
-            style={{ left: `${tickPremium}%` }}
-          >
-            {umbralPremium} · Premium
-          </span>
-          <span className="absolute right-0 top-[18px] whitespace-nowrap text-xs text-white/50">
-            {umbralVip} · VIP
-          </span>
-        </div>
-        {real ? (
+        {real && (
           <>
             <p className="text-sm leading-relaxed text-white">
-              Saldo de monedas: <strong className="text-[var(--lw-gold)]">{formatearMonedas(monedas)}</strong>. Las
-              monedas no vencen.
+              Saldo de monedas: <strong className="text-[var(--lw-gold)]">{formatearMonedas(monedas)}</strong>. Las monedas no vencen.
             </p>
             {monedas < 0 && (
               <p role="status" className="border border-white/20 px-3 py-2 text-xs leading-relaxed text-white/80">
@@ -117,16 +86,7 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
                 próximas compras; no es una deuda de dinero y no impide comprar ni reservar.
               </p>
             )}
-            <p className="text-xs leading-relaxed text-white/50">
-              Tu nivel depende de tu clasificación acumulada, que no baja por gastar monedas ni por no visitarnos.
-              Solo la anulación de una compra puede restarle.
-            </p>
           </>
-        ) : (
-          <p className="text-xs leading-relaxed text-white/50">
-            Por ahora tu clasificación usa tu saldo de puntos. Cuando se separen los puntos disponibles de los de
-            clasificación, canjear no los moverá.
-          </p>
         )}
       </div>
 

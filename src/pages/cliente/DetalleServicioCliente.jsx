@@ -312,7 +312,7 @@ export default function DetalleServicioCliente() {
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-24 lg:pb-8">
       {/* Migas + volver */}
-      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle pt-6">
+      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle">
         <nav aria-label="Ruta" className="flex min-w-0 items-center gap-2 truncate text-[11px] font-medium uppercase tracking-wider text-white/50">
           <Link to="/servicios" className="shrink-0 hover:text-white">
             Servicios

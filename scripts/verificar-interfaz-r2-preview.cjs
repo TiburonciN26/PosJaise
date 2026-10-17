@@ -51,7 +51,7 @@ function leerEnv(ruta) {
 }
 const env = leerEnv(path.join(raiz, '.env.staging.local'))
 const SUPA = env.VITE_SUPABASE_URL
-const FOTOS = ['public/inicio-web/hero-antes-referencia.jpg', 'public/inicio-web/hero-despues-referencia.jpg', 'public/inicio-web/antes-claro.webp', 'src/assets/login/foto-login.jpeg', 'public/inicio-web/hero-despues-referencia2.jpg'].map((f) => path.join(raiz, f))
+const FOTOS = ['public/inicio-web/hero-antes-oscuro.webp', 'public/inicio-web/hero-despues-oscuro.webp', 'public/inicio-web/hero-antes-claro.webp', 'src/assets/login/foto-login.jpeg', 'public/inicio-web/hero-despues-claro.webp'].map((f) => path.join(raiz, f))
 const [FA, FB, FC, FD, FE] = FOTOS
 
 const casos = []

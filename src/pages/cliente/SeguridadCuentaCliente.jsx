@@ -60,7 +60,7 @@ export default function SeguridadCuentaCliente() {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto p-4 md:p-8">
+    <div className="animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-sm">
         <div className="liquid-glass flex items-center gap-3 rounded-none p-5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[var(--lw-gold)]">

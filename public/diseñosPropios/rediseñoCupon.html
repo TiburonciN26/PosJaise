@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Rediseño del cupón · JAISE</title>
+  <style>
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    :root {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #eaeaea;
+      background: #101112;
+      font-synthesis: none;
+      --fondo: #101112;
+      --texto: #eaeaea;
+      --muted: #999b9d;
+      --linea: #303234;
+      --control: #1b1d1f;
+      --seleccion: #eceeed;
+      --seleccion-texto: #17191a;
+      /* Valores globales actuales del portal, replicados para esta maqueta aislada. */
+      --separador-vertical-secundario: 10px;
+      --separador-horizontal-secundario: 10px;
+      --verde-confirmado: #3ECF6A;
+    }
+    :root[data-tema="claro"] {
+      color-scheme: light;
+      --fondo: #e9e9e6;
+      --texto: #222426;
+      --muted: #626568;
+      --linea: #cbcdca;
+      --control: #dedfdb;
+      --seleccion: #242628;
+      --seleccion-texto: #fff;
+    }
+    body { margin: 0; min-height: 100svh; background: var(--fondo); color: var(--texto); }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible { outline: 2px solid #a9c6ec; outline-offset: 4px; }
+    .mesa { max-width: 1160px; margin: auto; padding: 40px 40px 24px; }
+    .cabecera { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 26px; }
+    .ruta { margin: 0 0 12px; font: 10px/1.5 "Courier New", monospace; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(24px, 4vw, 32px); letter-spacing: -.045em; font-weight: 600; }
+    .subtitulo { margin: 9px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .borrador { display: flex; align-items: center; gap: 7px; font: 10px/1.5 "Courier New", monospace; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+    .borrador::before { content: ""; width: 5px; height: 5px; background: #d8bd7f; border-radius: 50%; }
+    .herramientas { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-block: 1px solid var(--linea); }
+    .grupo { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .segmentos { display: inline-flex; padding: 3px; background: var(--control); border-radius: 7px; }
+    .segmentos button, .alternar { border: 0; border-radius: 5px; padding: 8px 12px; font-size: 11px; background: transparent; color: var(--muted); }
+    .segmentos button[aria-pressed="true"] { background: var(--seleccion); color: var(--seleccion-texto); }
+    .alternar { border: 1px solid var(--linea); color: var(--texto); }
+    .alternar:hover { background: var(--control); }
+    .lienzo { position: relative; padding: 46px 20px 50px; isolation: isolate; }
+    .lienzo::before { content: ""; position: absolute; inset: 8% 0 4%; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 50% 48%, #b0bcb418 0, transparent 64%); }
+    .galeria-cupones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 34px 30px; }
+    .categoria-titulo { width: min(100%, 430px); margin: 0 auto 12px; color: var(--texto); font-size: 13px; font-weight: 500; }
+    .categoria-titulo small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.5; }
+    .lienzo[data-vista="movil"] .galeria-cupones { grid-template-columns: minmax(0, 350px); justify-content: center; }
+    .soporte { position: relative; width: min(100%, 430px); margin-inline: auto; isolation: isolate; filter: drop-shadow(0 12px 15px #0002); transition: width 240ms ease; }
+    .lienzo[data-vista="movil"] .soporte { width: min(100%, 350px); }
+    .recibo {
+      /* Papel teñido de rosa: superficies mates y tinta granate.
+         El único brillo animado queda en el valor del descuento. */
+      --rojo: #9e4652;
+      --saturacion-papel: 1.2;
+      --tinta: #48292b;
+      --secundario: #735153;
+      --tenue: #79595b;
+      --linea-cupon: #b68b8959;
+      --papel: #efdedc;
+      --borde: #d7b9b5;
+      --papel-guardado: #e9ded9;
+      --borde-guardado: #d4c3bc;
+      --brillo-valor: linear-gradient(100deg, #ad4b59 0%, #ad4b59 35%, #f7b8b5 50%, #ad4b59 65%, #ad4b59 100%);
+      position: relative; overflow: hidden; color: var(--tinta); border: 1px solid var(--borde);
+      background: var(--papel);
+      /* Un poco más de tinte, sin filtrar el botón ni su verde exacto. */
+      background: hsl(from var(--papel) h calc(s * var(--saturacion-papel)) l);
+    }
+    :root[data-tema="claro"] .recibo[data-categoria="especial"] {
+      --papel: #f5e7e3;
+      --borde: #ddc5bf;
+      --papel-guardado: #f0e7e1;
+      --borde-guardado: #dbcec5;
+    }
+    /* Las categorías conservan el papel mate; se distinguen por tinta y tinte. */
+    .recibo[data-categoria="plata"] {
+      --rojo: #59616c; --tinta: #303640; --secundario: #59606a; --tenue: #646b73;
+      --linea-cupon: #8c95a659; --papel: #e3e6ea; --borde: #bdc3cd;
+      --papel-guardado: #dfe2e5; --borde-guardado: #c0c5cc;
+      --brillo-valor: linear-gradient(100deg, #566170 0%, #566170 35%, #dce5ee 50%, #566170 65%, #566170 100%);
+    }
+    .recibo[data-categoria="oro"] {
+      --saturacion-papel: 1.05;
+      --rojo: #8b741d; --tinta: #4c421c; --secundario: #716333; --tenue: #7b6a35;
+      --linea-cupon: #b39e4559; --papel: #f2e8b6; --borde: #d1c173;
+      --papel-guardado: #ebe3bc; --borde-guardado: #cec08a;
+      --brillo-valor: linear-gradient(100deg, #a48a20 0%, #a48a20 35%, #f4e5a2 50%, #a48a20 65%, #a48a20 100%);
+    }
+    .recibo[data-categoria="diamante"] {
+      --rojo: #56778c; --tinta: #2f4859; --secundario: #536e80; --tenue: #5c7487;
+      --linea-cupon: #8aaabe59; --papel: #dfeaf0; --borde: #b5cbd8;
+      --papel-guardado: #dfe5e9; --borde-guardado: #bccbd4;
+      --brillo-valor: linear-gradient(100deg, #507d94 0%, #507d94 35%, #e5d5ee 47%, #daeff2 54%, #507d94 65%, #507d94 100%);
+    }
+    .recibo[data-categoria="verde"] {
+      --rojo: #4f7256; --tinta: #2f4934; --secundario: #526c58; --tenue: #5f7763;
+      --linea-cupon: #88a78b59; --papel: #e0eadc; --borde: #b4cbb2;
+      --papel-guardado: #dfe5da; --borde-guardado: #bdcbb7;
+      --brillo-valor: linear-gradient(100deg, #4d7d54 0%, #4d7d54 35%, #d6eac0 50%, #4d7d54 65%, #4d7d54 100%);
+    }
+    :root[data-tema="claro"] .recibo[data-categoria="plata"] { --papel: #edf0f2; }
+    :root[data-tema="claro"] .recibo[data-categoria="oro"] { --papel: #f8f0ce; }
+    :root[data-tema="claro"] .recibo[data-categoria="diamante"] { --papel: #eaf3f7; }
+    :root[data-tema="claro"] .recibo[data-categoria="verde"] { --papel: #eaf2e5; }
+    .recibo[data-guardado="true"] { background: var(--papel-guardado); background: hsl(from var(--papel-guardado) h calc(s * var(--saturacion-papel)) l); border-color: var(--borde-guardado); }
+    .resumen { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) 29px; gap: 17px; align-items: center; padding: 22px; border: 0; text-align: left; color: inherit; background: transparent; }
+    .resumen:hover { background-color: #9e465206; }
+    .resumen:focus-visible { outline-offset: -4px; }
+    .resumen-beneficio { display: flex; flex-direction: column; gap: 7px; padding-right: 17px; border-right: 1px dashed var(--linea-cupon); }
+    .resumen .valor { font-size: 43px; line-height: 1; }
+    .resumen .valor .unidad { margin-left: 3px; }
+    .resumen-beneficio > .etiqueta { font: 8px/1.2 "Courier New", monospace; letter-spacing: .06em; color: var(--secundario); }
+    .resumen-textos { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .resumen-encabezado { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; }
+    .resumen-marca { font: 8px/1.4 "Courier New", monospace; letter-spacing: .05em; color: var(--rojo); }
+    .sello-reclamar, .sello-reclamado { display: inline-flex; align-items: center; gap: 3px; padding: 3px 5px; border: 1px solid transparent; border-radius: 3px; font-size: 9px; font-weight: 600; line-height: 1; white-space: nowrap; }
+    .sello-reclamar { background: #0a0a0a; color: #fff; }
+    .sello-reclamado { background: var(--verde-confirmado); color: #0a0a0a; }
+    .sello-reclamado svg { width: 11px; height: 11px; }
+    .resumen-titulo { font-size: 14px; font-weight: 600; line-height: 1.3; letter-spacing: -.02em; overflow-wrap: anywhere; }
+    .resumen-vigencia { font-size: 10px; color: var(--secundario); line-height: 1.4; }
+    .resumen-accion { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; color: var(--rojo); }
+    .resumen-accion svg { width: 17px; height: 17px; transition: transform 360ms ease; }
+    [data-abierto="true"] .resumen-accion svg { transform: rotate(180deg); }
+    /* Solo contraído: tinta negra, con la cápsula y el descuento como acentos. */
+    .recibo[data-abierto="false"] > .resumen :is(.etiqueta, .resumen-marca, .resumen-titulo, .resumen-vigencia, .resumen-accion) { color: #0a0a0a; }
+    .recibo[data-abierto="false"][data-categoria="especial"] { --brillo-valor: linear-gradient(100deg, #ff2d3f 0%, #ff2d3f 35%, #ffd0d4 50%, #ff2d3f 65%, #ff2d3f 100%); }
+    .recibo[data-abierto="false"][data-categoria="plata"] { --brillo-valor: linear-gradient(100deg, #6f757b 0%, #8e949a 35%, #f4f6f8 50%, #8e949a 65%, #6f757b 100%); }
+    .recibo[data-abierto="false"][data-categoria="oro"] { --brillo-valor: linear-gradient(100deg, #c5a100 0%, #d8b400 35%, #fff2a3 50%, #d8b400 65%, #c5a100 100%); }
+    .recibo[data-abierto="false"][data-categoria="diamante"] { --brillo-valor: linear-gradient(100deg, #598bb8 0%, #6aa3d4 35%, #eaf4ff 50%, #6aa3d4 65%, #598bb8 100%); }
+    .recibo[data-abierto="false"][data-categoria="verde"] { --brillo-valor: linear-gradient(100deg, #0b7a4c 0%, #16996a 35%, #7ff0bd 50%, #16996a 65%, #0b7a4c 100%); }
+    .desplegable { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 360ms cubic-bezier(.25, .8, .25, 1), visibility 0s 360ms; }
+    [data-abierto="true"] .desplegable { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
+    .desplegable-recorte { min-height: 0; overflow: hidden; }
+    /* Grano de papel procedural: el HTML no descarga imágenes ni recursos externos. */
+    .recibo::after, .recibo[data-guardado="true"][data-abierto="true"] .talon::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .22; mix-blend-mode: multiply; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23000' filter='url(%23p)' opacity='.55' d='M0 0h180v180H0z'/%3E%3C/svg%3E"); }
+    .recibo-superior { padding: 20px 28px 27px; border-top: 1px dashed var(--linea-cupon); background: transparent; }
+    .marca-fila { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding-bottom: 24px; border-bottom: 1px solid #282a291b; }
+    .marca { display: flex; flex-direction: column; gap: 4px; }
+    .marca-nombre { font-size: 24px; font-weight: 800; letter-spacing: .19em; line-height: 1; }
+    .marca-apellido { font-size: 6px; font-weight: 700; letter-spacing: .25em; }
+    .edicion { max-width: 90px; font: 9px/1.65 "Courier New", monospace; text-align: right; letter-spacing: .09em; text-transform: uppercase; color: #7a7b75; }
+    .estado { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin: 0 0 14px; color: var(--rojo); font: 10px/1.5 "Courier New", monospace; letter-spacing: .09em; text-transform: uppercase; }
+    .estado::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--rojo); }
+    [data-categoria="especial"] .estado::before { background: #ff2d3f; }
+    [data-guardado="true"] .estado::before { background: #4d9759; }
+    .beneficio { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 27px; }
+    .valor { display: flex; align-items: baseline; gap: 2px; font-size: clamp(68px, 17vw, 94px); font-weight: 700; letter-spacing: -.09em; line-height: .95; font-variant-numeric: lining-nums tabular-nums; background: var(--brillo-valor); background-size: 260% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: cupon-brillo-texto 4.5s linear infinite; }
+    .recibo[data-guardado="true"] .valor { animation: none; background: none; color: var(--secundario); }
+    .recibo[data-abierto="false"][data-guardado="true"] .valor { background: var(--brillo-valor); background-size: 260% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; }
+    .valor .unidad { font-size: .48em; letter-spacing: -.05em; margin-left: 6px; }
+    .valor .moneda { font-size: .38em; letter-spacing: -.06em; margin-right: 8px; }
+    .descuento { padding-bottom: 4px; text-align: right; font: 10px/1.6 "Courier New", monospace; letter-spacing: .1em; text-transform: uppercase; color: #777972; }
+    .tabla-cabecera { display: flex; justify-content: space-between; padding: 12px 0; border-block: 1px solid var(--linea-cupon); color: #0a0a0a; font: 9px/1.5 "Courier New", monospace; letter-spacing: .1em; }
+    .detalle { padding: 18px 0 20px; color: #0a0a0a; }
+    .detalle h2 { margin: 0 0 9px; font-size: 19px; font-weight: 600; letter-spacing: -.035em; line-height: 1.25; overflow-wrap: anywhere; }
+    .detalle p { margin: 0; font-size: 12px; color: #0a0a0a; line-height: 1.65; overflow-wrap: anywhere; }
+    .vigencia { margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-top: 15px; border-top: 1px solid var(--linea-cupon); font-size: 11px; line-height: 1.5; color: #0a0a0a; }
+    .vigencia dt { color: #0a0a0a; }
+    .vigencia dd { margin: 0; text-align: right; font-weight: 600; }
+    .talon { position: relative; padding: 26px 28px 24px; border-top: 1px dashed var(--linea-cupon); transform-origin: 12px 0; transition: transform 820ms cubic-bezier(.22, .8, .25, 1); }
+    /* Dos muescas transparentes, sin pintarlas del color del lienzo. */
+    .recibo { --corte: 165px; --muesca-y: 50%; mask-image: radial-gradient(circle 8px at 0 var(--muesca-y), transparent 7.5px, #000 8px), radial-gradient(circle 8px at 100% var(--muesca-y), transparent 7.5px, #000 8px); mask-composite: intersect; }
+    .recibo[data-abierto="true"] { --muesca-y: calc(100% - var(--corte)); }
+    /* Desgarro parcial: el talón sigue unido por la izquierda y gira hacia abajo.
+       Son las dos piezas originales del cupón: no se clona ni se desprende nada. */
+    .recibo[data-guardado="true"][data-abierto="true"] {
+      --borde-rasgado: inset(0);
+      isolation: isolate; overflow: visible; background: transparent; border-color: transparent; mask-image: none;
+    }
+    .recibo[data-guardado="true"][data-abierto="true"]::before {
+      content: ""; position: absolute; inset: 0 0 calc(var(--corte) - 2px); z-index: -1; pointer-events: none;
+      background: var(--papel-guardado); background: hsl(from var(--papel-guardado) h calc(s * var(--saturacion-papel)) l);
+      border: 1px solid var(--borde-guardado); clip-path: var(--borde-rasgado);
+      mask-image: radial-gradient(circle 8px at 0 100%, transparent 7.5px, #000 8px), radial-gradient(circle 8px at 100% 100%, transparent 7.5px, #000 8px); mask-composite: intersect;
+    }
+    .recibo[data-guardado="true"][data-abierto="true"]::after { bottom: calc(var(--corte) - 2px); clip-path: var(--borde-rasgado); }
+    .recibo[data-guardado="true"][data-abierto="true"] .desplegable-recorte { overflow: visible; }
+    .recibo[data-guardado="true"][data-abierto="true"] .talon {
+      background: var(--papel-guardado); background: hsl(from var(--papel-guardado) h calc(s * var(--saturacion-papel)) l);
+      border: 1px solid var(--borde-guardado); border-top-color: transparent;
+      clip-path: inset(0);
+      transform: rotate(2.5deg);
+      mask-image: radial-gradient(circle 8px at 0 0, transparent 7.5px, #000 8px), radial-gradient(circle 8px at 100% 0, transparent 7.5px, #000 8px); mask-composite: intersect;
+    }
+    .reclamar { width: 100%; min-height: 43px; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 12px 16px; color: #fff; background: #0a0a0a; border: 1px solid #0a0a0a; border-radius: 4px; font-size: 12px; font-weight: 600; transition: background 160ms, color 160ms; }
+    .reclamar:hover { background: #272727; }
+    .reclamar svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .recibo[data-guardado="true"] .reclamar { color: #0a0a0a; background: var(--verde-confirmado); border-color: var(--verde-confirmado); cursor: default; }
+    .ayuda { min-height: 14px; margin: 10px 0 0; font-size: 10px; text-align: center; color: #0a0a0a; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @keyframes cupon-brillo-texto {
+      0% { background-position: 130% 0; }
+      100% { background-position: -130% 0; }
+    }
+    .continuacion { width: min(100%, 430px); margin: 28px auto 0; padding-top: 23px; border-top: 1px solid var(--linea); }
+    .continuacion h2 { margin: 0 0 12px; font-size: 13px; font-weight: 500; color: var(--muted); }
+    .siluetas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .siluetas span { height: 68px; border: 1px solid var(--linea); border-radius: 6px; background: linear-gradient(130deg, var(--control), transparent); }
+    .lienzo[data-vista="movil"] .continuacion { width: min(100%, 350px); }
+    .pie-lienzo { padding-top: 18px; border-top: 1px solid var(--linea); display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .pie-lienzo p { margin: 0; }
+    @media (max-width: 639px) {
+      .galeria-cupones { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+      .mesa { padding: 24px 16px 20px; }
+      .cabecera { align-items: start; gap: 12px; margin-bottom: 21px; }
+      .borrador { margin-top: 5px; font-size: 9px; }
+      .subtitulo { max-width: 200px; font-size: 12px; }
+      .herramientas { flex-wrap: wrap; }
+      .grupo { gap: 6px; }
+      .segmentos button, .alternar { padding: 8px 9px; font-size: 10px; }
+      .lienzo { min-height: 0; padding: 40px 12px 44px; }
+      .recibo-superior, .resumen, .talon { padding-block: var(--separador-horizontal-secundario); padding-inline: var(--separador-vertical-secundario); }
+      .resumen { gap: 12px; grid-template-columns: auto minmax(0, 1fr) 23px; }
+      .resumen-beneficio { padding-right: var(--separador-vertical-secundario); }
+      .tabla-cabecera, .detalle { padding-block: var(--separador-horizontal-secundario); }
+      .vigencia { padding-top: var(--separador-horizontal-secundario); }
+      .resumen .valor { font-size: 36px; }
+      .resumen-titulo { font-size: 13px; }
+      .resumen-marca { font-size: 7px; }
+      .marca-nombre { font-size: 22px; }
+      .detalle h2 { font-size: 18px; }
+      .pie-lienzo { flex-direction: column; gap: 5px; }
+    }
+    /* El selector Móvil también muestra los espaciados móviles en un lienzo de PC. */
+    .lienzo[data-vista="movil"] :is(.recibo-superior, .resumen, .talon) { padding-block: var(--separador-horizontal-secundario); padding-inline: var(--separador-vertical-secundario); }
+    .lienzo[data-vista="movil"] .resumen-beneficio { padding-right: var(--separador-vertical-secundario); }
+    .lienzo[data-vista="movil"] :is(.tabla-cabecera, .detalle) { padding-block: var(--separador-horizontal-secundario); }
+    .lienzo[data-vista="movil"] .vigencia { padding-top: var(--separador-horizontal-secundario); }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="mesa">
+    <header class="cabecera">
+      <div>
+        <p class="ruta">JAISE / Diseños propios / 01</p>
+        <h1>Una colección de beneficios.</h1>
+        <p class="subtitulo">Cinco categorías. El mismo papel, un carácter diferente.</p>
+      </div>
+      <span class="borrador">Borrador</span>
+    </header>
+
+    <div class="herramientas" aria-label="Controles de la maqueta">
+      <div class="grupo">
+        <div class="segmentos" role="group" aria-label="Ancho de la vista">
+          <button type="button" data-vista="escritorio" aria-pressed="true">Escritorio</button>
+          <button type="button" data-vista="movil" aria-pressed="false">Móvil</button>
+        </div>
+        <button class="alternar" id="tema" type="button" aria-pressed="false">Lienzo claro</button>
+      </div>
+      <div class="grupo">
+        <div class="segmentos" role="group" aria-label="Tipo de descuento de ejemplo">
+          <button type="button" data-tipo="PORCENTAJE" aria-pressed="true">20 %</button>
+          <button type="button" data-tipo="MONTO" aria-pressed="false">S/ 25</button>
+        </div>
+        <button class="alternar" id="estado" type="button" aria-pressed="false">Ver todos reclamados</button>
+      </div>
+    </div>
+
+    <section class="lienzo" id="lienzo" data-vista="escritorio" aria-label="Vista previa de las cinco categorías">
+      <div class="galeria-cupones" id="galeria-cupones"></div>
+      <template id="plantilla-cupon">
+      <div class="soporte">
+        <article class="recibo" id="cupon" data-guardado="false" data-abierto="false" aria-labelledby="titulo-cupon">
+          <button class="resumen" id="desplegar" type="button" aria-expanded="false" aria-controls="contenido-cupon">
+            <span class="resumen-beneficio">
+              <span class="valor" id="valor" aria-label="20 por ciento"><span>20</span><span class="unidad">%</span></span>
+              <span class="etiqueta">DESCUENTO</span>
+            </span>
+            <span class="resumen-textos">
+              <span class="resumen-encabezado">
+                <span class="resumen-marca" id="marca-resumen">CUPÓN ESPECIAL</span>
+                <span class="sello-reclamar" id="sello-reclamar">Reclamar</span>
+                <span class="sello-reclamado" id="sello-reclamado" hidden>
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8 3 3 7-7"/></svg>
+                  Reclamado
+                </span>
+              </span>
+              <span class="resumen-titulo" id="titulo-cupon">Tu próxima visita, con un detalle especial.</span>
+              <span class="resumen-vigencia">Hasta el 31 dic. 2026</span>
+            </span>
+            <span class="resumen-accion" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              <span id="texto-desplegar">Ver</span>
+            </span>
+          </button>
+          <div class="desplegable" id="contenido-cupon" role="region" aria-labelledby="titulo-cupon" inert>
+          <div class="desplegable-recorte">
+          <div class="recibo-superior">
+            <p class="estado">Promoción activa</p>
+            <div class="tabla-cabecera" aria-hidden="true"><span>DESCRIPCIÓN</span><span>BENEFICIO ESPECIAL</span></div>
+            <div class="detalle">
+              <p id="descripcion">Disfruta de un descuento en tu próximo servicio y date ese momento para ti.</p>
+            </div>
+            <dl class="vigencia" id="vigencia"><dt>Disponible hasta</dt><dd id="fecha">31 dic. 2026</dd></dl>
+          </div>
+          <footer class="talon" id="talon">
+            <button type="button" class="reclamar" id="reclamar">
+              <svg id="icono-cupon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16v5a2 2 0 0 0 0 4v5H4v-5a2 2 0 0 0 0-4Z"/><path d="M15 5v3m0 3v2m0 3v3"/></svg>
+              <svg id="icono-guardado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" hidden><path d="m5 12 4 4L19 6"/></svg>
+              <span id="texto-boton">Reclamar cupón</span>
+            </button>
+            <p class="ayuda" id="ayuda" role="status">Se guarda en Mis cupones</p>
+          </footer>
+          </div>
+          </div>
+        </article>
+      </div>
+      </template>
+      <p class="sr-only" id="anuncio" role="status"></p>
+    </section>
+
+    <footer class="pie-lienzo">
+      <p>Maqueta independiente · Datos de ejemplo para revisar el diseño.</p>
+      <p>El botón simula el estado guardado.</p>
+    </footer>
+  </main>
+  <script>
+    // Campos del cupón de Inicio: tipo_descuento, valor, titulo,
+    // descripcion y vigente_hasta. Datos ficticios: no se consulta ninguna API.
+    const promocionDemo = {
+      tipo_descuento: 'PORCENTAJE', valor: 20,
+      titulo: 'Tu próxima visita, con un detalle especial.',
+      descripcion: 'Disfruta de un descuento en tu próximo servicio y date ese momento para ti.',
+      vigente_hasta: '2026-12-31',
+    };
+    // Categorías reales de src/lib/cupones.js. Verde agrupa bienvenida,
+    // referido y fidelización; aquí se usan solo ejemplos visuales.
+    const categorias = [
+      { id: 'especial', nombre: 'Oferta', detalle: 'Promociones y campañas' },
+      { id: 'plata', nombre: 'Plata', detalle: 'Beneficios de la tarjeta Plata' },
+      { id: 'oro', nombre: 'Oro', detalle: 'Beneficios de la tarjeta Oro' },
+      { id: 'diamante', nombre: 'Diamante', detalle: 'Beneficios de la tarjeta Diamante' },
+      { id: 'verde', nombre: 'Especial', detalle: 'Bienvenida, referidos y fidelización' },
+    ];
+    const tarjetas = [];
+    const galeria = document.getElementById('galeria-cupones');
+    const controlEstado = document.getElementById('estado');
+    function actualizarControlEstado() {
+      const todos = tarjetas.length > 0 && tarjetas.every(t => t.guardado);
+      controlEstado.textContent = todos ? 'Restablecer todos' : 'Ver todos reclamados';
+      controlEstado.setAttribute('aria-pressed', String(todos));
+    }
+
+    function crearCupon(categoria) {
+      const muestra = document.createElement('section');
+      muestra.className = 'muestra';
+      const encabezado = document.createElement('h2');
+      encabezado.className = 'categoria-titulo';
+      encabezado.textContent = categoria.nombre;
+      const detalle = document.createElement('small');
+      detalle.textContent = categoria.detalle;
+      encabezado.append(detalle);
+      const soporte = document.getElementById('plantilla-cupon').content.firstElementChild.cloneNode(true);
+      // Cada copia tiene IDs y referencias ARIA propios, sin duplicados.
+      soporte.querySelectorAll('[id]').forEach(e => {
+        e.dataset.ref = e.id;
+        e.id = categoria.id + '-' + e.id;
+      });
+      soporte.querySelectorAll('[aria-labelledby], [aria-controls]').forEach(e => {
+        ['aria-labelledby', 'aria-controls'].forEach(atributo => {
+          if (e.hasAttribute(atributo)) e.setAttribute(atributo, e.getAttribute(atributo).split(' ').map(id => categoria.id + '-' + id).join(' '));
+        });
+      });
+      muestra.append(encabezado, soporte);
+      galeria.append(muestra);
+      const buscar = nombre => soporte.querySelector('[data-ref="' + nombre + '"]');
+      const cupon = buscar('cupon'), talon = buscar('talon'), boton = buscar('reclamar');
+      const desplegar = buscar('desplegar'), contenido = buscar('contenido-cupon');
+      cupon.dataset.categoria = categoria.id;
+      buscar('marca-resumen').textContent = 'CUPÓN ' + categoria.nombre.toLocaleUpperCase('es');
+      let guardado = false;
+
+      function mostrarAbierto(abierto) {
+        cupon.dataset.abierto = String(abierto);
+        desplegar.setAttribute('aria-expanded', String(abierto));
+        contenido.inert = !abierto;
+        buscar('texto-desplegar').textContent = abierto ? 'Cerrar' : 'Ver';
+      }
+      desplegar.addEventListener('click', () => mostrarAbierto(cupon.dataset.abierto !== 'true'));
+      const ajustarMuescas = () => cupon.style.setProperty('--corte', (talon.offsetHeight + .5) + 'px');
+      new ResizeObserver(ajustarMuescas).observe(talon);
+
+      function mostrarEstado(nuevo) {
+        guardado = nuevo;
+        cupon.dataset.guardado = String(nuevo);
+        soporte.dataset.guardado = String(nuevo);
+        boton.disabled = nuevo;
+        buscar('texto-boton').textContent = nuevo ? 'Guardado en Mis cupones' : 'Reclamar cupón';
+        buscar('ayuda').textContent = nuevo ? 'Tu cupón ya está listo para tu próxima visita' : 'Se guarda en Mis cupones';
+        buscar('icono-cupon').toggleAttribute('hidden', nuevo);
+        buscar('icono-guardado').toggleAttribute('hidden', !nuevo);
+        buscar('sello-reclamar').toggleAttribute('hidden', nuevo);
+        buscar('sello-reclamado').toggleAttribute('hidden', !nuevo);
+        soporte.querySelector('.estado').textContent = nuevo ? 'Cupón reclamado' : categoria.id === 'especial' ? 'Promoción activa' : 'Beneficio disponible';
+        ajustarMuescas();
+        actualizarControlEstado();
+      }
+
+      function reclamarCupon() {
+        if (guardado) return;
+        mostrarEstado(true);
+        document.getElementById('anuncio').textContent = 'Cupón ' + categoria.nombre + ' reclamado y guardado en Mis cupones.';
+        desplegar.focus({ preventScroll: true });
+      }
+      boton.addEventListener('click', reclamarCupon);
+      soporte.querySelector('.estado').textContent = categoria.id === 'especial' ? 'Promoción activa' : 'Beneficio disponible';
+      return { mostrarEstado, valor: buscar('valor'), get guardado() { return guardado; } };
+    }
+    categorias.forEach(categoria => tarjetas.push(crearCupon(categoria)));
+    controlEstado.addEventListener('click', () => {
+      const nuevo = !tarjetas.every(t => t.guardado);
+      tarjetas.forEach(t => t.mostrarEstado(nuevo));
+      actualizarControlEstado();
+    });
+    document.getElementById('tema').addEventListener('click', e => {
+      const claro = document.documentElement.dataset.tema !== 'claro';
+      document.documentElement.dataset.tema = claro ? 'claro' : 'oscuro';
+      e.currentTarget.textContent = claro ? 'Lienzo oscuro' : 'Lienzo claro';
+      e.currentTarget.setAttribute('aria-pressed', String(claro));
+    });
+    document.querySelectorAll('[data-vista]').forEach(control => {
+      if (control.tagName !== 'BUTTON') return;
+      control.addEventListener('click', () => {
+        document.getElementById('lienzo').dataset.vista = control.dataset.vista;
+        document.querySelectorAll('button[data-vista]').forEach(b => b.setAttribute('aria-pressed', String(b === control)));
+      });
+    });
+    document.querySelectorAll('button[data-tipo]').forEach(control => {
+      control.addEventListener('click', () => {
+        const porcentaje = control.dataset.tipo === 'PORCENTAJE';
+        promocionDemo.tipo_descuento = control.dataset.tipo;
+        promocionDemo.valor = porcentaje ? 20 : 25;
+        document.querySelectorAll('button[data-tipo]').forEach(b => b.setAttribute('aria-pressed', String(b === control)));
+        tarjetas.forEach(({ valor }) => {
+          valor.innerHTML = porcentaje ? '<span>20</span><span class="unidad">%</span>' : '<span class="moneda">S/</span><span>25</span>';
+          valor.setAttribute('aria-label', porcentaje ? '20 por ciento' : '25 soles');
+        });
+      });
+    });
+
+  </script>
+</body>
+</html>

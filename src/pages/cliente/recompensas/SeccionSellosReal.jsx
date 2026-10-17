@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Gift, Stamp } from 'lucide-react'
-import { AvisoError, Cargando, Encabezado } from './ui.jsx'
+import { AvisoError, Cargando } from './ui.jsx'
 import { reglaSellos } from '../../../lib/programaRecompensas.js'
 import { fechaHoraLima, premioAItem, textoPagoMinimo } from './lib.js'
 import ConfirmarCanje from './ConfirmarCanje.jsx'
@@ -35,10 +35,9 @@ export default function SeccionSellosReal({
 
   return (
     <section className="flex flex-col gap-6">
-      <Encabezado
-        titulo="Mis sellos"
-        texto={`Un sello por cada día que compras servicios. Con ${cfg.costo} sellos reclamas un premio.`}
-      />
+      <p className="text-[13px] leading-relaxed text-white/60">
+        Un sello por cada día que compras servicios. Con {cfg.costo} sellos reclamas un premio.
+      </p>
 
       <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
         <div className="flex w-full max-w-sm flex-col gap-3 justify-self-center lg:justify-self-end">

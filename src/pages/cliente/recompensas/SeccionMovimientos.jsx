@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AvisoError, Cargando, Encabezado, Filtro, AvisoProximamente } from './ui.jsx'
+import { AvisoError, Cargando, Filtro, AvisoProximamente } from './ui.jsx'
 import { fechaHoraLima, formatearMonedas } from './lib.js'
 
 const TIPOS = ['Todos', 'Ganados', 'Gastados', 'Ajustes']
@@ -16,10 +16,9 @@ function MovimientosPendiente() {
 
   return (
     <section className="flex flex-col gap-5">
-      <Encabezado
-        titulo="Movimientos"
-        texto="Cada punto que ganas, gastas o se ajusta, con su motivo y tu saldo después."
-      />
+      <p className="text-[13px] leading-relaxed text-white/60">
+        Cada punto que ganas, gastas o se ajusta, con su motivo y tu saldo después.
+      </p>
 
       <AvisoProximamente>
         Todavía no registramos el detalle de cada movimiento de puntos. Cuando esté listo lo verás aquí, con su
@@ -92,10 +91,9 @@ function MovimientosReales({ movimientos, onReintentar }) {
 
   return (
     <section className="flex flex-col gap-5">
-      <Encabezado
-        titulo="Movimientos"
-        texto="Cada moneda que ganas, gastas o se revierte, con su motivo y tu saldo después. Fechas en hora de Perú."
-      />
+      <p className="text-[13px] leading-relaxed text-white/60">
+        Cada moneda que ganas, gastas o se revierte, con su motivo y tu saldo después. Fechas en hora de Perú.
+      </p>
 
       {movimientos.estado === 'cargando' && <Cargando />}
       {movimientos.estado === 'error' && (

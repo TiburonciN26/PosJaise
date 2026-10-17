@@ -342,7 +342,7 @@ export default function DetalleProductoCliente() {
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-28 lg:pb-8">
       {/* Migas + volver */}
-      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle pt-6">
+      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle">
         <nav aria-label="Ruta" className="flex min-w-0 items-center gap-2 truncate text-[11px] font-medium uppercase tracking-wider text-white/50">
           <Link to="/productos" className="shrink-0 hover:text-white">
             Productos
@@ -1004,7 +1004,7 @@ export default function DetalleProductoCliente() {
       <PieClienteWeb />
 
       {/* Barra inferior fija (solo móvil): precio + Agregar */}
-      <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-white/10 bg-[#111113]/95 px-4 py-3 backdrop-blur-xl lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 flex items-center gap-3 border-t border-white/10 bg-[#111113]/95 px-(--separador-vertical) py-3 backdrop-blur-xl lg:hidden">
         <span className="flex flex-col leading-tight">
           <span className="text-lg font-bold text-white">{formatearSoles(producto.precio)}</span>
           {producto.precio_antes && <s className="text-xs text-white/45">{formatearSoles(producto.precio_antes)}</s>}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, Clock, Globe, MapPin, Phone } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
 import { RUTAS_LEGALES } from '../../config/legal.js'
+import './PieClienteWeb.css'
 
 // Pie de página del portal cliente — solo en Inicio y las pestañas
 // principales de la barra (Servicios/Productos/Citas/Nosotros), a
@@ -32,91 +33,111 @@ export default function PieClienteWeb() {
   }, [])
 
   const redes = [
-    { url: contacto?.instagram_url, label: 'Instagram' },
-    { url: contacto?.facebook_url, label: 'Facebook' },
-    { url: contacto?.tiktok_url, label: 'TikTok' },
+    { url: contacto?.instagram_url, label: 'Instagram', icono: 'InstagramColor.svg' },
+    { url: contacto?.facebook_url, label: 'Facebook', icono: 'facebookColor.svg' },
+    { url: contacto?.tiktok_url, label: 'TikTok', icono: 'tiktokColor.svg' },
   ].filter((red) => red.url)
 
   return (
-    <footer className="mt-10 border-t border-white/10 px-4 py-6 md:px-8">
-      <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-3 text-center">
-        <p className="text-sm font-semibold text-white">Jaise Beauty Academy</p>
-
-        {(contacto?.direccion || horario || contacto?.telefono) && (
-          <div className="flex flex-col items-center gap-1.5 text-xs text-white/50">
-            {contacto?.direccion && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--lw-gold)]" />
-                {contacto.direccion}
-              </span>
+    <footer className="pie-cliente">
+      <div className="pie-cliente__interior">
+        <div className="pie-cliente__columnas">
+          <div className="pie-cliente__marca">
+            <p className="pie-cliente__nombre">Jaise Beauty Academy</p>
+            {redes.length > 0 && (
+              <div className="pie-cliente__redes">
+                {redes.map((red) => (
+                  <a
+                    key={red.label}
+                    href={red.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pie-cliente__red"
+                    aria-label={red.label}
+                  >
+                    <img src={`${import.meta.env.BASE_URL}icons/${red.icono}`} alt="" width="15" height="15" />
+                    <span className="pie-cliente__red-nombre">{red.label}</span>
+                  </a>
+                ))}
+              </div>
             )}
-            {horario && (
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 shrink-0 text-[var(--lw-gold)]" />
-                {formatearDias(horario.dias_atencion)} · {formatearHora(horario.bloque1_inicio)} -{' '}
-                {formatearHora(horario.bloque1_fin)}
-                {horario.bloque2_inicio && (
-                  <>
-                    {' '}
-                    y {formatearHora(horario.bloque2_inicio)} - {formatearHora(horario.bloque2_fin)}
-                  </>
+          </div>
+
+          {(contacto?.direccion || contacto?.telefono) && (
+            <section className="pie-cliente__seccion" aria-label="Contacto">
+              <h2 className="pie-cliente__titulo">Contacto</h2>
+              <div className="pie-cliente__contacto-datos">
+                {contacto?.direccion && (
+                  <p className="pie-cliente__dato">
+                    <span
+                      className="pie-cliente__ubicacion"
+                      aria-hidden="true"
+                      style={{ '--pie-ubicacion': `url(${import.meta.env.BASE_URL}icons/ubicacion.svg)` }}
+                    />
+                    <span>{contacto.direccion}</span>
+                  </p>
                 )}
-              </span>
-            )}
-            {contacto?.telefono && (
-              <a
-                href={`https://wa.me/${numeroWhatsapp(contacto.telefono)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 transition-colors hover:text-white"
-              >
-                <Phone className="h-3.5 w-3.5 shrink-0 text-[var(--lw-gold)]" />
-                {contacto.telefono}
-              </a>
-            )}
-          </div>
-        )}
+                {contacto?.telefono && (
+                  <a
+                    href={`https://wa.me/${numeroWhatsapp(contacto.telefono)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pie-cliente__dato pie-cliente__enlace"
+                  >
+                    <img className="pie-cliente__icono-contacto" src={`${import.meta.env.BASE_URL}icons/whatsappColor.svg`} alt="" width="15" height="15" />
+                    {contacto.telefono}
+                  </a>
+                )}
+              </div>
+            </section>
+          )}
 
-        {redes.length > 0 && (
-          <div className="flex items-center gap-4">
-            {redes.map((red) => (
-              <a
-                key={red.label}
-                href={red.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-xs text-white/50 transition-colors hover:text-white"
-              >
-                <Globe className="h-3 w-3" />
-                {red.label}
-              </a>
-            ))}
-          </div>
-        )}
+          {horario && (
+            <section className="pie-cliente__seccion" aria-label="Horario de atención">
+              <h2 className="pie-cliente__titulo">Horario de atención</h2>
+              <div className="pie-cliente__dato">
+                <p>
+                  <span className="pie-cliente__horario">{formatearDias(horario.dias_atencion)}</span>
+                  <span className="pie-cliente__turnos">
+                    <span className="pie-cliente__horario">
+                      {formatearHora(horario.bloque1_inicio)} - {formatearHora(horario.bloque1_fin)}
+                    </span>
+                    {horario.bloque2_inicio && (
+                      <span className="pie-cliente__horario">
+                        y {formatearHora(horario.bloque2_inicio)} - {formatearHora(horario.bloque2_fin)}
+                      </span>
+                    )}
+                  </span>
+                </p>
+              </div>
+            </section>
+          )}
 
-        {/* Culqi exige estos enlaces visibles para afiliar la pasarela. */}
-        <nav aria-label="Información legal" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs">
-          <Link to={RUTAS_LEGALES.terminos} className="text-white/60 transition-colors hover:text-white">
-            Términos y condiciones
-          </Link>
-          <Link to={RUTAS_LEGALES.cambios} className="text-white/60 transition-colors hover:text-white">
-            Cambios y devoluciones
-          </Link>
-          <Link to={RUTAS_LEGALES.privacidad} className="text-white/60 transition-colors hover:text-white">
-            Privacidad
-          </Link>
-        </nav>
+          {/* Culqi exige estos enlaces visibles para afiliar la pasarela. */}
+          <nav aria-label="Información legal" className="pie-cliente__seccion">
+            <h2 className="pie-cliente__titulo">Información legal</h2>
+            <Link to={RUTAS_LEGALES.terminos} className="pie-cliente__enlace">
+              Términos y condiciones
+            </Link>
+            <Link to={RUTAS_LEGALES.cambios} className="pie-cliente__enlace">
+              Cambios y devoluciones
+            </Link>
+            <Link to={RUTAS_LEGALES.privacidad} className="pie-cliente__enlace">
+              Privacidad
+            </Link>
 
-        {/* Obligatorio por ley (INDECOPI): visible en el pie de la web. */}
-        <Link
-          to={RUTAS_LEGALES.reclamos}
-          className="flex items-center gap-1.5 rounded border border-white/20 px-3 py-1.5 text-xs text-white/70 transition-colors hover:border-[var(--lw-gold)] hover:text-white"
-        >
-          <BookOpen className="h-3.5 w-3.5 text-[var(--lw-gold)]" />
-          Libro de Reclamaciones
-        </Link>
+            {/* Obligatorio por ley (INDECOPI): visible en el pie de la web. */}
+            <Link
+              to={RUTAS_LEGALES.reclamos}
+              className="pie-cliente__reclamos pie-cliente__enlace"
+            >
+              <BookOpen aria-hidden="true" />
+              Libro de Reclamaciones
+            </Link>
+          </nav>
+        </div>
 
-        <p className="text-[11px] text-white/30">
+        <p className="pie-cliente__copyright">
           © {new Date().getFullYear()} Jaise Beauty Academy
         </p>
       </div>

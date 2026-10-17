@@ -134,6 +134,22 @@ try {
     assert.equal(imagenes.resolverUrlGaleria('fotos/antes.jpg'), '/fotos/antes.jpg')
     assert.equal(imagenes.resolverUrlGaleria(null), null)
   })
+  await prueba('Hero: las rutas relativas históricas de la galería apuntan a los cuatro WebP actuales', () => {
+    for (const [anterior, actual] of [
+      ['hero-antes-referencia', 'hero-antes-oscuro.webp'],
+      ['hero-despues-referencia', 'hero-despues-oscuro.webp'],
+      ['hero-despues-referencia2', 'hero-despues-oscuro.webp'],
+      ['antes-claro', 'hero-antes-claro.webp'],
+      ['despues-claro', 'hero-despues-claro.webp'],
+    ]) {
+      for (const sufijo of ['.jpg', '.webp', '-640.webp', '-960.webp', '-1280.webp', '-1680.webp']) {
+        assert.equal(imagenes.resolverUrlGaleria(`inicio-web/${anterior}${sufijo}`), `/inicio-web/${actual}`)
+        assert.equal(imagenes.resolverUrlGaleria(`/inicio-web/${anterior}${sufijo}`), `/inicio-web/${actual}`)
+      }
+    }
+    assert.equal(imagenes.resolverUrlGaleria('inicio-web/hero-antes-oscuro.webp'), '/inicio-web/hero-antes-oscuro.webp')
+    assert.equal(imagenes.resolverUrlGaleria('https://ajeno.example/inicio-web/antes-claro.webp'), 'https://ajeno.example/inicio-web/antes-claro.webp')
+  })
   await prueba('B: urlPublicaR2 usa la base configurada (Pages) y referenciaDeUrlR2 reconoce ambas', () => {
     assert.equal(medios.urlPublicaR2(`r2:fotos-productos/${ID}`, 'm'), `${PAGES}/fotos-productos/${ID}/m.webp`)
     assert.equal(medios.referenciaDeUrlR2(`${R2DEV}/fotos-servicios/${ID}/m.webp`), `r2:fotos-servicios/${ID}`)

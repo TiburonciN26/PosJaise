@@ -2,7 +2,7 @@ import { Gift, Percent, ShoppingBag, Sparkles, Ticket, Crown } from 'lucide-reac
 
 // Secciones internas de Recompensas (estado en la URL: ?seccion=...).
 export const SECCIONES = [
-  { clave: 'tarjeta', label: 'Mi tarjeta', personal: true },
+  { clave: 'tarjeta', label: 'Mis puntos', personal: true },
   { clave: 'canje', label: 'Canjear puntos', personal: false },
   { clave: 'sellos', label: 'Mis sellos', personal: true },
   { clave: 'cupones', label: 'Mis cupones', personal: true },
@@ -48,13 +48,12 @@ export const BENEFICIOS_NIVEL = [
 // `estado` fija el caso que se muestra: 'acordada' | 'ejemplo' | 'prox'
 // (próximamente) | 'agotada' | 'vencida'.
 export const CATEGORIAS = [
-  { clave: 'todas', label: 'Todas' },
-  { clave: 'fijo', label: 'Descuento fijo' },
-  { clave: 'porc', label: 'Porcentaje' },
-  { clave: 'prod', label: 'Productos' },
-  { clave: 'regalo', label: 'Regalos' },
-  { clave: 'servicio', label: 'Servicios' },
-  { clave: 'exclusivo', label: 'Exclusivas' },
+  { clave: 'todas', label: 'Todos' },
+  { clave: 'oferta', label: 'Oferta' },
+  { clave: 'plata', label: 'Plata' },
+  { clave: 'oro', label: 'Oro' },
+  { clave: 'diamante', label: 'Diamante' },
+  { clave: 'especial', label: 'Especial' },
 ]
 
 export const RECOMPENSAS = [

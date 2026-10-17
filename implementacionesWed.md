@@ -7,6 +7,301 @@ sueltas) por una estructura concreta: qué pestañas tendrá, de qué se compone
 cada una, qué tablas usa/necesita, y cómo se conecta todo entre sí y con el
 "Web POS" (la vista de esta misma sección pero para el personal).
 
+## Categorías de cupones y filtro por nivel — 2026-10-16
+
+El cupón rojo de promociones se denomina Oferta; el verde de bienvenida,
+referidos y fidelización se denomina Especial. Plata/Oro/Diamante siguen
+correspondiendo a BASICO/PREMIUM/VIP. `nivelDeCupon` expone una clave
+`categoria` estable; el CSS de papel usa esa clave y conserva los colores.
+Las etiquetas se actualizan en todas las tarjetas y en la maqueta HTML.
+
+Canjear puntos/monedas filtra por Todos, Oferta, Plata, Oro, Diamante y
+Especial, en móvil y PC. Usa la misma clasificación que el acabado de
+la tarjeta, no el tipo de descuento ni el costo. La selección inicial
+se deriva del nivel conocido de la cuenta: BASICO→Plata, PREMIUM→Oro,
+VIP→Diamante. Visitantes o nivel todavía desconocido empiezan en Todos.
+La llegada tardía de datos no pisa una selección manual, y la selección
+manual de otra cuenta no se aplica al cambiar de identidad.
+
+Las categorías sin premios publicados muestran el estado vacío. No se
+mezclan cupones personales ya emitidos con premios por canjear, ni se
+inventan ofertas para poblar el filtro. Se mantienen búsqueda, costos,
+permisos, condiciones y confirmación del canje; no requiere migración.
+Pruebas puras: `node --test tests/e2e/cupones-categorias.test.mjs`.
+
+## Ayuda de sellos y títulos repetidos — 2026-10-16
+
+La tarjeta de visitas usa `sellos-tarjeta`, con overflow visible y una
+capa superior al historial, para que AyudaCampo no quede recortado ni
+tapado por los paneles de vidrio posteriores. El cambio se limita a
+esa tarjeta y funciona en ambos temas, móvil y PC.
+
+Se retiran los h2 de entrada de las subpestañas restantes (Mis cupones,
+Movimientos en ambos modos, Cómo funciona y Mis sellos del programa activo).
+Se conservan sus explicaciones, salvo el párrafo introductorio de Mis
+cupones, que se elimina también. El h1 Recompensas sigue identificando
+la página y el selector/pestaña identifica la sección. Los títulos de
+diálogos de confirmación y avisos de acceso se mantienen.
+
+## Mis puntos, menús y tarjeta de visitas — 2026-10-16
+
+Mi tarjeta pasa a llamarse Mis puntos en la navegación móvil y PC; la
+clave de URL continúa siendo `tarjeta`. Los dos selectores móviles
+separan sus opciones con 2 px y muestran la lista completa deslizándose
+8 px con opacidad durante 180 ms, en apertura y cierre. Ya no animan
+la altura ni revelan las filas de forma progresiva.
+
+En Canjear puntos/monedas se elimina la explicación «Canjear obtiene un
+cupón…» en móvil y PC. En Mis sellos (tarjeta de visitas heredada), se
+retiran los textos de visitas totales y visitas restantes; la explicación
+del beneficio se muestra solo en AyudaCampo junto al contador N de 5
+visitas. Mantiene el porcentaje configurado y el estado de tarjeta
+completa. El historial usa ChevronDown, igual a los nuevos selectores.
+No cambian el cómputo de sellos ni las condiciones de generación/canje.
+
+## Desplegables rectangulares de Recompensas — 2026-10-16
+
+En móvil, la navegación superior se sustituye por un selector al extremo
+derecho del h1 Recompensas (la ayuda sigue junto al título). Conserva las
+seis secciones y la URL `?seccion=...`; en PC siguen las pestañas originales
+y su navegación por teclado. El selector muestra la sección actual y
+trunca su etiqueta si el ancho es reducido, manteniendo el nombre accesible.
+
+Navegación y filtro de categorías reutilizan `SelectorDesplegable.jsx`:
+listas rectangulares sin bordes ni esquinas redondeadas, opciones a la
+izquierda y banda de color para la seleccionada. Conservan animación,
+Escape, cierre al tocar fuera, inert y movimiento reducido. El buscador
+oculta visualmente su placeholder solo en móvil; mantiene su etiqueta
+accesible y el placeholder de escritorio. No cambian permisos ni canje.
+
+## Filtro móvil de Canjear puntos/monedas — 2026-10-16
+
+Se retira el título interno Canjear puntos/monedas en móvil y PC; permanece
+la explicación del canje y el saldo. Solo en móvil, el buscador comparte
+fila con un selector de categoría a su derecha (Todas por defecto).
+Abre una lista bajo el selector con animación suave de altura/opacidad
+y respeta movimiento reducido. Elegir una categoría actualiza el filtro,
+cierra la lista y devuelve el foco al selector. Escape y tocar fuera
+también cierran. Cerrada, la lista queda fuera del foco mediante inert.
+En PC se mantienen las categorías visibles. La búsqueda, categorías
+disponibles y condiciones de canje usan los cálculos existentes.
+
+## Ayuda legible y clasificación simplificada — 2026-10-16
+
+`AyudaCampo` usa dentro del portal `--lw-muted`/`--lw-gold` para su icono
+y `--lw-fg`, `--lw-card`, `--lw-border` para el mensaje. Así respeta el
+tema propio del portal aunque el tema del POS sea distinto. Fuera del
+portal conserva su apariencia anterior.
+
+Se retira de Mi tarjeta el bloque separado «Progreso de clasificación»
+(barra, marcadores y explicaciones). La tarjeta de puntos mantiene sus
+cálculos y animación de progreso. El saldo exacto de monedas y su aviso
+condicional de saldo negativo permanecen debajo de la tarjeta, sin
+crear otra sección de clasificación. Aplica a móvil y PC, sin backend.
+
+## Encabezado compacto de Recompensas — 2026-10-16
+
+En móvil y PC, el h1 Recompensas lleva `AyudaCampo` inmediatamente a su
+derecha. La explicación «Tus visitas y compras suman puntos y sellos.
+Cámbialos por cupones y beneficios.» aparece solo dentro de esa ayuda.
+Se retiran del encabezado Club Jaise, Sesión iniciada como y el nombre
+de la clienta. Se conserva el perfil que utiliza la tarjeta de nivel;
+no cambian las lecturas, saldos, permisos ni el canje.
+
+## Sin padding superior duplicado al entrar en cada pestaña — 2026-10-16
+
+Las páginas y subpáginas del portal no suman padding superior a la
+reserva global de `PortalCliente`. Los contenedores de scroll que usaban
+`py-4 md:py-8` conservan solo su padding inferior. Se retira también el
+padding superior de los encabezados iniciales de Recompensas/Citas,
+la barra compartida de catálogos y la fila inicial de los detalles.
+Los paddings internos de tarjetas/formularios y las separaciones entre
+secciones posteriores permanecen. Inicio conserva su hero sin migaja.
+
+## Espacio reservado debajo de la migaja — 2026-10-16
+
+`PortalCliente` reserva en el main la parte de la migaja absoluta que
+sobresale del header más `--separador-horizontal`. Se mide antes de pintar
+y se actualiza con ResizeObserver al cambiar el tamaño del header/logo
+o de la migaja. Así todas las rutas y subpáginas comienzan debajo de
+la migaja aunque su contenido no tenga padding superior propio.
+Inicio, que no muestra migaja, conserva su posición anterior. Ocultar
+la migaja al abrir el menú no elimina la reserva ni desplaza el contenido.
+Se aplica en móvil y escritorio; no cambia la posición del menú lateral.
+
+## Tamaño global de h1 del portal en móvil — 2026-10-16
+
+`--fontzise-h1: 20px` se define en `:root` y se aplica a todos los h1
+de `.landing-web` solo por debajo de 40rem. El h1 del hero de Inicio
+lleva la clase explícita `inicio-hero-titulo` y conserva su tamaño
+adaptable anterior. No cambia la tipografía ni los tamaños de PC/POS.
+
+## Padding de botones con borde del portal — 2026-10-16
+
+Solo en móvil (`width < 40rem`), los botones con borde del portal y los
+enlaces presentados como botones usan `--pading-vertical-boton` (3 px)
+y `--pading-horizontal-boton` (7 px). Incluye pestañas y filtros de
+Recompensas, acciones dentro de tarjetas, cupones, diálogos, botones
+del carrito, CTA del hero y Libro de Reclamaciones del footer.
+
+La regla compartida se limita a `.landing-web`. No modifica el padding
+de PC ni las tarjetas contenedoras. En móvil, los botones de texto con
+borde usan alto automático, sin altura mínima fija e interlineado normal:
+su alto resulta del contenido, borde y padding. No se cambia el tamaño
+de fuente. Los controles de solo icono y el avatar mantienen su geometría.
+`--pading-verical-boton` queda como alias del nombre vertical corregido
+para mantener compatibles las clases existentes. Los bordes parciales
+de filas y encabezados desplegables no se consideran botones enmarcados.
+
+## Márgenes laterales del portal cliente — 2026-10-16
+
+Las pestañas y subpestañas del portal usan `--separador-vertical` para
+el padding izquierdo/derecho, en móvil y escritorio (valores actuales:
+10 px y 12 px desde lg). `--lw-gutter` es un alias de esa variable;
+`lw-gutter` y `lw-gutter-detalle` ya no usan valores fluidos distintos.
+
+Se sustituyen los paddings laterales fijos en perfil, direcciones,
+pedidos, notificaciones, seguridad, referidos, historial, reseñas y
+carritos. Inicio, catálogos, Recompensas, Citas, Nosotros y detalles
+comparten las clases de margen. Se conservan sus anchos máximos,
+separación vertical y padding interno de tarjetas y botones.
+
+Los documentos legales y el Libro de Reclamaciones aplican el margen
+en su contenido, sin sumar otro padding exterior al footer. Las tiras
+horizontales de reseñas/catálogos usan el mismo separador en sus márgenes
+negativos y padding, evitando desbordar con los antiguos 16 px.
+Sin cambios de lógica, datos, migraciones ni R2.
+
+## Cupones: diseño de papel en todas las pantallas — 2026-10-16
+
+El diseño aprobado de `public/diseñosPropios/rediseñoCupon.html` se comparte
+mediante `EnvolturaCupon.jsx` y `CuponPromocionInicio.css`. Sustituye el
+acabado metálico en Mis cupones, Referidos, carrito, catálogo de recompensas
+y los listados del POS de Promociones, Referidos Web y Fidelización Web.
+Inicio también usa esta estructura compartida.
+
+- Cinco paletas mate: Especial rojo, Plata, Oro amarillo suave, Diamante
+  azul y Verde. La categoría mantiene el origen/nivel de negocio existente;
+  no se deriva del precio ni cambia los permisos.
+- Contraídos por defecto, textura de papel, muescas laterales, importes
+  con brillo y textos negros al contraer; sin estrellas. En móvil se
+  mantienen los separadores secundarios globales, excepto en el botón.
+- Apertura suave, identificadores accesibles únicos y contenido cerrado
+  fuera del foco. Se respeta movimiento reducido.
+- Reclamado (cupón emitido y utilizable) usa cápsula verde `#3ECF6A`.
+  Canjeado, vencido, anulado o vigencia desconocida conservan su estado
+  y no ofrecen «Mostrar en caja». Un premio del catálogo conserva su
+  costo en monedas/puntos y los requisitos para obtenerlo.
+- Ancho adaptable al contenedor con máximo de 440 px, también en las
+  columnas de Recompensas. Al reclamar, el papel permanece entero y
+  sin inclinación; se conserva la confirmación verde. Obtener cupón abre la
+  confirmación existente; Editar/Eliminar promociones conservan sus
+  callbacks. Las ofertas generales sin código no se convierten en cupones.
+
+Cambio de presentación local: sin SQL, migraciones, R2, RPC nuevas ni
+despliegue. Las lecturas y operaciones existentes no cambian.
+
+## Ajustes locales de Inicio y acceso a Citas — 2026-10-15
+
+**Cupón especial de Inicio: diseño de papel aprobado.** Se integra únicamente
+el cupón rojo de `public/diseñosPropios/rediseñoCupon.html`, mediante
+`CuponPromocionInicio.jsx` y su CSS aislado. Contraído por defecto, ancho máximo
+440 px, papel rosa mate con textura y muescas, descuento rojo con brillo,
+textos negros al contraer y cápsulas Reclamar/Reclamado. Sin estrellitas
+decorativas en la maqueta ni en Inicio; conserva el brillo del descuento. El botón es negro
+con texto blanco; solo con un cupón confirmado pasa a verde `#3ECF6A` con
+texto negro. El efecto de rotura/inclinación del papel fue retirado el
+2026-10-16; el cupón permanece entero. Respeta movimiento reducido.
+En móvil usa los separadores secundarios globales; el padding del botón se
+conserva. La ampliación al resto de pantallas se documenta arriba (2026-10-16).
+
+`InicioCliente` conserva sus lecturas, `useRequerirSesion`, RPC
+`reclamar_cupon_promocion`, estado por cuenta y mensajes de error/éxito. El
+componente solo recibe datos y callbacks; su estado de apertura se reinicia
+al cambiar de cuenta o promoción. No contiene promociones de ejemplo ni
+conexiones adicionales. Las fechas DATE se muestran sin desplazamiento UTC.
+Los campos opcionales ausentes no generan texto ni datos inventados.
+
+Verificación local: app real con todas las API y sesiones simuladas;
+móvil/PC y ambos temas, visitante con retorno del login, espera de respuesta,
+éxito, error/reintento, cupón ya reclamado, cambio de cuenta, monto con
+decimales, título largo a 320 px, ausencia de promoción y movimiento reducido.
+Lint y compilación Vite correctos. Sin migraciones, cambios en R2 ni despliegue.
+
+**Simplificación visual de Inicio.** Se retiran el horario del hero y la
+tarjeta completa de saludo en móvil/PC. Se limpia el código y las lecturas
+que solo alimentaban esa tarjeta. El horario permanece en Visítanos y en el
+footer. Las estrellas y el texto del resumen de reseñas se alinean desde
+arriba del puntaje. Resultados reales conserva sus puntitos y animación,
+sin la leyenda «Mostrando resultados»; el avance tiene un nombre accesible.
+No requiere cambios en SQL ni R2.
+Verificado en localhost con API y sesiones simuladas: móvil/PC, claro/oscuro,
+con y sin sesión; alineación de reseñas, ausencia de los bloques retirados,
+horario conservado en Visítanos y animación completa de las seis fotos.
+
+**Menú lateral debajo del header.** `PortalCliente` comparte
+`--alto-header-cliente` (48 px en móvil y 90 px desde sm) entre el alto del
+header, el padding superior del contenido y el inicio de `MenuLateralCliente`
+con su overlay. Antes, el menú absoluto con `inset-0` empezaba en el borde
+superior de la pantalla: el padding del padre no lo desplazaba. También se
+corrige la reserva de 72 px que no coincidía con el header de 90 px desde sm.
+Se conservan el orden de capas, los enlaces y la animación de apertura.
+Verificado en localhost con API simuladas, ambos temas y anchos de 390, 639,
+640, 1023 y 1280 px: menú y overlay debajo del header, contenido alineado,
+cierre por botón/fondo/enlace y menú móvil oculto en escritorio.
+
+**Hero: cuatro originales WebP.** Se usan directamente
+`hero-antes-oscuro.webp`, `hero-despues-oscuro.webp`, `hero-antes-claro.webp` y
+`hero-despues-claro.webp` de `public/inicio-web`, a 3024×1698 px, con sus bytes
+originales verificados por SHA-256. Se corrigió `osucuro` en el nombre de uno de
+ellos. Se retiraron las 19 imágenes anteriores, srcset/sizes y el generador de
+variantes, por decisión del usuario. El móvil también descarga los originales:
+ya no aplica la reducción de peso del hero responsivo descrita en la Fase 8
+histórica. Se conserva el revelado del cursor, prioridad alta en después y baja
+en antes. Las rutas relativas históricas del hero en la galería se traducen en
+`resolverUrlGaleria`, sin modificar BD ni migraciones aplicadas. Las referencias
+a archivos de las herramientas de QA y el contrato de prueba de Fase 8 se
+actualizaron; no se ejecutaron pruebas contra R2/staging. Detalles y pesos exactos
+en `docs/diseno-inicio/README.md`. Cambio local, sin despliegue.
+
+**Resultados reales, actualización de la animación:** la primera foto se revela
+al verse completa. Cuando su tarjeta alcanza el centro, las cinco restantes
+caen automáticamente: 0.5 s dentro de cada par antes/después y 1 s para pasar
+al siguiente par, con el mismo patrón para todos. `useSecuenciaScroll` ya no
+fija la página ni intercepta wheel/touch; se puede continuar bajando libremente.
+Mantiene los efectos CSS y el orden antes/después. Los puntitos indican avance
+sin texto visible, con un nombre accesible para lectores de pantalla.
+La secuencia se pausa con la pestaña oculta,
+limpia timers/rAF al desmontar y no se repite hasta volver a montar Inicio.
+Con una o dos parejas o movimiento reducido se muestran todas directamente.
+El contrato vigente está en `docs/diseno-inicio/README.md`; reemplaza las reglas
+históricas de avance por gesto y fijación que aparecen más abajo en este registro.
+
+- **Inicio, móvil:** las tarjetas de reseñas, los tres bloques de cuidado y
+  confianza, y la tarjeta Visítanos usan `--separador-vertical-secundario` en
+  los laterales y `--separador-horizontal-secundario` arriba y abajo. Se usa el
+  nombre real de la variable existente, sin crear otra con el error de escritura.
+  Los seis h2 del contenido de Inicio pasan a 0.75 rem solo por debajo de 640 px;
+  se conservan los tamaños de PC y los títulos del footer compartido.
+- **Fotos de servicios en Inicio:** `TarjetaServicioCliente` recibe
+  `mostrarCategoria={false}` para retirar la etiqueta de la foto en PC y móvil.
+  La flecha que abre el servicio permanece; el valor por defecto mantiene las
+  categorías en las otras pantallas que usan ese componente.
+- **Citas sin sesión:** `/citas` sale del grupo `RutaPrivada` y muestra
+  `CitasPublicasCliente`: cómo reservar, horario/contacto y políticas públicas
+  ya disponibles. El botón Iniciar sesión conserva `state.desde='/citas'`.
+  No muestra citas, historial, saldo ni disponibilidad ficticia del calendario.
+- **Citas con sesión:** `CitasCliente` monta `CitasConSesion` solo con un
+  usuario identificado. La agenda y sus hooks originales permanecen dentro de
+  ese componente; la clave por ID descarta su estado al cambiar de cuenta.
+  Cerrar sesión lo desmonta y muestra la vista pública. `/citas/carrito`, perfil
+  y el resto de rutas personales siguen protegidos por `RutaPrivada`.
+- **Verificación:** navegador sobre la app local con API simuladas, móvil/PC y
+  claro/oscuro; padding, títulos, fotos sin categoría, navegación de visitante,
+  ausencia de llamadas RPC personales, retorno del login, agenda autenticada,
+  cierre y cambio de cuenta. Compilación Vite y lint correctos. Sin cambios en
+  SQL, permisos, R2 ni producción; no necesita migración.
+
 ## 0. Ya construido (Fase 0)
 
 - `usuarios` (personal) y `clientes_web` (clientes) son tablas separadas.
@@ -944,6 +1239,29 @@ Tres pedidos puntuales sobre `PortalCliente.jsx`:
 - Build y lint verificados.
 
 ### 7.7 Footer (`PieClienteWeb.jsx`)
+
+**Actualización visual 2026-10-15:** rediseño basado en la referencia de footer
+en columnas enviada por el usuario. `PieClienteWeb.css` distribuye marca y redes,
+contacto, horario e información legal en cuatro columnas desde 1024 px, dos en
+tablet y una en móvil. Copyright separado al pie; tipografía pequeña, alineación
+a la izquierda y borde superior discreto. Se conservan dirección, WhatsApp,
+ambos bloques de horario cuando existen, las tres redes, todos los enlaces legales
+y el Libro de Reclamaciones, con sus destinos y condiciones originales. Usa los
+tokens `--lw-*` para respetar ambos temas y `--separador-vertical` en el padding
+lateral móvil. Cambio exclusivamente de presentación: mismas lecturas y helpers,
+sin migraciones, R2 ni despliegue.
+Las redes utilizan los SVG originales de `public/icons` (`InstagramColor.svg`,
+`facebookColor.svg` y `tiktokColor.svg`), con la base de Vite para soportar ambas
+rutas de publicación; se conservan los nombres visibles y enlaces.
+Los enlaces de redes no tienen borde; el Libro de Reclamaciones conserva el
+suyo. El horario no lleva reloj y el teléfono usa `whatsappColor.svg`. La
+dirección utiliza `ubicacion.svg` mediante una máscara roja (`#ef4444`) limitada
+al footer, sin modificar el SVG original compartido.
+En móvil (<640 px), todo el footer se centra. Las redes muestran solo sus iconos
+con nombres accesibles; dirección y WhatsApp comparten fila, igual que los dos
+turnos del horario. Esas filas permiten envolver contenido si no cabe, para no
+generar scroll horizontal con direcciones largas. En tablet y PC se conserva
+la distribución anterior con los nombres de las redes y los datos apilados.
 
 A pedido del usuario: Inicio y las 4 pestañas principales de la barra
 (Servicios, Productos, Citas, Nosotros) suman un pie de página — las

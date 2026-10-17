@@ -629,7 +629,7 @@ export default function NosotrosCliente() {
   }
 
   return (
-    <div data-scroll-nosotros className="animate-entrada-pestana flex-1 overflow-y-auto py-4 md:py-8">
+    <div data-scroll-nosotros className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         {/* En Equipo el hero propio ya trae su texto de presentación. */}
         {seccionActiva !== 'equipo' && <p className="mb-5 text-sm text-white/60">Conoce al salón por dentro.</p>}
