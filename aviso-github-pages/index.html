@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Pos Jaise cambió de dirección</title>
+    <style>
+      :root { color-scheme: dark light; --bg:#0a0a0a; --card:#141414; --borde:#2e2e2e; --texto:#f0ede6; --suave:#a8a6a0; --acento:#f5a623; }
+      @media (prefers-color-scheme: light) { :root { --bg:#f8fafc; --card:#fff; --borde:#e2e8f0; --texto:#0f172a; --suave:#475569; --acento:#9a6700; } }
+      * { box-sizing: border-box; }
+      body { margin:0; min-height:100svh; display:flex; align-items:center; justify-content:center; padding:16px; background:var(--bg); color:var(--texto); font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
+      main { width:100%; max-width:440px; background:var(--card); border:1px solid var(--borde); border-radius:14px; padding:24px 20px; }
+      h1 { margin:0 0 8px; font-size:1.25rem; }
+      p { margin:0 0 14px; color:var(--suave); line-height:1.5; }
+      ol { margin:0 0 20px; padding-left:20px; line-height:1.55; }
+      li { margin-bottom:6px; }
+      a.boton { display:block; text-align:center; text-decoration:none; font-weight:700; padding:14px; border-radius:10px; background:var(--acento); color:#000; }
+      small { display:block; margin-top:14px; color:var(--suave); word-break:break-all; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pos Jaise tiene una nueva dirección</h1>
+      <p>Esta versión ya no se usa ni se actualiza. Para seguir trabajando, pasa a la nueva:</p>
+      <ol>
+        <li>Toca el botón de abajo y <strong>inicia sesión</strong> con tu usuario de siempre.</li>
+        <li>Instala la app nueva: en el menú del navegador elige <strong>«Instalar app»</strong> o <strong>«Añadir a la pantalla de inicio»</strong>.</li>
+        <li>Borra el ícono viejo de tu pantalla de inicio.</li>
+      </ol>
+      <p><strong>Si tienes una venta a medias, termínala antes</strong> de cambiar.</p>
+      <a id="ir" class="boton" href="https://pos-jaise.pages.dev/">Ir a la nueva web</a>
+      <small id="url">https://pos-jaise.pages.dev/</small>
+    </main>
+    <script>
+      // Conserva la ruta que se pidió (/PosJaise/ventas -> /ventas) en el enlace; no redirige solo
+      // a propósito: la persona tiene que leer las indicaciones.
+      ;(function () {
+        var destino = 'https://pos-jaise.pages.dev'
+        var ruta = location.pathname.replace(/^\/PosJaise\/?/, '/')
+        if (ruta === '/index.html' || ruta === '/404.html') ruta = '/'
+        var url = destino + ruta + location.search
+        document.getElementById('ir').href = url
+        document.getElementById('url').textContent = url
+      })()
+    </script>
+  </body>
+</html>

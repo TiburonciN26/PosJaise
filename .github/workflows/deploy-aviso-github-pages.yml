@@ -1,0 +1,36 @@
+name: Publicar aviso de nueva dirección en GitHub Pages
+
+# Reemplaza TODO el sitio de github.io por la carpeta aviso-github-pages/ (aviso + enlace a la web nueva en
+# Cloudflare + sw.js de retirada). No compila la app ni toca Cloudflare ni Supabase. Solo manual y con confirmación:
+# es el paso de "retirar github.io" y no se puede deshacer salvo volviendo a publicar el build anterior
+# (ver deploy-pages.yml, ref 0dc629e).
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Escribe PUBLICAR para reemplazar el sitio de github.io por el aviso'
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ github.event.inputs.confirmar == 'PUBLICAR' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: aviso-github-pages
+      - id: deployment
+        uses: actions/deploy-pages@v4
