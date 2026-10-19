@@ -15,8 +15,7 @@
       p { margin:0 0 14px; color:var(--suave); line-height:1.5; }
       ol { margin:0 0 20px; padding-left:20px; line-height:1.55; }
       li { margin-bottom:6px; }
-      button.boton { width:100%; margin-top:10px; border:1px solid var(--borde); background:transparent; color:var(--texto); font:inherit; font-weight:600; padding:12px; border-radius:10px; cursor:pointer; }
-      a.boton { display:block; text-align:center; text-decoration:none; font-weight:700; padding:14px; border-radius:10px; background:var(--acento); color:#000; }
+      button.principal { display:block; width:100%; border:0; font:inherit; font-weight:700; padding:14px; border-radius:10px; background:var(--acento); color:#000; cursor:pointer; }
       small { display:block; margin-top:14px; color:var(--suave); word-break:break-all; }
     </style>
   </head>
@@ -25,32 +24,23 @@
       <h1>Pos Jaise tiene una nueva dirección</h1>
       <p>Esta versión ya no se usa ni se actualiza. Para seguir trabajando, pasa a la nueva:</p>
       <ol>
-        <li>Toca <strong>«Abrir en el navegador»</strong> (si se abre dentro de esta misma app, usa <strong>«Copiar dirección»</strong> y pégala en Chrome) e <strong>inicia sesión</strong> con tu usuario de siempre.</li>
+        <li>Toca <strong>«Copiar dirección»</strong>, abre <strong>Chrome</strong>, pégala en la barra de direcciones e <strong>inicia sesión</strong> con tu usuario de siempre.</li>
         <li>Ya en el navegador, instala la app nueva: menú <strong>⋮</strong> → <strong>«Instalar app»</strong> o <strong>«Añadir a la pantalla de inicio»</strong>.</li>
         <li>Borra el ícono viejo de tu pantalla de inicio.</li>
       </ol>
       <p><strong>Si tienes una venta a medias, termínala antes</strong> de cambiar.</p>
-      <a id="ir" class="boton" href="https://pos-jaise.pages.dev/">Abrir en el navegador</a>
-      <button id="copiar" type="button" class="boton">Copiar dirección</button>
+      <button id="copiar" type="button" class="principal">Copiar dirección</button>
       <small id="url" style="user-select:all;-webkit-user-select:all">https://pos-jaise.pages.dev/</small>
     </main>
     <script>
-      // Conserva la ruta que se pidió (/PosJaise/ventas -> /ventas) en el enlace; no redirige solo
-      // a propósito: la persona tiene que leer las indicaciones.
+      // Conserva la ruta que se pidió (/PosJaise/ventas -> /ventas) en la dirección que se copia. No hay
+      // botón de «abrir»: dentro de la app instalada se abriría en una ventana de la misma app (parece que
+      // ya funcionó y no deja instalar), así que se obliga a copiar y pegar en el navegador.
       ;(function () {
         var destino = 'https://pos-jaise.pages.dev'
         var ruta = location.pathname.replace(/^\/PosJaise\/?/, '/')
         if (ruta === '/index.html' || ruta === '/404.html') ruta = '/'
         var url = destino + ruta + location.search
-        var ir = document.getElementById('ir')
-        ir.href = url
-        // Dentro de la app instalada, un enlace normal se abre en una ventana de la propia app (parece que la
-        // nueva ya está instalada y no deja copiar nada). En Android, un intent:// obliga a abrir el NAVEGADOR.
-        if (/Android/i.test(navigator.userAgent)) {
-          ir.href =
-            'intent://' + url.replace(/^https?:\/\//, '') +
-            '#Intent;scheme=https;action=android.intent.action.VIEW;S.browser_fallback_url=' + encodeURIComponent(url) + ';end'
-        }
         document.getElementById('url').textContent = url
         var copiar = document.getElementById('copiar')
         copiar.addEventListener('click', function () {
