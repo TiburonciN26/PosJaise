@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -71,6 +72,9 @@ export default function DetalleServicioCliente() {
   const { adelantoMinimo, cancelacionPlazoHoras, cargando: cargandoNegocio } = useEstadoNegocio()
 
   const [servicio, setServicio] = useState(null)
+
+  // Migaja completa en el header: Inicio | Servicios | categoría | nombre.
+  useRegistrarMigajas(servicio ? [{ titulo: servicio.categoria ?? 'General', ruta: servicio.categoria ? `/servicios?categoria=${encodeURIComponent(servicio.categoria)}` : undefined }, { titulo: servicio.nombre }] : [])
   const [galeria, setGaleria] = useState([])
   const [combo, setCombo] = useState(null)
   const [relacionados, setRelacionados] = useState([])
@@ -311,17 +315,8 @@ export default function DetalleServicioCliente() {
 
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-24 lg:pb-8">
-      {/* Migas + volver */}
-      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle">
-        <nav aria-label="Ruta" className="flex min-w-0 items-center gap-2 truncate text-[11px] font-medium uppercase tracking-wider text-white/50">
-          <Link to="/servicios" className="shrink-0 hover:text-white">
-            Servicios
-          </Link>
-          <span className="shrink-0">/</span>
-          <span className="shrink-0">{servicio.categoria ?? 'General'}</span>
-          <span className="shrink-0">/</span>
-          <span className="truncate text-white">{servicio.nombre}</span>
-        </nav>
+      {/* La ruta completa (Inicio | Servicios | categoría | nombre) la muestra la migaja del header (useRegistrarMigajas). */}
+      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-end gap-4 lw-gutter-detalle">
         <Link
           to="/servicios"
           className="hidden shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)] hover:text-white sm:flex"
@@ -347,7 +342,7 @@ export default function DetalleServicioCliente() {
                   }`}
                 >
                   <img src={urlPublicaFoto(BUCKET_FOTOS, foto.foto_url)} alt="" className="h-full w-full object-cover" />
-                  <span className="absolute inset-x-1 bottom-1 rounded bg-black/70 py-0.5 text-center text-[7.5px] font-bold uppercase tracking-wider text-white">
+                  <span className="absolute inset-x-1 bottom-1 rounded bg-black/70 py-0.5 text-center text-[7.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
                     {foto.etiqueta}
                   </span>
                 </button>
@@ -386,7 +381,7 @@ export default function DetalleServicioCliente() {
             )}
 
             {fotoActual && (
-              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between text-[10px] font-semibold uppercase tracking-widest text-white">
+              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-white">
                 <span>{fotoActual.etiqueta}</span>
                 {fotos.length > 1 && (
                   <span>
@@ -400,12 +395,12 @@ export default function DetalleServicioCliente() {
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">
+            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white/60">
               {servicio.categoria ?? 'Servicio'}
             </span>
-            <h1 className="lw-titulo-heavitas text-4xl uppercase leading-none sm:text-[52px]">{servicio.nombre}</h1>
+            <h1 className="sm:text-[48px] lw-titulo-heavitas text-4xl uppercase leading-none">{servicio.nombre}</h1>
             <div className="flex flex-wrap items-baseline gap-2.5">
-              <span className="text-[13px] text-white/60">desde</span>
+              <span className="text-[13px] sm:text-sm text-white/60">desde</span>
               <span className="text-3xl font-bold text-white sm:text-4xl">{formatearSoles(servicio.precio)}</span>
               {servicio.precio_variable && (
                 <span className="text-xs text-white/50">
@@ -415,7 +410,7 @@ export default function DetalleServicioCliente() {
             </div>
           </div>
 
-          <p className="text-[15px] leading-relaxed text-[#d9d9dc]">
+          <p className="text-[15px] sm:text-base leading-relaxed text-[#d9d9dc]">
             {servicio.descripcion ||
               `Uno de nuestros servicios de ${servicio.categoria ?? 'salón'} más solicitados. Coordina el diagnóstico con tu estilista al momento de tu cita.`}
           </p>
@@ -429,18 +424,18 @@ export default function DetalleServicioCliente() {
             }`}
           >
             <div className="flex flex-col gap-1.5 px-5 py-4">
-              <span className="text-[11px] uppercase tracking-widest text-white/50">Duración</span>
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">Duración</span>
               <span className="text-[17px] font-semibold text-white">{duracion ?? 'A confirmar'}</span>
             </div>
             <div className="flex flex-col gap-1.5 px-5 py-4">
-              <span className="text-[11px] uppercase tracking-widest text-white/50">Disponibilidad</span>
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">Disponibilidad</span>
               <span className="flex items-center gap-2 text-[17px] font-semibold text-white/80">
                 <span className="h-2 w-2 rounded-full bg-[#3ecf6a]" />
                 Consulta en Citas
               </span>
             </div>
             <div className="flex flex-col gap-1.5 px-5 py-4">
-              <span className="text-[11px] uppercase tracking-widest text-white/50">A domicilio</span>
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">A domicilio</span>
               {servicio.a_domicilio ? (
                 <span className="flex items-center gap-2 text-[17px] font-semibold text-white">
                   <span className="h-2 w-2 rounded-full bg-[#3ecf6a]" />
@@ -457,7 +452,7 @@ export default function DetalleServicioCliente() {
             </div>
             {servicio.duracion_resultado && (
               <div className="flex flex-col gap-1.5 px-5 py-4">
-                <span className="text-[11px] uppercase tracking-widest text-white/50">El resultado dura</span>
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">El resultado dura</span>
                 <span className="text-[17px] font-semibold text-white">{servicio.duracion_resultado}</span>
               </div>
             )}
@@ -468,7 +463,7 @@ export default function DetalleServicioCliente() {
             <button
               type="button"
               onClick={alternarCita}
-              className="flex items-center justify-between gap-3 rounded-full border px-6 py-2 pl-6 pr-2 text-[15px] font-semibold transition-colors"
+              className="flex items-center justify-between gap-3 rounded-full border px-6 py-2 pl-6 pr-2 text-[15px] sm:text-base font-semibold transition-colors"
               style={
                 enCita
                   ? { borderColor: 'var(--lw-gold)', background: 'transparent', color: 'var(--lw-gold)' }
@@ -514,7 +509,7 @@ export default function DetalleServicioCliente() {
               href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola, tengo una duda sobre "${servicio.nombre}".`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between gap-3 border-y border-white/10 py-4 text-[13px] text-white"
+              className="flex items-center justify-between gap-3 border-y border-white/10 py-4 text-[13px] sm:text-sm text-white"
             >
               <span className="flex items-center gap-2.5">
                 <MessageCircle className="h-4 w-4" /> ¿Dudas sobre este servicio? Escríbenos por WhatsApp
@@ -527,7 +522,7 @@ export default function DetalleServicioCliente() {
           <div className="grid grid-cols-3 gap-4 py-2">
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <PiggyBank className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-[13.5px] font-semibold leading-tight">
+              <span className="text-[13.5px] sm:text-sm font-semibold leading-tight">
                 {estimado?.cifra}
                 <br />
                 <span className="font-normal text-white/60">{estimado?.detalle}</span>
@@ -535,7 +530,7 @@ export default function DetalleServicioCliente() {
             </div>
             <a href="#resenas" className="flex flex-col items-center gap-2.5 text-center text-white">
               <Star className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-[13.5px] font-semibold leading-tight">
+              <span className="text-[13.5px] sm:text-sm font-semibold leading-tight">
                 {resumenResenas?.total > 0
                   ? `${resumenResenas.promedio} · ${resumenResenas.total} reseña${resumenResenas.total === 1 ? '' : 's'}`
                   : 'Reseñas'}
@@ -545,7 +540,7 @@ export default function DetalleServicioCliente() {
             </a>
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <Stamp className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-[13.5px] font-semibold leading-tight">
+              <span className="text-[13.5px] sm:text-sm font-semibold leading-tight">
                 {estimado?.sello.cifra}
                 <br />
                 <span className="font-normal text-white/60">{estimado?.sello.detalle}</span>
@@ -561,8 +556,8 @@ export default function DetalleServicioCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <CreditCard className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">Adelanto obligatorio para separar tu cita</span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">
+              <span className="text-[13.5px] sm:text-sm font-semibold text-white">Adelanto obligatorio para separar tu cita</span>
+              <span className="text-[12.5px] sm:text-sm leading-relaxed text-white/60">
                 {/* QA-029: sin adelanto configurado (null) el sistema exige pagar el total
                     (reservar_cita_web usa coalesce(adelanto_minimo, precio_total) y el carrito
                     igual): se dice eso, sin inventar un monto ni mostrar un marcador. */}
@@ -577,14 +572,14 @@ export default function DetalleServicioCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <Clock className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">
+              <span className="text-[13.5px] sm:text-sm font-semibold text-white">
                 {cargandoNegocio
                   ? 'Cambios o cancelación'
                   : cancelacionPlazoHoras != null
                     ? `Cambios o cancelación hasta ${cancelacionPlazoHoras} h antes`
                     : 'Cambios o cancelación: consulta el plazo con el negocio'}
               </span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">
+              <span className="text-[12.5px] sm:text-sm leading-relaxed text-white/60">
                 {cancelacionPlazoHoras != null || cargandoNegocio
                   ? 'Después de ese plazo, el adelanto no se devuelve.'
                   : 'Pasado el plazo que te indique el negocio, el adelanto no se devuelve.'}
@@ -594,8 +589,8 @@ export default function DetalleServicioCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <Truck className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">El saldo lo pagas en el local</span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">
+              <span className="text-[13.5px] sm:text-sm font-semibold text-white">El saldo lo pagas en el local</span>
+              <span className="text-[12.5px] sm:text-sm leading-relaxed text-white/60">
                 Efectivo, Yape, Plin, transferencia o tarjeta de crédito/débito (solo en el local).
               </span>
             </span>
@@ -607,7 +602,7 @@ export default function DetalleServicioCliente() {
       {servicio.pasos?.length > 0 ? (
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="lw-titulo-heavitas text-2xl uppercase">Cómo es el servicio</h2>
+            <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Cómo es el servicio</h2>
             {totalPasosMin > 0 && (
               <span className="text-sm text-white/60">
                 Total <b className="font-semibold text-white">{totalPasosMin} min</b>
@@ -629,7 +624,7 @@ export default function DetalleServicioCliente() {
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {servicio.pasos.map((paso, indice) => (
               <div key={indice} className="flex flex-col gap-2">
-                <span className="flex items-center gap-2 text-[11px] tracking-widest text-white/60">
+                <span className="flex items-center gap-2 text-[11px] sm:text-xs tracking-widest text-white/60">
                   <span
                     className="h-2.5 w-2.5 rounded-[3px]"
                     style={{ background: COLORES_PASOS[indice % COLORES_PASOS.length] }}
@@ -637,8 +632,8 @@ export default function DetalleServicioCliente() {
                   PASO {indice + 1}
                   {paso.minutos ? ` · ${paso.minutos} min` : ''}
                 </span>
-                <span className="text-[15px] font-semibold text-white">{paso.nombre}</span>
-                {paso.texto && <span className="text-[13px] leading-relaxed text-white/60">{paso.texto}</span>}
+                <span className="text-[15px] sm:text-base font-semibold text-white">{paso.nombre}</span>
+                {paso.texto && <span className="text-[13px] sm:text-sm leading-relaxed text-white/60">{paso.texto}</span>}
               </div>
             ))}
           </div>
@@ -647,7 +642,7 @@ export default function DetalleServicioCliente() {
         duracion && (
           <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="lw-titulo-heavitas text-2xl uppercase">Cómo es el servicio</h2>
+              <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Cómo es el servicio</h2>
               <span className="text-sm text-white/60">
                 Duración total <b className="font-semibold text-white">{duracion}</b>
               </span>
@@ -663,14 +658,14 @@ export default function DetalleServicioCliente() {
       {/* Cuidados antes y después */}
       {(servicio.cuidados_antes?.length > 0 || servicio.cuidados_despues?.length > 0) && (
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
-          <h2 className="lw-titulo-heavitas text-2xl uppercase">Cuidados antes y después</h2>
+          <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Cuidados antes y después</h2>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {servicio.cuidados_antes?.length > 0 && (
               <div className="rounded-[10px] border border-white/10 bg-[#111113] p-7 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-                <span className="text-[15px] font-bold text-white">Antes de tu cita</span>
+                <span className="text-[15px] sm:text-base font-bold text-white">Antes de tu cita</span>
                 <ul className="mt-3 list-none divide-y divide-white/10">
                   {servicio.cuidados_antes.map((texto, indice) => (
-                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] leading-relaxed text-[#d9d9dc]">
+                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] sm:text-sm leading-relaxed text-[#d9d9dc]">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
                       <span>{texto}</span>
                     </li>
@@ -680,10 +675,10 @@ export default function DetalleServicioCliente() {
             )}
             {servicio.cuidados_despues?.length > 0 && (
               <div className="rounded-[10px] border border-white/10 bg-[#111113] p-7 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-                <span className="text-[15px] font-bold text-white">Después de tu cita</span>
+                <span className="text-[15px] sm:text-base font-bold text-white">Después de tu cita</span>
                 <ul className="mt-3 list-none divide-y divide-white/10">
                   {servicio.cuidados_despues.map((texto, indice) => (
-                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] leading-relaxed text-[#d9d9dc]">
+                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] sm:text-sm leading-relaxed text-[#d9d9dc]">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
                       <span>{texto}</span>
                     </li>
@@ -700,12 +695,12 @@ export default function DetalleServicioCliente() {
         <section className="mx-auto mt-16 grid w-full max-w-[1400px] gap-4 lw-gutter-detalle sm:grid-cols-3">
           {servicio.especificaciones?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">
+              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[var(--lw-gold)]">
                 Especificaciones técnicas
               </h3>
               <div className="mt-3 divide-y divide-white/10">
                 {servicio.especificaciones.map((spec, indice) => (
-                  <div key={indice} className="flex justify-between gap-4 py-2.5 text-[13px]">
+                  <div key={indice} className="flex justify-between gap-4 py-2.5 text-[13px] sm:text-sm">
                     <span className="text-white/60">{spec.clave}</span>
                     <span className="text-right font-medium text-white">{spec.valor}</span>
                   </div>
@@ -715,10 +710,10 @@ export default function DetalleServicioCliente() {
           )}
           {servicio.herramientas?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Herramientas usadas</h3>
+              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Herramientas usadas</h3>
               <div className="mt-3 divide-y divide-white/10">
                 {servicio.herramientas.map((item, indice) => (
-                  <div key={indice} className="flex flex-col gap-0.5 py-2.5 text-[13px]">
+                  <div key={indice} className="flex flex-col gap-0.5 py-2.5 text-[13px] sm:text-sm">
                     <span className="font-medium text-white">{item.nombre}</span>
                     {item.descripcion && <span className="text-xs text-white/50">{item.descripcion}</span>}
                   </div>
@@ -728,10 +723,10 @@ export default function DetalleServicioCliente() {
           )}
           {servicio.materiales?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Materiales usados</h3>
+              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Materiales usados</h3>
               <div className="mt-3 divide-y divide-white/10">
                 {servicio.materiales.map((item, indice) => (
-                  <div key={indice} className="flex flex-col gap-0.5 py-2.5 text-[13px]">
+                  <div key={indice} className="flex flex-col gap-0.5 py-2.5 text-[13px] sm:text-sm">
                     <span className="font-medium text-white">{item.nombre}</span>
                     {item.descripcion && <span className="text-xs text-white/50">{item.descripcion}</span>}
                   </div>
@@ -744,14 +739,14 @@ export default function DetalleServicioCliente() {
 
       {/* Reseñas */}
       <section id="resenas" className="mx-auto mt-16 w-full max-w-[1400px] border-t border-white/10 lw-gutter-detalle pt-12">
-        <h2 className="lw-titulo-heavitas text-2xl uppercase">Lo que dicen nuestras clientas</h2>
+        <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Lo que dicen nuestras clientas</h2>
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="flex w-full flex-col gap-3.5 lg:w-[280px] lg:shrink-0">
             {resumenResenas?.total > 0 ? (
               <>
                 <div className="flex items-baseline gap-3">
                   <span className="text-[56px] font-bold leading-none text-white">{resumenResenas.promedio}</span>
-                  <span className="text-[13px] text-white/60">de 5</span>
+                  <span className="text-[13px] sm:text-sm text-white/60">de 5</span>
                 </div>
                 <div className="flex gap-0.5 text-[var(--lw-gold)]">
                   {Array.from({ length: 5 }, (_, i) => (
@@ -762,7 +757,7 @@ export default function DetalleServicioCliente() {
                     />
                   ))}
                 </div>
-                <span className="text-[13px] text-white/60">
+                <span className="text-[13px] sm:text-sm text-white/60">
                   {resumenResenas.total} reseña{resumenResenas.total === 1 ? '' : 's'} de clientas que se hicieron
                   este servicio
                 </span>
@@ -801,7 +796,7 @@ export default function DetalleServicioCliente() {
                   if (!requerirSesion('escribir una reseña')) return
                   setMostrarFormResena((v) => !v)
                 }}
-                className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold text-black"
+                className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-black"
                 style={{ background: 'var(--lw-gold)' }}
               >
                 <PenLine className="h-3.5 w-3.5" />
@@ -809,15 +804,15 @@ export default function DetalleServicioCliente() {
               </button>
               <Link
                 to="/nosotros"
-                className="flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white"
+                className="flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white"
               >
                 Reseñas del salón
               </Link>
             </div>
             {miResena?.estado === 'PENDIENTE' && (
-              <span className="text-[11.5px] text-white/50">Tu reseña está en revisión antes de publicarse.</span>
+              <span className="text-[11.5px] sm:text-xs text-white/50">Tu reseña está en revisión antes de publicarse.</span>
             )}
-            <span className="text-[11.5px] leading-relaxed text-white/40">
+            <span className="text-[11.5px] sm:text-xs leading-relaxed text-white/40">
               Solo pueden reseñar las clientas que ya se hicieron este servicio.
             </span>
 
@@ -874,7 +869,7 @@ export default function DetalleServicioCliente() {
                     </span>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-white">{resena.nombre}</span>
-                      <span className="text-[11.5px] text-white/50">
+                      <span className="text-[11.5px] sm:text-xs text-white/50">
                         {new Date(resena.creado_en).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
@@ -884,8 +879,8 @@ export default function DetalleServicioCliente() {
                       <Star key={i} className="h-3 w-3" fill={i < resena.calificacion ? 'currentColor' : 'none'} />
                     ))}
                   </div>
-                  {resena.comentario && <p className="text-[13px] leading-relaxed text-[#d9d9dc]">{resena.comentario}</p>}
-                  <span className="mt-auto w-fit rounded-[5px] bg-white/10 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-white/60">
+                  {resena.comentario && <p className="text-[13px] sm:text-sm leading-relaxed text-[#d9d9dc]">{resena.comentario}</p>}
+                  <span className="mt-auto w-fit rounded-[5px] bg-white/10 px-2.5 py-1 text-[9.5px] sm:text-xs font-bold uppercase tracking-wider text-white/60">
                     Clienta verificada
                   </span>
                 </article>
@@ -898,7 +893,7 @@ export default function DetalleServicioCliente() {
       {/* Se suele reservar junto con (combo sugerido) */}
       {combo && (
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
-          <h2 className="lw-titulo-heavitas text-2xl uppercase">Se suele reservar junto con</h2>
+          <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Se suele reservar junto con</h2>
           <div className="mt-6 flex flex-col gap-6 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:p-7">
             <div className="flex flex-1 flex-wrap items-center gap-4">
               <div className="flex items-center gap-3.5">
@@ -975,7 +970,7 @@ export default function DetalleServicioCliente() {
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex items-baseline gap-3">
-              <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">También te puede interesar</h2>
+              <h2 className="sm:text-[40px] lw-titulo-heavitas text-lg uppercase">También te puede interesar</h2>
               <span className="text-xs text-white/50">{servicio.categoria}</span>
             </div>
             <button

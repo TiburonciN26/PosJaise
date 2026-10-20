@@ -6,13 +6,16 @@ import { useTemaWeb } from '../context/TemaWebContext.jsx'
 import { PerfilClienteProvider } from '../context/PerfilClienteContext.jsx'
 import { CarritoClienteProvider, useCarritoCliente } from '../context/CarritoClienteContext.jsx'
 import { NotificacionesClienteProvider, useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
-import { seccionesCliente, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
+import { MigajasExtraContext } from '../context/MigajasExtraContext.jsx'
+import { seccionesCliente, seccionesNosotros, titulosSubpaginasCliente } from '../config/navegacionCliente.js'
 import { precargarPestanasPrincipales, reintentarPaginasFallidas } from '../config/paginasCliente.js'
 import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
 import AccionesVisitante from '../components/AccionesVisitante.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
 import IconoCampana from '../components/IconoCampana.jsx'
+import MenuSeccionesRecompensas from '../components/MenuSeccionesRecompensas.jsx'
+import MenuSeccionesPestana from '../components/MenuSeccionesPestana.jsx'
 
 // Chanchito "activo" — SVG que trajo el usuario (public/icons/
 // chanchitoActivo.svg), inlineado acá en vez de <img src="..."> a
@@ -79,6 +82,7 @@ function BotonChanchito({ estaEnPuntos }) {
     <Link
       to="/recompensas?seccion=tarjeta"
       aria-label="Tus puntos"
+      data-cupones-destino
       className="-mr-2 max-sm:mr-0 flex max-sm:hidden h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
     >
       <IconoChanchito />
@@ -279,7 +283,10 @@ export default function PortalCliente() {
   }, [])
 
   const esInicio = location.pathname === '/inicio'
-  const migajas = esInicio ? [] : migajasDeRuta(location.pathname)
+  // Niveles extra que registra una pantalla de detalle (ver MigajasExtraContext); solo valen en su propia ruta.
+  const [migajasExtra, setMigajasExtra] = useState(null)
+  const extra = migajasExtra && migajasExtra.pathname === location.pathname ? migajasExtra.niveles : []
+  const migajas = esInicio ? [] : [...migajasDeRuta(location.pathname), ...extra]
 
   // La migaja es absoluta y no reserva espacio en el flujo. Medir solo
   // cuánto sobresale del header evita depender de una altura de texto fija.
@@ -305,6 +312,7 @@ export default function PortalCliente() {
   }, [location.pathname, menuAbierto])
 
   return (
+    <MigajasExtraContext.Provider value={setMigajasExtra}>
     <PerfilClienteProvider>
       <CarritoClienteProvider>
         <NotificacionesClienteProvider>
@@ -400,24 +408,26 @@ export default function PortalCliente() {
                       {migajas.map((migaja, indice) => {
                         const esUltima = indice === migajas.length - 1
                         return (
-                          <span key={migaja.ruta} className="flex min-w-0 items-center gap-2">
+                          <span key={`${indice}-${migaja.ruta ?? migaja.titulo}`} className="flex min-w-0 items-center gap-2">
                             <span aria-hidden="true" className="lw-metal-azul-texto shrink-0">
                               |
                             </span>
                             {esUltima ? (
                               <span
-                                key={location.pathname}
-                                className="animate-deslizar-pestana lw-metal-azul-texto truncate"
+                                key={`${location.pathname}|${migaja.titulo}`}
+                                className="animate-deslizar-pestana lw-metal-azul-texto max-w-[42vw] truncate sm:max-w-[34vw]"
                               >
                                 {migaja.titulo}
                               </span>
-                            ) : (
+                            ) : migaja.ruta ? (
                               <Link
                                 to={migaja.ruta}
                                 className="shrink-0 truncate text-white/60 transition-colors hover:text-white"
                               >
                                 {migaja.titulo}
                               </Link>
+                            ) : (
+                              <span className="shrink-0 truncate text-white/60">{migaja.titulo}</span>
                             )}
                           </span>
                         )
@@ -440,6 +450,11 @@ export default function PortalCliente() {
                     animación y otra. */}
                 <nav className="hidden items-center gap-4 lg:ml-6 lg:flex xl:ml-12 xl:gap-6">
                   {seccionesCliente.map((seccion) => (
+                    seccion.path === '/recompensas' ? (
+                      <MenuSeccionesRecompensas key={seccion.path} />
+                    ) : seccion.path === '/nosotros' ? (
+                      <MenuSeccionesPestana key={seccion.path} ruta="/nosotros" label={seccion.label} secciones={seccionesNosotros} etiqueta="Secciones de Nosotros" />
+                    ) : (
                     <NavLink key={seccion.path} to={seccion.path} className="relative py-1">
                       {({ isActive }) => (
                         <>
@@ -464,6 +479,7 @@ export default function PortalCliente() {
                         </>
                       )}
                     </NavLink>
+                    )
                   ))}
                 </nav>
   
@@ -529,5 +545,6 @@ export default function PortalCliente() {
         </NotificacionesClienteProvider>
       </CarritoClienteProvider>
     </PerfilClienteProvider>
+    </MigajasExtraContext.Provider>
   )
 }

@@ -18,7 +18,7 @@ import Estrellas from '../../components/Estrellas.jsx'
 import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
 import MapaDiferido from '../../components/MapaDiferido.jsx'
 import ShinyText from '../../components/ShinyText.jsx'
-import CuponPromocionInicio from '../../components/CuponPromocionInicio.jsx'
+import CuponFlotanteInicio from '../../components/CuponFlotanteInicio.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 
 // Cuatro WebP entregados por el usuario (3024×1698), sin recomprimir ni
@@ -436,22 +436,18 @@ export default function InicioCliente() {
         </div>
       </section>
 
-      {/* 2. PROMOCIÓN ACTIVA — la misma campaña y reclamación, con el recibo aprobado. */}
+      {/* 2. PROMOCIÓN ACTIVA — cupón flotante bajo el header (ver CuponFlotanteInicio): cae, se minimiza y, al reclamarlo,
+          vuela a la cuenta; ya no ocupa lugar en la página. */}
       {promocion && (
-        <div className="mx-auto mt-4 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
-          <div
-            className={`relative ${reducirMovimiento ? '' : 'in-up'}`}
-            style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.promo}ms` }}
-          >
-            <CuponPromocionInicio
-              key={`${usuarioId ?? 'visitante'}:${promocion.id}`}
-              promocion={promocion}
-              reclamado={Boolean(cuponPromocion)}
-              reclamando={reclamando}
-              onReclamar={reclamarCupon}
-            />
-          </div>
-        </div>
+        <CuponFlotanteInicio
+          key={`${usuarioId ?? 'visitante'}:${promocion.id}`}
+          promocion={promocion}
+          reclamado={Boolean(cuponPromocion)}
+          reclamando={reclamando}
+          onReclamar={reclamarCupon}
+          usuarioId={usuarioId}
+          reducirMovimiento={reducirMovimiento}
+        />
       )}
 
       {/* 3. LO MÁS PEDIDO */}
@@ -483,7 +479,7 @@ export default function InicioCliente() {
         <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
           <div className="mb-7 flex items-end justify-between gap-3">
             <div className="flex flex-col gap-2.5">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Trabajos hechos en el salón</span>
+              <span className="text-[11px] sm:text-xs uppercase tracking-[0.24em] text-[#a6a6a6]">Trabajos hechos en el salón</span>
               <h2 className="lw-titulo-heavitas text-2xl max-sm:text-[0.75rem] text-white sm:text-[40px]">Resultados reales</h2>
             </div>
             <div className="flex items-center gap-5">
@@ -513,7 +509,7 @@ export default function InicioCliente() {
                       loading="lazy"
                       decoding="async"
                     />
-                    <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] uppercase tracking-wider text-[#e8e8ea]">
+                    <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] sm:text-xs uppercase tracking-wider text-[#e8e8ea]">
                       Antes
                     </span>
                   </div>
@@ -525,14 +521,14 @@ export default function InicioCliente() {
                       loading="lazy"
                       decoding="async"
                     />
-                    <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] uppercase tracking-wider text-[#e8e8ea]">
+                    <span className="absolute left-2.5 top-2.5 rounded-[5px] bg-white/[0.08] px-[9px] py-1 text-[10px] sm:text-xs uppercase tracking-wider text-[#e8e8ea]">
                       Después
                     </span>
                   </div>
                 </div>
                 <div className="flex items-baseline justify-between gap-2">
-                  {item.titulo && <span className="text-[15px] font-semibold text-white">{item.titulo}</span>}
-                  <Link to="/servicios" className="hidden text-[13px] text-[var(--lw-gold)] lg:inline">
+                  {item.titulo && <span className="text-[15px] sm:text-base font-semibold text-white">{item.titulo}</span>}
+                  <Link to="/servicios" className="hidden text-[13px] sm:text-sm text-[var(--lw-gold)] lg:inline">
                     Reservar este servicio
                   </Link>
                 </div>
@@ -547,7 +543,7 @@ export default function InicioCliente() {
         <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
           <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
             <div className="flex flex-col gap-3.5">
-              <h2 className="lw-titulo-heavitas text-[26px] max-sm:text-[0.75rem] leading-[1.1] text-white sm:text-[34px]">
+              <h2 className="lw-titulo-heavitas text-[26px] max-sm:text-[0.75rem] leading-[1.1] text-white sm:text-[40px]">
                 Lo que dicen nuestras clientas
               </h2>
               <div className="mt-3 flex items-start gap-3">
@@ -556,7 +552,7 @@ export default function InicioCliente() {
                 </span>
                 <div className="flex flex-col gap-1.5">
                   <Estrellas calificacion={Math.round(promedioResenas)} className="h-[15px] w-[15px]" />
-                  <span className="text-[13px] text-[#a6a6a6]">
+                  <span className="text-[13px] sm:text-sm text-[#a6a6a6]">
                     {totalExacto ? totalResenas : `Al menos ${totalResenas}`} reseñas de clientas que ya vinieron{promedioParcial ? ` (promedio de las ${calificaciones.length} más recientes)` : ''}
                   </span>
                 </div>
@@ -576,21 +572,21 @@ export default function InicioCliente() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Estrellas calificacion={resena.calificacion} className="h-[13px] w-[13px]" />
-                    <span className="text-xs text-[#a6a6a6]">{formatoFechaResena.format(new Date(resena.creado_en))}</span>
+                    <span className="text-xs sm:text-sm text-[#a6a6a6]">{formatoFechaResena.format(new Date(resena.creado_en))}</span>
                   </div>
                   {resena.servicio_nombre && (
-                    <span className="-mt-2 w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-[#e8e8ea]">
+                    <span className="-mt-2 w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] sm:text-xs text-[#e8e8ea]">
                       {resena.servicio_nombre}
                     </span>
                   )}
-                  <blockquote className="flex-1 text-[14.5px] leading-relaxed text-[#d9d9dc]">
+                  <blockquote className="flex-1 text-[14.5px] sm:text-base leading-relaxed text-[#d9d9dc]">
                     {resena.comentario}
                   </blockquote>
                   <figcaption className="flex items-center gap-2.5 border-t border-white/10 pt-3.5">
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1f1f22] text-xs font-semibold text-white">
                       {nombrePublico(resena.nombre).charAt(0)}
                     </span>
-                    <span className="text-[13.5px] font-semibold text-white">{nombrePublico(resena.nombre)}</span>
+                    <span className="text-[13.5px] sm:text-sm font-semibold text-white">{nombrePublico(resena.nombre)}</span>
                   </figcaption>
                 </figure>
               ))}
@@ -609,11 +605,11 @@ export default function InicioCliente() {
           <Users className="h-10 w-10" />
         </div>
         <div className="flex flex-col gap-4">
-          <span className="text-[11px] uppercase tracking-[0.24em] text-[#a6a6a6]">Sobre nosotros</span>
+          <span className="text-[11px] sm:text-xs uppercase tracking-[0.24em] text-[#a6a6a6]">Sobre nosotros</span>
           <h2 className="lw-titulo-heavitas text-[28px] max-sm:text-[0.75rem] leading-[1.1] text-white sm:text-[40px]">
             Cuidado y confianza en cada cita
           </h2>
-          <p className="max-w-[52ch] text-[15.5px] leading-relaxed text-[#d9d9dc]">
+          <p className="max-w-[52ch] text-[15.5px] sm:text-base leading-relaxed text-[#d9d9dc]">
             Creemos en escuchar antes de proponer. Cada cita empieza con una pregunta sobre lo que quieres lograr, y
             cada tratamiento se diseña a tu medida.
           </p>
@@ -624,9 +620,9 @@ export default function InicioCliente() {
               { n: '03', t: 'Con detalle', d: 'Cuidamos el resultado final.' },
             ].map((paso) => (
               <div key={paso.n} className="flex flex-col gap-1.5 rounded-[10px] border border-white/10 bg-[#111113] p-[18px] max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
-                <span className="text-xs font-semibold text-[var(--lw-gold)]">{paso.n}</span>
+                <span className="text-xs sm:text-sm font-semibold text-[var(--lw-gold)]">{paso.n}</span>
                 <span className="text-sm font-semibold text-white">{paso.t}</span>
-                <span className="text-[12.5px] leading-relaxed text-[#a6a6a6]">{paso.d}</span>
+                <span className="text-[12.5px] sm:text-sm leading-relaxed text-[#a6a6a6]">{paso.d}</span>
               </div>
             ))}
           </div>
@@ -640,8 +636,8 @@ export default function InicioCliente() {
       {hayVisitanos && (
         <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) grid w-full max-w-[1700px] gap-5 lw-gutter lw-gutter-sep lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <div className="flex flex-col gap-5 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:p-9">
-            <h2 className="lw-titulo-heavitas text-[26px] max-sm:text-[0.75rem] text-white sm:text-[34px]">Visítanos</h2>
-            <div className="flex flex-col gap-3.5 text-[14.5px] text-[#d9d9dc]">
+            <h2 className="lw-titulo-heavitas text-[26px] max-sm:text-[0.75rem] text-white sm:text-[40px]">Visítanos</h2>
+            <div className="flex flex-col gap-3.5 text-[14.5px] sm:text-base text-[#d9d9dc]">
               {contacto?.direccion && (
                 <span className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />

@@ -204,7 +204,7 @@ export default function ServiciosCliente() {
     return (
       <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-sm text-white/70">No se pudo cargar el catálogo de servicios.</p>
-        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
           Reintentar
         </button>
       </div>
@@ -243,7 +243,7 @@ export default function ServiciosCliente() {
         <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter pb-6 pt-6 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:pt-10">
           <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
             <span
-              className={`hidden text-[11px] font-semibold uppercase tracking-widest text-white/60 sm:block ${reducirMovimiento ? '' : 'in-left'}`}
+              className={`hidden text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white/60 sm:block ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
             >
               Tendencias y lo más pedido
@@ -309,7 +309,7 @@ export default function ServiciosCliente() {
                   >
                     <span
                       style={estiloEtiqueta}
-                      className="hidden w-fit items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-[#e8e8ea] sm:inline-flex"
+                      className="hidden w-fit items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] sm:text-xs font-semibold uppercase tracking-widest text-[#e8e8ea] sm:inline-flex"
                     >
                       <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                       {s.etiquetaHero}
@@ -323,14 +323,14 @@ export default function ServiciosCliente() {
                         únicamente sin aria-hidden). */}
                     <h1
                       style={estiloTitulo}
-                      className="lw-titulo-heavitas mt-4 text-[34px] uppercase leading-[1.02] sm:text-[56px]"
+                      className="sm:text-[48px] lw-titulo-heavitas mt-4 text-[34px] uppercase leading-[1.02]"
                     >
                       {s.nombre}
                     </h1>
                     <p style={estiloDescripcion} className="mt-4 max-w-[44ch] text-sm leading-relaxed text-[#d9d9dc] sm:text-[15px]">
                       {desc}
                     </p>
-                    <span style={estiloPrecio} className="mt-3.5 text-[13px] text-white/60">
+                    <span style={estiloPrecio} className="mt-3.5 text-[13px] sm:text-sm text-white/60">
                       desde <b className="font-semibold text-white">{formatearSoles(s.precio)}</b>
                       {duracionTexto && ` · ${duracionTexto}`}
                     </span>
@@ -366,7 +366,7 @@ export default function ServiciosCliente() {
               className={`flex flex-wrap items-baseline gap-2 text-xs text-white/50 ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.catalogoLinea}ms` }}
             >
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
+              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
               <span>/</span>
               <span className="font-medium text-[#e8e8ea]">{plural(datos?.total ?? 0)}</span>
               {precioDesde != null && (
@@ -403,7 +403,7 @@ export default function ServiciosCliente() {
             ))}
             <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/70" />
 
-            <span className="absolute left-4 top-9 inline-flex items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-[#e8e8ea] sm:hidden">
+            <span className="absolute left-4 top-9 inline-flex items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] sm:text-xs font-semibold uppercase tracking-widest text-[#e8e8ea] sm:hidden">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
               {heroActual.etiquetaHero}
             </span>
@@ -424,7 +424,7 @@ export default function ServiciosCliente() {
               </div>
             )}
 
-            <div className="absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] font-medium uppercase tracking-widest text-white">
+            <div className="absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] sm:text-xs font-medium uppercase tracking-widest text-white">
               <span className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                 {String(heroIdxSeguro + 1).padStart(2, '0')} / {String(heroServicios.length).padStart(2, '0')}
@@ -466,7 +466,7 @@ export default function ServiciosCliente() {
                     style={listo ? { animationDelay: `${delayBase}ms` } : undefined}
                   >
                     <div className="flex min-w-0 flex-wrap items-baseline gap-3">
-                      <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
+                      <h2 className="sm:text-[40px] lw-titulo-heavitas text-lg uppercase">{grupo.categoria}</h2>
                       <span className="text-xs text-white/50">{plural(grupo.total)}</span>
                     </div>
                     <button
@@ -515,7 +515,7 @@ export default function ServiciosCliente() {
             {ventanaConError && (
               <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
                 <p className="text-sm text-white/70">No se pudieron cargar las categorías.</p>
-                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
                   Reintentar
                 </button>
               </div>
@@ -529,7 +529,7 @@ export default function ServiciosCliente() {
           <div className="flex flex-col gap-4 pt-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div className="flex items-baseline gap-3">
-                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">
+                <h2 className="sm:text-[40px] lw-titulo-heavitas text-lg uppercase">
                   {termino ? 'Resultados' : categoriaActiva}
                 </h2>
                 {totalVisible != null && <span className="text-xs text-white/50">{plural(totalVisible)}</span>}
@@ -547,7 +547,7 @@ export default function ServiciosCliente() {
             {listado.estado === 'error' ? (
               <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
                 <p className="text-sm text-white/70">No se pudieron cargar los servicios.</p>
-                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
                   Reintentar
                 </button>
               </div>
@@ -573,8 +573,8 @@ export default function ServiciosCliente() {
 
         {/* 4. CÓMO RESERVAR */}
         <section className="mt-16 border-t border-white/10 pt-10">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">Así de simple</span>
-          <h2 className="lw-titulo-heavitas mt-2.5 text-2xl uppercase">Cómo reservar</h2>
+          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white/60">Así de simple</span>
+          <h2 className="sm:text-[40px] lw-titulo-heavitas mt-2.5 text-2xl uppercase">Cómo reservar</h2>
           <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
             {[
               {
@@ -594,9 +594,9 @@ export default function ServiciosCliente() {
               },
             ].map((item) => (
               <div key={item.paso} className="rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-                <span className="text-[11px] tracking-widest text-[var(--lw-gold)]">{item.paso.toUpperCase()}</span>
-                <h3 className="mt-2.5 text-[15px] font-semibold text-white">{item.titulo}</h3>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">{item.texto}</p>
+                <span className="text-[11px] sm:text-xs tracking-widest text-[var(--lw-gold)]">{item.paso.toUpperCase()}</span>
+                <h3 className="sm:text-xl mt-2.5 text-[15px] font-semibold text-white">{item.titulo}</h3>
+                <p className="mt-1.5 text-[13px] sm:text-sm leading-relaxed text-white/60">{item.texto}</p>
               </div>
             ))}
           </div>
@@ -606,7 +606,7 @@ export default function ServiciosCliente() {
         <section className="mt-16 border-t border-white/10 pt-14">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex max-w-[560px] flex-col gap-3.5">
-              <h2 className="lw-titulo-heavitas text-3xl uppercase leading-[1.05] sm:text-[46px]">¿No encuentras tu servicio?</h2>
+              <h2 className="sm:text-[40px] lw-titulo-heavitas text-3xl uppercase leading-[1.05]">¿No encuentras tu servicio?</h2>
               <p className="text-sm leading-relaxed text-white/60 sm:text-[15px]">
                 ¿En qué podemos ayudarte hoy? Cuéntanos qué buscas y te orientamos con el servicio ideal, o resolvemos tus
                 dudas sobre reservas y pagos.
@@ -625,8 +625,8 @@ export default function ServiciosCliente() {
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                 <MessageCircle className="h-[17px] w-[17px]" />
               </span>
-              <h3 className="mt-2.5 text-[15px] font-bold text-white">Escríbenos por WhatsApp</h3>
-              <p className="mb-1 text-[13px] leading-relaxed text-white/60">
+              <h3 className="sm:text-xl mt-2.5 text-[15px] font-bold text-white">Escríbenos por WhatsApp</h3>
+              <p className="mb-1 text-[13px] sm:text-sm leading-relaxed text-white/60">
                 Te recomendamos el servicio según tu cabello, piel o la ocasión, y te ayudamos a reservar.
               </p>
               {whatsapp ? (
@@ -634,12 +634,12 @@ export default function ServiciosCliente() {
                   href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre sus servicios.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white"
+                  className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white"
                 >
                   Abrir WhatsApp
                 </a>
               ) : (
-                <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] font-semibold text-white/40">
+                <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white/40">
                   Aún no configurado
                 </span>
               )}
@@ -648,13 +648,13 @@ export default function ServiciosCliente() {
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                 <MapPin className="h-[17px] w-[17px]" />
               </span>
-              <h3 className="mt-2.5 text-[15px] font-bold text-white">Contacto y ubicación</h3>
-              <p className="mb-1 text-[13px] leading-relaxed text-white/60">
+              <h3 className="sm:text-xl mt-2.5 text-[15px] font-bold text-white">Contacto y ubicación</h3>
+              <p className="mb-1 text-[13px] sm:text-sm leading-relaxed text-white/60">
                 {contacto?.direccion || contacto?.telefono
                   ? [contacto?.direccion, contacto?.telefono].filter(Boolean).join(' · ')
                   : 'Llámanos o visítanos. Te atendemos en el mismo horario.'}
               </p>
-              <Link to="/nosotros" className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+              <Link to="/nosotros" className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
                 Ver contacto
               </Link>
             </div>
@@ -662,11 +662,11 @@ export default function ServiciosCliente() {
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                 <HelpCircle className="h-[17px] w-[17px]" />
               </span>
-              <h3 className="mt-2.5 text-[15px] font-bold text-white">Preguntas frecuentes</h3>
-              <p className="mb-1 text-[13px] leading-relaxed text-white/60">
+              <h3 className="sm:text-xl mt-2.5 text-[15px] font-bold text-white">Preguntas frecuentes</h3>
+              <p className="mb-1 text-[13px] sm:text-sm leading-relaxed text-white/60">
                 Reservas, pagos, cambios y cancelaciones: todo en un solo lugar.
               </p>
-              <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] font-semibold text-white/50">
+              <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white/50">
                 Muy pronto
               </span>
             </div>

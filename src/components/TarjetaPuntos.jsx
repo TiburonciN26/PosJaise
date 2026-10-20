@@ -28,7 +28,6 @@ export default function TarjetaPuntos({
   const stageRef = useRef(null)
   const lienzoRef = useRef(null)
   const cardRef = useRef(null)
-  const pistaRef = useRef(null)
   const numRef = useRef(null)
   const barraRef = useRef(null)
 
@@ -42,7 +41,6 @@ export default function TarjetaPuntos({
     const stage = stageRef.current
     const lienzo = lienzoRef.current
     const card = cardRef.current
-    const pista = pistaRef.current
     if (!stage || !lienzo || !card) return undefined
 
     let escala = 1
@@ -78,7 +76,6 @@ export default function TarjetaPuntos({
       px = e.clientX
       py = e.clientY
       card.classList.add('tp-arrastrando')
-      if (pista) pista.style.opacity = '0'
       bucle?.querer(true)
     }
     function alMover(e) {
@@ -307,9 +304,6 @@ export default function TarjetaPuntos({
           </div>
         </div>
       </div>
-      <p ref={pistaRef} className="tp-pista">
-        ARRASTRA PARA GIRAR 360°
-      </p>
     </div>
   )
 }

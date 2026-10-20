@@ -53,7 +53,7 @@ function Etiqueta({ children, obligatorio, htmlFor }) {
 function Seccion({ titulo, children }) {
   return (
     <section className="liquid-glass space-y-4 rounded-none p-5">
-      <h2 className="text-sm font-semibold text-[var(--lw-gold)]">{titulo}</h2>
+      <h2 className="sm:text-xl text-sm font-semibold text-[var(--lw-gold)]">{titulo}</h2>
       {children}
     </section>
   )
@@ -185,7 +185,7 @@ export default function LibroReclamacionesCliente() {
         <div className="mx-auto w-full max-w-2xl space-y-4 lw-gutter-detalle">
           <div className="liquid-glass rounded-none p-6 text-center">
             <CheckCircle2 className="mx-auto h-10 w-10 text-[var(--lw-gold)]" />
-            <h1 className="mt-3 text-lg font-semibold text-white">Tu hoja de reclamación fue registrada</h1>
+            <h1 className="sm:text-xl mt-3 text-lg font-semibold text-white">Tu hoja de reclamación fue registrada</h1>
             <p className="mt-1 text-sm text-white/60">Guarda este código para cualquier seguimiento.</p>
             <p className="mt-4 font-mono text-2xl font-semibold text-[var(--lw-gold)]">{constancia.codigo}</p>
             <p className="mt-1 text-xs text-white/50">
@@ -222,7 +222,7 @@ export default function LibroReclamacionesCliente() {
             <BookOpen className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-white">Libro de Reclamaciones</h1>
+            <h1 className="sm:text-xl text-sm font-semibold text-white">Libro de Reclamaciones</h1>
             <p className="mt-0.5 text-xs text-white/50">
               Conforme al Código de Protección y Defensa del Consumidor (Ley N.º 29571).
             </p>
@@ -331,7 +331,7 @@ export default function LibroReclamacionesCliente() {
               </button>
             ))}
           </div>
-          <p className="text-[11px] leading-relaxed text-white/40">
+          <p className="text-[11px] sm:text-xs leading-relaxed text-white/40">
             <strong className="text-white/60">Reclamo:</strong> disconformidad con el producto o servicio.{' '}
             <strong className="text-white/60">Queja:</strong> malestar por la atención recibida, sin que
             afecte el producto o servicio.
@@ -366,7 +366,7 @@ export default function LibroReclamacionesCliente() {
               Declaro que la información es veraz.<span className="text-red"> *</span>
             </span>
           </label>
-          <p className="text-[11px] leading-relaxed text-white/40">
+          <p className="text-[11px] sm:text-xs leading-relaxed text-white/40">
             La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es
             requisito previo para interponer una denuncia ante el INDECOPI. El proveedor debe dar
             respuesta en un plazo no mayor a 15 días hábiles, prorrogable por otros 15 según la

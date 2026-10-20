@@ -182,7 +182,7 @@ function SelectorDia({ diaSeleccionado, onElegir }) {
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-white/50">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] sm:text-xs text-white/50">
         {DIAS_SEMANA.map((d) => (
           <span key={d}>{d}</span>
         ))}
@@ -311,7 +311,7 @@ function SeccionDireccion({ direcciones, direccionId, abierta, onAbrir, onCerrar
     <section aria-labelledby="carrito-dir-titulo" className="lw-panel flex flex-col p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
       <h2 id="carrito-dir-titulo">
         <button type="button" onClick={abierta ? onCerrar : onAbrir} aria-expanded={abierta} aria-controls="carrito-dir-contenido"
-          className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white">
+          className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white sm:text-xl">
           <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
           <span className="min-w-0 flex-1 break-words">{direccionSeleccionada ? `Enviar a ${direccionSeleccionada.direccion}` : 'Selecciona una dirección'}</span>
           <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
@@ -323,12 +323,12 @@ function SeccionDireccion({ direcciones, direccionId, abierta, onAbrir, onCerrar
           <div className="flex flex-col gap-3 pt-3">
             <Link
               to="/mi-perfil/direcciones"
-              className="flex w-fit items-center gap-1.5 text-[13px] font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]"
+              className="flex w-fit items-center gap-1.5 text-[13px] sm:text-sm font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]"
             >
               <Plus className="h-3.5 w-3.5" />
               Agregar
             </Link>
-      <p className="text-[13px] text-white/60">Elige dónde quieres recibir este pedido.</p>
+      <p className="text-[13px] sm:text-sm text-white/60">Elige dónde quieres recibir este pedido.</p>
       {direcciones.length === 0 ? (
         <Link
           to="/mi-perfil/direcciones"
@@ -361,7 +361,7 @@ function SeccionComprobante({ comprobante, onCambiar, ruc, onRuc, razonSocial, o
     <section aria-labelledby="carrito-comp-titulo" className="lw-panel flex flex-col p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
       <h2 id="carrito-comp-titulo">
         <button type="button" onClick={() => setAbierta(valor => !valor)} aria-expanded={abierta} aria-controls="carrito-comp-contenido"
-          className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white">
+          className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white sm:text-xl">
           <Receipt aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
           <span className="flex-1">{comprobante === 'BOLETA' ? 'Boleta' : 'Factura'}</span>
           <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
@@ -390,7 +390,7 @@ function SeccionComprobante({ comprobante, onCambiar, ruc, onRuc, razonSocial, o
         </button>
       </div>
       {comprobante === 'BOLETA' ? (
-        <p className="text-[13px] text-white/60">La boleta se emite a tu nombre y te llega por WhatsApp.</p>
+        <p className="text-[13px] sm:text-sm text-white/60">La boleta se emite a tu nombre y te llega por WhatsApp.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2.5">
@@ -421,7 +421,7 @@ function SeccionComprobante({ comprobante, onCambiar, ruc, onRuc, razonSocial, o
               />
             </div>
           </div>
-          <p className="text-[13px] text-white/60">La factura te llega por WhatsApp.</p>
+          <p className="text-[13px] sm:text-sm text-white/60">La factura te llega por WhatsApp.</p>
         </>
       )}
           </div>
@@ -520,7 +520,7 @@ function SeccionProductos({ productos, onAlternar, onCantidad, onQuitar }) {
   return (
     <section aria-labelledby="carrito-prod-titulo" className="lw-panel flex flex-col p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
       <div className="flex items-center justify-between gap-3 pb-1">
-        <h2 id="carrito-prod-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
+        <h2 id="carrito-prod-titulo" className="sm:text-xl flex items-center gap-2.5 text-base font-semibold text-white">
           <ShoppingBag className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
           Productos
         </h2>
@@ -564,7 +564,7 @@ function PanelCupones({ errorLectura, disponibles, usados, cuponAplicadoCodigo, 
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <h2 id="carrito-cupones-titulo" className="lw-titulo-heavitas text-[26px] lg:text-[28px]">
+            <h2 id="carrito-cupones-titulo" className="sm:text-[40px] lw-titulo-heavitas text-[26px]">
               Tus cupones
             </h2>
             <p className="text-sm leading-relaxed text-white/60">
@@ -603,7 +603,7 @@ function PanelCupones({ errorLectura, disponibles, usados, cuponAplicadoCodigo, 
             </button>
           </div>
           {errorCodigo && (
-            <p role="alert" className="text-[13px] text-red-400">
+            <p role="alert" className="text-[13px] sm:text-sm text-red-400">
               {errorCodigo}
             </p>
           )}
@@ -627,7 +627,7 @@ function PanelCupones({ errorLectura, disponibles, usados, cuponAplicadoCodigo, 
                     type="button"
                     onClick={() => onElegir(cupon.codigo)}
                     disabled={cupon.codigo === cuponAplicadoCodigo}
-                    className="text-[13px] font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8] disabled:cursor-default disabled:text-white/50"
+                    className="text-[13px] sm:text-sm font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8] disabled:cursor-default disabled:text-white/50"
                   >
                     {cupon.codigo === cuponAplicadoCodigo ? 'Aplicado' : 'Usar'}
                   </button>
@@ -1088,7 +1088,7 @@ export default function CarritoCliente() {
     <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8 lg:pb-10">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="mb-6 flex items-end justify-between gap-3 lg:mb-8">
-          <h1 className="lw-titulo-heavitas text-[28px]">Tu carrito</h1>
+          <h1 className="sm:text-[48px] lw-titulo-heavitas text-[28px]">Tu carrito</h1>
           <span className="shrink-0 text-sm text-white/60">{productos.length} artículos</span>
         </div>
 
@@ -1131,7 +1131,7 @@ export default function CarritoCliente() {
           {/* Columna derecha */}
           <div className="flex flex-col gap-6">
             <aside className="lw-panel flex flex-col gap-6 p-6 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) lg:p-7">
-              <h2 className="text-lg font-semibold text-white">Resumen del pedido</h2>
+              <h2 className="sm:text-xl text-lg font-semibold text-white">Resumen del pedido</h2>
 
               <div className="flex flex-col gap-2.5">
                 <div className="flex gap-2.5">
@@ -1241,7 +1241,7 @@ export default function CarritoCliente() {
                     </select>
                   </div>
                 ) : (
-                  <p className="flex items-center gap-2 text-[13px] text-white/60">
+                  <p className="flex items-center gap-2 text-[13px] sm:text-sm text-white/60">
                     <MapPin className="h-3.5 w-3.5 shrink-0" />
                     Recoges en el salón cuando te confirmemos que está listo.
                   </p>
@@ -1263,7 +1263,7 @@ export default function CarritoCliente() {
                     <span className="text-xs uppercase tracking-wider text-white/60">Cupón aplicado</span>
                     <TarjetaCupon cupon={cupon} />
                     {!cuponUtilizable && (
-                      <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
+                      <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] sm:text-sm text-white/90">
                         <span>
                           {estadoEfectivoCupon(cupon).estado === 'VENCIDO'
                             ? 'Este cupón ya venció y no se puede usar.'
@@ -1273,12 +1273,12 @@ export default function CarritoCliente() {
                       </div>
                     )}
                     {cuponUtilizable && validacion.estado === 'validando' && (
-                      <p role="status" className="text-[13px] text-white/70">
+                      <p role="status" className="text-[13px] sm:text-sm text-white/70">
                         Validando tu cupón…
                       </p>
                     )}
                     {cuponUtilizable && (validacion.estado === 'rechazado' || validacion.estado === 'error') && (
-                      <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
+                      <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] sm:text-sm text-white/90">
                         <span>{validacion.motivo}</span>
                         {validacion.estado === 'error' && (
                           <button type="button" onClick={() => setVersionCarrito((v) => v + 1)} className="w-fit font-semibold text-[var(--lw-gold)]">
@@ -1288,7 +1288,7 @@ export default function CarritoCliente() {
                         <span className="text-white/60">Quita el cupón o elige otro para continuar. No se consumió.</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-end gap-4 pt-0.5 text-[13px]">
+                    <div className="flex items-center justify-end gap-4 pt-0.5 text-[13px] sm:text-sm">
                       <button type="button" onClick={() => setDrawerAbierto(true)} className="font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]">
                         Cambiar
                       </button>
@@ -1352,12 +1352,12 @@ export default function CarritoCliente() {
               </div>
 
               {errorGuardado && (
-                <div role="alert" className="flex flex-col gap-1 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] text-white/90">
+                <div role="alert" className="flex flex-col gap-1 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] sm:text-sm text-white/90">
                   <span>{errorGuardado}</span>
                 </div>
               )}
               {hayPendientes && (
-                <p role="status" className="text-[13px] text-white/70">
+                <p role="status" className="text-[13px] sm:text-sm text-white/70">
                   Guardando los cambios de tu carrito…
                 </p>
               )}
@@ -1381,7 +1381,7 @@ export default function CarritoCliente() {
               </button>
 
               <section aria-labelledby="carrito-pago-titulo" className="flex flex-col gap-4 border-t border-[#232326] pt-4">
-                <h2 id="carrito-pago-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
+                <h2 id="carrito-pago-titulo" className="sm:text-xl flex items-center gap-2.5 text-base font-semibold text-white">
                   <CreditCard className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                   Método de pago
                 </h2>
@@ -1408,10 +1408,10 @@ export default function CarritoCliente() {
                 </div>
                 {esTarjeta ? (
                   <div className="flex flex-col gap-2 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
-                    <p className="text-[15px] font-semibold leading-snug text-white">
+                    <p className="text-[15px] sm:text-base font-semibold leading-snug text-white">
                       Paga con tu tarjeta de débito o crédito{totalConfirmado ? ` (${formatearSoles(total)})` : ''}.
                     </p>
-                    <p className="text-[13px] text-white/60">
+                    <p className="text-[13px] sm:text-sm text-white/60">
                       Al pulsar el botón se abre el formulario seguro de Culqi. Tus datos de tarjeta no pasan por esta web
                       y tu pedido se confirma al instante.
                     </p>
@@ -1429,15 +1429,15 @@ export default function CarritoCliente() {
                       <div
                         role="img"
                         aria-label={`Código QR de ${metodoActual.nombre} — todavía no disponible`}
-                        className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-[#f1f3f5] p-2 text-center text-[11px] font-medium text-[#0b0b0c]/60"
+                        className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-[#f1f3f5] p-2 text-center text-[11px] sm:text-xs font-medium text-[#0b0b0c]/60"
                       >
                         QR no disponible todavía
                       </div>
                     )
                   )}
                   <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
-                    <p className="text-[15px] font-semibold leading-snug text-white">{instruccionPago}</p>
-                    <p className="text-[13px] text-white/60">Sube la captura de tu pago para confirmar el pedido.</p>
+                    <p className="text-[15px] sm:text-base font-semibold leading-snug text-white">{instruccionPago}</p>
+                    <p className="text-[13px] sm:text-sm text-white/60">Sube la captura de tu pago para confirmar el pedido.</p>
                     <CampoSubirArchivo
                       nombreArchivo={captura}
                       previewUrl={capturaPreview}
@@ -1467,7 +1467,7 @@ export default function CarritoCliente() {
                 <MessageCircle className="h-[18px] w-[18px]" />
                 ¿Dudas con tu pedido? Escríbenos
               </a>
-              <ul className="flex flex-col gap-2.5 pl-1 text-[13px] text-white/60">
+              <ul className="flex flex-col gap-2.5 pl-1 text-[13px] sm:text-sm text-white/60">
                 <li className="flex items-center gap-2.5">
                   <ShieldCheck className="h-4 w-4 shrink-0 text-white/50" />
                   Productos 100% originales

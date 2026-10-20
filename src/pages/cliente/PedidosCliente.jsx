@@ -137,7 +137,7 @@ export default function PedidosCliente() {
                         <p className="text-sm font-semibold text-white">{formatearSoles(pedido.total)}</p>
                       </div>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${etiqueta.clase}`}>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-medium ${etiqueta.clase}`}>
                       {etiqueta.texto}
                     </span>
                   </div>
@@ -234,7 +234,7 @@ export default function PedidosCliente() {
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
           <div ref={panelCancelarRef} className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="text-base font-semibold text-white">¿Cancelar este pedido?</h2>
+              <h2 className="sm:text-xl text-base font-semibold text-white">¿Cancelar este pedido?</h2>
               <button
                 type="button"
                 onClick={() => setPedidoCancelando(null)}

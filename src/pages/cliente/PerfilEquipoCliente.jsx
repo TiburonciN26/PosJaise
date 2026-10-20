@@ -51,9 +51,9 @@ export default function PerfilEquipoCliente() {
               )}
             </div>
             <div className="flex flex-col gap-3">
-              <h1 className="lw-titulo-heavitas text-3xl uppercase leading-none md:text-5xl">{persona.nombres_completos}</h1>
+              <h1 className="sm:text-[48px] lw-titulo-heavitas text-3xl uppercase leading-none">{persona.nombres_completos}</h1>
               {persona.especialidad && (
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--lw-gold)]">
+                <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--lw-gold)]">
                   {persona.especialidad}
                 </p>
               )}

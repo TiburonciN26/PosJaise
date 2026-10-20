@@ -12,7 +12,7 @@ export default function CuponPromocionInicio({ promocion, reclamado, reclamando,
     ? formatearFechaCupon(/^\d{4}-\d{2}-\d{2}$/.test(fechaOriginal) ? `${fechaOriginal}T12:00:00-05:00` : fechaOriginal)
     : null
   return (
-    <EnvolturaCupon nivel={nivelDeCupon({ origen: 'PROMOCION' })} titulo={promocion.titulo}
+    <EnvolturaCupon estrella nivel={nivelDeCupon({ origen: 'PROMOCION' })} titulo={promocion.titulo}
       subtitulo={fecha ? `Hasta el ${fecha}` : null} reclamado={reclamado} confirmado={reclamado}
       estado={reclamado ? 'Reclamado' : reclamando ? 'Reclamando…' : 'Reclamar'}
       valor={<span className={`cpi-valor${esPorcentaje ? '' : ' cpi-valor-monto'}`}>{esPorcentaje ? <>{promocion.valor}<span className="cpi-unidad">%</span></> : formatearSoles(promocion.valor)}</span>}

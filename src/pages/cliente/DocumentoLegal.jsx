@@ -25,7 +25,7 @@ export default function DocumentoLegal({ titulo, introduccion, secciones, rutaAc
             <FileText className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-semibold text-white">{titulo}</h1>
+            <h1 className="sm:text-xl text-base font-semibold text-white">{titulo}</h1>
             <p className="mt-0.5 text-xs text-white/50">
               Última actualización: {FECHA_LEGAL} · Versión {VERSION_LEGAL}
             </p>
@@ -35,7 +35,7 @@ export default function DocumentoLegal({ titulo, introduccion, secciones, rutaAc
 
         {secciones.map((seccion, indice) => (
           <section key={seccion.titulo} className="liquid-glass space-y-2.5 rounded-none p-5">
-            <h2 className="text-sm font-semibold text-white">
+            <h2 className="sm:text-xl text-sm font-semibold text-white">
               {indice + 1}. {seccion.titulo}
             </h2>
             {seccion.bloques.map((bloque, i) =>

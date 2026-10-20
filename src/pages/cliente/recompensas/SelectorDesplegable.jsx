@@ -36,7 +36,7 @@ export default function SelectorDesplegable({ opciones, valor, onSeleccionar, et
       <button ref={boton} type="button" aria-expanded={abierto} aria-controls={id}
         aria-label={`${etiqueta}: ${seleccionada?.label ?? ''}`}
         onClick={() => setAbierto(valorAnterior => !valorAnterior)}
-        className="flex w-full min-w-0 items-center justify-between gap-1.5 border-0 bg-transparent px-(--pading-horizontal-boton) py-(--pading-vertical-boton) text-[13px] font-semibold leading-normal text-[var(--lw-fg)]">
+        className="flex w-full min-w-0 items-center justify-between gap-1.5 border-0 bg-transparent px-(--pading-horizontal-boton) py-(--pading-vertical-boton) text-[13px] sm:text-sm font-semibold leading-normal text-[var(--lw-fg)]">
         <span className="truncate">{seleccionada?.label}</span>
         <ChevronDown aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
       </button>
@@ -50,7 +50,7 @@ export default function SelectorDesplegable({ opciones, valor, onSeleccionar, et
                   setAbierto(false)
                   boton.current?.focus()
                 }}
-                className={`block w-full rounded-none border-0 px-(--pading-horizontal-boton) py-(--pading-vertical-boton) text-left text-[13px] leading-normal transition-colors hover:bg-[var(--lw-border)] ${valor === opcion.clave ? 'bg-[var(--lw-border)] font-semibold text-[var(--lw-gold)]' : 'bg-transparent text-[var(--lw-fg)]'}`}>
+                className={`block w-full rounded-none border-0 px-(--pading-horizontal-boton) py-(--pading-vertical-boton) text-left text-[13px] sm:text-sm leading-normal transition-colors hover:bg-[var(--lw-border)] ${valor === opcion.clave ? 'bg-[var(--lw-border)] font-semibold text-[var(--lw-gold)]' : 'bg-transparent text-[var(--lw-fg)]'}`}>
                 {opcion.label}
               </button>
             ))}

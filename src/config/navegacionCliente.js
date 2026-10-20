@@ -18,6 +18,15 @@ export const seccionesCliente = [
   { path: '/nosotros', label: 'Nosotros', icono: Building2 },
 ]
 
+// Subsecciones de «Nosotros» (?seccion=...). Viven aquí y no en NosotrosCliente.jsx porque las usa también el menú desplegable del
+// header (PortalCliente), que no debe importar la página (se carga diferida).
+export const seccionesNosotros = [
+  { clave: 'equipo', label: 'Equipo' },
+  { clave: 'galeria', label: 'Galería' },
+  { clave: 'resenas', label: 'Reseñas' },
+  { clave: 'contacto', label: 'Contacto' },
+]
+
 // Título que usa la migaja de pan de PortalCliente (debajo del header)
 // para cualquier ruta que NO sea una de las pestañas de arriba — se
 // llegó desde el menú del avatar (MenuUsuarioCliente), desde el ícono de

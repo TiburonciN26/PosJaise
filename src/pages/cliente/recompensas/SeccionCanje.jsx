@@ -225,7 +225,7 @@ export default function SeccionCanje({
       )}
 
       {sesion && modoReal && saldoReal && Number(saldoReal.monedas) < 0 && (
-        <p role="status" className="border border-white/20 px-4 py-3 text-[13px] leading-relaxed text-white/80">
+        <p role="status" className="border border-white/20 px-4 py-3 text-[13px] sm:text-sm leading-relaxed text-white/80">
           Tu saldo de monedas es negativo por una venta anulada. Se compensa con tus próximas compras; mientras tanto
           no puedes canjear.
         </p>
@@ -240,7 +240,7 @@ export default function SeccionCanje({
       )}
 
       {modoReal ? (
-        <div className="flex flex-col gap-1 border border-white/10 bg-white/[0.02] px-5 py-4 text-[13px] leading-relaxed text-white/60">
+        <div className="flex flex-col gap-1 border border-white/10 bg-white/[0.02] px-5 py-4 text-[13px] sm:text-sm leading-relaxed text-white/60">
           <span>{REGLA_MONEDAS}</span>
           <span>{REGLA_CUPONES}</span>
           <span>{REGLA_PROTECCION}</span>

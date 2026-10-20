@@ -1,12 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import './CuponPromocionInicio.css'
+import StarBorder from './StarBorder.jsx'
 
 // Presentación compartida; cada pantalla conserva sus permisos, datos y acciones.
 export default function EnvolturaCupon({
   nivel, valor, titulo, subtitulo, estado, confirmado = false, reclamado = false,
   etiquetaBeneficio = 'Descuento', apagada = false, esNuevo = false,
-  abierto: abiertoControlado, onToggle, pie, children,
+  abierto: abiertoControlado, onToggle, pie, children, estrella = false,
 }) {
   const [abiertoLocal, setAbiertoLocal] = useState(false)
   const abierto = abiertoControlado ?? abiertoLocal
@@ -26,7 +27,7 @@ export default function EnvolturaCupon({
     return () => observador.disconnect()
   }, [tienePie])
 
-  return (
+  const cupon = (
     <div ref={envolturaRef} className="cpi-envoltura">
       <article className="cpi" data-nivel={nivel?.nombre ?? 'Oferta'} data-categoria={nivel?.categoria ?? 'oferta'} data-abierto={abierto}
         data-reclamado={reclamado && Boolean(pie)} data-confirmado={confirmado}
@@ -56,5 +57,17 @@ export default function EnvolturaCupon({
         </div>
       </article>
     </div>
+  )
+
+  // Star Border (reactbits.dev/animations/star-border): la estrella recorre el borde del cupón.
+  // theme="light" siempre: es el modo que conserva el rojo puro (el "dark" mezcla la luz con blanco y se veía blanca).
+  // Solo se activa con la prop `estrella` (cupón de promoción de Inicio); los demás cupones no cambian.
+  if (!estrella) return cupon
+  return (
+    <StarBorder as="div" className="cpi-estrella" theme="light" radius={0} thickness={2} duration={5}
+      trailLength={0.35} glow={0.8} sparkle color="#ff2d3f" trailColor="#ff7a86"
+      backgroundColor="transparent" borderColor="transparent" hover="lap" clickPulse>
+      {cupon}
+    </StarBorder>
   )
 }

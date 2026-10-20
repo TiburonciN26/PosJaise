@@ -1,4 +1,29 @@
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import CampoColapsable from '../../../components/CampoColapsable.jsx'
+
 // Piezas chicas compartidas por las secciones de Recompensas.
+
+// Botón con flecha que despliega un panel de información (mismo patrón que «Ver historial de visitas» en Mis sellos).
+export function Desplegable({ titulo, children }) {
+  const [abierto, setAbierto] = useState(false)
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setAbierto((anterior) => !anterior)}
+        aria-expanded={abierto}
+        className="flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white sm:text-sm"
+      >
+        {titulo}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
+      </button>
+      <CampoColapsable abierto={abierto} margen>
+        <div className="liquid-glass flex flex-col gap-3 rounded-none p-5">{children}</div>
+      </CampoColapsable>
+    </div>
+  )
+}
 
 // Marca de "dato de diseño": propuesta / próximamente / ejemplo. Todo lo
 // que todavía no existe en el backend (ver docs/diseno-recompensas) lleva
@@ -10,7 +35,7 @@
 export function Pildora({ children, envolver = false }) {
   return (
     <span
-      className={`inline-flex items-center border border-dashed border-[var(--lw-gold)] px-2.5 text-[11px] font-semibold tracking-wide text-[var(--lw-gold)] ${
+      className={`inline-flex items-center border border-dashed border-[var(--lw-gold)] px-2.5 text-[11px] sm:text-xs font-semibold tracking-wide text-[var(--lw-gold)] ${
         envolver ? 'max-w-full whitespace-normal rounded-xl py-1 text-center leading-snug' : 'whitespace-nowrap rounded-full py-0.5'
       }`}
     >
@@ -25,7 +50,7 @@ export function Filtro({ activo, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={activo}
-      className={`min-h-9 rounded-full border px-3.5 text-[13px] font-semibold transition-colors ${
+      className={`min-h-9 rounded-full border px-3.5 text-[13px] sm:text-sm font-semibold transition-colors ${
         activo
           ? 'border-white bg-white text-[#0b0b0c]'
           : 'border-[#3a3a3f] bg-transparent text-white hover:border-[var(--lw-gold)]'
@@ -39,8 +64,8 @@ export function Filtro({ activo, onClick, children }) {
 export function Encabezado({ titulo, texto }) {
   return (
     <div className="flex flex-col gap-1">
-      <h2 className="text-[22px] font-semibold text-white">{titulo}</h2>
-      {texto && <p className="text-[13px] leading-relaxed text-white/60">{texto}</p>}
+      <h2 className="sm:text-[40px] text-[22px] font-semibold text-white">{titulo}</h2>
+      {texto && <p className="text-[13px] sm:text-sm leading-relaxed text-white/60">{texto}</p>}
     </div>
   )
 }
@@ -48,7 +73,7 @@ export function Encabezado({ titulo, texto }) {
 // Aviso estándar de una sección que todavía no tiene backend.
 export function AvisoProximamente({ children }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border border-white/10 bg-white/[0.02] px-5 py-4 text-[13px] leading-relaxed text-white/60">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border border-white/10 bg-white/[0.02] px-5 py-4 text-[13px] sm:text-sm leading-relaxed text-white/60">
       <Pildora>Próximamente</Pildora>
       {children}
     </div>
@@ -66,7 +91,7 @@ export function AvisoError({ titulo, texto, onReintentar }) {
     >
       <div className="flex flex-col gap-1">
         <p className="text-base font-semibold text-red">{titulo}</p>
-        {texto && <p className="max-w-[560px] text-[13px] leading-relaxed text-white/60">{texto}</p>}
+        {texto && <p className="max-w-[560px] text-[13px] sm:text-sm leading-relaxed text-white/60">{texto}</p>}
       </div>
       {onReintentar && (
         <button

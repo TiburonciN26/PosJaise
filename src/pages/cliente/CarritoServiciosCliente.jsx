@@ -486,7 +486,7 @@ export default function CarritoServiciosCliente() {
       <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8">
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 pb-20 text-center">
           <Sparkles className="h-9 w-9 text-white/25" />
-          <h1 className="lw-titulo-heavitas text-xl uppercase">Todavía no agregaste servicios</h1>
+          <h1 className="sm:text-[48px] lw-titulo-heavitas text-xl uppercase">Todavía no agregaste servicios</h1>
           <p className="text-sm text-white/60">Elige tus servicios favoritos y vuelve para reservar tu cita.</p>
           <Link to="/servicios" className="mt-2 rounded-full bg-[var(--lw-gold)] px-6 py-3 text-sm font-semibold text-black">
             Ver servicios
@@ -500,7 +500,7 @@ export default function CarritoServiciosCliente() {
     <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-24 md:pb-8 lg:pb-10">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="mb-6 flex items-end justify-between gap-3 lg:mb-8">
-          <h1 className="lw-titulo-heavitas text-[28px] uppercase">Carrito de servicios</h1>
+          <h1 className="sm:text-[48px] lw-titulo-heavitas text-[28px] uppercase">Carrito de servicios</h1>
           <span className="shrink-0 text-sm text-white/60">
             {servicios.length} {servicios.length === 1 ? 'servicio' : 'servicios'} · {duracionCarritoCompleto} min
           </span>
@@ -511,7 +511,7 @@ export default function CarritoServiciosCliente() {
           <div className="flex flex-col gap-8">
             <section aria-labelledby="carrito-serv-titulo" className="lw-panel flex flex-col p-6">
               <div className="flex items-center justify-between gap-3 pb-1">
-                <h2 id="carrito-serv-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
+                <h2 id="carrito-serv-titulo" className="sm:text-xl flex items-center gap-2.5 text-base font-semibold text-white">
                   <Sparkles className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                   Servicios
                 </h2>
@@ -532,7 +532,7 @@ export default function CarritoServiciosCliente() {
             </Link>
 
             <section aria-labelledby="carrito-asis-titulo" className="lw-panel flex flex-col gap-3 p-6">
-              <h2 id="carrito-asis-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
+              <h2 id="carrito-asis-titulo" className="sm:text-xl flex items-center gap-2.5 text-base font-semibold text-white">
                 <User className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                 Asistente
                 <span className="text-red-500" aria-hidden="true">
@@ -559,7 +559,7 @@ export default function CarritoServiciosCliente() {
             </section>
 
             <section aria-labelledby="carrito-fecha-titulo" className="lw-panel flex flex-col gap-4 p-6">
-              <h2 id="carrito-fecha-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
+              <h2 id="carrito-fecha-titulo" className="sm:text-xl flex items-center gap-2.5 text-base font-semibold text-white">
                 <Clock className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                 Día y hora
                 <span className="text-red-500" aria-hidden="true">
@@ -606,7 +606,7 @@ export default function CarritoServiciosCliente() {
                     <div className="flex flex-col gap-3">
                       {horariosPorTurno.manana.length > 0 && (
                         <div>
-                          <span className="mb-1.5 block text-[11px] uppercase tracking-wider text-white/40">Mañana</span>
+                          <span className="mb-1.5 block text-[11px] sm:text-xs uppercase tracking-wider text-white/40">Mañana</span>
                           <div className="grid grid-cols-3 gap-2">
                             {horariosPorTurno.manana.map((h) => (
                               <button
@@ -628,7 +628,7 @@ export default function CarritoServiciosCliente() {
                       )}
                       {horariosPorTurno.tarde.length > 0 && (
                         <div>
-                          <span className="mb-1.5 block text-[11px] uppercase tracking-wider text-white/40">Tarde</span>
+                          <span className="mb-1.5 block text-[11px] sm:text-xs uppercase tracking-wider text-white/40">Tarde</span>
                           <div className="grid grid-cols-3 gap-2">
                             {horariosPorTurno.tarde.map((h) => (
                               <button
@@ -655,7 +655,7 @@ export default function CarritoServiciosCliente() {
             </section>
 
             <section aria-labelledby="carrito-nota-titulo" className="lw-panel flex flex-col gap-2 p-6">
-              <h2 id="carrito-nota-titulo" className="text-base font-semibold text-white">
+              <h2 id="carrito-nota-titulo" className="sm:text-xl text-base font-semibold text-white">
                 Nota para el salón
               </h2>
               <textarea
@@ -671,7 +671,7 @@ export default function CarritoServiciosCliente() {
           {/* Columna derecha */}
           <div className="flex flex-col gap-6">
             <aside className="lw-panel flex flex-col gap-6 p-6 lg:p-7">
-              <h2 className="text-lg font-semibold text-white">Resumen de tu reserva</h2>
+              <h2 className="sm:text-xl text-lg font-semibold text-white">Resumen de tu reserva</h2>
 
               {horarioElegido ? (
                 <div className="flex flex-col gap-1 border-b border-[#232326] pb-4 text-sm">
@@ -717,10 +717,10 @@ export default function CarritoServiciosCliente() {
 
               <div className="flex flex-col gap-3 border-t border-[#232326] pt-4">
                 {programa.estado === 'cargando' && (
-                  <p aria-busy="true" className="text-[13px] text-white/50">Calculando tu avance…</p>
+                  <p aria-busy="true" className="text-[13px] sm:text-sm text-white/50">Calculando tu avance…</p>
                 )}
                 {(programa.estado === 'error' || (programa.activo === true && programa.saldo.estado === 'error')) && (
-                  <p role="alert" className="text-[13px] leading-relaxed text-white/60">
+                  <p role="alert" className="text-[13px] sm:text-sm leading-relaxed text-white/60">
                     No pudimos cargar tus monedas y sellos ahora, así que no mostramos un estimado. Tu reserva no se ve afectada.
                   </p>
                 )}
@@ -746,7 +746,7 @@ export default function CarritoServiciosCliente() {
                         style={{ width: `${avanceProg.pct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
                       />
                     </div>
-                    <p className="text-[13px] leading-relaxed text-white/70">
+                    <p className="text-[13px] sm:text-sm leading-relaxed text-white/70">
                       {monedasEstimadas && (
                         <>
                           <span className="font-semibold text-[var(--lw-gold)]">Estimado {monedasEstimadas}</span> cuando se confirme tu
@@ -781,7 +781,7 @@ export default function CarritoServiciosCliente() {
                       />
                     </div>
                     {puntosEstimados !== null && (
-                      <p className="flex items-center gap-1.5 text-[13px] text-white/70">
+                      <p className="flex items-center gap-1.5 text-[13px] sm:text-sm text-white/70">
                         <span className="font-semibold text-[var(--lw-gold)]">Ganarás +{puntosEstimados} pts</span>
                         {yaTieneCitaEseDia ? (
                           <span className="inline-flex items-center gap-1 text-white/45">
@@ -854,7 +854,7 @@ export default function CarritoServiciosCliente() {
               {faltante && <p className="hidden text-center text-xs text-white/50 lg:block">{faltante}</p>}
 
               <section aria-labelledby="carrito-pago-titulo" className="flex flex-col gap-4 border-t border-[#232326] pt-4">
-                <h2 id="carrito-pago-titulo" className="flex items-center gap-2.5 text-base font-semibold text-white">
+                <h2 id="carrito-pago-titulo" className="sm:text-xl flex items-center gap-2.5 text-base font-semibold text-white">
                   <CreditCard className="h-[18px] w-[18px] text-[var(--lw-gold)]" />
                   Método de pago del adelanto
                 </h2>
@@ -888,14 +888,14 @@ export default function CarritoServiciosCliente() {
                       <div
                         role="img"
                         aria-label={`Código QR de ${metodoActual.nombre} — todavía no disponible`}
-                        className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-[#f1f3f5] p-2 text-center text-[11px] font-medium text-[#0b0b0c]/60"
+                        className="flex h-28 w-28 shrink-0 items-center justify-center rounded-lg bg-[#f1f3f5] p-2 text-center text-[11px] sm:text-xs font-medium text-[#0b0b0c]/60"
                       >
                         QR no disponible todavía
                       </div>
                     ))}
                   <div className="flex min-w-0 flex-1 flex-col gap-2 self-stretch">
-                    <p className="text-[15px] font-semibold leading-snug text-white">{instruccionPago}</p>
-                    <p className="text-[13px] text-white/60">Sube la captura de tu pago para confirmar la reserva.</p>
+                    <p className="text-[15px] sm:text-base font-semibold leading-snug text-white">{instruccionPago}</p>
+                    <p className="text-[13px] sm:text-sm text-white/60">Sube la captura de tu pago para confirmar la reserva.</p>
                     <CampoSubirArchivo
                       nombreArchivo={captura}
                       previewUrl={capturaPreview}
@@ -933,7 +933,7 @@ export default function CarritoServiciosCliente() {
                   WhatsApp aún no configurado
                 </span>
               )}
-              <ul className="flex flex-col gap-2.5 pl-1 text-[13px] text-white/60">
+              <ul className="flex flex-col gap-2.5 pl-1 text-[13px] sm:text-sm text-white/60">
                 <li className="flex items-center gap-2.5">
                   <Clock className="h-4 w-4 shrink-0 text-white/50" />
                   Reprograma o cancela hasta {plazoCancelacion} horas antes.

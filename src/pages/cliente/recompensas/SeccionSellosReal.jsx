@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Gift, Stamp } from 'lucide-react'
-import { AvisoError, Cargando } from './ui.jsx'
+import { AvisoError, Cargando, Desplegable } from './ui.jsx'
 import { reglaSellos } from '../../../lib/programaRecompensas.js'
 import { fechaHoraLima, premioAItem, textoPagoMinimo } from './lib.js'
 import ConfirmarCanje from './ConfirmarCanje.jsx'
@@ -35,12 +35,12 @@ export default function SeccionSellosReal({
 
   return (
     <section className="flex flex-col gap-6">
-      <p className="text-[13px] leading-relaxed text-white/60">
+      <p className="text-[13px] sm:text-sm leading-relaxed text-white/60">
         Un sello por cada día que compras servicios. Con {cfg.costo} sellos reclamas un premio.
       </p>
 
-      <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
-        <div className="flex w-full max-w-sm flex-col gap-3 justify-self-center lg:justify-self-end">
+      <div className="flex flex-col items-center">
+        <div className="flex w-full max-w-sm flex-col gap-3">
           <div className="liquid-glass rounded-none p-5 text-center">
             <div className="flex justify-center gap-2">
               {Array.from({ length: cfg.costo }, (_, i) => {
@@ -72,6 +72,17 @@ export default function SeccionSellosReal({
             </p>
           </div>
 
+          <Desplegable titulo="Cómo se ganan los sellos">
+            <ul className="flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed text-white/80">
+              <li>Un sello por día de Perú cuando una compra confirmada incluye servicios, venga o no de una cita web.</li>
+              <li>Varias compras o varios servicios el mismo día dan un solo sello.</li>
+              <li>Los productos solos no dan sello.</li>
+              <li>Acumulas hasta {cfg.max} sellos. Con {cfg.max} no se suman más hasta que reclames un premio; no se acreditan visitas anteriores omitidas.</li>
+              <li>Cada premio cuesta {cfg.costo} sellos. Si anulan una compra, el sello de ese día se retira solo si no queda otra compra con servicios ese día.</li>
+            </ul>
+            <p className="border-t border-white/10 pt-3 text-[13px] sm:text-sm leading-relaxed text-white/50">{reglaSellos({ sellosMax: cfg.max, sellosPorPremio: cfg.costo })}</p>
+          </Desplegable>
+
           {lleno && (
             <p
               role="status"
@@ -82,29 +93,17 @@ export default function SeccionSellosReal({
           )}
 
           {negativo && (
-            <p role="status" className="border border-white/20 px-4 py-3 text-[13px] leading-relaxed text-white/80">
+            <p role="status" className="border border-white/20 px-4 py-3 text-[13px] sm:text-sm leading-relaxed text-white/80">
               Tienes {Math.abs(sellos)} {Math.abs(sellos) === 1 ? 'sello' : 'sellos'} por recuperar. Cada día con una
               venta de servicios válida recuperas un sello, hasta volver a 0. Después puedes seguir acumulando. Los
               premios que ya reclamaste se conservan.
             </p>
           )}
         </div>
-
-        <div className="liquid-glass flex flex-col gap-3 self-start rounded-none p-5">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Cómo se ganan los sellos</span>
-          <ul className="flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed text-white/80">
-            <li>Un sello por día de Perú cuando una compra confirmada incluye servicios, venga o no de una cita web.</li>
-            <li>Varias compras o varios servicios el mismo día dan un solo sello.</li>
-            <li>Los productos solos no dan sello.</li>
-            <li>Acumulas hasta {cfg.max} sellos. Con {cfg.max} no se suman más hasta que reclames un premio; no se acreditan visitas anteriores omitidas.</li>
-            <li>Cada premio cuesta {cfg.costo} sellos. Si anulan una compra, el sello de ese día se retira solo si no queda otra compra con servicios ese día.</li>
-          </ul>
-          <p className="border-t border-white/10 pt-3 text-[13px] leading-relaxed text-white/50">{reglaSellos({ sellosMax: cfg.max, sellosPorPremio: cfg.costo })}</p>
-        </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold text-white">Premios por sellos</h3>
+        <h3 className="sm:text-xl text-lg font-semibold text-white">Premios por sellos</h3>
         {catalogo.estado === 'cargando' && <Cargando />}
         {catalogo.estado === 'error' && (
           <AvisoError
@@ -126,7 +125,7 @@ export default function SeccionSellosReal({
                   <Gift className="h-4 w-4 shrink-0 text-[var(--lw-gold)]" aria-hidden="true" />
                   {r.nombre}
                 </span>
-                <span className="text-[13px] text-white/70">{r.beneficio}</span>
+                <span className="text-[13px] sm:text-sm text-white/70">{r.beneficio}</span>
                 <span className="text-xs text-white/50">
                   {r.aplica} · {r.minimo} · {r.vigencia}
                 </span>
@@ -147,7 +146,7 @@ export default function SeccionSellosReal({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold text-white">Historial de sellos</h3>
+        <h3 className="sm:text-xl text-lg font-semibold text-white">Historial de sellos</h3>
         {movimientos.estado === 'cargando' && <Cargando />}
         {movimientos.estado === 'error' && (
           <AvisoError
@@ -162,7 +161,7 @@ export default function SeccionSellosReal({
         {movimientos.estado === 'ok' && movimientos.datos.length > 0 && (
           <ul className="liquid-glass divide-y divide-white/10 rounded-none">
             {movimientos.datos.map((m) => (
-              <li key={m.id} className="flex flex-wrap items-baseline justify-between gap-2 p-3 text-[13px]">
+              <li key={m.id} className="flex flex-wrap items-baseline justify-between gap-2 p-3 text-[13px] sm:text-sm">
                 <span className="min-w-0 flex-1 text-white/80">
                   {m.descripcion}
                   <span className="block text-xs text-white/40">{fechaHoraLima(m.fecha)}</span>

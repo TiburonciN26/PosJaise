@@ -107,6 +107,7 @@ export default function MenuUsuarioCliente() {
         onClick={() => setAbierto((valorAnterior) => !valorAnterior)}
         aria-expanded={abierto}
         aria-label="Menú de cuenta"
+        data-cupones-destino
         className="peer relative z-10 flex h-[30px] w-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--lw-gold)]/30 bg-[var(--lw-gold)]/15 text-sm font-semibold text-[var(--lw-gold)] sm:h-10 sm:w-10"
       >
         {urlFoto ? (

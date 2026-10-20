@@ -35,7 +35,7 @@ function Pasos({ pasos }) {
         <div key={titulo} className="liquid-glass flex flex-col gap-2 rounded-none p-5">
           <span className="text-[28px] font-bold text-[var(--lw-gold)]">{i + 1}</span>
           <strong className="text-white">{titulo}</strong>
-          <span className="text-[13px] leading-relaxed text-white/60">{texto}</span>
+          <span className="text-[13px] sm:text-sm leading-relaxed text-white/60">{texto}</span>
         </div>
       ))}
     </div>
@@ -45,7 +45,7 @@ function Pasos({ pasos }) {
 function Bloque({ titulo, children }) {
   return (
     <div className="liquid-glass flex flex-col gap-2.5 rounded-none p-6">
-      <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">{titulo}</span>
+      <span className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white/50">{titulo}</span>
       {children}
     </div>
   )
@@ -60,7 +60,7 @@ export default function SeccionComo({ programa }) {
   const reglas = programa.reglas
   return (
     <section className="flex flex-col gap-6">
-      <p className="text-[13px] leading-relaxed text-white/60">En cuatro pasos.</p>
+      <p className="text-[13px] sm:text-sm leading-relaxed text-white/60">En cuatro pasos.</p>
 
       {programa.estado === 'cargando' && <Cargando />}
 
@@ -90,7 +90,7 @@ export default function SeccionComo({ programa }) {
 
           <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
             <div className="liquid-glass flex flex-col gap-3.5 rounded-none p-6">
-              <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Cómo se ganan las monedas</span>
+              <span className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white/50">Cómo se ganan las monedas</span>
               <div className="flex flex-col gap-2.5">
                 <div className="flex flex-wrap items-baseline justify-between gap-1.5 border-b border-white/10 pb-2.5">
                   <span className="font-semibold text-white">Servicios</span>
@@ -101,14 +101,14 @@ export default function SeccionComo({ programa }) {
                   <strong className="text-lg text-white">{textoTasa(reglas.tasaProd)}</strong>
                 </div>
               </div>
-              <p className="text-[13px] leading-relaxed text-white/60">
+              <p className="text-[13px] sm:text-sm leading-relaxed text-white/60">
                 Las tasas son sobre el importe neto que pagas. Las compras pequeñas también acumulan avance: no se pierden las
                 fracciones entre compras.
               </p>
             </div>
 
             <Bloque titulo="Condiciones para sumar">
-              <ul className="flex list-disc flex-col gap-1.5 pl-[18px] text-[13px] leading-snug text-white/80">
+              <ul className="flex list-disc flex-col gap-1.5 pl-[18px] text-[13px] sm:text-sm leading-snug text-white/80">
                 {CONDICIONES_ACTIVO.map((c) => (
                   <li key={c}>{c}</li>
                 ))}
@@ -135,7 +135,7 @@ export default function SeccionComo({ programa }) {
           </Bloque>
 
           <Bloque titulo="Reglas del programa">
-            <ul className="flex list-disc flex-col gap-1.5 pl-[18px] text-[13px] leading-snug text-white/80">
+            <ul className="flex list-disc flex-col gap-1.5 pl-[18px] text-[13px] sm:text-sm leading-snug text-white/80">
               <li>{REGLA_MONEDAS}</li>
               <li>{REGLA_CUPONES}</li>
               <li>Cada cupón indica a qué se aplica (servicios, productos o ambos), su compra mínima, su vigencia y, si tiene, su límite de canjes.</li>

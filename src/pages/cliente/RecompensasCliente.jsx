@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { usePerfilClienteOpcional } from '../../context/PerfilClienteContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
 import AyudaCampo from '../../components/AyudaCampo.jsx'
 import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
@@ -22,7 +23,7 @@ function PuertaSesion() {
   return (
     <section className="liquid-glass flex flex-wrap items-center justify-between gap-5 rounded-none p-8">
       <div className="flex max-w-[560px] flex-col gap-1.5">
-        <h2 className="text-lg font-semibold text-white">Esta sección es solo para clientas con sesión</h2>
+        <h2 className="sm:text-xl text-lg font-semibold text-white">Esta sección es solo para clientas con sesión</h2>
         <p className="text-sm leading-relaxed text-white/60">
           Inicia sesión para ver tu información personal. No mostramos datos de otras clientas. Mientras tanto
           puedes explorar «Canjear puntos» y «Cómo funciona».
@@ -51,16 +52,13 @@ function recursosDeSeccion(clave, programaReal) {
       if (programaReal === null) return ['saldo']
       return programaReal ? ['saldo', 'catalogoSellos', 'sellosMovs'] : ['saldo', 'fidelizacion', 'historial', 'cuponSellos']
     case 'cupones':
-      return ['saldo', 'cupones', 'promociones']
+      return ['saldo', 'cupones']
     case 'movimientos':
       return programaReal ? ['saldo', 'movimientos'] : ['saldo']
     default:
       return []
   }
 }
-
-const idTab = (clave) => `recompensas-tab-${clave}`
-const idPanel = (clave) => `recompensas-panel-${clave}`
 
 // "Recompensas" (Club Jaise) — pestaña del portal que reúne lo que antes
 // eran tres pantallas sueltas: Mis puntos (tarjeta), Fidelización
@@ -90,7 +88,6 @@ export default function RecompensasCliente({ publico = false }) {
   const { mostrarToast } = useToast()
   const [params, setParams] = useSearchParams()
   const [generando, setGenerando] = useState(false)
-  const tabsRef = useRef([])
 
   const userId = publico ? null : (session?.user?.id ?? null)
   const sesion = Boolean(userId)
@@ -136,10 +133,8 @@ export default function RecompensasCliente({ publico = false }) {
     }
   }
 
-  // QA-038: la sección «actual» para decidir una navegación sale de la URL REAL, no del último render. El router escribe la
-  // URL de inmediato, pero React renderiza la nueva sección después: con pulsaciones consecutivas (End → Home) la segunda se
-  // comparaba contra la sección del render viejo («tarjeta»), parecía «ya estoy ahí» y se IGNORABA, dejando la URL en la
-  // sección de la primera. (BrowserRouter: window.location se actualiza de forma síncrona al navegar.)
+  // La sección «actual» para decidir una navegación sale de la URL REAL, no del último render (BrowserRouter actualiza
+  // window.location de forma síncrona), así dos selecciones seguidas no se comparan contra una sección vieja.
   function claveVigente() {
     const clave = new URLSearchParams(window.location.search).get('seccion')
     return SECCIONES.some((s) => s.clave === clave) ? clave : SECCIONES[0].clave
@@ -147,23 +142,6 @@ export default function RecompensasCliente({ publico = false }) {
 
   function irA(clave) {
     if (clave !== claveVigente()) setParams({ seccion: clave })
-  }
-
-  // Patrón WAI-ARIA de pestañas (QA-038): flechas izquierda/derecha
-  // (circular) e Inicio/Fin; la pestaña se activa al recibir el foco.
-  function alTeclear(evento) {
-    const total = SECCIONES.length
-    // Posición vigente según la URL real (no el índice del render), para que flechas seguidas avancen una por una.
-    const indice = SECCIONES.findIndex((s) => s.clave === claveVigente())
-    let destino = null
-    if (evento.key === 'ArrowRight') destino = (indice + 1) % total
-    else if (evento.key === 'ArrowLeft') destino = (indice - 1 + total) % total
-    else if (evento.key === 'Home') destino = 0
-    else if (evento.key === 'End') destino = total - 1
-    if (destino === null) return
-    evento.preventDefault()
-    irA(SECCIONES[destino].clave)
-    tabsRef.current[destino]?.focus()
   }
 
   // null = todavía no se sabe si el programa nuevo está activo (el saldo no llegó); true / false cuando ya se leyó.
@@ -176,7 +154,7 @@ export default function RecompensasCliente({ publico = false }) {
   }, [seccion.clave, seccion.personal, sesion, userId, programaReal, asegurar])
 
   let contenido
-  const { puntos, fidelizacion, historial, cupones, promociones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs, cuponSellos } = recursos
+  const { puntos, fidelizacion, historial, cupones, saldo, catalogoMonedas, catalogoSellos, movimientos, sellosMovs, cuponSellos } = recursos
   // Fase 2: con el programa activo, saldo/sellos/movimientos salen del libro del servidor.
   const saldoReal = saldo.estado === 'ok' && saldo.datos?.activo ? saldo.datos : null
   // Programa activo según lo que se haya podido leer (saldo propio o reglas públicas); null mientras no se sepa.
@@ -265,9 +243,7 @@ export default function RecompensasCliente({ publico = false }) {
         contenido = (
           <SeccionCupones
             cupones={cupones}
-            promociones={promociones}
             onReintentarCupones={() => cargar('cupones')}
-            onReintentarPromociones={() => cargar('promociones')}
             programaActivo={Boolean(saldoReal)}
           />
         )
@@ -284,12 +260,15 @@ export default function RecompensasCliente({ publico = false }) {
     }
   }
 
+  // Migaja del header: «Inicio | Recompensas | <subpestaña actual>» (mismo rótulo que el selector).
+  useRegistrarMigajas([{ titulo: programaActivo && seccion.clave === 'canje' ? 'Canjear monedas' : seccion.label }])
+
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         <header className="flex items-center justify-between gap-2 pb-6 sm:justify-start">
           <div className="flex shrink-0 items-center gap-2">
-            <h1 className="lw-titulo-heavitas text-4xl uppercase md:text-5xl">Recompensas</h1>
+            <h1 className="sm:text-[48px] lw-titulo-heavitas text-4xl uppercase">Recompensas</h1>
             <AyudaCampo etiqueta="Cómo funcionan las recompensas">
               Tus visitas y compras suman puntos y sellos. Cámbialos por cupones y beneficios.
             </AyudaCampo>
@@ -299,36 +278,7 @@ export default function RecompensasCliente({ publico = false }) {
             opciones={SECCIONES.map(s => ({ ...s, label: programaActivo && s.clave === 'canje' ? 'Canjear monedas' : s.label }))} />
         </header>
 
-        <div role="tablist" aria-label="Secciones de Recompensas" className="mb-6 hidden flex-wrap gap-2 sm:flex">
-          {SECCIONES.map((s, indice) => {
-            const activa = indice === indiceActivo
-            return (
-              <button
-                key={s.clave}
-                ref={(el) => {
-                  tabsRef.current[indice] = el
-                }}
-                id={idTab(s.clave)}
-                type="button"
-                role="tab"
-                aria-selected={activa}
-                aria-controls={activa ? idPanel(s.clave) : undefined}
-                tabIndex={activa ? 0 : -1}
-                onClick={() => irA(s.clave)}
-                onKeyDown={alTeclear}
-                className={`min-h-11 whitespace-nowrap rounded-full border px-[18px] text-sm font-semibold transition-colors ${
-                  activa
-                    ? 'border-white bg-white text-[#0b0b0c]'
-                    : 'border-[#3a3a3f] bg-transparent text-white hover:border-[var(--lw-gold)]'
-                }`}
-              >
-                {programaActivo && s.clave === 'canje' ? 'Canjear monedas' : s.label}
-              </button>
-            )
-          })}
-        </div>
-
-        <div role="tabpanel" id={idPanel(seccion.clave)} aria-labelledby={idTab(seccion.clave)}>
+        <div>
           {contenido}
         </div>
       </div>

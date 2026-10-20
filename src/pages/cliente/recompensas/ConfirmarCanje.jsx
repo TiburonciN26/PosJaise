@@ -127,12 +127,12 @@ export default function ConfirmarCanje({ premio, origen, saldo, userId, onCerrar
       >
         {fase === 'hecho' ? (
           <>
-            <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Canje realizado</span>
-            <h2 className="text-xl font-semibold leading-snug text-white">{premio.nombre}</h2>
+            <span className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white/50">Canje realizado</span>
+            <h2 className="sm:text-xl text-xl font-semibold leading-snug text-white">{premio.nombre}</h2>
             <div className="break-all rounded-lg border border-dashed border-[var(--lw-gold)] px-3 py-4 text-center font-mono text-3xl font-bold tracking-[0.12em] text-white">
               {resultado.codigo}
             </div>
-            <p className="text-[13px] leading-relaxed text-white/70">
+            <p className="text-[13px] sm:text-sm leading-relaxed text-white/70">
               {resultado.repetido
                 ? 'Recuperamos el cupón de este canje: no se descontó nada más.'
                 : `Se descontaron ${formato(Number(resultado.costo))} ${unidad}.`}{' '}
@@ -157,10 +157,10 @@ export default function ConfirmarCanje({ premio, origen, saldo, userId, onCerrar
           </>
         ) : (
           <>
-            <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Confirmar canje</span>
-            <h2 className="text-xl font-semibold leading-snug text-white">{premio.nombre}</h2>
+            <span className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white/50">Confirmar canje</span>
+            <h2 className="sm:text-xl text-xl font-semibold leading-snug text-white">{premio.nombre}</h2>
 
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[13px] leading-snug">
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-[13px] sm:text-sm leading-snug">
               <dt className="text-white/50">Beneficio</dt>
               <dd className="text-white">{describirBeneficio(premio)}</dd>
               <dt className="text-white/50">Costo</dt>
@@ -190,14 +190,14 @@ export default function ConfirmarCanje({ premio, origen, saldo, userId, onCerrar
             </dl>
 
             {pagoMinimo && (
-              <p className="border border-[var(--lw-gold)]/40 bg-white/[0.03] px-3 py-2 text-[13px] leading-relaxed text-white">
+              <p className="border border-[var(--lw-gold)]/40 bg-white/[0.03] px-3 py-2 text-[13px] sm:text-sm leading-relaxed text-white">
                 {pagoMinimo}
               </p>
             )}
 
             <p className="text-xs leading-relaxed text-white/60">{REGLA_CUPONES}</p>
             <p className="text-xs leading-relaxed text-white/60">{REGLA_PROTECCION}</p>
-            <p className="text-[13px] font-semibold leading-relaxed text-white">
+            <p className="text-[13px] sm:text-sm font-semibold leading-relaxed text-white">
               Este canje es definitivo. Una vez confirmado, no podrás recuperar {esSellos ? 'los sellos' : 'las monedas'}{' '}
               utilizados{esSellos ? '' : ', aunque el cupón siga sin usar'}.
             </p>
@@ -205,7 +205,7 @@ export default function ConfirmarCanje({ premio, origen, saldo, userId, onCerrar
             {mensaje && (
               <p
                 role={fase === 'error' || fase === 'incierto' ? 'alert' : 'status'}
-                className={`border px-3 py-2 text-[13px] leading-relaxed ${
+                className={`border px-3 py-2 text-[13px] sm:text-sm leading-relaxed ${
                   fase === 'error' ? 'border-red/60 text-red' : 'border-white/20 text-white/80'
                 }`}
               >

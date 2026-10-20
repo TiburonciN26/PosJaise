@@ -206,7 +206,7 @@ export default function ProductosCliente() {
     return (
       <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-sm text-white/70">No se pudo cargar el catálogo de productos.</p>
-        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+        <button type="button" onClick={reintentarVitrina} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
           Reintentar
         </button>
       </div>
@@ -245,7 +245,7 @@ export default function ProductosCliente() {
         <section className="mx-auto grid w-full max-w-[1400px] gap-8 lw-gutter pb-6 pt-6 lg:grid-cols-[1fr_1.12fr] lg:gap-16 lg:pt-10">
           <div className="order-2 flex flex-col justify-between gap-6 lg:order-1">
             <span
-              className={`hidden text-[11px] font-semibold uppercase tracking-widest text-white/60 sm:block ${reducirMovimiento ? '' : 'in-left'}`}
+              className={`hidden text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white/60 sm:block ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.eyebrow}ms` }}
             >
               Novedades y lo más vendido
@@ -284,14 +284,14 @@ export default function ProductosCliente() {
 
                 return (
                   <div key={p.id} style={{ gridArea: '1 / 1' }} aria-hidden={!activo} className={`flex flex-col ${activo ? '' : 'pointer-events-none'}`}>
-                    <h1 style={estiloTitulo} className="lw-titulo-heavitas mt-4 text-[34px] uppercase leading-[1.02] sm:text-[56px]">
+                    <h1 style={estiloTitulo} className="sm:text-[48px] lw-titulo-heavitas mt-4 text-[34px] uppercase leading-[1.02]">
                       {p.nombre}
                     </h1>
                     <p style={estiloDescripcion} className="mt-4 max-w-[44ch] text-sm leading-relaxed text-[#d9d9dc] sm:text-[15px]">
                       {desc}
                     </p>
-                    <span style={estiloPrecio} className="mt-3.5 text-[13px] text-white/60">
-                      <b className="text-[15px] font-semibold text-white">{formatearSoles(p.precio)}</b>
+                    <span style={estiloPrecio} className="mt-3.5 text-[13px] sm:text-sm text-white/60">
+                      <b className="text-[15px] sm:text-base font-semibold text-white">{formatearSoles(p.precio)}</b>
                       {p.precio_antes && <s className="ml-1.5">{formatearSoles(p.precio_antes)}</s>}
                       {p.categoria && ` · ${p.categoria}`}
                     </span>
@@ -327,7 +327,7 @@ export default function ProductosCliente() {
               className={`flex flex-wrap items-baseline gap-2 text-xs text-white/50 ${reducirMovimiento ? '' : 'in-left'}`}
               style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.catalogoLinea}ms` }}
             >
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
+              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[#e8e8ea]">Catálogo</span>
               <span>/</span>
               <span className="font-medium text-[#e8e8ea]">{plural(datos?.total ?? 0)}</span>
               <span>·</span>
@@ -371,7 +371,7 @@ export default function ProductosCliente() {
                 const etiqueta = descuento != null ? `En oferta −${descuento}%` : producto.nuevo ? 'Nuevo' : producto.destacado ? 'Destacado' : 'Novedad'
                 return (
                   <span key={producto.id} aria-hidden={indice !== heroIdxSeguro}
-                    className="pointer-events-none absolute left-4 top-9 inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[#0b0b0c] transition-opacity duration-300 motion-reduce:transition-none"
+                    className="pointer-events-none absolute left-4 top-9 inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[12px] sm:text-sm font-semibold text-[#0b0b0c] transition-opacity duration-300 motion-reduce:transition-none"
                     style={{ opacity: indice === heroIdxSeguro ? 1 : 0 }}>
                     <Sparkles aria-hidden="true" className="h-[13px] w-[13px]" />
                     {etiqueta}
@@ -395,7 +395,7 @@ export default function ProductosCliente() {
                 </div>
               )}
 
-              <div className="absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] font-medium uppercase tracking-widest text-white">
+              <div className="absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] sm:text-xs font-medium uppercase tracking-widest text-white">
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                   {String(heroIdxSeguro + 1).padStart(2, '0')} / {String(heroProductos.length).padStart(2, '0')}
@@ -440,7 +440,7 @@ export default function ProductosCliente() {
       {(ofertas.filas.length > 0 || destacados.filas.length > 0) && (
         <section className="flex flex-col gap-9 py-10">
           <p
-            className={`mx-auto w-full max-w-[1700px] lw-gutter text-[15px] leading-relaxed text-[#d9d9dc] ${reducirMovimiento ? '' : 'in-left'}`}
+            className={`mx-auto w-full max-w-[1700px] lw-gutter text-[15px] sm:text-base leading-relaxed text-[#d9d9dc] ${reducirMovimiento ? '' : 'in-left'}`}
             style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.fraseOfertas}ms` }}
           >
             Los mismos productos que usamos en el salón, para que tu resultado dure en casa.
@@ -500,7 +500,7 @@ export default function ProductosCliente() {
                     style={listo ? { animationDelay: `${delayBase}ms` } : undefined}
                   >
                     <div className="flex min-w-0 flex-wrap items-baseline gap-3">
-                      <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{grupo.categoria}</h2>
+                      <h2 className="sm:text-[40px] lw-titulo-heavitas text-lg uppercase">{grupo.categoria}</h2>
                       <span className="text-xs text-white/50">{plural(grupo.total)}</span>
                     </div>
                     <button
@@ -541,7 +541,7 @@ export default function ProductosCliente() {
             {ventanaConError && (
               <div role="alert" className="flex flex-col items-center gap-3 py-6 text-center">
                 <p className="text-sm text-white/70">No se pudieron cargar las categorías.</p>
-                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                <button type="button" onClick={reintentarVentana} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
                   Reintentar
                 </button>
               </div>
@@ -555,7 +555,7 @@ export default function ProductosCliente() {
           <div className="flex flex-col gap-4 pt-8">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <div className="flex items-baseline gap-3">
-                <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">{termino ? 'Resultados' : categoriaActiva}</h2>
+                <h2 className="sm:text-[40px] lw-titulo-heavitas text-lg uppercase">{termino ? 'Resultados' : categoriaActiva}</h2>
                 {totalVisible != null && <span className="text-xs text-white/50">{plural(totalVisible)}</span>}
               </div>
               {categoriaActiva !== 'todos' && (
@@ -571,7 +571,7 @@ export default function ProductosCliente() {
             {listado.estado === 'error' ? (
               <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
                 <p className="text-sm text-white/70">No se pudieron cargar los productos.</p>
-                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+                <button type="button" onClick={reintentarListado} className="rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
                   Reintentar
                 </button>
               </div>
@@ -597,8 +597,8 @@ export default function ProductosCliente() {
 
         {/* 4. CÓMO COMPRAR */}
         <section className="mt-16 border-t border-white/10 pt-10">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">Así de simple</span>
-          <h2 className="lw-titulo-heavitas mt-2.5 text-2xl uppercase">Cómo comprar</h2>
+          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white/60">Así de simple</span>
+          <h2 className="sm:text-[40px] lw-titulo-heavitas mt-2.5 text-2xl uppercase">Cómo comprar</h2>
           <div className="mt-6 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
             {[
               { paso: 'Paso 1', titulo: 'Elige tus productos', texto: 'Toca un producto (o la flecha ↗) para ver sus detalles, elige la cantidad y agrégalo a tu carrito.' },
@@ -606,9 +606,9 @@ export default function ProductosCliente() {
               { paso: 'Paso 3', titulo: 'Recoge o recibe', texto: 'Te avisamos en Notificaciones cuando tu pedido esté listo para recoger o en camino, según la entrega que elijas.' },
             ].map((item) => (
               <div key={item.paso} className="rounded-[10px] border border-white/10 bg-[#111113] p-5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-                <span className="text-[11px] tracking-widest text-[var(--lw-gold)]">{item.paso.toUpperCase()}</span>
-                <h3 className="mt-2.5 text-[15px] font-semibold text-white">{item.titulo}</h3>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-white/60">{item.texto}</p>
+                <span className="text-[11px] sm:text-xs tracking-widest text-[var(--lw-gold)]">{item.paso.toUpperCase()}</span>
+                <h3 className="sm:text-xl mt-2.5 text-[15px] font-semibold text-white">{item.titulo}</h3>
+                <p className="mt-1.5 text-[13px] sm:text-sm leading-relaxed text-white/60">{item.texto}</p>
               </div>
             ))}
           </div>
@@ -618,7 +618,7 @@ export default function ProductosCliente() {
         <section className="mt-16 border-t border-white/10 pt-14">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex max-w-[560px] flex-col gap-3.5">
-              <h2 className="lw-titulo-heavitas text-3xl uppercase leading-[1.05] sm:text-[46px]">¿No encuentras tu producto?</h2>
+              <h2 className="sm:text-[40px] lw-titulo-heavitas text-3xl uppercase leading-[1.05]">¿No encuentras tu producto?</h2>
               <p className="text-sm leading-relaxed text-white/60 sm:text-[15px]">
                 Cuéntanos qué buscas y te recomendamos el producto ideal para tu tipo de cabello, uñas o piel.
               </p>
@@ -636,19 +636,19 @@ export default function ProductosCliente() {
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                 <MessageCircle className="h-[17px] w-[17px]" />
               </span>
-              <h3 className="mt-2.5 text-[15px] font-bold text-white">Escríbenos por WhatsApp</h3>
-              <p className="mb-1 text-[13px] leading-relaxed text-white/60">Te decimos si lo tenemos, cuándo llega o cuál te conviene más.</p>
+              <h3 className="sm:text-xl mt-2.5 text-[15px] font-bold text-white">Escríbenos por WhatsApp</h3>
+              <p className="mb-1 text-[13px] sm:text-sm leading-relaxed text-white/60">Te decimos si lo tenemos, cuándo llega o cuál te conviene más.</p>
               {whatsapp ? (
                 <a
                   href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre sus productos.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white"
+                  className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white"
                 >
                   Abrir WhatsApp
                 </a>
               ) : (
-                <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] font-semibold text-white/40">
+                <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white/40">
                   Aún no configurado
                 </span>
               )}
@@ -657,11 +657,11 @@ export default function ProductosCliente() {
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                 <MapPin className="h-[17px] w-[17px]" />
               </span>
-              <h3 className="mt-2.5 text-[15px] font-bold text-white">Contacto y ubicación</h3>
-              <p className="mb-1 text-[13px] leading-relaxed text-white/60">
+              <h3 className="sm:text-xl mt-2.5 text-[15px] font-bold text-white">Contacto y ubicación</h3>
+              <p className="mb-1 text-[13px] sm:text-sm leading-relaxed text-white/60">
                 {contacto?.direccion || contacto?.telefono ? [contacto?.direccion, contacto?.telefono].filter(Boolean).join(' · ') : 'Llámanos o visítanos. Te atendemos en el mismo horario.'}
               </p>
-              <Link to="/nosotros" className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] font-semibold text-white">
+              <Link to="/nosotros" className="self-start rounded-full border border-white/20 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white">
                 Ver contacto
               </Link>
             </div>
@@ -669,9 +669,9 @@ export default function ProductosCliente() {
               <span className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                 <HelpCircle className="h-[17px] w-[17px]" />
               </span>
-              <h3 className="mt-2.5 text-[15px] font-bold text-white">Preguntas frecuentes</h3>
-              <p className="mb-1 text-[13px] leading-relaxed text-white/60">Envíos, pagos, cambios y devoluciones: todo en un solo lugar.</p>
-              <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] font-semibold text-white/50">Muy pronto</span>
+              <h3 className="sm:text-xl mt-2.5 text-[15px] font-bold text-white">Preguntas frecuentes</h3>
+              <p className="mb-1 text-[13px] sm:text-sm leading-relaxed text-white/60">Envíos, pagos, cambios y devoluciones: todo en un solo lugar.</p>
+              <span className="self-start rounded-full border border-dashed border-white/15 px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-white/50">Muy pronto</span>
             </div>
           </div>
         </section>
@@ -713,7 +713,7 @@ const FilaCintaProductos = memo(function FilaCintaProductos({ titulo, derecha, e
   return (
     <div className={`flex flex-col ${claseEntrada}`} style={claseEntrada ? { animationDelay: `${delayEntrada}ms` } : undefined}>
       <div className={`mx-auto flex w-full max-w-[1700px] items-baseline gap-3 lw-gutter ${derecha ? 'justify-start' : 'justify-end'}`}>
-        <h2 className="lw-titulo-heavitas text-xl uppercase sm:text-[30px]">{titulo}</h2>
+        <h2 className="sm:text-[40px] lw-titulo-heavitas text-xl uppercase">{titulo}</h2>
         <span className="text-xs text-white/50">{plural(total ?? n)}</span>
       </div>
 
@@ -738,18 +738,18 @@ const FilaCintaProductos = memo(function FilaCintaProductos({ titulo, derecha, e
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/80" />
                 <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/30" />
-                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-wider text-white">
+                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-2.5 py-1.5 text-[9.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                   {etiqueta(p)}
                 </span>
                 <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5 flex flex-col gap-1">
-                  <span className="text-[15px] font-bold leading-tight text-white">{p.nombre}</span>
-                  <span className="text-[13px] font-semibold text-white">
+                  <span className="text-[15px] sm:text-base font-bold leading-tight text-white">{p.nombre}</span>
+                  <span className="text-[13px] sm:text-sm font-semibold text-white">
                     {formatearSoles(p.precio)}
-                    {p.precio_antes && <s className="ml-1.5 text-[12px] font-normal text-white/60">{formatearSoles(p.precio_antes)}</s>}
+                    {p.precio_antes && <s className="ml-1.5 text-[12px] sm:text-sm font-normal text-white/60">{formatearSoles(p.precio_antes)}</s>}
                   </span>
                 </div>
-                <span className="absolute left-1/2 top-1/2 z-[3] inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-white/0 py-0 pl-0 pr-0 text-[13px] font-semibold text-[#0b0b0c] opacity-0 backdrop-blur transition-all duration-300 group-hover:bg-white/95 group-hover:py-2.5 group-hover:pl-4.5 group-hover:pr-1.5 group-hover:opacity-100">
+                <span className="absolute left-1/2 top-1/2 z-[3] inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-white/0 py-0 pl-0 pr-0 text-[13px] sm:text-sm font-semibold text-[#0b0b0c] opacity-0 backdrop-blur transition-all duration-300 group-hover:bg-white/95 group-hover:py-2.5 group-hover:pl-4.5 group-hover:pr-1.5 group-hover:opacity-100">
                   Ver detalles
                   <span className="hidden h-[30px] w-[30px] items-center justify-center rounded-full bg-[#0b0b0c] text-white group-hover:flex">
                     <ArrowRight className="h-3.5 w-3.5" />

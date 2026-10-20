@@ -40,13 +40,6 @@ export default function AccionesVisitante({ variante = 'barra', onNavegar }) {
       >
         Iniciar sesión
       </Link>
-      <Link
-        to="/login?modo=registro"
-        state={estado}
-        className="hidden min-h-11 items-center whitespace-nowrap rounded-full bg-white px-5 text-sm font-semibold text-[#0b0b0c] transition-colors hover:bg-[var(--lw-gold)] sm:inline-flex"
-      >
-        Crear cuenta
-      </Link>
     </div>
   )
 }

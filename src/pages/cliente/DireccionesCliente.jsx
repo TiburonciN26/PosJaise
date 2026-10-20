@@ -115,7 +115,7 @@ export default function DireccionesCliente() {
                     <div className="flex items-center gap-2">
                       <p className="truncate text-sm font-semibold text-white">{direccion.etiqueta}</p>
                       {direccion.predeterminada && (
-                        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--lw-gold)]/15 px-2 py-0.5 text-[10px] font-medium text-[var(--lw-gold)]">
+                        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--lw-gold)]/15 px-2 py-0.5 text-[10px] sm:text-xs font-medium text-[var(--lw-gold)]">
                           <Star className="h-2.5 w-2.5 fill-current" />
                           Predeterminada
                         </span>
@@ -182,7 +182,7 @@ export default function DireccionesCliente() {
       {direccionEliminando && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
           <div className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
-            <h2 className="text-base font-semibold text-white">¿Eliminar dirección?</h2>
+            <h2 className="sm:text-xl text-base font-semibold text-white">¿Eliminar dirección?</h2>
             <p className="mt-1 text-sm text-white/60">
               Se eliminará "{direccionEliminando.etiqueta}". Esta acción no se puede deshacer.
             </p>

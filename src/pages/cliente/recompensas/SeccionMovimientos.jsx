@@ -16,7 +16,7 @@ function MovimientosPendiente() {
 
   return (
     <section className="flex flex-col gap-5">
-      <p className="text-[13px] leading-relaxed text-white/60">
+      <p className="text-[13px] sm:text-sm leading-relaxed text-white/60">
         Cada punto que ganas, gastas o se ajusta, con su motivo y tu saldo después.
       </p>
 
@@ -48,7 +48,7 @@ function MovimientosPendiente() {
         Aún no hay movimientos para mostrar.
       </div>
 
-      <div className="liquid-glass rounded-none px-5 py-4 text-[13px] leading-relaxed text-white/60">
+      <div className="liquid-glass rounded-none px-5 py-4 text-[13px] sm:text-sm leading-relaxed text-white/60">
         <strong className="text-white">Si anulan una venta:</strong> se revierten los puntos que dio. Si esa venta
         usó un cupón, el cupón se rehabilita según sus condiciones; no se te devuelven además los puntos del canje
         mientras el cupón siga disponible, porque duplicaría el beneficio.
@@ -91,7 +91,7 @@ function MovimientosReales({ movimientos, onReintentar }) {
 
   return (
     <section className="flex flex-col gap-5">
-      <p className="text-[13px] leading-relaxed text-white/60">
+      <p className="text-[13px] sm:text-sm leading-relaxed text-white/60">
         Cada moneda que ganas, gastas o se revierte, con su motivo y tu saldo después. Fechas en hora de Perú.
       </p>
 
@@ -132,7 +132,7 @@ function MovimientosReales({ movimientos, onReintentar }) {
           ) : (
             <ul className="liquid-glass divide-y divide-white/10 rounded-none">
               {visibles.map((m) => (
-                <li key={m.id} className="flex flex-wrap items-baseline justify-between gap-2 p-3.5 text-[13px]">
+                <li key={m.id} className="flex flex-wrap items-baseline justify-between gap-2 p-3.5 text-[13px] sm:text-sm">
                   <span className="min-w-0 flex-1 text-white/80">
                     {m.descripcion}
                     <span className="block text-xs text-white/40">{fechaHoraLima(m.fecha)}</span>
@@ -151,7 +151,7 @@ function MovimientosReales({ movimientos, onReintentar }) {
         </>
       )}
 
-      <div className="liquid-glass rounded-none px-5 py-4 text-[13px] leading-relaxed text-white/60">
+      <div className="liquid-glass rounded-none px-5 py-4 text-[13px] sm:text-sm leading-relaxed text-white/60">
         <strong className="text-white">Si anulan una venta:</strong> se revierten las monedas que dio, una sola vez. Si
         ya las habías gastado, tu saldo puede quedar negativo y se compensa con tus próximas compras (no es una deuda de
         dinero). Si esa venta usó un cupón, vuelve a estar disponible si sigue vigente; no se devuelven además las

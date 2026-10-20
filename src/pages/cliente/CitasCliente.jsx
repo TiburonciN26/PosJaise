@@ -78,9 +78,9 @@ const SELECT_CITA =
 const DEFAULT_PLAZO_CANCELACION_HORAS = 3
 
 const CLASE_BOTON_SECUNDARIO =
-  'flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 text-[13px] font-medium text-white/90 transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:cursor-not-allowed disabled:opacity-30'
+  'flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 text-[13px] sm:text-sm font-medium text-white/90 transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:cursor-not-allowed disabled:opacity-30'
 const CLASE_BOTON_SECUNDARIO_ROJO =
-  'flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 text-[13px] font-medium text-red transition-colors hover:border-red disabled:cursor-not-allowed disabled:opacity-30'
+  'flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 text-[13px] sm:text-sm font-medium text-red transition-colors hover:border-red disabled:cursor-not-allowed disabled:opacity-30'
 const CLASE_BLOQUE =
   'rounded-[10px] border border-white/10 bg-[#111113] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]'
 
@@ -203,7 +203,7 @@ function construirDiasGrilla(mesActual) {
 function ChipEstado({ estado }) {
   const info = ETIQUETAS_ESTADO[estado] ?? ETIQUETAS_ESTADO.PENDIENTE
   return (
-    <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-[11px] font-semibold ${info.clase}`}>
+    <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-[11px] sm:text-xs font-semibold ${info.clase}`}>
       {info.texto}
     </span>
   )
@@ -211,7 +211,7 @@ function ChipEstado({ estado }) {
 
 function ChipPuntos({ puntos }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]">
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-[#d3e4f8]">
       <Sparkles className="h-3 w-3 text-[var(--lw-gold)]" />+{puntos} pts
     </span>
   )
@@ -223,7 +223,7 @@ function ChipMonedas({ texto }) {
   return (
     <span
       title="Estimado: las monedas se acreditan al confirmarse la venta, sobre el importe neto (después de descuentos y cupones)."
-      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]"
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-[#d3e4f8]"
     >
       <Sparkles className="h-3 w-3 text-[var(--lw-gold)]" />
       Estimado {texto}
@@ -234,7 +234,7 @@ function ChipMonedas({ texto }) {
 function ChipSello({ sello, selloRepetido, activo = false }) {
   if (sello) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#d3e4f8]">
+      <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-[var(--lw-gold)]/35 bg-[var(--lw-gold)]/[0.06] px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-[#d3e4f8]">
         <Stamp className="h-3 w-3 text-[var(--lw-gold)]" />
         {activo ? 'Puede sumar 1 sello' : '+1 sello'}
       </span>
@@ -244,7 +244,7 @@ function ChipSello({ sello, selloRepetido, activo = false }) {
     return (
       <span
         title="Solo se suma 1 sello por día, aunque tengas varias citas ese día"
-        className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-white/20 px-2.5 py-1 text-[11px] text-white/40"
+        className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-dashed border-white/20 px-2.5 py-1 text-[11px] sm:text-xs text-white/40"
       >
         {activo ? 'Máx. 1 sello por día' : 'Sello ya contado ese día'}
       </span>
@@ -280,10 +280,10 @@ function SeccionPuntos({ titulo = 'Puntos', nivel, children }) {
         aria-controls={contenidoId}
         className="flex w-full items-center gap-3 text-left text-white"
       >
-        <h2 className="lw-titulo-heavitas text-[15px] uppercase">{titulo}</h2>
+        <h2 className="sm:text-xl lw-titulo-heavitas text-[15px] uppercase">{titulo}</h2>
         <span className="flex-1" />
         {nivel && (
-          <span className="rounded-full bg-[var(--lw-gold)]/15 px-2.5 py-1 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-[11px] font-semibold text-[var(--lw-gold)]">
+          <span className="rounded-full bg-[var(--lw-gold)]/15 px-2.5 py-1 max-sm:px-(--pading-horizontal-boton) max-sm:py-(--pading-verical-boton) text-[11px] sm:text-xs font-semibold text-[var(--lw-gold)]">
             Nivel {nivel}
           </span>
         )}
@@ -686,14 +686,14 @@ function CitasConSesion() {
     if (programa.estado === 'cargando') {
       return (
         <SeccionPuntos>
-          <p aria-busy="true" className="text-[13px] text-white/50">Cargando tu saldo…</p>
+          <p aria-busy="true" className="text-[13px] sm:text-sm text-white/50">Cargando tu saldo…</p>
         </SeccionPuntos>
       )
     }
     if (programa.estado === 'error' || (programa.activo === true && programa.saldo.estado === 'error')) {
       return (
         <SeccionPuntos>
-          <p role="alert" className="text-[13px] leading-relaxed text-white/60">
+          <p role="alert" className="text-[13px] sm:text-sm leading-relaxed text-white/60">
             No pudimos cargar tu saldo ahora. No cambió; solo no pudimos leerlo.
           </p>
           <button
@@ -709,7 +709,7 @@ function CitasConSesion() {
     if (programa.activo === true && !saldoProg) {
       return (
         <SeccionPuntos titulo="Monedas">
-          <p aria-busy="true" className="text-[13px] text-white/50">Cargando tu saldo…</p>
+          <p aria-busy="true" className="text-[13px] sm:text-sm text-white/50">Cargando tu saldo…</p>
         </SeccionPuntos>
       )
     }
@@ -724,7 +724,7 @@ function CitasConSesion() {
           <span className="font-mono text-3xl font-bold" style={{ color: 'var(--lw-gold)' }}>
             {activo ? formatearCantidad(saldoProg.monedas) : (puntos ?? '—')}
           </span>
-          <span className="text-[13px] text-white/50">{activo ? 'monedas disponibles' : 'pts'}</span>
+          <span className="text-[13px] sm:text-sm text-white/50">{activo ? 'monedas disponibles' : 'pts'}</span>
         </div>
         <div className="mt-2.5 flex items-center gap-3">
           <div
@@ -740,7 +740,7 @@ function CitasConSesion() {
               style={{ width: `${pct}%`, background: 'linear-gradient(90deg,#86a9d8,#d3e4f8)' }}
             />
           </div>
-          <Link to="/recompensas?seccion=tarjeta" className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+          <Link to="/recompensas?seccion=tarjeta" className="flex shrink-0 items-center gap-1.5 text-[13px] sm:text-sm font-medium text-[var(--lw-gold)]">
             {activo ? 'Ver mis monedas' : 'Ver mis puntos'} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -751,7 +751,7 @@ function CitasConSesion() {
           {activo ? (
             <>
               <div className="flex items-baseline justify-between">
-                <h2 className="lw-titulo-heavitas text-[15px] uppercase">Sellos</h2>
+                <h2 className="sm:text-xl lw-titulo-heavitas text-[15px] uppercase">Sellos</h2>
                 {sellosProg.negativo && <span className="text-xs text-white/50">{sellosProg.porRecuperar} por recuperar</span>}
               </div>
               {!sellosProg.negativo && (
@@ -770,7 +770,7 @@ function CitasConSesion() {
                     </span>
                   ))}
                 </div>
-                <Link to="/recompensas?seccion=sellos" className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+                <Link to="/recompensas?seccion=sellos" className="flex shrink-0 items-center gap-1.5 text-[13px] sm:text-sm font-medium text-[var(--lw-gold)]">
                   Ver mis sellos <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 </div>
@@ -779,7 +779,7 @@ function CitasConSesion() {
           ) : (
             <>
               <div className="flex items-baseline justify-between">
-                <h2 className="lw-titulo-heavitas text-[15px] uppercase">Sellos de fidelidad</h2>
+                <h2 className="sm:text-xl lw-titulo-heavitas text-[15px] uppercase">Sellos de fidelidad</h2>
                 {!sellosMeta && <span className="text-xs text-white/50">No disponible ahora</span>}
               </div>
               {sellosMeta && (
@@ -796,7 +796,7 @@ function CitasConSesion() {
                     </span>
                   ))}
                 </div>
-                <Link to="/recompensas?seccion=sellos" className="flex shrink-0 items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]">
+                <Link to="/recompensas?seccion=sellos" className="flex shrink-0 items-center gap-1.5 text-[13px] sm:text-sm font-medium text-[var(--lw-gold)]">
                   Ver mi fidelización <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 </div>
@@ -812,7 +812,7 @@ function CitasConSesion() {
     return (
       <div className={`${CLASE_BLOQUE} citas-cliente-tarjeta p-5 sm:px-6`}>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="lw-titulo-heavitas text-[15px] uppercase">Antes de tu cita</h2>
+          <h2 className="sm:text-xl lw-titulo-heavitas text-[15px] uppercase">Antes de tu cita</h2>
           {whatsapp ? (
             <a
               href={`https://wa.me/${whatsapp}?text=${encodeURIComponent('Hola, tengo una duda sobre mi cita.')}`}
@@ -833,7 +833,7 @@ function CitasConSesion() {
               <Clock className="h-4 w-4 text-[var(--lw-gold)]" />
               Reprogramar o cancelar
             </span>
-            <p className="text-[13px] leading-relaxed text-white/70">
+            <p className="text-[13px] sm:text-sm leading-relaxed text-white/70">
               Desde aquí hasta <strong className="text-white">{plazoHoras} horas antes</strong>. Después, escríbenos por WhatsApp.
             </p>
           </div>
@@ -842,14 +842,14 @@ function CitasConSesion() {
               <CalendarClock className="h-4 w-4 text-[var(--lw-gold)]" />
               Horario
             </span>
-            <p className="text-[13px] leading-relaxed text-white/70">{horarioTexto ? `Atendemos ${horarioTexto}.` : 'Horario aún no configurado'}</p>
+            <p className="text-[13px] sm:text-sm leading-relaxed text-white/70">{horarioTexto ? `Atendemos ${horarioTexto}.` : 'Horario aún no configurado'}</p>
           </div>
           <div className="citas-cliente-tarjeta flex flex-col gap-1.5 rounded-[10px] border border-white/10 bg-[#111113] p-4">
             <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/50">
               <MapPin className="h-4 w-4 text-[var(--lw-gold)]" />
               Dirección
             </span>
-            <p className="text-[13px] leading-relaxed text-white/70">{contacto?.direccion || 'Dirección aún no configurada'}</p>
+            <p className="text-[13px] sm:text-sm leading-relaxed text-white/70">{contacto?.direccion || 'Dirección aún no configurada'}</p>
           </div>
         </div>
       </div>
@@ -873,7 +873,7 @@ function CitasConSesion() {
           style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.header}ms` }}
         >
           <div className="flex flex-col gap-2 max-sm:shrink-0">
-            <h1 className="lw-titulo-heavitas text-3xl max-sm:text-[1.5rem] uppercase">Mis citas</h1>
+            <h1 className="sm:text-[48px] lw-titulo-heavitas text-3xl max-sm:text-[1.5rem] uppercase">Mis citas</h1>
           </div>
           <div className="flex items-center gap-3 max-sm:min-w-0 max-sm:justify-end">
             <Link
@@ -887,7 +887,7 @@ function CitasConSesion() {
               <span className="relative flex shrink-0">
                 <ShoppingCart className="h-5 w-5" />
                 {serviciosCarrito.size > 0 && (
-                  <span className="absolute -right-2.5 -top-2.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-[#0b0b0c] bg-[var(--lw-gold)] px-1 text-[11px] font-bold text-black">
+                  <span className="absolute -right-2.5 -top-2.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-[#0b0b0c] bg-[var(--lw-gold)] px-1 text-[11px] sm:text-xs font-bold text-black">
                     {serviciosCarrito.size}
                   </span>
                 )}
@@ -909,7 +909,7 @@ function CitasConSesion() {
             style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA.calendario}ms` }}
           >
             <div className="flex items-center justify-between gap-2">
-              <h2 id="citas-calendario-titulo" className="lw-titulo-heavitas text-base uppercase">
+              <h2 id="citas-calendario-titulo" className="sm:text-xl lw-titulo-heavitas text-base uppercase">
                 Calendario
               </h2>
               <div className="sm:hidden">
@@ -947,7 +947,7 @@ function CitasConSesion() {
               </button>
             </div>
             <div>
-              <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-white/50">
+              <div className="grid grid-cols-7 gap-1 text-center text-[11px] sm:text-xs text-white/50">
                 {DIAS_SEMANA.map((dia) => (
                   <span key={dia}>{dia}</span>
                 ))}
@@ -997,7 +997,7 @@ function CitasConSesion() {
           >
             <div className="flex min-h-[32px] max-sm:min-h-0 items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-1.5">
-                <h2 id="citas-lista-titulo" className="lw-titulo-heavitas text-base uppercase">
+                <h2 id="citas-lista-titulo" className="sm:text-xl lw-titulo-heavitas text-base uppercase">
                   <span className="md:hidden">{listaTitulo}</span>
                   <span className="hidden md:inline">{listaTituloLargo}</span>
                 </h2>
@@ -1034,7 +1034,7 @@ function CitasConSesion() {
                       className={`flex flex-col gap-2 max-sm:gap-1 ${animarGrupo ? 'in-right' : ''}`}
                       style={animarGrupo ? { animationDelay: `${delayGrupo}ms` } : undefined}
                     >
-                      <div className="flex items-baseline gap-2.5 text-[13px]">
+                      <div className="flex items-baseline gap-2.5 text-[13px] sm:text-sm">
                         <span className="font-semibold text-white/85">
                           <span className="md:hidden">{grupo.fecha}</span>
                           <span className="hidden md:inline">{grupo.fechaLarga}</span>
@@ -1062,7 +1062,7 @@ function CitasConSesion() {
                                 <span className="font-mono text-sm font-bold" style={{ color: 'var(--lw-gold)' }}>
                                   {formatoHora.format(new Date(cita.fecha_hora))}
                                 </span>
-                                <span className="text-[15px] font-medium">{nombresServicios(cita) || 'Servicio'}</span>
+                                <span className="text-[15px] sm:text-base font-medium">{nombresServicios(cita) || 'Servicio'}</span>
                               </div>
                               <div className="flex shrink-0 flex-col items-end gap-1 sm:self-stretch sm:justify-between">
                                 <ChipEstado estado={cita.estado} />
@@ -1154,7 +1154,7 @@ function CitasConSesion() {
               aria-controls={historialContenidoId}
               className="citas-cliente-tarjeta flex w-full items-center gap-3 px-5 py-4 text-left text-white sm:px-6"
             >
-              <h2 className="lw-titulo-heavitas text-base uppercase">Historial</h2>
+              <h2 className="sm:text-xl lw-titulo-heavitas text-base uppercase">Historial</h2>
               <span className="flex-1" />
               <ArrowBigDown aria-hidden="true" className={`h-5 w-5 text-white/50 transition-transform ${histAbierto ? 'rotate-180' : ''}`} />
             </button>
@@ -1194,17 +1194,17 @@ function CitasConSesion() {
                           {puedeCalificar && (
                             <Link
                               to={`/servicios/${servicioId}#resenas`}
-                              className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]"
+                              className="flex items-center gap-1.5 text-[13px] sm:text-sm font-medium text-[var(--lw-gold)]"
                             >
                               <Star className="h-3.5 w-3.5" />
                               Calificar
                             </Link>
                           )}
-                          {calificada && <span className="text-[13px] text-white/45">Calificada</span>}
+                          {calificada && <span className="text-[13px] sm:text-sm text-white/45">Calificada</span>}
                           <button
                             type="button"
                             onClick={() => volverAReservar(cita)}
-                            className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--lw-gold)]"
+                            className="flex items-center gap-1.5 text-[13px] sm:text-sm font-medium text-[var(--lw-gold)]"
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
                             Volver a reservar
@@ -1249,7 +1249,7 @@ function CitasConSesion() {
       {citaACancelar && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
           <div ref={panelCancelarRef} className="lw-bar w-full max-w-sm rounded-lg border border-white/10 p-5">
-            <h2 className="text-base font-semibold text-white">¿Cancelar esta cita?</h2>
+            <h2 className="sm:text-xl text-base font-semibold text-white">¿Cancelar esta cita?</h2>
             <p className="mt-1 text-sm text-white/60">
               {formatoHora.format(new Date(citaACancelar.fecha_hora))} — {nombresServicios(citaACancelar) || 'Servicio'}. Esta
               acción no se puede deshacer.

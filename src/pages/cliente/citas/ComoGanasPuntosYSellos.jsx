@@ -19,25 +19,25 @@ function Titulo({ icono: Icono, children }) {
       <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--lw-gold)]/10 text-[var(--lw-gold)]">
         <Icono className="h-[18px] w-[18px]" />
       </span>
-      <h3 className="lw-titulo-heavitas text-[15px] uppercase">{children}</h3>
+      <h3 className="sm:text-xl lw-titulo-heavitas text-[15px] uppercase">{children}</h3>
     </div>
   )
 }
 
-const P = ({ children }) => <p className="text-[13px] leading-relaxed text-white/75">{children}</p>
+const P = ({ children }) => <p className="text-[13px] sm:text-sm leading-relaxed text-white/75">{children}</p>
 const B = ({ children }) => <strong className="text-white">{children}</strong>
 
 function Niveles({ premium, vip }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
-        <strong className="text-[13px] text-white">Básico</strong>desde 0 pts
+      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] sm:text-xs text-white/50">
+        <strong className="text-[13px] sm:text-sm text-white">Básico</strong>desde 0 pts
       </div>
-      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
-        <strong className="text-[13px] text-white">Premium</strong>desde {formatearCantidad(premium)} pts
+      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] sm:text-xs text-white/50">
+        <strong className="text-[13px] sm:text-sm text-white">Premium</strong>desde {formatearCantidad(premium)} pts
       </div>
-      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] text-white/50">
-        <strong className="text-[13px] text-white">VIP</strong>desde {formatearCantidad(vip)} pts
+      <div className="citas-cliente-tarjeta flex flex-1 flex-col gap-0.5 rounded-lg border border-white/15 px-2.5 py-2 text-[11px] sm:text-xs text-white/50">
+        <strong className="text-[13px] sm:text-sm text-white">VIP</strong>desde {formatearCantidad(vip)} pts
       </div>
     </div>
   )
@@ -55,7 +55,7 @@ function Paso({ titulo, texto, ultimo = false, completado = false }) {
         <span className="z-[1] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-white/25 bg-[#0b0b0c]" />
       )}
       <span className={`flex flex-col gap-0.5 text-xs ${ultimo ? '' : 'pb-4'} ${completado ? '' : 'text-white/50'}`}>
-        <strong className={`text-[13px] ${completado ? 'text-green' : 'text-white/80'}`}>{titulo}</strong>
+        <strong className={`text-[13px] sm:text-sm ${completado ? 'text-green' : 'text-white/80'}`}>{titulo}</strong>
         {completado ? <span className="text-white/60">{texto}</span> : texto}
       </span>
     </div>
@@ -64,7 +64,7 @@ function Paso({ titulo, texto, ultimo = false, completado = false }) {
 
 function Nota({ children }) {
   return (
-    <div className="citas-cliente-tarjeta mt-8 max-sm:mt-(--separador-horizontal) flex gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-[13px] leading-relaxed text-white/60">
+    <div className="citas-cliente-tarjeta mt-8 max-sm:mt-(--separador-horizontal) flex gap-2.5 rounded-[10px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-[13px] sm:text-sm leading-relaxed text-white/60">
       <Info className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
       <span>{children}</span>
     </div>
@@ -88,13 +88,13 @@ export default function ComoGanasPuntosYSellos({ programa, heredado, reducirMovi
       }`}
       style={reducirMovimiento ? undefined : { animationDelay: `${retrasoMs}ms` }}
     >
-      <h2 id="citas-como-ganas-titulo" className="lw-titulo-heavitas text-xl uppercase">
+      <h2 id="citas-como-ganas-titulo" className="sm:text-[40px] lw-titulo-heavitas text-xl uppercase">
         {activo ? 'Cómo ganas monedas y sellos' : 'Cómo ganas puntos y sellos'}
       </h2>
-      <p className="mt-1.5 max-sm:mt-1 text-[13px] text-white/50">Así funciona tu tarjeta de fidelización en Jaise.</p>
+      <p className="mt-1.5 max-sm:mt-1 text-[13px] sm:text-sm text-white/50">Así funciona tu tarjeta de fidelización en Jaise.</p>
 
       {programa.estado === 'cargando' && (
-        <p aria-busy="true" className="mt-6 max-sm:mt-1 text-[13px] text-white/50">
+        <p aria-busy="true" className="mt-6 max-sm:mt-1 text-[13px] sm:text-sm text-white/50">
           Cargando las reglas del programa…
         </p>
       )}

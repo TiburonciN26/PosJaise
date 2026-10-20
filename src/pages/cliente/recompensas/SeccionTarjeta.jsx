@@ -92,7 +92,7 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
 
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-          <h3 className="text-lg font-semibold text-white">Beneficios por nivel</h3>
+          <h3 className="sm:text-xl text-lg font-semibold text-white">Beneficios por nivel</h3>
           <Pildora>Propuesta; premios y precios en revisión económica</Pildora>
         </div>
 
@@ -105,7 +105,7 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-lg font-bold">{n.nombre}</span>
                     {actual && (
-                      <span className="rounded-full bg-[var(--tp-ink)] px-2.5 py-1 text-[11px] font-bold tracking-wide text-white/90 [text-shadow:none]">
+                      <span className="rounded-full bg-[var(--tp-ink)] px-2.5 py-1 text-[11px] sm:text-xs font-bold tracking-wide text-white/90 [text-shadow:none]">
                         TU NIVEL
                       </span>
                     )}
@@ -116,7 +116,7 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
                       {n.clave === 'BASICO' ? 'Desde que te registras' : 'puntos de clasificación'}
                     </span>
                   </div>
-                  <p className="text-[13px] leading-relaxed opacity-80">{n.descripcion}</p>
+                  <p className="text-[13px] sm:text-sm leading-relaxed opacity-80">{n.descripcion}</p>
                   {actual ? (
                     <span className="flex min-h-11 items-center justify-center rounded-full bg-[var(--tp-ink)]/55 text-sm font-bold text-white/90 [text-shadow:none]">
                       Tu nivel actual
@@ -129,10 +129,10 @@ export default function SeccionTarjeta({ datos, nombre, saldoReal = null }) {
                       Ver recompensas
                     </Link>
                   )}
-                  <span className="text-[13px] font-bold">Qué incluye:</span>
+                  <span className="text-[13px] sm:text-sm font-bold">Qué incluye:</span>
                   <ul className="flex flex-col gap-2.5">
                     {n.beneficios.map((b) => (
-                      <li key={b} className="flex items-start gap-2.5 text-[13px] leading-snug">
+                      <li key={b} className="flex items-start gap-2.5 text-[13px] sm:text-sm leading-snug">
                         <span
                           aria-hidden="true"
                           className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--tp-ink)] text-white/90"

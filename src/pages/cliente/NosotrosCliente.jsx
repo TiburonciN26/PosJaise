@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Clock, Globe, Image, MapPin, PenLine, Phone, Star, User } from 'lucide-react'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
@@ -13,6 +13,9 @@ import ComparadorAntesDespues from '../../components/ComparadorAntesDespues.jsx'
 import Estrellas from '../../components/Estrellas.jsx'
 import MapaDiferido from '../../components/MapaDiferido.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
+import { seccionesNosotros } from '../../config/navegacionCliente.js'
+import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
 
 const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
   day: 'numeric',
@@ -22,13 +25,6 @@ const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
 })
 
 const BUCKET_FOTOS_EQUIPO = 'fotos-asistentes'
-
-const SUBSECCIONES = [
-  { id: 'equipo', label: 'Equipo' },
-  { id: 'galeria', label: 'Galería' },
-  { id: 'resenas', label: 'Reseñas' },
-  { id: 'contacto', label: 'Contacto' },
-]
 
 const INTERVALO_CARRUSEL_MS = 4500
 
@@ -124,7 +120,7 @@ function BotonConoceMas({ persona }) {
   return (
     <Link
       to={`/nosotros/equipo/${persona.id}`}
-      className="group/mas inline-flex w-fit items-center gap-2 text-[13px] font-semibold text-[var(--lw-gold)] transition-opacity hover:opacity-80"
+      className="group/mas inline-flex w-fit items-center gap-2 text-[13px] sm:text-sm font-semibold text-[var(--lw-gold)] transition-opacity hover:opacity-80"
     >
       Conoce más de {nombre}
       <ArrowRight className="h-4 w-4 transition-transform group-hover/mas:translate-x-0.5 motion-reduce:transition-none" />
@@ -149,14 +145,14 @@ function TarjetaEquipo({ persona, indice, refTarjeta, animacion }) {
             <User className="h-12 w-12 text-white/20" />
           )}
         </div>
-        <span className="absolute left-4 top-3.5 text-[11px] tracking-[0.2em] text-white/70">
+        <span className="absolute left-4 top-3.5 text-[11px] sm:text-xs tracking-[0.2em] text-white/70">
           {String(indice + 1).padStart(2, '0')}
         </span>
       </div>
       <div className="flex min-w-0 flex-col gap-1 px-5 pb-5 pt-4">
-        <h3 className="text-lg font-semibold text-white">{persona.nombres_completos}</h3>
+        <h3 className="sm:text-xl text-lg font-semibold text-white">{persona.nombres_completos}</h3>
         {persona.especialidad && (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--lw-gold)]">
+          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--lw-gold)]">
             {persona.especialidad}
           </p>
         )}
@@ -242,7 +238,7 @@ function SeccionEquipo() {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[13px] font-normal text-white transition-colors hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[13px] sm:text-sm font-normal text-white transition-colors hover:bg-white/10"
             >
               <Icono />
               {label}
@@ -257,7 +253,7 @@ function SeccionEquipo() {
     <div ref={enlazarContenedor}>
       <section className="pb-12 pt-2 md:pb-16">
         <h1
-          className={`lw-titulo-heavitas text-4xl uppercase leading-none md:text-[72px] ${entra('in-left', ENTRADA.titulo).className}`}
+          className={`sm:text-[48px] lw-titulo-heavitas text-4xl uppercase leading-none ${entra('in-left', ENTRADA.titulo).className}`}
           style={entra('in-left', ENTRADA.titulo).style}
         >
           Nuestro equipo
@@ -278,8 +274,8 @@ function SeccionEquipo() {
             >
               <RetratoCarrusel fotos={duena.foto_url ? [duena.foto_url] : []} reducirMovimiento={reducirMovimiento} />
               <div className="flex flex-col gap-0.5">
-                <span className="text-[15px] font-semibold text-white">{duena.nombres_completos}</span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--lw-gold)]">
+                <span className="text-[15px] sm:text-base font-semibold text-white">{duena.nombres_completos}</span>
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--lw-gold)]">
                   Fundadora
                 </span>
               </div>
@@ -341,8 +337,8 @@ function SeccionEquipo() {
         <section className="border-t border-[#1f1f22] pb-6 pt-12 md:pt-14">
           <div className="flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between md:gap-8">
             <div className="flex max-w-[46ch] flex-col gap-2.5">
-              <h2 className="lw-titulo-heavitas text-[28px] uppercase leading-tight">¿Lista para tu cita?</h2>
-              <p className="text-[15px] leading-relaxed text-white/70">
+              <h2 className="sm:text-[40px] lw-titulo-heavitas text-[28px] uppercase leading-tight">¿Lista para tu cita?</h2>
+              <p className="text-[15px] sm:text-base leading-relaxed text-white/70">
                 Escríbenos y te ayudamos a elegir con quién atenderte.
               </p>
             </div>
@@ -612,21 +608,13 @@ function SeccionProximamente({ icono: Icono, mensaje }) {
 // mientras el admin no cargue ninguna foto (o si algún día se agrega
 // una 5ta sección que todavía no tenga nada).
 export default function NosotrosCliente() {
-  const [seccionActiva, setSeccionActiva] = useState('equipo')
-  const tabsRef = useRef([])
-
-  function alTeclear(evento, indice) {
-    const total = SUBSECCIONES.length
-    let destino = null
-    if (evento.key === 'ArrowRight') destino = (indice + 1) % total
-    else if (evento.key === 'ArrowLeft') destino = (indice - 1 + total) % total
-    else if (evento.key === 'Home') destino = 0
-    else if (evento.key === 'End') destino = total - 1
-    if (destino === null) return
-    evento.preventDefault()
-    setSeccionActiva(SUBSECCIONES[destino].id)
-    tabsRef.current[destino]?.focus()
-  }
+  // La subsección vive en la URL (?seccion=...) para que el menú desplegable del header (PortalCliente) pueda cambiarla.
+  const [params, setParams] = useSearchParams()
+  const claveParam = params.get('seccion')
+  const seccionActual = seccionesNosotros.find((s) => s.clave === claveParam) ?? seccionesNosotros[0]
+  const seccionActiva = seccionActual.clave
+  // Migaja del header: «Inicio | Nosotros | <subpestaña actual>».
+  useRegistrarMigajas([{ titulo: seccionActual.label }])
 
   return (
     <div data-scroll-nosotros className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
@@ -634,33 +622,10 @@ export default function NosotrosCliente() {
         {/* En Equipo el hero propio ya trae su texto de presentación. */}
         {seccionActiva !== 'equipo' && <p className="mb-5 text-sm text-white/60">Conoce al salón por dentro.</p>}
 
-        {/* Mismo diseño que las subpestañas de Recompensas (píldoras con borde,
-            activa en blanco) y el mismo patrón WAI-ARIA de teclado. */}
-        <div role="tablist" aria-label="Secciones de Nosotros" className="mb-6 flex flex-wrap gap-2">
-          {SUBSECCIONES.map((seccion, indice) => {
-            const activa = seccionActiva === seccion.id
-            return (
-              <button
-                key={seccion.id}
-                ref={(el) => {
-                  tabsRef.current[indice] = el
-                }}
-                type="button"
-                role="tab"
-                aria-selected={activa}
-                tabIndex={activa ? 0 : -1}
-                onClick={() => setSeccionActiva(seccion.id)}
-                onKeyDown={(evento) => alTeclear(evento, indice)}
-                className={`min-h-11 whitespace-nowrap rounded-full border px-[18px] text-sm font-semibold transition-colors ${
-                  activa
-                    ? 'border-white bg-white text-[#0b0b0c]'
-                    : 'border-[#3a3a3f] bg-transparent text-white hover:border-[var(--lw-gold)]'
-                }`}
-              >
-                {seccion.label}
-              </button>
-            )
-          })}
+        {/* Escritorio: las subsecciones se eligen con la flecha junto a «Nosotros» en el header. Móvil: este selector. */}
+        <div className="mb-4 flex justify-end sm:hidden">
+          <SelectorDesplegable valor={seccionActiva} onSeleccionar={(clave) => setParams({ seccion: clave })}
+            etiqueta="Sección de Nosotros" etiquetaLista="Secciones de Nosotros" opciones={seccionesNosotros} />
         </div>
 
         {seccionActiva === 'equipo' && <SeccionEquipo />}

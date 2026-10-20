@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   AlertCircle,
@@ -64,6 +65,9 @@ export default function DetalleProductoCliente() {
   const { productosCarrito, agregarProducto } = useCarritoCliente()
 
   const [producto, setProducto] = useState(null)
+
+  // Migaja completa en el header: Inicio | Productos | categoría | nombre.
+  useRegistrarMigajas(producto ? [{ titulo: producto.categoria ?? 'General' }, { titulo: producto.nombre }] : [])
   const [galeria, setGaleria] = useState([])
   const [combo, setCombo] = useState(null)
   const [relacionados, setRelacionados] = useState([])
@@ -341,17 +345,8 @@ export default function DetalleProductoCliente() {
 
   return (
     <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-28 lg:pb-8">
-      {/* Migas + volver */}
-      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 lw-gutter-detalle">
-        <nav aria-label="Ruta" className="flex min-w-0 items-center gap-2 truncate text-[11px] font-medium uppercase tracking-wider text-white/50">
-          <Link to="/productos" className="shrink-0 hover:text-white">
-            Productos
-          </Link>
-          <span className="shrink-0">/</span>
-          <span className="shrink-0">{producto.categoria ?? 'General'}</span>
-          <span className="shrink-0">/</span>
-          <span className="truncate text-white">{producto.nombre}</span>
-        </nav>
+      {/* La ruta completa (Inicio | Productos | categoría | nombre) la muestra la migaja del header (useRegistrarMigajas). */}
+      <div className="mx-auto flex w-full max-w-[1400px] items-center justify-end gap-4 lw-gutter-detalle">
         <Link
           to="/productos"
           className="hidden shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--lw-gold)] hover:text-white sm:flex"
@@ -377,7 +372,7 @@ export default function DetalleProductoCliente() {
                   }`}
                 >
                   <img src={urlPublicaFoto(BUCKET_FOTOS, foto.foto_url)} alt="" className="h-full w-full object-cover" />
-                  <span className="absolute inset-x-1 bottom-1 rounded bg-black/70 py-0.5 text-center text-[7.5px] font-bold uppercase tracking-wider text-white">
+                  <span className="absolute inset-x-1 bottom-1 rounded bg-black/70 py-0.5 text-center text-[7.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
                     {foto.etiqueta}
                   </span>
                 </button>
@@ -411,14 +406,14 @@ export default function DetalleProductoCliente() {
             )}
 
             {descuento != null && (
-              <span className="absolute left-4 top-9 inline-flex items-center gap-2 rounded-[5px] bg-black/80 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white">
+              <span className="absolute left-4 top-9 inline-flex items-center gap-2 rounded-[5px] bg-black/80 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                 Oferta −{descuento}%
               </span>
             )}
 
             {fotoActual && fotos.length > 1 && (
-              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between text-[10px] font-semibold uppercase tracking-widest text-white">
+              <div className="absolute inset-x-3 bottom-3 flex items-end justify-between text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-white">
                 <span>{fotoActual.etiqueta}</span>
                 <span>
                   {fotoIdxSeguro + 1} / {fotos.length}
@@ -430,15 +425,15 @@ export default function DetalleProductoCliente() {
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/60">
+            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white/60">
               {[producto.categoria, producto.subcategoria].filter(Boolean).join(' · ') || 'Producto'}
             </span>
-            <h1 className="lw-titulo-heavitas text-4xl uppercase leading-none sm:text-[52px]">{producto.nombre}</h1>
+            <h1 className="sm:text-[48px] lw-titulo-heavitas text-4xl uppercase leading-none">{producto.nombre}</h1>
             <div className="flex flex-wrap items-baseline gap-2.5">
               <span className="text-3xl font-bold text-white sm:text-4xl">{formatearSoles(producto.precio)}</span>
               {producto.precio_antes && <s className="text-base text-white/45">{formatearSoles(producto.precio_antes)}</s>}
               {ahorro != null && (
-                <span className="inline-flex items-center gap-1.5 rounded-[5px] bg-[#18181b] px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-white">
+                <span className="inline-flex items-center gap-1.5 rounded-[5px] bg-[#18181b] px-2.5 py-1 text-[10.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                   Ahorras {formatearSoles(ahorro)}
                 </span>
@@ -451,7 +446,7 @@ export default function DetalleProductoCliente() {
             )}
           </div>
 
-          <p className="text-[15px] leading-relaxed text-[#d9d9dc]">
+          <p className="text-[15px] sm:text-base leading-relaxed text-[#d9d9dc]">
             {producto.descripcion ||
               `Uno de nuestros productos de ${producto.categoria ?? 'catálogo'} más pedidos. Pregunta por sus detalles y modo de uso en tu próxima visita.`}
           </p>
@@ -468,7 +463,7 @@ export default function DetalleProductoCliente() {
             }`}
           >
             <div className="flex flex-col gap-1.5 px-5 py-4">
-              <span className="text-[11px] uppercase tracking-widest text-white/50">Stock</span>
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">Stock</span>
               <span className="flex items-center gap-2 text-[17px] font-semibold text-white">
                 <span
                   className="h-2 w-2 rounded-full"
@@ -478,8 +473,8 @@ export default function DetalleProductoCliente() {
               </span>
             </div>
             <div className="flex flex-col gap-1.5 px-5 py-4">
-              <span className="text-[11px] uppercase tracking-widest text-white/50">Entrega</span>
-              <span className="flex flex-col gap-0.5 text-[15px] font-semibold text-white">
+              <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">Entrega</span>
+              <span className="flex flex-col gap-0.5 text-[15px] sm:text-base font-semibold text-white">
                 Recojo gratis en el local
                 {costoEnvioDesde != null && (
                   <span className="text-xs font-normal text-white/50">
@@ -490,13 +485,13 @@ export default function DetalleProductoCliente() {
             </div>
             {producto.contenido && (
               <div className="flex flex-col gap-1.5 px-5 py-4">
-                <span className="text-[11px] uppercase tracking-widest text-white/50">Contenido</span>
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">Contenido</span>
                 <span className="text-[17px] font-semibold text-white">{producto.contenido}</span>
               </div>
             )}
             {producto.rinde && (
               <div className="flex flex-col gap-1.5 px-5 py-4">
-                <span className="text-[11px] uppercase tracking-widest text-white/50">Rinde</span>
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest text-white/50">Rinde</span>
                 <span className="text-[17px] font-semibold text-white">{producto.rinde}</span>
               </div>
             )}
@@ -532,7 +527,7 @@ export default function DetalleProductoCliente() {
                 type="button"
                 onClick={confirmarAgregar}
                 disabled={addDeshabilitado}
-                className="flex flex-1 items-center justify-between gap-3 rounded-full border px-6 py-2 pl-6 pr-2 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed"
+                className="flex flex-1 items-center justify-between gap-3 rounded-full border px-6 py-2 pl-6 pr-2 text-[15px] sm:text-base font-semibold transition-colors disabled:cursor-not-allowed"
                 style={
                   agregadoOk
                     ? { borderColor: 'var(--lw-gold)', background: 'transparent', color: 'var(--lw-gold)' }
@@ -586,7 +581,7 @@ export default function DetalleProductoCliente() {
               href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola, tengo una duda sobre "${producto.nombre}".`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between gap-3 border-y border-white/10 py-4 text-[13px] text-white"
+              className="flex items-center justify-between gap-3 border-y border-white/10 py-4 text-[13px] sm:text-sm text-white"
             >
               <span className="flex items-center gap-2.5">
                 <MessageCircle className="h-4 w-4" /> ¿Dudas sobre este producto? Escríbenos por WhatsApp
@@ -599,7 +594,7 @@ export default function DetalleProductoCliente() {
           <div className="grid grid-cols-3 gap-4 py-2">
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <PiggyBank className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-[13.5px] font-semibold leading-tight">
+              <span className="text-[13.5px] sm:text-sm font-semibold leading-tight">
                 {estimado?.cifra}
                 <br />
                 <span className="font-normal text-white/60">{estimado?.detalle}</span>
@@ -607,7 +602,7 @@ export default function DetalleProductoCliente() {
             </div>
             <a href="#resenas" className="flex flex-col items-center gap-2.5 text-center text-white">
               <Star className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-[13.5px] font-semibold leading-tight">
+              <span className="text-[13.5px] sm:text-sm font-semibold leading-tight">
                 {resumenResenas?.total > 0
                   ? `${resumenResenas.promedio} · ${resumenResenas.total} reseña${resumenResenas.total === 1 ? '' : 's'}`
                   : 'Reseñas'}
@@ -617,7 +612,7 @@ export default function DetalleProductoCliente() {
             </a>
             <div className="flex flex-col items-center gap-2.5 text-center text-white">
               <Stamp className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-[13.5px] font-semibold leading-tight">
+              <span className="text-[13.5px] sm:text-sm font-semibold leading-tight">
                 Lo usamos
                 <br />
                 <span className="font-normal text-white/60">en el salón</span>
@@ -633,8 +628,8 @@ export default function DetalleProductoCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <CreditCard className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">Pagas al confirmar tu pedido</span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">
+              <span className="text-[13.5px] sm:text-sm font-semibold text-white">Pagas al confirmar tu pedido</span>
+              <span className="text-[12.5px] sm:text-sm leading-relaxed text-white/60">
                 Yape, Plin o transferencia; subes tu comprobante en el carrito. Puedes usar tus cupones.
               </span>
             </span>
@@ -642,8 +637,8 @@ export default function DetalleProductoCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <Truck className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">Recojo gratis o envío a domicilio</span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">
+              <span className="text-[13.5px] sm:text-sm font-semibold text-white">Recojo gratis o envío a domicilio</span>
+              <span className="text-[12.5px] sm:text-sm leading-relaxed text-white/60">
                 Te avisamos en Notificaciones cuando esté listo para recoger o en camino.
                 {costoEnvioDesde != null && ` Envío desde ${formatearSoles(costoEnvioDesde)}, según tu zona.`}
               </span>
@@ -652,8 +647,8 @@ export default function DetalleProductoCliente() {
           <div className="flex gap-3.5 px-6 py-5">
             <Package className="h-5 w-5 shrink-0 text-[var(--lw-gold)]" />
             <span className="flex flex-col gap-1">
-              <span className="text-[13.5px] font-semibold text-white">Cambios con el producto sellado</span>
-              <span className="text-[12.5px] leading-relaxed text-white/60">Solo con el producto sellado y sin usar. Consulta el plazo con el negocio.</span>
+              <span className="text-[13.5px] sm:text-sm font-semibold text-white">Cambios con el producto sellado</span>
+              <span className="text-[12.5px] sm:text-sm leading-relaxed text-white/60">Solo con el producto sellado y sin usar. Consulta el plazo con el negocio.</span>
             </span>
           </div>
         </div>
@@ -663,7 +658,7 @@ export default function DetalleProductoCliente() {
       {producto.modo_uso?.length > 0 && (
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-4">
-            <h2 className="lw-titulo-heavitas text-2xl uppercase">Cómo se usa</h2>
+            <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Cómo se usa</h2>
             {producto.frecuencia && (
               <span className="text-sm text-white/60">
                 Frecuencia <b className="font-semibold text-white">{producto.frecuencia}</b>
@@ -673,12 +668,12 @@ export default function DetalleProductoCliente() {
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {producto.modo_uso.map((paso, indice) => (
               <div key={indice} className="flex gap-3.5">
-                <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-white/15 bg-[#18181b] text-[13px] font-bold text-[var(--lw-gold)]">
+                <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-white/15 bg-[#18181b] text-[13px] sm:text-sm font-bold text-[var(--lw-gold)]">
                   {indice + 1}
                 </span>
                 <span className="flex flex-col gap-1.5">
-                  <span className="text-[15px] font-semibold text-white">{paso.nombre}</span>
-                  {paso.texto && <span className="text-[13px] leading-relaxed text-white/60">{paso.texto}</span>}
+                  <span className="text-[15px] sm:text-base font-semibold text-white">{paso.nombre}</span>
+                  {paso.texto && <span className="text-[13px] sm:text-sm leading-relaxed text-white/60">{paso.texto}</span>}
                 </span>
               </div>
             ))}
@@ -689,7 +684,7 @@ export default function DetalleProductoCliente() {
       {/* 4. ¿Es para ti? */}
       {(producto.ideal_para?.length > 0 || producto.tips?.length > 0) && (
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
-          <h2 className="lw-titulo-heavitas text-2xl uppercase">¿Es para ti?</h2>
+          <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">¿Es para ti?</h2>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {producto.ideal_para?.length > 0 && (
               <div className="rounded-[10px] border border-white/10 bg-[#111113] p-7 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
@@ -697,11 +692,11 @@ export default function DetalleProductoCliente() {
                   <span className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                     <Sparkles className="h-[18px] w-[18px]" />
                   </span>
-                  <span className="text-[15px] font-bold text-white">Ideal para</span>
+                  <span className="text-[15px] sm:text-base font-bold text-white">Ideal para</span>
                 </div>
                 <ul className="list-none divide-y divide-white/10">
                   {producto.ideal_para.map((texto, indice) => (
-                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] leading-relaxed text-[#d9d9dc]">
+                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] sm:text-sm leading-relaxed text-[#d9d9dc]">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
                       <span>{texto}</span>
                     </li>
@@ -715,11 +710,11 @@ export default function DetalleProductoCliente() {
                   <span className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-white/15 bg-[#18181b] text-white">
                     <AlertCircle className="h-[18px] w-[18px]" />
                   </span>
-                  <span className="text-[15px] font-bold text-white">Tips y precauciones</span>
+                  <span className="text-[15px] sm:text-base font-bold text-white">Tips y precauciones</span>
                 </div>
                 <ul className="list-none divide-y divide-white/10">
                   {producto.tips.map((texto, indice) => (
-                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] leading-relaxed text-[#d9d9dc]">
+                    <li key={indice} className="flex gap-3 py-3 text-[13.5px] sm:text-sm leading-relaxed text-[#d9d9dc]">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
                       <span>{texto}</span>
                     </li>
@@ -736,10 +731,10 @@ export default function DetalleProductoCliente() {
         <section className="mx-auto mt-16 grid w-full max-w-[1400px] gap-4 lw-gutter-detalle sm:grid-cols-3">
           {producto.especificaciones?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Especificaciones</h3>
+              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Especificaciones</h3>
               <div className="mt-3 divide-y divide-white/10">
                 {producto.especificaciones.map((spec, indice) => (
-                  <div key={indice} className="flex justify-between gap-4 py-2.5 text-[13px]">
+                  <div key={indice} className="flex justify-between gap-4 py-2.5 text-[13px] sm:text-sm">
                     <span className="text-white/60">{spec.clave}</span>
                     <span className="text-right font-medium text-white">{spec.valor}</span>
                   </div>
@@ -749,10 +744,10 @@ export default function DetalleProductoCliente() {
           )}
           {producto.ingredientes?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Ingredientes clave</h3>
+              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Ingredientes clave</h3>
               <div className="mt-3 divide-y divide-white/10">
                 {producto.ingredientes.map((item, indice) => (
-                  <div key={indice} className="flex items-center gap-3 py-2.5 text-[13px]">
+                  <div key={indice} className="flex items-center gap-3 py-2.5 text-[13px] sm:text-sm">
                     <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#18181b] text-[#d9d9dc]">
                       <Droplet className="h-3.5 w-3.5" />
                     </span>
@@ -767,10 +762,10 @@ export default function DetalleProductoCliente() {
           )}
           {producto.libre_de?.length > 0 && (
             <div className="rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Libre de</h3>
+              <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-[var(--lw-gold)]">Libre de</h3>
               <div className="mt-3 divide-y divide-white/10">
                 {producto.libre_de.map((texto, indice) => (
-                  <div key={indice} className="flex items-center gap-3 py-2.5 text-[13px]">
+                  <div key={indice} className="flex items-center gap-3 py-2.5 text-[13px] sm:text-sm">
                     <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg border border-white/15 bg-[#18181b] text-[#d9d9dc]">
                       <X className="h-4 w-4" />
                     </span>
@@ -785,21 +780,21 @@ export default function DetalleProductoCliente() {
 
       {/* 6. Reseñas */}
       <section id="resenas" className="mx-auto mt-16 w-full max-w-[1400px] border-t border-white/10 lw-gutter-detalle pt-12">
-        <h2 className="lw-titulo-heavitas text-2xl uppercase">Lo que dicen nuestras clientas</h2>
+        <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Lo que dicen nuestras clientas</h2>
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="flex w-full flex-col gap-3.5 lg:w-[280px] lg:shrink-0">
             {resumenResenas?.total > 0 ? (
               <>
                 <div className="flex items-baseline gap-3">
                   <span className="text-[56px] font-bold leading-none text-white">{resumenResenas.promedio}</span>
-                  <span className="text-[13px] text-white/60">de 5</span>
+                  <span className="text-[13px] sm:text-sm text-white/60">de 5</span>
                 </div>
                 <div className="flex gap-0.5 text-[var(--lw-gold)]">
                   {Array.from({ length: 5 }, (_, i) => (
                     <Star key={i} className="h-[18px] w-[18px]" fill={i < Math.round(resumenResenas.promedio) ? 'currentColor' : 'none'} />
                   ))}
                 </div>
-                <span className="text-[13px] text-white/60">
+                <span className="text-[13px] sm:text-sm text-white/60">
                   {resumenResenas.total} reseña{resumenResenas.total === 1 ? '' : 's'} de clientas que compraron este producto
                 </span>
                 <div className="mt-1 flex flex-col gap-1.5">
@@ -837,7 +832,7 @@ export default function DetalleProductoCliente() {
                   if (!requerirSesion('escribir una reseña')) return
                   setMostrarFormResena((v) => !v)
                 }}
-                className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold text-black"
+                className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] sm:text-sm font-semibold text-black"
                 style={{ background: 'var(--lw-gold)' }}
               >
                 <PenLine className="h-3.5 w-3.5" />
@@ -845,9 +840,9 @@ export default function DetalleProductoCliente() {
               </button>
             </div>
             {miResena?.estado === 'PENDIENTE' && (
-              <span className="text-[11.5px] text-white/50">Tu reseña está en revisión antes de publicarse.</span>
+              <span className="text-[11.5px] sm:text-xs text-white/50">Tu reseña está en revisión antes de publicarse.</span>
             )}
-            <span className="text-[11.5px] leading-relaxed text-white/40">
+            <span className="text-[11.5px] sm:text-xs leading-relaxed text-white/40">
               Solo pueden reseñar las clientas que ya compraron este producto.
             </span>
 
@@ -895,7 +890,7 @@ export default function DetalleProductoCliente() {
                     </span>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-white">{resena.nombre}</span>
-                      <span className="text-[11.5px] text-white/50">
+                      <span className="text-[11.5px] sm:text-xs text-white/50">
                         {new Date(resena.creado_en).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
@@ -905,8 +900,8 @@ export default function DetalleProductoCliente() {
                       <Star key={i} className="h-3 w-3" fill={i < resena.calificacion ? 'currentColor' : 'none'} />
                     ))}
                   </div>
-                  {resena.comentario && <p className="text-[13px] leading-relaxed text-[#d9d9dc]">{resena.comentario}</p>}
-                  <span className="mt-auto w-fit rounded-[5px] bg-white/10 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-white/60">
+                  {resena.comentario && <p className="text-[13px] sm:text-sm leading-relaxed text-[#d9d9dc]">{resena.comentario}</p>}
+                  <span className="mt-auto w-fit rounded-[5px] bg-white/10 px-2.5 py-1 text-[9.5px] sm:text-xs font-bold uppercase tracking-wider text-white/60">
                     Compra verificada
                   </span>
                 </article>
@@ -919,7 +914,7 @@ export default function DetalleProductoCliente() {
       {/* 7. Se suele comprar junto con (combo sugerido) */}
       {combo && (
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
-          <h2 className="lw-titulo-heavitas text-2xl uppercase">Se suele comprar junto con</h2>
+          <h2 className="sm:text-[40px] lw-titulo-heavitas text-2xl uppercase">Se suele comprar junto con</h2>
           <div className="mt-6 flex flex-col gap-6 rounded-[10px] border border-white/10 bg-[#111113] p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:flex-row sm:items-center sm:p-7">
             <div className="flex flex-1 flex-wrap items-center gap-4">
               <div className="flex items-center gap-3.5">
@@ -982,7 +977,7 @@ export default function DetalleProductoCliente() {
         <section className="mx-auto mt-16 w-full max-w-[1400px] lw-gutter-detalle">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex items-baseline gap-3">
-              <h2 className="lw-titulo-heavitas text-lg uppercase sm:text-[22px]">También te puede interesar</h2>
+              <h2 className="sm:text-[40px] lw-titulo-heavitas text-lg uppercase">También te puede interesar</h2>
               <span className="text-xs text-white/50">{producto.categoria}</span>
             </div>
             <button

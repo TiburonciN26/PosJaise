@@ -3,7 +3,7 @@ import { ChevronDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
 import AyudaCampo from '../../../components/AyudaCampo.jsx'
 import { formatearFechaSoloDia } from '../../../lib/fechas.js'
-import { AvisoError, Pildora } from './ui.jsx'
+import { AvisoError, Desplegable, Pildora } from './ui.jsx'
 import { formatearCantidad } from '../../../lib/programaRecompensas.js'
 
 const VISITAS_POR_RECOMPENSA = 5
@@ -53,8 +53,8 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
-        <div className="flex w-full max-w-sm flex-col gap-3 justify-self-center lg:justify-self-end">
+      <div className="flex flex-col items-center">
+        <div className="flex w-full max-w-sm flex-col gap-3">
           <div className="sellos-tarjeta liquid-glass rounded-none p-5 text-center">
             <p className="mt-2">
               <Pildora envolver>Recompensa de la nueva tarjeta: propuesta (20 %, máx. S/5)</Pildora>
@@ -76,7 +76,7 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
                     >
                       <Stamp className="h-5 w-5" />
                     </span>
-                    <span className="text-center text-[11px] leading-tight text-white/50">
+                    <span className="text-center text-[11px] sm:text-xs leading-tight text-white/50">
                       {fecha ? formatearFechaSoloDia(fecha) : ''}
                     </span>
                   </div>
@@ -96,6 +96,20 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
               </AyudaCampo>
             </div>
           </div>
+
+          <Desplegable titulo="Cómo se ganan los sellos">
+            <ul className="flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed text-white/80">
+              <li>Cada día en que te atendemos y se registra tu servicio genera un sello, hayas reservado en la web o no.</li>
+              <li>Máximo un sello por día (fecha de Perú), aunque tengas varios servicios en la misma visita.</li>
+              <li>Las reservas canceladas o no atendidas no dan sello.</li>
+              <li>Una compra de productos no da sello.</li>
+              <li>Con cinco sellos reclamas una recompensa; no gastas puntos.</li>
+            </ul>
+            <p className="border-t border-white/10 pt-3 text-[13px] sm:text-sm leading-relaxed text-white/50">
+              Los cupones de tarjetas anteriores conservan las condiciones con las que se emitieron: no se les aplican
+              retroactivamente nuevos topes.
+            </p>
+          </Desplegable>
 
           {recompensas > 0 && (
             <div className="liquid-glass flex items-start gap-3 rounded-none p-3.5">
@@ -162,25 +176,10 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
             </div>
           )}
         </div>
-
-        <div className="liquid-glass flex flex-col gap-3 self-start rounded-none p-5">
-          <span className="text-[11px] uppercase tracking-[0.2em] text-white/50">Cómo se ganan los sellos</span>
-          <ul className="flex list-disc flex-col gap-2 pl-[18px] text-sm leading-relaxed text-white/80">
-            <li>Cada día en que te atendemos y se registra tu servicio genera un sello, hayas reservado en la web o no.</li>
-            <li>Máximo un sello por día (fecha de Perú), aunque tengas varios servicios en la misma visita.</li>
-            <li>Las reservas canceladas o no atendidas no dan sello.</li>
-            <li>Una compra de productos no da sello.</li>
-            <li>Con cinco sellos reclamas una recompensa; no gastas puntos.</li>
-          </ul>
-          <p className="border-t border-white/10 pt-3 text-[13px] leading-relaxed text-white/50">
-            Los cupones de tarjetas anteriores conservan las condiciones con las que se emitieron: no se les aplican
-            retroactivamente nuevos topes.
-          </p>
-        </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold text-white">Tarjetas completadas</h3>
+        <h3 className="sm:text-xl text-lg font-semibold text-white">Tarjetas completadas</h3>
         {tarjetas.length === 0 ? (
           <div className="liquid-glass rounded-none p-5 text-sm text-white/50">Aún no has completado ninguna tarjeta.</div>
         ) : (
@@ -191,8 +190,8 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
                   Tarjeta {t.numero}
                   {t.cierre ? ` · completada el ${formatearFechaSoloDia(t.cierre)}` : ''}
                 </span>
-                <span className="text-[13px] text-white/60">Recompensa: 20% de descuento en un servicio</span>
-                <span className="text-[13px] text-white/60">
+                <span className="text-[13px] sm:text-sm text-white/60">Recompensa: 20% de descuento en un servicio</span>
+                <span className="text-[13px] sm:text-sm text-white/60">
                   {t.reclamada ? 'Recompensa reclamada' : 'Recompensa por reclamar'}
                 </span>
               </div>

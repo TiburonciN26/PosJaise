@@ -98,7 +98,7 @@ export default function MisResenasCliente() {
 
         {etiqueta && (
           <div className="liquid-glass mb-4 rounded-none p-4">
-            <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${etiqueta.clase}`}>
+            <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] sm:text-xs font-medium ${etiqueta.clase}`}>
               {etiqueta.texto}
             </span>
             <p className="mt-1.5 text-xs text-white/60">{etiqueta.ayuda}</p>

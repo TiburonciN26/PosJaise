@@ -136,3 +136,27 @@
 .cpi-valor-monto { font-size:clamp(18px,5vw,30px); }
 @media (max-width:639px) { .cpi-valor-monto { font-size:clamp(18px,5.5vw,27px); } }
 
+/* Contenedor del StarBorder del cupón de Inicio: mide exactamente lo mismo que el cupón (sin relleno ni tipografía de
+   botón). El canvas de la estrella se sube POR ENCIMA del cupón (z-index 3) para que la luz recorra su borde real;
+   no recibe clics (pointer-events: none), el hover y el clic los escucha el contenedor. */
+.star-border.cpi-estrella { display: flex; width: min(100%, 440px); margin-inline: auto; padding: 0; gap: 0; font-weight: 400; line-height: normal; text-align: left; }
+.star-border.cpi-estrella > .cpi-envoltura { width: 100%; margin: 0; }
+.star-border.cpi-estrella > .star-border__light { z-index: 3; }
+
+/* Cupón flotante de Inicio: se despide al reclamarse (sube un poco y se desvanece). */
+.cpi-flotante-salida { animation: cpi-flotante-salir 420ms ease-in forwards; }
+@keyframes cpi-flotante-salir { to { opacity: 0; transform: translateY(-14px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .cpi-flotante-salida { animation: none; } }
+
+/* Cupón flotante de Inicio: caída con rebote, X para minimizar y pastilla minimizada. */
+.cpi-caida { animation: cpi-caida 680ms cubic-bezier(.22,1,.36,1) both; }
+@keyframes cpi-caida { 0% { opacity: 0; transform: translateY(-130%); } 55% { opacity: 1; transform: translateY(10px); } 75% { transform: translateY(-4px); } 100% { transform: translateY(0); } }
+.cpi-minimizar { position: absolute; top: -9px; right: -9px; z-index: 5; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid #ffffff26; background: #141417; color: #fff; cursor: pointer; box-shadow: 0 4px 10px #0006; }
+.cpi-minimizar:hover { background: #2a2a30; }
+.cpi-pastilla { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 0; border-radius: 999px; background: #ff2d3f; color: #fff; font: 600 13px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 8px 20px #ff2d3f55; }
+.cpi-pastilla::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 0 #ff2d3f99; animation: cpi-pastilla-pulso 2.4s ease-out infinite; pointer-events: none; }
+.cpi-pastilla-entra { animation: cpi-pastilla-entra 420ms cubic-bezier(.22,1.4,.36,1) both; }
+@keyframes cpi-pastilla-entra { from { opacity: 0; transform: scale(.55) translateY(-8px); } to { opacity: 1; transform: none; } }
+@keyframes cpi-pastilla-pulso { 0% { box-shadow: 0 0 0 0 #ff2d3f99; } 70%, 100% { box-shadow: 0 0 0 12px #ff2d3f00; } }
+@media (prefers-reduced-motion: reduce) { .cpi-caida, .cpi-pastilla-entra, .cpi-pastilla::after { animation: none; } }
+@media (max-width: 639px) { .cpi-pastilla { padding: 12px; } .cpi-pastilla svg { width: 20px; height: 20px; } }
