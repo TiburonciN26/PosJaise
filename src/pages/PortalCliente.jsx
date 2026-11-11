@@ -17,79 +17,6 @@ import IconoCampana from '../components/IconoCampana.jsx'
 import MenuSeccionesRecompensas from '../components/MenuSeccionesRecompensas.jsx'
 import MenuSeccionesPestana from '../components/MenuSeccionesPestana.jsx'
 
-// Chanchito "activo" — SVG que trajo el usuario (public/icons/
-// chanchitoActivo.svg), inlineado acá en vez de <img src="..."> a
-// propósito: un <img> de un .svg externo no hereda `currentColor` del
-// botón (siempre se vería negro, sin importar el hover/tema) — inline
-// sí, igual que el resto de íconos "a medida" del proyecto
-// (EsquinaBracket, .lw-checker). El path es el mismo que el archivo,
-// solo con los atributos en formato JSX (stroke-width→strokeWidth,
-// etc).
-// -scale-x-100: el dibujo original mira hacia la derecha (el hocico
-// del lado del carrito/avatar) — se espeja para que mire hacia la
-// izquierda, o sea hacia el logo (pedido explícito del usuario).
-// El archivo hermano (chanchitoBloqueado.svg, mismo chancho + una
-// barra diagonal) queda en public/icons/ sin usar todavía — el
-// usuario lo reservó para más adelante, cuando algún producto/servicio
-// puntual no sume puntos.
-function IconoChanchito() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="icono-chanchito h-[22px] w-[22px] -scale-x-100 sm:h-8 sm:w-8"
-    >
-      <path d="M15 11v.01" />
-      <path d="M16 3l0 3.803a6.019 6.019 0 0 1 2.658 3.197h1.341a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-1.342a6.008 6.008 0 0 1 -1.658 2.473v2.027a1.5 1.5 0 0 1 -3 0v-.583a6.04 6.04 0 0 1 -1 .083h-4a6.04 6.04 0 0 1 -1 -.083v.583a1.5 1.5 0 0 1 -3 0v-2l0 -.027a6 6 0 0 1 4 -10.473h2.5l4.5 -3" />
-    </svg>
-  )
-}
-
-// Ícono de puntos (header) — ya no es un placeholder inerte: lleva a
-// '/recompensas' (sección Mi tarjeta; antes '/mis-puntos', ver
-// implementacionesWed.md §7.15), la tarjeta con el
-// nivel real del cliente (Básico/Premium/VIP, calculado en el servidor
-// por mis_puntos()). Las animaciones de la referencia del usuario
-// (rebote al sumar, brillo pulsante al llenarse, moneda cayendo,
-// destellos, "+N" flotante) siguen portadas en index.css
-// (`.chanchito-*`) para cuando el ícono del header también reaccione en
-// vivo a sumar puntos — hoy solo usa `.icono-chanchito` en reposo.
-// §7.54: mismo "volver" que BotonCarrito (§7.53) — parado en
-// /recompensas, el ícono pasa a ser navigate(-1) en vez de un Link que
-// no haría nada ahí.
-function BotonChanchito({ estaEnPuntos }) {
-  const navigate = useNavigate()
-
-  if (estaEnPuntos) {
-    return (
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        aria-label="Volver"
-        className="-mr-2 max-sm:mr-0 flex max-sm:hidden h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
-      >
-        <IconoChanchito />
-      </button>
-    )
-  }
-
-  return (
-    <Link
-      to="/recompensas?seccion=tarjeta"
-      aria-label="Tus puntos"
-      data-cupones-destino
-      className="-mr-2 max-sm:mr-0 flex max-sm:hidden h-11 w-11 max-sm:w-9 items-center justify-center text-white/80 transition-colors hover:text-white"
-    >
-      <IconoChanchito />
-    </Link>
-  )
-}
-
 // Botón del carrito (header) — subpágina propia ('/carrito', ver
 // titulosSubpaginasCliente), no una de las pestañas principales. La
 // insignia con la cantidad viene de CarritoClienteContext, compartido
@@ -362,7 +289,7 @@ export default function PortalCliente() {
                        JAISE
                       <sup className="ml-0.5 align-top text-[0px]">˚</sup>
                     </span>
-                    <span className="pl-[0.3em] text-[6px] font-bold tracking-[0.3em] text-white/50">
+                    <span className="pl-[0.3em] text-[6px] font-bold sm:text-[9px] tracking-[0.3em] text-white/50">
                       BEAUTY ACADEMY
                     </span>
                   </Link>
@@ -499,7 +426,6 @@ export default function PortalCliente() {
                       ? <Moon className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden="true" />
                       : <Sun className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden="true" />}
                   </button>
-                  <BotonChanchito estaEnPuntos={location.pathname === '/recompensas'} />
   
                   {usuario ? (
                     <>

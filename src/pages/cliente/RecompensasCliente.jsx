@@ -264,7 +264,7 @@ export default function RecompensasCliente({ publico = false }) {
   useRegistrarMigajas([{ titulo: programaActivo && seccion.clave === 'canje' ? 'Canjear monedas' : seccion.label }])
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
+    <div className="lw-margen-pagina animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         <header className="flex items-center justify-between gap-2 pb-6 sm:justify-start">
           <div className="flex shrink-0 items-center gap-2">

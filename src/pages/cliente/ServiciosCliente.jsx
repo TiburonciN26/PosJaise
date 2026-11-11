@@ -212,7 +212,7 @@ export default function ServiciosCliente() {
   }
 
   return (
-    <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+    <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto lw-margen-pagina">
       {/* 0. BARRA DEL CATÁLOGO (fija) — arriba de todo, justo bajo el header. */}
       <BarraCatalogo
         categorias={categorias}

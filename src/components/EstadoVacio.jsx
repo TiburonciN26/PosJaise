@@ -1,6 +1,7 @@
 const CLASE_ACCION = {
   amber: 'text-amber hover:text-amber/80',
   'purple-300': 'text-purple-300 hover:text-purple-300/80',
+  'azul-metal': 'text-azul-metal hover:text-azul-metal/80',
 }
 
 // M5 de la 5ª auditoría: "No se encontraron productos." como único

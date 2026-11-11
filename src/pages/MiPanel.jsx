@@ -167,7 +167,7 @@ export default function MiPanel({ activo = true }) {
     supabase
       .from('usuarios')
       .select('id, nombre_completo')
-      .eq('rol', 'ASISTENTE')
+      .in('rol', ['ASISTENTE', 'ENCARGADA'])
       .order('nombre_completo')
       .then(({ data }) => setAsistentesUsuarios(data ?? []))
   }, [esAdmin])
@@ -197,7 +197,7 @@ export default function MiPanel({ activo = true }) {
   // precio del servicio (ingreso), como siempre — pero filtrando por una
   // asistente puntual (paga por %, no por precio) necesita ver lo que de
   // verdad le corresponde a ella, no el precio del servicio que cobró el
-  // negocio. asistentesUsuarios ya solo trae cuentas rol=ASISTENTE.
+  // negocio. asistentesUsuarios ya solo trae cuentas rol=ASISTENTE o ENCARGADA.
   const filtroEsAsistente =
     esAdmin && usuarioFiltro !== OPCION_TODOS && asistentesUsuarios.some((a) => a.id === usuarioFiltro)
 

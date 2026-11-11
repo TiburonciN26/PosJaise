@@ -4,6 +4,7 @@ const COLORES = {
   amber: 'bg-amber',
   morado: 'bg-purple-300',
   rojo: 'bg-red',
+  'azul-metal': 'bg-azul-metal',
 }
 
 export default function BotonFlotanteAgregar({ onClick, color = 'amber', label = 'Agregar' }) {

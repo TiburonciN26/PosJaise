@@ -16,7 +16,7 @@ export default function CitasPublicasCliente() {
   const { adelantoMinimo, cancelacionPlazoHoras } = useEstadoNegocio()
 
   return (
-    <div className="citas-cliente-scroll flex-1 overflow-y-auto pb-4 md:pb-8">
+    <div className="lw-margen-pagina citas-cliente-scroll flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="citas-cliente-contenido mx-auto flex w-full max-w-[1400px] flex-col gap-6 lw-gutter-detalle">
         <header className="flex flex-col gap-2">
           <h1 className="sm:text-[48px] lw-titulo-heavitas text-3xl max-sm:text-[1.5rem] uppercase">Mis citas</h1>

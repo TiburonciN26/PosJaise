@@ -179,7 +179,7 @@ main:has(.modal-producto-web:not(.hidden *)) {
   --color-azul-metal: #a9c6ec;
 
   /* Tipografías */
-  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* Feedback: fila recién agregada al ticket */
@@ -458,6 +458,9 @@ main:has(.modal-producto-web:not(.hidden *)) {
   --separador-horizontal: 10px;
   /* Padding lateral de las pestañas (bordes izquierdo/derecho de la pantalla). */
   --separador-vertical: 10px;
+  /* Margen lateral extra de las pestañas de la web de clientes en PC/tablet (>= 640px). Un solo valor para todas;
+     lo usan .lw-margen-pagina y .lw-margen-pagina-suma (abajo, junto a .lw-gutter). */
+  --margen-pagina-cliente: 40px;
   /* Separadores SECUNDARIOS: padding interno de los bloques/tarjetas dentro de
      una pestaña (formularios, tarjetas de lista). Variables propias para poder
      ajustarlos sin mover los márgenes de pantalla de arriba. `horizontal` =
@@ -1288,6 +1291,13 @@ input[type='search']::-webkit-search-decoration {
    Los anchos máximos y el padding interno de las tarjetas se conservan. */
 .landing-web :is(.lw-gutter, .lw-gutter-detalle) {
   padding-inline: var(--separador-vertical);
+}
+
+/* Margen lateral de página (web de clientes, desde 640px): se pone en el contenedor raíz de cada pestaña y subpestaña.
+   `-suma` es para raíces que ya traían su propio padding lateral (px-(--separador-vertical)): suma el margen encima. */
+@media (min-width: 640px) {
+  .landing-web .lw-margen-pagina { padding-inline: var(--margen-pagina-cliente); }
+  .landing-web .lw-margen-pagina-suma { padding-inline: calc(var(--separador-vertical) + var(--margen-pagina-cliente)); }
 }
 
 .landing-web .lw-serif {

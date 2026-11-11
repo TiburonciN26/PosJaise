@@ -32,6 +32,36 @@ test('resolverDestino personal: solo pantallas del POS que su rol puede abrir; s
   assert.equal(resolverDestino('ASISTENTE', undefined), '/mi-panel');
 });
 
+test('resolverDestino ENCARGADA (cajera + asistente): ve ventas y su panel, nunca lo de admin', async () => {
+  const { secciones } = await import('../../src/config/navegacion.js');
+  const rutasEncargada = secciones.filter((s) => s.roles.includes('ENCARGADA')).map((s) => s.path);
+  assert.deepEqual(rutasEncargada, ['/ventas', '/inventario', '/historial', '/servicios', '/mi-panel', '/citas', '/gastos']);
+  assert.equal(resolverDestino('ENCARGADA', '/inventario'), '/inventario');
+  assert.equal(resolverDestino('ENCARGADA', '/mi-panel'), '/mi-panel');
+  assert.equal(resolverDestino('ENCARGADA', '/dashboard'), '/ventas');
+  assert.equal(resolverDestino('ENCARGADA', '/porcentajes'), '/ventas');
+  assert.equal(resolverDestino('ENCARGADA', undefined), '/ventas');
+});
+
+test('/personal (gestión de cuentas) es solo del ADMINISTRADOR', async () => {
+  const { secciones } = await import('../../src/config/navegacion.js');
+  const personal = secciones.find((s) => s.path === '/personal');
+  assert.deepEqual(personal?.roles, ['ADMINISTRADOR']);
+  assert.equal(resolverDestino('ADMINISTRADOR', '/personal'), '/personal');
+  for (const rol of ['CAJERA', 'ASISTENTE', 'ENCARGADA']) {
+    assert.notEqual(resolverDestino(rol, '/personal'), '/personal', rol);
+  }
+});
+
+test('Equipo (antes pestaña Asistentes) cuelga de Web y es solo del ADMINISTRADOR', async () => {
+  const { secciones } = await import('../../src/config/navegacion.js');
+  assert.equal(secciones.find((s) => s.path === '/asistentes'), undefined);
+  const equipo = secciones.find((s) => s.path === '/equipo-web');
+  assert.equal(equipo?.padre, '/web');
+  assert.deepEqual(equipo?.roles, ['ADMINISTRADOR']);
+  assert.notEqual(resolverDestino('ENCARGADA', '/equipo-web'), '/equipo-web');
+});
+
 test('esRutaDePersonal: reconoce pantallas del POS, con o sin consulta y barra final', () => {
   assert.equal(esRutaDePersonal('/ventas'), true);
   assert.equal(esRutaDePersonal('/dashboard?x=1'), true);

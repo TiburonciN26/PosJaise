@@ -389,6 +389,12 @@ deno_version = 2
 [functions.webhook-pasarela]
 verify_jwt = false
 
+# Alta, bloqueo y gestión de cuentas de personal (pestaña «Personal»). Solo ADMINISTRADOR: el JWT se
+# verifica en la puerta y la función revisa el rol; el service_role se usa solo para auth.admin.*
+# (ver supabase/functions/gestionar-personal/index.ts).
+[functions.gestionar-personal]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

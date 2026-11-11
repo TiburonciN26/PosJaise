@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ArrowBigDown } from 'lucide-react'
 import './CuponPromocionInicio.css'
 import StarBorder from './StarBorder.jsx'
 
@@ -47,7 +47,7 @@ export default function EnvolturaCupon({
             <span id={`${id}-titulo`} className="cpi-titulo">{titulo}</span>
             {subtitulo && <span className="cpi-fecha-resumen">{subtitulo}</span>}
           </span>
-          <span className="cpi-accion" aria-hidden="true"><ChevronDown strokeWidth={2.6} /><span>{abierto ? 'Cerrar' : 'Ver'}</span></span>
+          <span className="cpi-accion" aria-hidden="true"><ArrowBigDown strokeWidth={2.6} /><span>{abierto ? 'Cerrar' : 'Ver'}</span></span>
         </button>
         <div id={`${id}-detalle`} className="cpi-desplegable" role="region" aria-labelledby={`${id}-titulo`} aria-hidden={!abierto} inert={!abierto}>
           <div className="cpi-recorte">

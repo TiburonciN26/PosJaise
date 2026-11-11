@@ -11,6 +11,7 @@ import {
   Percent,
   Wallet,
   UserCog,
+  UserPlus,
   CalendarClock,
   Hammer,
   HandCoins,
@@ -28,11 +29,18 @@ import {
   BookOpen,
 } from 'lucide-react'
 
+// Roles de personal: ADMINISTRADOR (todo), CAJERA (vende/cobra), ASISTENTE (citas + su panel de pagos) y
+// ENCARGADA (la unión de CAJERA + ASISTENTE, sin ser admin). El resto de pantallas decide por `esAdmin`, así que
+// agregar un rol aquí basta para el menú; la seguridad real la pone la RLS (ver migración rol_encargada).
+const ROLES_CAJA = ['ADMINISTRADOR', 'CAJERA', 'ENCARGADA']
+const ROLES_PANEL = ['ADMINISTRADOR', 'ASISTENTE', 'ENCARGADA']
+const ROLES_CITAS = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA']
+
 export const secciones = [
-  { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ['ADMINISTRADOR', 'CAJERA'] },
-  { path: '/inventario', label: 'Inventario', icono: Package, roles: ['ADMINISTRADOR', 'CAJERA'] },
-  { path: '/historial', label: 'Historial', icono: History, roles: ['ADMINISTRADOR', 'CAJERA'] },
-  { path: '/servicios', label: 'Servicios', icono: Scissors, roles: ['ADMINISTRADOR', 'CAJERA'] },
+  { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ROLES_CAJA },
+  { path: '/inventario', label: 'Inventario', icono: Package, roles: ROLES_CAJA },
+  { path: '/historial', label: 'Historial', icono: History, roles: ROLES_CAJA },
+  { path: '/servicios', label: 'Servicios', icono: Scissors, roles: ROLES_CAJA },
   {
     path: '/dashboard',
     label: 'Dashboard',
@@ -44,14 +52,14 @@ export const secciones = [
     path: '/mi-panel',
     label: 'Mi Panel',
     icono: UserCircle,
-    roles: ['ADMINISTRADOR', 'ASISTENTE'],
+    roles: ROLES_PANEL,
     tema: 'rosa',
   },
   {
     path: '/citas',
     label: 'Citas',
     icono: CalendarClock,
-    roles: ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE'],
+    roles: ROLES_CITAS,
     tema: 'rosa',
   },
   { path: '/estadisticas', label: 'Estadísticas', icono: BarChart3, roles: ['ADMINISTRADOR'], tema: 'rosa' },
@@ -70,9 +78,10 @@ export const secciones = [
     padre: '/clientes',
   },
   { path: '/porcentajes', label: 'Porcentajes', icono: Percent, roles: ['ADMINISTRADOR'], tema: 'rosa' },
-  { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ['ADMINISTRADOR', 'CAJERA'], tema: 'rosa' },
+  { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ROLES_CAJA, tema: 'rosa' },
   { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
-  { path: '/asistentes', label: 'Asistentes', icono: UserCog, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  // Cuentas de acceso del POS (alta, bloqueo, roles). Las fichas del equipo (perfil público) viven en Web → Equipo.
+  { path: '/personal', label: 'Personal', icono: UserPlus, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   {
     path: '/mobiliario',
     label: 'Mobiliario',
@@ -183,6 +192,16 @@ export const secciones = [
     path: '/galeria-web',
     label: 'Galería Web',
     icono: Image,
+    roles: ['ADMINISTRADOR'],
+    tema: 'azul-metal',
+    padre: '/web',
+  },
+  {
+    // Fichas del equipo (antes la pestaña «Asistentes»): perfil público de «Nuestro equipo» y la ficha que usan
+    // comisiones y citas. Se crean solas al dar de alta a una asistente/encargada en Personal.
+    path: '/equipo-web',
+    label: 'Equipo',
+    icono: UserCog,
     roles: ['ADMINISTRADOR'],
     tema: 'azul-metal',
     padre: '/web',

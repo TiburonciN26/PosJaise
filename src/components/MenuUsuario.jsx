@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, ImagePlus, LogOut, User } from 'lucide-react'
+import { Camera, ImagePlus, KeyRound, LogOut, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useSalir } from '../hooks/useSalir.js'
 import ModalCamara from './ModalCamara.jsx'
+import ModalCambiarClave from './ModalCambiarClave.jsx'
 import Interruptor from './Interruptor.jsx'
 import SwitchTema from './SwitchTema.jsx'
 import {
@@ -43,6 +44,7 @@ export default function MenuUsuario() {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
   const [confirmandoSalir, setConfirmandoSalir] = useState(false)
+  const [cambiandoClave, setCambiandoClave] = useState(false)
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   const [mostrarCamara, setMostrarCamara] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
@@ -289,6 +291,15 @@ export default function MenuUsuario() {
 
           <button
             type="button"
+            onClick={() => setCambiandoClave(true)}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            Cambiar contraseña
+          </button>
+
+          <button
+            type="button"
             onClick={() => setConfirmandoSalir(true)}
             className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-red"
           >
@@ -306,6 +317,8 @@ export default function MenuUsuario() {
           </div>
         </div>
       )}
+
+      {cambiandoClave && <ModalCambiarClave onCerrar={() => setCambiandoClave(false)} />}
 
       {confirmando && (
         <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">

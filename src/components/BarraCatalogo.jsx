@@ -2,11 +2,10 @@ import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowBigDown, Search, X } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 
-// Barra fija del catálogo de Servicios y Productos: botón "Categorías"
-// (despliega hacia abajo, dentro de la propia barra, la lista completa con
-// su conteo), chips "Todos" + la categoría elegida, búsqueda y total. Al
-// elegir una categoría la lista se pliega con la misma animación y la
-// elegida queda marcada al lado de "Todos".
+// Barra fija del catálogo de Servicios y Productos: etiqueta "Categorías n",
+// el chip de la categoría activa («Todos» por defecto) que abre una lista
+// vertical con su conteo (mismo estilo que el selector de Recompensas),
+// búsqueda y total. Al elegir una categoría la lista se pliega.
 // `categorias` incluye 'todos' primero; `conteos` es { categoria: n }.
 //
 // El texto de búsqueda vive AQUÍ mientras se escribe: teclear solo vuelve a pintar esta barra, no toda la página del catálogo
@@ -73,13 +72,6 @@ export default function BarraCatalogo({
     onElegirCategoria(categoria)
   }
 
-  const claseChip = (activa) =>
-    `lw-chip-cat inline-flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full border px-3.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-      activa
-        ? 'lw-chip-cat-on border-transparent bg-white text-black'
-        : 'border-transparent bg-[#18181b] text-[#d6d6da] hover:text-white'
-    }`
-
   return (
     <div
       ref={barraRef}
@@ -89,32 +81,53 @@ export default function BarraCatalogo({
       <div className="mx-auto flex w-full max-w-[1700px] flex-wrap items-center gap-3">
         {selectorCategoriasMovil}
         <div className={`min-w-0 flex-1 items-center gap-2 ${selectorCategoriasMovil ? 'hidden sm:flex' : 'flex'}`}>
-          <button
-            type="button"
-            onClick={() => setAbierto((anterior) => !anterior)}
-            aria-expanded={abierto}
-            aria-controls="lista-categorias"
-            className="inline-flex h-[34px] shrink-0 items-center gap-2 pr-2 text-[11px] font-semibold uppercase tracking-wider text-white transition-opacity hover:opacity-70"
-          >
+          <span className="inline-flex h-[34px] shrink-0 items-center gap-2 pr-1 text-[11px] font-semibold uppercase tracking-wider text-white">
             Categorías
             <span className="text-white/50">{reales.length}</span>
-            <ArrowBigDown className={`h-3.5 w-3.5 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`} />
-          </button>
-          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            <button type="button" onClick={() => elegir('todos')} className={claseChip(categoriaActiva === 'todos')}>
-              Todos
+          </span>
+          {/* El chip de la categoría activa («Todos» por defecto) es el que abre la lista. */}
+          <div className="relative min-w-0">
+            <button
+              type="button"
+              onClick={() => setAbierto((anterior) => !anterior)}
+              aria-expanded={abierto}
+              aria-controls="lista-categorias"
+              aria-label={`Categoría elegida: ${categoriaActiva}. ${abierto ? 'Cerrar' : 'Abrir'} lista de categorías`}
+              className="inline-flex h-[34px] max-w-full items-center gap-1.5 whitespace-nowrap border-0 bg-transparent px-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--lw-fg)] transition-opacity hover:opacity-70"
+            >
+              <span className="truncate">{categoriaActiva}</span>
+              <ArrowBigDown aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
             </button>
-            {categoriaActiva !== 'todos' && (
-              <button
-                key={categoriaActiva}
-                type="button"
-                onClick={() => setAbierto(true)}
-                aria-label={`Categoría elegida: ${categoriaActiva}. Abrir lista de categorías`}
-                className={`${claseChip(true)} animate-entrada-dropdown`}
-              >
-                {categoriaActiva}
-              </button>
-            )}
+
+            {/* Lista (no botones-chip): filas planas como el selector de Recompensas. */}
+            <div
+              id="lista-categorias"
+              role="group"
+              aria-label="Categorías"
+              aria-hidden={!abierto}
+              inert={!abierto}
+              data-abierto={abierto}
+              className="recompensas-selector__lista absolute left-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-20px)]"
+            >
+              <div className="max-h-[40svh] space-y-[2px] overflow-y-auto bg-[var(--lw-card)] px-(--pading-horizontal-boton) py-(--pading-vertical-boton) shadow-lg">
+                {categorias.map((categoria) => (
+                  <button
+                    key={categoria}
+                    type="button"
+                    aria-pressed={categoriaActiva === categoria}
+                    onClick={() => elegir(categoria)}
+                    className={`flex w-full items-center justify-between gap-3 rounded-none border-0 px-(--pading-horizontal-boton) py-(--pading-vertical-boton) text-left text-[13px] leading-normal transition-colors hover:bg-[var(--lw-border)] ${
+                      categoriaActiva === categoria
+                        ? 'bg-[var(--lw-border)] font-semibold text-[var(--lw-gold)]'
+                        : 'bg-transparent text-[var(--lw-fg)]'
+                    }`}
+                  >
+                    <span className="truncate capitalize">{categoria}</span>
+                    {categoria !== 'todos' && <span className="shrink-0 opacity-60">{conteos[categoria] ?? 0}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         <label className={`lw-buscador flex h-[38px] items-center gap-2 rounded-full bg-[#18181b] px-3.5 text-white/50 sm:w-[230px] ${selectorCategoriasMovil ? 'min-w-0 flex-1 sm:flex-none' : 'w-full'}`}>
@@ -136,34 +149,6 @@ export default function BarraCatalogo({
         <span className="hidden shrink-0 text-[11px] uppercase tracking-wider text-white/50 sm:inline">
           {etiquetaTotal}
         </span>
-      </div>
-
-      {/* Lista desplegable: la fila crece de 0fr a 1fr (animación suave de
-          alto, sin medir píxeles) y `inert` la saca del foco mientras está
-          plegada. */}
-      <div
-        id="lista-categorias"
-        inert={!abierto}
-        className={`mx-auto w-full max-w-[1700px] transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${selectorCategoriasMovil ? 'hidden sm:grid' : 'grid'} ${
-          abierto ? 'mt-3 grid-rows-[1fr] opacity-100' : 'mt-0 grid-rows-[0fr] opacity-0'
-        }`}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-3">
-            <div className="flex max-h-[40svh] flex-wrap gap-2 overflow-y-auto pb-1">
-              {reales.map((categoria) => (
-                <button
-                  key={categoria}
-                  type="button"
-                  onClick={() => elegir(categoria)}
-                  className={claseChip(categoriaActiva === categoria)}
-                >
-                  {categoria} <span className="opacity-60">· {conteos[categoria] ?? 0}</span>
-                </button>
-              ))}
-                          </div>
-          </div>
-        </div>
       </div>
     </div>
   )

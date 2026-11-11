@@ -865,7 +865,7 @@ function CitasConSesion() {
   }
 
   return (
-    <div className="citas-cliente-scroll animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
+    <div className="lw-margen-pagina citas-cliente-scroll animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <div className="citas-cliente-contenido mx-auto w-full max-w-[1400px] lw-gutter-detalle">
         {/* Encabezado */}
         <div

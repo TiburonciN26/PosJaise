@@ -181,7 +181,7 @@ export default function LibroReclamacionesCliente() {
 
   if (constancia) {
     return (
-      <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
+      <div className="lw-margen-pagina animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
         <div className="mx-auto w-full max-w-2xl space-y-4 lw-gutter-detalle">
           <div className="liquid-glass rounded-none p-6 text-center">
             <CheckCircle2 className="mx-auto h-10 w-10 text-[var(--lw-gold)]" />
@@ -215,7 +215,7 @@ export default function LibroReclamacionesCliente() {
   }
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
+    <div className="lw-margen-pagina animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <form onSubmit={enviar} className="mx-auto w-full max-w-2xl space-y-4 lw-gutter-detalle">
         <div className="liquid-glass flex items-start gap-3 rounded-none p-5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-[var(--lw-gold)]">

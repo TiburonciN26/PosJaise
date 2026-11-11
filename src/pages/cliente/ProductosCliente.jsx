@@ -214,7 +214,7 @@ export default function ProductosCliente() {
   }
 
   return (
-    <div ref={contenedorRef} className="animate-entrada-pestana flex-1 overflow-y-auto">
+    <div ref={contenedorRef} className="lw-margen-pagina animate-entrada-pestana flex-1 overflow-y-auto">
       {/* 0. BARRA DEL CATÁLOGO (fija) — arriba de todo, justo bajo el header. */}
       <BarraCatalogo
         categorias={categorias}
@@ -738,7 +738,7 @@ const FilaCintaProductos = memo(function FilaCintaProductos({ titulo, derecha, e
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/80" />
                 <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/30" />
-                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-2.5 py-1.5 text-[9.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
+                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-2.5 py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                   {etiqueta(p)}
                 </span>

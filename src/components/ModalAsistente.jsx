@@ -217,7 +217,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        style={{ '--color-foco': 'var(--color-purple-300)' }}
+        style={{ '--color-foco': 'var(--color-azul-metal)' }}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <h2 className="text-base font-semibold text-ink">
@@ -233,7 +233,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               autoComplete="new-password"
               value={formulario.nombresCompletos}
               onChange={(evento) => actualizarCampo('nombresCompletos', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-azul-metal"
               autoFocus
             />
           </div>
@@ -248,7 +248,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.telefono}
               onChange={(evento) => actualizarCampo('telefono', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -262,7 +262,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.email}
               onChange={(evento) => actualizarCampo('email', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -275,7 +275,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.direccion}
               onChange={(evento) => actualizarCampo('direccion', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -288,7 +288,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.contactoEmergencia}
               onChange={(evento) => actualizarCampo('contactoEmergencia', evento.target.value)}
               placeholder="Opcional"
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -299,7 +299,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               type="date"
               value={formulario.cumpleanos}
               onChange={(evento) => actualizarCampo('cumpleanos', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
             />
           </div>
 
@@ -310,7 +310,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               type="date"
               value={formulario.fechaIngreso}
               onChange={(evento) => actualizarCampo('fechaIngreso', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal"
             />
           </div>
 
@@ -320,7 +320,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               id={`${idBase}-cuenta`}
               value={formulario.usuarioId}
               onChange={(evento) => actualizarCampo('usuarioId', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-azul-metal"
             >
               <option value="">Sin vincular</option>
               {usuariosDisponibles.map((usuario) => (
@@ -330,8 +330,9 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               ))}
             </select>
             <p className="mt-1 text-xs text-ink/60">
-              Vincula esta profesional con su cuenta de login para que su % de comisión funcione
-              en Mi Panel.
+              {formulario.usuarioId
+                ? 'Esta ficha ya está vinculada a su cuenta. Las cuentas (alta, bloqueo, rol y contraseña) se gestionan en la pestaña Personal.'
+                : 'Las fichas de asistentes y encargadas nuevas se crean solas desde la pestaña Personal. Vincula una manualmente solo si es una ficha antigua sin cuenta.'}
             </p>
           </div>
 
@@ -374,7 +375,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.especialidad}
               onChange={(evento) => actualizarCampo('especialidad', evento.target.value)}
               placeholder="Ej. Colorimetría, cortes, maquillaje..."
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -386,7 +387,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               onChange={(evento) => actualizarCampo('bio', evento.target.value)}
               placeholder="Opcional — un par de líneas sobre su experiencia"
               rows={3}
-              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -399,7 +400,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.horarioWeb}
               onChange={(evento) => actualizarCampo('horarioWeb', evento.target.value)}
               placeholder="Ej. Lunes a sábado, 10:00 a. m. - 8:30 p. m."
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -412,7 +413,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.instagramUrl}
               onChange={(evento) => actualizarCampo('instagramUrl', evento.target.value)}
               placeholder="https://instagram.com/..."
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -425,7 +426,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.facebookUrl}
               onChange={(evento) => actualizarCampo('facebookUrl', evento.target.value)}
               placeholder="https://facebook.com/..."
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -438,7 +439,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               value={formulario.tiktokUrl}
               onChange={(evento) => actualizarCampo('tiktokUrl', evento.target.value)}
               placeholder="https://tiktok.com/@..."
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
+              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-azul-metal"
             />
           </div>
 
@@ -453,7 +454,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
                 )}
               </div>
               <div className="flex flex-1 flex-col gap-2">
-                <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-purple-300 hover:text-purple-300">
+                <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-azul-metal hover:text-azul-metal">
                   <ImagePlus className="h-3.5 w-3.5" />
                   {procesandoFoto ? 'Procesando...' : previewFoto ? 'Cambiar foto' : 'Elegir foto'}
                   <input
@@ -468,7 +469,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
                   type="button"
                   onClick={() => setMostrarCamara(true)}
                   disabled={procesandoFoto}
-                  className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+                  className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
                 >
                   <Camera className="h-3.5 w-3.5" />
                   {procesandoFoto ? 'Procesando...' : 'Tomar foto'}
@@ -491,13 +492,13 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
           <button
             type="button"
             onClick={() => actualizarCampo('mostrarEnWeb', !formulario.mostrarEnWeb)}
-            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-purple-300"
+            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-azul-metal"
           >
             <span className="flex min-w-0 items-center gap-2 text-sm text-ink">
               <Globe className="h-4 w-4 shrink-0 text-ink/60" />
               Mostrar en la Web
             </span>
-            <Interruptor activado={formulario.mostrarEnWeb} colorActivado="bg-purple-300" />
+            <Interruptor activado={formulario.mostrarEnWeb} colorActivado="bg-azul-metal" />
           </button>
 
           {puedeSerDuena && formulario.mostrarEnWeb && (
@@ -505,13 +506,13 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
               <button
                 type="button"
                 onClick={() => actualizarCampo('esDuena', !formulario.esDuena)}
-                className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-purple-300"
+                className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-azul-metal"
               >
                 <span className="flex min-w-0 items-center gap-2 text-sm text-ink">
                   <Crown className="h-4 w-4 shrink-0 text-ink/60" />
                   Fundadora
                 </span>
-                <Interruptor activado={formulario.esDuena} colorActivado="bg-purple-300" />
+                <Interruptor activado={formulario.esDuena} colorActivado="bg-azul-metal" />
               </button>
               <p className="mt-1 text-xs text-ink/60">
                 Aparece al inicio de Nuestro equipo con su foto, horario y redes. Solo una a la vez.
@@ -531,14 +532,14 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
             type="button"
             onClick={onCerrar}
             disabled={guardando}
-            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+            className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={guardando}
-            className="flex-1 rounded-lg bg-purple-300 py-2 text-sm font-semibold text-bg disabled:opacity-40"
+            className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40"
           >
             {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar'}
           </button>

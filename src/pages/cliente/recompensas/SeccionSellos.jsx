@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
+import { ArrowBigDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
 import AyudaCampo from '../../../components/AyudaCampo.jsx'
 import { formatearFechaSoloDia } from '../../../lib/fechas.js'
@@ -152,7 +152,7 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
                 className="flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white"
               >
                 Ver historial de visitas
-                <ChevronDown
+                <ArrowBigDown
                   className={`h-3 w-3 transition-transform duration-300 ${historialAbierto ? 'rotate-180' : ''}`}
                 />
               </button>

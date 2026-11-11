@@ -7001,3 +7001,61 @@ Implementado y probado en **local** (R2 simulado); sin R2 real, bucket, dominio 
   - **F10A-02b:** el evaluador cuenta solo muestras válidas (métricas numéricas y sin errores de página) y recalcula desde ellas en los cuatro grupos con muestras. El manifiesto exige cierre, artefactos por grupo con huellas iguales y una huella de las fuentes del candidato.
   - **F10A-03b:** el índice del fallback de SPA pasa la misma comprobación de ruta real.
   - **F10A-05b:** `main` muestra el monto original de una deuda con abonos y su cobro no envía importe. El borrador V3 solo acepta su cobro sin pagos previos y rechaza los que tienen abonos sin tocar el ledger (ensayo 26/26 en ROLLBACK; reacción del build de `main` comprobada). D11 queda en A (mecanismo y regla operativa, recomendada), B (mecanismo y pausa) o C (solo pausa).
+
+## 57. Nuevo rol de personal «ENCARGADA» (cajera + asistente) — 2026-11-10 (migración aplicada en producción el 2026-11-11, SIN comprobantes)
+
+**Por qué:** la dueña (ADMINISTRADOR) trabajará menos y entra personal que **vende** como la cajera y **atiende** como la asistente (Mi Panel con su comisión, completar sus citas). Hasta ahora cada cuenta tenía exactamente un rol y el personal era exclusivo de cada uno.
+
+**Decisión:** un 4.º valor de `usuarios.rol` (`ENCARGADA`), no «varios roles por usuario» (obligaba a reescribir toda la RLS). Permisos = unión exacta de CAJERA + ASISTENTE; todo lo que era solo del administrador sigue igual.
+
+| Pantalla / acción | ENCARGADA |
+|---|---|
+| Ventas, Inventario (modo cajera, sin costos ni crear/editar), Servicios (solo lectura), Gastos (solo VARIABLES) | Sí, igual que la cajera |
+| Historial | Solo el día (como la cajera); sin exportar CSV |
+| Anular venta (y, cuando exista, emitir o re-emitir comprobante) | Solo ventas de **hoy** (como la cajera) |
+| Citas, Mi Panel, completar sus propias citas, registrar atenciones con su % | Sí, igual que la asistente |
+| Dashboard, Estadísticas, Auditoría, Clientes, Deudas, Porcentajes, Chanchito, Asistentes, Mobiliario, Web, abrir/cerrar negocio | No (solo admin) |
+
+**Qué cambió**
+- `supabase/migrations/20261110000001_rol_encargada.sql`: CHECK `usuarios_rol_check`; políticas `ventas_insert/select`, `venta_items_select`, `gastos_insert/select/update`; funciones `confirmar_venta`, `anular_venta`, `agregar_stock` (cuerpo vivo **de producción**, solo ampliada la lista de roles; verificado por hash md5 contra producción antes y después de aplicarla). No se crearon helpers nuevos.
+- **Independiente de comprobantes (decisión 2026-11-11):** comprobantes electrónicos queda sin subir a producción hasta auditarse (la clienta aún no elige proveedor). Por eso esta migración NO toca `solicitar_comprobante`, `reemitir_comprobante` ni la política de `comprobantes`, y `confirmar_venta` conserva su firma de 9 parámetros. La versión que sí incluía comprobantes quedó como referencia en `informe01Comprobantes/referencia-rol_encargada-con-comprobantes.sql` (rama `wip/comprobantes`): cuando comprobantes se apruebe, su migración deberá volver a definir esas funciones e incluir también `ENCARGADA`.
+- No hizo falta tocar `asistentes_para_citas`, `agendar_cita_web`, `reprogramar_mi_cita_web` (`<> 'CAJERA'`), los resúmenes (`<> 'ADMINISTRADOR'`), `completar_cita`, `resumen_mi_panel` ni el trigger de comisión: se deciden por el vínculo ficha ↔ porcentajes, no por el rol.
+- `supabase/functions/emitir-comprobante/index.ts` (acepta `ENCARGADA`): pertenece a comprobantes, que aún no se sube (ver arriba).
+- Front: `src/config/navegacion.js` (constantes `ROLES_CAJA`, `ROLES_PANEL`, `ROLES_CITAS`), `MiPanel.jsx` (el desplegable del admin incluye cuentas ENCARGADA) y `Asistentes.jsx` (se puede vincular una ficha a una ENCARGADA).
+
+**Alta de una encargada (las cuentas de personal se siguen creando a mano):**
+1. Crear el usuario en Supabase Auth.
+2. `insert into public.usuarios (id, email, nombre_completo, rol, activo) values (<uid>, <email>, <nombre>, 'ENCARGADA', true);`
+3. En la pestaña **Asistentes**, crear su ficha vinculada a esa cuenta.
+4. En **Porcentajes**, definir su % por servicio. **Sin ficha o sin %, el trigger rechaza el registro** («Sin % asignado…») y solo puede anotarlo como pendiente. *(Este alta manual quedó reemplazada por la pestaña **Personal**, sección 58.)*
+
+**Pruebas locales (BD):** con una cuenta ENCARGADA de prueba (transacción revertida): vende, suma stock, anula la venta de hoy y se le rechaza la de hace 3 días, crea gasto VARIABLE y se le rechaza el FIJO, no ve auditoría ni deudas, no puede eliminar productos/servicios ni editar productos, `productos_vista` le oculta el costo, aparece como profesional en `asistentes_para_citas` y `resumen_mi_panel` responde. Front: `node --test tests/e2e/destino-login.test.mjs` (5/5), `npm run build` sin errores. No se probó en navegador.
+
+**Límite conocido:** las políticas de `gastos` y los resúmenes usan el rol **actual**; si alguien cambia de rol, su historia se reinterpreta (igual que ya ocurría entre CAJERA y ASISTENTE).
+
+## 58. Pestaña «Personal»: crear, bloquear y gestionar cuentas desde el POS — 2026-11-10 (migración aplicada en producción el 2026-11-11; función sin desplegar)
+
+**Por qué:** dar de alta a una cajera, asistente o encargada exigía 4 pasos manuales (usuario en Supabase Auth, fila en `usuarios`, ficha en Asistentes vinculada a mano, % en Porcentajes) y cada cuenta nueva requería intervención del desarrollador. En la prueba de la ENCARGADA se vio además el error de Mi Panel: sin ficha, el trigger de comisión lanza «Sin % asignado…» y el modal lo mostraba como «No se pudo guardar».
+
+**Pestaña Asistentes ≠ rol ASISTENTE.** El *rol* es la **cuenta con login**. La pestaña *Asistentes* son las **fichas del equipo** (foto, bio, redes, «mostrar en web», profesional seleccionable en citas, % de comisión). Ahora la ficha se crea sola al crear la cuenta; Asistentes queda para el perfil público.
+
+**Qué hace «Personal» (solo ADMINISTRADOR, `/personal`):** lista de todas las cuentas (administrador, encargada, cajera, asistente) con rol, estado (Activa/Bloqueada), último ingreso y aviso si falta la ficha; **crear** (correo + contraseña inicial que define la admin, con «Generar» y «Copiar»), **editar** nombre/rol, **bloquear/desbloquear** y **restablecer contraseña**. No se eliminan cuentas (el historial de ventas las referencia): se bloquean.
+
+**Cómo funciona**
+- `supabase/functions/gestionar-personal/index.ts` (**hay que desplegarla**): exige ADMINISTRADOR; el `service_role` se usa solo para `auth.admin.*` (crear, banear, contraseña). Las filas de `usuarios` y `asistentes` se escriben con el JWT de la admin, así la auditoría registra quién hizo cada cambio. Rol validado contra lista blanca; si falla un paso al crear, se revierte la cuenta de Auth. Bloquear = `usuarios.activo=false` + baneo en Auth + ficha inactiva (deja de salir en citas); desbloquear lo revierte. ENCARGADA/ASISTENTE crean ficha sola; un ADMINISTRADOR solo si se marca «También atiende servicios»; pasar a CAJERA desactiva la ficha (no se borra).
+- `supabase/migrations/20261110000002_gestion_personal.sql`: índice único `asistentes(usuario_id)` (una ficha por cuenta), trigger `proteger_ultimo_administrador` (nunca queda el sistema sin un administrador activo), RPC `personal_listar()` (solo admin; une `usuarios` con `auth.users`).
+- Front: `src/pages/Personal.jsx`, `src/components/ModalPersonal.jsx`, `ModalClavePersonal.jsx`, `src/lib/personal.js`. Nuevo `ModalCambiarClave.jsx` + botón «Cambiar contraseña» en `MenuUsuario` (el personal no podía cambiar la suya).
+- `ModalRegistroAtencion.jsx`: una cuenta no admin **sin ficha** ya no se trata como 100 %: queda «sin %», se avisa y se ofrece anotar como pendiente; los errores de negocio del servidor (`P0001`) se muestran tal cual.
+- `ModalAsistente.jsx`: el texto de «Cuenta de acceso» apunta a Personal.
+
+**Alta de una persona nueva (reemplaza el procedimiento manual de la sección 57):** Personal → «Nueva persona» → correo, nombre, rol y contraseña → copiar las credenciales y entregarlas. Para asistentes/encargadas, asignar luego sus % en **Porcentajes** (hasta entonces solo anotan atenciones como pendientes).
+
+**Pruebas locales:** BD (transacción revertida): no se puede degradar, desactivar ni borrar al último admin; segunda ficha para la misma cuenta rechazada; `personal_listar()` rechazada a no-admin. Función (contra el stack local, 28 comprobaciones): cajera → 403, token inválido → 401, correo/rol/contraseña inválidos → 400, crear ENCARGADA/CAJERA/ADMIN (con y sin ficha), correo repetido → 409, bloquear (no inicia sesión y la sesión abierta pierde el rol), desbloquear, no bloquearse ni cambiar el propio rol, cambio de rol con ficha (se desactiva y se reactiva la misma), restablecer contraseña. `node --test tests/e2e/destino-login.test.mjs` y `npm run build` sin errores. No se probó la interfaz en el navegador.
+
+**Ajustes posteriores (2026-11-11)**
+- **Asistentes pasa a Web → «Equipo»** (`/equipo-web`, subpestaña de Web con la paleta azul-metal; el hub `Web.jsx` tiene su botón «Ir a Equipo»). Ya no es una pestaña principal: ahí solo se edita el perfil público/ficha. Se añadió soporte `azul-metal` a `EstadoVacio` y `BotonFlotanteAgregar`. La ruta vieja `/asistentes` ya no existe.
+- **Claves simples rechazadas:** además de 8+ caracteres, no se aceptan todo igual (`aaaaaaaa`), secuencias (`12345678`, `abcdefgh`, `87654321`), patrones cortos repetidos (`12121212`) ni las más comunes (`password`, `admin123`…). La regla vive en `validarPassword` (`src/lib/personal.js`, adelanta el aviso en los tres formularios) y se repite en la Edge Function, que es la que manda. «Generar» siempre produce claves válidas (probado con 2000).
+- **Nota en «Editar persona»:** explica que la contraseña no se puede ver (Supabase solo guarda una versión cifrada) y que se define una nueva con el botón de la llave.
+- **Correos:** al crear una cuenta basta un correo con formato válido (se crea ya confirmada, sin enviar correo de verificación); es el usuario de inicio de sesión y no hay recuperación por correo para el personal (la admin restablece la clave).
+
+**Producción (2026-11-11):** las migraciones `20261110000001` y `20261110000002` se aplicaron a mano desde el SQL Editor (por eso no figuran en el historial de migraciones de Supabase) y se verificaron por consultas de solo lectura (CHECK con `ENCARGADA`, índice único, trigger, `personal_listar()` sin EXECUTE para anon, cuerpos de funciones idénticos al repo; 0 fichas duplicadas y 3 administradores previos). **Pendiente (pedir confirmación antes):** desplegar la función `gestionar-personal` (`supabase functions deploy gestionar-personal`); hasta entonces la pestaña Personal no funciona en producción. `emitir-comprobante` NO se despliega (comprobantes sin auditar).

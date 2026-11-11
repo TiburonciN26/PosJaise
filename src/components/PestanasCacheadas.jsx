@@ -34,6 +34,7 @@ const Clientes = componenteDiferido(() => import('../pages/Clientes.jsx'), 'Clie
 const Porcentajes = componenteDiferido(() => import('../pages/Porcentajes.jsx'), 'Porcentajes')
 const Gastos = componenteDiferido(() => import('../pages/Gastos.jsx'), 'Gastos')
 const Asistentes = componenteDiferido(() => import('../pages/Asistentes.jsx'), 'Asistentes')
+const Personal = componenteDiferido(() => import('../pages/Personal.jsx'), 'Personal')
 const Mobiliario = componenteDiferido(() => import('../pages/Mobiliario.jsx'), 'Mobiliario')
 const Chanchito = componenteDiferido(() => import('../pages/Chanchito.jsx'), 'Chanchito')
 const Web = componenteDiferido(() => import('../pages/Web.jsx'), 'Web')
@@ -64,7 +65,8 @@ const PAGINAS = {
   '/clientes': Clientes,
   '/porcentajes': Porcentajes,
   '/gastos': Gastos,
-  '/asistentes': Asistentes,
+  '/equipo-web': Asistentes,
+  '/personal': Personal,
   '/mobiliario': Mobiliario,
   '/chanchito': Chanchito,
   '/web': Web,

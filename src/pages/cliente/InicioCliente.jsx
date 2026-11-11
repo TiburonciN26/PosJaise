@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, MapPin, MessageCircle, Users } from 'lucide-react'
+import { ArrowUpRight, ChevronRight, MapPin, MessageCircle, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { COLUMNAS_SERVICIO_TARJETA } from '../../lib/catalogoPublico.js'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
@@ -350,7 +350,7 @@ export default function InicioCliente() {
   const hayVisitanos = Boolean(contacto?.direccion || horario || contacto?.telefono)
 
   return (
-    <div ref={contenedorRef} className="landing-web flex-1 overflow-y-auto">
+    <div ref={contenedorRef} className="landing-web flex-1 overflow-y-auto lw-margen-pagina">
       {/* 1. HERO — una sola pieza: la foto (con el efecto antes/después
           existente) es el FONDO COMPLETO de la sección, no una caja
           separada; el texto flota encima, sobre la franja negra que ya
@@ -412,8 +412,8 @@ export default function InicioCliente() {
                 <ShinyText text="Reserva tu cita" speed={3} delay={1.5} className="lw-cta-shiny" />
                 <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
               </Link>
-              {/* Mismo acabado que "Reserva tu cita" (pedido del usuario). */}
-              <Link to="/servicios" className="lw-cta-hero">
+              {/* OCULTO a pedido (movil y pc), mismo criterio que "Reserva tu cita": quitar el style para volver a mostrarlo. */}
+              <Link to="/servicios" className="lw-cta-hero" style={{ display: 'none' }}>
                 <ShinyText text="Ver servicios" speed={3} delay={1.5} className="lw-cta-shiny" />
                 <ArrowUpRight className="lw-cta-flecha h-4 w-4" />
               </Link>
@@ -457,9 +457,10 @@ export default function InicioCliente() {
             <div className="flex flex-col gap-2.5">
               <h2 className="lw-titulo-heavitas text-2xl max-sm:text-[0.75rem] text-white sm:text-[40px]">Lo más pedido</h2>
             </div>
-            <Link to="/servicios" className="shrink-0 text-sm text-[#e8e8ea] hover:text-white">
-              Ver todos los servicios →
-            </Link>
+            <Link to="/servicios" className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold">
+                <span className="text-[var(--lw-gold)]">Ver todos los servicios</span>
+                <ChevronRight className="h-4 w-4 text-[var(--lw-gold)]" aria-hidden="true" />
+              </Link>
           </div>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
             {topServicios.map((servicio) => (
@@ -474,7 +475,7 @@ export default function InicioCliente() {
           cargó ninguna pareja real en Galería Web; muestra hasta 3 (el
           diseño aprobado), pero no exige las 3 completas. Con una o dos
           parejas se muestran directas. La secuencia requiere tres parejas:
-          al llegar la primera al centro, las demás caen solas sin fijar el scroll. */}
+          en cuanto cae la primera foto, las demás siguen solas sin fijar el scroll. */}
       {galeria.length > 0 && (
         <section className="mx-auto mt-24 max-sm:mt-(--separador-horizontal) w-full max-w-[1700px] lw-gutter lw-gutter-sep">
           <div className="mb-7 flex items-end justify-between gap-3">
@@ -484,8 +485,9 @@ export default function InicioCliente() {
             </div>
             <div className="flex items-center gap-5">
               {enCurso && <div className="hidden sm:block"><PuntosAvance puntos={puntos} /></div>}
-              <Link to="/nosotros" className="shrink-0 text-sm text-[#e8e8ea] hover:text-white">
-                Ver galería →
+              <Link to="/nosotros" className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold">
+                <span className="text-[var(--lw-gold)]">Ver galería</span>
+                <ChevronRight className="h-4 w-4 text-[var(--lw-gold)]" aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -528,9 +530,6 @@ export default function InicioCliente() {
                 </div>
                 <div className="flex items-baseline justify-between gap-2">
                   {item.titulo && <span className="text-[15px] sm:text-base font-semibold text-white">{item.titulo}</span>}
-                  <Link to="/servicios" className="hidden text-[13px] sm:text-sm text-[var(--lw-gold)] lg:inline">
-                    Reservar este servicio
-                  </Link>
                 </div>
               </div>
             ))}
@@ -551,14 +550,15 @@ export default function InicioCliente() {
                   {promedioResenas.toFixed(1)}
                 </span>
                 <div className="flex flex-col gap-1.5">
-                  <Estrellas calificacion={Math.round(promedioResenas)} className="h-[15px] w-[15px]" />
+                  <Estrellas calificacion={Math.round(promedioResenas)} className="h-[15px] w-[15px]" colorActivo="#facc15" />
                   <span className="text-[13px] sm:text-sm text-[#a6a6a6]">
                     {totalExacto ? totalResenas : `Al menos ${totalResenas}`} reseñas de clientas que ya vinieron{promedioParcial ? ` (promedio de las ${calificaciones.length} más recientes)` : ''}
                   </span>
                 </div>
               </div>
-              <Link to="/nosotros" className="mt-2.5 text-sm text-[#e8e8ea] hover:text-white">
-                Ver todas las reseñas →
+              <Link to="/nosotros" className="mt-2.5 self-start inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold">
+                <span className="text-[var(--lw-gold)]">Ver todas las reseñas</span>
+                <ChevronRight className="h-4 w-4 text-[var(--lw-gold)]" aria-hidden="true" />
               </Link>
             </div>
             <div className="inicio-resenas-carrusel min-w-0 overflow-x-auto" role="region" aria-label="Reseñas de clientas" tabIndex={0}>
@@ -571,7 +571,7 @@ export default function InicioCliente() {
                   className="flex w-[280px] shrink-0 flex-col gap-4 rounded-[10px] border border-white/10 bg-[#111113] p-[26px] max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario) shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)] sm:w-[320px]"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <Estrellas calificacion={resena.calificacion} className="h-[13px] w-[13px]" />
+                    <Estrellas calificacion={resena.calificacion} className="h-[13px] w-[13px]" colorActivo="#facc15" />
                     <span className="text-xs sm:text-sm text-[#a6a6a6]">{formatoFechaResena.format(new Date(resena.creado_en))}</span>
                   </div>
                   {resena.servicio_nombre && (
@@ -626,8 +626,9 @@ export default function InicioCliente() {
               </div>
             ))}
           </div>
-          <Link to="/nosotros" className="mt-1.5 text-sm text-[#e8e8ea] hover:text-white">
-            Conoce al equipo →
+          <Link to="/nosotros" className="mt-1.5 inline-flex items-center gap-1.5 self-start text-sm font-semibold">
+            <span className="text-[var(--lw-gold)]">Conoce al equipo</span>
+            <ChevronRight className="h-4 w-4 text-[var(--lw-gold)]" aria-hidden="true" />
           </Link>
         </div>
       </section>

@@ -92,7 +92,7 @@ function completitud(asistente) {
 
 function coloresCompletitud(porcentaje) {
   if (porcentaje === 100) return { barra: 'bg-green', texto: 'text-green' }
-  if (porcentaje >= 50) return { barra: 'bg-purple-300', texto: 'text-purple-300' }
+  if (porcentaje >= 50) return { barra: 'bg-azul-metal', texto: 'text-azul-metal' }
   return { barra: 'bg-ink/30', texto: 'text-ink/60' }
 }
 
@@ -163,11 +163,12 @@ export default function Asistentes({ activo = true }) {
     // Incluye también ADMINISTRADOR: un admin que atiende servicios
     // personalmente necesita poder vincularse a una ficha igual que
     // cualquier asistente (para que le puedan asignar/completar citas a
-    // su nombre) — nunca CAJERA, que no atiende.
+    // su nombre) — nunca CAJERA, que no atiende. La ENCARGADA (vende y atiende)
+    // sí: necesita su ficha vinculada para que su comisión use su % y no el 100 %.
     const { data } = await supabase
       .from('usuarios')
       .select('id, nombre_completo, rol')
-      .in('rol', ['ADMINISTRADOR', 'ASISTENTE'])
+      .in('rol', ['ADMINISTRADOR', 'ASISTENTE', 'ENCARGADA'])
       .order('nombre_completo')
     setUsuariosAsistente(data ?? [])
   }
@@ -230,7 +231,7 @@ export default function Asistentes({ activo = true }) {
   return (
     <div
       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
-      style={{ '--color-foco': 'var(--color-purple-300)' }}
+      style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
       {/* Buscador + Nueva asistente: fijos arriba al hacer scroll, siempre debajo del header */}
       <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
@@ -238,16 +239,16 @@ export default function Asistentes({ activo = true }) {
           valor={busqueda}
           onCambiar={setBusqueda}
           placeholder="Buscar por nombre..."
-          tema="purple-300"
+          tema="azul-metal"
           sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" sinBorde />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="azul-metal" sinBorde />
 
         <button
           type="button"
           onClick={() => setModalAsistente('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-azul-metal px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
         >
           <Plus className="h-4 w-4" />
           <span>Nueva asistente</span>
@@ -255,8 +256,8 @@ export default function Asistentes({ activo = true }) {
       </div>
 
       <p className="mt-3 text-sm text-ink/60">
-        Asistentes:{' '}
-        <span className="font-mono font-semibold text-purple-300">{asistentes.length}</span>
+        Equipo:{' '}
+        <span className="font-mono font-semibold text-azul-metal">{asistentes.length}</span>
       </p>
 
       {error && (
@@ -272,7 +273,7 @@ export default function Asistentes({ activo = true }) {
           icono={UserCog}
           mensaje="No se encontraron asistentes."
           accion={{ label: '+ Nueva asistente', onClick: () => setModalAsistente('nuevo') }}
-          tema="purple-300"
+          tema="azul-metal"
         />
       ) : (
         <div className="mt-4 grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -292,7 +293,7 @@ export default function Asistentes({ activo = true }) {
                     aria-expanded={abierto}
                     className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-azul-metal/30 bg-azul-metal/15 text-sm font-semibold text-azul-metal">
                       {iniciales(asistente.nombres_completos)}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -319,13 +320,13 @@ export default function Asistentes({ activo = true }) {
                             </span>
                           )}
                           {asistente.es_duena && (
-                            <span className="flex items-center gap-1 font-semibold text-purple-300">
+                            <span className="flex items-center gap-1 font-semibold text-azul-metal">
                               <Crown className="h-3 w-3 shrink-0" />
                               Fundadora
                             </span>
                           )}
                           {asistente.mostrar_en_web && (
-                            <span className="flex items-center gap-1 text-purple-300">
+                            <span className="flex items-center gap-1 text-azul-metal">
                               <Globe className="h-3 w-3 shrink-0" />
                               En la Web
                             </span>
@@ -453,7 +454,7 @@ export default function Asistentes({ activo = true }) {
                 type="button"
                 onClick={() => setAsistenteAEliminar(null)}
                 disabled={eliminando}
-                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
               >
                 Cancelar
               </button>

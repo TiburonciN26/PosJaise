@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ArrowBigDown } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 // Pestaña de la barra del header (solo escritorio: en móvil las pestañas viven en el drawer y la pantalla trae su propio selector)
@@ -62,7 +62,7 @@ export default function MenuSeccionesPestana({ ruta, label, secciones, etiqueta 
         >
           {label}
         </span>
-        <ChevronDown
+        <ArrowBigDown
           aria-hidden="true"
           className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''} ${
             enPestana || abierto ? 'text-[#a9c6ec]' : 'text-white/60'

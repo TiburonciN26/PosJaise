@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BookOpen, Coins, Gift, LayoutGrid, Image, MapPin, PiggyBank, ShoppingBag, Stamp, Star, Ticket } from 'lucide-react'
+import { BookOpen, Coins, Gift, LayoutGrid, Image, MapPin, PiggyBank, ShoppingBag, Stamp, Star, Ticket, UserCog } from 'lucide-react'
 import IconoMartillo from '../components/IconoMartillo.jsx'
 
 // Panel administrativo de la pestaña Web de clientes — ya no es un
@@ -109,6 +109,14 @@ export default function Web() {
       >
         <Image className="h-4 w-4" />
         Ir a Galería Web
+      </Link>
+
+      <Link
+        to="/equipo-web"
+        className="flex w-full max-w-xs items-center justify-center gap-2 rounded-lg border border-azul-metal/40 bg-azul-metal/10 px-4 py-3 text-sm font-medium text-azul-metal transition-colors hover:bg-azul-metal/15"
+      >
+        <UserCog className="h-4 w-4" />
+        Ir a Equipo
       </Link>
       <Link
         to="/login-web"

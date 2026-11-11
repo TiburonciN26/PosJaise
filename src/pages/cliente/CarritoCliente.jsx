@@ -4,7 +4,7 @@ import {
   ArrowRight,
   Bike,
   Check,
-  ChevronDown,
+  ArrowBigDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
@@ -314,7 +314,7 @@ function SeccionDireccion({ direcciones, direccionId, abierta, onAbrir, onCerrar
           className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white sm:text-xl">
           <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
           <span className="min-w-0 flex-1 break-words">{direccionSeleccionada ? `Enviar a ${direccionSeleccionada.direccion}` : 'Selecciona una dirección'}</span>
-          <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
+          <ArrowBigDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
         </button>
       </h2>
       <div id="carrito-dir-contenido" aria-hidden={!abierta} inert={!abierta}
@@ -364,7 +364,7 @@ function SeccionComprobante({ comprobante, onCambiar, ruc, onRuc, razonSocial, o
           className="flex w-full items-center gap-2.5 text-left text-base font-semibold text-white sm:text-xl">
           <Receipt aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-[var(--lw-gold)]" />
           <span className="flex-1">{comprobante === 'BOLETA' ? 'Boleta' : 'Factura'}</span>
-          <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
+          <ArrowBigDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierta ? 'rotate-180' : ''}`} />
         </button>
       </h2>
       <div id="carrito-comp-contenido" aria-hidden={!abierta} inert={!abierta}
@@ -1085,7 +1085,7 @@ export default function CarritoCliente() {
   }
 
   return (
-    <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8 lg:pb-10">
+    <div className="lw-margen-pagina-suma landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8 lg:pb-10">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="mb-6 flex items-end justify-between gap-3 lg:mb-8">
           <h1 className="sm:text-[48px] lw-titulo-heavitas text-[28px]">Tu carrito</h1>
@@ -1169,7 +1169,7 @@ export default function CarritoCliente() {
                     <span className={dia ? 'text-white' : 'text-white/40'}>
                       {dia ? formatearClaveDia(dia) : 'Elige el día'}
                     </span>
-                    <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-300 motion-reduce:transition-none ${diaAbierto ? 'rotate-180' : ''}`} />
+                    <ArrowBigDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-300 motion-reduce:transition-none ${diaAbierto ? 'rotate-180' : ''}`} />
                   </button>
                   <div id="carrito-selector-dia" aria-hidden={!diaAbierto} inert={!diaAbierto}
                     className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${diaAbierto ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
@@ -1199,7 +1199,7 @@ export default function CarritoCliente() {
                     className="lw-campo flex items-center justify-between text-left"
                   >
                     <span className={hora ? 'text-white font-mono' : 'text-white/40'}>{hora || 'Elige la hora'}</span>
-                    <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-300 motion-reduce:transition-none ${horaAbierta ? 'rotate-180' : ''}`} />
+                    <ArrowBigDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-300 motion-reduce:transition-none ${horaAbierta ? 'rotate-180' : ''}`} />
                   </button>
                   <div id="carrito-selector-hora" aria-hidden={!horaAbierta} inert={!horaAbierta}
                     className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${horaAbierta ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>

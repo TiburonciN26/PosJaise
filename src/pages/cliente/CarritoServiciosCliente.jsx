@@ -483,7 +483,7 @@ export default function CarritoServiciosCliente() {
 
   if (servicios.length === 0) {
     return (
-      <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8">
+      <div className="lw-margen-pagina-suma landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-4 md:pb-8">
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-3 pb-20 text-center">
           <Sparkles className="h-9 w-9 text-white/25" />
           <h1 className="sm:text-[48px] lw-titulo-heavitas text-xl uppercase">Todavía no agregaste servicios</h1>
@@ -497,7 +497,7 @@ export default function CarritoServiciosCliente() {
   }
 
   return (
-    <div className="landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-24 md:pb-8 lg:pb-10">
+    <div className="lw-margen-pagina-suma landing-web animate-entrada-pestana flex-1 overflow-y-auto bg-[#0b0b0c] px-(--separador-vertical) pb-24 md:pb-8 lg:pb-10">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="mb-6 flex items-end justify-between gap-3 lg:mb-8">
           <h1 className="sm:text-[48px] lw-titulo-heavitas text-[28px] uppercase">Carrito de servicios</h1>

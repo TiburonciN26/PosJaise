@@ -300,8 +300,10 @@ export default function ModalRegistroAtencion({
   // ADMINISTRADOR se queda siempre con el 100% — ya sea que tenga ficha
   // vinculada (p. ej. para que le puedan asignar/completar citas a su
   // nombre) o no — nunca es una comisión que el negocio le "paga" a
-  // alguien más. Si el dueño no es admin y tampoco tiene ficha (no
-  // debería pasar hoy, pero por las dudas), también se asume 100%.
+  // alguien más. Si el dueño NO es admin y no tiene ficha vinculada (la
+  // administradora aún no la creó en Personal/Asistentes), NO tiene % que
+  // aplicar: queda «sin %» y solo puede anotar la atención como pendiente
+  // (antes se asumía 100 % y el servidor la rechazaba con un error genérico).
   useEffect(() => {
     let vigente = true
     async function cargarAsistenteDueno() {
@@ -328,8 +330,12 @@ export default function ModalRegistroAtencion({
         setPorcentajeActual(null)
         return
       }
-      if (esAdminDueno || !asistenteIdDueno) {
+      if (esAdminDueno) {
         setPorcentajeActual(100)
+        return
+      }
+      if (!asistenteIdDueno) {
+        setPorcentajeActual(null)
         return
       }
       const { data } = await supabase
@@ -369,9 +375,13 @@ export default function ModalRegistroAtencion({
   }, [usaCarrito, asistenteIdDueno, cargandoAsistenteDueno])
 
   function porcentajeParaServicio(servicioId) {
-    if (esAdminDueno || !asistenteIdDueno) return 100
+    if (esAdminDueno) return 100
+    if (!asistenteIdDueno) return null
     return mapaPorcentajes[servicioId] ?? null
   }
+
+  // Cuenta de personal (no admin) sin ficha vinculada: no se le puede calcular comisión.
+  const sinFichaDueno = !cargandoAsistenteDueno && !esAdminDueno && !asistenteIdDueno
 
   // Antes solo bloqueaba completar una cita; ahora también bloquea
   // registrar una atención nueva desde cero (esMultiple) — el servidor ya
@@ -381,7 +391,6 @@ export default function ModalRegistroAtencion({
   const hayLineaSinComision =
     usaCarrito &&
     !cargandoAsistenteDueno &&
-    Boolean(asistenteIdDueno) &&
     lineas.some((linea) => porcentajeParaServicio(linea.servicioId) == null)
 
   // Con el buscador vacío, includes('') es siempre true — así al enfocar el
@@ -615,9 +624,11 @@ export default function ModalRegistroAtencion({
     setGuardando(false)
 
     if (errorGuardado) {
+      // Las reglas de negocio del servidor (negocio cerrado, «Sin % asignado…») llegan con code P0001 y un
+      // mensaje pensado para la usuaria: se muestra tal cual; el resto sí es un fallo genérico.
       setError(
-        errorGuardado.message === MENSAJE_NEGOCIO_CERRADO
-          ? MENSAJE_NEGOCIO_CERRADO
+        errorGuardado.message === MENSAJE_NEGOCIO_CERRADO || errorGuardado.code === 'P0001'
+          ? errorGuardado.message
           : 'No se pudo guardar. Intenta de nuevo.',
       )
       return
@@ -904,6 +915,14 @@ export default function ModalRegistroAtencion({
                 />
               </div>
             </div>
+          )}
+
+          {sinFichaDueno && (
+            <p className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-ink/80">
+              Tu cuenta aún no tiene ficha de asistente, así que no se puede calcular tu comisión. Pídele a la
+              administradora que la cree en la pestaña Personal; mientras tanto puedes anotar la atención como
+              pendiente.
+            </p>
           )}
 
           {error && (

@@ -154,7 +154,7 @@ export default function IconoCampana({
         {conBadge && (
           <span
             key={contador}
-            className="pointer-events-none absolute -top-1.5 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-[7px] px-[3px] text-[9.5px] font-semibold leading-none"
+            className="pointer-events-none absolute -top-1.5 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-[7px] px-[3px] text-[10px] font-semibold leading-none"
             style={estiloBadge}
           >
             {contador > 9 ? '9+' : contador}

@@ -46,7 +46,7 @@ export default memo(function TarjetaServicioCliente({ servicio, mostrarCategoria
         )}
 
         {mostrarCategoria && servicio.categoria && (
-          <span className="absolute bottom-2.5 left-2.5 right-[46px] truncate rounded-[5px] bg-black/70 px-2.5 py-1 text-[9.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
+          <span className="absolute bottom-2.5 left-2.5 right-[46px] truncate rounded-[5px] bg-black/70 px-2.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white">
             {servicio.categoria}
           </span>
         )}

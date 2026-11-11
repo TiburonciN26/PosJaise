@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ArrowBigDown } from 'lucide-react'
 
 // Selector móvil compartido por navegación y filtros de Recompensas.
 export default function SelectorDesplegable({ opciones, valor, onSeleccionar, etiqueta, etiquetaLista, className = '', alineacion = 'derecha' }) {
@@ -38,7 +38,7 @@ export default function SelectorDesplegable({ opciones, valor, onSeleccionar, et
         onClick={() => setAbierto(valorAnterior => !valorAnterior)}
         className="flex w-full min-w-0 items-center justify-between gap-1.5 border-0 bg-transparent px-(--pading-horizontal-boton) py-(--pading-vertical-boton) text-[13px] sm:text-sm font-semibold leading-normal text-[var(--lw-fg)]">
         <span className="truncate">{seleccionada?.label}</span>
-        <ChevronDown aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
+        <ArrowBigDown aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
       </button>
       <div id={id} role="group" aria-label={etiquetaLista} aria-hidden={!abierto} inert={!abierto} data-abierto={abierto}
         className={`recompensas-selector__lista absolute top-full z-30 mt-2 w-48 max-w-[calc(100vw-20px)] ${alineacion === 'izquierda' ? 'left-0' : 'right-0'}`}>

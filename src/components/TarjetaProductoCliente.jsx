@@ -63,7 +63,7 @@ export default memo(function TarjetaProductoCliente({ producto }) {
         )}
 
         {descuento != null && !agotado && (
-          <span className="absolute left-2.5 top-2.5 z-[2] inline-flex items-center gap-1.5 rounded-[5px] bg-black/80 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-white">
+          <span className="absolute left-2.5 top-2.5 z-[2] inline-flex items-center gap-1.5 rounded-[5px] bg-black/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
             <span className="h-[5px] w-[5px] rounded-full bg-[var(--lw-rose)]" />
             −{descuento}%
           </span>
@@ -71,12 +71,12 @@ export default memo(function TarjetaProductoCliente({ producto }) {
 
         <div className="absolute bottom-2.5 left-2.5 right-[46px] z-[2] flex flex-wrap gap-1.5">
           {agotado && (
-            <span className="rounded-[5px] bg-black/80 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-white">
+            <span className="rounded-[5px] bg-black/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
               Agotado
             </span>
           )}
           {(producto.subcategoria || producto.categoria) && !agotado && (
-            <span className="truncate rounded-[5px] bg-black/70 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wider text-white">
+            <span className="truncate rounded-[5px] bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
               {producto.subcategoria || producto.categoria}
             </span>
           )}

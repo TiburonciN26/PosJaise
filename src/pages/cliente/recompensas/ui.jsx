@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ArrowBigDown } from 'lucide-react'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
 
 // Piezas chicas compartidas por las secciones de Recompensas.
@@ -16,7 +16,7 @@ export function Desplegable({ titulo, children }) {
         className="flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white sm:text-sm"
       >
         {titulo}
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
+        <ArrowBigDown className={`h-3.5 w-3.5 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
       </button>
       <CampoColapsable abierto={abierto} margen>
         <div className="liquid-glass flex flex-col gap-3 rounded-none p-5">{children}</div>

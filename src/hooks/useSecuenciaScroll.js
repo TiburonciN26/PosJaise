@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 // Resultados reales: el scroll solo inicia la secuencia. La primera foto cae
-// al verse completa; cuando llega al centro, las demás siguen por tiempo.
+// al verse completa y, en ese mismo momento, el resto del flujo empieza por tiempo.
 // Nunca se fija la página ni se interceptan gestos de rueda, teclado o touch.
 const INTERVALO_DENTRO_PAR_MS = 500
 const INTERVALO_ENTRE_PARES_MS = 1000
@@ -69,11 +69,10 @@ export function useSecuenciaScroll({ activo, reducirMovimiento, totalFotos }) {
       const completa = rect.top >= 0 && rect.bottom <= altoVentana
       if (reveladas === 0 && completa) mostrar(1)
 
-      // Detectar también el cruce del centro entre dos eventos de scroll.
-      // Importa la primera pareja, no el centro de una grilla alta en móvil.
-      if (rect.top + rect.height / 2 <= altoVentana / 2) {
+      // Apenas cae la primera foto arranca el resto, sin esperar a que llegue al
+      // centro de la pantalla.
+      if (reveladas >= 1) {
         iniciada = true
-        if (reveladas === 0) mostrar(1)
         const transcurrido = performance.now() - primeraCaidaEn
         programar(Math.max(0, intervaloSiguiente(reveladas) - transcurrido))
       }

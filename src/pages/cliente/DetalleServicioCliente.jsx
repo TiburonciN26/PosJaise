@@ -314,7 +314,7 @@ export default function DetalleServicioCliente() {
   const totalPasosMin = (servicio.pasos ?? []).reduce((suma, paso) => suma + (Number(paso.minutos) || 0), 0)
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto pb-24 lg:pb-8">
+    <div className="lw-margen-pagina animate-entrada-pestana flex-1 overflow-y-auto pb-24 lg:pb-8">
       {/* La ruta completa (Inicio | Servicios | categoría | nombre) la muestra la migaja del header (useRegistrarMigajas). */}
       <div className="mx-auto flex w-full max-w-[1400px] items-center justify-end gap-4 lw-gutter-detalle">
         <Link
@@ -342,7 +342,7 @@ export default function DetalleServicioCliente() {
                   }`}
                 >
                   <img src={urlPublicaFoto(BUCKET_FOTOS, foto.foto_url)} alt="" className="h-full w-full object-cover" />
-                  <span className="absolute inset-x-1 bottom-1 rounded bg-black/70 py-0.5 text-center text-[7.5px] sm:text-xs font-bold uppercase tracking-wider text-white">
+                  <span className="absolute inset-x-1 bottom-1 rounded bg-black/70 py-0.5 text-center text-[9px] sm:text-xs font-bold uppercase tracking-wider text-white">
                     {foto.etiqueta}
                   </span>
                 </button>
@@ -880,7 +880,7 @@ export default function DetalleServicioCliente() {
                     ))}
                   </div>
                   {resena.comentario && <p className="text-[13px] sm:text-sm leading-relaxed text-[#d9d9dc]">{resena.comentario}</p>}
-                  <span className="mt-auto w-fit rounded-[5px] bg-white/10 px-2.5 py-1 text-[9.5px] sm:text-xs font-bold uppercase tracking-wider text-white/60">
+                  <span className="mt-auto w-fit rounded-[5px] bg-white/10 px-2.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/60">
                     Clienta verificada
                   </span>
                 </article>

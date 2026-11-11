@@ -90,7 +90,7 @@ export default function MisResenasCliente() {
   const etiqueta = resena ? ETIQUETAS_ESTADO[resena.estado] : null
 
   return (
-    <div className="animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">
+    <div className="lw-margen-pagina-suma animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">
       <div className="mx-auto w-full max-w-md">
         <p className="mb-6 text-sm text-white/60">
           Cuéntanos cómo fue tu experiencia — se publica en Nosotros luego de una revisión rápida.
