@@ -36,6 +36,8 @@ import { useCerrarConEscape } from '../../hooks/useCerrarConEscape.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { procesarImagen, subirFoto, urlPublicaFoto } from '../../lib/imagenes.js'
 import { aLima, anioMesEnLima, claveDiaLima, diaSemanaLima, iniciarDia, iniciarMesLima, sumarDias } from '../../lib/fechas.js'
+import { obtenerHorario } from '../../lib/datosNegocioWeb.js'
+import { horasDelDia, turnosDelDia } from '../../lib/horarioAtencion.js'
 import TarjetaCupon from '../../components/TarjetaCupon.jsx'
 import AceptoTerminos from '../../components/AceptoTerminos.jsx'
 import { estadoEfectivoCupon } from '../../lib/cupones.js'
@@ -69,37 +71,27 @@ const BUCKET_QR_PAGOS = 'qr-pagos'
 // nuevo que ver ahí (sigue Pendiente hasta que el admin verifique el
 // pago).
 
-// Horario de ejemplo — mismos 2 bloques reales que ya usa el negocio
-// (horario_atencion(), 74_horario_atencion.sql): 10:00-13:00 y
-// 15:00-20:30. Fase 3 reemplaza esto por la fila real de esa función +
-// probablemente `horarios_disponibles_cita()` o su equivalente para
-// pedidos, para no ofrecer una hora que el negocio no puede cumplir.
-const HORARIO_EJEMPLO = {
-  bloques: [
-    { inicio: '10:00', fin: '13:00' },
-    { inicio: '15:00', fin: '20:30' },
-  ],
-  intervaloMin: 60,
+// Horas de entrega/recojo: salen del horario POR DÍA que configura la administradora (horario_atencion_semanal(),
+// migración 20261112000004) — cada hora en punto desde el inicio de cada turno del día elegido. El servidor
+// (confirmar_pedido_productos) vuelve a validar contra ese mismo horario.
+const PASO_HORAS_MIN = 60
+
+// Día ISO (1 = lunes … 7 = domingo) de una clave "YYYY-M-D" de claveDiaLima (mes base 0).
+function isodowDeClave(clave) {
+  const [anio, mes, dia] = clave.split('-').map(Number)
+  const diaSemana = new Date(Date.UTC(anio, mes, dia)).getUTCDay()
+  return diaSemana === 0 ? 7 : diaSemana
 }
 
-function generarHorasDelDia({ bloques, intervaloMin }) {
-  const horas = []
-  for (const bloque of bloques) {
-    let [h, m] = bloque.inicio.split(':').map(Number)
-    const [hFin, mFin] = bloque.fin.split(':').map(Number)
-    while (h * 60 + m < hFin * 60 + mFin) {
-      horas.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
-      m += intervaloMin
-      if (m >= 60) {
-        h += Math.floor(m / 60)
-        m %= 60
-      }
-    }
-  }
-  return horas
+// Horas que se pueden elegir ese día: las del horario y, si es hoy, solo las que todavía no pasaron (hora de Lima).
+function horasParaDia(semana, clave) {
+  if (!semana || !clave) return []
+  const horas = horasDelDia(turnosDelDia(semana, isodowDeClave(clave)), PASO_HORAS_MIN)
+  if (clave !== claveDiaLima(new Date())) return horas
+  const ahora = aLima(new Date())
+  const ahoraTexto = `${String(ahora.getUTCHours()).padStart(2, '0')}:${String(ahora.getUTCMinutes()).padStart(2, '0')}`
+  return horas.filter((h) => h > ahoraTexto)
 }
-
-const HORAS_EJEMPLO = generarHorasDelDia(HORARIO_EJEMPLO)
 
 const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -156,8 +148,9 @@ function claveDiaAISO(clave) {
 // `onElegir` trabajan con la misma `claveDiaLima` que ya usa el resto
 // del proyecto para agrupar por día — Fase 3 decide el formato real que
 // viaja al RPC (probablemente una fecha ISO derivada de esta misma
-// clave, no la clave en sí).
-function SelectorDia({ diaSeleccionado, onElegir }) {
+// clave, no la clave en sí). `semana` (horario por día) deshabilita además los días que el negocio no atiende; sin
+// horario cargado no se bloquea ninguno (decide el servidor).
+function SelectorDia({ diaSeleccionado, onElegir, semana }) {
   const [mesActual, setMesActual] = useState(() => iniciarDia(new Date()))
   const diasGrilla = construirDiasGrilla(mesActual)
   const { anio: anioActual, mes: mesIndiceActual } = anioMesEnLima(mesActual)
@@ -195,16 +188,19 @@ function SelectorDia({ diaSeleccionado, onElegir }) {
           const esHoy = clave === hoyClave
           const esSeleccionado = clave === diaSeleccionado
           const esPasado = dia.getTime() < inicioHoy
+          const esCerrado = Boolean(semana) && turnosDelDia(semana, isodowDeClave(clave)).length === 0
+          const deshabilitado = esPasado || esCerrado
           return (
             <button
               key={clave}
               type="button"
               onClick={() => onElegir(clave)}
-              disabled={esPasado}
+              disabled={deshabilitado}
+              title={esCerrado && !esPasado ? 'Cerrado' : undefined}
               className={`flex aspect-square items-center justify-center rounded-lg text-xs transition-colors ${
                 esSeleccionado
                   ? 'bg-[var(--lw-gold)] font-semibold text-black'
-                  : esPasado
+                  : deshabilitado
                     ? 'cursor-not-allowed text-white/15'
                     : esHoy
                       ? 'border border-[var(--lw-gold)] text-[var(--lw-gold)]'
@@ -684,6 +680,8 @@ export default function CarritoCliente() {
   const [dia, setDia] = useState('')
   const [diaAbierto, setDiaAbierto] = useState(false)
   const [hora, setHora] = useState('')
+  // undefined = cargando; null = no se pudo leer o el negocio aún no tiene días abiertos.
+  const [horario, setHorario] = useState(undefined)
   const [horaAbierta, setHoraAbierta] = useState(false)
   const [metodoPago, setMetodoPago] = useState('YAPE')
   const [captura, setCaptura] = useState('')
@@ -733,6 +731,16 @@ export default function CarritoCliente() {
 
     cargar()
   }, [])
+
+  useEffect(() => {
+    let vigente = true
+    obtenerHorario().then((semana) => vigente && setHorario(semana))
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  const horasDisponibles = horasParaDia(horario, dia)
 
   // Vuelve a mostrar el carrito GUARDADO (cantidades y precios del servidor), conservando qué productos estaban marcados.
   const recargarDesdeServidor = useCallback(async () => {
@@ -1177,9 +1185,12 @@ export default function CarritoCliente() {
                     <div className="pt-2">
                       <SelectorDia
                         diaSeleccionado={dia}
+                        semana={horario}
                         onElegir={(clave) => {
                           setDia(clave)
                           setDiaAbierto(false)
+                          // La hora elegida puede no existir en el horario del nuevo día.
+                          if (hora && !horasParaDia(horario, clave).includes(hora)) setHora('')
                         }}
                       />
                     </div>
@@ -1204,8 +1215,19 @@ export default function CarritoCliente() {
                   <div id="carrito-selector-hora" aria-hidden={!horaAbierta} inert={!horaAbierta}
                     className={`grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none ${horaAbierta ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                     <div className="min-h-0 overflow-hidden">
+                    {horasDisponibles.length === 0 && (
+                      <p className="pt-2 text-xs text-white/50">
+                        {horario === undefined
+                          ? 'Cargando horario...'
+                          : horario === null
+                            ? 'No pudimos cargar el horario de atención. Recarga la página o escríbenos por WhatsApp.'
+                            : !dia
+                              ? 'Elige primero el día.'
+                              : 'Ya no quedan horas disponibles ese día. Elige otro día.'}
+                      </p>
+                    )}
                     <div className="grid grid-cols-3 gap-2 pt-2">
-                      {HORAS_EJEMPLO.map((h) => (
+                      {horasDisponibles.map((h) => (
                         <button
                           key={h}
                           type="button"

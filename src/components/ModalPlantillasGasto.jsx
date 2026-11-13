@@ -130,6 +130,10 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
                 <span>Nueva</span>
               </button>
             </div>
+            {/* Generación automática: migración 20261112000010 (pg_cron, una vez por mes). */}
+            <p className="mt-1 text-sm text-ink/60">
+              Al empezar cada mes se crean solos los gastos fijos de las plantillas activas.
+            </p>
 
             {plantillas.length === 0 ? (
               <EstadoVacio icono={Wallet} mensaje="No hay plantillas registradas." tema="purple-300" />

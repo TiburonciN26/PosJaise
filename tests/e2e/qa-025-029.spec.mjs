@@ -273,16 +273,16 @@ test('QA-025: Estadísticas rotula Ingreso neto y coincide con Dashboard (bruto 
   const bruto = await importeFilaDashboard(page, 'Ingreso bruto');
   const descuentos = await importeFilaDashboard(page, 'Descuentos');
   expect(descuentos, 'el descuento de la venta ficticia debe verse').toBeGreaterThanOrEqual(2);
-  // QA-031: el envío cobrado (ventas con delivery) es una línea propia; el neto sigue siendo sum(ventas.total).
-  const envio = await importeFilaDashboard(page, 'Envío cobrado');
-  const neto = Math.round((bruto - descuentos + envio) * 100) / 100;
+  // QA-031 + 2026-11-12: «Envío cobrado» es una línea solo informativa (pasa al
+  // repartidor); el neto es bruto − descuentos = sum(ventas.total − envío).
+  const neto = Math.round((bruto - descuentos) * 100) / 100;
 
   await page.goto('/estadisticas');
   const tarjeta = page.getByText('Ingreso neto', { exact: true }).first();
   await expect(tarjeta, 'la tarjeta se llama Ingreso neto').toBeVisible();
   await expect(page.getByText('Ingreso bruto', { exact: true }), 'Estadísticas no usa el nombre de Dashboard para otro importe').toHaveCount(0);
   const valor = monto(await tarjeta.locator('xpath=following-sibling::p').first().innerText());
-  expect(valor, 'ingreso neto de Estadísticas = bruto − descuentos + envío de Dashboard (mismo período)').toBeCloseTo(neto, 2);
+  expect(valor, 'ingreso neto de Estadísticas = bruto − descuentos de Dashboard (mismo período)').toBeCloseTo(neto, 2);
 });
 
 test.describe('QA-029: condiciones de adelanto y plazo sin marcadores', () => {

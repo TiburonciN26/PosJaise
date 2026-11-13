@@ -27,14 +27,21 @@ import {
   Coins,
   LayoutGrid,
   BookOpen,
+  Warehouse,
+  Banknote,
 } from 'lucide-react'
 
-// Roles de personal: ADMINISTRADOR (todo), CAJERA (vende/cobra), ASISTENTE (citas + su panel de pagos) y
-// ENCARGADA (la unión de CAJERA + ASISTENTE, sin ser admin). El resto de pantallas decide por `esAdmin`, así que
-// agregar un rol aquí basta para el menú; la seguridad real la pone la RLS (ver migración rol_encargada).
+// Roles de personal: ADMINISTRADOR (todo), CAJERA (vende/cobra), ASISTENTE (citas + su panel de pagos),
+// ENCARGADA (la unión de CAJERA + ASISTENTE, sin ser admin) y PERSONAL_APOYO (chicas que vienen solo cuando hay mucho
+// tráfico: ÚNICAMENTE Mi Panel, para anotar lo que atendieron). El resto de pantallas decide por `esAdmin`, así que
+// agregar un rol aquí basta para el menú; la seguridad real la pone la RLS (migraciones rol_encargada y
+// rol_personal_apoyo).
 const ROLES_CAJA = ['ADMINISTRADOR', 'CAJERA', 'ENCARGADA']
-const ROLES_PANEL = ['ADMINISTRADOR', 'ASISTENTE', 'ENCARGADA']
+const ROLES_PANEL = ['ADMINISTRADOR', 'ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO']
 const ROLES_CITAS = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA']
+// Almacén (cosas internas que no se venden): todo el personal anota lo que saca; solo la admin crea artículos e ingresos
+// (migración 20261112000011_almacen).
+const ROLES_ALMACEN = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO']
 
 export const secciones = [
   { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ROLES_CAJA },
@@ -69,7 +76,9 @@ export const secciones = [
     path: '/deudas',
     label: 'Deudas',
     icono: HandCoins,
-    roles: ['ADMINISTRADOR'],
+    // Cajera y Encargada solo CONSULTAN y dejan notas de cobro que confirma la admin
+    // (migración 20261112000001_deudas_notas_cobro).
+    roles: ROLES_CAJA,
     tema: 'rosa',
     // Netamente ligada a Clientes: en el menú lateral (móvil) no aparece
     // como pestaña suelta, solo se revela al desplegar Clientes (ver
@@ -79,6 +88,11 @@ export const secciones = [
   },
   { path: '/porcentajes', label: 'Porcentajes', icono: Percent, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ROLES_CAJA, tema: 'rosa' },
+  // Fondo fijo en efectivo para gastos menores (20261112000012): los mismos roles que manejan Gastos / Ventas.
+  { path: '/caja-chica', label: 'Caja chica', icono: Banknote, roles: ROLES_CAJA, tema: 'rosa' },
+  // Va después de Mi Panel a propósito: rutaInicialPara() toma la PRIMERA sección visible del rol, y la asistente y el
+  // personal de apoyo deben seguir aterrizando en Mi Panel.
+  { path: '/almacen', label: 'Almacén', icono: Warehouse, roles: ROLES_ALMACEN, tema: 'rosa' },
   { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   // Cuentas de acceso del POS (alta, bloqueo, roles). Las fichas del equipo (perfil público) viven en Web → Equipo.
   { path: '/personal', label: 'Personal', icono: UserPlus, roles: ['ADMINISTRADOR'], tema: 'rosa' },

@@ -468,7 +468,7 @@ export default function Historial({ activo = true }) {
       },
     }))
     mostrarToast('Venta anulada. Se devolvió el stock.', 'exito')
-    cargarVentas()
+    cargarVentas(vigenteRef.current, true)
   }
 
   const filtroEfectivo = esAdmin ? filtro : 'hoy'
@@ -488,6 +488,8 @@ export default function Historial({ activo = true }) {
   async function cargarVentas(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     const { desde, hasta } = calcularRango(filtroEfectivo, personalizado)
+    // Una recarga silenciosa (tras anular) conserva las filas ya cargadas con «Cargar más» para que el scroll no salte.
+    const cantidad = silencioso ? Math.min(Math.max(ventas.length, TAMANO_PAGINA), 1000) : TAMANO_PAGINA
 
     let consultaVentas = supabase
       .from('ventas')
@@ -497,7 +499,7 @@ export default function Historial({ activo = true }) {
       .order('fecha', { ascending: false })
 
     if (!filtroActivo) {
-      consultaVentas = consultaVentas.range(0, TAMANO_PAGINA - 1)
+      consultaVentas = consultaVentas.range(0, cantidad - 1)
     }
 
     const [ventasRes, resumenRes] = await Promise.all([
@@ -519,7 +521,7 @@ export default function Historial({ activo = true }) {
 
     setError(null)
     setVentas(ventasRes.data ?? [])
-    setHayMas(!filtroActivo && (ventasRes.data ?? []).length === TAMANO_PAGINA)
+    setHayMas(!filtroActivo && (ventasRes.data ?? []).length === cantidad)
 
     const filaResumen = resumenRes.data?.[0]
     setResumen(

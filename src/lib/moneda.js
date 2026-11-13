@@ -28,3 +28,13 @@ export function leerImporte(texto) {
   if (!/^(?:\d{1,8}(?:\.\d{1,2})?|\.\d{1,2})$/.test(limpio)) return Number.NaN
   return Number(limpio)
 }
+
+// Filtro de tecleo para importes en soles: dígitos y un solo punto con hasta 2 decimales (ej. 15 o 15.50). Se aplica en
+// cada onChange, así una letra o un signo pegado simplemente no aparece; la validación completa sigue con leerImporte().
+// La coma no se admite, como en Gastos.
+export function soloImporte(texto) {
+  const limpio = String(texto ?? '').replace(/[^\d.]/g, '')
+  const [enteros, ...resto] = limpio.split('.')
+  const parteEntera = enteros.slice(0, 8)
+  return resto.length === 0 ? parteEntera : `${parteEntera}.${resto.join('').slice(0, 2)}`
+}

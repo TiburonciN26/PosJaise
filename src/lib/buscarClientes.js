@@ -7,8 +7,12 @@
 export const LIMITE_SUGERENCIAS = 20
 
 // `%`, `_` y `\` son comodines/escape de LIKE: se escapan para que el texto del usuario sea literal.
+// Los espacios (uno o varios, incluido el no separable) pasan a `%`: en producción hay nombres guardados con
+// doble espacio («Argolla␣␣lagrima…», 40 productos al 12/11/2026) que el navegador muestra como uno solo, y
+// buscar «argolla lagrima» no los encontraba. Así las palabras se buscan en orden, sin importar el espaciado.
 export function patronIlike(termino) {
-  return `%${termino.trim().replace(/[\\%_]/g, '\\$&')}%`
+  const palabras = termino.trim().split(/\s+/).map((p) => p.replace(/[\\%_]/g, '\\$&'))
+  return `%${palabras.join('%')}%`
 }
 
 // Valor entre comillas dentro de un filtro `or=(...)` de PostgREST: las comas, paréntesis y puntos del

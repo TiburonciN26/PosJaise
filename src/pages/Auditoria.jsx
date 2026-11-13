@@ -23,6 +23,9 @@ const TABLA_LABELS = {
   ventas: 'Ventas',
   stock: 'Stock',
   estado_negocio: 'Estado del negocio',
+  horario_semanal: 'Horario de atención',
+  almacen_articulos: 'Almacén',
+  caja_chica_config: 'Caja chica',
 }
 
 const OPCION_TODAS_TABLAS = 'todas'

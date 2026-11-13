@@ -48,8 +48,11 @@ function formatearFechaHora(fechaIso) {
 // desktop — las 4 versiones ya eran prácticamente idénticas. Eliminar
 // queda exclusivo del admin; cancelar/editar los ve cualquiera que llegue
 // a esta pantalla (solo ADMINISTRADOR o CAJERA, ver navegacion.js).
+// Los que vienen de Caja chica (20261112000012) no se editan ni se cancelan aquí: se anulan desde esa pestaña, para que
+// el saldo de la caja y el gasto nunca queden distintos (el servidor también lo bloquea).
 function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
   const cancelado = gasto.estado === 'CANCELADO'
+  const deCajaChica = Boolean(gasto.caja_chica_movimiento_id)
   return (
     <div
       className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 rounded-lg p-2.5 ${
@@ -74,6 +77,11 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
               {formatearFechaHora(gasto.creado_en)}
             </span>
           )}
+          {deCajaChica && (
+            <span className="rounded-full border border-purple-300/40 bg-purple-300/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-300">
+              Caja chica
+            </span>
+          )}
           {cancelado && (
             <span className="rounded-full bg-red/15 px-1.5 py-0.5 text-[10px] font-medium text-red">
               Cancelado
@@ -82,13 +90,13 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
         </div>
       </div>
       <div className="col-start-2 row-start-2 flex shrink-0 items-center gap-0 lg:row-span-2 lg:row-start-1">
-        {!cancelado && (
+        {!cancelado && !deCajaChica && (
           <>
             <BotonAccion plano icono={Pencil} texto="Editar" color="celeste" sinBorde onClick={onEditar} />
             <BotonAccion plano icono={Ban} texto="Cancelar" color="rojo" sinBorde onClick={onCancelar} />
           </>
         )}
-        {esAdmin && (
+        {esAdmin && !deCajaChica && (
           <BotonAccion plano icono={Trash2} texto="Eliminar" color="rojo" sinBorde onClick={onEliminar} />
         )}
       </div>
@@ -185,7 +193,7 @@ export default function Gastos({ activo = true }) {
     if (!silencioso) setCargando(true)
     const { data, error: errorConsulta } = await supabase
       .from('gastos')
-      .select('id, nombre, tipo, monto, mes, anio, estado, creado_en')
+      .select('id, nombre, tipo, monto, mes, anio, estado, creado_en, caja_chica_movimiento_id')
       .eq('mes', mes)
       .eq('anio', anioDebounced)
       .order('nombre')
@@ -284,7 +292,7 @@ export default function Gastos({ activo = true }) {
         : `Se agregaron ${plantillasFaltantes.length} gastos fijos: ${plantillasFaltantes.map((p) => p.nombre).join(', ')}.`,
       'exito',
     )
-    cargarGastos()
+    cargarGastos(undefined, true)
   }
 
   async function confirmarEliminar() {
@@ -304,7 +312,7 @@ export default function Gastos({ activo = true }) {
     }
 
     mostrarToast('Gasto eliminado.', 'exito')
-    cargarGastos()
+    cargarGastos(undefined, true)
   }
 
   async function confirmarCancelar() {
@@ -324,7 +332,7 @@ export default function Gastos({ activo = true }) {
     }
 
     mostrarToast('Gasto cancelado.', 'exito')
-    cargarGastos()
+    cargarGastos(undefined, true)
   }
 
   function exportarCSV() {
@@ -743,7 +751,7 @@ export default function Gastos({ activo = true }) {
             const esNuevo = modalGasto === 'nuevo'
             setModalGasto(null)
             mostrarToast(esNuevo ? 'Gasto creado.' : 'Gasto actualizado.', 'exito')
-            cargarGastos()
+            cargarGastos(undefined, true)
           }}
         />
       )}

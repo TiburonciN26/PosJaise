@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen } from 'lucide-react'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { agruparHorario, textoTurnos } from '../../lib/horarioAtencion.js'
 import { RUTAS_LEGALES } from '../../config/legal.js'
 import './PieClienteWeb.css'
 
@@ -10,7 +11,7 @@ import './PieClienteWeb.css'
 // principales de la barra (Servicios/Productos/Citas/Nosotros), a
 // pedido del usuario; las subpáginas de cuenta (Mi Perfil, Carrito,
 // etc.) no lo llevan. Mismas fuentes que SeccionContacto
-// (NosotrosCliente.jsx): datos_contacto()/horario_atencion(). Si el
+// (NosotrosCliente.jsx): datos_contacto()/horario_atencion_semanal(). Si el
 // admin todavía no cargó dirección/teléfono/redes desde ContactoWeb.jsx
 // (POS), esas líneas simplemente no aparecen — nada se inventa ni se
 // deja como placeholder tipo "Próximamente".
@@ -95,20 +96,20 @@ export default function PieClienteWeb() {
           {horario && (
             <section className="pie-cliente__seccion" aria-label="Horario de atención">
               <h2 className="pie-cliente__titulo">Horario de atención</h2>
-              <div className="pie-cliente__dato">
-                <p>
-                  <span className="pie-cliente__horario">{formatearDias(horario.dias_atencion)}</span>
-                  <span className="pie-cliente__turnos">
-                    <span className="pie-cliente__horario">
-                      {formatearHora(horario.bloque1_inicio)} - {formatearHora(horario.bloque1_fin)}
+              <div className="pie-cliente__dato pie-cliente__dato--grupos">
+                {agruparHorario(horario).map((grupo) => (
+                  <p key={grupo.dias}>
+                    <span className="pie-cliente__horario">{grupo.dias}</span>
+                    <span className="pie-cliente__turnos">
+                      {grupo.turnos.map((turno, i) => (
+                        <span key={turno.inicio} className="pie-cliente__horario">
+                          {i > 0 ? 'y ' : ''}
+                          {textoTurnos([turno])}
+                        </span>
+                      ))}
                     </span>
-                    {horario.bloque2_inicio && (
-                      <span className="pie-cliente__horario">
-                        y {formatearHora(horario.bloque2_inicio)} - {formatearHora(horario.bloque2_fin)}
-                      </span>
-                    )}
-                  </span>
-                </p>
+                  </p>
+                ))}
               </div>
             </section>
           )}

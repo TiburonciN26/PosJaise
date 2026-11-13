@@ -31,7 +31,9 @@ import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
 import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
 import { avanceNivel, estimarMonedas, formatearCantidad, tarjetaDeSellos, textoMonedasEstimadas } from '../../lib/programaRecompensas.js'
 import { formatearSoles } from '../../lib/moneda.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { obtenerHorario } from '../../lib/datosNegocioWeb.js'
+import { textoHorarioEnLinea } from '../../lib/horarioAtencion.js'
 import PieClienteWeb from './PieClienteWeb.jsx'
 import {
   aLima,
@@ -433,7 +435,7 @@ function CitasConSesion() {
       const [asistentesRes, contactoRes, horarioRes, cfgRes, puntosRes, fidelizacionRes] = await Promise.all([
         supabase.rpc('asistentes_para_citas'),
         supabase.rpc('datos_contacto'),
-        supabase.rpc('horario_atencion'),
+        obtenerHorario(),
         supabase.from('config_puntos').select('puntos_por_visita, puntos_por_sol_gastado').eq('id', 1).maybeSingle(),
         supabase.rpc('mis_puntos'),
         supabase.rpc('mi_fidelizacion'),
@@ -441,7 +443,7 @@ function CitasConSesion() {
       if (!vigente) return
       setAsistentesPorId(new Map((asistentesRes.data ?? []).map((a) => [a.id, a.nombres_completos])))
       setContacto(contactoRes.data?.[0] ?? null)
-      setHorario(horarioRes.data?.[0] ?? null)
+      setHorario(horarioRes)
       setCfgPuntos(cfgRes.data ?? null)
       setMisPuntos(puntosRes.data?.[0] ?? null)
       setFidelizacion(fidelizacionRes.data?.[0] ?? null)
@@ -564,9 +566,8 @@ function CitasConSesion() {
   }, [listaOrdenada, diaSeleccionado])
 
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
-  const horarioTexto = horario
-    ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
-    : null
+  // Horario por día (horarioAtencion.js): todos los turnos, agrupando los días que comparten horario.
+  const horarioTexto = horario ? textoHorarioEnLinea(horario) : null
 
   // Programa APAGADO (heredado): puntos y sellos de mis_puntos() / mi_fidelizacion() y la fórmula de config_puntos. Cada dato puede
   // faltar (consulta fallida): entonces no se muestra ni se sustituye por un valor por omisión.

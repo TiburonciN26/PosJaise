@@ -31,7 +31,10 @@ export default function MenuLateral({ abierto, onCerrar }) {
   // Las pestañas con "padre" (ej. Deudas -> Clientes) no aparecen sueltas
   // en la lista — solo se revelan al desplegar la pestaña de la que
   // cuelgan (ver abajo, seccionesAbiertas).
-  const seccionesTop = seccionesVisibles.filter((seccion) => !seccion.padre)
+  // Si el rol no ve la pestaña padre (la cajera ve Deudas pero no Clientes), la hija
+  // aparece suelta para no quedar inaccesible desde el menú.
+  const pathsVisibles = new Set(seccionesVisibles.map((seccion) => seccion.path))
+  const seccionesTop = seccionesVisibles.filter((seccion) => !seccion.padre || !pathsVisibles.has(seccion.padre))
   const [seccionesAbiertas, setSeccionesAbiertas] = useState(() => new Set())
 
   // El cajón queda montado siempre (solo se traslada fuera de pantalla al

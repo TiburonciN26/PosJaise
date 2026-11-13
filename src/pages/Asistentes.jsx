@@ -168,7 +168,7 @@ export default function Asistentes({ activo = true }) {
     const { data } = await supabase
       .from('usuarios')
       .select('id, nombre_completo, rol')
-      .in('rol', ['ADMINISTRADOR', 'ASISTENTE', 'ENCARGADA'])
+      .in('rol', ['ADMINISTRADOR', 'ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO'])
       .order('nombre_completo')
     setUsuariosAsistente(data ?? [])
   }
@@ -217,7 +217,7 @@ export default function Asistentes({ activo = true }) {
         'info',
       )
     }
-    cargarAsistentes()
+    cargarAsistentes(undefined, true)
   }
 
   const filtrados = busqueda.trim()
@@ -434,7 +434,7 @@ export default function Asistentes({ activo = true }) {
             const esNueva = modalAsistente === 'nuevo'
             setModalAsistente(null)
             mostrarToast(esNueva ? 'Asistente creada.' : 'Asistente actualizada.', 'exito')
-            cargarAsistentes()
+            cargarAsistentes(undefined, true)
           }}
         />
       )}

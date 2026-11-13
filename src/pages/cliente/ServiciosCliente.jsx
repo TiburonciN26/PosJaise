@@ -9,7 +9,8 @@ import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
 import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { formatearSoles } from '../../lib/moneda.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { agruparHorario, textoHorarioEnLinea, textoTurnos } from '../../lib/horarioAtencion.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
 import { formatearDuracion } from '../../lib/serviciosVisual.js'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
@@ -188,9 +189,8 @@ export default function ServiciosCliente() {
   const precioDesde = datos?.precioDesde ?? null
   const totalVisible = agrupado ? (datos?.total ?? null) : listadoVigente && listado.estado === 'ok' ? listado.total : null
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
-  const horarioTexto = horario
-    ? `${formatearDias(horario.dias_atencion)} ${formatearHora(horario.bloque1_inicio)}-${formatearHora(horario.bloque1_fin)}`
-    : null
+  // Horario por día (horarioAtencion.js): todos los turnos, agrupando los días que comparten horario.
+  const horarioTexto = horario ? textoHorarioEnLinea(horario) : null
 
   if (cargando) {
     return (
@@ -612,9 +612,14 @@ export default function ServiciosCliente() {
                 dudas sobre reservas y pagos.
               </p>
             </div>
-            {horarioTexto && (
+            {horario && (
               <div className="flex flex-col gap-1 text-right">
-                <span className="text-lg font-bold text-white sm:text-2xl">{horarioTexto}</span>
+                {agruparHorario(horario).map((grupo) => (
+                  <span key={grupo.dias} className="flex flex-col">
+                    <span className="text-lg font-bold text-white sm:text-2xl">{grupo.dias}</span>
+                    <span className="text-sm text-white/70 sm:text-base">{textoTurnos(grupo.turnos)}</span>
+                  </span>
+                ))}
                 <span className="text-xs text-white/50">horario de atención por WhatsApp y en el local</span>
               </div>
             )}

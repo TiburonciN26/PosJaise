@@ -7,7 +7,9 @@ import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
 import { IconoFacebook, IconoInstagram, IconoTikTok } from '../../components/IconosRedes.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { resolverUrlGaleria, urlPublicaFoto } from '../../lib/imagenes.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { obtenerHorario } from '../../lib/datosNegocioWeb.js'
+import { agruparHorario, textoTurnos } from '../../lib/horarioAtencion.js'
 import { nombrePublico } from '../../lib/resenas.js'
 import ComparadorAntesDespues from '../../components/ComparadorAntesDespues.jsx'
 import Estrellas from '../../components/Estrellas.jsx'
@@ -473,8 +475,8 @@ function SeccionResenas() {
 }
 
 // Dirección/teléfono/redes: datos_contacto() (87_contacto_negocio.sql).
-// Horario: horario_atencion() (74_horario_atencion.sql, ya existía desde
-// la fase de Citas Web — se reusa tal cual, no se inventa otro). Ningún
+// Horario: horario_atencion_semanal() por día (migración 20261112000004, lo edita
+// la administradora desde su menú de usuario), vía la caché compartida con el pie. Ningún
 // dato hardcodeado acá: si el admin no cargó dirección/teléfono/redes
 // desde ContactoWeb.jsx (POS), esas líneas simplemente no aparecen.
 function SeccionContacto() {
@@ -485,11 +487,11 @@ function SeccionContacto() {
   useEffect(() => {
     let vigente = true
 
-    Promise.all([supabase.rpc('datos_contacto'), supabase.rpc('horario_atencion')]).then(
-      ([contactoRes, horarioRes]) => {
+    Promise.all([supabase.rpc('datos_contacto'), obtenerHorario()]).then(
+      ([contactoRes, semana]) => {
         if (!vigente) return
         setContacto(contactoRes.data?.[0] ?? null)
-        setHorario(horarioRes.data?.[0] ?? null)
+        setHorario(semana)
         setCargando(false)
       },
     )
@@ -541,17 +543,13 @@ function SeccionContacto() {
         {horario && (
           <div className="mt-3 flex items-start gap-2.5">
             <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lw-gold)]" />
-            <div className="text-sm text-white/80">
-              <p>{formatearDias(horario.dias_atencion)}</p>
-              <p className="text-white/60">
-                {formatearHora(horario.bloque1_inicio)} - {formatearHora(horario.bloque1_fin)}
-                {horario.bloque2_inicio && (
-                  <>
-                    {' '}
-                    y {formatearHora(horario.bloque2_inicio)} - {formatearHora(horario.bloque2_fin)}
-                  </>
-                )}
-              </p>
+            <div className="space-y-1.5 text-sm text-white/80">
+              {agruparHorario(horario).map((grupo) => (
+                <div key={grupo.dias}>
+                  <p>{grupo.dias}</p>
+                  <p className="text-white/60">{textoTurnos(grupo.turnos)}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}

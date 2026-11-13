@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
+  NotebookPen,
+  Percent,
   Pencil,
   Trash2,
   Ban,
@@ -110,6 +113,7 @@ export default function MiPanel({ activo = true }) {
   const { usuario, rol } = useAuth()
   const esAdmin = rol === 'ADMINISTRADOR'
   const { mostrarToast } = useToast()
+  const navigate = useNavigate()
 
   const [filtro, setFiltro] = useEstadoVista('/mi-panel:filtro', 'mes')
   const [personalizado, setPersonalizado] = useEstadoVista('/mi-panel:personalizado', () => {
@@ -118,6 +122,9 @@ export default function MiPanel({ activo = true }) {
   })
 
   const [registros, setRegistros] = useState([])
+  // Atenciones PENDIENTE_PORCENTAJE («notas» sin %), de cualquier fecha: alimentan el aviso de arriba y dicen, por
+  // registro, si la administradora ya asignó el % (entonces la dueña puede confirmarla). Ver cargarPendientes().
+  const [pendientes, setPendientes] = useState([])
   const [resumen, setResumen] = useState(RESUMEN_VACIO)
   const [hayMas, setHayMas] = useState(false)
   const [cargandoMas, setCargandoMas] = useState(false)
@@ -167,7 +174,7 @@ export default function MiPanel({ activo = true }) {
     supabase
       .from('usuarios')
       .select('id, nombre_completo')
-      .in('rol', ['ASISTENTE', 'ENCARGADA'])
+      .in('rol', ['ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO'])
       .order('nombre_completo')
       .then(({ data }) => setAsistentesUsuarios(data ?? []))
   }, [esAdmin])
@@ -197,7 +204,7 @@ export default function MiPanel({ activo = true }) {
   // precio del servicio (ingreso), como siempre — pero filtrando por una
   // asistente puntual (paga por %, no por precio) necesita ver lo que de
   // verdad le corresponde a ella, no el precio del servicio que cobró el
-  // negocio. asistentesUsuarios ya solo trae cuentas rol=ASISTENTE o ENCARGADA.
+  // negocio. asistentesUsuarios ya solo trae cuentas rol=ASISTENTE, ENCARGADA o PERSONAL_APOYO.
   const filtroEsAsistente =
     esAdmin && usuarioFiltro !== OPCION_TODOS && asistentesUsuarios.some((a) => a.id === usuarioFiltro)
 
@@ -217,13 +224,46 @@ export default function MiPanel({ activo = true }) {
     return consulta
   }
 
+  // Notas pendientes de comisión SIN filtro de fecha (una nota de la semana pasada sigue esperando). La admin ve las de
+  // todo el personal (aunque esté mirando su propio panel), porque es quien debe asignar el %; las demás, solo las suyas.
+  // El trigger de comisión recién aplica el % al confirmar, así que «ya tiene %» se sabe mirando Porcentajes
+  // (la RLS deja a cada una leer solo sus propios %).
+  async function cargarPendientes(vigente = { actual: true }) {
+    if (!usuario) return
+    let consulta = supabase
+      .from('registro_servicios')
+      .select('id, usuario_id, servicio_id, fecha')
+      .eq('estado', 'PENDIENTE_PORCENTAJE')
+      .order('fecha')
+    if (!esAdmin) consulta = consulta.eq('usuario_id', usuario.id)
+    const { data, error: errorPendientes } = await consulta
+    if (!vigente.actual) return
+    if (errorPendientes || !data?.length) {
+      setPendientes([])
+      return
+    }
+
+    const { data: porcentajes } = await supabase
+      .from('porcentajes')
+      .select('servicio_id, porcentaje, asistentes!inner(usuario_id)')
+      .in('servicio_id', [...new Set(data.map((r) => r.servicio_id))])
+    if (!vigente.actual) return
+    const porClave = new Map(
+      (porcentajes ?? []).map((p) => [`${p.asistentes.usuario_id}|${p.servicio_id}`, Number(p.porcentaje)]),
+    )
+    setPendientes(data.map((r) => ({ ...r, porcentaje: porClave.get(`${r.usuario_id}|${r.servicio_id}`) ?? null })))
+  }
+
   async function cargarRegistros(vigente = { actual: true }, silencioso = false) {
     if (!usuario) return
     if (!silencioso) setCargando(true)
+    cargarPendientes(vigente)
     const { desde, hasta } = calcularRango(filtro, personalizado)
+    // Una recarga silenciosa (tras guardar/eliminar) conserva las filas ya cargadas con «Cargar más» para que el scroll no salte.
+    const cantidad = silencioso ? Math.min(Math.max(registros.length, TAMANO_PAGINA), 1000) : TAMANO_PAGINA
 
     let consultaLista = construirConsultaRegistros(desde, hasta)
-    if (!filtroActivo) consultaLista = consultaLista.range(0, TAMANO_PAGINA - 1)
+    if (!filtroActivo) consultaLista = consultaLista.range(0, cantidad - 1)
 
     const [listaRes, resumenRes] = await Promise.all([
       consultaLista,
@@ -246,7 +286,7 @@ export default function MiPanel({ activo = true }) {
 
     setError(null)
     setRegistros(listaRes.data ?? [])
-    setHayMas(!filtroActivo && (listaRes.data ?? []).length === TAMANO_PAGINA)
+    setHayMas(!filtroActivo && (listaRes.data ?? []).length === cantidad)
 
     const filaResumen = resumenRes.data?.[0]
     setResumen(
@@ -337,7 +377,7 @@ export default function MiPanel({ activo = true }) {
     }
 
     mostrarToast('Atención eliminada.', 'exito')
-    cargarRegistros()
+    cargarRegistros(vigenteRef.current, true)
   }
 
   async function confirmarCancelar() {
@@ -357,17 +397,18 @@ export default function MiPanel({ activo = true }) {
     }
 
     mostrarToast('Atención cancelada.', 'exito')
-    cargarRegistros()
+    cargarRegistros(vigenteRef.current, true)
   }
 
   async function confirmarPendiente(registro) {
     if (confirmandoId) return
     setConfirmandoId(registro.id)
 
-    const { error: errorConfirmar } = await supabase
-      .from('registro_servicios')
-      .update({ estado: 'ACTIVO' })
-      .eq('id', registro.id)
+    // RPC (migración 20261112000003): solo la dueña de la nota, de cualquier día — la RLS de update solo le deja
+    // tocar atenciones de HOY y el % puede asignarse días después.
+    const { error: errorConfirmar } = await supabase.rpc('confirmar_atencion_pendiente', {
+      p_registro_id: registro.id,
+    })
 
     setConfirmandoId(null)
 
@@ -379,8 +420,48 @@ export default function MiPanel({ activo = true }) {
     }
 
     mostrarToast('Atención confirmada — ya cuenta en tus totales.', 'exito')
-    cargarRegistros()
+    cargarRegistros(vigenteRef.current, true)
   }
+
+  // «Ver» del aviso: deja a la vista esas atenciones (amplía el período si alguna es anterior, en la admin cambia el
+  // filtro de persona si hace falta) y abre su día y su detalle.
+  function verPendientes(lista) {
+    if (lista.length === 0) return
+    const fechas = lista.map((p) => new Date(p.fecha))
+    const { desde, hasta } = calcularRango(filtro, personalizado)
+    if (!fechas.every((f) => f >= desde && f < hasta)) {
+      // Si todas son del mismo mes se elige ese mes (el selector de FiltrosFecha lo reconoce y lo marca); si abarcan
+      // varios meses, un rango desde la más antigua hasta hoy.
+      const meses = new Set(fechas.map((f) => formatearFechaISO(f).slice(0, 7)))
+      const mesActual = formatearFechaISO(new Date()).slice(0, 7)
+      if (meses.size === 1 && meses.has(mesActual)) {
+        setFiltro('mes')
+      } else if (meses.size === 1) {
+        const [anio, mes] = [...meses][0].split('-').map(Number)
+        const ultimo = String(new Date(Date.UTC(anio, mes, 0)).getUTCDate()).padStart(2, '0')
+        const mm = String(mes).padStart(2, '0')
+        setPersonalizado({ desde: `${anio}-${mm}-01`, hasta: `${anio}-${mm}-${ultimo}` })
+        setFiltro('personalizado')
+      } else {
+        const masAntigua = new Date(Math.min(...fechas.map((f) => f.getTime())))
+        setPersonalizado({ desde: formatearFechaISO(masAntigua), hasta: formatearFechaISO(new Date()) })
+        setFiltro('personalizado')
+      }
+    }
+    if (esAdmin) {
+      const duenas = new Set(lista.map((p) => p.usuario_id))
+      const unica = duenas.size === 1 ? [...duenas][0] : null
+      if (usuarioFiltro !== OPCION_TODOS && usuarioFiltro !== unica) setUsuarioFiltro(unica ?? OPCION_TODOS)
+    }
+    setBusqueda('')
+    setDiasAbiertos((anterior) => new Set([...anterior, ...fechas.map(claveDiaLima)]))
+    setRegistrosAbiertos((anterior) => new Set([...anterior, ...lista.map((p) => p.id)]))
+  }
+
+  const porcentajeDePendiente = new Map(pendientes.map((p) => [p.id, p.porcentaje]))
+  const pendientesListas = pendientes.filter((p) => p.porcentaje != null)
+  const pendientesEsperando = pendientes.filter((p) => p.porcentaje == null)
+  const cuantas = (n) => (n === 1 ? '1 atención' : `${n} atenciones`)
 
   const registrosFiltrados = busqueda.trim()
     ? registros.filter((r) => {
@@ -480,6 +561,36 @@ export default function MiPanel({ activo = true }) {
         tema="purple-300"
       />
 
+      {/* Avisos de notas pendientes de comisión (mismo estilo que el aviso de notas de cobro en Deudas). */}
+      {pendientesListas.length > 0 && (
+        <button
+          type="button"
+          onClick={() => verPendientes(pendientesListas)}
+          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-green/40 bg-green/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-green"
+        >
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-green" />
+          <span>
+            {esAdmin
+              ? `${cuantas(pendientesListas.length)} ya ${pendientesListas.length === 1 ? 'tiene' : 'tienen'} su % asignado: falta que quien la anotó la confirme. Ver`
+              : `El administrador asignó tu porcentaje: ${pendientesListas.length === 1 ? 'tienes 1 atención' : `tienes ${pendientesListas.length} atenciones`} por confirmar. Ver`}
+          </span>
+        </button>
+      )}
+      {pendientesEsperando.length > 0 && (
+        <button
+          type="button"
+          onClick={() => verPendientes(pendientesEsperando)}
+          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-amber"
+        >
+          <NotebookPen className="h-4 w-4 shrink-0 text-amber" />
+          <span>
+            {esAdmin
+              ? `${cuantas(pendientesEsperando.length)} sin % asignado. Asígnalo en Porcentajes para que la puedan confirmar. Ver`
+              : `${cuantas(pendientesEsperando.length)} pendiente${pendientesEsperando.length === 1 ? '' : 's'} de comisión: esperando que el administrador asigne tu porcentaje. Ver`}
+          </span>
+        </button>
+      )}
+
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
           {error}
@@ -507,7 +618,6 @@ export default function MiPanel({ activo = true }) {
             const totalDia = sumarMontos(registrosActivosDia, (r) =>
               montoDeRegistro(r, esAdmin && !filtroEsAsistente),
             )
-            const hayPendientesDia = grupo.registros.some((r) => r.estado === 'PENDIENTE_PORCENTAJE')
 
             return (
               <div
@@ -516,9 +626,6 @@ export default function MiPanel({ activo = true }) {
                   abierto ? 'rounded-none border-l-2 border-l-purple-300 bg-purple-300/5' : 'rounded-lg'
                 }`}
               >
-                {hayPendientesDia && (
-                  <span className="absolute -left-1.5 -top-1.5 z-10 h-3 w-3 rounded-full bg-purple-300" />
-                )}
                 <button
                   type="button"
                   onClick={() => alternarDia(grupo.clave)}
@@ -557,8 +664,17 @@ export default function MiPanel({ activo = true }) {
                       // criterio que es_hoy() en el servidor) — antes el botón
                       // aparecía igual en días pasados y el intento fallaba con
                       // un toast de error confuso.
-                      const puedeCancelar = esAdmin || esHoyLima(new Date(registro.fecha))
-                      const puedeConfirmar = esAdmin || registro.usuario_id === usuario?.id
+                      const esHoy = esHoyLima(new Date(registro.fecha))
+                      // Nota pendiente (sin %): es de quien la anotó. La admin solo la ve y asigna el % en
+                      // Porcentajes; confirmarla o cancelarla es de la dueña (RLS + RPC, migración 20261112000003).
+                      const esPropio = registro.usuario_id === usuario?.id
+                      const porcentajeNota = pendiente ? (porcentajeDePendiente.get(registro.id) ?? null) : null
+                      const puedeConfirmar = pendiente && esPropio && porcentajeNota != null
+                      const puedeEditar = !cancelado && !pendiente && esAdmin
+                      const puedeCancelar = !cancelado && (pendiente ? esPropio && esHoy : esAdmin || esHoy)
+                      const puedeEliminar = !pendiente && esAdmin
+                      const puedeAsignarPorcentaje = pendiente && !esPropio && esAdmin && porcentajeNota == null
+                      const nombreDuena = nombreUsuarioDe(registro) ?? 'quien la anotó'
                       const registroAbierto = registrosAbiertos.has(registro.id)
 
                       return (
@@ -599,6 +715,10 @@ export default function MiPanel({ activo = true }) {
                                   <span className="rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
                                     Cancelada
                                   </span>
+                                ) : pendiente && porcentajeNota != null ? (
+                                  <span className="rounded-full bg-green/15 px-2 py-0.5 text-[11px] font-medium text-green">
+                                    Por confirmar
+                                  </span>
                                 ) : pendiente ? (
                                   <span className="rounded-full bg-orange-400/15 px-2 py-0.5 text-[11px] font-medium text-orange-400">
                                     Pendiente
@@ -636,13 +756,22 @@ export default function MiPanel({ activo = true }) {
 
                           <CampoColapsable abierto={registroAbierto}>
                             <div className="space-y-2 border-t border-border/60 px-2.5 pb-2.5 pt-2">
-                              {pendiente && (
-                                <div className="flex items-center gap-1.5 rounded-lg bg-orange-400/10 px-2.5 py-1.5 text-xs text-orange-400">
-                                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                                  Pendiente de comisión — no cuenta en tus totales hasta que el
-                                  administrador asigne un % y se confirme.
-                                </div>
-                              )}
+                              {pendiente &&
+                                (porcentajeNota != null ? (
+                                  <div className="flex items-center gap-1.5 rounded-lg bg-green/10 px-2.5 py-1.5 text-xs text-green">
+                                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                    {esPropio
+                                      ? `El administrador asignó tu porcentaje (${porcentajeNota}%). Ya puedes confirmarla.`
+                                      : `% asignado (${porcentajeNota}%). Falta que ${nombreDuena} la confirme.`}
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 rounded-lg bg-orange-400/10 px-2.5 py-1.5 text-xs text-orange-400">
+                                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                    {esPropio
+                                      ? 'Pendiente de comisión — no cuenta en tus totales hasta que el administrador asigne tu % y la confirmes.'
+                                      : `Sin % asignado. Asígnalo en Porcentajes; después ${nombreDuena} la confirma.`}
+                                  </div>
+                                ))}
 
                               {!cancelado && !pendiente && (
                                 <div className="flex flex-wrap items-center gap-3">
@@ -673,10 +802,9 @@ export default function MiPanel({ activo = true }) {
 
                               {/* Cancelada: solo Eliminar (admin) sigue disponible —
                                   Editar/Cancelar no aplican a una atención ya cancelada. */}
-                              {((!cancelado && (esAdmin || puedeCancelar)) ||
-                                (cancelado && esAdmin)) && (
+                              {(puedeConfirmar || puedeEditar || puedeCancelar || puedeEliminar || puedeAsignarPorcentaje) && (
                                 <div className="flex flex-wrap items-center justify-center gap-1.5">
-                                  {pendiente && puedeConfirmar && (
+                                  {puedeConfirmar && (
                                     <BotonAccion
                                       icono={CheckCircle2}
                                       texto="Confirmar"
@@ -684,7 +812,15 @@ export default function MiPanel({ activo = true }) {
                                       onClick={() => confirmarPendiente(registro)}
                                     />
                                   )}
-                                  {!cancelado && esAdmin && (
+                                  {puedeAsignarPorcentaje && (
+                                    <BotonAccion
+                                      icono={Percent}
+                                      texto="Asignar %"
+                                      color="morado"
+                                      onClick={() => navigate('/porcentajes')}
+                                    />
+                                  )}
+                                  {puedeEditar && (
                                     <BotonAccion
                                       icono={Pencil}
                                       texto="Editar"
@@ -692,7 +828,7 @@ export default function MiPanel({ activo = true }) {
                                       onClick={() => setModalRegistro(registro)}
                                     />
                                   )}
-                                  {!cancelado && puedeCancelar && (
+                                  {puedeCancelar && (
                                     <BotonAccion
                                       icono={Ban}
                                       texto="Cancelar"
@@ -700,7 +836,7 @@ export default function MiPanel({ activo = true }) {
                                       onClick={() => setRegistroACancelar(registro)}
                                     />
                                   )}
-                                  {esAdmin && (
+                                  {puedeEliminar && (
                                     <BotonAccion
                                       icono={Trash2}
                                       texto="Eliminar"
@@ -752,7 +888,7 @@ export default function MiPanel({ activo = true }) {
             const esNuevo = modalRegistro === 'nuevo'
             setModalRegistro(null)
             mostrarToast(esNuevo ? 'Atención registrada.' : 'Atención actualizada.', 'exito')
-            cargarRegistros()
+            cargarRegistros(vigenteRef.current, true)
           }}
         />
       )}

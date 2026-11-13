@@ -98,6 +98,8 @@ export default function CatalogoWeb({ activo = true }) {
   const [busqueda, setBusqueda] = useEstadoVista('/catalogo-web:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
   const [filas, setFilas] = useState([])
+  const cantidadFilasRef = useRef(0)
+  cantidadFilasRef.current = filas.length
   const [hayMas, setHayMas] = useState(false)
   const [cargando, setCargando] = useState(true)
   const [cargandoMas, setCargandoMas] = useState(false)
@@ -120,7 +122,9 @@ export default function CatalogoWeb({ activo = true }) {
   const cargar = useCallback(
     async (vigente = { actual: true }, silencioso = false) => {
       if (!silencioso) setCargando(true)
-      const { data, error: errorConsulta } = await consulta().range(0, tamano - 1)
+      // Una recarga silenciosa (tras guardar) conserva las filas ya cargadas con «Cargar más» para que el scroll no salte.
+      const hasta = silencioso ? Math.min(Math.max(cantidadFilasRef.current, tamano), 1000) : tamano
+      const { data, error: errorConsulta } = await consulta().range(0, hasta - 1)
       if (!vigente.actual) return
       if (errorConsulta) {
         setError('No se pudo cargar el catálogo.')
@@ -129,7 +133,7 @@ export default function CatalogoWeb({ activo = true }) {
       } else {
         setError(null)
         setFilas(data ?? [])
-        setHayMas((data ?? []).length === tamano)
+        setHayMas((data ?? []).length === hasta)
       }
       setCargando(false)
     },

@@ -123,9 +123,12 @@ export default function Inventario({ activo = true }) {
   async function cargarProductos(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     const filtros = { busqueda: busquedaDebounced, orden, filtroStock }
+    // Una recarga silenciosa (tras guardar/eliminar) conserva las filas ya cargadas con «Cargar más»: si se recortara a la
+    // primera página, la lista encogería y el scroll saltaría.
+    const hasta = silencioso ? Math.min(Math.max(productos.length, TAMANO_PAGINA), 1000) : TAMANO_PAGINA
 
     const [productosRes, resumenRes] = await Promise.all([
-      construirConsultaProductos(filtros).range(0, TAMANO_PAGINA - 1),
+      construirConsultaProductos(filtros).range(0, hasta - 1),
       supabase.rpc('resumen_inventario'),
     ])
 
@@ -140,7 +143,7 @@ export default function Inventario({ activo = true }) {
 
     setError(null)
     setProductos(productosRes.data ?? [])
-    setHayMas((productosRes.data ?? []).length === TAMANO_PAGINA)
+    setHayMas((productosRes.data ?? []).length === hasta)
 
     const filaResumen = resumenRes.data?.[0]
     setResumen(
@@ -217,7 +220,7 @@ export default function Inventario({ activo = true }) {
     } else {
       mostrarToast('Ese producto ya tiene ventas registradas — se desactivó en vez de eliminarse.', 'info')
     }
-    cargarProductos()
+    cargarProductos(vigenteRef.current, true)
   }
 
   // Búsqueda, orden y filtro de stock ya vienen resueltos por el servidor
@@ -548,7 +551,7 @@ export default function Inventario({ activo = true }) {
                 anterior ? { ...anterior, producto: productoActualizado } : anterior,
               )
             }
-            cargarProductos()
+            cargarProductos(vigenteRef.current, true)
           }}
         />
       )}
@@ -572,7 +575,7 @@ export default function Inventario({ activo = true }) {
                   : anterior,
               )
             }
-            cargarProductos()
+            cargarProductos(vigenteRef.current, true)
           }}
         />
       )}

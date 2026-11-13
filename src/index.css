@@ -336,6 +336,244 @@ main:has(.modal-producto-web:not(.hidden *)) {
   }
 }
 
+/* =========================================================
+   Punto de equilibrio (Dashboard) — diseño "Aurora"
+   Spec: docs/diseño-puntoEquilibrio/ (export .html del lienzo, escritorio
+   y móvil). Dos estados:
+   · Aún no cubre (<100%): barra lavanda con perilla luminosa al final.
+   · Meta cumplida (≥100%): borde aurora girando, dos manchas de luz a la
+     deriva detrás, barra arcoíris que fluye con destello, y cada 8 s una
+     pastilla "¡Meta cumplida!" + confeti saliendo del final de la barra.
+   Los colores del arcoíris/aurora son fijos (iguales en ambos temas); el
+   lavanda de la barra sigue a --color-purple-300 (en claro pasa a rosa,
+   como el resto de ese acento).
+   ========================================================= */
+@property --pe-angulo {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.pe-relleno {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-purple-300) 45%, #5b3bb0),
+    var(--color-purple-300)
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-purple-300) 45%, transparent);
+}
+
+.pe-perilla {
+  background: #ffffff;
+  box-shadow: 0 0 10px 3px color-mix(in srgb, var(--color-purple-300) 80%, transparent);
+}
+
+/* Borde aurora: técnica "padding reveal" (1px de padding con el
+   conic-gradient de fondo; la tarjeta de adentro tapa todo menos el anillo).
+   Solo gira el ángulo del gradiente, la caja queda quieta. */
+.pe-aurora {
+  padding: 1px;
+  border-radius: calc(var(--radius-lg) + 1px);
+  background: conic-gradient(from var(--pe-angulo), #d8b4fe, #ed8bac, #ffd9a0, #8ff0ab, #9ad1ff, #d8b4fe);
+  box-shadow: 0 0 30px rgba(237, 139, 172, 0.18);
+  animation: pe-girar 6s linear infinite;
+}
+
+.pe-mancha {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.pe-mancha-a {
+  --pe-deriva: 110px;
+  animation: pe-deriva 9s ease-in-out infinite;
+}
+.pe-mancha-b {
+  --pe-deriva: -110px;
+  animation: pe-deriva 11s ease-in-out infinite;
+}
+@media (min-width: 64rem) {
+  .pe-mancha-a {
+    --pe-deriva: 220px;
+  }
+  .pe-mancha-b {
+    --pe-deriva: -240px;
+  }
+}
+
+.pe-flujo {
+  background: linear-gradient(90deg, #d8b4fe, #ed8bac, #ffd9a0, #8ff0ab, #9ad1ff, #d8b4fe);
+  background-size: 300% 100%;
+  box-shadow: 0 0 14px rgba(237, 139, 172, 0.5);
+  animation: pe-flujo 5s linear infinite;
+}
+
+.pe-destello {
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: pe-destello 3.4s ease-in-out infinite;
+}
+
+.pe-subir {
+  animation: pe-subir 1.5s ease-out infinite;
+}
+
+.pe-menear {
+  animation: pe-menear 0.5s ease-in-out infinite;
+}
+
+.pe-pastilla {
+  background: #0f2a1a;
+  border: 1px solid #3ecf6a;
+  box-shadow: 0 0 18px rgba(62, 207, 106, 0.45);
+  opacity: 0;
+}
+/* PC: centrada sobre el final de la barra (translateX -50%). */
+.pe-pastilla-centrada {
+  animation: pe-pastilla-centrada 8s ease-out infinite;
+}
+/* Móvil: anclada a la derecha de la tarjeta, sube en vertical. */
+.pe-pastilla-derecha {
+  animation: pe-pastilla-derecha 8s ease-out infinite;
+}
+.pe-pastilla-pico {
+  background: #0f2a1a;
+  border-right: 1px solid #3ecf6a;
+  border-bottom: 1px solid #3ecf6a;
+}
+
+.pe-confeti {
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  opacity: 0;
+  z-index: 3;
+  pointer-events: none;
+  animation: pe-confeti 8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+
+@keyframes pe-girar {
+  to {
+    --pe-angulo: 360deg;
+  }
+}
+@keyframes pe-deriva {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(var(--pe-deriva));
+  }
+}
+@keyframes pe-flujo {
+  to {
+    background-position: 300% 0;
+  }
+}
+@keyframes pe-destello {
+  0% {
+    transform: translateX(-140%);
+  }
+  55%, 100% {
+    transform: translateX(420%);
+  }
+}
+@keyframes pe-subir {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+@keyframes pe-menear {
+  0%, 100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(12deg);
+  }
+}
+@keyframes pe-pastilla-centrada {
+  0%, 3% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.85);
+  }
+  9% {
+    opacity: 1;
+    transform: translate(-50%, -4px) scale(1.05);
+  }
+  12% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  32% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  38%, 100% {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(1);
+  }
+}
+@keyframes pe-pastilla-derecha {
+  0%, 3% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.85);
+  }
+  9% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.05);
+  }
+  12% {
+    transform: translateY(0) scale(1);
+  }
+  32% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  38%, 100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(1);
+  }
+}
+@keyframes pe-confeti {
+  0%, 4% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  6% {
+    opacity: 1;
+  }
+  28% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+  }
+  36%, 100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--dy) + 34px)) rotate(var(--rot));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pe-aurora,
+  .pe-mancha-a,
+  .pe-mancha-b,
+  .pe-flujo,
+  .pe-destello,
+  .pe-subir,
+  .pe-menear,
+  .pe-pastilla-centrada,
+  .pe-pastilla-derecha,
+  .pe-confeti {
+    animation: none;
+  }
+}
+
 /* Martillo de la pestaña "Web... Próximamente": cocked-back con pausa
    (anticipación), golpe rápido, rebote breve y vuelta a cocked-back. El
    pivote va en el JSX (transform-origin cerca del mango) para que gire

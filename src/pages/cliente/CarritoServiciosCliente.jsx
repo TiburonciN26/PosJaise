@@ -25,7 +25,9 @@ import { useProgramaRecompensas } from '../../hooks/useProgramaRecompensas.js'
 import { avanceNivel, estimarMonedas, formatearCantidad, textoMonedasEstimadas } from '../../lib/programaRecompensas.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { procesarImagen, subirFoto, urlPublicaFoto } from '../../lib/imagenes.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { obtenerHorario } from '../../lib/datosNegocioWeb.js'
+import { textoHorarioEnLinea, turnosDelDia } from '../../lib/horarioAtencion.js'
 import { degradadoServicio, formatearDuracion } from '../../lib/serviciosVisual.js'
 import { aLima, formatearFechaISO, iniciarDia, sumarDias } from '../../lib/fechas.js'
 import CampoSubirArchivo from '../../components/CampoSubirArchivo.jsx'
@@ -203,7 +205,7 @@ export default function CarritoServiciosCliente() {
           .from('carrito_servicios')
           .select('servicio_id, servicios(nombre, categoria, precio, duracion_min, foto_url, activo)'),
         supabase.rpc('asistentes_para_citas'),
-        supabase.rpc('horario_atencion'),
+        obtenerHorario(),
         supabase.rpc('datos_contacto'),
         supabase.rpc('mis_puntos'),
         supabase.from('config_puntos').select('puntos_por_visita, puntos_por_sol_gastado').eq('id', 1).maybeSingle(),
@@ -225,7 +227,7 @@ export default function CarritoServiciosCliente() {
 
       setServicios(cargados)
       setAsistentes(asistentesRes.data ?? [])
-      setHorarioAtencion(horarioRes.data?.[0] ?? null)
+      setHorarioAtencion(horarioRes)
       setContacto(contactoRes.data?.[0] ?? null)
       setMisPuntos(puntosRes.data?.[0] ?? null)
       setCfgPuntos(cfgRes.data ?? null)
@@ -264,7 +266,8 @@ export default function CarritoServiciosCliente() {
       const enLima = aLima(fecha)
       const diaSemana = enLima.getUTCDay() // 0 = domingo
       const isodow = diaSemana === 0 ? 7 : diaSemana
-      const cerrado = horarioAtencion ? !(horarioAtencion.dias_atencion ?? []).includes(isodow) : false
+      // Día sin turnos en el horario de la administradora = cerrado (sin horario cargado, decide el servidor).
+      const cerrado = horarioAtencion ? turnosDelDia(horarioAtencion, isodow).length === 0 : false
       dias.push({
         clave: formatearFechaISO(fecha),
         corto: `${DIAS_CORTOS[diaSemana]} ${enLima.getUTCDate()}`,
@@ -455,9 +458,7 @@ export default function CarritoServiciosCliente() {
   }
 
   const whatsapp = contacto?.telefono ? numeroWhatsapp(contacto.telefono) : null
-  const horarioTexto = horarioAtencion
-    ? `${formatearDias(horarioAtencion.dias_atencion)} ${formatearHora(horarioAtencion.bloque1_inicio)}-${formatearHora(horarioAtencion.bloque1_fin)}`
-    : null
+  const horarioTexto = horarioAtencion ? textoHorarioEnLinea(horarioAtencion) : null
   const plazoCancelacion = cancelacionPlazoHoras ?? 3
 
   const metodoActual = METODOS_PAGO.find((m) => m.id === metodoPago)

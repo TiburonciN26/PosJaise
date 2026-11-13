@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, ImagePlus, KeyRound, LogOut, User } from 'lucide-react'
+import { Camera, Clock, ImagePlus, KeyRound, LogOut, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -7,6 +7,9 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useSalir } from '../hooks/useSalir.js'
 import ModalCamara from './ModalCamara.jsx'
 import ModalCambiarClave from './ModalCambiarClave.jsx'
+import ModalHorarioPos from './ModalHorarioPos.jsx'
+import { supabase } from '../lib/supabase.js'
+import { normalizarHorarioPos, proximoEventoPos, textoProximoEvento } from '../lib/horarioPos.js'
 import Interruptor from './Interruptor.jsx'
 import SwitchTema from './SwitchTema.jsx'
 import {
@@ -45,6 +48,10 @@ export default function MenuUsuario() {
   const [confirmando, setConfirmando] = useState(false)
   const [confirmandoSalir, setConfirmandoSalir] = useState(false)
   const [cambiandoClave, setCambiandoClave] = useState(false)
+  const [editandoHorario, setEditandoHorario] = useState(false)
+  // Apertura/cierre automático del POS (horario_pos_config, migración 20261112000005): para mostrar «cierra hoy a las …».
+  // Se relee al abrir el menú y al cerrar el modal del horario (pudo cambiar).
+  const [configPos, setConfigPos] = useState(null)
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   const [mostrarCamara, setMostrarCamara] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
@@ -72,6 +79,21 @@ export default function MenuUsuario() {
     document.addEventListener('pointerdown', alClicFuera)
     return () => document.removeEventListener('pointerdown', alClicFuera)
   }, [menuAbierto])
+
+  useEffect(() => {
+    if (!menuAbierto || editandoHorario) return undefined
+    let vigente = true
+    supabase.rpc('horario_pos_config').then(({ data, error }) => {
+      if (vigente) setConfigPos(error ? null : normalizarHorarioPos(data))
+    })
+    return () => {
+      vigente = false
+    }
+  }, [menuAbierto, editandoHorario])
+
+  const textoAutomatico = textoProximoEvento(proximoEventoPos(configPos))
+  // Al cambiar a mano, cuándo lo revierte el horario: si cierro, la próxima apertura; si abro, el próximo cierre.
+  const textoTrasCambioManual = textoProximoEvento(proximoEventoPos(configPos, new Date(), { soloAbrir: negocioAbierto }))
 
   // Personal que a veces también es clienta del salón (ver
   // AuthContext.jsx, "entrarComoClienta") — misma sesión, misma cuenta,
@@ -268,10 +290,25 @@ export default function MenuUsuario() {
                 </span>
               </div>
             )}
-            {!esAdmin && !negocioAbierto && (
-              <p className="mt-2 text-xs text-ink/60">
-                Esperando a que el administrador inicie la jornada.
-              </p>
+            {textoAutomatico ? (
+              <p className="mt-2 text-xs text-ink/60">{textoAutomatico}.</p>
+            ) : (
+              !esAdmin &&
+              !negocioAbierto && (
+                <p className="mt-2 text-xs text-ink/60">Esperando a que el administrador inicie la jornada.</p>
+              )
+            )}
+            {esAdmin && (
+              // Configuración del POS: a qué hora se abre y se cierra solo el negocio para el personal. (El horario de
+              // atención que ve la web se edita en Web › Contacto Web.)
+              <button
+                type="button"
+                onClick={() => setEditandoHorario(true)}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber"
+              >
+                <Clock className="h-3.5 w-3.5" />
+                Apertura y cierre automático
+              </button>
             )}
           </div>
 
@@ -319,6 +356,7 @@ export default function MenuUsuario() {
       )}
 
       {cambiandoClave && <ModalCambiarClave onCerrar={() => setCambiandoClave(false)} />}
+      {editandoHorario && <ModalHorarioPos onCerrar={() => setEditandoHorario(false)} />}
 
       {confirmando && (
         <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
@@ -333,6 +371,13 @@ export default function MenuUsuario() {
                 ? 'Los asistentes no podrán iniciar sesión ni registrar ventas, servicios o stock hasta que vuelva a abrirlo.'
                 : 'Los asistentes podrán volver a iniciar sesión y trabajar con normalidad.'}
             </p>
+            {textoTrasCambioManual && (
+              // Con el modo automático activo, el cambio manual dura hasta el siguiente evento contrario del horario.
+              <p className="mt-2 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-ink/70">
+                Apertura y cierre automático activo: {textoTrasCambioManual.charAt(0).toLowerCase()}
+                {textoTrasCambioManual.slice(1)}.
+              </p>
+            )}
             <div className="mt-4 flex gap-2">
               <button
                 type="button"

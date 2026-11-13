@@ -276,7 +276,7 @@ export default function Mobiliario({ activo = true }) {
     }
 
     mostrarToast('Mueble eliminado.', 'exito')
-    cargarMobiliario()
+    cargarMobiliario(undefined, true)
   }
 
   async function confirmarEliminarCompra() {
@@ -296,7 +296,7 @@ export default function Mobiliario({ activo = true }) {
     }
 
     mostrarToast('Compra eliminada.', 'exito')
-    cargarMobiliario()
+    cargarMobiliario(undefined, true)
   }
 
   const filtrados = busqueda.trim()
@@ -514,7 +514,7 @@ export default function Mobiliario({ activo = true }) {
             const esNuevo = modalMueble === 'nuevo'
             setModalMueble(null)
             mostrarToast(esNuevo ? 'Mueble creado.' : 'Mueble actualizado.', 'exito')
-            cargarMobiliario()
+            cargarMobiliario(undefined, true)
           }}
         />
       )}
@@ -528,7 +528,7 @@ export default function Mobiliario({ activo = true }) {
             const esNueva = !modalCompra.compra
             setModalCompra(null)
             mostrarToast(esNueva ? 'Compra registrada.' : 'Compra actualizada.', 'exito')
-            cargarMobiliario()
+            cargarMobiliario(undefined, true)
           }}
         />
       )}

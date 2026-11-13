@@ -97,6 +97,8 @@ async function resumenPeriodo(desde, hasta, filtro, incluirDetalle = true) {
     .select('monto')
     .eq('mes', mes + 1)
     .eq('anio', anio)
+    // Solo gastos ACTIVOS: los cancelados (en Gastos o al anular una salida de Caja chica) ya no se pagaron.
+    .eq('estado', 'ACTIVO')
   const gastosMesTotal = sumarMontos(gastosData ?? [], (g) => g.monto)
   const gastosMes = calcularGastosProrrateados({ filtro, gastosMesTotal, anio, mes, desde, hasta })
 
@@ -348,9 +350,11 @@ export default function Estadisticas({ activo = true }) {
         <EsqueletoResumen cantidad={8} />
       ) : (
         <>
-          {/* 1. KPIs comparativos. QA-025: el importe es sum(ventas.total), es decir
-              DESPUÉS de descuentos (en Dashboard "Ingreso bruto" es el importe ANTES del
-              descuento): se rotula "Ingreso neto" para no mezclar los dos conceptos. */}
+          {/* 1. KPIs comparativos. QA-025: el importe es sum(ventas.total − envío), es
+              decir DESPUÉS de descuentos (en Dashboard "Ingreso bruto" es el importe ANTES
+              del descuento): se rotula "Ingreso neto" para no mezclar los dos conceptos.
+              El envío de pedidos web no cuenta (pasa al repartidor, migración
+              20261112000007); "Métodos de pago" sí lo incluye porque entró por ese medio. */}
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <TarjetaComparativa
               etiqueta="Ingreso neto"

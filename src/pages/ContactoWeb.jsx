@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import GuiaPestana from '../components/GuiaPestana.jsx'
-import { CalendarDays, ImagePlus, MapPin, Phone, Wallet, X } from 'lucide-react'
+import { CalendarDays, Clock, ImagePlus, MapPin, Phone, Wallet, X } from 'lucide-react'
+import ModalHorarioAtencion from '../components/ModalHorarioAtencion.jsx'
+import { obtenerHorario } from '../lib/datosNegocioWeb.js'
+import { agruparHorario, textoTurnos } from '../lib/horarioAtencion.js'
 import { supabase } from '../lib/supabase.js'
 import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -157,6 +160,58 @@ function CampoMetodoPago({
 // A diferencia de Promociones/Pedidos Web/Reseñas, "estado_negocio" es
 // una fila singleton (id=1) de configuración, no una lista — por eso
 // esta pantalla es un formulario simple, sin buscador ni tarjetas.
+// Horario de atención de la WEB (horario_semanal, migración 20261112000004): lo que ven las clientas en Inicio, el pie,
+// Nosotros y Citas, y dentro del cual pueden reservar citas o pedir entregas. Se guarda aparte del formulario de
+// contacto (ModalHorarioAtencion). No es la apertura/cierre del POS para el personal: esa está en el menú de usuario.
+function TarjetaHorarioWeb() {
+  const [horario, setHorario] = useState(undefined)
+  const [editando, setEditando] = useState(false)
+
+  useEffect(() => {
+    if (editando) return undefined
+    let vigente = true
+    obtenerHorario().then((semana) => vigente && setHorario(semana))
+    return () => {
+      vigente = false
+    }
+  }, [editando])
+
+  return (
+    <section className="mb-3 rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+          <Clock className="h-4 w-4 text-azul-metal" />
+          Horario de atención
+        </p>
+        <button
+          type="button"
+          onClick={() => setEditando(true)}
+          className="rounded-lg border border-border-strong bg-bg px-3 py-1.5 text-xs text-ink transition-colors hover:border-azul-metal hover:text-azul-metal"
+        >
+          Editar horario
+        </button>
+      </div>
+      <div className="mt-2 text-sm text-ink/80">
+        {horario === undefined ? (
+          <p className="font-mono text-xs text-ink/60">Cargando...</p>
+        ) : horario === null ? (
+          <p className="text-xs text-ink/60">Sin días de atención: la web no deja reservar citas ni pedir entregas.</p>
+        ) : (
+          <ul className="space-y-1">
+            {agruparHorario(horario).map((grupo) => (
+              <li key={grupo.dias}>
+                <span className="font-medium text-ink">{grupo.dias}:</span>{' '}
+                <span className="text-ink/70">{textoTurnos(grupo.turnos)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {editando && <ModalHorarioAtencion onCerrar={() => setEditando(false)} />}
+    </section>
+  )
+}
+
 export default function ContactoWeb() {
   const { mostrarToast } = useToast()
   const [formulario, setFormulario] = useState(formularioVacio)
@@ -395,7 +450,9 @@ export default function ContactoWeb() {
       className="relative animate-entrada-pestana px-(--separador-vertical) pb-24 pt-(--separador-horizontal) lg:mx-auto lg:pb-6 lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-azul-metal)' }}
     >
-      <GuiaPestana>Esto es lo que ven tus clientes en Nosotros &gt; Contacto — el horario ya está cargado (ver Citas), acá solo falta dirección, teléfono y redes.</GuiaPestana>
+      <GuiaPestana>Esto es lo que ven tus clientes en Nosotros &gt; Contacto: horario de atención, dirección, teléfono y redes. El horario también decide en qué días y horas pueden reservar citas o pedir entregas desde la web.</GuiaPestana>
+
+      <TarjetaHorarioWeb />
 
       <form onSubmit={guardar} className="space-y-3 rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
         <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">

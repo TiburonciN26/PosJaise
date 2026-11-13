@@ -30,7 +30,8 @@ const formularioVacio = {
   categoriaSeleccionada: '',
   categoriaNueva: '',
   precio: '',
-  duracionMin: '',
+  duracionHoras: '',
+  duracionMinutos: '',
   descripcion: '',
   activo: true,
   enTendencia: false,
@@ -42,13 +43,33 @@ const formularioVacio = {
   comboCon: '',
 }
 
+// La duración se guarda en minutos (`duracion_min`), pero se edita en dos campos —horas y minutos— para no tener que
+// convertir a mano (ej. 1 h 30 min en vez de «90»). Ambos vacíos = sin duración.
+function duracionEnPartes(minutosTotales) {
+  if (minutosTotales == null) return { duracionHoras: '', duracionMinutos: '' }
+  const horas = Math.floor(minutosTotales / 60)
+  const minutos = minutosTotales % 60
+  return { duracionHoras: horas ? String(horas) : '', duracionMinutos: minutos ? String(minutos) : '' }
+}
+
+const ENTERO_NO_NEGATIVO = /^\d+$/
+
+// Devuelve los minutos totales, '' si ambos campos están vacíos, o null si algún campo no es un entero válido.
+function duracionTotal(formulario) {
+  const horas = formulario.duracionHoras.trim()
+  const minutos = formulario.duracionMinutos.trim()
+  if (!horas && !minutos) return ''
+  if ((horas && !ENTERO_NO_NEGATIVO.test(horas)) || (minutos && !ENTERO_NO_NEGATIVO.test(minutos))) return null
+  return (horas ? parseInt(horas, 10) : 0) * 60 + (minutos ? parseInt(minutos, 10) : 0)
+}
+
 function formularioDesdeServicio(servicio) {
   return {
     nombre: servicio.nombre ?? '',
     categoriaSeleccionada: servicio.categoria ?? '',
     categoriaNueva: '',
     precio: String(servicio.precio ?? ''),
-    duracionMin: servicio.duracion_min != null ? String(servicio.duracion_min) : '',
+    ...duracionEnPartes(servicio.duracion_min),
     descripcion: servicio.descripcion ?? '',
     activo: servicio.activo ?? true,
     enTendencia: servicio.en_tendencia ?? false,
@@ -76,12 +97,13 @@ function validar(formulario, modo) {
     return 'El precio debe ser un número mayor a 0.'
   }
 
-  if (formulario.duracionMin.trim()) {
-    const duracion = parseInt(formulario.duracionMin, 10)
-    if (Number.isNaN(duracion) || duracion <= 0) {
-      return 'La duración debe ser un número mayor a 0.'
-    }
+  if (formulario.duracionMinutos.trim() && ENTERO_NO_NEGATIVO.test(formulario.duracionMinutos.trim())
+    && parseInt(formulario.duracionMinutos, 10) > 59) {
+    return 'Los minutos de la duración van de 0 a 59 (usa el campo de horas para el resto).'
   }
+  const duracion = duracionTotal(formulario)
+  if (duracion === null) return 'Las horas y los minutos de la duración deben ser números enteros.'
+  if (duracion === 0) return 'La duración debe ser mayor a 0 (o deja ambos campos vacíos).'
 
   return null
 }
@@ -354,7 +376,8 @@ export default function ModalServicio({
     const fotoFinal = fotoNueva ? rutaFotoSubida : fotoEliminada ? null : fotoPersistida.current
 
     // Cada modo guarda SOLO sus columnas (ver el comentario del componente).
-    const datosPos = datosPosServicio({ formulario, categoriaFinal })
+    // datosPosServicio trabaja con `duracionMin` (minutos totales como texto): se arma desde horas + minutos.
+    const datosPos = datosPosServicio({ formulario: { ...formulario, duracionMin: String(duracionTotal(formulario) ?? '') }, categoriaFinal })
     const datosWeb = datosWebServicio({ formulario, fotoFinal, pasos, especificaciones, herramientas, materiales, cuidadosAntes, cuidadosDespues })
     const datos = esWeb ? datosWeb : datosPos
 
@@ -506,17 +529,37 @@ export default function ModalServicio({
             </div>
 
             <div>
-              <Etiqueta htmlFor={`${idBase}-duracion`}>Duración (min)</Etiqueta>
-              <input
-                id={`${idBase}-duracion`}
-                type="search"
-                inputMode="numeric"
-                autoComplete="new-password"
-                value={formulario.duracionMin}
-                onChange={(evento) => actualizarCampo('duracionMin', evento.target.value)}
-                placeholder="Opcional"
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
-              />
+              <Etiqueta htmlFor={`${idBase}-duracion-horas`}>Duración</Etiqueta>
+              <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    id={`${idBase}-duracion-horas`}
+                    type="search"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    aria-label="Horas de duración"
+                    value={formulario.duracionHoras}
+                    onChange={(evento) => actualizarCampo('duracionHoras', evento.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-8 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+                  />
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink/60">h</span>
+                </div>
+                <div className="relative min-w-0 flex-1">
+                  <input
+                    id={`${idBase}-duracion-minutos`}
+                    type="search"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    aria-label="Minutos de duración"
+                    value={formulario.duracionMinutos}
+                    onChange={(evento) => actualizarCampo('duracionMinutos', evento.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-10 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+                  />
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink/60">min</span>
+                </div>
+              </div>
             </div>
           </div>
 

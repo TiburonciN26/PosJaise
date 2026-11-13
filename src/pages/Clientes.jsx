@@ -239,9 +239,12 @@ export default function Clientes({ activo = true }) {
   async function cargarClientes(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     const filtros = { busqueda: busquedaDebounced, orden, sexo: filtroSexo }
+    // Una recarga silenciosa (tras guardar/eliminar) conserva las filas ya cargadas con «Cargar más»: si se recortara a la
+    // primera página, la lista encogería y el scroll saltaría.
+    const hasta = silencioso ? Math.min(Math.max(clientes.length, TAMANO_PAGINA), 1000) : TAMANO_PAGINA
 
     const [clientesRes, totalRes] = await Promise.all([
-      construirConsultaClientes(filtros).range(0, TAMANO_PAGINA - 1),
+      construirConsultaClientes(filtros).range(0, hasta - 1),
       aplicarFiltroSexo(
         aplicarFiltroBusqueda(
           supabase.from('clientes').select('id', { count: 'exact', head: true }),
@@ -262,7 +265,7 @@ export default function Clientes({ activo = true }) {
 
     setError(null)
     setClientes(clientesRes.data ?? [])
-    setHayMas((clientesRes.data ?? []).length === TAMANO_PAGINA)
+    setHayMas((clientesRes.data ?? []).length === hasta)
     if (!totalRes.error) setTotalClientes(totalRes.count ?? 0)
     setCargando(false)
   }
@@ -328,7 +331,7 @@ export default function Clientes({ activo = true }) {
     }
 
     mostrarToast('Cliente eliminado.', 'exito')
-    cargarClientes()
+    cargarClientes(vigenteRef.current, true)
   }
 
   const clientesOrdenados = ordenarClientes(clientes, orden)
@@ -556,7 +559,7 @@ export default function Clientes({ activo = true }) {
             const esNuevo = modalCliente === 'nuevo'
             setModalCliente(null)
             mostrarToast(esNuevo ? 'Cliente creado.' : 'Cliente actualizado.', 'exito')
-            cargarClientes()
+            cargarClientes(vigenteRef.current, true)
           }}
         />
       )}

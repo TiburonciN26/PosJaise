@@ -71,6 +71,8 @@ test('un nombre inexistente no devuelve nada (el modal puede ofrecer el alta leg
 
 test('los comodines de LIKE del texto se tratan como literales', async () => {
   assert.equal(patronIlike('50%_a\\b'), '%50\\%\\_a\\\\b%');
+  // Espacios repetidos o no separables no deben impedir encontrar «Argolla␣␣lagrima…» (doble espacio en prod).
+  assert.equal(patronIlike('  argolla   lagrima chunky '), '%argolla%lagrima%chunky%');
   const todos = await buscarClientes(sb, '%');
   assert.ok(todos.every((c) => c.nombre.includes('%')), '«%» no debe comportarse como comodín');
   const guion = await buscarClientes(sb, '_');

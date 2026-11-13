@@ -32,7 +32,11 @@ const OPCIONES_ORDEN = [
 ]
 
 function formatearDuracion(minutos) {
-  return minutos != null ? `${minutos} min` : '—'
+  if (minutos == null) return '—'
+  const horas = Math.floor(minutos / 60)
+  const resto = minutos % 60
+  if (!horas) return `${resto} min`
+  return resto ? `${horas} h ${resto} min` : `${horas} h`
 }
 
 export default function Servicios({ activo = true }) {
@@ -152,7 +156,8 @@ export default function Servicios({ activo = true }) {
         'info',
       )
     }
-    cargarServicios()
+    // Recarga SILENCIOSA: sin esqueleto, la tabla sigue montada y el scroll se queda donde estaba.
+    cargarServicios(vigenteRef.current, true)
   }
 
   // Búsqueda y orden ya vienen resueltos por el servidor: `servicios` es la página a mostrar.
@@ -389,7 +394,8 @@ export default function Servicios({ activo = true }) {
             const esNuevo = modalServicio === 'nuevo'
             setModalServicio(null)
             mostrarToast(esNuevo ? 'Servicio creado.' : 'Servicio actualizado.', 'exito')
-            cargarServicios()
+            // Recarga SILENCIOSA: si se mostrara el esqueleto, la tabla se desmonta y el scroll vuelve arriba.
+            cargarServicios(vigenteRef.current, true)
           }}
         />
       )}

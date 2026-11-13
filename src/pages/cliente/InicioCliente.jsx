@@ -11,7 +11,8 @@ import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
 import { useLectura } from '../../hooks/useLectura.js'
 import { useRequerirSesion } from '../../hooks/useRequerirSesion.js'
 import { useSecuenciaScroll } from '../../hooks/useSecuenciaScroll.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { agruparHorario, textoTurnos } from '../../lib/horarioAtencion.js'
 import { resolverUrlGaleria } from '../../lib/imagenes.js'
 import { nombrePublico } from '../../lib/resenas.js'
 import Estrellas from '../../components/Estrellas.jsx'
@@ -648,18 +649,15 @@ export default function InicioCliente() {
               {horario && (
                 <span className="flex items-start gap-3">
                   <span className="mt-0.5 h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--lw-gold)]" />
-                  <span>
-                    {formatearDias(horario.dias_atencion)}
-                    <br />
-                    <span className="text-[#a6a6a6]">
-                      {formatearHora(horario.bloque1_inicio)} – {formatearHora(horario.bloque1_fin)}
-                      {horario.bloque2_inicio && (
-                        <>
-                          {' '}
-                          · {formatearHora(horario.bloque2_inicio)} – {formatearHora(horario.bloque2_fin)}
-                        </>
-                      )}
-                    </span>
+                  {/* Un grupo por cada juego de turnos distinto (p. ej. «Lunes a Viernes» y «Sábado»). */}
+                  <span className="flex flex-col gap-1.5">
+                    {agruparHorario(horario).map((grupo) => (
+                      <span key={grupo.dias}>
+                        {grupo.dias}
+                        <br />
+                        <span className="text-[#a6a6a6]">{textoTurnos(grupo.turnos, { separador: ' – ', union: ' · ' })}</span>
+                      </span>
+                    ))}
                   </span>
                 </span>
               )}

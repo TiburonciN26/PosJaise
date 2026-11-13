@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUp } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { anioMesEnLima, calcularRango, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
@@ -8,6 +7,7 @@ import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import { EsqueletoResumen } from '../components/Esqueleto.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import TarjetaPuntoEquilibrio, { porcentajeEquilibrio } from '../components/TarjetaPuntoEquilibrio.jsx'
 
 const METRICAS_VACIAS = {
   ingresoProductos: 0,
@@ -27,164 +27,6 @@ const ETIQUETA_GASTOS = {
   semana: 'Gastos de la semana (mes ÷ 4)',
   mes: 'Gastos fijos + variables del mes',
   personalizado: 'Gastos del período (prorrateado)',
-}
-
-const ETIQUETA_COBERTURA = {
-  hoy: 'Gastos diarios cubiertos',
-  semana: 'Gastos semanales cubiertos',
-  mes: 'Gastos del mes cubiertos',
-  personalizado: 'Gastos del período cubiertos',
-}
-
-// En claro el verde de texto se oscurece (--color-green-texto); en oscuro no existe y cae al verde de marca.
-const VERDE_TEXTO = 'var(--color-green-texto, #3ecf6a)'
-
-function Brillo({ activo }) {
-  if (!activo) return null
-  return (
-    <div className="pointer-events-none absolute inset-0 z-10 w-1/3 animate-brillo-barra bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-  )
-}
-
-// Brillo que recorre solo las letras (no su fondo): se pinta como el propio
-// relleno del texto vía background-clip, así el destello ilumina el glifo en
-// vez de dibujarse como un cuadro de luz encima de todo. La clase de color
-// (text-ink, etc.) va aparte (claseColorInactiva) porque si se mezcla con
-// text-transparent en la misma className, cuál gana depende del orden en el
-// CSS generado por Tailwind, no del orden en el string — y a veces pierde
-// text-transparent, dejando el texto opaco y tapando el degradado.
-function TextoBrillante({ activo, color, destello = '#f7b3ca', className = '', claseColorInactiva = '', children }) {
-  if (!activo) {
-    return <span className={`${className} ${claseColorInactiva}`}>{children}</span>
-  }
-  return (
-    <span
-      className={`${className} animate-brillo-texto bg-clip-text text-transparent`}
-      style={{
-        backgroundImage: `linear-gradient(90deg, ${color} 30%, ${destello} 50%, ${color} 70%)`,
-        backgroundSize: '220% 100%',
-      }}
-    >
-      {children}
-    </span>
-  )
-}
-
-function BarraTermometro({ filtro, ingresoBruto, meta }) {
-  const porcentaje = meta > 0 ? (ingresoBruto / meta) * 100 : ingresoBruto > 0 ? 100 : 0
-  const anchoRelleno = Math.min(porcentaje, 100)
-  const superado = meta > 0 ? ingresoBruto > meta : ingresoBruto > 0
-  const llegoAlTope = porcentaje >= 100
-
-  return (
-    <div
-      className="relative isolate overflow-hidden rounded-lg border border-purple-300 bg-surface px-4 pb-[11px] pt-[11px]"
-      style={
-        llegoAlTope
-          ? {
-              boxShadow:
-                '0 0 40px rgba(237,139,172,0.28), inset 0 0 0 1px rgba(255,225,235,0.35), inset 0 -4px 14px rgba(237,139,172,0.12)',
-            }
-          : undefined
-      }
-    >
-      {llegoAlTope && (
-        <>
-          {/* Efectos de brillo estáticos (sin movimiento ni puntos) sobre el
-              fondo normal: halo rosa, borde luminoso, iridiscencia suave, líneas
-              finas y reflejo fijo. Solo aparece al superar el 100% de gastos cubiertos. */}
-          <div
-            className="pointer-events-none absolute inset-0 -z-10 opacity-[0.14]"
-            style={{
-              background:
-                'linear-gradient(120deg,#ffb3d9,#b3e5ff 25%,#d4ffb3 45%,#fff0b3 60%,#d9b3ff 80%,#b3fff6)',
-            }}
-          />
-          <div
-            className="pointer-events-none absolute inset-0 -z-10"
-            style={{
-              background:
-                'repeating-linear-gradient(90deg,rgba(255,225,235,0.05) 0 1px,transparent 1px 4px)',
-            }}
-          />
-          <div
-            className="pointer-events-none absolute inset-0 -z-10"
-            style={{
-              background:
-                'radial-gradient(circle at 70% 40%,rgba(237,139,172,0.22),rgba(237,139,172,0) 55%)',
-            }}
-          />
-        </>
-      )}
-
-      {llegoAlTope && (
-        <div
-          className="pointer-events-none absolute inset-0 -z-10 w-1/2 animate-brillo-tarjeta"
-          style={{
-            animationDelay: '3s',
-            backgroundImage:
-              'linear-gradient(100deg, transparent, rgba(216,180,254,0.08), transparent)',
-          }}
-        />
-      )}
-
-      <div className="flex items-center justify-between gap-2">
-        <TextoBrillante
-          activo={llegoAlTope}
-          color="var(--color-ink)"
-          className="text-sm font-semibold"
-          claseColorInactiva="text-ink"
-        >
-          Punto de equilibrio
-        </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink">
-          {superado && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
-          <span>
-          <TextoBrillante
-            activo={llegoAlTope}
-            color={superado ? VERDE_TEXTO : 'var(--color-ink)'}
-            claseColorInactiva={superado ? 'text-green' : 'text-ink'}
-          >
-            {ingresoBruto.toFixed(2)}
-          </TextoBrillante>
-          <TextoBrillante activo={llegoAlTope} color="var(--color-ink)" claseColorInactiva="text-ink">
-            {' - '}
-            {meta.toFixed(2)}
-          </TextoBrillante>
-          </span>
-        </span>
-      </div>
-
-      <div className="relative mt-3 h-4 overflow-hidden rounded-full bg-surface-2">
-        <div
-          className="absolute inset-y-0 left-0 rounded-full bg-purple-300 transition-[width] duration-500"
-          style={{ width: `${anchoRelleno}%` }}
-        />
-        <Brillo activo={llegoAlTope} />
-      </div>
-
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <TextoBrillante activo={llegoAlTope} color="var(--color-ink)" claseColorInactiva="text-ink" className="text-xs">
-          {ETIQUETA_COBERTURA[filtro]}
-        </TextoBrillante>
-        <span className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink">
-          {porcentaje > 100 && <ArrowUp className="h-3 w-3 animate-elevar-flecha text-green" />}
-          <span>
-          <TextoBrillante
-            activo={llegoAlTope}
-            color={porcentaje > 100 ? VERDE_TEXTO : 'var(--color-ink)'}
-            claseColorInactiva={porcentaje > 100 ? 'text-green' : 'text-ink'}
-          >
-            {Math.round(porcentaje)}%
-          </TextoBrillante>
-          <TextoBrillante activo={llegoAlTope} color="var(--color-ink)" claseColorInactiva="text-ink">
-            {' - 100%'}
-          </TextoBrillante>
-          </span>
-        </span>
-      </div>
-    </div>
-  )
 }
 
 export default function Dashboard({ activo = true }) {
@@ -218,7 +60,13 @@ export default function Dashboard({ activo = true }) {
         p_desde: desde.toISOString(),
         p_hasta: hasta.toISOString(),
       }),
-      supabase.from('gastos').select('monto').eq('mes', mesReferenciaIndice + 1).eq('anio', anioReferencia),
+      // Solo gastos ACTIVOS: los cancelados (en Gastos o al anular una salida de Caja chica) ya no se pagaron.
+      supabase
+        .from('gastos')
+        .select('monto')
+        .eq('mes', mesReferenciaIndice + 1)
+        .eq('anio', anioReferencia)
+        .eq('estado', 'ACTIVO'),
     ])
 
     if (!vigente.actual) return
@@ -274,10 +122,13 @@ export default function Dashboard({ activo = true }) {
   // descontado — la cascada debe partir del mismo ingreso neto en ambas
   // pantallas, o la ganancia final difiere para el mismo período.
   //
-  // QA-031: ventas.total incluye el envío cobrado (se suma después del descuento);
-  // antes se restaba de "Descuentos". Ahora el envío es una línea propia y el
-  // neto sigue siendo sum(ventas.total): bruto − descuentos + envío cobrado.
-  const ingresoNeto = redondear2(ingresoBruto - metricas.descuentos + metricas.envioCobrado)
+  // QA-031 separó el envío de "Descuentos" (ventas.total lo incluye). Desde el
+  // 2026-11-12 el envío NO es ingreso: la clienta lo paga y se le entrega
+  // completo al repartidor, así que contarlo inflaba la ganancia en ese monto.
+  // Neto = bruto − descuentos = sum(ventas.total − envío), el mismo "Ingreso
+  // neto" de Estadísticas (migración 20261112000007). envioCobrado queda solo
+  // como dato informativo en el Resumen del período.
+  const ingresoNeto = redondear2(ingresoBruto - metricas.descuentos)
   const gananciaProductos = metricas.ingresoProductos - metricas.costoProductos
 
   const { gastosOperativos, utilidadNeta, montoDiezmo, gananciaFinal, metaEquilibrio } =
@@ -287,11 +138,11 @@ export default function Dashboard({ activo = true }) {
       comisionesPagadas: metricas.comisionesPagadas,
       gastosMes: metricas.gastosMes,
     })
+  const metaCumplida = porcentajeEquilibrio(ingresoNeto, metaEquilibrio) >= 100
 
   const pasosPrevios = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto },
     { etiqueta: 'Descuentos', valor: -metricas.descuentos },
-    { etiqueta: 'Envío cobrado', valor: metricas.envioCobrado },
     { etiqueta: '10% gastos operativos (estimado)', valor: -gastosOperativos },
     { etiqueta: 'Costo de productos vendidos', valor: -metricas.costoProductos },
     { etiqueta: 'Comisión pagada a asistentes', valor: -metricas.comisionesPagadas },
@@ -304,13 +155,21 @@ export default function Dashboard({ activo = true }) {
   const filasResumen = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto, positivo: true, clase: 'text-green' },
     { etiqueta: 'Descuentos', valor: metricas.descuentos, positivo: false, clase: 'text-red' },
-    { etiqueta: 'Envío cobrado', valor: metricas.envioCobrado, positivo: true, clase: 'text-green' },
     { etiqueta: 'Ingreso productos', valor: metricas.ingresoProductos, positivo: true, clase: 'text-amber' },
     { etiqueta: 'Ingreso servicios', valor: metricas.ingresoServicios, positivo: true, clase: 'text-blue' },
     { etiqueta: 'Gastos productos', valor: metricas.costoProductos, positivo: false, clase: 'text-red' },
     { etiqueta: 'Ganancia productos', valor: gananciaProductos, positivo: true, clase: 'text-green' },
     { etiqueta: 'Comisiones a pagar', valor: metricas.comisionesPagadas, positivo: false, clase: 'text-red' },
     { etiqueta: ETIQUETA_GASTOS[filtro], valor: metricas.gastosMes, positivo: false, clase: 'text-blue' },
+    // Solo informativo (sin signo, en gris): el envío pasa al repartidor y no
+    // entra en ningún cálculo de ganancia.
+    {
+      etiqueta: 'Envío cobrado',
+      nota: 'pasa al repartidor',
+      valor: metricas.envioCobrado,
+      informativo: true,
+      clase: 'text-ink/50',
+    },
   ]
 
   return (
@@ -344,9 +203,17 @@ export default function Dashboard({ activo = true }) {
           {/* PC: punto de equilibrio a la izquierda y totales a la derecha
               (cada tarjeta del ancho de su contenido). En móvil el wrapper
               desaparece (contents) y cada hijo conserva su orden original. */}
-          <div className="contents lg:order-1 lg:col-span-2 lg:flex lg:items-stretch lg:gap-4">
-            <div className="order-1 min-w-0 lg:flex-1">
-              <BarraTermometro filtro={filtro} ingresoBruto={ingresoNeto} meta={metaEquilibrio} />
+          {/* Meta cumplida: la pastilla "¡Meta cumplida!" y el confeti salen
+              por encima de la tarjeta — pt-8 les deja ese espacio (en móvil
+              sobre la tarjeta; en PC sobre toda la fila, para que las
+              tarjetas de totales sigan alineadas con ella). */}
+          <div
+            className={`contents lg:order-1 lg:col-span-2 lg:flex lg:items-stretch lg:gap-4 ${
+              metaCumplida ? 'lg:pt-8' : ''
+            }`}
+          >
+            <div className={`order-1 min-w-0 lg:flex-1 ${metaCumplida ? 'pt-8 lg:pt-0' : ''}`}>
+              <TarjetaPuntoEquilibrio filtro={filtro} ingreso={ingresoNeto} meta={metaEquilibrio} />
             </div>
             <div className="order-3 grid grid-cols-3 gap-3 lg:flex lg:shrink-0 lg:gap-3 [&>*]:lg:flex [&>*]:lg:flex-col [&>*]:lg:justify-center [&>*]:lg:whitespace-nowrap">
               <TarjetaResumen etiqueta="Ventas" valor={metricas.cantidadVentas} />
@@ -366,9 +233,12 @@ export default function Dashboard({ activo = true }) {
               {filasResumen.map((fila) => (
                 <div key={fila.etiqueta} className="flex items-center justify-between text-sm">
                   <span className="text-ink/60">{fila.etiqueta}</span>
+                  {/* Nota como hermana (no dentro) de la etiqueta: los e2e buscan
+                      la etiqueta por texto exacto y suben a esta fila. */}
+                  {fila.nota && <span className="ml-1 shrink-0 text-xs text-ink/40">({fila.nota})</span>}
                   <span className="mx-2 min-w-4 flex-1 translate-y-0.5 border-b border-dashed border-ink/25" />
                   <span className={`font-mono ${fila.clase}`}>
-                    {fila.positivo ? '+' : '−'}
+                    {!fila.informativo && (fila.positivo ? '+' : '−')}
                     {formatearSoles(Math.abs(fila.valor))}
                   </span>
                 </div>

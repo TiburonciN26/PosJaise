@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { obtenerContacto, obtenerHorario } from '../../lib/datosNegocioWeb.js'
-import { formatearDias, formatearHora, numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { numeroWhatsapp } from '../../lib/contactoNegocio.js'
+import { agruparHorario, textoTurnos } from '../../lib/horarioAtencion.js'
 import { formatearSoles } from '../../lib/moneda.js'
 import { useEstadoNegocio } from '../../context/EstadoNegocioContext.jsx'
 import { useLectura } from '../../hooks/useLectura.js'
@@ -50,10 +51,18 @@ export default function CitasPublicasCliente() {
           <section className={TARJETA}>
             <h2 className="sm:text-xl lw-titulo-heavitas text-[15px] uppercase text-white">Horario de atención</h2>
             {horario ? (
-              <div className="text-sm leading-relaxed text-white/70">
-                <p>{formatearDias(horario.dias_atencion)}</p>
-                <p>{formatearHora(horario.bloque1_inicio)} – {formatearHora(horario.bloque1_fin)}</p>
-                {horario.bloque2_inicio && <p>y {formatearHora(horario.bloque2_inicio)} – {formatearHora(horario.bloque2_fin)}</p>}
+              <div className="space-y-2 text-sm leading-relaxed text-white/70">
+                {agruparHorario(horario).map((grupo) => (
+                  <div key={grupo.dias}>
+                    <p>{grupo.dias}</p>
+                    {grupo.turnos.map((turno, i) => (
+                      <p key={turno.inicio}>
+                        {i > 0 ? 'y ' : ''}
+                        {textoTurnos([turno], { separador: ' – ' })}
+                      </p>
+                    ))}
+                  </div>
+                ))}
               </div>
             ) : <p className="text-sm text-white/60">Consulta el horario de atención con el salón.</p>}
             {contacto?.direccion && <p className="wrap-break-word text-sm text-white/70">{contacto.direccion}</p>}

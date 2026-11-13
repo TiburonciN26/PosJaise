@@ -7059,3 +7059,276 @@ Implementado y probado en **local** (R2 simulado); sin R2 real, bucket, dominio 
 - **Correos:** al crear una cuenta basta un correo con formato válido (se crea ya confirmada, sin enviar correo de verificación); es el usuario de inicio de sesión y no hay recuperación por correo para el personal (la admin restablece la clave).
 
 **Producción (2026-11-11):** las migraciones `20261110000001` y `20261110000002` se aplicaron a mano desde el SQL Editor (por eso no figuran en el historial de migraciones de Supabase) y se verificaron por consultas de solo lectura (CHECK con `ENCARGADA`, índice único, trigger, `personal_listar()` sin EXECUTE para anon, cuerpos de funciones idénticos al repo; 0 fichas duplicadas y 3 administradores previos). **Función desplegada (2026-11-11):** `gestionar-personal` en producción (versión 1, `verify_jwt` activo; sin sesión responde 401). No se probó todavía con una sesión real de administradora: primera prueba pendiente desde la pestaña Personal. `emitir-comprobante` NO se despliega (comprobantes sin auditar).
+
+## 59. Deudas para Cajera/Encargada: solo consulta + «notas de cobro» que confirma la admin — 2026-11-12 (local, sin commit, sin producción)
+
+**Pedido:** la cajera y la encargada reciben el dinero en caja cuando una clienta paga lo que debe, pero Deudas era solo de la administradora. Ahora pueden **ver** la pestaña y dejar una **nota de cobro**; no pueden crear, editar ni eliminar deudas, ni registrar o anular pagos. La deuda no cambia hasta que la administradora **confirma** la nota (con el monto que ella verifique: total o parcial) o la **rechaza**.
+
+- **Migración `20261112000001_deudas_notas_cobro.sql`:** `deudas_select` y `deuda_pagos_select` pasan a `rol_actual() in (ADMINISTRADOR, CAJERA, ENCARGADA)`; insert/update/delete siguen en `es_admin()`. Tabla nueva `deuda_notas_cobro` (monto, fecha, nota, estado PENDIENTE/CONFIRMADA/RECHAZADA, quién la anotó —nombre guardado porque la cajera no puede leer `usuarios`—, quién la revisó, `monto_confirmado`, `pago_id`). Solo SELECT para `authenticated` (con `revoke all` previo: el local da privilegios por defecto a tablas nuevas); las escrituras van por tres funciones security definer con su propia comprobación de rol: `crear_nota_cobro_deuda` (admin/cajera/encargada; monto ≤ saldo), `confirmar_nota_cobro_deuda` (solo admin; registra el pago en `deuda_pagos` con la nota «Nota de cobro de <nombre> · <texto>», recalcula el estado y marca la nota) y `rechazar_nota_cobro_deuda` (solo admin). `registrar_pago_deuda`/`anular_pago_deuda` no cambian: son security invoker y la RLS las sigue frenando para la cajera.
+- **Front:** `navegacion.js` (Deudas para `ROLES_CAJA`); `MenuLateral.jsx` muestra suelta una subpestaña cuyo padre el rol no ve (Deudas cuelga de Clientes, que la cajera no tiene); `Deudas.jsx` oculta Nueva deuda/Editar/Eliminar/Pago parcial/Cobrado/anular pago a quien no es admin y le muestra «Nota de cobro»; cada tarjeta lista sus notas pendientes (la admin con ✓ Confirmar / ⦸ Rechazar), aviso «Hay N notas de cobro por confirmar» y filtro «Por confirmar»; `ModalPagoDeuda.jsx` gana los modos `nota` y `confirmar` (mismos campos; en confirmar viene prellenado con lo anotado y la admin ajusta el monto) y muestra el mensaje real del servidor ante validaciones (P0001).
+- **Verificado en local:** pruebas SQL por rol dentro de transacción revertida (cajera: ve la deuda, no puede insertar/editar/borrar deudas ni pagar, ni escribir en la tabla de notas directamente, ni confirmar/rechazar; nota por encima del saldo rechazada; encargada crea nota; asistente no ve deudas ni puede anotar; admin confirma 50 de una nota de 60 → pago parcial, no puede confirmar dos veces, rechaza otra, y una segunda nota por el saldo deja la deuda COBRADA). Consulta de la página validada contra la API local; `npm run build` OK; `destino-login` 8/8. Interfaz sin verificar en navegador.
+- **Ajustes (mismo día, tras probarlo el usuario):**
+  - *Quién cobró:* la lista de pagos muestra «fecha · nombre». Si el pago vino de una nota confirmada, el nombre es quien la anotó (aunque la confirme la admin; se cruza `deuda_notas_cobro.pago_id`); si lo registró la admin directo, «Admin».
+  - *Cobro directo con notas pendientes:* el formulario de «Pago parcial»/«Cobrado» de la admin avisa de las notas pendientes y ofrece «Confirmar nota» (pasa al modo confirmar, así el pago queda a nombre de quien cobró). Y si la deuda llega a COBRADA por cualquier vía, el trigger `deudas_descartar_notas_cobro` cierra sus notas aún pendientes como `DESCARTADA` (estado nuevo): ya no aparecen ni se pueden confirmar. `confirmar_nota_cobro_deuda` marca su nota CONFIRMADA antes de recalcular, para que el trigger solo descarte las otras. Probado: pago parcial directo → la nota sigue pendiente; cobro total directo → DESCARTADA; confirmar una nota que cubre el saldo → esa CONFIRMADA, la otra DESCARTADA y no confirmable.
+- **Pendiente para producción:** aplicar la migración (pedir confirmación) y publicar el front.
+
+## 60. Rol «Personal de apoyo» (PERSONAL_APOYO): solo Mi Panel — 2026-11-12 (local, sin commit, sin producción)
+
+- **Por qué:** a veces vienen chicas que no trabajan en el salón, llamadas como apoyo cuando hay mucho tráfico de clientas. Tienen que poder anotar lo que atendieron en Mi Panel (para cobrar su comisión), pero no deben ver ninguna otra pestaña porque no trabajan de forma permanente.
+- **Rol:** quinto valor de `usuarios.rol`, `PERSONAL_APOYO`, con la etiqueta «Personal de apoyo». Se crea desde la pestaña Personal como cualquier otra cuenta y lleva **ficha** automática (igual que ASISTENTE y ENCARGADA), porque la comisión se calcula por la ficha y sus % en Porcentajes. Sin % solo puede anotar como pendiente.
+- **Front:** `navegacion.js`, donde solo figura en `ROLES_PANEL`. Por eso su único menú es Mi Panel, y cualquier otra ruta cae ahí (`resolverDestino`). También se tocaron:
+  - `personal.js`: opción del selector de rol y `ROLES_CON_FICHA`.
+  - `MiPanel.jsx`: el filtro de la admin por persona la incluye.
+  - `Asistentes.jsx`: la cuenta aparece como vinculable a una ficha.
+  - `ModalPersonal.jsx`: con 5 roles, el último ocupa la fila entera.
+- **Edge Function `gestionar-personal`:** acepta el rol nuevo (lista blanca) y le crea la ficha. **Hay que volver a desplegarla** en producción.
+- **Migración `20261112000002_rol_personal_apoyo.sql`:**
+  - El CHECK acepta `PERSONAL_APOYO`.
+  - Las políticas de `citas` y `cita_servicios` («cualquier personal») ahora la excluyen: no lee la agenda ni crea o modifica citas por la API.
+  - `asistentes_para_citas`, `agendar_cita_web` y `reprogramar_mi_cita_web` la excluyen como profesional (igual que a la CAJERA), para que no se reserve con alguien que no está en el local.
+  - Ventas, gastos, deudas, inventario, etc. ya listaban roles explícitos que no la incluyen. Lo que necesita Mi Panel (sus registros, `resumen_mi_panel`, trigger de comisión, sus %, lectura de clientes y servicios) funciona por el vínculo de la ficha, como para una asistente.
+- **Verificado en local:** pruebas SQL en una transacción revertida, con una cuenta de apoyo con ficha y 40 %:
+  - Ve 0 citas y 0 cita_servicios, y no puede crear citas (RLS).
+  - No sale en el selector de citas, y ve 0 ventas, gastos y deudas.
+  - Sí ve servicios, clientes, su ficha y sus %.
+  - Registra un servicio propio con 40 % (pago calculado por el trigger) y `resumen_mi_panel` responde.
+  - No puede anotar cobros de deudas.
+  - Una ASISTENTE real sigue viendo las 299 citas.
+  - `destino-login` 9/9; `npm run build` OK. Interfaz sin verificar en navegador.
+- **Pendiente para producción** (pedir confirmación):
+  - Comparar con producción los cuerpos de `agendar_cita_web` y `reprogramar_mi_cita_web` (se tomaron del local).
+  - Aplicar la migración y volver a desplegar `gestionar-personal`.
+  - Publicar el front.
+
+## 61. Mi Panel: las notas pendientes de comisión son de quien las anotó — 2026-11-12 (local, sin commit, sin producción)
+
+- **Por qué:** una atención registrada sin % asignado queda como nota (`PENDIENTE_PORCENTAJE`). Hasta ahora:
+  - Se avisaba solo con un punto morado en la tarjeta del día, poco claro.
+  - La administradora podía confirmarla, editarla, cancelarla y eliminarla.
+
+  La dueña pidió que la admin solo pueda verla y asignar el %, y que confirmar sea cosa de la persona dueña de ese panel.
+- **Aviso arriba** (estilo del aviso de notas de cobro de Deudas), en lugar del punto. Sale de una consulta propia sin filtro de fecha, así que una nota antigua no se pierde. La admin ve las de todo el personal, aunque esté mirando su propio panel.
+  - *Ámbar:* «N atenciones pendientes de comisión: esperando que el administrador asigne tu porcentaje». En la admin: «N atenciones sin % asignado. Asígnalo en Porcentajes…».
+  - *Verde:* «El administrador asignó tu porcentaje: tienes N atenciones por confirmar». En la admin: «… falta que quien la anotó la confirme».
+  - «Ver» abre los días y los detalles de esas atenciones. Si quedan fuera del período elige su mes, o un rango si abarcan varios meses. En la admin, si hace falta, cambia el filtro de persona.
+- **«Ya tiene %»** se sabe mirando Porcentajes (servicio + ficha de la dueña). El trigger de comisión recién aplica el % al confirmar.
+- **Cada nota:**
+  - La etiqueta pasa de «Pendiente» (naranja) a «Por confirmar» (verde) cuando ya hay %.
+  - La dueña ve «El administrador asignó tu porcentaje (X%). Ya puedes confirmarla.» con el botón **Confirmar**, que solo aparece con % asignado. Puede cancelar su nota del día, como antes.
+  - La admin ve el estado, y un atajo **«Asignar %»** a Porcentajes cuando falta el %. No tiene Confirmar, Editar, Cancelar ni Eliminar. Las atenciones activas y canceladas siguen igual para ella.
+- **Migración `20261112000003_mi_panel_pendientes_solo_duena.sql`:**
+  - `registro_servicios_update` y `registro_servicios_delete_admin`: la rama de admin ya no alcanza filas `PENDIENTE_PORCENTAJE` (ni puede dejar una en ese estado).
+  - Nueva `confirmar_atencion_pendiente(p_registro_id)`, security definer. Solo la dueña, solo si sigue pendiente, y de cualquier día: la RLS de update solo le deja tocar las de hoy, y el % puede asignarse después. El trigger aplica el % o rechaza si aún no lo hay.
+- **Verificado en local:** pruebas SQL en una transacción revertida.
+  - La admin ve la nota; editarla, cancelarla o eliminarla afecta 0 filas; confirmarla es rechazado.
+  - La admin sigue editando atenciones activas, pero no puede pasarlas a pendiente.
+  - La dueña no puede confirmar sin %. Tras asignarle 40 %, confirma su nota de ayer con la RPC (ACTIVO, S/ 20.00 de S/ 50) y no puede confirmarla dos veces.
+  - Consultas del front validadas contra la API local; `npm run build` OK. Interfaz sin verificar en navegador.
+- **Pendiente para producción:** aplicar la migración (pedir confirmación) junto con el front. Si se publica el front sin la migración, Confirmar falla porque no existe la RPC.
+
+## 62. Horario de atención configurable por la admin, por día y con doble turno — 2026-11-12 (local, sin commit, sin producción)
+
+- **Por qué:** la administradora, que abre y cierra el negocio, debe poder fijar los días y el horario de atención, con doble turno solo en los días que quiera (p. ej. lunes a sábado 10:00-13:00 y 15:00-20:30). Hasta ahora:
+  - El horario vivía en `estado_negocio` (migración 74) como un solo par de bloques para todos los días.
+  - Se cargaba a mano por SQL: no había pantalla.
+  - El carrito de productos tenía las horas fijas en el código y dejaba elegir días cerrados.
+- **Dónde se edita:** **Web › Contacto Web**, en la tarjeta «Horario de atención» con el resumen y el botón «Editar horario». Al principio estuvo en el menú de usuario; se movió porque es configuración del portal web, no del POS (ver 63). Abre `ModalHorarioAtencion.jsx`:
+  - Cada día tiene un interruptor Abierto/Cerrado y su turno 1. «Agregar segundo turno» añade otro y la X lo quita.
+  - «Copiar a los demás días abiertos» repite los turnos de un día en los otros días abiertos.
+  - Valida igual que el servidor y marca en rojo el día con error. Avisa si se cierran todos los días.
+- **Migración `20261112000004_horario_atencion_por_dia.sql`:**
+  - **Tabla `horario_semanal`:** una fila por día ISO; día cerrado = horas en null. Un CHECK exige turno 1 válido y turno 2 posterior al 1.
+    - Se siembra con el horario que ya había, así que al aplicarla nada cambia.
+    - No se lee ni se escribe directamente: RLS sin políticas y revoke a anon/authenticated.
+  - **`horario_atencion_semanal()`:** lectura pública (anon y authenticated).
+  - **`guardar_horario_atencion(p_dias jsonb)`:** solo ADMINISTRADOR. Recibe los 7 días y devuelve mensajes por día (P0001). Escribe en `auditoria` un cambio legible por cada día modificado (p. ej. «Sábado — horario: 10:00-13:00 y 15:00-20:30 → Cerrado»); Auditoría lo muestra como «Horario de atención».
+  - **`horarios_disponibles_cita()` y `confirmar_pedido_productos()`:** validan contra los turnos del día elegido. Los cuerpos son los vivos de local, idénticos a las migraciones 75 y 20261009000005; solo cambia la lectura del horario. Afecta a citas web (agendar y reprogramar) y a pedidos web.
+  - **`horario_atencion()`:** se conserva con la misma firma solo por compatibilidad con webs viejas en caché (PWA). Devuelve los días abiertos y los turnos del primer día abierto.
+  - **`estado_negocio`:** se eliminan sus columnas de horario. Queda una sola fuente de verdad.
+- **Web:** `src/lib/horarioAtencion.js` normaliza y agrupa los días que comparten turnos («Lunes a Viernes», «Sábado»…).
+  - *Inicio, pie, Nosotros › Contacto y Citas (visitante):* muestran cada grupo con todos sus turnos.
+  - *Servicios y Productos (bloque de WhatsApp):* lo mismo.
+  - *Textos «Atendemos …» (Citas, carrito de servicios):* el horario completo en una línea.
+  - *Carrito de servicios:* deshabilita los días sin turnos.
+  - *Carrito de productos:* deshabilita los días cerrados, ofrece las horas del día elegido (hoy, solo las que no pasaron) y limpia la hora si deja de valer al cambiar de día.
+  - `obtenerHorario()` (caché de 60 s) se invalida al guardar desde el modal.
+- **Verificado en local:**
+  - Pruebas SQL en una transacción revertida:
+    - anon y la cajera no pueden leer la tabla ni guardar; anon sí lee la función pública.
+    - Hay mensajes para 7 casos inválidos: faltan días, día repetido, turno al revés, turnos solapados, turno incompleto, turno 2 sin turno 1 y hora inválida.
+    - Guardar deja auditoría solo de los días cambiados; guardar lo mismo no deja nada.
+    - Con el sábado cerrado y el domingo 10-14, las citas dan 0 cupos el sábado y de 10:00 a 13:30 el domingo. El pedido rechaza el sábado («no atiende ese día») y las 14:00 del viernes («hora dentro del horario»).
+  - `tests/e2e/horario-atencion.test.mjs`: 4 pruebas de la lógica pura, OK.
+  - API local OK, `npm run build` OK. Interfaz sin verificar en navegador.
+- **Pendiente para producción** (pedir confirmación): antes, confirmar en prod que solo esas tres funciones leen las columnas de horario y que `confirmar_pedido_productos` coincide con 20261009000005. Aplicar la migración junto con el front: el front nuevo llama a `horario_atencion_semanal()`, que no existe sin la migración.
+
+## 63. Apertura y cierre automático del negocio para el personal del POS — 2026-11-12 (local, sin commit, sin producción)
+
+- **Por qué:** para que cajeras, asistentes, encargadas y personal de apoyo ya no puedan ingresar, la administradora tenía que cerrar el negocio a mano (`estado_negocio.abierto`). Pidió que se abra y se cierre solo, con horas editables por día.
+  - Es distinto del horario de atención de la web (sección 62): este solo decide cuándo puede trabajar el personal del POS.
+- **Dónde se edita:** menú de usuario de la admin › **Apertura y cierre automático**, debajo del interruptor del negocio. Abre `ModalHorarioPos.jsx`:
+  - Un interruptor general (automático activado o apagado).
+  - Por día: «Se abre / No se abre», con hora de apertura y de cierre. «Copiar a los demás» repite las horas de un día.
+- **Comportamiento:**
+  - A la hora de apertura el interruptor «Negocio abierto» se prende solo; a la de cierre se apaga. Todo lo que ya bloqueaba con el negocio cerrado sigue igual: el login del personal en `AuthContext`, `negocio_abierto()` en RLS y RPC, y el interruptor en todos los dispositivos por Realtime.
+  - La administradora siempre entra.
+  - La admin puede seguir abriendo y cerrando a mano. Su cambio dura hasta el siguiente evento programado; por ejemplo, si abre un domingo, queda abierto hasta que ella cierre o llegue el próximo cierre.
+  - **Al guardar con el modo activo**, el negocio se ajusta al horario en ese momento. El aviso dice si quedó abierto o cerrado.
+  - **En el menú** se ve «Cierra automáticamente hoy a las 8:30 p. m.» o «Abre automáticamente mañana a las …», tanto para la admin como para el personal.
+  - **En la confirmación del cambio manual**, el menú muestra cuándo lo va a revertir el horario.
+- **Migración `20261112000005_apertura_cierre_automatico_pos.sql`:**
+  - Activa **`pg_cron`**.
+  - **`horario_pos`**: una fila por día, apertura y cierre, o sin horas si ese día no se abre solo.
+  - **`horario_pos_estado`**: fila única con el campo `automatico` (apagado al aplicar) y `ultimo_evento`. Ambas tablas sin acceso directo para anon/authenticated.
+  - Se siembra con el horario web, desde la apertura del primer turno hasta el cierre del último.
+  - **`aplicar_horario_pos()`**, que corre cada minuto por el job `aplicar-horario-pos`:
+    - Toma el evento programado más reciente que ya pasó y lo aplica **una sola vez** (`ultimo_evento`). Si se pierde una corrida, la siguiente lo aplica, y no pisa los cambios manuales entre eventos.
+    - Solo cambia `estado_negocio.abierto`. En Auditoría el cambio aparece como «Automático (horario del POS)».
+  - **`horario_pos_config()`**: solo personal; las clientas reciben 0 filas.
+  - **`guardar_horario_pos(p_automatico, p_dias)`**: solo ADMINISTRADOR. Valida y deja auditoría por día cambiado y del interruptor general; después reaplica el horario.
+- **Web:** el horario de atención de la web se movió del menú de usuario a **Web › Contacto Web** (tarjeta «Horario de atención», `ModalHorarioAtencion` con el color azul-metal de esa pestaña).
+- **Verificado en local:**
+  - Pruebas SQL en una transacción revertida:
+    - anon no lee nada. La cajera ve el horario, pero no puede guardarlo ni ejecutar `aplicar_horario_pos`. La clienta recibe 0 filas.
+    - Las validaciones devuelven su mensaje por día.
+    - Al activar con un cierre ya pasado el negocio queda cerrado (`negocio_abierto()` = false); con cierre a las 23:00 queda abierto.
+    - Una apertura manual no se revierte hasta el siguiente evento.
+    - El cierre por evento queda auditado como «Automático (horario del POS)».
+    - Con el modo apagado, no toca nada.
+  - Prueba real con `pg_cron` en local: con el cierre de hoy puesto 2 minutos más tarde, el job cerró el negocio exactamente a las 16:02:00. La auditoría lo marcó «Automático (horario del POS)». Después se restauró el estado local: modo automático apagado, negocio abierto.
+  - `tests/e2e/horario-atencion.test.mjs`: 7 pruebas (3 del próximo evento del POS), OK. `npm run build` y el lint, OK. Interfaz sin verificar en navegador.
+- **Pendiente para producción** (pedir confirmación): activar `pg_cron` y aplicar las migraciones 20261112000004 y 20261112000005 junto con el front.
+- **Ajustes tras revisarlo (2026-11-12):**
+  - **Modo manual:** con «Apertura y cierre automático» apagado, los días no se pueden tocar. El editor va dentro de un `<fieldset disabled>`, que bloquea interruptores, selectores y botones.
+  - **Selector de hora con AM/PM** (`SelectorHora.jsx`): hora 1-12, minutos de 5 en 5 y botones AM/PM. Reemplaza a `<input type="time">`, que según el dispositivo se veía en formato de 24 horas. Se usa en los dos horarios, el web y el del POS.
+  - **Segundo horario opcional por día en el POS** (migración `20261112000006_horario_pos_doble_turno.sql`):
+    - Por defecto cada día tiene un solo horario (p. ej. 10:00 a. m.-8:30 p. m.). «Agregar segundo horario» parte uno largo en 10:00-13:00 y 15:00-20:30, y «Quitar» lo deshace.
+    - En el descanso entre los dos horarios el negocio se cierra solo para el personal y luego se vuelve a abrir.
+    - En la base: columnas `apertura2` y `cierre2` en `horario_pos`. `aplicar_horario_pos()` maneja hasta 4 eventos por día, `horario_pos_config()` devuelve los nuevos campos y `guardar_horario_pos()` usa los mismos mensajes que el horario web.
+  - **Editor compartido** `EditorTurnosSemana.jsx` (estado y validaciones en `src/lib/turnosSemana.js`) para el modal web y el del POS.
+  - **Verificado en local:**
+    - Pruebas SQL revertidas: los mensajes de turno solapado e incompleto. Con dos horarios, si la hora actual cae en el segundo el negocio queda abierto; si cae en el descanso, cerrado. La auditoría muestra «10:00-13:00 y 15:00-20:30».
+    - 9 pruebas en Node, OK. Build y lint, OK. Interfaz sin verificar en navegador.
+
+## 64. Servicios: duración en horas + minutos, y el scroll ya no salta al guardar — 2026-11-12 (local, sin commit, sin producción)
+
+- **Modal de servicio (modo POS, `ModalServicio.jsx`):** la duración se escribe en dos campos, **horas** y **minutos** (0-59), en vez de un solo número de minutos. En la base no cambia nada: se sigue guardando `duracion_min` (horas × 60 + minutos), así que no hay migración. Si los dos campos están vacíos, el servicio queda sin duración. Al editar, un servicio de 90 min se abre como 1 h 30 min. La tabla y las tarjetas de Servicios muestran la duración igual («1 h 30 min», «45 min»).
+- **El scroll ya no vuelve arriba tras guardar o eliminar.** Causa: después de guardar, la pestaña recargaba con `setCargando(true)`. La tabla se cambiaba por el esqueleto, que es más bajo, y el contenedor `<main>` recortaba el scroll a 0. Ahora esas recargas son **silenciosas**: no hay esqueleto, la tabla sigue montada y solo cambian los datos.
+  - Paginadas con «Cargar más» (Servicios, Inventario, Clientes, Historial, Mi Panel, Catálogo Web): la recarga silenciosa pide **las filas que ya estaban cargadas** (tope 1000), no solo la primera página, para que la lista no encoja.
+  - Sin paginar (Asistentes, Gastos, Mobiliario, Deudas): pasan a usar el modo silencioso que ya tenían.
+  - Las listas con `useListaPaginada` (Promociones, Pedidos Web, Recompensas, Reseñas) y Citas, Personal, Porcentajes y Libro de reclamaciones ya recargaban sin vaciar la lista: sin cambios.
+- **Verificado:** `npm run build` OK y lint sin errores nuevos. Interfaz sin verificar en navegador.
+
+## 65. Dashboard: el envío ya no cuenta como ganancia, y tarjeta de punto de equilibrio «Aurora» — 2026-11-12 (local, sin commit, sin producción)
+
+- **Envío fuera de la ganancia.** El delivery de los pedidos web lo paga la clienta y se le entrega completo al repartidor: es dinero de paso. Antes `ventas.total` (que incluye el envío) entraba entero en el ingreso neto y en la cascada, y como el pago al repartidor no se resta en ningún lado, la ganancia salía inflada en el monto del envío (aretes de S/ 20 + envío S/ 10 → contaba S/ 30).
+  - `Dashboard.jsx`: `ingresoNeto = bruto − descuentos` (ya no `+ envioCobrado`). Se quita la línea «Envío cobrado» de la cascada. En el Resumen del período queda al final como dato **informativo**: gris, sin signo y con la nota «(pasa al repartidor)».
+  - Migración `supabase/migrations/20261112000007_estadisticas_sin_envio.sql`: `resumen_estadisticas()` resta el envío (`pedidos_web.costo_delivery`, el mismo origen que `resumen_dashboard`) del `ingreso_bruto` («Ingreso neto» en pantalla) y de la tendencia diaria. **Métodos de pago sigue usando `ventas.total`**, porque el envío sí entró por ese medio. Como tiene la misma firma y el mismo retorno, es un `create or replace` que conserva los grants. Corrige el histórico sin tocar ninguna venta.
+  - E2E actualizados: `qa-031-032.spec.mjs` (el neto sube solo lo vendido) y `qa-025-029.spec.mjs` (neto = bruto − descuentos).
+  - **Aplicada solo en Local**, con `psql` y registrada en `schema_migrations`. `supabase migration up` se niega porque la base Local tiene las migraciones `20261026000001-5` (comprobantes electrónicos, de otra rama) que no están en esta. No se reparó ese historial. Verificado por SQL con octubre: Estadísticas 68 088,12 = Dashboard nuevo 68 088,12 = total con envío 68 101,12 − envío 13,00; métodos de pago siguen sumando 68 101,12.
+- **Tarjeta «Punto de equilibrio» con el diseño Aurora** (`docs/diseño-puntoEquilibrio/`), en su propio componente `src/components/TarjetaPuntoEquilibrio.jsx`. Reemplaza a la anterior (borde lavanda y destellos sobre el texto).
+  - *Aún no cubre:* tarjeta neutra, barra fina con degradado lavanda y perilla luminosa al final, montos `ingreso / meta` y el % en lavanda.
+  - *Meta cumplida (≥ 100 %):* borde aurora que gira (conic-gradient con `@property --pe-angulo`), dos manchas de luz a la deriva, barra arcoíris que fluye con destello, % en una pastilla verde con flecha que sube y, cada 8 s, la pastilla «¡Meta cumplida!» con carita que se menea más confeti.
+  - En PC va todo en una fila (título · barra · montos). En móvil, título y montos arriba y la barra debajo. Es un solo árbol reacomodado con grid. La pastilla y el confeti salen del final de la barra en PC y de la esquina derecha en móvil.
+  - Sobresalen por encima de la tarjeta: con la meta cumplida el Dashboard reserva `pt-8` arriba. `isolate` mantiene todo por debajo de los filtros sticky.
+  - CSS en `index.css` (clases `.pe-*`, junto a las demás animaciones), con `prefers-reduced-motion`. El % usa `floor` para que un 99,6 % no se lea «100 %».
+- **Verificado:** `npm run build` OK y lint sin avisos nuevos. Capturas con Playwright (Chromium headless) contra `npm run dev` y Supabase Local, entrando con la cuenta QA de administradora por enlace mágico local: los dos estados en PC (1280/1440) y en móvil (390), en tema claro y oscuro.
+
+## 66. Porcentajes, Historial solo con ventas propias y colores de citas por rol — 2026-11-12 (local, sin commit, sin producción)
+
+- **Porcentajes:** el campo del % por asistente pasa de `w-9` a `w-11` (cabe un carácter más).
+- **Historial POS: la cajera y la encargada solo ven sus propias ventas** (`vendedor_id = auth.uid()`), siempre solo las de hoy. La administradora sigue viendo todo.
+  - Migración `20261112000008_historial_solo_ventas_propias.sql`: endurece las políticas `ventas_select` y `venta_items_select`. El filtro va en la RLS y no en `Historial.jsx` para que las ventas ajenas no se puedan leer por PostgREST. Como `resumen_historial()` es `security invoker`, las tarjetas de resumen también cuentan solo lo propio sin tocar la función.
+  - Verificado por SQL dentro de una transacción revertida: con 1 de las 3 ventas de hoy reasignada a una cajera, esa cajera ve 1 venta y su resumen suma S/ 10. Otra cajera y una encargada ven 0, y la admin ve las 3.
+- **Citas POS: color de cada tarjeta según el rol de quien la agendó** (`creado_por`). Las citas agendadas por la clienta desde la Web (`creado_por_cliente_web_id`) tienen su propio color, «Cliente Web». La tarjeta lleva el mismo tratamiento que el día seleccionado del calendario: borde del color al 50 % y fondo al 14 %.
+  - Migración `20261112000009_colores_citas_por_rol.sql`: tabla `colores_citas_rol` (clave → `#RRGGBB`) que lee solo el personal. Valores iniciales: admin verde jade `#00A86B`, encargada rosa palo `#E8B4B8` y el resto distintos. `autores_citas_rol()` (security definer) da el rol de cada usuario, incluidos los inactivos, y solo al personal. Es una función aparte porque `usuarios_para_citas()` también la usa el portal de clientas y a propósito no expone el rol. Los colores se guardan con `guardar_colores_citas(jsonb)`: solo la admin, y valida el formato y la clave.
+  - Front: `src/lib/coloresCitas.js` y `src/components/ModalColoresCitas.jsx` (selector nativo + código hex, vista previa en vivo, Esc, toast). Botón con el ícono de paleta en la cabecera de `Citas.jsx`, solo para `ADMINISTRADOR`. Si no cargan los colores, las tarjetas quedan como antes, sin color.
+  - Verificado por SQL: una cajera lee los colores pero no puede guardarlos (ni por RPC ni por `update` directo, que afecta 0 filas). Una cuenta sin fila en `usuarios` (clienta) no lee nada. La admin guarda, y se rechazan un color inválido y un rol desconocido.
+- Ambas migraciones se aplicaron en Local con `psql` y quedaron registradas en `schema_migrations`, por el mismo motivo que en la sección 65. `npm run build` y oxlint OK. **No se verificó visualmente** (sin navegador en esta sesión).
+
+## 67. Gastos: los gastos fijos de las plantillas se crean solos cada mes — 2026-11-12 (local, sin commit, sin producción)
+
+- **Pedido:** que la admin ya no tenga que pulsar «Crear gastos fijos del mes» cada mes. Si se olvidaba, Dashboard, Estadísticas y el punto de equilibrio calculaban ese mes sin sus gastos fijos.
+- **Migración `supabase/migrations/20261112000010_gastos_fijos_automaticos.sql`:**
+  - `generar_gastos_fijos_mes()` (security definer, sin execute para nadie de la app) crea una fila FIJO por cada plantilla activa de `gastos_recurrentes` en el mes en curso (hora de Lima).
+  - La corre **pg_cron todos los días a las 00:05 de Lima** (`5 5 * * *` UTC, job `generar-gastos-fijos-mes`), no solo el día 1, así una corrida perdida la cubre la del día siguiente.
+  - Tabla `gastos_fijos_generados (anio, mes)`: cada mes se genera **una sola vez**. Si la admin borra o cancela un gasto fijo de ese mes, no vuelve a aparecer.
+  - No duplica lo creado a mano: `on conflict` sobre el índice único `gastos_fijo_mes_anio_unique` (nombre, mes, anio, tipo FIJO).
+  - `creado_por` queda null y Auditoría registra «Automático (gastos fijos)», como el cierre automático del POS (sección del 20261112000005).
+  - Al aplicarse genera de una vez el mes en curso.
+- **Botón «Crear gastos fijos del mes»:** se mantiene, para una plantilla nueva a mitad de mes o para un mes pasado.
+- **`ModalPlantillasGasto.jsx`:** aviso bajo el título: «Al empezar cada mes se crean solos los gastos fijos de las plantillas activas».
+- **Aplicada solo en Local** con `psql` y registrada en `schema_migrations` (mismo motivo que la sección 65). Verificado por SQL: crea los 34 fijos de noviembre desde las plantillas de prueba, Auditoría los marca como automáticos, una segunda corrida crea 0 y el job queda en `cron.job`. `npm run build` OK. Interfaz sin verificar en navegador.
+
+## 68. Pestaña Almacén: cosas internas del negocio que no se venden — 2026-11-12 (local, sin commit, sin producción)
+
+- **Pedido:** una pestaña parecida a Inventario para lo de uso interno (p. ej. «llegaron 10 aguas para las trabajadoras», «se usó 1»), con fecha y quién hizo cada movimiento. Decisiones de la dueña:
+  - **Salidas:** las anota todo el personal (admin, cajera, encargada, asistente y personal de apoyo).
+  - **Artículos e ingresos:** solo la admin crea, edita y elimina artículos y registra ingresos.
+  - **Costo:** cada ingreso guarda su costo total.
+- **Migración `supabase/migrations/20261112000011_almacen.sql`:**
+  - **Tablas:** `almacen_articulos` (nombre único sin distinguir mayúsculas, categoría, unidad, stock ≥ 0, mínimo, activo) y `almacen_movimientos` (INGRESO/SALIDA, cantidad, stock antes y después, costo solo en ingresos, nota, usuaria, fecha).
+  - **Escrituras:** todas pasan por funciones security definer, y las tablas no tienen GRANT de escritura (se revoca todo porque la base Local da privilegios por defecto). Así el stock y el historial no se desalinean ni se falsifican.
+    - `registrar_salida_almacen()`: cualquier rol del personal. No deja bajar de 0 («Solo quedan N botella…»). Con el negocio cerrado solo la admin.
+    - `registrar_ingreso_almacen()`: solo admin, con el costo obligatorio (puede ser 0).
+    - `guardar_articulo_almacen()`: crear o editar. El stock inicial queda como primer INGRESO con su costo; editar no toca el stock.
+    - `eliminar_articulo_almacen()`: si el artículo tiene movimientos lo desactiva, si no lo borra.
+  - **Lecturas:**
+    - `historial_almacen_articulo()`: solo admin; quién, cuándo, cuánto y a qué costo.
+    - `resumen_almacen()`: total, bajo y sin stock. `gastado_mes` (ingresos del mes, hora de Lima) solo llega a la admin.
+    - Vista `almacen_articulos_vista` (security_invoker): agrega `stock_bajo` y `sin_stock` para filtrar. No son columnas de la tabla, para no llenar Auditoría de ruido. El personal solo ve los artículos activos.
+  - **Auditoría:** trigger estándar `registrar_auditoria` en `almacen_articulos`. `Auditoria.jsx` muestra la tabla como «Almacén».
+- **Frontend:**
+  - `src/pages/Almacen.jsx`: buscador, orden, filtros Total/Bajo/Sin stock, tarjeta «Gastado este mes» (admin), tarjetas en móvil y tabla en escritorio.
+  - `ModalMovimientoAlmacen.jsx` (sacar o ingresar), `ModalArticuloAlmacen.jsx` (crear o editar), `ModalDetalleArticuloAlmacen.jsx` (detalle; historial para la admin) y `src/lib/almacen.js`.
+  - Menú: `/almacen` va **después de Mi Panel** para que `rutaInicialPara()` siga mandando a la asistente y al personal de apoyo a Mi Panel. Registrada en `PestanasCacheadas.jsx`.
+  - De paso, en `ModalColoresCitas.jsx` y en los modales nuevos, Esc ya no cierra el modal de abajo mientras uno guarda.
+- **Aplicada solo en Local** con `psql` y registrada en `schema_migrations`. Verificado por SQL con una cuenta de cada rol:
+  - Admin crea con stock inicial; nombre repetido o stock inicial sin costo, rechazados.
+  - Personal de apoyo y cajera sacan; sacar más del stock, rechazado.
+  - Un rol que no es admin no puede ingresar, ni leer movimientos, ni hacer UPDATE directo.
+  - La cajera no ve inactivos; una clienta no ve nada.
+  - El historial muestra quién hizo cada movimiento, el resumen da gastado S/ 15, eliminar con movimientos desactiva y Auditoría registra solo cambios reales.
+  - `npm run build` OK. Interfaz sin verificar en navegador.
+- **Ajustes pedidos tras revisar en pantalla (mismo día):**
+  - El stock mínimo ya no se pide ni se muestra: vale 3 por defecto (`default 3` en la tabla y `STOCK_MINIMO_ALMACEN` en `src/lib/almacen.js`). Al editar se conserva el que tenga. Se quitó la columna «Mínimo» de la tabla.
+  - Los campos de cantidad, stock inicial y costo solo dejan escribir números, con `soloEnteros` y `soloImporte` (un punto y hasta 2 decimales) en cada `onChange`. La validación completa sigue al guardar y en el servidor.
+  - Sin placeholder en el costo total.
+  - Detalle: sin «Mínimo», y cada movimiento muestra solo «Ingresó N» o «Salió N» en vez de «anterior → ±N → nuevo».
+
+## 69. Pestaña Caja chica: fondo fijo en efectivo para gastos menores — 2026-11-12 (local, sin commit, sin producción)
+
+- **Pedido:** la dueña quería una caja chica. Hasta ahora las cajeras anotaban los gastitos en Gastos → variables, pero así no se sabía cuánto efectivo quedaba en la cajita ni cuándo se había repuesto. Se definió como **fondo fijo para gastos menores**, no como el cuadre de ventas del día.
+- **Reglas:**
+  - La admin fija el **monto del fondo**, por ejemplo S/ 200.
+  - **Salidas:** admin, cajera y encargada. Con el negocio cerrado, solo la admin. No se puede sacar más que el saldo. Cada salida crea **sola** su gasto VARIABLE del mes, «Caja chica: <motivo>».
+  - **Reponer** y **contar caja:** solo la admin. Si el conteo no cuadra se registra un FALTANTE (que también es gasto variable) o un SOBRANTE. Si cuadra queda un CONTEO de S/ 0 como constancia de quién contó.
+  - **Anular:** la admin anula salidas y reposiciones; quien hizo una salida, solo la suya y el mismo día. Nada se borra: el movimiento queda ANULADO y su gasto pasa a CANCELADO. No se anula una reposición si el saldo quedaría negativo.
+- **Migración `20261112000012_caja_chica.sql`:**
+  - `caja_chica_config` (fila única con `monto_fondo`, con auditoría) y `caja_chica_movimientos` (SALIDA / REPOSICION / FALTANTE / SOBRANTE / CONTEO, con quién, cuándo y quién anuló). Sin GRANT de escritura: todo pasa por funciones security definer.
+  - El **saldo no se guarda**: es la suma de los movimientos activos, así nunca se descuadra con el historial. Cada escritura bloquea la fila de configuración para que dos salidas a la vez no dejen el saldo en negativo.
+  - `gastos.caja_chica_movimiento_id` liga el gasto con su movimiento. El trigger `proteger_gastos_caja_chica` impide editar, cancelar o eliminar esos gastos desde la API, salvo desde las funciones de caja chica (ajuste de sesión `app.caja_chica_rpc`). Que `creado_por` pase a null al borrar un usuario no se bloquea.
+  - Funciones:
+    - escritura: `registrar_salida_caja_chica`, `reponer_caja_chica`, `contar_caja_chica` (devuelve la diferencia), `anular_movimiento_caja_chica` y `guardar_fondo_caja_chica`;
+    - lectura: `resumen_caja_chica` (saldo y fondo; `gastado_mes` solo para la admin) y `movimientos_caja_chica('HOY'|'SEMANA'|'MES')`, que trae `puede_anular` calculado para quien mira.
+- **Frontend:**
+  - `src/pages/CajaChica.jsx`:
+    - saldo grande (verde; naranja bajo el 20 % del fondo; rojo en 0) y «de S/ fondo» con lápiz para la admin;
+    - «Gastado este mes» (admin), botones Reponer y Contar caja (admin), filtro Hoy/Semana/Mes e historial;
+    - cada movimiento dice solo «Salió S/ 15.00», «Repuesto…» o «Faltante…»; los anulados salen tachados con quién los anuló;
+    - botón flotante «Registrar salida» en móvil.
+  - `ModalMovimientoCajaChica.jsx`: un modal para salida, reposición, conteo y fondo. Los montos usan `soloImporte`, que ahora vive en `src/lib/moneda.js` y Almacén re-exporta. La reposición propone lo que falta para llenar el fondo, y el conteo avisa en vivo si hay faltante o sobrante.
+  - `src/lib/cajaChica.js`: mensajes de error, colores y etiquetas.
+  - Gastos: las filas de caja chica llevan la etiqueta «Caja chica» y no muestran Editar, Cancelar ni Eliminar.
+  - Menú: `/caja-chica`, después de Gastos, para administradora, cajera y encargada.
+  - `Auditoria.jsx`: la tabla `caja_chica_config` se muestra como «Caja chica».
+- **Aplicada solo en Local** con `psql` y registrada en `schema_migrations`. Verificado por SQL con una cuenta de cada rol:
+  - Admin fija fondo 200 y repone 200; la cajera saca 15 → saldo 185 y se crea el gasto variable.
+  - Sacar 500, rechazado («Solo quedan S/ 185.00»).
+  - La cajera no puede reponer, ni contar, ni leer la tabla, ni editar el gasto en Gastos.
+  - La encargada no puede anular la salida de la cajera; la cajera sí anula la suya → saldo 200 y gasto CANCELADO.
+  - La asistente no ve nada.
+  - El conteo de 175 con saldo 180 da faltante −5 y su gasto; un segundo conteo de 175 cuadra.
+  - Anular una reposición ya gastada, rechazado. Eliminar el gasto ligado, rechazado. Con el negocio cerrado, la cajera queda bloqueada.
+  - `npm run build` OK. Interfaz sin verificar en navegador.
+- **Corrección relacionada (mismo día):** el Dashboard y Estadísticas sumaban también los gastos **CANCELADOS**: los cancelados a mano en Gastos y ahora las salidas anuladas en Caja chica. Así la utilidad bajaba por dinero que no se gastó. Las dos consultas de `gastos` ahora filtran `estado = 'ACTIVO'`. Según la dueña, el «10 % gastos operativos (estimado)» de la cascada es una reserva de emergencia aparte, no se cruza con los gastos reales, así que se deja igual.

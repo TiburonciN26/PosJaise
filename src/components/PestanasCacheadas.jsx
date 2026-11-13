@@ -33,6 +33,8 @@ const Auditoria = componenteDiferido(() => import('../pages/Auditoria.jsx'), 'Au
 const Clientes = componenteDiferido(() => import('../pages/Clientes.jsx'), 'Clientes')
 const Porcentajes = componenteDiferido(() => import('../pages/Porcentajes.jsx'), 'Porcentajes')
 const Gastos = componenteDiferido(() => import('../pages/Gastos.jsx'), 'Gastos')
+const Almacen = componenteDiferido(() => import('../pages/Almacen.jsx'), 'Almacen')
+const CajaChica = componenteDiferido(() => import('../pages/CajaChica.jsx'), 'CajaChica')
 const Asistentes = componenteDiferido(() => import('../pages/Asistentes.jsx'), 'Asistentes')
 const Personal = componenteDiferido(() => import('../pages/Personal.jsx'), 'Personal')
 const Mobiliario = componenteDiferido(() => import('../pages/Mobiliario.jsx'), 'Mobiliario')
@@ -65,6 +67,8 @@ const PAGINAS = {
   '/clientes': Clientes,
   '/porcentajes': Porcentajes,
   '/gastos': Gastos,
+  '/almacen': Almacen,
+  '/caja-chica': CajaChica,
   '/equipo-web': Asistentes,
   '/personal': Personal,
   '/mobiliario': Mobiliario,

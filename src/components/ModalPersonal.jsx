@@ -217,7 +217,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
                       disabled={bloqueado}
                       aria-pressed={elegido}
                       onClick={() => setRol(opcion.id)}
-                      className={`rounded-lg border px-3 py-2 text-left transition-colors disabled:opacity-60 ${
+                      className={`rounded-lg border px-3 py-2 text-left transition-colors last:odd:col-span-2 disabled:opacity-60 ${
                         elegido
                           ? 'border-purple-300 bg-purple-300/10'
                           : 'border-border hover:border-border-strong'

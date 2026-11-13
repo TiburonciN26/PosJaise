@@ -15,10 +15,13 @@ export const COLUMNAS_WEB_PRODUCTO = [
 ]
 
 const texto = (v) => (v?.trim() ? v.trim() : null)
+// Nombre de catálogo: sin espacios en los bordes y con los espacios internos repetidos reducidos a uno. En producción
+// había 40 productos con doble espacio («Argolla␣␣lagrima…») que se veían bien pero no aparecían al buscar.
+export const limpiarNombre = (v) => v.trim().replace(/\s+/g, ' ')
 
 export function datosPosServicio({ formulario, categoriaFinal }) {
   return {
-    nombre: formulario.nombre.trim(),
+    nombre: limpiarNombre(formulario.nombre),
     categoria: categoriaFinal,
     precio: parseFloat(formulario.precio),
     duracion_min: formulario.duracionMin.trim() ? parseInt(formulario.duracionMin, 10) : null,
@@ -61,7 +64,7 @@ export function datosWebServicio({ formulario, fotoFinal, pasos, especificacione
 export function datosPosProducto({ formulario, categoriaFinal, precio, costo }) {
   return {
     codigo_barras: formulario.codigoBarras.trim() || null,
-    nombre: formulario.nombre.trim(),
+    nombre: limpiarNombre(formulario.nombre),
     categoria: categoriaFinal || null,
     subcategoria: formulario.subcategoria.trim() || null,
     precio,

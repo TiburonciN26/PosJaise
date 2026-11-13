@@ -22,6 +22,7 @@ import {
   Calendar,
   Clock,
   Globe,
+  Palette,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -44,7 +45,9 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import ModalCita from '../components/ModalCita.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
+import ModalColoresCitas from '../components/ModalColoresCitas.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import { colorDeCita, estiloTarjetaCita } from '../lib/coloresCitas.js'
 
 const DIAS_CORTOS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
 const MESES = [
@@ -250,6 +253,10 @@ export default function Citas({ activo = true }) {
   const [asistentes, setAsistentes] = useState([])
   const [asistenteFiltro, setAsistenteFiltro] = useState('todas')
   const [nombresUsuarios, setNombresUsuarios] = useState(new Map())
+  // Color de cada tarjeta según el rol de quien agendó (ver lib/coloresCitas.js).
+  const [rolPorUsuario, setRolPorUsuario] = useState(new Map())
+  const [coloresCitas, setColoresCitas] = useState({})
+  const [modalColores, setModalColores] = useState(false)
   const [ocultarCanceladas, setOcultarCanceladas] = useState(true)
   const [clientesCumpleanos, setClientesCumpleanos] = useState([])
   const [citas, setCitas] = useState([])
@@ -415,6 +422,17 @@ export default function Citas({ activo = true }) {
     supabase
       .rpc('usuarios_para_citas')
       .then(({ data }) => setNombresUsuarios(new Map((data ?? []).map((u) => [u.id, u.nombre_completo]))))
+  }, [])
+
+  // Si alguna de las dos falla, las tarjetas simplemente quedan sin color (como antes): no bloquea la agenda.
+  useEffect(() => {
+    supabase
+      .rpc('autores_citas_rol')
+      .then(({ data }) => setRolPorUsuario(new Map((data ?? []).map((u) => [u.id, u.rol]))))
+    supabase
+      .from('colores_citas_rol')
+      .select('clave, color')
+      .then(({ data }) => setColoresCitas(Object.fromEntries((data ?? []).map((c) => [c.clave, c.color]))))
   }, [])
 
   // Cumpleaños: se cargan una sola vez (no dependen del mes que se esté
@@ -715,6 +733,18 @@ export default function Citas({ activo = true }) {
               {ocultarCanceladas ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
 
+            {rol === 'ADMINISTRADOR' && (
+              <button
+                type="button"
+                onClick={() => setModalColores(true)}
+                aria-label="Colores de las citas"
+                title="Colores de las citas"
+                className="shrink-0 p-1.5 text-ink/40 transition-colors hover:text-purple-300"
+              >
+                <Palette className="h-4 w-4" />
+              </button>
+            )}
+
             <button
               type="button"
               onClick={irHoy}
@@ -866,6 +896,7 @@ export default function Citas({ activo = true }) {
                     key={cita.id}
                     type="button"
                     onClick={() => setCitaSeleccionada(cita)}
+                    style={estiloTarjetaCita(colorDeCita(cita, rolPorUsuario, coloresCitas))}
                     className="relative flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-purple-300/50"
                   >
                     {((cita.cita_servicios?.length ?? 0) > 1 || tieneAsistentePendiente(cita)) && (
@@ -1003,6 +1034,7 @@ export default function Citas({ activo = true }) {
                             key={cita.id}
                             type="button"
                             onClick={() => setCitaSeleccionada(cita)}
+                            style={estiloTarjetaCita(colorDeCita(cita, rolPorUsuario, coloresCitas))}
                             className="relative flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:border-purple-300/50"
                           >
                             {((cita.cita_servicios?.length ?? 0) > 1 || tieneAsistentePendiente(cita)) && (
@@ -1045,6 +1077,17 @@ export default function Citas({ activo = true }) {
       )}
 
       <BotonFlotanteAgregar onClick={() => setModalCita('nuevo')} color="morado" label="Nueva cita" />
+
+      {modalColores && (
+        <ModalColoresCitas
+          coloresIniciales={coloresCitas}
+          onCerrar={() => setModalColores(false)}
+          onGuardado={(nuevos) => {
+            setColoresCitas(nuevos)
+            setModalColores(false)
+          }}
+        />
+      )}
 
       {modalCita && (
         <ModalCita

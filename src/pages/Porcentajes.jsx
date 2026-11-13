@@ -121,7 +121,7 @@ function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuarda
             onKeyDown={(evento) => {
               if (evento.key === 'Enter') evento.target.blur()
             }}
-            className="w-9 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:text-ink/60"
+            className="w-11 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300 disabled:text-ink/60"
           />
           <span className="text-xs text-ink/60">%</span>
         </div>

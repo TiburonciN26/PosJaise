@@ -35,7 +35,7 @@ test('resolverDestino personal: solo pantallas del POS que su rol puede abrir; s
 test('resolverDestino ENCARGADA (cajera + asistente): ve ventas y su panel, nunca lo de admin', async () => {
   const { secciones } = await import('../../src/config/navegacion.js');
   const rutasEncargada = secciones.filter((s) => s.roles.includes('ENCARGADA')).map((s) => s.path);
-  assert.deepEqual(rutasEncargada, ['/ventas', '/inventario', '/historial', '/servicios', '/mi-panel', '/citas', '/gastos']);
+  assert.deepEqual(rutasEncargada, ['/ventas', '/inventario', '/historial', '/servicios', '/mi-panel', '/citas', '/deudas', '/gastos']);
   assert.equal(resolverDestino('ENCARGADA', '/inventario'), '/inventario');
   assert.equal(resolverDestino('ENCARGADA', '/mi-panel'), '/mi-panel');
   assert.equal(resolverDestino('ENCARGADA', '/dashboard'), '/ventas');
@@ -60,6 +60,25 @@ test('Equipo (antes pestaña Asistentes) cuelga de Web y es solo del ADMINISTRAD
   assert.equal(equipo?.padre, '/web');
   assert.deepEqual(equipo?.roles, ['ADMINISTRADOR']);
   assert.notEqual(resolverDestino('ENCARGADA', '/equipo-web'), '/equipo-web');
+});
+
+test('Deudas: la consultan admin, cajera y encargada (notas de cobro); la asistente no', async () => {
+  const { secciones } = await import('../../src/config/navegacion.js');
+  const deudas = secciones.find((s) => s.path === '/deudas');
+  assert.deepEqual(deudas?.roles, ['ADMINISTRADOR', 'CAJERA', 'ENCARGADA']);
+  assert.equal(resolverDestino('CAJERA', '/deudas'), '/deudas');
+  assert.equal(resolverDestino('ENCARGADA', '/deudas'), '/deudas');
+  assert.notEqual(resolverDestino('ASISTENTE', '/deudas'), '/deudas');
+});
+
+test('PERSONAL_APOYO (viene a ayudar por días): solo Mi Panel, cualquier otra ruta cae ahí', async () => {
+  const { secciones } = await import('../../src/config/navegacion.js');
+  const rutasApoyo = secciones.filter((s) => s.roles.includes('PERSONAL_APOYO')).map((s) => s.path);
+  assert.deepEqual(rutasApoyo, ['/mi-panel']);
+  assert.equal(resolverDestino('PERSONAL_APOYO', undefined), '/mi-panel');
+  for (const ruta of ['/ventas', '/citas', '/servicios', '/inventario', '/deudas', '/gastos', '/dashboard', '/personal']) {
+    assert.equal(resolverDestino('PERSONAL_APOYO', ruta), '/mi-panel', ruta);
+  }
 });
 
 test('esRutaDePersonal: reconoce pantallas del POS, con o sin consulta y barra final', () => {

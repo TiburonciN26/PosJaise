@@ -51,6 +51,8 @@
 .pie-cliente__dato p { margin: 0; }
 .pie-cliente__horario { display: block; }
 .pie-cliente__turnos { display: block; }
+/* Horario por día: un párrafo por cada juego de turnos distinto («Lunes a Viernes», «Sábado»…), uno debajo del otro. */
+.pie-cliente__dato--grupos { flex-direction: column; gap: 6px; }
 .pie-cliente__icono-contacto { width: 15px; height: 15px; flex: none; margin-top: 4px; object-fit: contain; }
 .pie-cliente__ubicacion {
   width: 18px;
@@ -91,6 +93,7 @@
   .pie-cliente__red-nombre { display: none; }
   .pie-cliente__seccion { align-items: center; }
   .pie-cliente__dato { justify-content: center; }
+  .pie-cliente__dato--grupos { align-items: center; }
   .pie-cliente__contacto-datos { flex-direction: row; flex-wrap: wrap; justify-content: center; }
   .pie-cliente__turnos { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 4px; }
   .pie-cliente__turnos > .pie-cliente__horario { white-space: nowrap; }

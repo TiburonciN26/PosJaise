@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Pencil, Trash2, Plus, CheckCheck, HandCoins, Filter, Coins, X } from 'lucide-react'
+import { Pencil, Trash2, Plus, CheckCheck, HandCoins, Filter, Coins, X, NotebookPen, Check, Ban } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
@@ -20,6 +21,7 @@ const OPCIONES_FILTRO = [
   { id: 'todas', label: 'Todas' },
   { id: 'pendientes', label: 'Pendientes' },
   { id: 'cobradas', label: 'Cobradas' },
+  { id: 'por_confirmar', label: 'Por confirmar' },
 ]
 
 function formatearFecha(fechaIso) {
@@ -49,6 +51,13 @@ function saldoDe(deuda) {
   return Math.max(0, redondear2(deuda.monto - pagadoDe(deuda)))
 }
 
+// Notas de cobro que la cajera/encargada dejó y la administradora aún no revisa (más antiguas primero).
+function notasPendientesDe(deuda) {
+  return (deuda.deuda_notas_cobro ?? [])
+    .filter((n) => n.estado === 'PENDIENTE')
+    .sort((a, b) => a.creado_en.localeCompare(b.creado_en))
+}
+
 // Fecha del último pago (los pagos guardan 'YYYY-MM-DD', así que el orden alfabético sirve).
 function fechaCobro(deuda) {
   const fechas = (deuda.deuda_pagos ?? []).map((p) => p.fecha).sort()
@@ -57,6 +66,10 @@ function fechaCobro(deuda) {
 
 export default function Deudas({ activo = true }) {
   const { mostrarToast } = useToast()
+  // Cajera y Encargada solo consultan y dejan notas de cobro; crear/editar/eliminar/cobrar es de la admin
+  // (la base lo impone igual: migración 20261112000001_deudas_notas_cobro).
+  const { rol } = useAuth()
+  const esAdmin = rol === 'ADMINISTRADOR'
   const numeroColumnas = useNumeroColumnas()
 
   const [deudas, setDeudas] = useState([])
@@ -69,24 +82,31 @@ export default function Deudas({ activo = true }) {
   const [deudaAEliminar, setDeudaAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [deudaAPagar, setDeudaAPagar] = useState(null)
+  const [deudaANotar, setDeudaANotar] = useState(null)
+  const [notaAConfirmar, setNotaAConfirmar] = useState(null) // { deuda, nota }
+  const [notaARechazar, setNotaARechazar] = useState(null) // { deuda, nota }
+  const [rechazando, setRechazando] = useState(false)
   const [pagoAAnular, setPagoAAnular] = useState(null) // { deuda, pago }
   const [anulando, setAnulando] = useState(false)
   const primeraCargaHecha = useRef(false)
   const panelEliminarRef = useRef(null)
 
   const panelAnularRef = useRef(null)
+  const panelRechazarRef = useRef(null)
 
   useCerrarConEscape(() => setDeudaAEliminar(null), Boolean(deudaAEliminar))
   useModalA11y(panelEliminarRef, Boolean(deudaAEliminar))
   useCerrarConEscape(() => setPagoAAnular(null), Boolean(pagoAAnular))
   useModalA11y(panelAnularRef, Boolean(pagoAAnular))
+  useCerrarConEscape(() => setNotaARechazar(null), Boolean(notaARechazar))
+  useModalA11y(panelRechazarRef, Boolean(notaARechazar))
 
   async function cargarDeudas(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
 
     let consulta = supabase
       .from('deudas')
-      .select('id, cliente_id, concepto, monto, fecha, estado, nota, clientes!inner(nombre), deuda_pagos(id, monto, fecha, nota, creado_en)')
+      .select('id, cliente_id, concepto, monto, fecha, estado, nota, clientes!inner(nombre), deuda_pagos(id, monto, fecha, nota, creado_en), deuda_notas_cobro(id, monto, fecha, nota, estado, creado_por_nombre, creado_en, pago_id)')
       .order('fecha', { ascending: false })
       .order('creado_en', { ascending: false })
 
@@ -104,7 +124,8 @@ export default function Deudas({ activo = true }) {
       setError('No se pudieron cargar las deudas.')
     } else {
       setError(null)
-      setDeudas(data ?? [])
+      const filas = data ?? []
+      setDeudas(filtroEstado === 'por_confirmar' ? filas.filter((d) => notasPendientesDe(d).length > 0) : filas)
     }
     setCargando(false)
   }
@@ -137,6 +158,23 @@ export default function Deudas({ activo = true }) {
     cargarDeudas(undefined, true)
   }
 
+  async function confirmarRechazarNota() {
+    if (!notaARechazar) return
+    setRechazando(true)
+    const { error: errorRechazar } = await supabase.rpc('rechazar_nota_cobro_deuda', {
+      p_nota_id: notaARechazar.nota.id,
+    })
+    setRechazando(false)
+    setNotaARechazar(null)
+
+    if (errorRechazar) {
+      mostrarToast(errorRechazar.code === 'P0001' ? errorRechazar.message : 'No se pudo rechazar la nota.', 'error')
+      return
+    }
+    mostrarToast('Nota de cobro rechazada.', 'exito')
+    cargarDeudas(undefined, true)
+  }
+
   async function confirmarEliminar() {
     if (!deudaAEliminar) return
 
@@ -162,6 +200,7 @@ export default function Deudas({ activo = true }) {
   // que no queden huecos como pasaba con la grilla de filas de alto fijo.
   const columnas = Array.from({ length: numeroColumnas }, (_, c) => deudas.filter((_, i) => i % numeroColumnas === c))
   const totalVisible = sumarMontos(deudas, (d) => (filtroEstado === 'pendientes' ? saldoDe(d) : d.monto))
+  const notasPorConfirmar = deudas.reduce((total, d) => total + notasPendientesDe(d).length, 0)
 
   return (
     <div
@@ -188,14 +227,16 @@ export default function Deudas({ activo = true }) {
           sinBorde
         />
 
-        <button
-          type="button"
-          onClick={() => setModalDeuda('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nueva deuda</span>
-        </button>
+        {esAdmin && (
+          <button
+            type="button"
+            onClick={() => setModalDeuda('nuevo')}
+            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nueva deuda</span>
+          </button>
+        )}
       </div>
 
       <p className="mt-3 text-sm text-ink/60">
@@ -204,6 +245,20 @@ export default function Deudas({ activo = true }) {
         {' · '}
         <span className="font-mono font-semibold text-purple-300">{formatearSoles(totalVisible)}</span>
       </p>
+
+      {notasPorConfirmar > 0 && filtroEstado !== 'por_confirmar' && (
+        <button
+          type="button"
+          onClick={() => setFiltroEstado('por_confirmar')}
+          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-amber"
+        >
+          <NotebookPen className="h-4 w-4 shrink-0 text-amber" />
+          <span>
+            {notasPorConfirmar === 1 ? 'Hay 1 nota de cobro' : `Hay ${notasPorConfirmar} notas de cobro`}{' '}
+            {esAdmin ? 'por confirmar. Ver' : 'esperando a la administradora. Ver'}
+          </span>
+        </button>
+      )}
 
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
@@ -217,7 +272,7 @@ export default function Deudas({ activo = true }) {
         <EstadoVacio
           icono={HandCoins}
           mensaje="No se encontraron deudas."
-          accion={{ label: '+ Nueva deuda', onClick: () => setModalDeuda('nuevo') }}
+          accion={esAdmin ? { label: '+ Nueva deuda', onClick: () => setModalDeuda('nuevo') } : undefined}
           tema="purple-300"
         />
       ) : (
@@ -228,6 +283,14 @@ export default function Deudas({ activo = true }) {
             const cobrada = deuda.estado === 'COBRADA'
             const pagado = pagadoDe(deuda)
             const saldo = saldoDe(deuda)
+            const notasPendientes = notasPendientesDe(deuda)
+            // Quién cobró cada pago: si vino de una nota confirmada, quien la anotó (aunque la confirme la admin);
+            // si no, lo registró la administradora directamente.
+            const cobradoPor = new Map(
+              (deuda.deuda_notas_cobro ?? [])
+                .filter((n) => n.estado === 'CONFIRMADA' && n.pago_id)
+                .map((n) => [n.pago_id, n.creado_por_nombre ?? 'Personal']),
+            )
             const pagos = [...(deuda.deuda_pagos ?? [])].sort((a, b) =>
               a.fecha === b.fecha ? a.creado_en.localeCompare(b.creado_en) : a.fecha.localeCompare(b.fecha),
             )
@@ -272,9 +335,14 @@ export default function Deudas({ activo = true }) {
                     <ul className="mt-1 space-y-0.5">
                       {pagos.map((pago) => (
                         <li key={pago.id} className="flex items-center justify-between gap-2 text-ink/70">
-                          <span className="font-mono">{formatearFecha(pago.fecha)}</span>
+                          <span className="min-w-0 truncate">
+                            <span className="font-mono">{formatearFecha(pago.fecha)}</span>
+                            {' · '}
+                            {cobradoPor.get(pago.id) ?? 'Admin'}
+                          </span>
                           <span className="flex items-center gap-1">
                             <span className="font-mono font-semibold text-green">{formatearSoles(pago.monto)}</span>
+                            {esAdmin && (
                             <button
                               type="button"
                               onClick={() => setPagoAAnular({ deuda, pago })}
@@ -284,6 +352,7 @@ export default function Deudas({ activo = true }) {
                             >
                               <X className="h-3.5 w-3.5" />
                             </button>
+                            )}
                           </span>
                         </li>
                       ))}
@@ -297,6 +366,54 @@ export default function Deudas({ activo = true }) {
                   </div>
                 )}
 
+                {notasPendientes.length > 0 && (
+                  <div className="mt-2 rounded-lg border border-amber/40 bg-amber/10 px-2.5 py-1.5 text-xs">
+                    <p className="flex items-center gap-1.5 font-medium text-ink/80">
+                      <NotebookPen className="h-3.5 w-3.5 text-amber" />
+                      Notas de cobro por confirmar
+                    </p>
+                    <ul className="mt-1 space-y-1.5">
+                      {notasPendientes.map((nota) => (
+                        <li key={nota.id} className="text-ink/70">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="min-w-0 truncate">
+                              <span className="font-mono">{formatearFecha(nota.fecha)}</span>
+                              {' · '}
+                              {nota.creado_por_nombre ?? 'Personal'}
+                            </span>
+                            <span className="flex shrink-0 items-center gap-1">
+                              <span className="font-mono font-semibold text-amber">{formatearSoles(nota.monto)}</span>
+                              {esAdmin && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => setNotaAConfirmar({ deuda, nota })}
+                                    title="Confirmar cobro"
+                                    aria-label="Confirmar cobro"
+                                    className="flex h-7 w-7 items-center justify-center rounded border border-border-strong text-green transition-colors hover:bg-green/10"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setNotaARechazar({ deuda, nota })}
+                                    title="Rechazar nota"
+                                    aria-label="Rechazar nota"
+                                    className="flex h-7 w-7 items-center justify-center rounded border border-border-strong text-red transition-colors hover:bg-red/10"
+                                  >
+                                    <Ban className="h-3.5 w-3.5" />
+                                  </button>
+                                </>
+                              )}
+                            </span>
+                          </div>
+                          {nota.nota && <p className="mt-0.5 text-ink/60">«{nota.nota}»</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {deuda.nota && (
                   <p className="mt-2 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs text-ink/70">
                     {deuda.nota}
@@ -304,7 +421,15 @@ export default function Deudas({ activo = true }) {
                 )}
 
                 <div className="mt-3 flex items-center justify-end gap-1.5">
-                  {!cobrada && (
+                  {!esAdmin && !cobrada && (
+                    <BotonAccion
+                      icono={NotebookPen}
+                      texto="Nota de cobro"
+                      color="morado"
+                      onClick={() => setDeudaANotar(deuda)}
+                    />
+                  )}
+                  {esAdmin && !cobrada && (
                     <>
                       <BotonAccion
                         icono={Coins}
@@ -320,18 +445,22 @@ export default function Deudas({ activo = true }) {
                       />
                     </>
                   )}
-                  <BotonAccion
-                    icono={Pencil}
-                    texto="Editar"
-                    color="celeste"
-                    onClick={() => setModalDeuda(deuda)}
-                  />
-                  <BotonAccion
-                    icono={Trash2}
-                    texto="Eliminar"
-                    color="rojo"
-                    onClick={() => setDeudaAEliminar(deuda)}
-                  />
+                  {esAdmin && (
+                    <>
+                      <BotonAccion
+                        icono={Pencil}
+                        texto="Editar"
+                        color="celeste"
+                        onClick={() => setModalDeuda(deuda)}
+                      />
+                      <BotonAccion
+                        icono={Trash2}
+                        texto="Eliminar"
+                        color="rojo"
+                        onClick={() => setDeudaAEliminar(deuda)}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
             )
@@ -341,7 +470,7 @@ export default function Deudas({ activo = true }) {
         </div>
       )}
 
-      <BotonFlotanteAgregar onClick={() => setModalDeuda('nuevo')} color="morado" label="Nueva deuda" />
+      {esAdmin && <BotonFlotanteAgregar onClick={() => setModalDeuda('nuevo')} color="morado" label="Nueva deuda" />}
 
       {modalDeuda && (
         <ModalDeuda
@@ -351,7 +480,7 @@ export default function Deudas({ activo = true }) {
             const esNueva = modalDeuda === 'nuevo'
             setModalDeuda(null)
             mostrarToast(esNueva ? 'Deuda registrada.' : 'Deuda actualizada.', 'exito')
-            cargarDeudas()
+            cargarDeudas(undefined, true)
           }}
         />
       )}
@@ -360,6 +489,12 @@ export default function Deudas({ activo = true }) {
         <ModalPagoDeuda
           deuda={deudaAPagar}
           saldo={saldoDe(deudaAPagar)}
+          notasPendientes={notasPendientesDe(deudaAPagar)}
+          onConfirmarNota={(nota) => {
+            const deuda = deudaAPagar
+            setDeudaAPagar(null)
+            setNotaAConfirmar({ deuda, nota })
+          }}
           onCerrar={() => setDeudaAPagar(null)}
           onGuardado={(quedoCobrada) => {
             setDeudaAPagar(null)
@@ -367,6 +502,65 @@ export default function Deudas({ activo = true }) {
             cargarDeudas(undefined, true)
           }}
         />
+      )}
+
+      {deudaANotar && (
+        <ModalPagoDeuda
+          modo="nota"
+          deuda={deudaANotar}
+          saldo={saldoDe(deudaANotar)}
+          onCerrar={() => setDeudaANotar(null)}
+          onGuardado={() => {
+            setDeudaANotar(null)
+            mostrarToast('Nota de cobro enviada a la administradora.', 'exito')
+            cargarDeudas(undefined, true)
+          }}
+        />
+      )}
+
+      {notaAConfirmar && (
+        <ModalPagoDeuda
+          modo="confirmar"
+          deuda={notaAConfirmar.deuda}
+          notaCobro={notaAConfirmar.nota}
+          saldo={saldoDe(notaAConfirmar.deuda)}
+          onCerrar={() => setNotaAConfirmar(null)}
+          onGuardado={(quedoCobrada) => {
+            setNotaAConfirmar(null)
+            mostrarToast(quedoCobrada ? 'Cobro confirmado: deuda cobrada.' : 'Cobro confirmado.', 'exito')
+            cargarDeudas(undefined, true)
+          }}
+        />
+      )}
+
+      {notaARechazar && (
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelRechazarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+            <h2 className="text-base font-semibold text-ink">¿Rechazar esta nota de cobro?</h2>
+            <p className="mt-1 text-sm text-ink/60">
+              La nota de {formatearSoles(notaARechazar.nota.monto)} de {notaARechazar.nota.creado_por_nombre ?? 'personal'} se
+              descarta y la deuda de {notaARechazar.deuda.clientes.nombre} no cambia.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setNotaARechazar(null)}
+                disabled={rechazando}
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmarRechazarNota}
+                disabled={rechazando}
+                className="flex-1 rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10 disabled:opacity-40"
+              >
+                {rechazando ? 'Rechazando...' : 'Sí, rechazar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {pagoAAnular && (
