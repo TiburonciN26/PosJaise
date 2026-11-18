@@ -42,9 +42,8 @@ const UMBRAL_ARRASTRE_ELIMINAR = 90
 // la fila (nombre/precio, no los controles con su propio onClick).
 const UMBRAL_ARRASTRE_INICIO = 8
 
-// Rutas con BASE_URL (no "/icons/..." a secas): en GitHub Pages la app vive
-// bajo /PosJaise/ y Vite no reescribe strings dentro de JSX — con la ruta
-// absoluta estos íconos daban 404 en producción (A1 de la 3ª auditoría).
+// Rutas con BASE_URL (no "/icons/..." a secas): Vite no reescribe strings dentro de JSX, y cuando la app vivía bajo un
+// prefijo (GitHub Pages, ya retirado) la ruta absoluta daba 404 (A1 de la 3ª auditoría). Se conserva por si la base cambia.
 const metodosPago = [
   {
     nombre: 'Efectivo',

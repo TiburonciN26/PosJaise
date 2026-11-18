@@ -3,14 +3,14 @@
 // no pasa por Vite: sin imports ni sintaxis de módulo.
 //
 // Contrato: solo se guardan recursos ESTÁTICOS PÚBLICOS DEL BUILD, reconocidos por su espacio de nombres bajo el alcance del
-// service worker (`/` en Cloudflare, `/PosJaise/` en GitHub Pages), sin query string y con el tipo de contenido esperado.
+// service worker (`/` en Cloudflare Pages), sin query string y con el tipo de contenido esperado.
 // «Mismo origen» NO basta: con VITE_SUPABASE_URL relativa (`/__supabase`, modo móvil) la API, Storage y las URLs firmadas
 // de comprobantes viven en el mismo origen. Nunca se guardan: datos/Storage/Auth/Realtime/Functions (ni por el proxy), /medios
 // (fotos del negocio con retirada propia), nada con query (?token=… de las URLs firmadas), respuestas de error,
 // redirigidas, opacas, `private`/`no-store`, ni el index.html que el fallback de SPA devuelve con 200 en lugar de un
 // archivo que ya no existe (guardarlo envenenaría esa URL durante 30 días).
 ;(function (alcance) {
-  const raiz = new URL(alcance.registration.scope).pathname // '/' o '/PosJaise/'
+  const raiz = new URL(alcance.registration.scope).pathname // '/' (se lee del alcance por si la base cambia)
   const ASSET = /^assets\/[^/]+\.(js|css|woff2?|ttf|png|jpe?g|webp|avif|svg)$/
   const IMAGEN_PUBLICA = /^(?:(?:inicio-web|icons)\/[^/]+\.(png|jpe?g|webp|avif|svg)|(?:favicon[\w-]*|icon-[\w-]+)\.(png|ico)|icons\.(svg))$/
   // Defensa explícita además de la lista positiva: rutas de datos o privadas, bajo cualquier prefijo.

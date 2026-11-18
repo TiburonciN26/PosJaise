@@ -21,9 +21,15 @@ npm run preview   # serve the production build locally
 ```
 
 There is no CI and no deployed environment the user tests against day
-to day — they test exclusively via `npm run dev` locally. A GitHub
-Actions workflow for GitHub Pages exists but isn't the feedback loop
-to rely on.
+to day — they test exclusively via `npm run dev` locally. Production
+is **Cloudflare Pages**: every push to `main` auto-deploys with
+`npm run build:cloudflare` (`scripts/build-cloudflare.mjs`), which
+fails the deploy if the built `index.html` mentions `/PosJaise/`, if a
+`404.html` ends up in the output, or if privileged keys leak. Run that
+script locally before pushing anything that touches `index.html`,
+`vite.config.js` or `public/`. GitHub Pages was retired (2026-11-18):
+no workflow publishes there anymore. Never push front-end code that
+depends on a migration that isn't applied in production yet.
 
 **This session's environment has no browser automation tool** (no
 Playwright/chromium-cli configured). After changing UI, run `npm run

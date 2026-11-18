@@ -55,21 +55,11 @@ function diferidosDelPos() {
 const DIFERIDO_POS = diferidosDelPos()
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
-  // GitHub Pages sirve este proyecto bajo /PosJaise/ (Pages de proyecto, no
-  // de usuario), así que el build necesita ese prefijo en assets, rutas y
-  // manifest. En dev queda "/" porque Vite lo sirve desde la raíz.
-  //
-  // Fase 2 (Cloudflare Pages): el mismo código también se publica en la raíz de
-  // un dominio (`*.pages.dev` o dominio propio). `VITE_BASE_PATH=/` en ese build
-  // (ver scripts/build-cloudflare.mjs) cambia el prefijo; sin la variable el
-  // resultado es idéntico al de siempre (/PosJaise/), así que GitHub Pages no cambia.
-  const baseConfigurada = (process.env.VITE_BASE_PATH ?? '/PosJaise/').trim()
-  const baseNormalizada = `/${baseConfigurada.replace(/^\/+|\/+$/g, '')}/`.replace(/^\/\/$/, '/')
-  const base = command === 'build' ? baseNormalizada : '/'
-  // 404.html es el truco de SPA de GitHub Pages; en la raíz de Cloudflare Pages su
-  // sola presencia DESACTIVA el fallback de SPA, así que ese build lo excluye (y del precache).
-  const esRaiz = base === '/'
+export default defineConfig(({ mode }) => {
+  // La app se publica en la raíz de un dominio (Cloudflare Pages: `*.pages.dev` o dominio propio), así que la base es
+  // siempre "/". GitHub Pages (que exigía el prefijo /PosJaise/ y el truco del 404.html) se retiró el 2026-11-18;
+  // github.io conserva congelado el aviso de nueva dirección y ya no se publica nada ahí desde este repo.
+  const base = '/'
 
   const shell = cierreDelShell()
 
@@ -158,11 +148,9 @@ export default defineConfig(({ command, mode }) => {
               },
             },
           ],
-          globIgnores: esRaiz ? ['**/404.html'] : [],
-          // Build de Cloudflare (base /): /medios y /medios/* los sirve una Pages Function (fotos), nunca la SPA.
-          // El SW no debe devolver index.html a una navegación a una foto. `/medios-extra` NO queda excluido.
-          // GitHub Pages (base /PosJaise/) no cambia.
-          ...(esRaiz ? { navigateFallbackDenylist: [/^\/medios(?:\/|$)/] } : {}),
+          // /medios y /medios/* los sirve una Pages Function (fotos), nunca la SPA: el SW no debe devolver index.html a una
+          // navegación a una foto. `/medios-extra` NO queda excluido.
+          navigateFallbackDenylist: [/^\/medios(?:\/|$)/],
         },
         manifest: {
           name: 'Pos Jaise Beauty Academy',

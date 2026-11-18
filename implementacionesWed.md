@@ -7657,3 +7657,18 @@ Pedidos de la dueña sobre Inventario, en varias tandas. Migraciones `2026111200
 - **Fallo del despliegue en Cloudflare Pages (82565d0):** la compilación terminaba bien, pero `scripts/build-cloudflare.mjs` abortaba con «index.html referencia /PosJaise/».
   - La causa era un comentario dentro del script en línea de `index.html` (precarga del hero) que mencionaba la ruta de GitHub Pages. Vite conserva esos comentarios en el `index.html` final.
   - Se reescribió el comentario sin la ruta. `node scripts/build-cloudflare.mjs` en local pasa todas las comprobaciones de salida.
+
+## 87. Se retira GitHub Pages: Cloudflare Pages es el único despliegue — 2026-11-18
+
+- **Borrado:**
+  - `.github/workflows/deploy-pages.yml` y `deploy-aviso-github-pages.yml`;
+  - la carpeta `aviso-github-pages/`;
+  - `public/404.html` (el truco de SPA de rafgraph);
+  - en `index.html`, el script del `<body>` que decodificaba `?/ruta`.
+- **`vite.config.js`:** la base es siempre `/`; antes era `/PosJaise/` salvo con `VITE_BASE_PATH=/`. Sin `esRaiz`: `navigateFallbackDenylist` de `/medios` queda siempre y desaparece el `globIgnores` del 404. `npm run build` produce ahora lo mismo que publica Cloudflare.
+- **Precarga del hero en `index.html`:** mira solo `location.pathname`.
+- **Comentarios** de `useSalir.js`, `Ventas.jsx`, `sw-reglas-cache.js` y `build-cloudflare.mjs` puestos al día. El código sigue usando `BASE_URL` y el alcance del SW, por si la base vuelve a cambiar. `build-cloudflare.mjs` conserva sus comprobaciones (sin 404, sin `/PosJaise/`) como salvaguarda.
+- **El sitio `tiburoncin26.github.io/PosJaise/` sigue encendido**, por decisión del usuario, con el aviso de nueva dirección ya publicado. Desde el repo no se puede volver a publicar ahí.
+- No se tocaron los scripts y mediciones históricos (`scripts/fase10a`, `verificar-*`, `tests/e2e/performance-*`) que mencionan la URL vieja. Son registro de fases cerradas.
+- `CLAUDE.md`: se documenta el despliegue en Cloudflare y la regla de no hacer push de un front que necesita una migración aún no aplicada.
+- **Verificado:** `npm run build` (sin `404.html` ni `PosJaise` en la salida); `node scripts/build-cloudflare.mjs` OK; oxlint sin avisos nuevos.

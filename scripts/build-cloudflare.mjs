@@ -1,6 +1,6 @@
 // Build para Cloudflare Pages (raíz del dominio). Uso: npm run build:cloudflare
-//  · VITE_BASE_PATH=/ (el build de GitHub Pages NO usa esto y sigue en /PosJaise/).
-//  · Quita dist/404.html (truco de SPA de GitHub Pages): sin él, Pages aplica su fallback de SPA.
+//  · VITE_BASE_PATH=/ (la base ya es "/" en vite.config.js; GitHub Pages se retiró el 2026-11-18).
+//  · Quita dist/404.html si apareciera (era el truco de SPA de GitHub Pages): con él, Pages no aplica su fallback de SPA.
 //  · Copia cloudflare/_headers a la salida.
 //  · En Cloudflare (CF_PAGES=1) valida ANTES de iniciar Vite el backend y la clave por entorno
 //    (scripts/lib/entornos-supabase.mjs): preview → staging aprobado; producción → negocio aprobado.

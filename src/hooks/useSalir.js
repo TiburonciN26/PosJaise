@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 // árbol se aplican en renders distintos, y por un instante el visitante estaría en la
 // ruta del POS (p. ej. /ventas), que lo mandaría al login. Recargar además descarta
 // de la memoria todo lo cargado por la sesión anterior (importante en un POS
-// compartido). BASE_URL respeta el prefijo de GitHub Pages (/PosJaise/).
+// compartido). BASE_URL es la raíz del sitio ("/").
 export function useSalir() {
   const { cerrarSesion } = useAuth()
 
