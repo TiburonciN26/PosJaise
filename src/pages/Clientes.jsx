@@ -1,40 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  Pencil,
-  Trash2,
-  Plus,
-  Phone,
-  Cake,
-  Mail,
-  MapPin,
-  StickyNote,
-  MessageCircle,
-  ArrowBigDown,
-  Users,
-  Globe,
-  Lock,
-  Venus,
-  Mars,
-  Filter,
-  ArrowRight,
-} from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Plus, MessageCircle, Users, Filter, ArrowRight } from 'lucide-react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
-import { urlPublicaFoto } from '../lib/imagenes.js'
+import { numeroWhatsapp } from '../lib/contactoNegocio.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
+import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
-import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalCliente from '../components/ModalCliente.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import PerfilCliente from '../components/clientes/PerfilCliente.jsx'
+import { AvatarCliente, CapsulaTipoCliente } from '../components/clientes/PiezasPerfil.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import { edad } from '../lib/edad.js'
 
 // Datos que suman a la barra de "datos completos": ocasionales como notas
 // no cuentan (casi nadie los llena y no dice nada de qué tan bien se conoce
@@ -46,6 +31,11 @@ const OPCIONES_ORDEN = [
   { id: 'nombre-desc', label: 'Nombre (Z-A)' },
   { id: 'completitud-asc', label: 'Datos completos (menor a mayor)' },
   { id: 'completitud-desc', label: 'Datos completos (mayor a menor)' },
+  // Por edad: lo ordena el servidor por fecha de cumpleaños (así «Cargar más» sigue el mismo orden); quienes no tienen
+  // cumpleaños van al final. «Sin cumpleaños» además filtra: muestra solo a quienes no lo tienen registrado.
+  { id: 'edad-asc', label: 'Edad (menor a mayor)' },
+  { id: 'edad-desc', label: 'Edad (mayor a menor)' },
+  { id: 'sin-cumpleanos', label: 'Sin cumpleaños registrado' },
 ]
 
 const OPCIONES_SEXO = [
@@ -55,7 +45,6 @@ const OPCIONES_SEXO = [
 ]
 
 const TAMANO_PAGINA = 50
-const BUCKET_FOTOS_CLIENTES = 'fotos-clientes'
 // clientes_web(direcciones_cliente(...)) — un cliente Web puede guardar
 // varias direcciones (ver implementacionesWed.md §7.17/§7.18); se
 // embeben anidadas bajo clientes_web porque esa es la tabla con la que
@@ -95,56 +84,17 @@ function aplicarFiltroSexo(consulta, sexo) {
   return sexo === 'todos' ? consulta : consulta.eq('sexo', sexo)
 }
 
+function aplicarFiltroCumpleanos(consulta, orden) {
+  return orden === 'sin-cumpleanos' ? consulta.is('cumpleanos', null) : consulta
+}
+
 function construirConsultaClientes({ busqueda, orden, sexo }) {
   let consulta = aplicarFiltroBusqueda(supabase.from('clientes').select(SELECT_CLIENTES), busqueda)
-  consulta = aplicarFiltroSexo(consulta, sexo)
+  consulta = aplicarFiltroCumpleanos(aplicarFiltroSexo(consulta, sexo), orden)
+  // Menor a mayor = cumpleaños más reciente primero. El nombre queda como desempate.
+  if (orden === 'edad-asc') consulta = consulta.order('cumpleanos', { ascending: false, nullsFirst: false })
+  if (orden === 'edad-desc') consulta = consulta.order('cumpleanos', { ascending: true, nullsFirst: false })
   return consulta.order('nombre', { ascending: orden !== 'nombre-desc' })
-}
-
-function formatearFecha(fechaIso) {
-  if (!fechaIso) return null
-  const [anio, mes, dia] = fechaIso.split('-')
-  return `${dia}/${mes}/${anio}`
-}
-
-function numeroWhatsapp(telefono) {
-  const digitos = telefono.replace(/\D/g, '')
-  return digitos.length === 9 ? `51${digitos}` : digitos
-}
-
-function iniciales(nombre) {
-  const partes = nombre.trim().split(/\s+/)
-  return (
-    partes
-      .slice(0, 2)
-      .map((parte) => parte[0]?.toUpperCase() ?? '')
-      .join('') || '?'
-  )
-}
-
-// Solo los clientes que se registraron por la Web tienen foto (la suben
-// ellos desde Mi Perfil, ver 63_mi_perfil_cliente.sql) — un manual
-// siempre cae al círculo de iniciales de siempre. Estado de error propio
-// por tarjeta (no uno global): si la foto de un cliente no carga, no debe
-// tumbar la de los demás.
-function AvatarCliente({ cliente }) {
-  const [errorFoto, setErrorFoto] = useState(false)
-  const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS_CLIENTES, cliente.foto_url) : null
-
-  return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-purple-300/30 bg-purple-300/15 text-sm font-semibold text-purple-300">
-      {urlFoto ? (
-        <img
-          src={urlFoto}
-          alt=""
-          onError={() => setErrorFoto(true)}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        iniciales(cliente.nombre)
-      )}
-    </div>
-  )
 }
 
 // Un cliente Web "tiene dirección" si guardó al menos una en la pestaña
@@ -166,15 +116,6 @@ function coloresCompletitud(porcentaje) {
   return { barra: 'bg-ink/30', texto: 'text-ink/60' }
 }
 
-function DatoCliente({ icono: Icono, children, mono }) {
-  return (
-    <div className="flex min-w-0 items-center gap-1.5 text-sm text-ink/60">
-      <Icono className="h-3.5 w-3.5 shrink-0 text-ink/60" />
-      <span className={`min-w-0 truncate ${mono ? 'font-mono' : ''}`}>{children}</span>
-    </div>
-  )
-}
-
 function BarraCompletitud({ porcentaje, colores }) {
   return (
     <div className="flex items-center gap-2 px-3 pb-2.5 text-xs lg:pb-3 text-ink/60">
@@ -188,24 +129,6 @@ function BarraCompletitud({ porcentaje, colores }) {
       <span className={`shrink-0 font-mono font-medium ${colores.texto}`}>{porcentaje}%</span>
     </div>
   )
-}
-
-// 1 columna en móvil, 2 desde sm (640px), 3 desde lg (1024px). Las columnas son
-// independientes (flex) para que expandir una tarjeta no deje huecos en las vecinas.
-function useNumColumnas() {
-  const calcular = () => {
-    if (typeof window === 'undefined') return 1
-    if (window.matchMedia('(min-width: 1024px)').matches) return 3
-    if (window.matchMedia('(min-width: 640px)').matches) return 2
-    return 1
-  }
-  const [n, setN] = useState(calcular)
-  useEffect(() => {
-    const alCambiar = () => setN(calcular())
-    window.addEventListener('resize', alCambiar)
-    return () => window.removeEventListener('resize', alCambiar)
-  }, [])
-  return n
 }
 
 export default function Clientes({ activo = true }) {
@@ -224,8 +147,21 @@ export default function Clientes({ activo = true }) {
   const [modalCliente, setModalCliente] = useState(null) // null | 'nuevo' | cliente
   const [clienteAEliminar, setClienteAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
-  const [abiertos, setAbiertos] = useState(() => new Set())
-  const numColumnas = useNumColumnas()
+  // Perfil abierto: `?cliente=<id>` en la URL (el botón Atrás del navegador vuelve a la lista y el enlace se puede
+  // recargar). PestanasCacheadas solo reconoce rutas exactas, así que el perfil vive DENTRO de /clientes: la lista
+  // queda montada y oculta debajo (conserva lo cargado). Mientras esta pestaña está oculta la URL es la de otra
+  // pestaña: el valor se congela y solo se vuelve a leer al estar activa.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const parametroCliente = searchParams.get('cliente')
+  // Solo si arranca activa: otra pestaña también puede usar `?cliente=` (Deudas filtrada a una clienta).
+  const [clienteAbiertoId, setClienteAbiertoId] = useState(activo ? parametroCliente : null)
+  const [versionPerfil, setVersionPerfil] = useState(0)
+  const raizRef = useRef(null)
+  const scrollListaRef = useRef(0)
+  const perfilAnteriorRef = useRef(clienteAbiertoId)
+  const { barraRef, encabezadoRef, claseTh, estiloTh } = useEncabezadoTablaPegado([clientes, cargando, clienteAbiertoId])
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
   // cargarMasClientes descarte una respuesta que llega tarde de una
@@ -236,6 +172,35 @@ export default function Clientes({ activo = true }) {
   useCerrarConEscape(() => setClienteAEliminar(null), Boolean(clienteAEliminar))
   useModalA11y(panelEliminarRef, Boolean(clienteAEliminar))
 
+  useEffect(() => {
+    if (activo) setClienteAbiertoId(parametroCliente)
+  }, [activo, parametroCliente])
+
+  // Al abrir un perfil se guarda dónde estaba la lista y se sube al inicio; al volver se recupera esa posición.
+  useLayoutEffect(() => {
+    const anterior = perfilAnteriorRef.current
+    perfilAnteriorRef.current = clienteAbiertoId
+    if (anterior === clienteAbiertoId) return
+    const main = raizRef.current?.closest('main')
+    if (!main) return
+    if (!anterior) scrollListaRef.current = main.scrollTop
+    main.scrollTop = clienteAbiertoId ? 0 : scrollListaRef.current
+  }, [clienteAbiertoId])
+
+  // Cada perfil abierto desde aquí suma una entrada al historial (con su profundidad en `state`): «← Clientes» retrocede
+  // todas de una vez, así el Atrás del navegador no vuelve a pasar por los perfiles. Si el perfil se abrió desde un
+  // enlace o al recargar (sin profundidad), se reemplaza la entrada.
+  function abrirPerfil(id) {
+    const profundidad = (location.state?.profundidadPerfil ?? 0) + 1
+    setSearchParams({ cliente: id }, { state: { profundidadPerfil: profundidad } })
+  }
+
+  function volverALista() {
+    const profundidad = location.state?.profundidadPerfil ?? 0
+    if (profundidad > 0) navigate(-profundidad)
+    else setSearchParams({}, { replace: true })
+  }
+
   async function cargarClientes(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
     const filtros = { busqueda: busquedaDebounced, orden, sexo: filtroSexo }
@@ -245,12 +210,15 @@ export default function Clientes({ activo = true }) {
 
     const [clientesRes, totalRes] = await Promise.all([
       construirConsultaClientes(filtros).range(0, hasta - 1),
-      aplicarFiltroSexo(
-        aplicarFiltroBusqueda(
-          supabase.from('clientes').select('id', { count: 'exact', head: true }),
-          busquedaDebounced,
+      aplicarFiltroCumpleanos(
+        aplicarFiltroSexo(
+          aplicarFiltroBusqueda(
+            supabase.from('clientes').select('id', { count: 'exact', head: true }),
+            busquedaDebounced,
+          ),
+          filtroSexo,
         ),
-        filtroSexo,
+        orden,
       ),
     ])
 
@@ -305,15 +273,6 @@ export default function Clientes({ activo = true }) {
     }
   }, [activo, busquedaDebounced, orden, filtroSexo])
 
-  function alternarAbierto(id) {
-    setAbiertos((anterior) => {
-      const siguiente = new Set(anterior)
-      if (siguiente.has(id)) siguiente.delete(id)
-      else siguiente.add(id)
-      return siguiente
-    })
-  }
-
   async function confirmarEliminar() {
     if (!clienteAEliminar) return
 
@@ -331,225 +290,218 @@ export default function Clientes({ activo = true }) {
     }
 
     mostrarToast('Cliente eliminado.', 'exito')
+    if (clienteAEliminar.id === clienteAbiertoId) volverALista()
     cargarClientes(vigenteRef.current, true)
   }
 
   const clientesOrdenados = ordenarClientes(clientes, orden)
 
+  const botonWhatsapp = (cliente) =>
+    cliente.telefono ? (
+      <span onClick={(evento) => evento.stopPropagation()} onKeyDown={(evento) => evento.stopPropagation()}>
+        <BotonAccion
+          icono={MessageCircle}
+          texto="WhatsApp"
+          color="verde"
+          href={`https://wa.me/${numeroWhatsapp(cliente.telefono)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          sinBorde
+        />
+      </span>
+    ) : null
+
   return (
     <div
+      ref={raizRef}
       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
-      {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
-      <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
-        <BarraBusqueda
-          valor={busqueda}
-          onCambiar={setBusqueda}
-          placeholder="Buscar por nombre o teléfono..."
-          tema="purple-300"
-          sinBorde
+      {clienteAbiertoId && (
+        <PerfilCliente
+          key={clienteAbiertoId}
+          clienteId={clienteAbiertoId}
+          version={versionPerfil}
+          onVolver={volverALista}
+          onEditar={(cliente) => setModalCliente(cliente)}
+          onEliminar={(cliente) => setClienteAEliminar(cliente)}
+          onAbrirCliente={abrirPerfil}
         />
-
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" sinBorde />
-
-        <SelectorOrden
-          opciones={OPCIONES_SEXO}
-          valor={filtroSexo}
-          onCambiar={setFiltroSexo}
-          tema="purple-300"
-          icono={Filter}
-          ariaLabel="Filtrar por sexo"
-          sinBorde
-        />
-
-        <button
-          type="button"
-          onClick={() => setModalCliente('nuevo')}
-          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nuevo cliente</span>
-        </button>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-sm text-ink/60">
-          Clientes: <span className="font-mono font-semibold text-purple-300">{totalClientes}</span>
-        </p>
-        <Link
-          to="/deudas"
-          className="inline-flex items-center gap-1 text-sm text-purple-300 transition-colors hover:text-purple-200"
-        >
-          Ver deudas
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-
-      {error && (
-        <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
-          {error}
-        </p>
       )}
 
-      {cargando ? (
-        <EsqueletoLista columnas={4} />
-      ) : clientesOrdenados.length === 0 ? (
-        <EstadoVacio
-          icono={Users}
-          mensaje="No se encontraron clientes."
-          accion={{ label: '+ Nuevo cliente', onClick: () => setModalCliente('nuevo') }}
-          tema="purple-300"
-        />
-      ) : (
-        <div className="mt-4 flex items-start gap-3">
-          {Array.from({ length: numColumnas }, (_, col) => (
-            <div key={col} className="flex min-w-0 flex-1 flex-col gap-3">
-              {clientesOrdenados
-                .filter((_, i) => i % numColumnas === col)
-                .map((cliente) => {
-            const abierto = abiertos.has(cliente.id)
-            const porcentaje = completitud(cliente)
-            const colores = coloresCompletitud(porcentaje)
+      {/* La lista sigue montada (oculta) mientras se ve un perfil: al volver conserva lo cargado. */}
+      <div className={clienteAbiertoId ? 'hidden' : undefined}>
+        {/* Buscador + Nuevo cliente: fijos arriba al hacer scroll, siempre debajo del header */}
+        <div
+          ref={barraRef}
+          className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)"
+        >
+          <BarraBusqueda
+            valor={busqueda}
+            onCambiar={setBusqueda}
+            placeholder="Buscar por nombre o teléfono..."
+            tema="purple-300"
+            sinBorde
+          />
 
-            return (
-              <div key={cliente.id} className="rounded-lg border border-border bg-surface">
-                <div className="flex items-center gap-3 px-3 pb-1 pt-2 lg:p-3">
+          <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="purple-300" sinBorde />
+
+          <SelectorOrden
+            opciones={OPCIONES_SEXO}
+            valor={filtroSexo}
+            onCambiar={setFiltroSexo}
+            tema="purple-300"
+            icono={Filter}
+            ariaLabel="Filtrar por sexo"
+            sinBorde
+          />
+
+          <button
+            type="button"
+            onClick={() => setModalCliente('nuevo')}
+            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2.5 text-sm font-semibold text-bg lg:flex"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nuevo cliente</span>
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-ink/60">
+            Clientes: <span className="font-mono font-semibold text-purple-300">{totalClientes}</span>
+          </p>
+          <Link
+            to="/deudas"
+            className="inline-flex items-center gap-1 text-sm text-purple-300 transition-colors hover:text-purple-200"
+          >
+            Ver deudas
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+
+        {error && (
+          <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
+            {error}
+          </p>
+        )}
+
+        {cargando ? (
+          <EsqueletoLista columnas={5} />
+        ) : clientesOrdenados.length === 0 ? (
+          <EstadoVacio
+            icono={Users}
+            mensaje="No se encontraron clientes."
+            accion={{ label: '+ Nuevo cliente', onClick: () => setModalCliente('nuevo') }}
+            tema="purple-300"
+          />
+        ) : (
+          <>
+            {/* Celular: tarjeta simple; tocarla abre el perfil. */}
+            <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:hidden">
+              {clientesOrdenados.map((cliente) => {
+                const porcentaje = completitud(cliente)
+                return (
                   <div
-                    onClick={() => alternarAbierto(cliente.id)}
-                    onKeyDown={manejarActivacionTeclado(() => alternarAbierto(cliente.id))}
+                    key={cliente.id}
                     role="button"
                     tabIndex={0}
-                    aria-expanded={abierto}
-                    className="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
+                    onClick={() => abrirPerfil(cliente.id)}
+                    onKeyDown={manejarActivacionTeclado(() => abrirPerfil(cliente.id))}
+                    className="cursor-pointer touch-manipulation rounded-lg border border-border bg-surface transition-colors hover:border-purple-300/40"
                   >
-                    <AvatarCliente cliente={cliente} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink">{cliente.nombre}</p>
-                      {cliente.cliente_web_id && (
-                        <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber/15 px-1.5 py-0.5 text-[10px] font-medium text-amber">
-                          <Globe className="h-2.5 w-2.5" />
-                          Cliente Web
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {cliente.telefono && (
-                      <BotonAccion
-                        icono={MessageCircle}
-                        texto="WhatsApp"
-                        color="verde"
-                        href={`https://wa.me/${numeroWhatsapp(cliente.telefono)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sinBorde
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => alternarAbierto(cliente.id)}
-                      aria-label={abierto ? 'Contraer' : 'Expandir'}
-                      className="p-1.5"
-                    >
-                      <ArrowBigDown
-                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
-                          abierto ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <BarraCompletitud porcentaje={porcentaje} colores={colores} />
-
-                <CampoColapsable abierto={abierto}>
-                  <div className="flex items-start justify-between gap-3 border-t border-border p-3">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <DatoCliente
-                        icono={cliente.sexo === 'Femenino' ? Venus : cliente.sexo === 'Masculino' ? Mars : Users}
-                      >
-                        {cliente.sexo || 'Sin registrar'}
-                      </DatoCliente>
-                      <DatoCliente icono={Phone} mono>
-                        {cliente.telefono || 'Sin registrar'}
-                      </DatoCliente>
-                      <DatoCliente icono={Cake} mono>
-                        {formatearFecha(cliente.cumpleanos) || 'Sin registrar'}
-                      </DatoCliente>
-                      <DatoCliente icono={Mail} mono>
-                        {cliente.clientes_web?.email || 'Sin registrar'}
-                      </DatoCliente>
-                      {(cliente.clientes_web?.direcciones_cliente?.length ?? 0) > 0 ? (
-                        <div className="flex min-w-0 items-start gap-1.5 text-sm text-ink/60">
-                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink/60" />
-                          <div className="min-w-0 space-y-0.5">
-                            {cliente.clientes_web.direcciones_cliente.map((dir) => (
-                              <p key={dir.id} className="truncate">
-                                <span className="font-medium text-ink/80">{dir.etiqueta}:</span> {dir.direccion}
-                                {dir.predeterminada && <span className="ml-1 text-amber">★</span>}
-                              </p>
-                            ))}
-                          </div>
+                    <div className="flex items-center gap-3 px-3 pb-1 pt-2">
+                      <AvatarCliente cliente={cliente} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">{cliente.nombre}</p>
+                        <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                          <CapsulaTipoCliente web={Boolean(cliente.cliente_web_id)} />
+                          {cliente.telefono && (
+                            <span className="truncate font-mono text-xs text-ink/60">{cliente.telefono}</span>
+                          )}
                         </div>
-                      ) : (
-                        <DatoCliente icono={MapPin}>{cliente.direccion || 'Sin registrar'}</DatoCliente>
-                      )}
-                      <DatoCliente icono={StickyNote}>
-                        {cliente.notas || 'Sin registrar'}
-                      </DatoCliente>
+                      </div>
+                      {botonWhatsapp(cliente)}
+                      <ArrowRight className="h-4 w-4 shrink-0 text-ink/40" />
                     </div>
-
-                    {cliente.cliente_web_id ? (
-                      <div className="flex shrink-0 items-center gap-1.5 text-xs text-ink/50">
-                        <Lock className="h-3.5 w-3.5 shrink-0" />
-                        <span className="max-w-[9rem]">
-                          Se registró por la Web — edita su perfil desde ahí.
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex shrink-0 gap-2">
-                        <BotonAccion
-                          icono={Pencil}
-                          texto="Editar"
-                          color="celeste"
-                          onClick={() => setModalCliente(cliente)}
-                        />
-                        <BotonAccion
-                          icono={Trash2}
-                          texto="Eliminar"
-                          color="rojo"
-                          onClick={() => setClienteAEliminar(cliente)}
-                        />
-                      </div>
-                    )}
+                    <BarraCompletitud porcentaje={porcentaje} colores={coloresCompletitud(porcentaje)} />
                   </div>
-                </CampoColapsable>
-              </div>
-            )
-          })}
+                )
+              })}
             </div>
-          ))}
-        </div>
-      )}
 
-      {hayMas && (
-        <button
-          type="button"
-          onClick={cargarMasClientes}
-          disabled={cargandoMas}
-          className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
-        >
-          {cargandoMas ? 'Cargando...' : 'Cargar más'}
-        </button>
-      )}
+            {/* PC: tabla; clic en la fila abre el perfil. */}
+            <div className="mt-4 hidden overflow-x-clip border-y border-border lg:block">
+              <table className="w-full text-left text-sm">
+                <thead ref={encabezadoRef}>
+                  <tr className="font-mono text-xs uppercase tracking-wider text-ink/60">
+                    <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Nombre del cliente</th>
+                    <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Edad</th>
+                    <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Tipo de cliente</th>
+                    <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Celular / WhatsApp</th>
+                    <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Correo electrónico</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {clientesOrdenados.map((cliente) => (
+                    <tr
+                      key={cliente.id}
+                      tabIndex={0}
+                      onClick={() => abrirPerfil(cliente.id)}
+                      onKeyDown={manejarActivacionTeclado(() => abrirPerfil(cliente.id))}
+                      className="cursor-pointer touch-manipulation bg-tabla hover:bg-surface-2/60"
+                    >
+                      <td className="px-3 py-2">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <AvatarCliente cliente={cliente} tamano="sm" />
+                          <span className="min-w-0 truncate text-ink">{cliente.nombre}</span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 font-mono text-ink/80">
+                        {edad(cliente.cumpleanos) != null ? (
+                          `${edad(cliente.cumpleanos)} ${edad(cliente.cumpleanos) === 1 ? 'año' : 'años'}`
+                        ) : (
+                          <span className="font-sans text-ink/40">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <CapsulaTipoCliente web={Boolean(cliente.cliente_web_id)} />
+                      </td>
+                      <td className="px-3 py-2">
+                        {cliente.telefono ? (
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-ink/80">{cliente.telefono}</span>
+                            {botonWhatsapp(cliente)}
+                          </div>
+                        ) : (
+                          <span className="text-ink/40">—</span>
+                        )}
+                      </td>
+                      <td className="max-w-[16rem] truncate px-3 py-2 font-mono text-ink/70">
+                        {cliente.clientes_web?.email || <span className="font-sans text-ink/40">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
-      <BotonFlotanteAgregar
-        onClick={() => setModalCliente('nuevo')}
-        color="morado"
-        label="Nuevo cliente"
-      />
+        {hayMas && (
+          <button
+            type="button"
+            onClick={cargarMasClientes}
+            disabled={cargandoMas}
+            className="mt-4 w-full rounded-lg border border-border-strong py-2.5 text-sm text-ink/70 transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
+          >
+            {cargandoMas ? 'Cargando...' : 'Cargar más'}
+          </button>
+        )}
+      </div>
+
+      {!clienteAbiertoId && (
+        <BotonFlotanteAgregar onClick={() => setModalCliente('nuevo')} color="morado" label="Nuevo cliente" />
+      )}
 
       {modalCliente && (
         <ModalCliente
@@ -559,6 +511,7 @@ export default function Clientes({ activo = true }) {
             const esNuevo = modalCliente === 'nuevo'
             setModalCliente(null)
             mostrarToast(esNuevo ? 'Cliente creado.' : 'Cliente actualizado.', 'exito')
+            if (!esNuevo) setVersionPerfil((v) => v + 1)
             cargarClientes(vigenteRef.current, true)
           }}
         />

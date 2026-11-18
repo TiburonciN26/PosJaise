@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Minus, Pencil, Plus, Trash2, Warehouse } from 'lucide-react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { ArrowBigDown, Minus, Pencil, Plus, Trash2, Warehouse } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -18,8 +18,11 @@ import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalArticuloAlmacen from '../components/ModalArticuloAlmacen.jsx'
 import ModalMovimientoAlmacen from '../components/ModalMovimientoAlmacen.jsx'
-import { mensajeErrorAlmacen } from '../lib/almacen.js'
+import { calcularCostoTotal, mensajeErrorAlmacen } from '../lib/almacen.js'
 import ModalDetalleArticuloAlmacen from '../components/ModalDetalleArticuloAlmacen.jsx'
+import HistorialArticuloAlmacen from '../components/HistorialArticuloAlmacen.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
 
 // Almacén: cosas internas del negocio que NO se venden (agua para las trabajadoras, papel, guantes, limpieza…). Misma
 // estructura que Inventario, pero aparte de «productos». Migración 20261112000011_almacen:
@@ -41,11 +44,11 @@ const ORDEN_A_COLUMNA = {
   'stock-desc': { columna: 'stock_actual', ascending: false },
 }
 
-const RESUMEN_VACIO = { total: 0, bajoStock: 0, sinStock: 0, gastadoMes: 0, categorias: [] }
+const RESUMEN_VACIO = { total: 0, bajoStock: 0, sinStock: 0, gastadoMes: 0 }
 
-// Quita caracteres que rompen la sintaxis del filtro .or() de PostgREST (igual que en Inventario).
+// Quita los comodines de ilike para que lo tecleado se busque tal cual.
 function terminoSeguro(texto) {
-  return texto.replace(/[%,()]/g, '')
+  return texto.replace(/[%_\\]/g, '')
 }
 
 function claseColorStock(articulo) {
@@ -61,6 +64,8 @@ export default function Almacen({ activo = true }) {
 
   const [articulos, setArticulos] = useState([])
   const [resumen, setResumen] = useState(RESUMEN_VACIO)
+  // Solo admin: precio unitario del último ingreso de cada artículo (precios_almacen(), migración 20261118000002).
+  const [precios, setPrecios] = useState(() => new Map())
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useEstadoVista('/almacen:busqueda', '')
@@ -70,7 +75,8 @@ export default function Almacen({ activo = true }) {
 
   const [modalArticulo, setModalArticulo] = useState(null) // null | 'nuevo' | articulo
   const [movimiento, setMovimiento] = useState(null) // null | { articulo, tipo: 'SALIDA' | 'INGRESO' }
-  const [detalle, setDetalle] = useState(null) // articulo | null
+  const [detalle, setDetalle] = useState(null) // articulo | null (solo celular: en PC el historial se despliega en la fila)
+  const [abiertos, setAbiertos] = useState(() => new Set()) // ids con el historial desplegado en la tabla de PC
   const [articuloAEliminar, setArticuloAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
 
@@ -89,16 +95,22 @@ export default function Almacen({ activo = true }) {
 
     let consulta = supabase
       .from('almacen_articulos_vista')
+      // categoria ya no se muestra, pero se lee para conservarla al editar (ModalArticuloAlmacen la reenvía tal cual).
       .select('id, nombre, categoria, unidad, stock_actual, stock_minimo, activo')
     const termino = terminoSeguro(busquedaDebounced.trim())
-    if (termino) consulta = consulta.or(`nombre.ilike.%${termino}%,categoria.ilike.%${termino}%`)
+    // La categoría ya no se pide ni se muestra: se busca solo por nombre.
+    if (termino) consulta = consulta.ilike('nombre', `%${termino}%`)
     if (filtroStock === 'bajo') consulta = consulta.eq('stock_bajo', true).eq('activo', true)
     if (filtroStock === 'sin_stock') consulta = consulta.eq('sin_stock', true).eq('activo', true)
     const { columna, ascending } = ORDEN_A_COLUMNA[orden] ?? ORDEN_A_COLUMNA['nombre-asc']
     // Inactivos al final (solo los ve la administradora); dentro de cada grupo, el orden elegido.
     consulta = consulta.order('activo', { ascending: false }).order(columna, { ascending }).order('nombre')
 
-    const [articulosRes, resumenRes] = await Promise.all([consulta.limit(1000), supabase.rpc('resumen_almacen')])
+    const [articulosRes, resumenRes, preciosRes] = await Promise.all([
+      consulta.limit(1000),
+      supabase.rpc('resumen_almacen'),
+      esAdmin ? supabase.rpc('precios_almacen') : Promise.resolve({ data: [] }),
+    ])
     if (!vigente.actual) return
 
     if (articulosRes.error) {
@@ -110,6 +122,8 @@ export default function Almacen({ activo = true }) {
 
     setError(null)
     setArticulos(articulosRes.data ?? [])
+    // Si los precios fallan, la tabla sigue: esas dos columnas muestran «—».
+    setPrecios(new Map((preciosRes.data ?? []).map((fila) => [fila.articulo_id, Number(fila.precio_unitario)])))
     const fila = resumenRes.data?.[0]
     setResumen(
       fila
@@ -118,7 +132,6 @@ export default function Almacen({ activo = true }) {
             bajoStock: fila.bajo_stock ?? 0,
             sinStock: fila.sin_stock ?? 0,
             gastadoMes: fila.gastado_mes ?? 0,
-            categorias: fila.categorias ?? [],
           }
         : RESUMEN_VACIO,
     )
@@ -160,6 +173,15 @@ export default function Almacen({ activo = true }) {
       data === 'ELIMINADO' ? 'exito' : 'info',
     )
     recargar()
+  }
+
+  function alternarHistorial(id) {
+    setAbiertos((anterior) => {
+      const siguiente = new Set(anterior)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
+      return siguiente
+    })
   }
 
   function abrirMovimiento(articulo, tipo) {
@@ -281,18 +303,11 @@ export default function Almacen({ activo = true }) {
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{articulo.nombre}</p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      {articulo.categoria && (
-                        <span className="shrink-0 whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
-                          {articulo.categoria}
-                        </span>
-                      )}
-                      {!articulo.activo && (
-                        <span className="rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
-                          Inactivo
-                        </span>
-                      )}
-                    </div>
+                    {!articulo.activo && (
+                      <span className="mt-0.5 inline-block rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
+                        Inactivo
+                      </span>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="font-mono text-xs text-ink/70">
@@ -307,66 +322,126 @@ export default function Almacen({ activo = true }) {
             ))}
           </div>
 
-          {/* Tabla: escritorio */}
+          {/* Tabla: escritorio. Para la administradora, tocar la fila (o la flecha de la última columna) despliega su
+              historial debajo, en vez del modal flotante que se usa en el celular. Los botones de acción frenan el clic solo
+              sobre sí mismos: el espacio libre de esa celda también despliega. */}
           <div className="mt-4 hidden overflow-x-clip border-y border-border lg:block">
             <table className="w-full text-left text-sm">
               <thead ref={encabezadoRef}>
                 <tr className="font-mono text-xs uppercase tracking-wider text-ink/60">
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Artículo</th>
-                  <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Categoría</th>
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Stock</th>
+                  {esAdmin && (
+                    <>
+                      <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Precio</th>
+                      <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Total</th>
+                    </>
+                  )}
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Acciones</th>
+                  {esAdmin && (
+                    <th style={estiloTh} className={`${claseTh} w-10 px-3 py-2 font-normal`}>
+                      <span className="sr-only">Historial</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {articulos.map((articulo) => (
-                  <tr
-                    key={articulo.id}
-                    onClick={() => setDetalle(articulo)}
-                    className={`cursor-pointer touch-manipulation bg-tabla hover:bg-surface-2/60 ${
-                      articulo.activo ? '' : 'opacity-60'
-                    }`}
-                  >
-                    <td className="px-3 py-2.5">
-                      <p className="text-ink">
-                        {articulo.nombre}
-                        {!articulo.activo && (
-                          <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
-                            Inactivo
-                          </span>
-                        )}
-                      </p>
-                      <p className="font-mono text-xs text-ink/60">{articulo.unidad}</p>
-                    </td>
-                    <td className="px-3 py-2.5 text-ink/60">{articulo.categoria || '—'}</td>
-                    <td className={`px-3 py-2.5 text-right font-mono ${claseColorStock(articulo)}`}>{articulo.stock_actual}</td>
-                    <td className="px-3 py-2.5" onClick={(evento) => evento.stopPropagation()}>
-                      <div className="flex justify-end gap-2">
-                        {accionesFila(articulo, { sinBorde: true })}
+                {articulos.map((articulo, indice) => {
+                  const abierto = esAdmin && abiertos.has(articulo.id)
+                  const ultimo = indice === articulos.length - 1
+                  const precio = precios.get(articulo.id)
+                  const total = precio == null ? null : calcularCostoTotal(articulo.stock_actual, precio)
+                  return (
+                    <Fragment key={articulo.id}>
+                      <tr
+                        onClick={esAdmin ? () => alternarHistorial(articulo.id) : undefined}
+                        onKeyDown={esAdmin ? manejarActivacionTeclado(() => alternarHistorial(articulo.id)) : undefined}
+                        role={esAdmin ? 'button' : undefined}
+                        tabIndex={esAdmin ? 0 : undefined}
+                        aria-expanded={esAdmin ? abierto : undefined}
+                        className={`touch-manipulation bg-tabla ${esAdmin ? 'cursor-pointer hover:bg-surface-2/60' : ''} ${
+                          articulo.activo ? '' : 'opacity-60'
+                        } ${esAdmin && ultimo && !abierto ? 'border-b-0' : ''}`}
+                      >
+                        <td className="px-3 py-2.5">
+                          <p className={abierto ? 'text-purple-300' : 'text-ink'}>
+                            {articulo.nombre}
+                            {!articulo.activo && (
+                              <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
+                                Inactivo
+                              </span>
+                            )}
+                          </p>
+                          <p className="font-mono text-xs text-ink/60">{articulo.unidad}</p>
+                        </td>
+                        <td className={`px-3 py-2.5 text-right font-mono ${claseColorStock(articulo)}`}>
+                          {articulo.stock_actual}
+                        </td>
                         {esAdmin && (
                           <>
-                            <BotonAccion
-                              plano
-                              sinBorde
-                              icono={Pencil}
-                              texto="Editar"
-                              color="celeste"
-                              onClick={() => setModalArticulo(articulo)}
-                            />
-                            <BotonAccion
-                              plano
-                              sinBorde
-                              icono={Trash2}
-                              texto="Eliminar"
-                              color="rojo"
-                              onClick={() => setArticuloAEliminar(articulo)}
-                            />
+                            {/* Precio: el del último ingreso. Total: lo que vale el stock que queda a ese precio. */}
+                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-ink/80">
+                              {precio == null ? <span className="text-ink/40">—</span> : formatearSoles(precio)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-purple-300">
+                              {total == null ? <span className="text-ink/40">—</span> : formatearSoles(total)}
+                            </td>
                           </>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        <td className="px-3 py-2.5 text-right">
+                          <div className="inline-flex gap-2" onClick={(evento) => evento.stopPropagation()}>
+                            {accionesFila(articulo, { sinBorde: true })}
+                            {esAdmin && (
+                              <>
+                                <BotonAccion
+                                  plano
+                                  sinBorde
+                                  icono={Pencil}
+                                  texto="Editar"
+                                  color="celeste"
+                                  onClick={() => setModalArticulo(articulo)}
+                                />
+                                <BotonAccion
+                                  plano
+                                  sinBorde
+                                  icono={Trash2}
+                                  texto="Eliminar"
+                                  color="rojo"
+                                  onClick={() => setArticuloAEliminar(articulo)}
+                                />
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        {esAdmin && (
+                          <td className="px-3 py-2.5">
+                            <div className="flex justify-end">
+                              <ArrowBigDown
+                                aria-hidden="true"
+                                className={`h-4 w-4 transition-transform duration-300 ${
+                                  abierto ? 'rotate-180 text-purple-300' : 'text-ink/60'
+                                }`}
+                              />
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                      {/* Fila del desplegable: cerrada no lleva borde, para que no se vea una línea doble entre artículos. */}
+                      {esAdmin && (
+                        <tr className={abierto ? '' : 'border-b-0'}>
+                          <td colSpan={6} className="p-0">
+                            <CampoColapsable abierto={abierto} diferido>
+                              <div className="bg-bg px-3 py-3">
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink/60">Movimientos</p>
+                                <HistorialArticuloAlmacen articuloId={articulo.id} stockActual={articulo.stock_actual} />
+                              </div>
+                            </CampoColapsable>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -416,7 +491,6 @@ export default function Almacen({ activo = true }) {
       {modalArticulo && (
         <ModalArticuloAlmacen
           articulo={modalArticulo === 'nuevo' ? null : modalArticulo}
-          categoriasExistentes={resumen.categorias}
           onCerrar={() => setModalArticulo(null)}
           onGuardado={() => {
             const esNuevo = modalArticulo === 'nuevo'

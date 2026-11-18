@@ -7672,3 +7672,199 @@ Pedidos de la dueña sobre Inventario, en varias tandas. Migraciones `2026111200
 - No se tocaron los scripts y mediciones históricos (`scripts/fase10a`, `verificar-*`, `tests/e2e/performance-*`) que mencionan la URL vieja. Son registro de fases cerradas.
 - `CLAUDE.md`: se documenta el despliegue en Cloudflare y la regla de no hacer push de un front que necesita una migración aún no aplicada.
 - **Verificado:** `npm run build` (sin `404.html` ni `PosJaise` en la salida); `node scripts/build-cloudflare.mjs` OK; oxlint sin avisos nuevos.
+
+## 88. Clientes: tabla en PC y perfil completo de cada clienta — 2026-11-18 (local, sin commit, sin producción)
+
+**Por qué:** lo que se sabe de una clienta estaba repartido en otras pestañas (Historial, Citas, Deudas, Recompensas…), y los puntos ni se veían en el POS. El usuario pidió verlo todo en su perfil.
+
+**Decisiones del usuario:**
+- **Visitas:** una fila por día.
+- **Servicios:** un resumen por servicio, para no repetir lo de Visitas.
+- **Celular:** una tarjeta simple que abre el perfil.
+- **Secciones extra:** productos comprados, deudas y pagos, cupones y referidos, reseñas y pedidos web.
+
+**Migración `20261118000001_perfil_cliente.sql`** (aplicada en Local, **no** en producción):
+- **`clientes.creado_en`** («Cliente desde»): se rellenó desde `auditoria` (4750 de 4750 en Local) y después se le puso el default. Es el mismo cuidado que en la 0015.
+- **`perfil_cliente_resumen(id)`**: los indicadores del encabezado y los contadores de cada sección en una sola llamada:
+  - total gastado, visitas, ticket promedio, primera y última visita;
+  - servicio y asistente favoritos, citas y la próxima;
+  - deuda pendiente, puntos, nivel y sellos;
+  - quién la refirió y cuántas refirió ella.
+
+  Usa `recompensas_saldos()`, que no tiene grant para `authenticated`.
+- **`visitas_cliente(id, limite, desde)`**: agrupa por día de Lima las atenciones y ventas, paginado por días. Un día cuenta como visita si tuvo una atención no cancelada o una venta activa.
+- **`servicios_cliente_resumen(id)`** y **`productos_cliente_resumen(id)`**: una fila por servicio o producto.
+- Las cuatro funciones son `security definer`, solo ADMINISTRADOR (`42501` para el resto).
+- **Índices nuevos por clienta** en `registro_servicios`, `ventas`, `citas`, `pedidos_web` y `clientes.referido_por`. No había ninguno que empezara por `cliente_id`.
+- **Fuente de los servicios:** `registro_servicios`. Todo servicio vendido nace de una atención (`registrar_venta` exige `registro_servicio_id`).
+
+**Front:**
+- **`Clientes.jsx`:**
+  - **PC:** tabla como la de Inventario (`useEncabezadoTablaPegado`) con Nombre, Tipo (Manual/Web), Celular/WhatsApp y Correo.
+  - **Celular:** tarjetas simples con la barra «Datos completos».
+  - Al hacer clic o tocar se abre el perfil.
+- **Navegación del perfil:** vive dentro de `/clientes` como `?cliente=<id>`, porque `PestanasCacheadas` solo reconoce rutas exactas.
+  - La lista queda montada y oculta; al volver recupera su posición de scroll.
+  - Cada perfil abierto suma una entrada al historial con su profundidad en `state`, y «← Clientes» las retrocede todas de una vez.
+  - Mientras la pestaña está oculta, el id se congela.
+- **`src/components/clientes/`:**
+  - **`PerfilCliente`:** encabezado, KPIs, aviso de deuda, datos personales y secciones desplegables. Muestra también DNI, RUC y razón social, código de referido y «Cliente desde», que antes no se veían.
+  - **`PiezasPerfil`:** avatar, cápsulas, `SeccionPerfil`, `EstadoLista` y `TablaSeccion`.
+  - **Una sección por archivo:** `SeccionVisitas`, `SeccionesResumen` (servicios y productos), `SeccionCitas`, `SeccionPuntos`, `SeccionDeudas`, `SeccionCupones`, `SeccionResenas` y `SeccionPedidos`.
+- **Carga de las secciones:** cada una pide sus datos la primera vez que se abre y queda montada. Usa «Ver más» con el hook nuevo `useListaAcumulada`; `useListaPaginada` (paginación con conteo) no cambia.
+- **Editar y eliminar** siguen usando `ModalCliente` y el diálogo de la pestaña. Al guardar se vuelve a leer el perfil, y al eliminar desde el perfil se vuelve a la lista.
+- **Historial médico:** solo un espacio «Próximamente» (fase 2). La propuesta de campos está en el plan aprobado.
+
+**Verificado:**
+- **SQL** con sesión simulada:
+  - admin: los totales coinciden con consultas manuales a `ventas`;
+  - cajera: `42501` en las 4 funciones;
+  - una clienta sin historial devuelve ceros y listas vacías.
+- **Las 14 consultas** del perfil contra el PostgREST local con un JWT de admin: todas 200.
+- `npm run build` OK y oxlint sin avisos nuevos.
+- **No revisado visualmente:** no hay navegador automatizado.
+
+### 88.1 Ajustes al perfil: botones, DNI, edad y filtro por edad — 2026-11-18 (local, sin commit, sin producción)
+
+- **Botones del encabezado del perfil** (WhatsApp, Editar, Eliminar): sin borde y con fondo oscuro. `BotonAccion` tiene
+  una prop nueva, `fondo` (`bg-bg`, hover `bg-boton-icono`), que conserva el color del ícono.
+- **«Visitas» y «Última visita»**: se cuenta un día (hora de Lima) en que la clienta tuvo al menos una atención no
+  cancelada o una venta activa; varias atenciones el mismo día son una sola visita. «Última visita» es el más
+  reciente de esos días. El detalle del indicador ahora dice «días que vino» para que no se confunda con atenciones.
+- **DNI en el formulario de cliente** (`ModalCliente`): vuelve después de que la 67 lo sacara. Solo dígitos, máximo 8;
+  se valida en el front y en la base con `clientes_dni_formato` (`NOT VALID`, agregado a la misma migración
+  `20261118000001`, que todavía no está en producción). Al editar, el DNI solo se manda si la fila abierta lo traía,
+  para no borrarlo desde un formulario abierto con una fila sin esa columna. No cuenta en «Datos completos».
+- **Edad automática**: al elegir una fecha de cumpleaños válida aparece «Edad» (solo lectura) al lado. Una fecha
+  futura muestra «Fecha no válida» y no deja guardar. El perfil muestra la edad como dato aparte en «Datos personales».
+- **Filtro por edad** en Clientes (ícono de torta): rangos <18, 18-25, 26-35, 36-45, 46-60, >60 y «Sin cumpleaños».
+  Se traduce a un rango de fechas de `cumpleanos` y filtra el servidor, así «Cargar más» y el conteo siguen exactos.
+- `src/lib/edad.js` (nuevo) es la única fuente de la edad (`edad`, `fechaHaceAnios`, `RANGOS_EDAD`,
+  `limitesCumpleanos`), contra el día de hoy en Lima. Un 29 de febrero en año no bisiesto se toma como 28, para que el
+  filtro coincida exactamente con `edad()`.
+
+**Verificación:**
+- Edad comprobada con casos de 29 de febrero y una prueba de fuerza bruta (1950-2028, todos los rangos): 0 diferencias
+  entre `edad()` y los límites del filtro.
+- Filtro contra el PostgREST local como admin: cada edad límite cae en su rango.
+- La regla del DNI rechaza `123` y acepta `12345678`. La migración completa se vuelve a correr sin errores.
+- `npm run build` OK y oxlint sin avisos nuevos.
+- **No revisado visualmente.** En Local quedaron 6 clientas de prueba con cumpleaños cargados (edades 0, 10, 18, 25, 26
+  y 61) para probar el filtro.
+
+### 88.2 Más ajustes: orden por edad, aviso de deuda y Deudas filtrada por clienta — 2026-11-18 (local, sin commit)
+
+- **Selector de edad (torta) en Clientes:** reemplaza los rangos de la 88.1. Opciones: «Sin orden» (por defecto),
+  «Edad: menor a mayor», «Edad: mayor a menor» y «Sin cumpleaños registrado».
+  - El orden lo hace el servidor por `cumpleanos` (`nullslast`, nombre como desempate), así «Cargar más» sigue el mismo
+    orden.
+  - Con un orden por edad elegido, no se aplica el reordenamiento local por «Datos completos».
+  - `lib/edad.js` quedó solo con `edad()`; se quitaron los rangos y los límites de fecha.
+- **Datos personales:** Cumpleaños con ícono, etiqueta y valor en amarillo (`Dato destacado`).
+- **Aviso «Tiene una deuda pendiente»:** ahora es un botón. Abre y cierra «Deudas y pagos» y la lleva a la vista.
+  `SeccionPerfil` acepta ser controlada (`abierta` + `onAlternar`, más `seccionRef`).
+- **Abonos en «Deudas y pagos»:** en vez de «Abono» dice «Cobró <nombre>», con el mismo criterio que la pestaña Deudas:
+  - si el pago vino de una nota de cobro confirmada, quien la anotó;
+  - si no, `deuda_pagos.creado_por → usuarios.nombre_completo`;
+  - los pagos viejos sin `creado_por` dicen «Administración».
+- **«Cobrar o registrar en Deudas»:** lleva a `/deudas?cliente=<id>`, que muestra solo las deudas de esa clienta (todas
+  las que tenga).
+  - Aparece el chip «Deudas de <nombre> · Ver todas»; escribir en el buscador o tocar «Ver todas» quita el filtro.
+  - Al llegar se limpian la búsqueda y el filtro de estado guardados.
+  - Deudas queda montada y oculta mientras otra pestaña usa `?cliente=` (el perfil de Clientes): el parámetro solo se
+    lee estando activa. Clientes ahora también arranca sin perfil si no está activa.
+- **Historial de visitas:** la columna de hora pasa de `w-14` a `w-20` con `whitespace-nowrap`, para que «a. m.» no
+  salte de línea. La lista de productos se reindentó para quedar alineada.
+
+**Verificación:** `npm run build` OK, oxlint sin avisos nuevos. Contra el PostgREST local como admin: el orden por
+cumpleaños en los dos sentidos, el filtro `deudas.cliente_id` y el embed `deuda_pagos → usuarios(nombre_completo)`.
+**No revisado visualmente.**
+
+### 88.3 Edad en la tabla, amarillo de Cumpleaños y aviso de deuda — 2026-11-18 (local, sin commit)
+
+- **Tabla de Clientes (PC):** la edad («34 años», calculada con `edad()`) aparece a la derecha del nombre, en gris y mono.
+  Si no hay cumpleaños, no se muestra nada.
+- **Cumpleaños en Datos personales:** el amarillo pasa del ámbar del POS (`--color-amber`, que tira a naranja) al
+  `#facc15` de las estrellas de reseñas del portal de clientas (InicioCliente.jsx).
+- **Aviso de deuda pendiente:** ya no es todo un botón ni lleva flecha. El activador es solo el texto «Ver detalle /
+  Ocultar detalle», un poco separado del mensaje (`ml-4`).
+
+### 88.4 Edad en su propia columna y orden por edad dentro del selector de orden — 2026-11-18 (local, sin commit)
+
+- **Tabla de Clientes (PC):** «Edad» es una columna aparte, a la derecha de «Nombre del cliente». Las clientas sin
+  cumpleaños muestran «—».
+- **Selector de la torta:** se quitó. Sus opciones pasan al selector de orden de siempre (flechas):
+  - «Edad (menor a mayor)» y «Edad (mayor a menor)»: los ordena el servidor por `cumpleanos` (`nullslast`, nombre
+    como desempate);
+  - «Sin cumpleaños registrado»: filtra `cumpleanos is null`, ordenado por nombre, y el conteo usa el mismo filtro.
+- La clave guardada `/clientes:ordenEdad` ya no se usa.
+
+## 89. Almacén: sin categoría, precio unitario e historial desplegable en PC — 2026-11-18 (local, sin commit)
+
+No necesita migración: solo cambia el front.
+
+- **Categoría:** se quitó del formulario, de la tabla, de las tarjetas, del detalle y del buscador (ahora busca solo por
+  nombre).
+  - La columna `almacen_articulos.categoria` sigue en la base. Al editar se reenvía la que el artículo ya tuviera, para no
+    borrar datos.
+- **Nombre:** sin placeholder.
+- **Unidad:** se mantiene. Debajo hay una línea que explica para qué sirve: cómo se cuenta el stock, ej. «12 botella».
+- **Precio unitario en vez de costo total.** Se usa al crear el artículo (stock inicial) y en «Ingreso».
+  - El total (cantidad × precio) se muestra calculado y no se puede editar.
+  - Al servidor sigue yendo el costo total, redondeado a céntimos (`calcularCostoTotal` en `src/lib/almacen.js`).
+  - En el historial, cada ingreso muestra también el costo por unidad: «S/ 30.00 (S/ 2.50 c/u)».
+- **Tabla de PC:**
+  - **Bug:** un clic cerca de los botones de acción no abría nada. Pasaba porque toda la celda frenaba el clic. Ahora solo
+    lo frena el grupo de botones (`inline-flex`).
+  - **Historial:** para la admin hay una nueva última columna con `ArrowBigDown`. La fila entera despliega el historial
+    debajo (`CampoColapsable diferido`), en lugar del modal flotante.
+  - **Bordes:** la fila del desplegable no lleva borde cuando está cerrada, para que no se vea una línea doble.
+  - **Personal que no es admin:** no tiene historial, así que no ve la flecha y su fila no es clicable.
+- **Celular:** las tarjetas siguen abriendo el modal de detalle.
+- **Componente nuevo:** el historial pasó a `src/components/HistorialArticuloAlmacen.jsx`. Lo usan el desplegable de la
+  tabla y el modal del celular.
+- **Scroll horizontal en «Nuevo artículo»:** los inputs, dentro de una grilla de 2 columnas, no se encogían por debajo de su
+  ancho propio. Se corrigió con `min-w-0` en las celdas y los inputs, y `overflow-x-hidden` en el formulario. Lo mismo se
+  hizo en el modal de ingreso y salida.
+
+### 89.1 Columnas «Precio» y «Total» en la tabla de PC (solo admin)
+
+- **Migración nueva `supabase/migrations/20261118000002_almacen_precios.sql`:** función `precios_almacen()`, `security definer` y solo admin.
+  - Devuelve, por artículo, el precio unitario del **último ingreso** (`costo_total / cantidad`).
+  - Al resto del personal no le devuelve filas.
+  - **Por qué una función:** `almacen_movimientos` no tiene GRANT, a propósito, para que los costos solo se lean por funciones de la admin.
+  - **Por qué no una columna:** habría que mantenerla al día en cada ingreso, y llenaría Auditoría de ruido.
+  - **Estado:** aplicada en Local y probada (admin: precios correctos; asistente: 0 filas). **No está aplicada en producción.**
+- **`Almacen.jsx`:**
+  - nuevas columnas **Precio** (último precio unitario) y **Total** (`stock_actual × precio`, con `calcularCostoTotal`), después de Stock;
+  - sin ingresos con costo se muestra «—»;
+  - solo las ve la admin;
+  - el desplegable del historial pasa a `colSpan={6}`.
+
+## 90. Gastos: se muestra quién registró cada gasto — 2026-11-18 (local, sin commit; no necesita migración)
+
+- **Problema:** Caja chica mostraba quién hizo cada salida o reposición. El gasto variable que esa salida crea en Gastos no decía quién lo hizo.
+- **Origen del dato:** `crear_gasto_caja_chica()` ya guardaba a esa persona en `gastos.creado_por` (su `auth.uid()`), pero la pestaña Gastos no la leía.
+- **Cambio en `Gastos.jsx`:** lee `creado_por` y `usuarios(nombre_completo)`. Cada fila muestra el nombre con el ícono `User`, junto a la hora. Vale para todos los gastos que tengan autora, no solo los de Caja chica.
+- **Cajera y encargada:** la RLS de `usuarios` solo deja a la administradora leer a todo el personal, así que para ellas el embed llega vacío salvo en sus propios gastos. En ese caso el nombre se completa con `usuarios_para_citas()` (personal activo, la misma lista que usa Citas).
+- **Gasto de Caja chica cuya autora fue eliminada:** muestra «Usuario eliminado».
+- **Gastos fijos generados sin autora:** no muestran nombre.
+- **Verificado en Local por REST:** como admin, los gastos de Caja chica traen el nombre. Como cajera, el embed funciona en sus gastos y no da 403.
+
+## 91. Producción al día (Clientes, Almacén) y limpieza de Mobiliario — 2026-11-18
+
+- **Mobiliario:** a pedido de la clienta se borraron sus 25 fichas. No había compras.
+  - Antes se comprobó con una lectura que ninguna otra tabla, vista ni función usa esas tablas. La única relación es la de `mobiliario_compras`, que se borra en cascada.
+  - Tampoco había fotos en Storage ni trigger de Auditoría.
+  - El MCP rechazó el `delete` (`declined`). Lo ejecutó el usuario en el SQL Editor, y después se comprobó: 0 filas en las dos tablas.
+- **DNI previo a la regla de 8 dígitos:** una clienta tenía un documento de 9 dígitos.
+  - Con el CHECK `clientes_dni_formato`, cualquier UPDATE de su fila (puntos, cupones, direcciones…) habría fallado.
+  - Con autorización del usuario se le quitó el último dígito y el documento original quedó anotado en sus `notas`.
+- **Aplicadas en producción**, con confirmación explícita del usuario y el SQL exacto de cada archivo:
+  - `20261118000002_almacen_precios`: `precios_almacen()` es security definer y solo la ejecutan `authenticated` y `postgres`.
+  - `20261118000001_perfil_cliente`:
+    - Antes de aplicarla se comprobaron en producción las 50 columnas que usan las funciones, la firma de `recompensas_saldos()` y que no quedara ningún DNI fuera de formato.
+    - Comprobado después: 80 de 83 clientas recuperaron `creado_en` desde Auditoría.
+    - Como admin, las cuatro funciones responden: con la clienta de más ventas dan 8 visitas, 9 servicios y 5 productos.
+    - Como cajera, recibe 42501.
+- Recién entonces se hizo el push del front de las secciones 88 a 90.

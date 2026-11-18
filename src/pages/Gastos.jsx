@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, Trash2, Plus, ArrowBigDown, Download, Wallet, Ban, Clock } from 'lucide-react'
+import { Pencil, Trash2, Plus, ArrowBigDown, Download, Wallet, Ban, Clock, User } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -75,6 +75,12 @@ function FilaGasto({ gasto, esAdmin, onEditar, onCancelar, onEliminar }) {
             <span className="flex items-center gap-1 font-mono text-[11px] text-ink/40">
               <Clock className="h-3 w-3" />
               {formatearFechaHora(gasto.creado_en)}
+            </span>
+          )}
+          {gasto.creadoPorNombre && (
+            <span className="flex min-w-0 items-center gap-1 text-[11px] text-ink/60">
+              <User className="h-3 w-3 shrink-0" />
+              <span className="truncate">{gasto.creadoPorNombre}</span>
             </span>
           )}
           {deCajaChica && (
@@ -191,12 +197,19 @@ export default function Gastos({ activo = true }) {
 
   async function cargarGastos(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
-    const { data, error: errorConsulta } = await supabase
-      .from('gastos')
-      .select('id, nombre, tipo, monto, mes, anio, estado, creado_en, caja_chica_movimiento_id')
-      .eq('mes', mes)
-      .eq('anio', anioDebounced)
-      .order('nombre')
+    // Quién registró cada gasto (en los de Caja chica, quien hizo la salida: crear_gasto_caja_chica() pone su auth.uid()
+    // en creado_por). La RLS de usuarios solo deja a la administradora leer a todo el personal; a la cajera / encargada
+    // el embed le llega vacío salvo en sus propios gastos, así que se completa con usuarios_para_citas() (personal
+    // activo, la misma lista que usa Citas). Si esa lista falla, simplemente no se muestra el nombre.
+    const [{ data, error: errorConsulta }, personalRes] = await Promise.all([
+      supabase
+        .from('gastos')
+        .select('id, nombre, tipo, monto, mes, anio, estado, creado_en, caja_chica_movimiento_id, creado_por, usuarios(nombre_completo)')
+        .eq('mes', mes)
+        .eq('anio', anioDebounced)
+        .order('nombre'),
+      supabase.rpc('usuarios_para_citas'),
+    ])
 
     if (!vigente.actual) return
 
@@ -204,7 +217,18 @@ export default function Gastos({ activo = true }) {
       setError('No se pudo cargar los gastos.')
     } else {
       setError(null)
-      setGastos(data ?? [])
+      const nombres = new Map((personalRes.data ?? []).map((persona) => [persona.id, persona.nombre_completo]))
+      setGastos(
+        (data ?? []).map(({ usuarios, ...gasto }) => ({
+          ...gasto,
+          // Gasto de Caja chica sin creado_por = su autora fue eliminada (FK on delete set null). Los fijos generados
+          // sin autora no muestran nada.
+          creadoPorNombre:
+            usuarios?.nombre_completo ||
+            nombres.get(gasto.creado_por) ||
+            (gasto.caja_chica_movimiento_id && !gasto.creado_por ? 'Usuario eliminado' : null),
+        })),
+      )
     }
     setCargando(false)
   }

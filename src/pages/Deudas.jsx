@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Pencil, Trash2, Plus, CheckCheck, HandCoins, Filter, Coins, X, NotebookPen, Check, Ban } from 'lucide-react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -78,6 +79,14 @@ export default function Deudas({ activo = true }) {
   const [busqueda, setBusqueda] = useEstadoVista('/deudas:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
   const [filtroEstado, setFiltroEstado] = useEstadoVista('/deudas:filtroEstado', 'todas')
+  // `?cliente=<id>`: llega desde el perfil de la clienta («Cobrar o registrar en Deudas») y muestra solo sus deudas.
+  // Esta pestaña queda montada y oculta (PestanasCacheadas) mientras la URL es la de otra pestaña (p. ej.
+  // /clientes?cliente=…): el parámetro solo se lee estando activa, si no se congela el último valor.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const parametroCliente = searchParams.get('cliente')
+  const [filtroCliente, setFiltroCliente] = useState(activo ? parametroCliente : null)
+  const nombreClienteFiltrado = location.state?.nombreCliente ?? null
   const [modalDeuda, setModalDeuda] = useState(null) // null | 'nuevo' | deuda
   const [deudaAEliminar, setDeudaAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
@@ -101,6 +110,22 @@ export default function Deudas({ activo = true }) {
   useCerrarConEscape(() => setNotaARechazar(null), Boolean(notaARechazar))
   useModalA11y(panelRechazarRef, Boolean(notaARechazar))
 
+  const clienteAplicadoRef = useRef(null)
+  useEffect(() => {
+    if (!activo || parametroCliente === clienteAplicadoRef.current) return
+    clienteAplicadoRef.current = parametroCliente
+    setFiltroCliente(parametroCliente)
+    // Al llegar filtrada a una clienta se ven TODAS sus deudas: se limpia la búsqueda y el filtro de estado guardados.
+    if (parametroCliente) {
+      setBusqueda('')
+      setFiltroEstado('todas')
+    }
+  }, [activo, parametroCliente, setBusqueda, setFiltroEstado])
+
+  function quitarFiltroCliente() {
+    setSearchParams({}, { replace: true })
+  }
+
   async function cargarDeudas(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
 
@@ -112,7 +137,9 @@ export default function Deudas({ activo = true }) {
 
     if (filtroEstado === 'pendientes') consulta = consulta.eq('estado', 'PENDIENTE')
     if (filtroEstado === 'cobradas') consulta = consulta.eq('estado', 'COBRADA')
-    if (busquedaDebounced.trim()) {
+    if (filtroCliente) {
+      consulta = consulta.eq('cliente_id', filtroCliente)
+    } else if (busquedaDebounced.trim()) {
       consulta = consulta.ilike('clientes.nombre', `%${busquedaDebounced.trim()}%`)
     }
 
@@ -139,7 +166,7 @@ export default function Deudas({ activo = true }) {
     return () => {
       vigente.actual = false
     }
-  }, [activo, busquedaDebounced, filtroEstado])
+  }, [activo, busquedaDebounced, filtroEstado, filtroCliente])
 
   async function confirmarAnularPago() {
     if (!pagoAAnular) return
@@ -211,7 +238,11 @@ export default function Deudas({ activo = true }) {
       <div className="sticky top-0 z-10 -mx-(--separador-vertical) flex items-center gap-2 bg-bg px-(--separador-vertical) pb-2 pt-(--separador-horizontal)">
         <BarraBusqueda
           valor={busqueda}
-          onCambiar={setBusqueda}
+          onCambiar={(valor) => {
+            // Escribir en el buscador reemplaza el filtro por clienta que vino del perfil.
+            setBusqueda(valor)
+            if (filtroCliente) quitarFiltroCliente()
+          }}
           placeholder="Buscar por cliente..."
           tema="purple-300"
           sinBorde
@@ -238,6 +269,25 @@ export default function Deudas({ activo = true }) {
           </button>
         )}
       </div>
+
+      {filtroCliente && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-purple-300/40 bg-purple-300/10 px-3 py-2 text-sm text-ink/80">
+          <span className="min-w-0 flex-1 truncate">
+            Deudas de{' '}
+            <span className="font-medium text-purple-300">
+              {nombreClienteFiltrado ?? deudas[0]?.clientes?.nombre ?? 'esta clienta'}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={quitarFiltroCliente}
+            className="flex shrink-0 items-center gap-1 text-xs text-ink/60 transition-colors hover:text-purple-300"
+          >
+            <X className="h-3.5 w-3.5" />
+            Ver todas
+          </button>
+        </div>
+      )}
 
       <p className="mt-3 text-sm text-ink/60">
         {OPCIONES_FILTRO.find((o) => o.id === filtroEstado)?.label}:{' '}

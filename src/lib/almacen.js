@@ -15,3 +15,13 @@ export function soloEnteros(texto) {
 
 // soloImporte vive en moneda.js (también lo usa Caja chica); se re-exporta para los modales del Almacén.
 export { soloImporte } from './moneda.js'
+
+// Los ingresos se anotan por PRECIO UNITARIO (lo que costó cada botella, rollo…) y el total sale solo: cantidad × precio.
+// El servidor sigue guardando el costo total del ingreso (almacen_movimientos.costo_total, numeric(10,2)), así que se
+// redondea a céntimos aquí. null si falta alguno de los dos o no es un número válido.
+export const COSTO_MAXIMO_ALMACEN = 99999999.99
+
+export function calcularCostoTotal(cantidad, precioUnitario) {
+  if (!Number.isFinite(cantidad) || !Number.isFinite(precioUnitario)) return null
+  return Math.round(cantidad * precioUnitario * 100) / 100
+}

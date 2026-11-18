@@ -4,13 +4,14 @@ import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
 import { listarCambios } from '../lib/cambiosFormulario.js'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
-import { leerImporte } from '../lib/moneda.js'
+import { formatearSoles, leerImporte } from '../lib/moneda.js'
 import Etiqueta from './Etiqueta.jsx'
-import { mensajeErrorAlmacen, soloEnteros, soloImporte } from '../lib/almacen.js'
+import { COSTO_MAXIMO_ALMACEN, calcularCostoTotal, mensajeErrorAlmacen, soloEnteros, soloImporte } from '../lib/almacen.js'
 
 // Registrar un movimiento del Almacén (migración 20261112000011):
 //   · SALIDA  → cualquier rol del personal anota lo que sacó (registrar_salida_almacen). No deja bajar de 0.
-//   · INGRESO → solo la administradora, con el costo total de lo que entró (registrar_ingreso_almacen).
+//   · INGRESO → solo la administradora. Anota el PRECIO UNITARIO y el total (cantidad × precio) se calcula solo; al
+//     servidor va ese total, como siempre (registrar_ingreso_almacen).
 // Quién y cuándo los pone el servidor (auth.uid() y now()), no el formulario.
 
 const MAXIMO_CANTIDAD = 2147483647
@@ -21,10 +22,14 @@ export default function ModalMovimientoAlmacen({ articulo, tipo, onCerrar, onGua
   useModalA11y(panelRef)
   const esIngreso = tipo === 'INGRESO'
   const [cantidad, setCantidad] = useState('')
-  const [costo, setCosto] = useState('')
+  const [precioUnitario, setPrecioUnitario] = useState('')
   const [nota, setNota] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+
+  const cantidadEscrita = /^\d+$/.test(cantidad.trim()) ? Number(cantidad.trim()) : null
+  const totalCalculado =
+    esIngreso && cantidadEscrita > 0 ? calcularCostoTotal(cantidadEscrita, leerImporte(precioUnitario)) : null
 
   // Mientras guarda, Esc no cierra; el modal sigue en la pila para que tampoco cierre el de abajo.
 
@@ -41,9 +46,13 @@ export default function ModalMovimientoAlmacen({ articulo, tipo, onCerrar, onGua
       setError(`Solo quedan ${articulo.stock_actual} ${articulo.unidad} en el almacén.`)
       return
     }
-    const costoNumerico = esIngreso ? leerImporte(costo) : null
-    if (esIngreso && Number.isNaN(costoNumerico)) {
-      setError('El costo total debe ser un monto válido (ej. 15 o 15.50; 0 si no costó nada).')
+    const costoNumerico = esIngreso ? calcularCostoTotal(cantidadNumerica, leerImporte(precioUnitario)) : null
+    if (esIngreso && costoNumerico == null) {
+      setError('Ingresa el precio unitario (ej. 2.50; 0 si no costó nada).')
+      return
+    }
+    if (esIngreso && costoNumerico > COSTO_MAXIMO_ALMACEN) {
+      setError('El total es demasiado alto. Revisa la cantidad y el precio unitario.')
       return
     }
 
@@ -73,9 +82,9 @@ export default function ModalMovimientoAlmacen({ articulo, tipo, onCerrar, onGua
   const colorFoco = esIngreso ? 'focus:border-green' : 'focus:border-purple-300'
 
   // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
-  const valoresFormulario = { cantidad, costo, nota }
+  const valoresFormulario = { cantidad, precioUnitario, nota }
   const valoresBase = useRef(valoresFormulario)
-  const cambios = listarCambios(valoresBase.current, valoresFormulario, { cantidad: 'Cantidad', costo: 'Costo', nota: 'Nota' })
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, { cantidad: 'Cantidad', precioUnitario: 'Precio unitario', nota: 'Nota' })
   const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
 
   return (
@@ -84,7 +93,7 @@ export default function ModalMovimientoAlmacen({ articulo, tipo, onCerrar, onGua
         autoComplete="off"
         ref={panelRef}
         onSubmit={guardar}
-        className="max-h-full w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
+        className="max-h-full w-full max-w-sm overflow-y-auto overflow-x-hidden rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-ink">{esIngreso ? 'Ingreso al almacén' : 'Sacar del almacén'}</h2>
@@ -113,19 +122,35 @@ export default function ModalMovimientoAlmacen({ articulo, tipo, onCerrar, onGua
           </div>
 
           {esIngreso && (
-            <div>
-              <Etiqueta obligatorio htmlFor="almacen-costo">
-                Costo total (S/)
-              </Etiqueta>
-              <input
-                id="almacen-costo"
-                type="search"
-                inputMode="decimal"
-                autoComplete="new-password"
-                value={costo}
-                onChange={(evento) => setCosto(soloImporte(evento.target.value))}
-                className={`w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 ${colorFoco}`}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="min-w-0">
+                <Etiqueta obligatorio htmlFor="almacen-precio-unitario">
+                  Precio unitario (S/)
+                </Etiqueta>
+                <input
+                  id="almacen-precio-unitario"
+                  type="search"
+                  inputMode="decimal"
+                  autoComplete="new-password"
+                  value={precioUnitario}
+                  onChange={(evento) => setPrecioUnitario(soloImporte(evento.target.value))}
+                  className={`w-full min-w-0 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 ${colorFoco}`}
+                />
+              </div>
+              <div className="min-w-0">
+                {/* Solo lectura: cantidad × precio unitario. */}
+                <Etiqueta htmlFor="almacen-costo-total">Total</Etiqueta>
+                <output
+                  id="almacen-costo-total"
+                  htmlFor="almacen-cantidad almacen-precio-unitario"
+                  aria-live="polite"
+                  className={`flex w-full items-center rounded-lg border border-dashed border-border px-3 py-2 text-sm ${
+                    totalCalculado != null ? 'font-mono text-green' : 'text-ink/50'
+                  }`}
+                >
+                  {totalCalculado != null ? formatearSoles(totalCalculado) : '—'}
+                </output>
+              </div>
             </div>
           )}
 

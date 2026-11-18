@@ -5,10 +5,13 @@ import { listarCambios } from '../lib/cambiosFormulario.js'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
+import { edad } from '../lib/edad.js'
+import { formatearFechaISO } from '../lib/fechas.js'
 
 const formularioVacio = {
   nombre: '',
   telefono: '',
+  dni: '',
   sexo: '',
   direccion: '',
   cumpleanos: '',
@@ -19,6 +22,7 @@ function formularioDesdeCliente(cliente) {
   return {
     nombre: cliente.nombre ?? '',
     telefono: cliente.telefono ?? '',
+    dni: cliente.dni ?? '',
     sexo: cliente.sexo ?? '',
     direccion: cliente.direccion ?? '',
     cumpleanos: cliente.cumpleanos ?? '',
@@ -28,6 +32,11 @@ function formularioDesdeCliente(cliente) {
 
 function validar(formulario) {
   if (!formulario.nombre.trim()) return 'El nombre completo es obligatorio.'
+  const dni = formulario.dni.trim()
+  if (dni && !/^\d{8}$/.test(dni)) return 'El DNI debe tener 8 dígitos.'
+  if (formulario.cumpleanos && edad(formulario.cumpleanos) == null) {
+    return 'La fecha de cumpleaños no es válida: no puede ser futura.'
+  }
   return null
 }
 
@@ -44,6 +53,8 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
   )
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  const hoyIso = formatearFechaISO(new Date())
+  const edadCalculada = edad(formulario.cumpleanos, hoyIso)
 
 
   function actualizarCampo(campo, valor) {
@@ -70,6 +81,9 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
       cumpleanos: formulario.cumpleanos || null,
       notas: formulario.notas.trim() || null,
     }
+    // Al editar, el DNI solo se manda si la fila que se abrió lo traía: así un formulario abierto con una fila sin esa
+    // columna no lo borraría sin querer. (Hoy solo se edita desde el perfil, que sí lo trae.)
+    if (!esEdicion || 'dni' in cliente) datos.dni = formulario.dni.trim() || null
 
     const { data: filaGuardada, error: errorGuardado } = esEdicion
       ? await supabase.from('clientes').update(datos).eq('id', cliente.id).select().single()
@@ -81,7 +95,9 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
       setError(
         errorGuardado.code === '23505'
           ? 'Ya existe un cliente con ese teléfono.'
-          : 'No se pudo guardar el cliente. Intenta de nuevo.',
+          : errorGuardado.code === '23514'
+            ? 'El DNI debe tener 8 dígitos.'
+            : 'No se pudo guardar el cliente. Intenta de nuevo.',
       )
       return
     }
@@ -91,7 +107,7 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
 
   // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
   const formularioBase = useRef(formulario)
-  const cambios = listarCambios(formularioBase.current, formulario, { nombre: 'Nombre', telefono: 'Teléfono', sexo: 'Sexo', direccion: 'Dirección', cumpleanos: 'Cumpleaños', notas: 'Notas' })
+  const cambios = listarCambios(formularioBase.current, formulario, { nombre: 'Nombre', telefono: 'Teléfono', dni: 'DNI', sexo: 'Sexo', direccion: 'Dirección', cumpleanos: 'Cumpleaños', notas: 'Notas' })
   const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
 
   return (
@@ -138,7 +154,21 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
             />
           </div>
 
-          <div className="grid grid-cols-[2fr_3fr] gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Etiqueta htmlFor={`${idBase}-dni`}>DNI</Etiqueta>
+              <input
+                id={`${idBase}-dni`}
+                type="search"
+                inputMode="numeric"
+                autoComplete="new-password"
+                maxLength={8}
+                value={formulario.dni}
+                onChange={(evento) => actualizarCampo('dni', evento.target.value.replace(/\D/g, '').slice(0, 8))}
+                placeholder="Opcional"
+                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:font-sans placeholder:text-ink/60 focus:border-purple-300"
+              />
+            </div>
             <div>
               <Etiqueta htmlFor={`${idBase}-sexo`}>Sexo</Etiqueta>
               <select
@@ -152,15 +182,37 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
                 <option value="Masculino">Masculino</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-[3fr_2fr] gap-3">
             <div>
               <Etiqueta htmlFor={`${idBase}-cumpleanos`}>Fecha de cumpleaños</Etiqueta>
               <input
                 id={`${idBase}-cumpleanos`}
                 type="date"
+                max={hoyIso}
                 value={formulario.cumpleanos}
                 onChange={(evento) => actualizarCampo('cumpleanos', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
               />
+            </div>
+            <div>
+              {/* Solo lectura: se calcula sola apenas la fecha es válida. */}
+              <Etiqueta htmlFor={`${idBase}-edad`}>Edad</Etiqueta>
+              <output
+                id={`${idBase}-edad`}
+                htmlFor={`${idBase}-cumpleanos`}
+                aria-live="polite"
+                className={`flex w-full items-center rounded-lg border border-dashed border-border px-3 py-2 text-sm ${
+                  edadCalculada != null ? 'font-mono text-purple-300' : 'text-ink/50'
+                }`}
+              >
+                {edadCalculada != null
+                  ? `${edadCalculada} ${edadCalculada === 1 ? 'año' : 'años'}`
+                  : formulario.cumpleanos
+                    ? 'Fecha no válida'
+                    : '—'}
+              </output>
             </div>
           </div>
 

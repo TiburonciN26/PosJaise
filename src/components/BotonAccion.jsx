@@ -24,6 +24,7 @@ export default function BotonAccion({
   target,
   rel,
   sinBorde,
+  fondo,
 }) {
   // min-h-10/min-w-10 (40px): mínimo táctil — antes el botón solo icono
   // (móvil, sin el texto de lg:inline) quedaba en ~28px; 40px se mantiene
@@ -33,8 +34,10 @@ export default function BotonAccion({
   } ${
     plano
       ? `bg-boton-icono text-ink ${COLORES_ICONO_HOVER[color]}`
-      : `bg-transparent hover:bg-surface-2 ${COLORES_ICONO_ACCION[color]}`
+      : `${fondo ? 'bg-bg hover:bg-boton-icono' : 'bg-transparent hover:bg-surface-2'} ${COLORES_ICONO_ACCION[color]}`
   }`
+  // `fondo`: fondo oscuro fijo (el de la página) para que el botón se distinga sobre una tarjeta `bg-surface`
+  // sin necesitar borde, p. ej. las acciones del encabezado del perfil de clienta.
 
   // Solo ícono, en cualquier tamaño de pantalla — el texto queda como
   // title (tooltip) para accesibilidad. Antes se revelaba como texto en
