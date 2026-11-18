@@ -7654,3 +7654,6 @@ Pedidos de la dueña sobre Inventario, en varias tandas. Migraciones `2026111200
 - **`20261112000014_proveedores`:** el MCP rechazó dos veces su aplicación (`declined`, sin ejecutar nada; probablemente por las sentencias `drop function`/`revoke`). El usuario la aplicó a mano en el SQL Editor de producción el 2026-11-18.
   - Comprobado después con una lectura: 19 proveedores, 198 vínculos (todos principales), `agregar_stock(uuid, integer, text, uuid)` presente y la firma de 3 parámetros eliminada, `proveedores_nombres`, `productos_vista.proveedor_id`, `movimientos_stock.proveedor_id`, RLS y las 2 políticas.
   - Recién entonces se hizo el push, que publica el front que la necesita.
+- **Fallo del despliegue en Cloudflare Pages (82565d0):** la compilación terminaba bien, pero `scripts/build-cloudflare.mjs` abortaba con «index.html referencia /PosJaise/».
+  - La causa era un comentario dentro del script en línea de `index.html` (precarga del hero) que mencionaba la ruta de GitHub Pages. Vite conserva esos comentarios en el `index.html` final.
+  - Se reescribió el comentario sin la ruta. `node scripts/build-cloudflare.mjs` en local pasa todas las comprobaciones de salida.

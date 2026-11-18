@@ -57,7 +57,9 @@
         try {
           var base = '%BASE_URL%'
           var l = window.location
-          // GitHub Pages: public/404.html reenvía /PosJaise/inicio como /PosJaise/?/inicio (ver el script del <body>).
+          // Ruta reenviada por public/404.html como «<base>?/inicio» (ver el script del <body>). Sin escribir la base de
+          // GitHub Pages aquí: Vite deja este comentario en el index.html final y build-cloudflare.mjs rechaza cualquier
+          // mención a esa ruta.
           var ruta = l.search.charAt(1) === '/' ? l.search.slice(1).split('&')[0] : l.pathname.slice(base.length - 1) || '/'
           if (!/^\/(inicio\/?)?$/.test(ruta)) return
           var haySesion = false
