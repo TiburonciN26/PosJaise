@@ -7651,6 +7651,6 @@ Pedidos de la dueña sobre Inventario, en varias tandas. Migraciones `2026111200
 - **Aplicadas en producción el 2026-11-18** (con confirmación explícita del usuario y el SQL exacto de cada archivo):
   - `20261112000013_productos_ultimo_ingreso`: antes se comprobó que las columnas actuales de `productos_vista` coincidían con el inicio de la nueva definición y que no tenía `reloptions`.
   - `20261112000015_servicios_creado_en`: los 38 servicios recuperaron su fecha de alta desde Auditoría.
-- **Pendiente:** `20261112000014_proveedores`. Su aplicación por MCP fue rechazada en el permiso y no se ejecutó nada; en producción no existe `proveedores`.
-  - Al aplicarla, convertirá los 198 productos con proveedor en 19 fichas con su vínculo principal.
-  - Hasta entonces, el front de este commit falla en producción en Agregar stock (llama a `agregar_stock` con `p_proveedor_id`), en la pestaña Proveedores y en las secciones de proveedor de Inventario.
+- **`20261112000014_proveedores`:** el MCP rechazó dos veces su aplicación (`declined`, sin ejecutar nada; probablemente por las sentencias `drop function`/`revoke`). El usuario la aplicó a mano en el SQL Editor de producción el 2026-11-18.
+  - Comprobado después con una lectura: 19 proveedores, 198 vínculos (todos principales), `agregar_stock(uuid, integer, text, uuid)` presente y la firma de 3 parámetros eliminada, `proveedores_nombres`, `productos_vista.proveedor_id`, `movimientos_stock.proveedor_id`, RLS y las 2 políticas.
+  - Recién entonces se hizo el push, que publica el front que la necesita.
