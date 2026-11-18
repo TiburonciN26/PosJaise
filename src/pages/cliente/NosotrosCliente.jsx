@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { ArrowRight, Clock, Globe, Image, MapPin, PenLine, Phone, Star, User } from 'lucide-react'
 import { useEntornoAnimacion } from '../../hooks/useEntornoAnimacion.js'
 import { useRevelarEnPantalla } from '../../hooks/useRevelarEnPantalla.js'
@@ -452,12 +451,12 @@ function SeccionResenas() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {resenas.map((resena, indice) => (
-            <motion.div
+            // Entrada escalonada en CSS (.lw-resena-entra, index.css): antes era un <motion.div> de framer-motion, la única
+            // razón por la que esta página cargaba esa librería.
+            <div
               key={resena.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: (indice % 6) * 0.08 }}
-              className="liquid-glass rounded-none p-5"
+              className="liquid-glass lw-resena-entra rounded-none p-5"
+              style={{ animationDelay: `${(indice % 6) * 80}ms` }}
             >
               <Estrellas calificacion={resena.calificacion} />
               {resena.comentario && (
@@ -466,7 +465,7 @@ function SeccionResenas() {
               <p className="mt-3 text-xs font-medium text-white/50">
                 {nombrePublico(resena.nombre)} · {formatoFechaResena.format(new Date(resena.creado_en))}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

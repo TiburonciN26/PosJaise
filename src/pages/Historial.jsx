@@ -76,6 +76,16 @@ const CLASE_METODO_PAGO_PILL = {
   Plin: 'border border-cyan-300/40 bg-cyan-300/15 text-cyan-300',
 }
 
+// Color del ícono del filtro de método: el mismo texto de la cápsula del método elegido; «Todos» queda ámbar.
+const CLASE_ICONO_FILTRO_METODO = {
+  todos: 'text-amber',
+  Efectivo: 'text-green',
+  Tarjeta: 'text-blue',
+  Transferencia: 'text-gray-300',
+  Yape: 'text-purple-300',
+  Plin: 'text-cyan-300',
+}
+
 // Solo cambia lo que se muestra (VEN007 -> V007) — el código real en la
 // base de datos y en el CSV exportado no se toca.
 function codigoCorto(codigo) {
@@ -693,6 +703,8 @@ export default function Historial({ activo = true }) {
           tema="amber"
           sinBorde
           icono={Filter}
+          seleccionado
+          claseIcono={CLASE_ICONO_FILTRO_METODO[filtroMetodo] ?? 'text-amber'}
           ariaLabel="Filtrar por método de pago"
         />
 
@@ -799,8 +811,8 @@ export default function Historial({ activo = true }) {
                         {codigoCorto(venta.codigo)}
                       </span>
                       <span
-                        className={`truncate font-mono text-xs ${
-                          anulada ? 'text-red line-through' : 'text-ink/60'
+                        className={`truncate font-mono text-xs transition-colors duration-300 ${
+                          anulada ? 'text-red line-through' : abierto ? 'text-green' : 'text-ink/60'
                         }`}
                       >
                         {formatearFechaHora(venta.fecha)}
@@ -894,8 +906,8 @@ export default function Historial({ activo = true }) {
                           {anulada && <span className="sr-only">Anulada</span>}
                         </td>
                         <td
-                          className={`px-3 py-2.5 font-mono ${
-                            anulada ? 'text-red line-through' : 'text-ink/60'
+                          className={`px-3 py-2.5 font-mono transition-colors duration-300 ${
+                            anulada ? 'text-red line-through' : abierto ? 'text-green' : 'text-ink/60'
                           }`}
                         >
                           {formatearFechaHora(venta.fecha)}

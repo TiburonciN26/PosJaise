@@ -1,5 +1,7 @@
 import { useId, useRef, useState } from 'react'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
 import { formatearSoles } from '../lib/moneda.js'
@@ -19,7 +21,6 @@ export default function ModalDatosComprobante({ tipo, inicial, total, dniObligat
   const [direccion, setDireccion] = useState(inicial?.direccion ?? '')
   const [intento, setIntento] = useState(false)
 
-  useCerrarConEscape(onCerrar)
   useModalA11y(panelRef)
 
   const documentoOk = esFactura ? rucValido(documento) : dniValido(documento)
@@ -46,6 +47,12 @@ export default function ModalDatosComprobante({ tipo, inicial, total, dniObligat
         : 'Escribe un DNI de 8 dígitos.'
       : null
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = { documento, nombre, direccion }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, { documento: 'Documento', nombre: 'Nombre', direccion: 'Dirección' })
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -55,7 +62,10 @@ export default function ModalDatosComprobante({ tipo, inicial, total, dniObligat
         noValidate
         className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">{esFactura ? 'Datos de la factura' : 'Datos de la boleta'}</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">{esFactura ? 'Datos de la factura' : 'Datos de la boleta'}</h2>
+          <BotonCerrarModal onClick={intentarCerrar} />
+        </div>
         <p className="mt-1 text-sm text-ink/60">
           {esFactura
             ? 'La factura se emite a nombre de una empresa o persona con RUC.'
@@ -118,7 +128,7 @@ export default function ModalDatosComprobante({ tipo, inicial, total, dniObligat
         <div className="mt-5 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber"
           >
             Volver
@@ -128,6 +138,7 @@ export default function ModalDatosComprobante({ tipo, inicial, total, dniObligat
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

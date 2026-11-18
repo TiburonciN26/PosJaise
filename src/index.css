@@ -343,7 +343,8 @@ main:has(.modal-producto-web:not(.hidden *)) {
    · Aún no cubre (<100%): barra lavanda con perilla luminosa al final.
    · Meta cumplida (≥100%): borde aurora girando, dos manchas de luz a la
      deriva detrás, barra arcoíris que fluye con destello, y cada 8 s una
-     pastilla "¡Meta cumplida!" + confeti saliendo del final de la barra.
+     pastilla "¡Meta cumplida!" + confeti en medio de la tarjeta. La palabra
+     «Dashboard» del menú lateral brilla con .texto-aurora.
    Los colores del arcoíris/aurora son fijos (iguales en ambos temas); el
    lavanda de la barra sigue a --color-purple-300 (en claro pasa a rosa,
    como el resto de ese acento).
@@ -427,18 +428,74 @@ main:has(.modal-producto-web:not(.hidden *)) {
   box-shadow: 0 0 18px rgba(62, 207, 106, 0.45);
   opacity: 0;
 }
-/* PC: centrada sobre el final de la barra (translateX -50%). */
-.pe-pastilla-centrada {
-  animation: pe-pastilla-centrada 8s ease-out infinite;
+/* En medio de la tarjeta (PC y móvil). Antes salía por encima y el Dashboard
+   le reservaba 32px vacíos arriba (pt-8), que en móvil se veían como una
+   franja negra bajo los filtros. */
+.pe-pastilla-medio {
+  animation: pe-pastilla-medio 8s ease-out infinite;
 }
-/* Móvil: anclada a la derecha de la tarjeta, sube en vertical. */
-.pe-pastilla-derecha {
-  animation: pe-pastilla-derecha 8s ease-out infinite;
+
+/* Texto aurora (palabra «Dashboard» del menú lateral con la meta cumplida):
+   los colores del anillo fluyendo por las letras (mismo pe-flujo que la
+   barra) más un resplandor rosado. Sin borde. */
+.texto-aurora {
+  background: linear-gradient(90deg, #d8b4fe, #ed8bac, #ffd9a0, #8ff0ab, #9ad1ff, #d8b4fe);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  filter: drop-shadow(0 0 6px rgba(237, 139, 172, 0.55));
+  animation: pe-flujo 5s linear infinite;
 }
-.pe-pastilla-pico {
-  background: #0f2a1a;
-  border-right: 1px solid #3ecf6a;
-  border-bottom: 1px solid #3ecf6a;
+/* Su ícono: el stroke usa el degradado SVG animado de MenuLateral
+   (#degradado-aurora-menu); aquí solo el mismo resplandor. */
+.icono-aurora {
+  filter: drop-shadow(0 0 5px rgba(237, 139, 172, 0.6));
+}
+/* Carita feliz a la derecha de «Dashboard»: aparece y desaparece con el
+   mismo ciclo de 8 s que la pastilla de la tarjeta, y un confeti diminuto
+   que cae poco (--caida) para no invadir las filas vecinas. */
+.menu-carita {
+  opacity: 0;
+  animation: menu-carita 8s ease-out infinite;
+}
+/* Doble clase: .pe-confeti se declara más abajo y, con la misma
+   especificidad, pisaba este tamaño (salía a 6×10 px). */
+.pe-confeti.pe-confeti-mini {
+  width: 2px;
+  height: 4px;
+  border-radius: 0.5px;
+  --caida: 6px;
+}
+/* Menú lateral cerrado (sigue montado fuera de pantalla): el brillo queda, pero
+   sin animar, para no repintar en bucle detrás de las pestañas. Al abrirse se
+   quita la clase y las animaciones arrancan desde 0 (carita y confeti salen
+   enseguida en vez de a mitad de ciclo). */
+.menu-lateral-quieto .texto-aurora,
+.menu-lateral-quieto .menu-carita,
+.menu-lateral-quieto .pe-confeti,
+.menu-lateral-quieto .pe-menear {
+  animation: none;
+}
+@keyframes menu-carita {
+  0%, 3% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  9% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  12%, 32% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  38%, 100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
 }
 
 .pe-confeti {
@@ -499,46 +556,25 @@ main:has(.modal-producto-web:not(.hidden *)) {
     transform: rotate(12deg);
   }
 }
-@keyframes pe-pastilla-centrada {
+@keyframes pe-pastilla-medio {
   0%, 3% {
     opacity: 0;
-    transform: translate(-50%, 10px) scale(0.85);
+    transform: translate(-50%, calc(-50% + 10px)) scale(0.85);
   }
   9% {
     opacity: 1;
-    transform: translate(-50%, -4px) scale(1.05);
+    transform: translate(-50%, calc(-50% - 4px)) scale(1.05);
   }
   12% {
-    transform: translate(-50%, 0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
   32% {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
   38%, 100% {
     opacity: 0;
-    transform: translate(-50%, -10px) scale(1);
-  }
-}
-@keyframes pe-pastilla-derecha {
-  0%, 3% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.85);
-  }
-  9% {
-    opacity: 1;
-    transform: translateY(-4px) scale(1.05);
-  }
-  12% {
-    transform: translateY(0) scale(1);
-  }
-  32% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  38%, 100% {
-    opacity: 0;
-    transform: translateY(-10px) scale(1);
+    transform: translate(-50%, calc(-50% - 10px)) scale(1);
   }
 }
 @keyframes pe-confeti {
@@ -555,7 +591,7 @@ main:has(.modal-producto-web:not(.hidden *)) {
   }
   36%, 100% {
     opacity: 0;
-    transform: translate(var(--dx), calc(var(--dy) + 34px)) rotate(var(--rot));
+    transform: translate(var(--dx), calc(var(--dy) + var(--caida, 34px))) rotate(var(--rot));
   }
 }
 
@@ -567,10 +603,15 @@ main:has(.modal-producto-web:not(.hidden *)) {
   .pe-destello,
   .pe-subir,
   .pe-menear,
-  .pe-pastilla-centrada,
-  .pe-pastilla-derecha,
-  .pe-confeti {
+  .pe-pastilla-medio,
+  .pe-confeti,
+  .texto-aurora {
     animation: none;
+  }
+  /* Sin animación la carita quedaría invisible (parte en opacity 0). */
+  .menu-carita {
+    animation: none;
+    opacity: 1;
   }
 }
 
@@ -2319,7 +2360,8 @@ input[type='search']::-webkit-search-decoration {
    es la fuente real, así que va como @font-face local. */
 @font-face {
   font-family: 'Kunaroh';
-  src: url('./assets/fonts/Kunaroh.ttf') format('truetype');
+  /* woff2 primero (misma fuente, comprimida sin pérdida desde el .ttf); el .ttf queda de respaldo y como original. */
+  src: url('./assets/fonts/Kunaroh.woff2') format('woff2'), url('./assets/fonts/Kunaroh.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -2333,10 +2375,121 @@ input[type='search']::-webkit-search-decoration {
    local con el .ttf que subió el usuario. */
 @font-face {
   font-family: 'Heavitas';
-  src: url('./assets/fonts/Heavitas.ttf') format('truetype');
+  /* woff2 primero (misma fuente, comprimida sin pérdida desde el .ttf); el .ttf queda de respaldo y como original. */
+  src: url('./assets/fonts/Heavitas.woff2') format('woff2'), url('./assets/fonts/Heavitas.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+}
+
+/* Fuentes que antes venían de Google Fonts (Space Mono, Inter, Instrument Serif y Orbitron), ahora ALOJADAS AQUÍ.
+   Por qué: la hoja de fonts.googleapis.com y los archivos de fonts.gstatic.com eran dos conexiones a otros servidores
+   (DNS + TLS cada una) antes de poder pintar el texto con su letra; Orbitron es el logo del header, así que el logo
+   parpadeaba en cada primera carga. Servidas desde el mismo origen viajan por la conexión ya abierta, quedan en la caché
+   del service worker (funcionan sin red) y no dependen de un tercero.
+   Son EXACTAMENTE los mismos archivos woff2 que servía Google (descargados el 2026-11-13; licencia SIL OFL, que permite
+   alojarlos), con los mismos nombres de familia, pesos y unicode-range: ninguna regla font-family cambia. Solo se
+   conservan los subconjuntos latin y latin-ext (la web está en español); el navegador descarga un archivo únicamente
+   si la página usa esa familia, ese peso y algún carácter de su rango. Inter y Orbitron son variables: un archivo cubre
+   todos sus pesos. Para añadir una familia o un peso: bajar su woff2 y sumar aquí su @font-face. */
+/* Instrument Serif 400 cursiva · latin-ext */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/google/instrument-serif-latin-ext-400-italic.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Instrument Serif 400 cursiva · latin */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/google/instrument-serif-latin-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Instrument Serif 400 · latin-ext */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/google/instrument-serif-latin-ext-400.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Instrument Serif 400 · latin */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/google/instrument-serif-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Inter 400–700 · latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/google/inter-latin-ext-400-700.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Inter 400–700 · latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('./assets/fonts/google/inter-latin-400-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Orbitron 700–900 · latin */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src: url('./assets/fonts/google/orbitron-latin-700-900.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Space Mono 400 · latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/google/space-mono-latin-ext-400.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Space Mono 400 · latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/google/space-mono-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Space Mono 700 · latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/google/space-mono-latin-ext-700.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Space Mono 700 · latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/google/space-mono-latin-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 .lw-titulo-heavitas {
@@ -3171,6 +3324,43 @@ input[type='search']::-webkit-search-decoration {
   .landing-web .in-right,
   .landing-web .in-up,
   .landing-web .in-photo {
+    animation: none;
+  }
+}
+
+/* Muro de reseñas de Nosotros — cada tarjeta sube 20 px y aparece en 0,5 s, escalonadas (el retraso lo pone el JSX con
+   animation-delay, 80 ms por tarjeta en ciclos de 6). Reemplaza al <motion.div> de framer-motion con los mismos valores:
+   su curva por defecto para una transición con duración es «easeOut» = cubic-bezier(0, 0, 0.58, 1). Relleno `backwards`
+   (no `both`): durante el retraso la tarjeta espera invisible y, al terminar, la animación deja de aplicar — no queda un
+   transform retenido que cree un contexto de apilamiento sobre el vidrio (.liquid-glass). */
+.landing-web .lw-resena-entra {
+  animation: lw-resena-entra 0.5s cubic-bezier(0, 0, 0.58, 1) backwards;
+}
+@keyframes lw-resena-entra {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-resena-entra {
+    animation: none;
+  }
+}
+
+/* Aviso de estado que solo se ve si la espera se alarga («Guardando los cambios de tu carrito…»): el elemento está desde el
+   primer instante (lo anuncia el lector de pantalla), pero se pinta tras 0,4 s. Un guardado normal termina antes, así que no
+   parpadea un texto con cada clic. Con «reducir movimiento» se muestra de inmediato, sin fundido. */
+.landing-web .lw-aviso-tardio {
+  animation: lw-aviso-tardio 0.2s ease-out 0.4s backwards;
+}
+@keyframes lw-aviso-tardio {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .lw-aviso-tardio {
     animation: none;
   }
 }

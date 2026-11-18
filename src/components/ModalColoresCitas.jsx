@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { CLAVES_COLOR_CITA, REGEX_COLOR, estiloTarjetaCita } from '../lib/coloresCitas.js'
@@ -19,10 +21,6 @@ export default function ModalColoresCitas({ coloresIniciales, onCerrar, onGuarda
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
-  // Mientras guarda, Esc no cierra; el modal sigue en la pila para que tampoco cierre el de abajo.
-  useCerrarConEscape(() => {
-    if (!guardando) onCerrar()
-  })
 
   function cambiar(clave, valor) {
     setError(null)
@@ -50,6 +48,13 @@ export default function ModalColoresCitas({ coloresIniciales, onCerrar, onGuarda
     onGuardado(aGuardar)
   }
 
+  // Mientras guarda no se cierra (useAvisoDescarte lo mantiene en la pila de Esc para que tampoco cierre el de abajo).
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = { colores }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, { colores: 'Colores' })
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -59,7 +64,10 @@ export default function ModalColoresCitas({ coloresIniciales, onCerrar, onGuarda
         style={{ '--color-foco': 'var(--color-purple-300)' }}
         className="flex max-h-full w-full max-w-md flex-col rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">Colores de las citas</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Colores de las citas</h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
         <p className="mt-1 text-sm text-ink/60">
           Cada tarjeta de cita toma el color del rol de quien la agendó. Las que agenda la clienta desde la web usan el
           color de «Cliente Web».
@@ -112,7 +120,7 @@ export default function ModalColoresCitas({ coloresIniciales, onCerrar, onGuarda
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
           >
@@ -127,6 +135,7 @@ export default function ModalColoresCitas({ coloresIniciales, onCerrar, onGuarda
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

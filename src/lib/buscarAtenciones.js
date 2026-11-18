@@ -24,15 +24,23 @@ const porFechaEId = (a, b) => {
   return d !== 0 ? d : a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 }
 
+// `orden`: 'asc' (más antigua primero, el valor de siempre) o 'desc' (última agregada primero). Se aplica EN
+// EL SERVIDOR: si solo se invirtiera en el navegador, con más de `limite` pendientes se vería la última de las
+// 30 más antiguas y no la más reciente.
 // Devuelve { filas, truncado }. `truncado` = hay más coincidencias que el límite (la interfaz lo avisa
 // para que nunca parezca que la lista está completa cuando no lo está).
-export async function buscarAtenciones(supabase, termino, { excluirIds = [], limite = LIMITE_ATENCIONES } = {}) {
+export async function buscarAtenciones(
+  supabase,
+  termino,
+  { excluirIds = [], limite = LIMITE_ATENCIONES, orden = 'asc' } = {},
+) {
   const texto = termino.trim()
+  const ascendente = orden !== 'desc'
 
   if (!texto) {
     const { data, error } = await pendientes(supabase, `${CAMPOS}, servicios(nombre), clientes(nombre), usuarios(nombre_completo)`, excluirIds)
-      .order('fecha')
-      .order('id')
+      .order('fecha', { ascending: ascendente })
+      .order('id', { ascending: ascendente })
       .limit(limite + 1)
     if (error) throw error
     return { filas: (data ?? []).slice(0, limite), truncado: (data ?? []).length > limite }
@@ -44,13 +52,13 @@ export async function buscarAtenciones(supabase, termino, { excluirIds = [], lim
   const [porServicio, porCliente] = await Promise.all([
     pendientes(supabase, `${CAMPOS}, servicios!inner(nombre), clientes(nombre), usuarios(nombre_completo)`, excluirIds)
       .ilike('servicios.nombre', patron)
-      .order('fecha')
-      .order('id')
+      .order('fecha', { ascending: ascendente })
+      .order('id', { ascending: ascendente })
       .limit(limite + 1),
     pendientes(supabase, `${CAMPOS}, servicios(nombre), clientes!inner(nombre), usuarios(nombre_completo)`, excluirIds)
       .ilike('clientes.nombre', patron)
-      .order('fecha')
-      .order('id')
+      .order('fecha', { ascending: ascendente })
+      .order('id', { ascending: ascendente })
       .limit(limite + 1),
   ])
   if (porServicio.error) throw porServicio.error
@@ -58,7 +66,7 @@ export async function buscarAtenciones(supabase, termino, { excluirIds = [], lim
 
   const unicas = new Map()
   for (const fila of [...(porServicio.data ?? []), ...(porCliente.data ?? [])]) unicas.set(fila.id, fila)
-  const todas = [...unicas.values()].sort(porFechaEId)
+  const todas = [...unicas.values()].sort((a, b) => (ascendente ? porFechaEId(a, b) : porFechaEId(b, a)))
   return { filas: todas.slice(0, limite), truncado: todas.length > limite }
 }
 

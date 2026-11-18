@@ -40,6 +40,7 @@ import {
 } from '../lib/fechas.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BotonAccion from '../components/BotonAccion.jsx'
+import BotonCerrarModal from '../components/BotonCerrarModal.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
@@ -174,7 +175,8 @@ function formatearFechaCorta(fechaIso) {
 const SELECT_CITAS =
   'id, cliente_id, cliente_nombre_referencia, asistente_id, creado_por, creado_por_cliente_web_id, ' +
   'fecha_hora, estado, nota, adelanto, ' +
-  'clientes(nombre), asistentes(nombres_completos, usuario_id), ' +
+  // telefono: botón de WhatsApp junto al nombre en el detalle de la cita (solo si la clienta tiene número).
+  'clientes(nombre, telefono), asistentes(nombres_completos, usuario_id), ' +
   'cita_servicios(id, servicio_id, duracion_min, precio, servicios(nombre, precio))'
 
 // Antes, sin asistente asignado, se mostraba el nombre de quien agendó la
@@ -1145,6 +1147,22 @@ export default function Citas({ activo = true }) {
                 {nombreClienteDe(citaSeleccionada)}
               </h2>
               <span className="flex shrink-0 items-center gap-1.5">
+                {/* WhatsApp pegado a la izquierda de la cápsula de estado: abre el chat de la clienta. Sin número
+                    (o cita sin clienta registrada, solo con nombre de referencia) no se muestra nada. -my-2 para
+                    que el botón (40px de zona táctil) no estire la cabecera; -mr-1.5 lo arrima a la cápsula. */}
+                {citaSeleccionada.clientes?.telefono?.replace(/\D/g, '') && (
+                  <span className="-my-2 -mr-1.5 flex">
+                    <BotonAccion
+                      icono={MessageCircle}
+                      texto="WhatsApp"
+                      color="verde"
+                      href={`https://wa.me/${numeroWhatsapp(citaSeleccionada.clientes.telefono)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sinBorde
+                    />
+                  </span>
+                )}
                 {esCitaWeb(citaSeleccionada) && <CapsulaClienteWeb />}
                 <span
                   className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
@@ -1152,6 +1170,10 @@ export default function Citas({ activo = true }) {
                   }`}
                 >
                   {(ESTADOS[citaSeleccionada.estado] ?? ESTADOS.PENDIENTE).label}
+                </span>
+                {/* ml: el botón usa margen negativo para agrandar su zona táctil; así no tapa la cápsula. */}
+                <span className="ml-3 flex">
+                  <BotonCerrarModal onClick={() => setCitaSeleccionada(null)} />
                 </span>
               </span>
             </div>

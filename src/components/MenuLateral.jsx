@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ArrowBigDown } from 'lucide-react'
+import { ArrowBigDown, Smile } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { secciones } from '../config/navegacion.js'
 import IconoMartillo from './IconoMartillo.jsx'
+import { actualizarMetaDesdeMenu, useMetaCumplida } from '../lib/metaDashboard.js'
 
 function clasesFila(seccion, isActive, opacidadRosaInactiva, opacidadRojoInactiva) {
   const esRosa = seccion.tema === 'rosa'
@@ -24,10 +25,105 @@ function clasesFila(seccion, isActive, opacidadRosaInactiva, opacidadRojoInactiv
     : 'border-transparent text-ink/70 hover:bg-surface-2 hover:text-ink'
 }
 
+// Meta del Dashboard cumplida: el ícono de «Dashboard» se pinta con este
+// degradado aurora (lucide pone `color` en el stroke, así que basta
+// color="url(#…)"). El degradado se repite y se desplaza en bucle, como la
+// barra del Punto de equilibrio.
+const ID_DEGRADADO_AURORA = 'degradado-aurora-menu'
+const COLORES_AURORA = ['#d8b4fe', '#ed8bac', '#ffd9a0', '#8ff0ab', '#9ad1ff', '#d8b4fe']
+
+// `animar` = el menú está abierto. Cerrado, el cajón sigue montado fuera de pantalla: sin esto el degradado se seguía
+// desplazando en bucle (repintando el ícono) detrás de cualquier pestaña.
+function DegradadoAurora({ animar }) {
+  const sinMovimiento =
+    !animar ||
+    (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+  return (
+    <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient
+          id={ID_DEGRADADO_AURORA}
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1="0"
+          x2="24"
+          y2="0"
+          spreadMethod="repeat"
+        >
+          {COLORES_AURORA.map((color, indice) => (
+            <stop key={indice} offset={indice / (COLORES_AURORA.length - 1)} stopColor={color} />
+          ))}
+          {!sinMovimiento && (
+            <animateTransform
+              attributeName="gradientTransform"
+              type="translate"
+              from="0 0"
+              to="24 0"
+              dur="3s"
+              repeatCount="indefinite"
+            />
+          )}
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
+// La carita del «¡Meta cumplida!» (sin la pastilla) a la derecha de la
+// palabra, con un confeti en miniatura: mismo ciclo de 8 s que la tarjeta.
+// Piezas de 2×4 px repartidas en abanico (hasta ~30 px a los lados y ~16 px
+// hacia arriba) para que se vean sueltas y no como un manchón. Caben de
+// sobra: a la derecha de la carita quedan unos 40 px de cajón y «Dashboard»
+// es la primera fila (hay ~20 px libres encima).
+const CONFETI_MENU = [
+  { dx: -30, dy: -8, rot: 260, color: '#ed8bac' },
+  { dx: -22, dy: -15, rot: -200, color: '#d8b4fe' },
+  { dx: -12, dy: -18, rot: 320, color: '#3ecf6a' },
+  { dx: -3, dy: -13, rot: -120, color: '#ffd9a0' },
+  { dx: 6, dy: -19, rot: 200, color: '#9ad1ff' },
+  { dx: 15, dy: -14, rot: -280, color: '#3ecf6a' },
+  { dx: 24, dy: -17, rot: 150, color: '#ed8bac' },
+  { dx: 31, dy: -7, rot: -240, color: '#ffd9a0' },
+  { dx: -26, dy: 3, rot: 180, color: '#9ad1ff' },
+  { dx: 28, dy: 4, rot: -160, color: '#d8b4fe' },
+]
+
+function CaritaMetaMenu() {
+  return (
+    <span aria-hidden="true" className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+      {CONFETI_MENU.map((pieza, indice) => (
+        <span
+          key={indice}
+          className="pe-confeti pe-confeti-mini left-1/2 top-1/2 -ml-px -mt-[2px]"
+          style={{
+            '--dx': `${pieza.dx}px`,
+            '--dy': `${pieza.dy}px`,
+            '--rot': `${pieza.rot}deg`,
+            background: pieza.color,
+          }}
+        />
+      ))}
+      <span className="menu-carita relative z-[4] flex">
+        <Smile className="pe-menear h-4 w-4 text-[#3ecf6a]" strokeWidth={2} />
+      </span>
+    </span>
+  )
+}
+
 export default function MenuLateral({ abierto, onCerrar }) {
   const { rol } = useAuth()
   const { tema } = useTheme()
+  // Con la meta del Dashboard cumplida, la palabra «Dashboard» brilla con los
+  // colores de la aurora (sin borde; .texto-aurora en index.css).
+  const metaCumplida = useMetaCumplida()
   const seccionesVisibles = secciones.filter((seccion) => seccion.roles.includes(rol))
+  const veDashboard = seccionesVisibles.some((seccion) => seccion.path === '/dashboard')
+
+  // El brillo no depende de haber abierto el Dashboard: al abrir el menú, si la pestaña no está montada, se calcula la
+  // meta aquí mismo (lib/metaDashboard.js; como mucho una consulta por minuto).
+  useEffect(() => {
+    if (abierto && veDashboard) actualizarMetaDesdeMenu()
+  }, [abierto, veDashboard])
   // Las pestañas con "padre" (ej. Deudas -> Clientes) no aparecen sueltas
   // en la lista — solo se revelan al desplegar la pestaña de la que
   // cuelgan (ver abajo, seccionesAbiertas).
@@ -78,9 +174,12 @@ export default function MenuLateral({ abierto, onCerrar }) {
         className={`absolute inset-y-0 left-0 flex w-48 flex-col overflow-y-auto overscroll-contain border-r border-border bg-bg py-3 transition-transform duration-300 ease-in-out ${
           abierto
             ? 'translate-x-0 shadow-[4px_0_16px_rgba(0,0,0,0.45)]'
-            : '-translate-x-full pointer-events-none'
+            : 'menu-lateral-quieto -translate-x-full pointer-events-none'
         }`}
       >
+        {/* El brillo de la meta siempre está; solo se anima con el menú abierto (.menu-lateral-quieto en index.css
+            corta las animaciones y, al abrir, arrancan desde el principio: la carita y el confeti salen enseguida). */}
+        {metaCumplida && <DegradadoAurora animar={abierto} />}
         {seccionesTop.map((seccion) => {
           const hijos = seccionesVisibles.filter((otra) => otra.padre === seccion.path)
           const tieneHijos = hijos.length > 0
@@ -101,10 +200,22 @@ export default function MenuLateral({ abierto, onCerrar }) {
                 >
                   {seccion.animado ? (
                     <IconoMartillo animando={abierto} className="h-4 w-4 shrink-0" />
+                  ) : metaCumplida && seccion.path === '/dashboard' ? (
+                    <seccion.icono
+                      color={`url(#${ID_DEGRADADO_AURORA})`}
+                      className="icono-aurora h-4 w-4 shrink-0"
+                    />
                   ) : (
                     <seccion.icono className="h-4 w-4 shrink-0" />
                   )}
-                  <span className="truncate">{seccion.label}</span>
+                  <span
+                    className={`truncate ${
+                      metaCumplida && seccion.path === '/dashboard' ? 'texto-aurora' : ''
+                    }`}
+                  >
+                    {seccion.label}
+                  </span>
+                  {metaCumplida && seccion.path === '/dashboard' && <CaritaMetaMenu />}
                 </NavLink>
 
                 {tieneHijos && (

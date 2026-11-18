@@ -46,25 +46,49 @@
           ?.setAttribute('content', tema === 'claro' ? '#f5f4f1' : '#0a0a0a')
       })()
     </script>
+    <script>
+      // Foto principal de Inicio (el elemento más grande de la página de aterrizaje). Sin esto el navegador la descubría recién
+      // cuando React pintaba el hero: después de bajar el JS de entrada, resolver la sesión y bajar los chunks del portal. Con
+      // el <link rel="preload"> empieza a bajar a la vez que ese JS. Solo en / o /inicio, y solo si esta visita va a montar el
+      // portal: misma regla que precargaTemprana() en src/config/paginasCliente.js (sin sesión guardada, o pista «portal») y
+      // mismo tema que TemaWebContext.jsx (clave jaise-tema-web) — si cambian allá, cambiar también acá. El <img> del hero pide
+      // exactamente esta URL, así que reutiliza la descarga (no se baja dos veces).
+      ;(function () {
+        try {
+          var base = '%BASE_URL%'
+          var l = window.location
+          // GitHub Pages: public/404.html reenvía /PosJaise/inicio como /PosJaise/?/inicio (ver el script del <body>).
+          var ruta = l.search.charAt(1) === '/' ? l.search.slice(1).split('&')[0] : l.pathname.slice(base.length - 1) || '/'
+          if (!/^\/(inicio\/?)?$/.test(ruta)) return
+          var haySesion = false
+          for (var i = 0; i < localStorage.length; i++) {
+            if (/^sb-.+-auth-token$/.test(localStorage.key(i) || '')) haySesion = true
+          }
+          if (haySesion && localStorage.getItem('jaise-arbol') !== 'portal') return
+          var tema = localStorage.getItem('jaise-tema-web') === 'claro' ? 'claro' : 'oscuro'
+          var enlace = document.createElement('link')
+          enlace.rel = 'preload'
+          enlace.as = 'image'
+          enlace.type = 'image/webp'
+          enlace.setAttribute('fetchpriority', 'high')
+          // Pantalla chica: la variante de 1280 px (misma consulta que MEDIA_HERO_CHICO en InicioCliente.jsx).
+          var chica = window.matchMedia('(max-width: 639px)').matches
+          enlace.href = base + 'inicio-web/hero-despues-' + tema + (chica ? '-1280' : '') + '.webp'
+          document.head.appendChild(enlace)
+        } catch (e) {
+          // Almacenamiento bloqueado: la foto se pide al pintar el hero, como antes.
+        }
+      })()
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Pos Jaise Beauty Academy" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Fase 8 (PERF-11): Google Fonts ya no bloquea el primer render. La hoja se pide con media="print" y se activa al cargar
-         (patrón estándar; `display=swap` ya hacía que el texto apareciera con la fuente de reserva y cambiara después, así que el
-         resultado visual final es el mismo). <noscript> conserva la carga normal sin JavaScript. Se quitó Outfit: ninguna regla CSS,
-         componente ni página la usa (solo estaba declarada aquí). El resto de familias y pesos se mantiene tal cual. -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=Orbitron:wght@700;800;900&display=swap" />
-    </noscript>
+    <!-- Tipografías (Space Mono, Inter, Instrument Serif, Orbitron): ya NO se piden a Google Fonts. Están alojadas en
+         src/assets/fonts/google/ y declaradas en src/index.css (@font-face, mismos archivos, familias y pesos): sin conexiones a
+         fonts.googleapis.com / fonts.gstatic.com. Para sumar una familia o un peso, ver el comentario de ese bloque. -->
+    <!-- La del logo del header del portal (Orbitron) se precarga desde src/config/paginasCliente.js (precargarFuenteLogo), solo
+         cuando la visita monta el portal: el POS no la usa y no la descarga. -->
     <title>Pos Jaise Beauty Academy</title>
   </head>
   <body>

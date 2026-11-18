@@ -1,15 +1,27 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from './AuthContext.jsx'
 
 const EstadoNegocioContext = createContext(null)
 
+const COLUMNAS =
+  'abierto, cuenta_transferencia, yape_numero, yape_titular, yape_qr_url, ' +
+  'plin_numero, plin_titular, plin_qr_url, adelanto_minimo, cancelacion_plazo_horas'
+// Una clienta no tiene canal Realtime (ver abajo): su copia se vuelve a leer al volver a la pestaña o al abrir un carrito,
+// pero no más de una vez por minuto.
+const FRESCURA_MS = 60_000
+
 // Única fuente de verdad: la fila public.estado_negocio en Supabase (ver
 // 44_estado_negocio.sql), no una variable local — todo dispositivo
-// conectado la lee al montar y se mantiene al día vía Realtime, sin
-// necesidad de recargar la página.
+// conectado la lee al montar. El PERSONAL se mantiene al día vía Realtime, sin
+// recargar la página (abrir/cerrar el negocio tiene que verse al instante en
+// todas las cajas). Una CLIENTA no abre ese canal: era el único de todo el
+// portal, así que cada clienta con la web abierta mantenía un WebSocket vivo
+// (y ocupaba una conexión simultánea de Realtime del proyecto) para una fila
+// que casi nunca cambia. Su copia se refresca al volver a la pestaña y al
+// abrir un carrito (refrescar), que es donde se leen los datos de pago.
 export function EstadoNegocioProvider({ children }) {
-  const { session, cargando: cargandoAuth } = useAuth()
+  const { session, cargando: cargandoAuth, rol } = useAuth()
   // Fail-open a propósito: esto es solo para la UI (mostrar el aviso,
   // habilitar/deshabilitar botones). La barrera real está en el servidor
   // (RLS + RPCs en 45_negocio_cerrado_bloquea_escrituras.sql), así que un
@@ -43,6 +55,31 @@ export function EstadoNegocioProvider({ children }) {
   // «Esperando» solo importa para el visitante: con una cuenta ya identificada el efecto no debe reiniciarse cuando la auth
   // termina de cargar el perfil (eso repetía la lectura y el canal Realtime sin que nada hubiera cambiado).
   const esperandoVisitante = !usuarioId && cargandoAuth
+  const cuentaActualRef = useRef(usuarioId)
+  useEffect(() => {
+    cuentaActualRef.current = usuarioId
+  }, [usuarioId])
+  const ultimaLecturaRef = useRef(0)
+
+  const aplicarFila = useCallback((fila) => {
+    setAbierto(fila.abierto)
+    setCuentaTransferencia(fila.cuenta_transferencia ?? '')
+    setPagos({
+      yapeNumero: fila.yape_numero ?? '',
+      yapeTitular: fila.yape_titular ?? '',
+      yapeQrUrl: fila.yape_qr_url ?? null,
+      plinNumero: fila.plin_numero ?? '',
+      plinTitular: fila.plin_titular ?? '',
+      plinQrUrl: fila.plin_qr_url ?? null,
+    })
+    setAdelantoMinimo(fila.adelanto_minimo ?? null)
+    setCancelacionPlazoHoras(fila.cancelacion_plazo_horas ?? null)
+  }, [])
+
+  const leerFila = useCallback(() => {
+    ultimaLecturaRef.current = Date.now()
+    return supabase.from('estado_negocio').select(COLUMNAS).eq('id', 1).maybeSingle()
+  }, [])
 
   useEffect(() => {
     if (!usuarioId) {
@@ -73,36 +110,22 @@ export function EstadoNegocioProvider({ children }) {
     }
 
     let vigente = true
-
-    function aplicarFila(fila) {
-      setAbierto(fila.abierto)
-      setCuentaTransferencia(fila.cuenta_transferencia ?? '')
-      setPagos({
-        yapeNumero: fila.yape_numero ?? '',
-        yapeTitular: fila.yape_titular ?? '',
-        yapeQrUrl: fila.yape_qr_url ?? null,
-        plinNumero: fila.plin_numero ?? '',
-        plinTitular: fila.plin_titular ?? '',
-        plinQrUrl: fila.plin_qr_url ?? null,
-      })
-      setAdelantoMinimo(fila.adelanto_minimo ?? null)
-      setCancelacionPlazoHoras(fila.cancelacion_plazo_horas ?? null)
+    leerFila().then(({ data }) => {
+      if (!vigente) return
+      if (data) aplicarFila(data)
+      setCargando(false)
+    })
+    return () => {
+      vigente = false
     }
+  }, [usuarioId, esperandoVisitante, aplicarFila, leerFila])
 
-    supabase
-      .from('estado_negocio')
-      .select(
-        'abierto, cuenta_transferencia, yape_numero, yape_titular, yape_qr_url, ' +
-          'plin_numero, plin_titular, plin_qr_url, adelanto_minimo, cancelacion_plazo_horas',
-      )
-      .eq('id', 1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!vigente) return
-        if (data) aplicarFila(data)
-        setCargando(false)
-      })
-
+  // Canal Realtime: solo el personal (también cuando mira su perfil de clienta: conserva su rol). Va en un efecto aparte del
+  // de la lectura para que conocer el rol —que llega después de la sesión— no repita la lectura (Fase 5).
+  const esPersonal = Boolean(rol) && rol !== 'CLIENTE'
+  useEffect(() => {
+    if (!usuarioId || !esPersonal) return undefined
+    let vigente = true
     const canal = supabase
       .channel('estado_negocio')
       .on(
@@ -114,12 +137,32 @@ export function EstadoNegocioProvider({ children }) {
         },
       )
       .subscribe()
-
     return () => {
       vigente = false
       supabase.removeChannel(canal)
     }
-  }, [usuarioId, esperandoVisitante])
+  }, [usuarioId, esPersonal, aplicarFila])
+
+  // Clienta: sin canal, la fila se vuelve a leer cuando hace falta que esté al día. No hace nada para el personal (ya tiene
+  // el canal) ni para el visitante (no lee esta tabla), ni si la última lectura es de hace menos de un minuto.
+  const esClienta = Boolean(usuarioId) && rol === 'CLIENTE'
+  const refrescar = useCallback(() => {
+    if (!esClienta || Date.now() - ultimaLecturaRef.current < FRESCURA_MS) return
+    const cuenta = usuarioId
+    leerFila().then(({ data }) => {
+      // Si mientras tanto cambió la cuenta (cierre de sesión), esta respuesta ya no es de nadie.
+      if (data && cuentaActualRef.current === cuenta) aplicarFila(data)
+    })
+  }, [esClienta, usuarioId, aplicarFila, leerFila])
+
+  useEffect(() => {
+    if (!esClienta) return undefined
+    const alVolver = () => {
+      if (document.visibilityState === 'visible') refrescar()
+    }
+    document.addEventListener('visibilitychange', alVolver)
+    return () => document.removeEventListener('visibilitychange', alVolver)
+  }, [esClienta, refrescar])
 
   // El servidor decide quién puede llamar esto (RLS admin-only) — acá no
   // se repite ese chequeo, solo se propaga el error si Supabase lo rechaza.
@@ -153,6 +196,7 @@ export function EstadoNegocioProvider({ children }) {
       cargando,
       cambiarEstado,
       cambiarCuentaTransferencia,
+      refrescar,
     }),
     [
       abierto,
@@ -163,6 +207,7 @@ export function EstadoNegocioProvider({ children }) {
       cargando,
       cambiarEstado,
       cambiarCuentaTransferencia,
+      refrescar,
     ],
   )
 

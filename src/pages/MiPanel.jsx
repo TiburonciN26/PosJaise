@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   NotebookPen,
@@ -169,20 +169,29 @@ export default function MiPanel({ activo = true }) {
   useModalA11y(panelEliminarRef, Boolean(registroAEliminar))
   useModalA11y(panelCancelarRef, Boolean(registroACancelar))
 
+  // Todo el personal (cualquier rol salvo CLIENTE), incluidas otras
+  // administradoras: antes solo se pedían ASISTENTE/ENCARGADA/PERSONAL_APOYO
+  // y una admin con atenciones (ej. la dueña) salía en «Todos» pero no se
+  // podía elegir sola. La RLS de usuarios ya deja al admin leer a todos.
+  // La propia cuenta va aparte con «(yo)», así que se excluye de la lista.
   useEffect(() => {
-    if (!esAdmin) return
+    if (!esAdmin || !usuario) return
     supabase
       .from('usuarios')
-      .select('id, nombre_completo')
-      .in('rol', ['ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO'])
+      .select('id, nombre_completo, rol')
+      .neq('rol', 'CLIENTE')
+      .neq('id', usuario.id)
       .order('nombre_completo')
       .then(({ data }) => setAsistentesUsuarios(data ?? []))
-  }, [esAdmin])
+  }, [esAdmin, usuario])
 
   const opcionesFiltroUsuario = [
     { id: OPCION_TODOS, label: 'Todos' },
     ...(usuario ? [{ id: usuario.id, label: `${usuario.nombre_completo} (yo)` }] : []),
-    ...asistentesUsuarios.map((a) => ({ id: a.id, label: a.nombre_completo })),
+    ...asistentesUsuarios.map((a) => ({
+      id: a.id,
+      label: a.rol === 'ADMINISTRADOR' ? `${a.nombre_completo} (admin)` : a.nombre_completo,
+    })),
   ]
 
   // Con búsqueda de texto activa, paginar rompería el resultado (la búsqueda
@@ -204,9 +213,12 @@ export default function MiPanel({ activo = true }) {
   // precio del servicio (ingreso), como siempre — pero filtrando por una
   // asistente puntual (paga por %, no por precio) necesita ver lo que de
   // verdad le corresponde a ella, no el precio del servicio que cobró el
-  // negocio. asistentesUsuarios ya solo trae cuentas rol=ASISTENTE, ENCARGADA o PERSONAL_APOYO.
+  // negocio. Otra administradora cuenta como la propia: sus atenciones se
+  // guardan al 100% (trigger de comisión), así que se muestra el precio.
   const filtroEsAsistente =
-    esAdmin && usuarioFiltro !== OPCION_TODOS && asistentesUsuarios.some((a) => a.id === usuarioFiltro)
+    esAdmin &&
+    usuarioFiltro !== OPCION_TODOS &&
+    asistentesUsuarios.some((a) => a.id === usuarioFiltro && a.rol !== 'ADMINISTRADOR')
 
   function construirConsultaRegistros(desde, hasta) {
     let consulta = supabase
@@ -423,10 +435,27 @@ export default function MiPanel({ activo = true }) {
     cargarRegistros(vigenteRef.current, true)
   }
 
+  // El aviso queda «abierto» mientras todas sus atenciones (y su día) estén desplegadas. Se deduce de lo que está
+  // abierto en vez de guardarlo aparte, así no queda desfasado si la usuaria cierra a mano alguno de esos días.
+  function avisoAbierto(lista) {
+    return (
+      lista.length > 0 &&
+      lista.every((p) => registrosAbiertos.has(p.id) && diasAbiertos.has(claveDiaLima(new Date(p.fecha))))
+    )
+  }
+
   // «Ver» del aviso: deja a la vista esas atenciones (amplía el período si alguna es anterior, en la admin cambia el
-  // filtro de persona si hace falta) y abre su día y su detalle.
+  // filtro de persona si hace falta) y abre su día y su detalle. Si ya estaban todas abiertas, el mismo botón
+  // («Ocultar») cierra esas atenciones y sus días, sin tocar los filtros.
   function verPendientes(lista) {
     if (lista.length === 0) return
+    if (avisoAbierto(lista)) {
+      const dias = new Set(lista.map((p) => claveDiaLima(new Date(p.fecha))))
+      const ids = new Set(lista.map((p) => p.id))
+      setDiasAbiertos((anterior) => new Set([...anterior].filter((clave) => !dias.has(clave))))
+      setRegistrosAbiertos((anterior) => new Set([...anterior].filter((id) => !ids.has(id))))
+      return
+    }
     const fechas = lista.map((p) => new Date(p.fecha))
     const { desde, hasta } = calcularRango(filtro, personalizado)
     if (!fechas.every((f) => f >= desde && f < hasta)) {
@@ -458,9 +487,28 @@ export default function MiPanel({ activo = true }) {
     setRegistrosAbiertos((anterior) => new Set([...anterior, ...lista.map((p) => p.id)]))
   }
 
-  const porcentajeDePendiente = new Map(pendientes.map((p) => [p.id, p.porcentaje]))
-  const pendientesListas = pendientes.filter((p) => p.porcentaje != null)
-  const pendientesEsperando = pendientes.filter((p) => p.porcentaje == null)
+  // Derivados de `pendientes` memorizados: abrir/cerrar un día re-renderiza la pestaña entera y no hace falta
+  // recalcularlos en cada clic (solo cambian al recargar).
+  const { porcentajeDePendiente, pendientesListas, pendientesEsperando, sinAsignarPorDia } = useMemo(() => {
+    const esperando = pendientes.filter((p) => p.porcentaje == null)
+    // Atenciones sin % por día (clave Lima). Sale de `pendientes`, no de la lista cargada: la lista puede estar
+    // filtrada por persona (la admin entra viendo su propio panel y las notas son de las asistentes) o paginada, y el
+    // punto rosa debe verse igual, coherente con el aviso.
+    const porDia = new Map()
+    for (const p of esperando) {
+      const clave = claveDiaLima(new Date(p.fecha))
+      if (!porDia.has(clave)) porDia.set(clave, [])
+      porDia.get(clave).push(p)
+    }
+    return {
+      porcentajeDePendiente: new Map(pendientes.map((p) => [p.id, p.porcentaje])),
+      pendientesListas: pendientes.filter((p) => p.porcentaje != null),
+      pendientesEsperando: esperando,
+      sinAsignarPorDia: porDia,
+    }
+  }, [pendientes])
+  const avisoListasAbierto = avisoAbierto(pendientesListas)
+  const avisoEsperandoAbierto = avisoAbierto(pendientesEsperando)
   const cuantas = (n) => (n === 1 ? '1 atención' : `${n} atenciones`)
 
   const registrosFiltrados = busqueda.trim()
@@ -571,8 +619,8 @@ export default function MiPanel({ activo = true }) {
           <CheckCircle2 className="h-4 w-4 shrink-0 text-green" />
           <span>
             {esAdmin
-              ? `${cuantas(pendientesListas.length)} ya ${pendientesListas.length === 1 ? 'tiene' : 'tienen'} su % asignado: falta que quien la anotó la confirme. Ver`
-              : `El administrador asignó tu porcentaje: ${pendientesListas.length === 1 ? 'tienes 1 atención' : `tienes ${pendientesListas.length} atenciones`} por confirmar. Ver`}
+              ? `${cuantas(pendientesListas.length)} ya ${pendientesListas.length === 1 ? 'tiene' : 'tienen'} su % asignado: falta que quien la anotó la confirme. ${avisoListasAbierto ? 'Ocultar' : 'Ver'}`
+              : `El administrador asignó tu porcentaje: ${pendientesListas.length === 1 ? 'tienes 1 atención' : `tienes ${pendientesListas.length} atenciones`} por confirmar. ${avisoListasAbierto ? 'Ocultar' : 'Ver'}`}
           </span>
         </button>
       )}
@@ -585,8 +633,8 @@ export default function MiPanel({ activo = true }) {
           <NotebookPen className="h-4 w-4 shrink-0 text-amber" />
           <span>
             {esAdmin
-              ? `${cuantas(pendientesEsperando.length)} sin % asignado. Asígnalo en Porcentajes para que la puedan confirmar. Ver`
-              : `${cuantas(pendientesEsperando.length)} pendiente${pendientesEsperando.length === 1 ? '' : 's'} de comisión: esperando que el administrador asigne tu porcentaje. Ver`}
+              ? `${cuantas(pendientesEsperando.length)} sin % asignado. Asígnalo en Porcentajes para que la puedan confirmar. ${avisoEsperandoAbierto ? 'Ocultar' : 'Ver'}`
+              : `${cuantas(pendientesEsperando.length)} pendiente${pendientesEsperando.length === 1 ? '' : 's'} de comisión: esperando que el administrador asigne tu porcentaje. ${avisoEsperandoAbierto ? 'Ocultar' : 'Ver'}`}
           </span>
         </button>
       )}
@@ -618,6 +666,13 @@ export default function MiPanel({ activo = true }) {
             const totalDia = sumarMontos(registrosActivosDia, (r) =>
               montoDeRegistro(r, esAdmin && !filtroEsAsistente),
             )
+            // Punto rosa en la esquina: el día tiene alguna atención sin % asignado, para ubicarla sin abrir todos.
+            const sinAsignarDelDia = sinAsignarPorDia.get(grupo.clave) ?? []
+            const sinAsignarDia = sinAsignarDelDia.length > 0
+            // Las que no están en la lista de este día (otra persona con el filtro actual, o en una página aún no
+            // cargada): se avisa dentro del día con un «Ver» que las trae, igual que el aviso de arriba.
+            const idsDelDia = sinAsignarDia ? new Set(grupo.registros.map((r) => r.id)) : null
+            const sinAsignarOcultas = sinAsignarDelDia.filter((p) => !idsDelDia?.has(p.id))
 
             return (
               <div
@@ -626,17 +681,34 @@ export default function MiPanel({ activo = true }) {
                   abierto ? 'rounded-none border-l-2 border-l-purple-300 bg-purple-300/5' : 'rounded-lg'
                 }`}
               >
+                {sinAsignarDia && (
+                  <span
+                    aria-hidden="true"
+                    title="Tiene atenciones sin % asignado"
+                    className="pointer-events-none absolute -left-1 -top-1 z-[1] h-2.5 w-2.5 rounded-full bg-purple-300 ring-2 ring-bg"
+                  />
+                )}
                 <button
                   type="button"
                   onClick={() => alternarDia(grupo.clave)}
+                  aria-label={sinAsignarDia ? `${formatearTituloDia(grupo.fecha)}: tiene atenciones sin % asignado` : undefined}
                   className="flex w-full items-center gap-2 px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) text-left"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <p className="text-sm font-medium text-ink">
+                      {/* Abierto: toda la cabecera se pinta rosa (día, fecha, servicios, monto y flecha). */}
+                      <p
+                        className={`text-sm font-medium transition-colors duration-300 ${
+                          abierto ? 'text-purple-300' : 'text-ink'
+                        }`}
+                      >
                         {formatearTituloDia(grupo.fecha)}
                       </p>
-                      <span className="text-xs text-ink/60">
+                      <span
+                        className={`text-xs transition-colors duration-300 ${
+                          abierto ? 'text-purple-300' : 'text-ink/60'
+                        }`}
+                      >
                         {registrosActivosDia.length} servicio
                         {registrosActivosDia.length === 1 ? '' : 's'}
                       </span>
@@ -646,14 +718,30 @@ export default function MiPanel({ activo = true }) {
                     {formatearSoles(totalDia)}
                   </span>
                   <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
-                      abierto ? 'rotate-180' : ''
+                    className={`h-4 w-4 shrink-0 transition-[transform,color] duration-300 ${
+                      abierto ? 'rotate-180 text-purple-300' : 'text-ink/60'
                     }`}
                   />
                 </button>
 
-                <CampoColapsable abierto={abierto}>
+                {/* diferido: los registros de un día cerrado no se montan. Sin esto, cada clic re-renderizaba todas
+                    las atenciones de todos los días con su detalle (cientos de filas) y abrir/cerrar se sentía lento.
+                    No hay borradores dentro (solo lectura y botones), así que desmontarlos no pierde nada. */}
+                <CampoColapsable abierto={abierto} diferido>
                   <div className="space-y-2 border-t border-border p-3">
+                    {sinAsignarOcultas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => verPendientes(sinAsignarOcultas)}
+                        className="flex w-full items-center gap-2 rounded-lg border border-purple-300/40 bg-purple-300/10 px-2.5 py-1.5 text-left text-xs text-ink/80 transition-colors hover:border-purple-300"
+                      >
+                        <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-purple-300" />
+                        <span>
+                          {cuantas(sinAsignarOcultas.length)} sin % asignado este día no{' '}
+                          {sinAsignarOcultas.length === 1 ? 'aparece' : 'aparecen'} con el filtro actual. Ver
+                        </span>
+                      </button>
+                    )}
                     {grupo.registros.map((registro) => {
                       const tieneComision =
                         registro.porcentaje_aplicado != null && registro.pago_asistente != null
@@ -754,7 +842,7 @@ export default function MiPanel({ activo = true }) {
                             </div>
                           </div>
 
-                          <CampoColapsable abierto={registroAbierto}>
+                          <CampoColapsable abierto={registroAbierto} diferido>
                             <div className="space-y-2 border-t border-border/60 px-2.5 pb-2.5 pt-2">
                               {pendiente &&
                                 (porcentajeNota != null ? (

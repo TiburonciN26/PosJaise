@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, Plus, Package } from 'lucide-react'
+import { Pencil, Trash2, Plus, Package, ArrowBigDown, ImageOff, ZoomIn, Barcode, Printer } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -9,12 +9,20 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import { formatearSoles } from '../lib/moneda.js'
+import { urlPublicaFoto } from '../lib/imagenes.js'
+import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { imprimirEtiqueta } from '../lib/codigoBarras.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import ModalProducto from '../components/ModalProducto.jsx'
 import { SELECT_PRODUCTOS } from '../lib/columnasCatalogo.js'
 import ModalAgregarStock from '../components/ModalAgregarStock.jsx'
 import ModalDetalleProducto from '../components/ModalDetalleProducto.jsx'
+import ModalVisorFoto from '../components/ModalVisorFoto.jsx'
+import ModalCodigosBarras from '../components/ModalCodigosBarras.jsx'
+import HistorialStockProducto from '../components/HistorialStockProducto.jsx'
+import ProveedoresDelProducto from '../components/ProveedoresDelProducto.jsx'
+import CampoColapsable from '../components/CampoColapsable.jsx'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
@@ -22,7 +30,12 @@ import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 
+// «Últimos agregados»: lo más reciente primero, sea una ficha nueva o una existente a la que se le sumó stock
+// (`ultimo_ingreso` de productos_vista, migración 20261112000013). Es el orden por defecto.
+const ORDEN_POR_DEFECTO = 'reciente'
+
 const OPCIONES_ORDEN = [
+  { id: 'reciente', label: 'Últimos agregados' },
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
   { id: 'nombre-desc', label: 'Nombre (Z-A)' },
   { id: 'precio-asc', label: 'Venta (menor a mayor)' },
@@ -34,6 +47,8 @@ const OPCIONES_ORDEN = [
 ]
 
 const ORDEN_A_COLUMNA = {
+  // Las fichas antiguas sin movimientos de stock no tienen fecha (null): van al final, no al principio.
+  reciente: { columna: 'ultimo_ingreso', ascending: false, nullsFirst: false },
   'nombre-asc': { columna: 'nombre', ascending: true },
   'nombre-desc': { columna: 'nombre', ascending: false },
   'costo-asc': { columna: 'costo', ascending: true },
@@ -74,8 +89,11 @@ function construirConsultaProductos({ busqueda, orden, filtroStock }) {
   if (filtroStock === 'bajo') consulta = consulta.eq('stock_bajo', true)
   if (filtroStock === 'sin_stock') consulta = consulta.eq('sin_stock', true)
 
-  const { columna, ascending } = ORDEN_A_COLUMNA[orden] ?? ORDEN_A_COLUMNA['nombre-asc']
-  return consulta.order(columna, { ascending })
+  const { columna, ascending, nullsFirst } = ORDEN_A_COLUMNA[orden] ?? ORDEN_A_COLUMNA[ORDEN_POR_DEFECTO]
+  // Desempate por nombre y luego id: sin él, filas con la misma fecha (o varias sin fecha) pueden repetirse o saltarse
+  // entre páginas de «Cargar más».
+  const ordenada = consulta.order(columna, nullsFirst === undefined ? { ascending } : { ascending, nullsFirst })
+  return (columna === 'nombre' ? ordenada : ordenada.order('nombre', { ascending: true })).order('id', { ascending: true })
 }
 
 function formatearNumero(monto) {
@@ -102,13 +120,19 @@ export default function Inventario({ activo = true }) {
   const [error, setError] = useState(null)
   const [busqueda, setBusqueda] = useEstadoVista('/inventario:busqueda', '')
   const busquedaDebounced = useDebounce(busqueda, 300)
-  const [orden, setOrden] = useEstadoVista('/inventario:orden', 'nombre-asc')
+  const [orden, setOrden] = useEstadoVista('/inventario:orden', ORDEN_POR_DEFECTO)
   const [filtroStock, setFiltroStock] = useEstadoVista('/inventario:filtroStock', 'todos') // 'todos' | 'bajo' | 'sin_stock'
   const [modalProducto, setModalProducto] = useState(null) // null | 'nuevo' | producto
   const [productoAEliminar, setProductoAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
   const [productoParaAgregarStock, setProductoParaAgregarStock] = useState(null)
-  const [productoDetalle, setProductoDetalle] = useState(null) // { producto, mostrarAcciones } | null
+  const [productoDetalle, setProductoDetalle] = useState(null) // { producto, mostrarAcciones } | null (solo escritorio)
+  const [abiertos, setAbiertos] = useState(() => new Set()) // tarjetas móviles desplegadas
+  const [fotoVisor, setFotoVisor] = useState(null) // { url, alt } | null
+  const [mostrarCodigos, setMostrarCodigos] = useState(false)
+  // Sube al guardar un producto, agregar stock o editar/eliminar un proveedor desde un desplegable: remonta los bloques de
+  // proveedores e historial de las tarjetas abiertas para que muestren lo nuevo.
+  const [versionProveedores, setVersionProveedores] = useState(0)
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: mismo guard que la carga inicial, para que
   // cargarMasProductos descarte una respuesta que llega tarde de un
@@ -198,6 +222,21 @@ export default function Inventario({ activo = true }) {
     }
   }, [activo, busquedaDebounced, orden, filtroStock])
 
+  function imprimirEtiquetaProducto(producto) {
+    if (!imprimirEtiqueta({ nombre: producto.nombre, codigo: producto.codigo_barras })) {
+      mostrarToast('Ese código tiene caracteres que no se pueden imprimir como código de barras (tildes, ñ o símbolos).', 'error')
+    }
+  }
+
+  function alternarAbierto(id) {
+    setAbiertos((anterior) => {
+      const siguiente = new Set(anterior)
+      if (siguiente.has(id)) siguiente.delete(id)
+      else siguiente.add(id)
+      return siguiente
+    })
+  }
+
   async function confirmarEliminar() {
     if (!productoAEliminar) return
 
@@ -214,6 +253,11 @@ export default function Inventario({ activo = true }) {
     }
 
     setProductoDetalle(null)
+    setAbiertos((anterior) => {
+      const siguiente = new Set(anterior)
+      siguiente.delete(productoAEliminar.id)
+      return siguiente
+    })
 
     if (data === 'ELIMINADO') {
       mostrarToast('Producto eliminado.', 'exito')
@@ -252,7 +296,19 @@ export default function Inventario({ activo = true }) {
           onCambiar={setOrden}
           tema="amber"
           sinBorde
+          seleccionado
         />
+
+        {/* Hoja de códigos de barras (nombre + código de TODOS los productos; exportar / imprimir etiqueta). */}
+        <button
+          type="button"
+          onClick={() => setMostrarCodigos(true)}
+          aria-label="Códigos de barras"
+          title="Códigos de barras"
+          className="flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-boton-icono p-2.5 text-ink/70 transition-colors hover:text-amber"
+        >
+          <Barcode className="h-4 w-4" />
+        </button>
 
         {esAdmin && (
           <button
@@ -350,66 +406,153 @@ export default function Inventario({ activo = true }) {
         />
       ) : (
         <>
-          {/* Tarjetas: solo móvil. Tocar la tarjeta abre el detalle (foto +
-              historial de stock si es admin), donde ahora viven Editar/
-              Eliminar. "Agregar stock" en cambio queda inline acá (lo usan
-              seguido ambos roles) Y también dentro del modal. */}
+          {/* Tarjetas desplegables: solo móvil. Sin desplegar se ve lo esencial (nombre, stock, precio de venta y
+              «Agregar stock», que ambos roles usan seguido). Al desplegar: foto, código, categoría, costo/ganancia
+              (admin), historial de stock (admin) y Editar/Eliminar (admin) — lo que antes mostraba el modal de
+              detalle, que ahora solo se abre desde la tabla de escritorio. */}
           <div className="mt-3 grid grid-cols-1 gap-2.5 lg:hidden">
-            {productos.map((producto) => (
-              <div
-                key={producto.id}
-                onClick={() => setProductoDetalle({ producto, mostrarAcciones: true })}
-                className="w-full touch-manipulation rounded-lg border border-border bg-surface p-2 text-left transition-colors hover:border-amber/40"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{producto.nombre}</p>
-                    <div className="mt-0.5 flex items-center gap-2 overflow-visible">
-                      <p className="shrink-0 whitespace-nowrap font-mono text-xs text-ink/60">
-                        {producto.codigo_barras || 'Sin código'}
+            {productos.map((producto) => {
+              const abierto = abiertos.has(producto.id)
+              const urlFoto = urlPublicaFoto('fotos-productos', producto.foto_url)
+              return (
+                <div key={producto.id} className="rounded-lg border border-border bg-surface transition-colors hover:border-amber/40">
+                  <div className="flex items-center gap-2 p-2">
+                    <div
+                      onClick={() => alternarAbierto(producto.id)}
+                      onKeyDown={manejarActivacionTeclado(() => alternarAbierto(producto.id))}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={abierto}
+                      className="min-w-0 flex-1 cursor-pointer touch-manipulation"
+                    >
+                      <p className="truncate text-sm font-medium text-ink">
+                        {producto.nombre}
+                        {!producto.activo && (
+                          <span className="ml-2 rounded border border-border-strong px-1.5 py-0.5 text-[11px] font-normal text-ink/60">
+                            Inactivo
+                          </span>
+                        )}
                       </p>
-                      {producto.categoria && (
-                        <span className="shrink-0 whitespace-nowrap rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
-                          {producto.categoria}
+                      <div className="mt-0.5 flex items-center gap-3 font-mono text-xs text-ink/70">
+                        <span>
+                          Venta <span className="text-amber">{formatearNumero(producto.precio)}</span>
                         </span>
+                        <span>
+                          Stock: <span className={claseColorStock(producto)}>{producto.stock_actual}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <BotonAccion
+                      plano
+                      sinBorde
+                      icono={Plus}
+                      texto="Agregar stock"
+                      color="morado"
+                      onClick={() => setProductoParaAgregarStock({ producto, desdeDetalle: false })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => alternarAbierto(producto.id)}
+                      aria-label={abierto ? 'Contraer' : 'Expandir'}
+                      className="shrink-0 p-1.5"
+                    >
+                      <ArrowBigDown
+                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </div>
+
+                  <CampoColapsable abierto={abierto} diferido>
+                    <div className="border-t border-border p-3">
+                      {urlFoto ? (
+                        <button
+                          type="button"
+                          onClick={() => setFotoVisor({ url: urlFoto, alt: producto.nombre })}
+                          className="relative block h-40 w-full rounded-lg"
+                        >
+                          <div className="foto-borde-luz h-full w-full rounded-lg">
+                            <div className="h-full w-full overflow-hidden rounded-[6px] bg-surface-2">
+                              <img src={urlFoto} alt={producto.nombre} className="h-full w-full object-cover" />
+                            </div>
+                          </div>
+                          <span className="absolute bottom-1.5 right-1.5 rounded-full bg-black/60 p-1.5 text-white">
+                            <ZoomIn className="h-3.5 w-3.5" />
+                          </span>
+                        </button>
+                      ) : (
+                        <div className="flex h-40 w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
+                          <ImageOff className="h-8 w-8 text-ink/40" />
+                        </div>
+                      )}
+
+                      {/* [impresora] [ícono] código ........ categoría (extremo derecho) */}
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          {producto.codigo_barras && (
+                            <BotonAccion
+                              plano
+                              sinBorde
+                              icono={Printer}
+                              texto="Imprimir etiqueta"
+                              color="celeste"
+                              onClick={() => imprimirEtiquetaProducto(producto)}
+                            />
+                          )}
+                          <Barcode className="h-4 w-4 shrink-0 text-ink/60" aria-hidden="true" />
+                          <span className="break-all font-mono text-xs text-ink/60">
+                            {producto.codigo_barras || 'Sin código'}
+                          </span>
+                        </div>
+                        {producto.categoria && (
+                          <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-ink/60">
+                            {producto.categoria}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-sm text-ink/70">
+                        {esAdmin && (
+                          <span>Costo <span className="text-ink/60">{formatearNumero(producto.costo ?? 0)}</span></span>
+                        )}
+                        <span>Venta <span className="text-amber">{formatearNumero(producto.precio)}</span></span>
+                        {esAdmin && (
+                          <span>Gananc. <span className="text-green">{formatearNumero(producto.precio - (producto.costo ?? 0))}</span></span>
+                        )}
+                      </div>
+
+                      <ProveedoresDelProducto
+                        key={`prov-${producto.id}-${versionProveedores}`}
+                        producto={producto}
+                        esAdmin={esAdmin}
+                        onCambio={() => {
+                          setVersionProveedores((n) => n + 1)
+                          cargarProductos(vigenteRef.current, true)
+                        }}
+                      />
+
+                      <HistorialStockProducto
+                        key={`${producto.id}-${producto.stock_actual}-${versionProveedores}`}
+                        productoId={producto.id}
+                        esAdmin={esAdmin}
+                        proveedorHabitualId={producto.proveedor_id}
+                        onProveedorCambio={() => {
+                          setVersionProveedores((n) => n + 1)
+                          cargarProductos(vigenteRef.current, true)
+                        }}
+                      />
+
+                      {esAdmin && (
+                        <div className="mt-3 flex justify-start gap-2">
+                          <BotonAccion icono={Pencil} texto="Editar" color="celeste" onClick={() => setModalProducto(producto)} />
+                          <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" onClick={() => setProductoAEliminar(producto)} />
+                        </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="font-mono text-xs text-ink/70">
-                      Stock:{' '}
-                      <span className={claseColorStock(producto)}>{producto.stock_actual}</span>
-                    </span>
-                    <div onClick={(evento) => evento.stopPropagation()}>
-                      <BotonAccion
-                        plano
-                        icono={Plus}
-                        texto="Agregar stock"
-                        color="morado"
-                        onClick={() => setProductoParaAgregarStock({ producto, desdeDetalle: false })}
-                      />
-                    </div>
-                  </div>
+                  </CampoColapsable>
                 </div>
-
-                {!producto.activo && (
-                  <span className="mt-1 inline-block rounded border border-border-strong px-1.5 py-0.5 text-[11px] text-ink/60">
-                    Inactivo
-                  </span>
-                )}
-
-                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-sm text-ink/70">
-                  {esAdmin && (
-                    <span>Costo <span className="text-ink/60">{formatearNumero(producto.costo ?? 0)}</span></span>
-                  )}
-                  <span>Venta <span className="text-amber">{formatearNumero(producto.precio)}</span></span>
-                  {esAdmin && (
-                    <span>Gananc. <span className="text-green">{formatearNumero(producto.precio - (producto.costo ?? 0))}</span></span>
-                  )}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Tabla: tablet y desktop */}
@@ -552,6 +695,7 @@ export default function Inventario({ activo = true }) {
               )
             }
             cargarProductos(vigenteRef.current, true)
+            setVersionProveedores((n) => n + 1)
           }}
         />
       )}
@@ -559,6 +703,7 @@ export default function Inventario({ activo = true }) {
       {productoParaAgregarStock && (
         <ModalAgregarStock
           producto={productoParaAgregarStock.producto}
+          esAdmin={esAdmin}
           onCerrar={() => setProductoParaAgregarStock(null)}
           onGuardado={(stockNuevo) => {
             const { desdeDetalle } = productoParaAgregarStock
@@ -576,6 +721,7 @@ export default function Inventario({ activo = true }) {
               )
             }
             cargarProductos(vigenteRef.current, true)
+            setVersionProveedores((n) => n + 1) // el ingreso pudo vincular otro proveedor al producto
           }}
         />
       )}
@@ -598,6 +744,12 @@ export default function Inventario({ activo = true }) {
             setProductoParaAgregarStock({ producto: productoDetalle.producto, desdeDetalle: true })
           }}
         />
+      )}
+
+      {mostrarCodigos && <ModalCodigosBarras onCerrar={() => setMostrarCodigos(false)} />}
+
+      {fotoVisor && (
+        <ModalVisorFoto url={fotoVisor.url} alt={fotoVisor.alt} onCerrar={() => setFotoVisor(null)} />
       )}
 
       {productoAEliminar && (

@@ -1,5 +1,6 @@
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 import { GRUPOS_POR_VENTANA, TAMANO_PAGINA_CATALOGO, paginasTotales } from '../lib/catalogoPublico.js'
+import { guardarCopia, leerCopia, mismaCopia } from '../lib/copiasEnMemoria.js'
 
 // Estado de un catálogo público del portal (Productos / Servicios) resuelto en el SERVIDOR — Fase 4.
 //
@@ -20,14 +21,23 @@ import { GRUPOS_POR_VENTANA, TAMANO_PAGINA_CATALOGO, paginasTotales } from '../l
 // resultados de una búsqueda anterior bajo el encabezado de otra.
 //
 // `cargarVitrina({ signal })` y `cargarPagina({ categoria, termino, pagina, tam, signal })` pueden cambiar en cada render (se leen por ref).
+//
+// `catalogo` (opcional: 'servicios' | 'productos') activa la copia en memoria de la vitrina (lib/copiasEnMemoria.js): al volver a la
+// página dentro de la misma visita se pinta al instante lo último visto (estado «recargando», sin «Cargando...») y la vitrina se
+// vuelve a pedir en segundo plano. La copia es por catálogo Y por `clave` (cuenta): nunca se muestra la de otra cuenta. Sin
+// `catalogo` el hook se comporta exactamente como antes.
 const SIN_GRUPOS = []
 const esAbort = (error) => error?.name === 'AbortError' || /AbortError/.test(String(error?.message ?? ''))
 
-export function useCatalogoPublico({ cargarVitrina, cargarPagina, cargarGrupos, clave = 'anon', tam = TAMANO_PAGINA_CATALOGO, categoriaInicial = 'todos' }) {
+export function useCatalogoPublico({ cargarVitrina, cargarPagina, cargarGrupos, clave = 'anon', catalogo = null, tam = TAMANO_PAGINA_CATALOGO, categoriaInicial = 'todos' }) {
+  const idCopia = catalogo ? `vitrina\u0000${catalogo}\u0000${clave}` : null
   const [categoriaActiva, setCategoriaCruda] = useState(categoriaInicial)
   const [busqueda, setBusquedaCruda] = useState('')
   const [pagina, setPagina] = useState(1)
-  const [vitrina, setVitrina] = useState({ estado: 'cargando', datos: null, error: null })
+  const [vitrina, setVitrina] = useState(() => {
+    const guardada = leerCopia(idCopia)
+    return guardada ? { estado: 'recargando', datos: guardada, error: null } : { estado: 'cargando', datos: null, error: null }
+  })
   const [listado, setListado] = useState({ estado: 'inactivo', clave: null, filas: [], total: 0, error: null })
   const [paginaGrupos, setPaginaGrupos] = useState(1)
   const [ventana, setVentana] = useState({ estado: 'inactivo', pagina: 1, grupos: [], error: null })
@@ -65,20 +75,34 @@ export function useCatalogoPublico({ cargarVitrina, cargarPagina, cargarGrupos, 
   useEffect(() => {
     const control = new AbortController()
     let vigente = true
-    setVitrina((previa) => (previa.datos ? { ...previa, estado: 'recargando' } : { estado: 'cargando', datos: null, error: null }))
+    setVitrina((previa) => {
+      // Copia de ESTA cuenta (si la hay y sigue vigente): es lo que se muestra mientras llega la lectura nueva. Si ya es lo que
+      // está en pantalla (montaje normal) no se cambia el objeto de datos, así la página no vuelve a renderizar por nada.
+      const guardada = leerCopia(idCopia)
+      if (guardada) return previa.datos === guardada && previa.estado === 'recargando' ? previa : { estado: 'recargando', datos: guardada, error: null }
+      return previa.datos ? { ...previa, estado: 'recargando' } : { estado: 'cargando', datos: null, error: null }
+    })
     cargarVitrinaRef.current({ signal: control.signal }).then(
       (datos) => {
-        if (vigente) setVitrina({ estado: 'ok', datos, error: null })
+        if (!vigente) return
+        guardarCopia(idCopia, datos)
+        // Si la lectura nueva es idéntica a lo que ya se ve, se conserva el MISMO objeto: las listas memorizadas de la página
+        // (grupos, héroe, claves de animación) no cambian y no se vuelve a pintar el catálogo.
+        setVitrina((previa) => (previa.datos && mismaCopia(previa.datos, datos) ? { estado: 'ok', datos: previa.datos, error: null } : { estado: 'ok', datos, error: null }))
       },
       (error) => {
-        if (vigente && !esAbort(error)) setVitrina({ estado: 'error', datos: null, error })
+        if (!vigente || esAbort(error)) return
+        // Falló la lectura en segundo plano pero hay una copia vigente de esta cuenta: se sigue mostrando (tiene como mucho
+        // VIDA_MS de antigüedad) en vez de reemplazar un catálogo visible por una pantalla de error.
+        const guardada = leerCopia(idCopia)
+        setVitrina(guardada ? { estado: 'ok', datos: guardada, error: null } : { estado: 'error', datos: null, error })
       },
     )
     return () => {
       vigente = false
       control.abort()
     }
-  }, [clave, intentoVitrina])
+  }, [clave, intentoVitrina, idCopia])
 
   // Cuenta distinta: se vuelve a la primera ventana de grupos (viene con la vitrina).
   useEffect(() => {

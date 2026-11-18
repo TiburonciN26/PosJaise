@@ -9,6 +9,11 @@ import { TemaWebProvider } from './context/TemaWebContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import AvisoActualizacionPWA from './components/AvisoActualizacionPWA.jsx'
+import { precargaTemprana } from './config/paginasCliente.js'
+
+// Visitante (o clienta que ya usó el portal en este navegador): el portal y la página de la URL empiezan a descargarse YA, en
+// paralelo con la lectura de la sesión, en vez de después (ver precargaTemprana). El POS no descarga nada de esto.
+precargaTemprana()
 
 // Fase 8 V2 (F8-01): el aviso de versión nueva queda FUERA del límite de error de la app. Antes compartía el ErrorBoundary
 // global: un error que llegaba hasta ahí desmontaba también el aviso, y desaparecía el único botón «Actualizar» (el que respeta

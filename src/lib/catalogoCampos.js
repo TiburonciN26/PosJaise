@@ -8,7 +8,7 @@ export const COLUMNAS_WEB_SERVICIO = [
   'descripcion', 'en_tendencia', 'a_domicilio', 'costo_domicilio', 'precio_variable', 'nota_precio', 'duracion_resultado',
   'combo_con', 'foto_url', 'pasos', 'especificaciones', 'herramientas', 'materiales', 'cuidados_antes', 'cuidados_despues',
 ]
-export const COLUMNAS_POS_PRODUCTO = ['codigo_barras', 'nombre', 'categoria', 'subcategoria', 'precio', 'costo', 'stock_actual', 'proveedor']
+export const COLUMNAS_POS_PRODUCTO = ['codigo_barras', 'nombre', 'categoria', 'subcategoria', 'precio', 'costo', 'stock_actual']
 export const COLUMNAS_WEB_PRODUCTO = [
   'precio_antes', 'oferta_hasta', 'foto_url', 'descripcion', 'contenido', 'rinde', 'frecuencia', 'combo_con', 'destacado', 'nuevo',
   'en_inicio', 'especificaciones', 'modo_uso', 'ideal_para', 'tips', 'ingredientes', 'libre_de',
@@ -61,6 +61,8 @@ export function datosWebServicio({ formulario, fotoFinal, pasos, especificacione
   }
 }
 
+// Los proveedores ya no son un texto del producto: viven en producto_proveedores (vincular_proveedores_producto), así que
+// el POS no escribe `proveedor` (la columna antigua queda solo como respaldo; migración 20261112000014).
 export function datosPosProducto({ formulario, categoriaFinal, precio, costo }) {
   return {
     codigo_barras: formulario.codigoBarras.trim() || null,
@@ -70,7 +72,6 @@ export function datosPosProducto({ formulario, categoriaFinal, precio, costo }) 
     precio,
     costo,
     stock_actual: parseInt(formulario.stockInicial, 10),
-    proveedor: formulario.proveedor.trim() || null,
   }
 }
 

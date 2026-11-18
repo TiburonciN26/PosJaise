@@ -1,13 +1,11 @@
 import { Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
-import { rutaInicialPara } from './config/navegacion.js'
-import { pagina, precargarPortalYRuta } from './config/paginasCliente.js'
+import { pagina, precargarPortalYRuta, recordarArbol } from './config/paginasCliente.js'
 import { esRutaDePersonal } from './lib/destinoLogin.js'
 import RutaProtegida from './components/RutaProtegida.jsx'
 import RutaPrivada from './components/RutaPrivada.jsx'
-import Layout from './components/Layout.jsx'
-import PestanasCacheadas from './components/PestanasCacheadas.jsx'
+import { ArmazonPos } from './config/armazonPos.js'
 import LimiteCargaDiferida from './components/LimiteCargaDiferida.jsx'
 import { componenteDiferido } from './lib/moduloDiferido.js'
 
@@ -63,12 +61,30 @@ function App() {
   // guardada, y `vistaCliente` salía verdadero: cada recarga del POS descargaba el portal y Inicio sin necesitarlos. Ahora la
   // precarga espera a conocer el rol; un visitante (sin sesión) no tiene perfil que leer, así que esa espera es inmediata.
   const [portalListo, setPortalListo] = useState(false)
+  // Pista para la próxima visita: qué árbol montó esta (ver precargaTemprana en config/paginasCliente.js).
+  useEffect(() => {
+    // Con sesión pero sin perfil (fallo de red al leerlo) todavía no se sabe qué árbol es: no se anota nada.
+    if (cargando || (session && !usuario)) return
+    recordarArbol(vistaCliente ? 'portal' : 'pos')
+  }, [cargando, session, usuario, vistaCliente])
   useEffect(() => {
     if (cargando || !vistaCliente) return undefined
     let vigente = true
     precargarPortalYRuta()
       .catch(() => {})
       .then(() => vigente && setPortalListo(true))
+    return () => {
+      vigente = false
+    }
+  }, [cargando, vistaCliente])
+
+  // Lo mismo para el POS: su árbol (armazón + pestañas + Ventas) es un chunk aparte desde que salió del JS de entrada.
+  // Se descarga antes de montarlo; con la pista «pos» precargaTemprana() ya lo pidió al arrancar y aquí solo se espera.
+  const [posListo, setPosListo] = useState(false)
+  useEffect(() => {
+    if (cargando || vistaCliente) return undefined
+    let vigente = true
+    ArmazonPos.precargar().then(() => vigente && setPosListo(true))
     return () => {
       vigente = false
     }
@@ -174,13 +190,23 @@ function App() {
           </Route>
         ) : (
           <Route element={<RutaProtegida />}>
-            <Route element={<Layout />}>
-              <Route index element={<Navigate to={rutaInicialPara(rol)} replace />} />
-              {/* Un solo comodín: así el router nunca desmonta PestanasCacheadas
-                  al cambiar de pestaña; ella decide sola qué mostrar/ocultar y
-                  aplica el guard de rol (antes hecho por RutaAdmin). */}
-              <Route path="*" element={<PestanasCacheadas />} />
-            </Route>
+            {/* Un solo comodín: así el router nunca desmonta el armazón ni PestanasCacheadas al cambiar de pestaña; ella
+                decide sola qué mostrar/ocultar, aplica el guard de rol y manda «/» (o una ruta que el rol no puede ver) a la
+                pantalla inicial del rol. Si el código del POS no llega, el aviso local ofrece reintentar. */}
+            <Route
+              path="*"
+              element={
+                posListo ? (
+                  <LimiteCargaDiferida onReintentar={ArmazonPos.reintentar}>
+                    <Suspense fallback={<CargandoPantalla />}>
+                      <ArmazonPos />
+                    </Suspense>
+                  </LimiteCargaDiferida>
+                ) : (
+                  <CargandoPantalla />
+                )
+              }
+            />
           </Route>
         )}
       </Routes>

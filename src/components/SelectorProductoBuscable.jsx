@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import BotonVoz from './BotonVoz.jsx'
 import { supabase } from '../lib/supabase.js'
 import { buscarProductosCombo, productoNombrePorId } from '../lib/buscarProductosVenta.js'
+import { SIN_SUGERENCIAS } from '../lib/sinSugerencias.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 
 // <select> de productos con buscador (combo sugerido de la ficha Web). Mismo contrato que SelectorServicioBuscable:
@@ -64,7 +65,7 @@ export default function SelectorProductoBuscable({ id, valor, onCambiar, textoVa
       <div className="flex items-center gap-2">
         <input
           type="search"
-          autoComplete="off"
+          {...SIN_SUGERENCIAS}
           value={texto}
           onChange={(evento) => setTexto(evento.target.value)}
           placeholder="Buscar producto por nombre..."

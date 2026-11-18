@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { normalizarHorarioPos } from '../lib/horarioPos.js'
@@ -25,8 +26,9 @@ export default function ModalHorarioPos({ onCerrar }) {
   const [errorCarga, setErrorCarga] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  const diasBase = useRef(null) // lo leído de la base, para saber qué cambió
+  const automaticoBase = useRef(null)
 
-  useCerrarConEscape(onCerrar, !guardando)
 
   useEffect(() => {
     let vigente = true
@@ -37,8 +39,11 @@ export default function ModalHorarioPos({ onCerrar }) {
         return
       }
       const config = normalizarHorarioPos(data)
+      const inicial = estadoInicialTurnos(config.dias)
+      diasBase.current = inicial
+      automaticoBase.current = config.automatico
       setAutomatico(config.automatico)
-      setDias(estadoInicialTurnos(config.dias))
+      setDias(inicial)
     })
     return () => {
       vigente = false
@@ -86,6 +91,18 @@ export default function ModalHorarioPos({ onCerrar }) {
     onCerrar()
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar (y se dice cuáles).
+  const cambios = []
+  if (dias && diasBase.current) {
+    dias.forEach((dia, i) => {
+      if (JSON.stringify(dia) !== JSON.stringify(diasBase.current[i])) cambios.push(`${NOMBRES_DIA[dia.dia]}: horario modificado`)
+    })
+  }
+  if (automaticoBase.current !== null && automatico !== automaticoBase.current) {
+    cambios.unshift(`Apertura automática: ${automaticoBase.current ? 'Sí' : 'No'} → ${automatico ? 'Sí' : 'No'}`)
+  }
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -95,7 +112,10 @@ export default function ModalHorarioPos({ onCerrar }) {
         style={{ '--color-foco': 'var(--color-amber)' }}
         className="flex max-h-full w-full max-w-lg flex-col rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">Apertura y cierre del negocio</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Apertura y cierre del negocio</h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
         <p className="mt-1 text-sm text-ink/60">
           Al inicio de cada horario el negocio se abre solo y al final se cierra. Con el negocio cerrado el personal no
           puede ingresar ni registrar nada; tú siempre puedes entrar.
@@ -162,7 +182,7 @@ export default function ModalHorarioPos({ onCerrar }) {
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber disabled:opacity-40"
           >
@@ -177,6 +197,7 @@ export default function ModalHorarioPos({ onCerrar }) {
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

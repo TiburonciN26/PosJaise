@@ -29,6 +29,7 @@ import {
   BookOpen,
   Warehouse,
   Banknote,
+  Truck,
 } from 'lucide-react'
 
 // Roles de personal: ADMINISTRADOR (todo), CAJERA (vende/cobra), ASISTENTE (citas + su panel de pagos),
@@ -46,6 +47,8 @@ const ROLES_ALMACEN = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA', 'PER
 export const secciones = [
   { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ROLES_CAJA },
   { path: '/inventario', label: 'Inventario', icono: Package, roles: ROLES_CAJA },
+  // Registro de proveedores (20261112000014): solo la administradora; en el menú lateral se revela al desplegar Inventario.
+  { path: '/proveedores', label: 'Proveedores', icono: Truck, roles: ['ADMINISTRADOR'], padre: '/inventario' },
   { path: '/historial', label: 'Historial', icono: History, roles: ROLES_CAJA },
   { path: '/servicios', label: 'Servicios', icono: Scissors, roles: ROLES_CAJA },
   {

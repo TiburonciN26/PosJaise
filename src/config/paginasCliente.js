@@ -1,4 +1,6 @@
 import { componenteDiferido } from '../lib/moduloDiferido.js'
+import urlFuenteLogo from '../assets/fonts/google/orbitron-latin-700-900.woff2?url'
+import { ArmazonPos } from './armazonPos.js'
 
 // QA-021: el portal cliente (PortalCliente + ~20 páginas) ya no viaja en el
 // bundle inicial de todos los roles: cada página es un chunk.
@@ -83,11 +85,77 @@ const RUTAS = [
 
 // Carga el portal y la página de la URL actual (más Inicio, aterrizaje de la
 // clienta) en paralelo; la app espera esa promesa antes de montar el portal.
+// Orbitron es la letra del logo «JAISE» del header del portal. Sin esto el navegador la pedía recién al pintar el header y el
+// logo se veía un instante con la letra de reserva. Se precarga al empezar a descargar el portal (el POS no la usa: no la baja).
+// Es el mismo archivo que declara el @font-face de index.css, así que el CSS reutiliza esta descarga; un preload de fuente
+// necesita `crossOrigin` aunque sea del mismo origen (las fuentes se piden siempre en modo CORS).
+let fuenteLogoPedida = false
+function precargarFuenteLogo() {
+  if (fuenteLogoPedida || typeof document === 'undefined') return
+  fuenteLogoPedida = true
+  const enlace = document.createElement('link')
+  enlace.rel = 'preload'
+  enlace.as = 'font'
+  enlace.type = 'font/woff2'
+  enlace.crossOrigin = 'anonymous'
+  enlace.href = urlFuenteLogo
+  document.head.appendChild(enlace)
+}
+
 export function precargarPortalYRuta() {
+  precargarFuenteLogo()
   const base = import.meta.env.BASE_URL
   const ruta = window.location.pathname.slice(Math.max(base.length - 1, 0)) || '/'
   const nombre = RUTAS.find(([patron]) => patron.test(ruta))?.[1] ?? 'InicioCliente'
   return Promise.all([precargar('PortalCliente'), precargar(nombre), precargar('InicioCliente')])
+}
+
+// ───────── Precarga temprana (antes de conocer el rol) ─────────
+// App.jsx espera a que la autenticación resuelva para empezar a descargar el portal (así una recarga del POS no lo baja sin
+// necesitarlo, Fase 5). Para una clienta con sesión esa espera son dos lecturas en serie (usuarios → clientes_web) durante las
+// que la red estaba ociosa. Dos señales locales permiten adelantarse sin tocar esa regla:
+//   · no hay ninguna sesión de Supabase guardada → es un visitante: seguro verá el portal;
+//   · la última vez que esta pestaña/navegador abrió la app montó el portal (pista «portal», la escribe App.jsx).
+// Con sesión guardada y pista «pos» se adelanta el otro árbol: el chunk del POS (config/armazonPos.js), que ya no viaja en el
+// JS de entrada. Con sesión y sin pista no se adelanta nada: se espera al perfil. Una pista equivocada (p. ej. personal que
+// ayer miró su perfil de clienta) cuesta una descarga en reposo y se corrige sola al montar.
+// index.html usa la misma regla para precargar la foto del hero: si se cambia aquí, cambiar también allá.
+const CLAVE_PISTA_ARBOL = 'jaise-arbol'
+
+function haySesionGuardada() {
+  for (let i = 0; i < localStorage.length; i += 1) {
+    if (/^sb-.+-auth-token$/.test(localStorage.key(i) ?? '')) return true
+  }
+  return false
+}
+
+/** La llama App.jsx cuando ya sabe qué árbol monta: 'portal' (visitante, clienta, personal en modo clienta) o 'pos'. */
+export function recordarArbol(arbol) {
+  try {
+    localStorage.setItem(CLAVE_PISTA_ARBOL, arbol)
+  } catch {
+    // Almacenamiento bloqueado: solo se pierde el adelanto de la próxima visita.
+  }
+}
+
+/** Último árbol que montó este navegador: 'portal', 'pos' o null (sin pista o sin acceso al almacenamiento). */
+export function arbolRecordado() {
+  try {
+    return localStorage.getItem(CLAVE_PISTA_ARBOL)
+  } catch {
+    return null
+  }
+}
+
+/** La llama main.jsx al arrancar, antes de montar React. Nunca lanza. */
+export function precargaTemprana() {
+  try {
+    const pista = arbolRecordado()
+    if (!haySesionGuardada() || pista === 'portal') precargarPortalYRuta()
+    else if (pista === 'pos') ArmazonPos.precargar()
+  } catch {
+    // Sin acceso a localStorage: se precarga al resolver la autenticación, como siempre.
+  }
 }
 
 // Mientras se muestra el formulario de login (aún sin saber el rol) se

@@ -620,15 +620,33 @@ export default function Ventas({ activo = true }) {
   }, [esCupon, codigoCupon])
 
   function alternarTipoDescuento() {
-    setTipoDescuento((anterior) => {
-      const siguiente = anterior === 'porcentaje' ? 'monto' : anterior === 'monto' ? 'cupon' : 'porcentaje'
-      // Limpia el valor del modo que se deja — un código de cupón viejo
-      // colgado ahí es más riesgoso que un número de descuento viejo (se
-      // reenviaría a confirmar_venta si no se limpia).
-      if (anterior === 'cupon') setCodigoCupon('')
-      if (siguiente === 'cupon') setValorDescuento('')
-      return siguiente
-    })
+    const anterior = tipoDescuento
+    const siguiente = anterior === 'porcentaje' ? 'monto' : anterior === 'monto' ? 'cupon' : 'porcentaje'
+
+    // El número tecleado en % / S/ y el campo de cupón se comportan como UN
+    // solo campo: lo que hay en uno se ve en el otro y no se pierde al
+    // rotar el botón. Un "1" en cupón es un código inválido (no suma al
+    // total y bloquea el cobro), pero se conserva hasta que se borre.
+    if (siguiente === 'cupon') {
+      // valorDescuento no se toca (puede ser "1.5"); el código solo lo muestra.
+      setCodigoCupon(limpiarCodigoCupon(valorDescuento))
+    } else if (anterior === 'cupon') {
+      // Si en cupón se editó el campo y quedó solo con dígitos, ese número
+      // pasa al descuento. Si se dejó igual, o tiene letras (un código real,
+      // no un número), el descuento previo queda intacto. El código de
+      // cupón siempre se limpia al salir: uno viejo colgado se reenviaría
+      // a confirmar_venta.
+      const editado = codigoCupon !== limpiarCodigoCupon(valorDescuento)
+      if (editado && /^[0-9]+$/.test(codigoCupon)) {
+        setValorDescuento(
+          siguiente === 'porcentaje' ? String(Math.min(100, parseInt(codigoCupon, 10))) : codigoCupon,
+        )
+      } else if (editado && codigoCupon === '') {
+        setValorDescuento('')
+      }
+      setCodigoCupon('')
+    }
+    setTipoDescuento(siguiente)
   }
 
   // Tocar el método ya seleccionado lo desmarca (vuelve a null, oculta
@@ -666,8 +684,12 @@ export default function Ventas({ activo = true }) {
     )
   }
 
+  function limpiarCodigoCupon(valor) {
+    return String(valor).replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6)
+  }
+
   function actualizarCodigoCupon(valor) {
-    setCodigoCupon(valor.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6))
+    setCodigoCupon(limpiarCodigoCupon(valor))
   }
 
   const {
@@ -1500,7 +1522,9 @@ export default function Ventas({ activo = true }) {
               </div>
             </CampoColapsable>
 
-            <div className="mt-3">
+            {/* Boleta/Factura oculto a pedido (no eliminado): quitar `hidden` para volver a mostrarlo.
+                Mientras está oculto, `comprobante` queda en null y no bloquea el cobro. */}
+            <div className="mt-3 hidden">
               <p className="mb-1.5 text-xs text-ink">Comprobante</p>
               <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 {[

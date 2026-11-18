@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { normalizarReglas } from '../lib/programaRecompensas.js'
+import { guardarCopia, leerCopia, mismaCopia } from '../lib/copiasEnMemoria.js'
+
+// Las REGLAS del programa son públicas e iguales para todas: llevan copia en memoria (lib/copiasEnMemoria.js). Las piden el menú
+// del header y cada página que muestra un estimado de puntos; sin copia, cada página que se montaba mostraba «Calculando…» hasta
+// que respondía la misma lectura otra vez. Con copia el estimado se pinta al instante y las reglas se vuelven a leer en segundo
+// plano en cada montaje (si el programa se apagó o cambió, se corrige solo). El SALDO es personal: nunca se guarda.
+const COPIA_REGLAS = 'recompensas:reglas-publicas'
 
 // Estado del programa de Recompensas para las pantallas del portal que anuncian monedas, sellos o nivel (Citas, detalle de servicio y
 // de producto, carrito de servicios, Inicio y «Cómo funciona»). UNA sola lectura de las reglas vigentes
@@ -12,13 +19,17 @@ import { normalizarReglas } from '../lib/programaRecompensas.js'
 //   reglas: { estado, datos }  datos = normalizarReglas(...) → { activo:false } | { activo:true, tasaServ, tasaProd, ... }
 //   saldo : { estado, datos }  estado 'inactivo' cuando no aplica (sin sesión o programa apagado)
 export function useProgramaRecompensas(userId = null) {
-  const [reglas, setReglas] = useState({ estado: 'cargando', datos: null })
+  const [reglas, setReglas] = useState(() => {
+    const guardadas = leerCopia(COPIA_REGLAS)
+    return guardadas ? { estado: 'ok', datos: guardadas } : { estado: 'cargando', datos: null }
+  })
   const [saldo, setSaldo] = useState({ estado: 'inactivo', datos: null })
   const generacion = useRef(0)
 
   const cargar = useCallback(async () => {
     const gen = ++generacion.current
-    setReglas({ estado: 'cargando', datos: null })
+    const guardadas = leerCopia(COPIA_REGLAS)
+    setReglas((previas) => (guardadas ? (previas.estado === 'ok' && previas.datos === guardadas ? previas : { estado: 'ok', datos: guardadas }) : { estado: 'cargando', datos: null }))
     setSaldo({ estado: 'inactivo', datos: null })
 
     let lectura
@@ -30,10 +41,12 @@ export function useProgramaRecompensas(userId = null) {
     if (gen !== generacion.current) return
     const datos = lectura.error ? null : normalizarReglas(lectura.data?.[0])
     if (!datos) {
-      setReglas({ estado: 'error', datos: null })
+      // Falló la lectura en segundo plano: se conserva la copia vigente (si la hay) en vez de borrar el estimado ya pintado.
+      if (!guardadas) setReglas({ estado: 'error', datos: null })
       return
     }
-    setReglas({ estado: 'ok', datos })
+    guardarCopia(COPIA_REGLAS, datos)
+    setReglas((previas) => (previas.estado === 'ok' && mismaCopia(previas.datos, datos) ? previas : { estado: 'ok', datos }))
     if (!datos.activo || !userId) return
 
     setSaldo({ estado: 'cargando', datos: null })

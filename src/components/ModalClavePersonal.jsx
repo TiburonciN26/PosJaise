@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { Copy, Eye, EyeOff, Sparkles } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { MIN_PASSWORD, generarPassword, restablecerPassword, validarPassword } from '../lib/personal.js'
@@ -56,7 +57,10 @@ export default function ModalClavePersonal({ persona, onCerrar, onGuardado }) {
         onSubmit={guardar}
         className="max-h-full w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">Restablecer contraseña</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Restablecer contraseña</h2>
+          <BotonCerrarModal onClick={() => (hecho ? onGuardado() : onCerrar())} disabled={guardando} />
+        </div>
         <p className="mt-1 text-sm text-ink/60">
           {persona.nombre_completo} · <span className="font-mono">{persona.email}</span>
         </p>

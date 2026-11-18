@@ -11,10 +11,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 // más los chunks de PortalCliente e InicioCliente con las suyas. El resto (páginas del POS, escáner, páginas del portal, modales) se guarda
 // «por uso» (runtimeCaching CacheFirst: son archivos con hash inmutable) la primera vez que se piden con el service worker activo.
 // Los datos operativos (Supabase) NO pasan por ninguna regla: siempre red.
-const RAICES_DE_ATERRIZAJE = ['/pages/PortalCliente.jsx', '/pages/cliente/InicioCliente.jsx']
+// El POS (armazón + pestañas + Ventas) dejó de viajar en la entrada: es el chunk de components/ArmazonPos.jsx. Va aquí para que
+// siga en el precaché con todas sus importaciones estáticas: el POS debe abrir y cobrar sin red, igual que antes.
+const RAICES_DE_ATERRIZAJE = ['/pages/PortalCliente.jsx', '/pages/cliente/InicioCliente.jsx', '/components/ArmazonPos.jsx']
 // Los íconos de la PWA (192/512 y maskable) NO se precachean: el navegador los pide por su cuenta al instalar la app desde el manifest.
 // Fase 8 V2 (F8-01): sí entran los 4 íconos de métodos de pago que Ventas muestra al cobrar (≈30 kB): son lo único que el
-// panel de cobro pide fuera del código ya precacheado (Ventas viaja en la entrada) y deben verse aunque falle la red.
+// panel de cobro pide fuera del código ya precacheado (Ventas viaja en el chunk del POS, que es parte del shell) y deben verse aunque falle la red.
 const SHELL_FIJO = new Set(['index.html', 'manifest.webmanifest', 'icons/efectivo.svg', 'icons/targueta.svg', 'icons/transferencia.svg', 'icons/yape.svg'])
 function cierreDelShell() {
   const permitidos = new Set()

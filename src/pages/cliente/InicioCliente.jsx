@@ -29,7 +29,15 @@ const FOTO_DESPUES = `${import.meta.env.BASE_URL}inicio-web/hero-despues-oscuro.
 const FOTO_ANTES = `${import.meta.env.BASE_URL}inicio-web/hero-antes-oscuro.webp`
 const FOTO_DESPUES_CLARA = `${import.meta.env.BASE_URL}inicio-web/hero-despues-claro.webp`
 const FOTO_ANTES_CLARA = `${import.meta.env.BASE_URL}inicio-web/hero-antes-claro.webp`
+// Pantallas chicas (celular en vertical): UNA variante de 1280 px de ancho generada desde el mismo original (decisión del
+// usuario, 2026-11-13: «solo una variante de 1280 px en móvil para no perder calidad»). Un celular de 430 px CSS a 3× tiene
+// 1290 px físicos de ancho: no puede mostrar más detalle que eso. Desde 640 px CSS (tableta, PC, celular apaisado) se sirve
+// siempre el original de 3024 px. Se elige por ancho de pantalla (<source media>), no por densidad, para que sea predecible;
+// index.html precarga con la MISMA consulta (si cambia aquí, cambiar allá). Cómo regenerarlas: docs/diseno-inicio/README.md.
+const MEDIA_HERO_CHICO = '(max-width: 639px)'
+const variante1280 = (url) => url.replace(/\.webp$/, '-1280.webp')
 const RADIO_REVELADO = 340
+const MASCARA_OCULTA = 'linear-gradient(transparent, transparent)'
 
 // Revela la foto "antes" bajo el cursor sin re-renderizar React en cada
 // movimiento: interpola posición y radio a mano y escribe el resultado
@@ -100,7 +108,7 @@ function useRevelarAntes() {
       const y = suave.y.toFixed(1)
       const mascara =
         radio < 2
-          ? 'linear-gradient(transparent, transparent)'
+          ? MASCARA_OCULTA
           : `radial-gradient(circle ${radio}px at ${x}px ${y}px, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%)`
       imagenAntes.style.maskImage = mascara
       imagenAntes.style.webkitMaskImage = mascara
@@ -267,6 +275,19 @@ export default function InicioCliente() {
 
   const contenedorRef = useRef(null)
   const { contenedorHeroRef, imagenAntesRef } = useRevelarAntes()
+  // La foto «antes» SOLO se ve al pasar un puntero (mouse o lápiz) por el hero: useRevelarAntes ignora el tacto, así que en un
+  // celular quedaba siempre oculta tras su máscara… pero se descargaba igual (430–495 kB) y se decodificaba a 3024×1698 px.
+  // Ahora se monta solo donde puede verse: de entrada si el equipo tiene algún puntero con hover (any-hover: PC, portátil,
+  // tableta con mouse), o en cuanto llega el primer evento de un puntero que no sea táctil (mouse conectado después). La foto
+  // «después» —la que todos ven— no cambia: mismo archivo original, misma prioridad alta.
+  const [conFotoAntes, setConFotoAntes] = useState(
+    () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(any-hover: hover)').matches,
+  )
+  const activarFotoAntes = conFotoAntes
+    ? undefined
+    : (evento) => {
+        if (evento.pointerType !== 'touch') setConFotoAntes(true)
+      }
 
   const { usuario } = useAuth()
   const usuarioId = usuario?.id ?? null
@@ -277,10 +298,12 @@ export default function InicioCliente() {
 
   // Fase 5: lecturas independientes. El hero se pinta de inmediato; cada sección aparece cuando llega lo suyo y una
   // dependencia lenta o caída solo oculta su propia sección. Visitante: nada personal se consulta.
-  const topRes = useLectura(leerTopServicios)
+  // Las tres lecturas PÚBLICAS llevan copia en memoria: al volver a Inicio se pintan al instante y se revalidan en segundo plano.
+  // La promoción NO: incluye si ESTA clienta ya reclamó el cupón, y una copia vieja mostraría «Reclamar cupón» un instante.
+  const topRes = useLectura(leerTopServicios, null, { copia: 'inicio\u0000top-servicios' })
   const promoRes = useLectura(() => leerPromocionActiva(usuarioId), usuarioId)
-  const resenasRes = useLectura(leerResumenResenas)
-  const galeriaRes = useLectura(leerGaleriaInicio)
+  const resenasRes = useLectura(leerResumenResenas, null, { copia: 'inicio\u0000resenas' })
+  const galeriaRes = useLectura(leerGaleriaInicio, null, { copia: 'inicio\u0000galeria' })
   // Contacto y horario: lecturas COMPARTIDAS con el pie de página y las demás pantallas (caché de vida corta, sin duplicados).
   const contactoRes = useLectura(obtenerContacto)
   const horarioRes = useLectura(obtenerHorario)
@@ -359,30 +382,43 @@ export default function InicioCliente() {
           fotos de siempre, con el botón "Ver servicios"). */}
       <section
         ref={contenedorHeroRef}
+        onPointerMove={activarFotoAntes}
+        onPointerDown={activarFotoAntes}
         className={`${esClaro ? '' : 'lw-sobre-foto '}relative mx-auto flex aspect-[1680/944] w-full max-w-[1800px] cursor-crosshair flex-col lw-gutter ${esClaro ? 'bg-transparent' : 'bg-[#0b0b0c]'}`}
       >
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <img
-            src={esClaro ? FOTO_DESPUES_CLARA : FOTO_DESPUES}
-            width={3024}
-            height={1698}
-            fetchPriority="high"
-            decoding="async"
-            alt="Resultado después del servicio"
-            className="absolute inset-0 h-full w-full object-cover object-[right_center]"
-          />
-          <img
-            ref={imagenAntesRef}
-            src={esClaro ? FOTO_ANTES_CLARA : FOTO_ANTES}
-            width={3024}
-            height={1698}
-            fetchPriority="low"
-            decoding="async"
-            alt=""
-            aria-hidden="true"
-            style={{ filter: 'grayscale(0.35) brightness(0.97)' }}
-            className="absolute inset-0 h-full w-full object-cover object-[right_center]"
-          />
+          {/* <picture> no participa del diseño (display: contents): las <img> siguen posicionándose contra este contenedor. */}
+          <picture className="contents">
+            <source media={MEDIA_HERO_CHICO} srcSet={variante1280(esClaro ? FOTO_DESPUES_CLARA : FOTO_DESPUES)} type="image/webp" />
+            <img
+              src={esClaro ? FOTO_DESPUES_CLARA : FOTO_DESPUES}
+              width={3024}
+              height={1698}
+              fetchPriority="high"
+              decoding="async"
+              alt="Resultado después del servicio"
+              className="absolute inset-0 h-full w-full object-cover object-[right_center]"
+            />
+          </picture>
+          {conFotoAntes && (
+            <picture className="contents">
+              <source media={MEDIA_HERO_CHICO} srcSet={variante1280(esClaro ? FOTO_ANTES_CLARA : FOTO_ANTES)} type="image/webp" />
+              <img
+                ref={imagenAntesRef}
+                src={esClaro ? FOTO_ANTES_CLARA : FOTO_ANTES}
+                width={3024}
+                height={1698}
+                fetchPriority="low"
+                decoding="async"
+                alt=""
+                aria-hidden="true"
+                // La máscara parte oculta desde el primer cuadro (useRevelarAntes la mueve después): si la foto se monta más tarde
+                // —mouse conectado a una tableta— no llega a taparle un instante a la foto «después».
+                style={{ filter: 'grayscale(0.35) brightness(0.97)', maskImage: MASCARA_OCULTA, WebkitMaskImage: MASCARA_OCULTA }}
+                className="absolute inset-0 h-full w-full object-cover object-[right_center]"
+              />
+            </picture>
+          )}
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-[1700px] flex-1 flex-col justify-center gap-[clamp(10px,1.8vw,20px)] py-[clamp(16px,3vw,40px)]">

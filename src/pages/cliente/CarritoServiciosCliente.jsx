@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../lib/supabase.js'
+import { claveCitas, olvidarCopia } from '../../lib/copiasEnMemoria.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
@@ -164,7 +165,12 @@ export default function CarritoServiciosCliente() {
   const programa = useProgramaRecompensas(session?.user?.id ?? null)
   const { mostrarToast } = useToast()
   const { quitarServicio, vaciarServiciosReservados } = useCarritoCliente()
-  const { cuentaTransferencia, pagos, adelantoMinimo, cancelacionPlazoHoras } = useEstadoNegocio()
+  const { cuentaTransferencia, pagos, adelantoMinimo, cancelacionPlazoHoras, refrescar: refrescarNegocio } = useEstadoNegocio()
+  // Los datos de pago (Yape/Plin/cuenta) ya no llegan por Realtime a las clientas: se releen al abrir el carrito si la copia
+  // tiene más de un minuto (EstadoNegocioContext).
+  useEffect(() => {
+    refrescarNegocio()
+  }, [refrescarNegocio])
   const navigate = useNavigate()
 
   const [cargando, setCargando] = useState(true)
@@ -448,6 +454,8 @@ export default function CarritoServiciosCliente() {
       if (error) throw error
 
       mostrarToast('Cita reservada.', 'exito')
+      // La copia en memoria de «Mis citas» no incluye esta reserva: se descarta para que Citas la lea del servidor.
+      olvidarCopia(claveCitas(usuario.id))
       await vaciarServiciosReservados(idsReservados)
       navigate('/citas')
     } catch (error) {

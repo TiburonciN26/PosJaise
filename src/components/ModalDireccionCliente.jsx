@@ -3,7 +3,8 @@ import { X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { usePerfilCliente } from '../context/PerfilClienteContext.jsx'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 
 // Etiqueta propia (no la Etiqueta.jsx compartida con el POS, que usa
@@ -33,7 +34,6 @@ export default function ModalDireccionCliente({ direccion, onCerrar, onGuardada 
   const { perfil } = usePerfilCliente()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
-  useCerrarConEscape(onCerrar)
 
   const esEdicion = Boolean(direccion)
 
@@ -83,6 +83,18 @@ export default function ModalDireccionCliente({ direccion, onCerrar, onGuardada 
     onGuardada()
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = { etiqueta, direccionTexto, celular, referencia, predeterminada }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, {
+    etiqueta: 'Nombre de la dirección',
+    direccionTexto: 'Dirección',
+    celular: 'Celular',
+    referencia: 'Referencia',
+    predeterminada: 'Predeterminada',
+  })
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando, variante: 'web' })
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4">
       <div
@@ -95,7 +107,7 @@ export default function ModalDireccionCliente({ direccion, onCerrar, onGuardada 
           </h2>
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             aria-label="Cerrar"
             className="-m-2 rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white"
           >
@@ -175,7 +187,7 @@ export default function ModalDireccionCliente({ direccion, onCerrar, onGuardada 
           <div className="flex gap-2 border-t border-white/10 pt-4">
             <button
               type="button"
-              onClick={onCerrar}
+              onClick={intentarCerrar}
               disabled={guardando}
               className="flex-1 rounded-lg border border-white/15 py-2 text-sm text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:opacity-40"
             >
@@ -191,6 +203,7 @@ export default function ModalDireccionCliente({ direccion, onCerrar, onGuardada 
           </div>
         </form>
       </div>
+      {aviso}
     </div>
   )
 }

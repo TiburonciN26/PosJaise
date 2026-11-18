@@ -5,6 +5,7 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BotonAccion from './BotonAccion.jsx'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 
 // Detalle de un artículo del Almacén. Para la administradora incluye el historial (quién sacó / ingresó qué, cuándo y,
 // en los ingresos, a qué costo) vía historial_almacen_articulo(), que solo le responde a ella. Mismo esquema que
@@ -61,7 +62,10 @@ export default function ModalDetalleArticuloAlmacen({ articulo, esAdmin, onCerra
         className="flex max-h-full w-full max-w-md flex-col rounded-lg border border-border bg-surface"
       >
         <div className="min-h-0 flex-1 overflow-y-auto px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
-          <h2 className="text-base font-semibold text-ink">{articulo.nombre}</h2>
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-base font-semibold text-ink">{articulo.nombre}</h2>
+            <BotonCerrarModal onClick={onCerrar} />
+          </div>
           <p className="font-mono text-xs text-ink/60">
             {articulo.categoria || 'Sin categoría'} · {articulo.unidad}
             {!articulo.activo && ' · Inactivo'}

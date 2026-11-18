@@ -15,29 +15,19 @@ export function porcentajeEquilibrio(ingreso, meta) {
 }
 
 // Confeti de la meta cumplida (diseño Aurora, docs/diseño-puntoEquilibrio/):
-// cada pieza sale del mismo punto y vuela a (dx, dy) girando. En PC brota del
-// final de la barra; en móvil, de la esquina superior derecha de la tarjeta.
-const CONFETI_PC = [
-  { dx: -70, dy: -46, rot: 260, color: '#ed8bac' },
-  { dx: -45, dy: -62, rot: -200, color: '#d8b4fe' },
-  { dx: -22, dy: -52, rot: 320, color: '#3ecf6a' },
-  { dx: -8, dy: -70, rot: -120, color: '#ffd9a0' },
-  { dx: 12, dy: -58, rot: 200, color: '#9ad1ff' },
-  { dx: 30, dy: -66, rot: -280, color: '#3ecf6a' },
-  { dx: 52, dy: -48, rot: 150, color: '#ed8bac' },
-  { dx: 74, dy: -40, rot: -240, color: '#ffd9a0' },
-  { dx: -58, dy: -24, rot: 180, color: '#9ad1ff' },
-  { dx: 62, dy: -22, rot: -160, color: '#d8b4fe' },
-]
-const CONFETI_MOVIL = [
-  { dx: -90, dy: -34, rot: 260, color: '#ed8bac' },
-  { dx: -62, dy: -52, rot: -200, color: '#d8b4fe' },
-  { dx: -38, dy: -44, rot: 320, color: '#3ecf6a' },
-  { dx: -20, dy: -60, rot: -120, color: '#ffd9a0' },
-  { dx: -4, dy: -48, rot: 200, color: '#9ad1ff' },
-  { dx: -76, dy: -18, rot: -280, color: '#3ecf6a' },
-  { dx: -50, dy: -24, rot: 150, color: '#ed8bac' },
-  { dx: -10, dy: -26, rot: -240, color: '#ffd9a0' },
+// cada pieza sale del centro de la tarjeta (detrás de la pastilla) y vuela a
+// (dx, dy) girando, hacia ambos lados.
+const CONFETI = [
+  { dx: -112, dy: -30, rot: 260, color: '#ed8bac' },
+  { dx: -82, dy: -50, rot: -200, color: '#d8b4fe' },
+  { dx: -52, dy: -42, rot: 320, color: '#3ecf6a' },
+  { dx: -22, dy: -56, rot: -120, color: '#ffd9a0' },
+  { dx: 22, dy: -52, rot: 200, color: '#9ad1ff' },
+  { dx: 52, dy: -44, rot: -280, color: '#3ecf6a' },
+  { dx: 84, dy: -52, rot: 150, color: '#ed8bac' },
+  { dx: 114, dy: -28, rot: -240, color: '#ffd9a0' },
+  { dx: -98, dy: 6, rot: 180, color: '#9ad1ff' },
+  { dx: 100, dy: 8, rot: -160, color: '#d8b4fe' },
 ]
 
 function Confeti({ piezas, className }) {
@@ -56,15 +46,14 @@ function Confeti({ piezas, className }) {
   ))
 }
 
-function PastillaMetaCumplida({ className, clasePico }) {
+function PastillaMetaCumplida() {
   return (
     <div
       aria-hidden="true"
-      className={`pe-pastilla pointer-events-none absolute z-30 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 ${className}`}
+      className="pe-pastilla pe-pastilla-medio pointer-events-none absolute left-1/2 top-1/2 z-30 flex items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5"
     >
       <Smile className="pe-menear h-[18px] w-[18px] text-[#3ecf6a]" strokeWidth={2} />
       <span className="text-[13px] font-bold text-[#3ecf6a]">¡Meta cumplida!</span>
-      <span className={`pe-pastilla-pico absolute -bottom-[6px] h-2.5 w-2.5 rotate-45 ${clasePico}`} />
     </div>
   )
 }
@@ -73,8 +62,8 @@ function PastillaMetaCumplida({ className, clasePico }) {
 // Un solo árbol para PC y móvil, reacomodado con grid: en móvil título y
 // montos arriba y la barra debajo a lo ancho; en PC (lg) todo en una fila
 // título · barra · montos. Las animaciones viven en index.css (.pe-*).
-// La pastilla y el confeti sobresalen por ARRIBA de la tarjeta: el Dashboard
-// le reserva ese espacio (pt-8) cuando la meta está cumplida, e `isolate`
+// La pastilla aparece en medio de la tarjeta (no por encima: eso obligaba a
+// reservar un hueco vacío arriba) y el confeti brota detrás de ella. `isolate`
 // mantiene todo por debajo de los filtros sticky (z-10) al hacer scroll.
 export default function TarjetaPuntoEquilibrio({ filtro, ingreso, meta }) {
   const porcentaje = porcentajeEquilibrio(ingreso, meta)
@@ -98,11 +87,6 @@ export default function TarjetaPuntoEquilibrio({ filtro, ingreso, meta }) {
             <div className="pe-flujo absolute inset-0 overflow-hidden rounded-full">
               <div className="pe-destello absolute inset-y-0 left-0 w-[22%]" />
             </div>
-            <PastillaMetaCumplida
-              className="pe-pastilla-centrada bottom-6 left-full hidden lg:flex"
-              clasePico="left-1/2 -ml-[5px]"
-            />
-            <Confeti piezas={CONFETI_PC} className="left-full top-1/2 -ml-[3px] -mt-[5px] hidden lg:block" />
           </>
         ) : (
           <>
@@ -158,11 +142,8 @@ export default function TarjetaPuntoEquilibrio({ filtro, ingreso, meta }) {
         </div>
         <div className="relative z-[1]">{contenido}</div>
       </div>
-      <PastillaMetaCumplida
-        className="pe-pastilla-derecha -top-8 right-3.5 flex lg:hidden"
-        clasePico="right-6"
-      />
-      <Confeti piezas={CONFETI_MOVIL} className="right-[38px] top-[6px] lg:hidden" />
+      <Confeti piezas={CONFETI} className="left-1/2 top-1/2 -ml-[3px] -mt-[5px]" />
+      <PastillaMetaCumplida />
     </div>
   )
 }

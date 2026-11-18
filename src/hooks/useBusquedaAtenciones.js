@@ -9,7 +9,7 @@ import { useDebounce } from './useDebounce.js'
 // una consulta fallida NUNCA se presentan como «no hay atenciones pendientes».
 // Cambiar las exclusiones (se agregó o se quitó una atención del carrito) vuelve a pedir la lista sin
 // mostrar «Buscando…»: el modal además oculta al instante lo que ya está en el carrito.
-export function useBusquedaAtenciones({ termino, excluirIds, esperaMs = 250 }) {
+export function useBusquedaAtenciones({ termino, excluirIds, orden = 'asc', esperaMs = 250 }) {
   const debounced = useDebounce(termino, esperaMs)
   const claveExclusion = [...excluirIds].sort().join(',')
   const [resultado, setResultado] = useState(null) // { para, ok, filas, truncado }
@@ -19,7 +19,7 @@ export function useBusquedaAtenciones({ termino, excluirIds, esperaMs = 250 }) {
   useEffect(() => {
     const numero = ++secuencia.current
     const ids = claveExclusion ? claveExclusion.split(',') : []
-    buscarAtenciones(supabase, debounced, { excluirIds: ids }).then(
+    buscarAtenciones(supabase, debounced, { excluirIds: ids, orden }).then(
       ({ filas, truncado }) => {
         if (numero === secuencia.current) setResultado({ para: debounced, ok: true, filas, truncado })
       },
@@ -27,7 +27,7 @@ export function useBusquedaAtenciones({ termino, excluirIds, esperaMs = 250 }) {
         if (numero === secuencia.current) setResultado({ para: debounced, ok: false, filas: [], truncado: false })
       },
     )
-  }, [debounced, claveExclusion, intento])
+  }, [debounced, claveExclusion, intento, orden])
 
   const vigente = resultado !== null && resultado.para === termino
   const reintentar = useCallback(() => {

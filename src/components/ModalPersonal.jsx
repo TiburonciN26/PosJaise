@@ -1,6 +1,8 @@
 import { useId, useRef, useState } from 'react'
 import { Check, Copy, Eye, EyeOff, Sparkles } from 'lucide-react'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import {
@@ -50,8 +52,6 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
   const [error, setError] = useState(null)
   const [credenciales, setCredenciales] = useState(null) // { email, password } tras crear
 
-  // Con las credenciales a la vista, cerrar con Esc equivale a «Listo».
-  useCerrarConEscape(() => (credenciales ? onGuardado(true) : onCerrar()), !guardando)
 
   function validar() {
     if (nombre.trim().length < 2) return 'Escribe el nombre completo.'
@@ -101,6 +101,24 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
     mostrarToast(listo ? 'Credenciales copiadas.' : 'No se pudo copiar. Anótalas manualmente.', listo ? 'exito' : 'error')
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería. Con las
+  // credenciales a la vista ya no hay nada que perder: cerrar (X o Esc) equivale a «Listo».
+  const valoresFormulario = { nombre, email, rol, password, tambienAtiende }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = credenciales
+    ? []
+    : listarCambios(
+        valoresBase.current,
+        valoresFormulario,
+        { nombre: 'Nombre', email: 'Correo', rol: 'Rol', password: 'Contraseña', tambienAtiende: 'También atiende' },
+        { sinValor: ['password'] },
+      )
+  const { intentarCerrar, aviso } = useAvisoDescarte({
+    cambios,
+    onCerrar: credenciales ? () => onGuardado(true) : onCerrar,
+    bloqueado: guardando,
+  })
+
   const llevaFicha = ROLES_CON_FICHA.includes(rol) || (rol === 'ADMINISTRADOR' && tambienAtiende)
 
   return (
@@ -113,10 +131,13 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
           aria-label="Cuenta creada"
           className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
         >
-          <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
-            <Check className="h-4 w-4 text-green" aria-hidden="true" />
-            Cuenta creada
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+              <Check className="h-4 w-4 text-green" aria-hidden="true" />
+              Cuenta creada
+            </h2>
+            <BotonCerrarModal onClick={intentarCerrar} />
+          </div>
           <p className="mt-1 text-sm text-ink/60">
             Entrégale estos datos a {nombre.trim()}. La contraseña solo se muestra ahora: luego puedes
             restablecerla desde la lista. Puede cambiarla al entrar, desde su menú de usuario.
@@ -168,7 +189,10 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
           style={{ '--color-foco': 'var(--color-purple-300)' }}
           className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
         >
-          <h2 className="text-base font-semibold text-ink">{esEdicion ? 'Editar persona' : 'Nueva persona'}</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-ink">{esEdicion ? 'Editar persona' : 'Nueva persona'}</h2>
+            <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+          </div>
 
           <div className="mt-4 space-y-3">
             <div>
@@ -310,7 +334,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
           <div className="mt-4 flex gap-2">
             <button
               type="button"
-              onClick={onCerrar}
+              onClick={intentarCerrar}
               disabled={guardando}
               className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
             >
@@ -326,6 +350,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
           </div>
         </form>
       )}
+      {aviso}
     </div>
   )
 }

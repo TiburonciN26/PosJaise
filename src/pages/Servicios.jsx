@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, Plus, Scissors, Clock, ArrowBigDown } from 'lucide-react'
+import { Pencil, Trash2, Plus, Scissors, Clock, ArrowBigDown, CalendarPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -23,6 +23,7 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCIONES_ORDEN = [
+  { id: 'reciente', label: 'Agregados recientemente' }, // por defecto (como «Últimos agregados» en Inventario)
   { id: 'nombre-asc', label: 'Nombre (A-Z)' },
   { id: 'nombre-desc', label: 'Nombre (Z-A)' },
   { id: 'precio-asc', label: 'Precio (menor a mayor)' },
@@ -30,6 +31,15 @@ const OPCIONES_ORDEN = [
   { id: 'duracion-asc', label: 'Duración (menor a mayor)' },
   { id: 'duracion-desc', label: 'Duración (mayor a menor)' },
 ]
+
+// `creado_en` solo lo pide esta pestaña (personal): no va en SELECT_SERVICIOS, que define las columnas editables
+// de la ficha (POS + Web) y lo comprueba tests/e2e/catalogo-pos-web.test.mjs.
+const COLUMNAS_LISTADO = `${SELECT_SERVICIOS}, creado_en`
+
+function formatearFechaAlta(fechaIso) {
+  if (!fechaIso) return null
+  return new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(fechaIso))
+}
 
 function formatearDuracion(minutos) {
   if (minutos == null) return '—'
@@ -54,7 +64,7 @@ export default function Servicios({ activo = true }) {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [categoriasExistentes, setCategoriasExistentes] = useState([])
   const vigenteRef = useRef({ actual: true })
-  const [orden, setOrden] = useEstadoVista('/servicios:orden', 'nombre-asc')
+  const [orden, setOrden] = useEstadoVista('/servicios:orden', 'reciente')
   const [modalServicio, setModalServicio] = useState(null) // null | 'nuevo' | servicio
   const [servicioAEliminar, setServicioAEliminar] = useState(null)
   const [eliminando, setEliminando] = useState(false)
@@ -82,7 +92,7 @@ export default function Servicios({ activo = true }) {
     // Una recarga silenciosa (tras guardar/eliminar) conserva hasta donde el usuario había llegado.
     const hasta = silencioso ? Math.min(Math.max(servicios.length, TAMANO_PAGINA_SERVICIOS), 1000) : TAMANO_PAGINA_SERVICIOS
     const [res, resCategorias] = await Promise.all([
-      consultaListadoServicios(supabase, { termino: busquedaDebounced, orden, columnas: SELECT_SERVICIOS }).range(0, hasta - 1),
+      consultaListadoServicios(supabase, { termino: busquedaDebounced, orden, columnas: COLUMNAS_LISTADO }).range(0, hasta - 1),
       categoriasDeServicios(supabase).catch(() => null),
     ])
 
@@ -108,7 +118,7 @@ export default function Servicios({ activo = true }) {
     const { data, error: errorMas } = await consultaListadoServicios(supabase, {
       termino: busquedaDebounced,
       orden,
-      columnas: SELECT_SERVICIOS,
+      columnas: COLUMNAS_LISTADO,
     }).range(servicios.length, servicios.length + TAMANO_PAGINA_SERVICIOS - 1)
     setCargandoMas(false)
     if (!vigente.actual) return
@@ -178,7 +188,7 @@ export default function Servicios({ activo = true }) {
           sinBorde
         />
 
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" sinBorde />
+        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" sinBorde seleccionado />
 
         {esAdmin && (
           <button
@@ -224,19 +234,22 @@ export default function Servicios({ activo = true }) {
                       aria-expanded={abierto}
                       className="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
                     >
+                      {/* El estado va en la fila del precio (extremo derecho) para que el nombre use todo el ancho. */}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-ink">{servicio.nombre}</p>
-                        <p className="font-mono text-sm text-amber">
-                          {formatearSoles(servicio.precio)}
-                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-mono text-sm text-amber">
+                            {formatearSoles(servicio.precio)}
+                          </p>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                              servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
+                            }`}
+                          >
+                            {servicio.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </div>
                       </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          servicio.activo ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'
-                        }`}
-                      >
-                        {servicio.activo ? 'Activo' : 'Inactivo'}
-                      </span>
                     </div>
 
                     <button
@@ -265,6 +278,13 @@ export default function Servicios({ activo = true }) {
                           <Clock className="h-3.5 w-3.5" />
                           {formatearDuracion(servicio.duracion_min)}
                         </span>
+                        {servicio.creado_en && (
+                          <span className="flex items-center gap-1 text-xs text-ink/60">
+                            <CalendarPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="sr-only">Agregado el</span>
+                            {formatearFechaAlta(servicio.creado_en)}
+                          </span>
+                        )}
                       </div>
 
                       {esAdmin && (
@@ -299,6 +319,7 @@ export default function Servicios({ activo = true }) {
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 font-normal`}>Categoría</th>
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Precio</th>
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Duración</th>
+                  <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Agregado</th>
                   <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Estado</th>
                   {esAdmin && <th style={estiloTh} className={`${claseTh} px-3 py-2 text-right font-normal`}>Acciones</th>}
                 </tr>
@@ -313,6 +334,9 @@ export default function Servicios({ activo = true }) {
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono text-ink/60">
                       {formatearDuracion(servicio.duracion_min)}
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-mono text-ink/60">
+                      {formatearFechaAlta(servicio.creado_en) ?? '—'}
                     </td>
                     <td className="px-3 py-2.5 text-right">
                       <span

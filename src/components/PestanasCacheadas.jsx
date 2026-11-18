@@ -9,9 +9,11 @@ import { PaginaActivaContext, ProteccionPantallaContext } from '../context/Pagin
 import { fijarIdentidadVista, reiniciarEstadoVista } from '../lib/estadoVista.js'
 import { alLiberarFormulario, formularioEditado, formularioEnviado, tieneFormulariosSinConfirmar } from '../lib/formulariosProtegidos.js'
 
-// Ventas queda con import normal (no lazy): es la pestaña de aterrizaje de
-// TODOS los usuarios (index redirige ahí), así que no vale la pena pagar una
-// ida y vuelta de red extra solo para achicar el bundle inicial. Las demás
+// Ventas queda con import normal (no lazy): es la pestaña de aterrizaje del
+// POS, así que no vale la pena pagar una ida y vuelta de red extra solo para
+// achicar su chunk. (Desde 2026-11-14 este archivo y Ventas ya no viajan en el
+// JS de entrada de la app: son el chunk del POS, components/ArmazonPos.jsx, que
+// los visitantes y las clientas del portal no descargan.) Las demás
 // —sobre todo las 7 exclusivas de admin— sí se cargan aparte (import()): una
 // asistente nunca llega a pedir ese código, y el admin lo pide recién cuando
 // entra a esa pestaña, no todo junto al abrir la app.
@@ -34,6 +36,7 @@ const Clientes = componenteDiferido(() => import('../pages/Clientes.jsx'), 'Clie
 const Porcentajes = componenteDiferido(() => import('../pages/Porcentajes.jsx'), 'Porcentajes')
 const Gastos = componenteDiferido(() => import('../pages/Gastos.jsx'), 'Gastos')
 const Almacen = componenteDiferido(() => import('../pages/Almacen.jsx'), 'Almacen')
+const Proveedores = componenteDiferido(() => import('../pages/Proveedores.jsx'), 'Proveedores')
 const CajaChica = componenteDiferido(() => import('../pages/CajaChica.jsx'), 'CajaChica')
 const Asistentes = componenteDiferido(() => import('../pages/Asistentes.jsx'), 'Asistentes')
 const Personal = componenteDiferido(() => import('../pages/Personal.jsx'), 'Personal')
@@ -68,6 +71,7 @@ const PAGINAS = {
   '/porcentajes': Porcentajes,
   '/gastos': Gastos,
   '/almacen': Almacen,
+  '/proveedores': Proveedores,
   '/caja-chica': CajaChica,
   '/equipo-web': Asistentes,
   '/personal': Personal,

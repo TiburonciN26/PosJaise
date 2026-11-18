@@ -1,12 +1,21 @@
 import { useRef, useState } from 'react'
 import BotonVoz from './BotonVoz.jsx'
-import { X, ClipboardCheck } from 'lucide-react'
+import { X, ClipboardCheck, User, ListFilter } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useBusquedaAtenciones } from '../hooks/useBusquedaAtenciones.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import IconoBuscar from './IconoBuscar.jsx'
 import EstadoVacio from './EstadoVacio.jsx'
+import SelectorOrden from './SelectorOrden.jsx'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
+
+const MOSTRAR_VOZ = false
+
+const OPCIONES_ORDEN = [
+  { id: 'desc', label: 'Última agregada primero' },
+  { id: 'asc', label: 'Más antigua primero' },
+]
 
 // Corta a propósito (día/mes + hora, sin año) — alcanza para notar de un
 // vistazo que una atención quedó de un día anterior (se olvidaron de
@@ -42,21 +51,21 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
   useModalA11y(panelRef)
   const [busqueda, setBusqueda] = useState('')
   const [indiceActivo, setIndiceActivo] = useState(-1)
+  // Por defecto la última agregada arriba (el orden se pide al servidor: ver buscarAtenciones.js).
+  const [orden, setOrden] = useState('desc')
 
   useCerrarConEscape(onCerrar)
 
-  const busquedaAtenciones = useBusquedaAtenciones({ termino: busqueda, excluirIds })
+  const busquedaAtenciones = useBusquedaAtenciones({ termino: busqueda, excluirIds, orden })
   const { listo, buscando, error, truncado } = busquedaAtenciones
   // Lo que ya está en el carrito desaparece al instante (sin esperar la nueva consulta).
   const idsExcluidos = new Set(excluirIds)
   const filtradas = busquedaAtenciones.resultados.filter((atencion) => !idsExcluidos.has(atencion.id))
 
   // Agrupadas por cliente para que la cajera vea de un vistazo todo lo
-  // pendiente de la misma persona, en vez de buscarla entre atenciones de
-  // otros clientes intercaladas. El índice plano (sobre `filtradas`) se
-  // conserva para que la navegación con flechas/Enter siga funcionando
-  // igual, solo que ahora dibujado agrupado.
-  const indicePorId = new Map(filtradas.map((atencion, indice) => [atencion.id, indice]))
+  // pendiente de la misma persona. Los grupos salen en el orden de la
+  // primera atención de cada uno (ya ordenada por fecha según `orden`), así
+  // que la clienta con la atención más reciente (o más antigua) queda arriba.
   const gruposFiltrados = (() => {
     const mapa = new Map()
     for (const atencion of filtradas) {
@@ -66,8 +75,12 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
       }
       mapa.get(clave).atenciones.push(atencion)
     }
-    return Array.from(mapa.values()).sort((a, b) => a.clienteNombre.localeCompare(b.clienteNombre))
+    return Array.from(mapa.values())
   })()
+  // Índice plano en el MISMO orden en que se dibuja, para que las flechas/Enter
+  // recorran la lista tal como se ve.
+  const visibles = gruposFiltrados.flatMap((grupo) => grupo.atenciones)
+  const indicePorId = new Map(visibles.map((atencion, indice) => [atencion.id, indice]))
 
   function manejarCambioBusqueda(valor) {
     setBusqueda(valor)
@@ -85,16 +98,16 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
     }
 
     if (evento.key === 'ArrowDown') {
-      if (!listo || filtradas.length === 0) return
+      if (!listo || visibles.length === 0) return
       evento.preventDefault()
-      setIndiceActivo((indice) => (indice + 1) % filtradas.length)
+      setIndiceActivo((indice) => (indice + 1) % visibles.length)
       return
     }
 
     if (evento.key === 'ArrowUp') {
-      if (!listo || filtradas.length === 0) return
+      if (!listo || visibles.length === 0) return
       evento.preventDefault()
-      setIndiceActivo((indice) => (indice - 1 + filtradas.length) % filtradas.length)
+      setIndiceActivo((indice) => (indice - 1 + visibles.length) % visibles.length)
       return
     }
 
@@ -103,12 +116,12 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
     // Con la búsqueda pendiente o fallida Enter no elige nada (podría ser una fila desactualizada).
     if (!listo) return
 
-    if (indiceActivo >= 0 && filtradas[indiceActivo]) {
-      onSeleccionar(filtradas[indiceActivo])
+    if (indiceActivo >= 0 && visibles[indiceActivo]) {
+      onSeleccionar(visibles[indiceActivo])
       return
     }
-    if (filtradas.length === 1) {
-      onSeleccionar(filtradas[0])
+    if (visibles.length === 1) {
+      onSeleccionar(visibles[0])
     }
   }
 
@@ -124,14 +137,7 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
       >
         <div className="flex items-center justify-between gap-2 border-b border-border px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
           <h2 className="text-base font-semibold text-ink">Atención a cobrar</h2>
-          <button
-            type="button"
-            onClick={onCerrar}
-            aria-label="Cerrar"
-            className="-m-3.5 rounded-lg p-3.5 text-ink/60 transition-colors hover:bg-surface-2 hover:text-ink"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <BotonCerrarModal onClick={onCerrar} />
         </div>
 
         <div className="border-b border-border px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
@@ -164,7 +170,19 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
                 </button>
               )}
             </div>
-            <BotonVoz onTexto={manejarCambioBusqueda} />
+            {/* Micrófono oculto a pedido (no eliminado): poner MOSTRAR_VOZ en true para volver a mostrarlo. */}
+            {MOSTRAR_VOZ && <BotonVoz onTexto={manejarCambioBusqueda} />}
+            <SelectorOrden
+              opciones={OPCIONES_ORDEN}
+              valor={orden}
+              onCambiar={(nuevo) => {
+                setOrden(nuevo)
+                setIndiceActivo(-1)
+              }}
+              icono={ListFilter}
+              seleccionado
+              ariaLabel="Ordenar atenciones por fecha"
+            />
           </div>
         </div>
 
@@ -199,8 +217,9 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
                 key={grupo.clienteNombre}
                 className="border-b border-border py-1.5 last:border-b-0"
               >
-                <p className="truncate px-3 pb-1 pt-1 text-sm font-semibold text-ink">
-                  {grupo.clienteNombre}
+                <p className="flex items-center gap-1.5 px-3 pb-1 pt-1 text-sm font-semibold text-ink">
+                  <User className="h-3.5 w-3.5 shrink-0 text-ink/60" />
+                  <span className="truncate">{grupo.clienteNombre}</span>
                 </p>
                 <div className="pl-3">
                   {grupo.atenciones.map((atencion) => {

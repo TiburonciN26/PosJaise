@@ -60,6 +60,39 @@ de tema y revelado antes/después. Se conservan los fetchPriority high/low y el
 encuadre/layout del hero. La carga móvil aumenta respecto a las variantes
 pequeñas anteriores: cada par original pesa aproximadamente 0.93–0.97 MB.
 
+**Actualización 2026-11-13 (rendimiento, sin cambiar las fotos):**
+
+- La foto **«antes» solo se monta donde puede verse**: de entrada si el equipo
+  tiene algún puntero con hover (`any-hover: hover`: PC, portátil, tableta con
+  mouse) o al primer evento de un puntero no táctil. En un celular el revelado
+  ignora el tacto, así que esa foto quedaba siempre oculta pero se descargaba
+  igual; ahora el móvil baja **una** foto (≈0.48–0.50 MB) en vez del par.
+  En escritorio no cambia nada: las dos, high/low.
+- La foto **«después» se precarga desde `index.html`** (`<link rel="preload">`
+  creado por un script en línea, solo en `/` e `/inicio`, según el tema guardado
+  en `jaise-tema-web`): empieza a bajar junto con el JS de entrada y el `<img>`
+  reutiliza esa descarga. Si cambia el nombre de los archivos, actualizar
+  también ese script.
+- **Una variante de 1280 px para pantallas chicas** (decisión del usuario,
+  2026-11-13: «solo una variante de 1280 px en móvil para no perder calidad»).
+  Cada foto tiene su `-1280.webp` (1280×718, 66–76 kB, con la misma
+  transparencia) generado del original. Se sirve con
+  `<picture><source media="(max-width: 639px)">`: solo por debajo de 640 px CSS
+  (celular en vertical). Desde 640 px —tableta, PC, celular apaisado— se sirven
+  siempre los originales de 3024×1698 px. Un celular de 430 px a 3× tiene
+  1290 px físicos de ancho, así que no puede mostrar más detalle que la variante.
+  El preload de `index.html` usa la misma consulta de medios.
+- **Si se cambian las fotos de campaña**, además de sustituir los cuatro
+  originales hay que regenerar sus cuatro variantes (desde `public/inicio-web`,
+  una vez por archivo):
+
+  ```bash
+  ffmpeg -y -i hero-despues-oscuro.webp -vf "scale=1280:-2:flags=lanczos" \
+    -c:v libwebp -quality 90 -compression_level 6 -preset photo hero-despues-oscuro-1280.webp
+  ```
+
+  Si se olvida, el móvil seguiría mostrando la foto anterior.
+
 - Estilo de la web del cliente: `.landing-web`, `--lw-gold` (= azul metálico `#a9c6ec`), fondo `#0b0b0c`; rosa `--lw-rose` (`#ff85a1`) solo en el puntito de las etiquetas.
 - Tipografías: **Kunaroh** en el logo y el título del hero ("Belleza que transforma", ya existe como `.lw-titulo-kunaroh`); **Heavitas** en títulos de sección, en **blanco sólido** y mayúsculas; el resto con la fuente actual.
 - Bloques: fondo `#111113`, borde `1px #1f1f22`, radio `10px`, `box-shadow: inset 0 1px 1px rgba(255,255,255,.06)`.

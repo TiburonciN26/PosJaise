@@ -26,6 +26,7 @@ const TABLA_LABELS = {
   horario_semanal: 'Horario de atención',
   almacen_articulos: 'Almacén',
   caja_chica_config: 'Caja chica',
+  proveedores: 'Proveedores',
 }
 
 const OPCION_TODAS_TABLAS = 'todas'

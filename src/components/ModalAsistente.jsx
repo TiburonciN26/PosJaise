@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Camera, Crown, Globe, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
 import Interruptor from './Interruptor.jsx'
@@ -85,7 +87,6 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
   const [errorFoto, setErrorFoto] = useState(null)
   const [mostrarCamara, setMostrarCamara] = useState(false)
 
-  useCerrarConEscape(onCerrar)
 
   useEffect(() => {
     return () => {
@@ -211,6 +212,13 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
     onGuardado()
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const formularioBase = useRef(formulario)
+  const cambios = listarCambios(formularioBase.current, formulario, { nombresCompletos: 'Nombres completos', telefono: 'Teléfono', email: 'Email', direccion: 'Dirección', contactoEmergencia: 'Contacto de emergencia', cumpleanos: 'Cumpleaños', fechaIngreso: 'Fecha de ingreso', usuarioId: 'Cuenta de acceso', activo: 'Activa', especialidad: 'Especialidad', bio: 'Bio', mostrarEnWeb: 'Mostrar en la Web', esDuena: 'Dueña', instagramUrl: 'Instagram', facebookUrl: 'Facebook', tiktokUrl: 'TikTok', horarioWeb: 'Horario (Web)' }, { sinValor: ['usuarioId'] })
+  if (fotoNueva) cambios.push('Foto nueva (sin guardar)')
+  if (fotoEliminada) cambios.push('Foto quitada')
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -220,9 +228,12 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
         style={{ '--color-foco': 'var(--color-azul-metal)' }}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">
-          {esEdicion ? 'Editar asistente' : 'Nueva asistente'}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            {esEdicion ? 'Editar asistente' : 'Nueva asistente'}
+          </h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         <div className="mt-4 space-y-3">
           <div>
@@ -530,7 +541,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
           >
@@ -549,6 +560,7 @@ export default function ModalAsistente({ asistente, usuariosDisponibles, onCerra
       {mostrarCamara && (
         <ModalCamara onCapturar={capturarDesdeCamara} onCerrar={() => setMostrarCamara(false)} />
       )}
+      {aviso}
     </div>
   )
 }

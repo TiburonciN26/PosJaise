@@ -1,8 +1,20 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
+import { arbolRecordado } from '../config/paginasCliente.js'
 
 const AuthContext = createContext(null)
+
+// Fila de perfil de una clienta. Devuelve una PROMESA ya lanzada (el constructor de consultas de supabase-js no envía nada
+// hasta que alguien lo espera): así se puede pedir a la vez que «usuarios». Nunca rechaza: un fallo llega como { error }.
+function leerClienteWeb(userId) {
+  return supabase
+    .from('clientes_web')
+    .select('id, email, activo')
+    .eq('id', userId)
+    .maybeSingle()
+    .then((respuesta) => respuesta)
+}
 
 const CLAVE_MODO_VISTA = 'modoVista'
 
@@ -53,12 +65,11 @@ export function AuthProvider({ children }) {
   // "usuarios"). Siempre deja a "usuario" (o errorPerfil/bloqueoLogin)
   // resuelto por su cuenta — cargarPerfil no necesita mirar el resultado,
   // solo evitar seguir con su propio manejo de "cuenta inválida" después.
-  const cargarPerfilCliente = useCallback(async (userId) => {
-    const { data, error } = await supabase
-      .from('clientes_web')
-      .select('id, email, activo')
-      .eq('id', userId)
-      .maybeSingle()
+  //
+  // `lecturaAdelantada`: la misma lectura de clientes_web, ya en vuelo (ver cargarPerfilSinCompartir). Si viene, se espera
+  // esa en vez de pedirla otra vez.
+  const cargarPerfilCliente = useCallback(async (userId, lecturaAdelantada = null) => {
+    const { data, error } = await (lecturaAdelantada ?? leerClienteWeb(userId))
 
     if (error) {
       setErrorPerfil(true)
@@ -118,7 +129,15 @@ export function AuthProvider({ children }) {
   // alcanzara a echarlo — eso se vivía como "entra un segundo y lo bota".
   // Haciendo el chequeo ACÁ, en el único lugar que decide setUsuario, no
   // hay ventana en la que la app llegue a mostrarse.
+  //
+  // Lectura adelantada de clientes_web: una clienta no tiene fila en «usuarios», así que su perfil eran dos lecturas EN
+  // SERIE (usuarios → 0 filas → clientes_web) y el portal esperaba dos idas y vueltas antes de montarse. Si la última vez
+  // este navegador montó el portal (pista «portal», la misma que usa precargaTemprana), las dos salen a la vez y se espera
+  // una sola ida y vuelta. Con pista «pos» o sin pista no se adelanta nada: el arranque del POS hace exactamente las mismas
+  // peticiones que antes. Si resulta ser personal (viendo su perfil de clienta), la lectura adelantada se descarta.
   const cargarPerfilSinCompartir = useCallback(async (userId, esNuevoLogin = false) => {
+    const lecturaCliente = arbolRecordado() === 'portal' ? leerClienteWeb(userId) : null
+
     const { data, error } = await supabase
       .from('usuarios')
       .select('id, email, nombre_completo, rol, activo, foto_url')
@@ -136,7 +155,7 @@ export function AuthProvider({ children }) {
     // pestaña Web (se auto-registra, no lo crea un admin). Se resuelve en
     // clientes_web en vez de tratarlo como cuenta inválida/desactivada.
     if (!data) {
-      await cargarPerfilCliente(userId)
+      await cargarPerfilCliente(userId, lecturaCliente)
       return
     }
 

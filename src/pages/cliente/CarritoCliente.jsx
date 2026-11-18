@@ -660,7 +660,12 @@ export default function CarritoCliente() {
   const { usuario } = useAuth()
   const { mostrarToast } = useToast()
   const { recargar: recargarCarrito } = useCarritoCliente()
-  const { cuentaTransferencia, pagos } = useEstadoNegocio()
+  const { cuentaTransferencia, pagos, refrescar: refrescarNegocio } = useEstadoNegocio()
+  // Los datos de pago (Yape/Plin/cuenta) ya no llegan por Realtime a las clientas: se releen al abrir el carrito si la copia
+  // tiene más de un minuto (EstadoNegocioContext).
+  useEffect(() => {
+    refrescarNegocio()
+  }, [refrescarNegocio])
   const navigate = useNavigate()
 
   const [cargando, setCargando] = useState(true)
@@ -997,6 +1002,24 @@ export default function CarritoCliente() {
   const total = Math.max(0, subtotal + costoDelivery - descuentoCupon)
   // Con un cupón aplicado, el total solo es el que se paga cuando el servidor lo confirmó; con guardados en curso, nunca.
   const totalConfirmado = !hayPendientes && cuponUtilizable && (!cupon || cuponValidado)
+  // Si la fila «Total» puede mostrar un número. Sin cupón el total es una suma local (subtotal + delivery), igual que la fila
+  // del subtotal: se muestra siempre y rueda al cambiar una cantidad, aunque el guardado siga en curso (lo que se paga —el
+  // botón y el importe de las instrucciones— sigue esperando a `totalConfirmado`). Con cupón solo cuando el servidor confirmó
+  // el descuento (QA-054): mientras tanto la fila dice «Validando cupón…».
+  // Antes la fila dependía de `totalConfirmado`: cada cambio de cantidad la reemplazaba un instante por un texto (parpadeo) y
+  // el contador se volvía a montar ya en el valor nuevo, sin rodar.
+  const totalMostrable = !cupon || cuponValidado
+  // Cupón aplicado cuyo descuento está por confirmarse (guardado en curso o validación en vuelo), a diferencia de uno rechazado
+  // o con error, que son estados estables. Mientras dura, el resumen NO cambia de alto: cada pieza transitoria (aviso de
+  // guardado, «Validando…», la fila del descuento, el importe de las instrucciones) ocupa el mismo sitio que la definitiva.
+  // Si no, la casilla de términos y el botón de confirmar saltaban hacia abajo y volvían con cada cambio de cantidad.
+  const cuponEnValidacion =
+    Boolean(cupon) && cuponUtilizable && !cuponValidado && validacion.estado !== 'rechazado' && validacion.estado !== 'error'
+  // Último total que se mostró. Mientras un cupón se valida el contador sigue montado (oculto) con este valor: al confirmarse
+  // rueda de aquí al total nuevo en vez de aparecer de golpe. (Ajuste de estado durante el render: patrón de React para un
+  // valor derivado de props/estado anteriores.)
+  const [totalFirme, setTotalFirme] = useState(total)
+  if (totalMostrable && totalFirme !== total) setTotalFirme(total)
   const totalSinDescuentos = subtotalSinDescuento + costoDelivery
   const hayAhorroTotal = totalSinDescuentos > total
   const cuponesDisponibles = cupones.filter((c) => estadoEfectivoCupon(c).utilizable)
@@ -1020,11 +1043,20 @@ export default function CarritoCliente() {
     metodoPago === 'YAPE'
       ? { numero: pagos.yapeNumero, titular: pagos.yapeTitular, qrUrl: pagos.yapeQrUrl }
       : { numero: cuentaTransferencia, titular: '', qrUrl: null }
+  // Importe entre paréntesis de las instrucciones. Solo se escribe el número cuando es el que se paga (`totalConfirmado`,
+  // QA-054/QA-057). Mientras se guarda el carrito o se valida el cupón —un instante— va un marcador del mismo ancho que el
+  // importe, «(S/ …)»: una frase larga ahí cambiaba el número de renglones y movía todo el bloque de pago en cada cambio de
+  // cantidad. La frase larga queda para el estado estable (cupón rechazado, vencido o con error).
+  const importeInstruccion = totalConfirmado
+    ? ` (${formatearSoles(total)})`
+    : hayPendientes || cuponEnValidacion
+      ? ' (S/ …)'
+      : ' (se mostrará cuando se confirme tu cupón)'
   const instruccionPago = !datosMetodoActual.numero
     ? `El negocio todavía no configuró ${metodoActual.nombre} — escríbenos por WhatsApp antes de pagar.`
     : metodoPago === 'TRANSFERENCIA'
-      ? `Transfiere el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : hayPendientes ? ' (se mostrará cuando se guarde tu carrito)' : ' (se mostrará cuando se confirme tu cupón)'} a: ${datosMetodoActual.numero}.`
-      : `${metodoActual.nombre === 'Yape' ? 'Yapea' : 'Plinea'} el total exacto${totalConfirmado ? ` (${formatearSoles(total)})` : hayPendientes ? ' (se mostrará cuando se guarde tu carrito)' : ' (se mostrará cuando se confirme tu cupón)'} al ${datosMetodoActual.numero}${datosMetodoActual.titular ? ` — ${datosMetodoActual.titular}` : ''}.`
+      ? `Transfiere el total exacto${importeInstruccion} a: ${datosMetodoActual.numero}.`
+      : `${metodoActual.nombre === 'Yape' ? 'Yapea' : 'Plinea'} el total exacto${importeInstruccion} al ${datosMetodoActual.numero}${datosMetodoActual.titular ? ` — ${datosMetodoActual.titular}` : ''}.`
 
   useEffect(() => {
     if (!cuponAplicado) {
@@ -1294,11 +1326,6 @@ export default function CarritoCliente() {
                         <span className="text-white/60">Quita el cupón o elige otro para continuar. No se consumió.</span>
                       </div>
                     )}
-                    {cuponUtilizable && validacion.estado === 'validando' && (
-                      <p role="status" className="text-[13px] sm:text-sm text-white/70">
-                        Validando tu cupón…
-                      </p>
-                    )}
                     {cuponUtilizable && (validacion.estado === 'rechazado' || validacion.estado === 'error') && (
                       <div role="alert" className="flex flex-col gap-2 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] sm:text-sm text-white/90">
                         <span>{validacion.motivo}</span>
@@ -1310,13 +1337,20 @@ export default function CarritoCliente() {
                         <span className="text-white/60">Quita el cupón o elige otro para continuar. No se consumió.</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-end gap-4 pt-0.5 text-[13px] sm:text-sm">
-                      <button type="button" onClick={() => setDrawerAbierto(true)} className="font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]">
-                        Cambiar
-                      </button>
-                      <button type="button" onClick={() => setCuponAplicado(null)} className="text-white/60 hover:text-white">
-                        Quitar
-                      </button>
+                    {/* «Validando tu cupón…» va en este mismo renglón, a la izquierda de Cambiar/Quitar: como párrafo propio
+                        empujaba todo el resumen hacia abajo cada vez que se revalidaba (p. ej. al cambiar una cantidad). */}
+                    <div className="flex items-center justify-between gap-4 pt-0.5 text-[13px] sm:text-sm">
+                      <p role="status" className="min-w-0 text-white/70">
+                        {cuponEnValidacion ? 'Validando tu cupón…' : ''}
+                      </p>
+                      <span className="flex shrink-0 items-center gap-4">
+                        <button type="button" onClick={() => setDrawerAbierto(true)} className="font-semibold text-[var(--lw-gold)] hover:text-[#d3e4f8]">
+                          Cambiar
+                        </button>
+                        <button type="button" onClick={() => setCuponAplicado(null)} className="text-white/60 hover:text-white">
+                          Quitar
+                        </button>
+                      </span>
                     </div>
                   </>
                 )}
@@ -1355,33 +1389,47 @@ export default function CarritoCliente() {
                     </span>
                   </div>
                 )}
+                {/* Mientras el descuento se confirma no se anuncia ninguna línea de cupón (QA-054), pero su renglón se reserva
+                    vacío: si desapareciera y volviera, todo lo de abajo subiría y bajaría con cada cambio de cantidad. */}
+                {cuponEnValidacion && (
+                  <div aria-hidden="true" className="flex justify-between">
+                    <span>&nbsp;</span>
+                    <span className="invisible">
+                      − S/ <Contador valor={0} decimales={2} tamano={14} />
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-baseline justify-between border-t border-[#232326] pt-4">
+              <div className="relative flex items-baseline justify-between border-t border-[#232326] pt-4">
                 <span className="text-base font-semibold text-white">Total</span>
-                <span className="flex items-baseline gap-2.5">
-                  {hayAhorroTotal && totalConfirmado && <s className="lw-precio-antes text-base">{formatearSoles(totalSinDescuentos)}</s>}
-                  {totalConfirmado ? (
-                    <span className="text-[26px] font-bold text-white">
-                      S/ <Contador valor={total} decimales={2} tamano={26} />
-                    </span>
-                  ) : (
-                    <span className="text-[16px] font-semibold text-white/60">
-                      {validacion.estado === 'validando' ? 'Validando cupón…' : 'Total pendiente del cupón'}
+                <span className="relative flex items-baseline gap-2.5">
+                  {hayAhorroTotal && totalMostrable && <s className="lw-precio-antes text-base">{formatearSoles(totalSinDescuentos)}</s>}
+                  {/* El contador no se desmonta nunca: así rueda entre totales. Mientras un cupón se valida queda invisible pero
+                      conserva su sitio (la fila no cambia de alto) y el texto de estado se superpone a la derecha. */}
+                  <span className={`text-[26px] font-bold text-white ${totalMostrable ? '' : 'invisible'}`}>
+                    S/ <Contador valor={totalMostrable ? total : totalFirme} decimales={2} tamano={26} />
+                  </span>
+                  {!totalMostrable && (
+                    <span className="absolute inset-y-0 right-0 flex items-center whitespace-nowrap text-[16px] font-semibold text-white/60">
+                      {cuponEnValidacion ? 'Validando cupón…' : 'Total pendiente del cupón'}
                     </span>
                   )}
                 </span>
+                {/* Fuera del flujo, en el hueco que separa el total de la casilla de términos: como párrafo normal empujaba la
+                    casilla y el botón de confirmar hacia abajo y los devolvía al terminar cada guardado. Aparece con retardo
+                    (.lw-aviso-tardio): un guardado normal termina antes y no llega a verse; solo se lee si la red va lenta. */}
+                {hayPendientes && (
+                  <p role="status" className="lw-aviso-tardio absolute left-0 top-full whitespace-nowrap pt-0.5 text-[13px] leading-5 text-white/70">
+                    Guardando los cambios de tu carrito…
+                  </p>
+                )}
               </div>
 
               {errorGuardado && (
                 <div role="alert" className="flex flex-col gap-1 border border-[#d9534f]/60 px-3 py-2.5 text-[13px] sm:text-sm text-white/90">
                   <span>{errorGuardado}</span>
                 </div>
-              )}
-              {hayPendientes && (
-                <p role="status" className="text-[13px] sm:text-sm text-white/70">
-                  Guardando los cambios de tu carrito…
-                </p>
               )}
               <AceptoTerminos
                 id="carrito-acepto-terminos"
@@ -1431,7 +1479,7 @@ export default function CarritoCliente() {
                 {esTarjeta ? (
                   <div className="flex flex-col gap-2 rounded-[10px] border border-[#232326] bg-[#0d0d0f] p-5 max-sm:px-(--separador-vertical-secundario) max-sm:py-(--separador-horizontal-secundario)">
                     <p className="text-[15px] sm:text-base font-semibold leading-snug text-white">
-                      Paga con tu tarjeta de débito o crédito{totalConfirmado ? ` (${formatearSoles(total)})` : ''}.
+                      Paga con tu tarjeta de débito o crédito{totalConfirmado ? ` (${formatearSoles(total)})` : hayPendientes || cuponEnValidacion ? ' (S/ …)' : ''}.
                     </p>
                     <p className="text-[13px] sm:text-sm text-white/60">
                       Al pulsar el botón se abre el formulario seguro de Culqi. Tus datos de tarjeta no pasan por esta web

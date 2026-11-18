@@ -3,7 +3,9 @@ import BotonVoz from './BotonVoz.jsx'
 import { X, User, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useDebounce } from '../hooks/useDebounce.js'
 import { buscarClientes } from '../lib/buscarClientes.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -248,7 +250,6 @@ export default function ModalRegistroAtencion({
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
-  useCerrarConEscape(onCerrar)
 
   // Búsqueda de clientes en el servidor. Cada petición lleva un número de secuencia: si el texto
   // cambia mientras una respuesta vuela, la respuesta vieja se descarta (no pisa a la nueva).
@@ -637,6 +638,22 @@ export default function ModalRegistroAtencion({
     onGuardado()
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería (en el
+  // carrito: cliente, fecha, nota y servicios; al editar una atención: su formulario).
+  const valoresFormulario = usaCarrito
+    ? { cliente: busquedaCliente, fecha: fechaMultiple, nota: notaMultiple, servicios: lineas }
+    : { ...formulario }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(
+    valoresBase.current,
+    valoresFormulario,
+    usaCarrito
+      ? { cliente: 'Cliente', fecha: 'Fecha', nota: 'Nota', servicios: 'Servicios' }
+      : { servicioId: 'Servicio', clienteId: 'Cliente', precio: 'Precio', fecha: 'Fecha', nota: 'Nota' },
+    { sinValor: ['servicioId', 'clienteId'] },
+  )
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   if (usaCarrito) {
     return (
       <>
@@ -650,13 +667,16 @@ export default function ModalRegistroAtencion({
           onSubmit={guardarMultiple}
           className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
         >
-          <h2 className="text-base font-semibold text-ink">
-            {esCompletarCita
-              ? 'Completar cita'
-              : lineas.length > 1
-                ? 'Registrar atenciones'
-                : 'Registrar atención'}
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-ink">
+              {esCompletarCita
+                ? 'Completar cita'
+                : lineas.length > 1
+                  ? 'Registrar atenciones'
+                  : 'Registrar atención'}
+            </h2>
+            <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+          </div>
 
           {cargandoListas ? (
             <p className="mt-4 text-center font-mono text-sm text-ink/60">Cargando...</p>
@@ -934,7 +954,7 @@ export default function ModalRegistroAtencion({
           <div className="mt-4 flex gap-2">
             <button
               type="button"
-              onClick={onCerrar}
+              onClick={intentarCerrar}
               disabled={guardando}
               className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
             >
@@ -992,6 +1012,7 @@ export default function ModalRegistroAtencion({
             onGuardado={manejarServicioCreado}
           />
         )}
+        {aviso}
       </>
     )
   }
@@ -1007,7 +1028,10 @@ export default function ModalRegistroAtencion({
         onSubmit={guardar}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">Editar atención</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Editar atención</h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         {cargandoListas ? (
           <p className="mt-4 text-center font-mono text-sm text-ink/60">Cargando...</p>
@@ -1101,7 +1125,7 @@ export default function ModalRegistroAtencion({
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
           >
@@ -1116,6 +1140,7 @@ export default function ModalRegistroAtencion({
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

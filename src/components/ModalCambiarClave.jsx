@@ -1,7 +1,9 @@
 import { useId, useRef, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { MIN_PASSWORD, validarPassword } from '../lib/personal.js'
@@ -20,8 +22,6 @@ export default function ModalCambiarClave({ onCerrar }) {
   const [ver, setVer] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
-
-  useCerrarConEscape(onCerrar, !guardando)
 
   async function guardar(evento) {
     evento.preventDefault()
@@ -50,6 +50,14 @@ export default function ModalCambiarClave({ onCerrar }) {
     onCerrar()
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = { nueva, repetir }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, { nueva: 'Nueva contraseña', repetir: 'Repetir contraseña' }, {
+    sinValor: ['nueva', 'repetir'],
+  })
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -58,7 +66,10 @@ export default function ModalCambiarClave({ onCerrar }) {
         onSubmit={guardar}
         className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">Cambiar mi contraseña</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Cambiar mi contraseña</h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         <div className="mt-4 space-y-3">
           <div>
@@ -109,7 +120,7 @@ export default function ModalCambiarClave({ onCerrar }) {
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber disabled:opacity-40"
           >
@@ -124,6 +135,7 @@ export default function ModalCambiarClave({ onCerrar }) {
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

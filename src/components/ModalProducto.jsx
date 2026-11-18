@@ -1,15 +1,22 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Camera, ImagePlus, X } from 'lucide-react'
+import { Barcode, Camera, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerImporte } from '../lib/moneda.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
+import ModalConfirmarDescarte from './ModalConfirmarDescarte.jsx'
+import SeccionProveedoresProducto from './SeccionProveedoresProducto.jsx'
+import { COLUMNAS_PROVEEDOR } from '../lib/proveedores.js'
+import { useToast } from '../context/ToastContext.jsx'
 import AyudaCampo from './AyudaCampo.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
 import SelectorProductoBuscable from './SelectorProductoBuscable.jsx'
 import { datosPosProducto, datosWebProducto } from '../lib/catalogoCampos.js'
+import { generarCodigoInterno, generarCodigoUnico } from '../lib/codigoBarras.js'
+import { SIN_SUGERENCIAS } from '../lib/sinSugerencias.js'
 import {
   eliminarFoto,
   procesarImagen,
@@ -24,6 +31,42 @@ const BUCKET_FOTOS = 'fotos-productos'
 const STOCK_MINIMO_POR_DEFECTO = 3
 const OPCION_NUEVA_CATEGORIA = '__nueva__'
 
+// Subcategoría oculta a pedido (la clienta no la usa), NO eliminada: la columna, el guardado y el valor que ya tuviera
+// cada producto se conservan. Poner en true para volver a mostrar el campo.
+const MOSTRAR_SUBCATEGORIA = false
+
+// Etiquetas para el aviso «se perderá…» al salir con cambios sin guardar (solo campos visibles en cada modo).
+const CAMPOS_POS = {
+  nombre: 'Nombre',
+  codigoBarras: 'Código de barras',
+  categoriaSeleccionada: 'Categoría',
+  categoriaNueva: 'Nueva categoría',
+  ...(MOSTRAR_SUBCATEGORIA ? { subcategoria: 'Subcategoría' } : {}),
+  stockInicial: 'Stock',
+  costo: 'Costo',
+  precio: 'Precio de venta',
+}
+const CAMPOS_WEB = {
+  precioAntes: 'Precio antes de la oferta',
+  ofertaHasta: 'Precio de oferta hasta',
+  comboCon: 'Combo sugerido',
+  descripcion: 'Descripción',
+  contenido: 'Contenido',
+  rinde: 'Rinde',
+  frecuencia: 'Frecuencia de uso',
+  destacado: 'Destacado',
+  nuevo: 'Marcado como «Nuevo»',
+  enInicio: 'Mostrar en inicio',
+}
+const CAMPOS_SIN_VALOR = new Set(['comboCon']) // ids: se avisa «modificado» sin mostrar el uuid
+
+function textoCorto(valor) {
+  if (typeof valor === 'boolean') return valor ? 'Sí' : 'No'
+  const limpio = String(valor ?? '').trim()
+  if (!limpio) return '(vacío)'
+  return limpio.length > 40 ? `${limpio.slice(0, 40)}…` : limpio
+}
+
 const formularioVacio = {
   codigoBarras: '',
   nombre: '',
@@ -35,7 +78,6 @@ const formularioVacio = {
   precioAntes: '',
   ofertaHasta: '',
   stockInicial: '',
-  proveedor: '',
   descripcion: '',
   contenido: '',
   rinde: '',
@@ -58,7 +100,6 @@ function formularioDesdeProducto(producto) {
     precioAntes: producto.precio_antes != null ? String(producto.precio_antes) : '',
     ofertaHasta: producto.oferta_hasta ?? '',
     stockInicial: String(producto.stock_actual ?? ''),
-    proveedor: producto.proveedor ?? '',
     descripcion: producto.descripcion ?? '',
     contenido: producto.contenido ?? '',
     rinde: producto.rinde ?? '',
@@ -127,7 +168,7 @@ function validarWeb(formulario) {
 }
 
 // Separación POS / Web: el MISMO registro se edita desde dos lugares y cada uno guarda SOLO sus columnas.
-//  - modo 'pos' (Inventario): código, nombre, categoría, subcategoría, costo, precio REAL, stock y proveedor. Una ficha
+//  - modo 'pos' (Inventario): código, nombre, categoría, subcategoría, costo, precio REAL y stock (los proveedores van aparte, en producto_proveedores). Una ficha
 //    nueva se crea solo con esto.
 //  - modo 'web' (Web → Catálogo → Productos, solo ADMINISTRADOR): precio anterior y fecha de oferta, descripción,
 //    contenido, rinde, frecuencia, foto, galería, combo, destacados y contenido editorial.
@@ -139,9 +180,12 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   useModalA11y(panelRef)
   const esEdicion = Boolean(producto)
 
+  // Un producto NUEVO nace con un código de barras interno al azar (EAN-13); se puede cambiar a mano (p. ej. escaneando el
+  // del fabricante) o regenerar con el botón del campo. Forma parte del punto de partida: por sí solo no cuenta como cambio.
   const [formulario, setFormulario] = useState(() =>
-    esEdicion ? formularioDesdeProducto(producto) : formularioVacio,
+    esEdicion ? formularioDesdeProducto(producto) : { ...formularioVacio, codigoBarras: esWeb ? '' : generarCodigoInterno() },
   )
+  const [generandoCodigo, setGenerandoCodigo] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
@@ -187,7 +231,93 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   const [ingredientes, setIngredientes] = useState(() => producto?.ingredientes ?? [])
   const [libreDe, setLibreDe] = useState(() => (producto?.libre_de ?? []).map((texto) => ({ texto })))
 
-  useCerrarConEscape(onCerrar)
+  // Punto de partida para saber si el usuario cambió algo (formulario y listas editoriales).
+  const formularioBase = useRef(formulario)
+  const listasBase = useRef(JSON.stringify([especificaciones, modoUso, idealPara, tips, ingredientes, libreDe]))
+  const [confirmandoDescarte, setConfirmandoDescarte] = useState(false)
+
+  // Proveedores vinculados (solo modo POS): [{ proveedor, principal }]. Se leen de producto_proveedores y se guardan junto
+  // con el producto. Si no se pudieron leer ('error'), NO se tocan al guardar (no se borran por una lectura fallida).
+  const { mostrarToast } = useToast()
+  const [vinculos, setVinculos] = useState([])
+  const [estadoVinculos, setEstadoVinculos] = useState(esEdicion && !esWeb ? 'cargando' : 'listo')
+  const vinculosBase = useRef([])
+
+  useEffect(() => {
+    if (!esEdicion || esWeb) return undefined
+    let vigente = true
+    supabase
+      .from('producto_proveedores')
+      .select(`principal, creado_en, proveedores(${COLUMNAS_PROVEEDOR})`)
+      .eq('producto_id', producto.id)
+      .order('creado_en', { ascending: true })
+      .then(({ data, error: errorVinculos }) => {
+        if (!vigente) return
+        if (errorVinculos) {
+          setEstadoVinculos('error')
+          return
+        }
+        const filas = (data ?? [])
+          .filter((fila) => fila.proveedores)
+          .map((fila) => ({ proveedor: fila.proveedores, principal: fila.principal }))
+          .sort((a, b) => Number(b.principal) - Number(a.principal))
+        vinculosBase.current = filas
+        setVinculos(filas)
+        setEstadoVinculos('listo')
+      })
+    return () => {
+      vigente = false
+    }
+  }, [esEdicion, esWeb, producto?.id])
+
+  const idsBase = vinculosBase.current.map((v) => v.proveedor.id)
+  const idsAhora = vinculos.map((v) => v.proveedor.id)
+  const proveedoresAgregados = vinculos.filter((v) => !idsBase.includes(v.proveedor.id)).map((v) => v.proveedor.nombre)
+  const proveedoresQuitados = vinculosBase.current.filter((v) => !idsAhora.includes(v.proveedor.id)).map((v) => v.proveedor.nombre)
+  const principalBase = vinculosBase.current.find((v) => v.principal)?.proveedor
+  const principalAhora = vinculos.find((v) => v.principal)?.proveedor
+  const cambioPrincipal = (principalBase?.id ?? null) !== (principalAhora?.id ?? null)
+  const vinculosCambiaron = proveedoresAgregados.length > 0 || proveedoresQuitados.length > 0 || cambioPrincipal
+
+  // Qué se perdería al salir: cada campo cambiado (antes → ahora), las listas editadas y las fotos pendientes.
+  const cambios = []
+  for (const [campo, etiqueta] of Object.entries(esWeb ? CAMPOS_WEB : CAMPOS_POS)) {
+    const antes = formularioBase.current[campo]
+    const ahora = formulario[campo]
+    if (antes === ahora) continue
+    cambios.push(
+      CAMPOS_SIN_VALOR.has(campo) ? `${etiqueta}: modificado` : `${etiqueta}: ${textoCorto(antes)} → ${textoCorto(ahora)}`,
+    )
+  }
+  if (!esWeb) {
+    if (proveedoresAgregados.length > 0) cambios.push(`Proveedores agregados: ${proveedoresAgregados.join(', ')}`)
+    if (proveedoresQuitados.length > 0) cambios.push(`Proveedores quitados: ${proveedoresQuitados.join(', ')}`)
+    if (cambioPrincipal && principalBase && principalAhora) {
+      cambios.push(`Proveedor principal: ${principalBase.nombre} → ${principalAhora.nombre}`)
+    }
+  }
+  if (esWeb) {
+    const listasAhora = [especificaciones, modoUso, idealPara, tips, ingredientes, libreDe]
+    const listasAntes = JSON.parse(listasBase.current)
+    const NOMBRES_LISTAS = ['Especificaciones', 'Cómo se usa (pasos)', 'Ideal para', 'Tips y precauciones', 'Ingredientes clave', 'Libre de']
+    listasAhora.forEach((lista, i) => {
+      if (JSON.stringify(lista) !== JSON.stringify(listasAntes[i])) cambios.push(`${NOMBRES_LISTAS[i]}: modificado`)
+    })
+    if (fotoNueva) cambios.push('Foto principal nueva (sin guardar)')
+    if (fotoEliminada) cambios.push('Foto principal quitada')
+    const galeriaNuevas = fotosGaleria.filter((foto) => foto.esNueva).length
+    if (galeriaNuevas > 0) cambios.push(`${galeriaNuevas} foto(s) nueva(s) en la galería (sin guardar)`)
+    if (idsGaleriaEliminados.length > 0) cambios.push(`${idsGaleriaEliminados.length} foto(s) quitada(s) de la galería`)
+  }
+
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de descartar (nunca se pierde nada en silencio).
+  function intentarCerrar() {
+    if (guardando) return
+    if (cambios.length > 0) setConfirmandoDescarte(true)
+    else onCerrar()
+  }
+
+  useCerrarConEscape(intentarCerrar)
 
   // Libera el object URL de preview al reemplazar la foto o desmontar,
   // para no acumular memoria mientras el modal queda abierto.
@@ -315,6 +445,16 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   function actualizarCampo(campo, valor) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }
+
+  async function generarCodigo() {
+    setGenerandoCodigo(true)
+    const codigo = await generarCodigoUnico(supabase)
+    setGenerandoCodigo(false)
+    actualizarCampo('codigoBarras', codigo)
+  }
+
+  // En un producto existente el botón solo aparece si todavía no tiene código: regenerarlo invalidaría etiquetas ya impresas.
+  const puedeGenerarCodigo = !esEdicion || !formularioBase.current.codigoBarras
 
   // Solo para la vista previa de Ganancia; guardar() valida antes con validar().
   const costoNumerico = leerImporte(formulario.costo) || 0
@@ -460,13 +600,42 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
       }
     }
 
+    // Proveedores (modo POS): se guardan DESPUÉS del producto, que ya tiene id real.
+    if (!esWeb && estadoVinculos === 'listo' && vinculosCambiaron) {
+      const { error: errorVinculos } = await supabase.rpc('vincular_proveedores_producto', {
+        p_producto_id: productoId,
+        p_proveedor_ids: vinculos.map((v) => v.proveedor.id),
+        p_principal: principalAhora?.id ?? null,
+      })
+      if (errorVinculos) {
+        if (esEdicion) {
+          // El UPDATE del producto es idempotente: reintentar no duplica nada.
+          setGuardando(false)
+          setError('El producto se guardó, pero no sus proveedores. Pulsa «Guardar cambios» para reintentar.')
+          return
+        }
+        // Producto NUEVO ya creado: reintentar desde aquí lo duplicaría, así que se cierra y se avisa.
+        mostrarToast('El producto se creó, pero no se pudieron vincular sus proveedores: agrégalos desde Editar.', 'error')
+      } else {
+        vinculosBase.current = vinculos
+      }
+    }
+
     setGuardando(false)
 
     // En edición, se manda de vuelta el producto ya actualizado — así, si
     // este modal se abrió desde el de historial de stock, ese modal (que
     // sigue montado, ver Inventario.jsx) puede refrescar sus datos sin
     // esperar a un refetch aparte.
-    onGuardado(esEdicion ? { ...producto, ...datos } : null)
+    onGuardado(
+      esEdicion
+        ? {
+            ...producto,
+            ...datos,
+            ...(esWeb ? {} : { proveedor: principalAhora?.nombre ?? null, proveedor_id: principalAhora?.id ?? null }),
+          }
+        : null,
+    )
   }
 
   return (
@@ -478,9 +647,12 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
         className={`max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario) ${esWeb ? 'modal-producto-web' : ''}`}
       >
         <div className={esWeb ? 'modal-producto-web__cabecera' : undefined}>
-        <h2 className="text-base font-semibold text-ink">
-          {esWeb ? 'Contenido Web del producto' : esEdicion ? 'Editar producto' : 'Nuevo producto'}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            {esWeb ? 'Contenido Web del producto' : esEdicion ? 'Editar producto' : 'Nuevo producto'}
+          </h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         {esWeb && (
           <p className="mt-1 text-sm text-ink/70">
@@ -498,7 +670,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             <input
               id={`${idBase}-nombre`}
               type="search"
-              autoComplete="new-password"
+              {...SIN_SUGERENCIAS}
               value={formulario.nombre}
               onChange={(evento) => actualizarCampo('nombre', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
@@ -508,14 +680,28 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
 
           <div>
             <Etiqueta htmlFor={`${idBase}-codigo`}>Código de barras</Etiqueta>
-            <input
-              id={`${idBase}-codigo`}
-              type="search"
-              autoComplete="new-password"
-              value={formulario.codigoBarras}
-              onChange={(evento) => actualizarCampo('codigoBarras', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                id={`${idBase}-codigo`}
+                type="search"
+                {...SIN_SUGERENCIAS}
+                value={formulario.codigoBarras}
+                onChange={(evento) => actualizarCampo('codigoBarras', evento.target.value)}
+                className="min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
+              />
+              {puedeGenerarCodigo && (
+                <button
+                  type="button"
+                  onClick={generarCodigo}
+                  disabled={generandoCodigo}
+                  aria-label="Generar código de barras"
+                  title="Generar un código nuevo al azar"
+                  className="flex shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 p-2.5 text-ink/70 transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                >
+                  <Barcode className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Categoría ocupa 2/3 y stock inicial 1/3: la categoría necesita
@@ -542,7 +728,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
               {formulario.categoriaSeleccionada === OPCION_NUEVA_CATEGORIA && (
                 <input
                   type="search"
-                  autoComplete="new-password"
+                  {...SIN_SUGERENCIAS}
                   value={formulario.categoriaNueva}
                   onChange={(evento) => actualizarCampo('categoriaNueva', evento.target.value)}
                   placeholder="Nombre de la nueva categoría"
@@ -560,7 +746,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
                 id={`${idBase}-stock`}
                 type="search"
                 inputMode="numeric"
-                autoComplete="new-password"
+                {...SIN_SUGERENCIAS}
                 value={formulario.stockInicial}
                 onChange={(evento) => actualizarCampo('stockInicial', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -568,17 +754,19 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             </div>
           </div>
 
+          {MOSTRAR_SUBCATEGORIA && (
           <div>
             <Etiqueta htmlFor={`${idBase}-subcategoria`}>Subcategoría</Etiqueta>
             <input
               id={`${idBase}-subcategoria`}
               type="search"
-              autoComplete="new-password"
+              {...SIN_SUGERENCIAS}
               value={formulario.subcategoria}
               onChange={(evento) => actualizarCampo('subcategoria', evento.target.value)}
               className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-amber"
             />
           </div>
+          )}
 
           <div className="flex gap-3">
             <div className="flex-1">
@@ -587,7 +775,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
                 id={`${idBase}-costo`}
                 type="search"
                 inputMode="decimal"
-                autoComplete="new-password"
+                {...SIN_SUGERENCIAS}
                 value={formulario.costo}
                 onChange={(evento) => actualizarCampo('costo', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -599,7 +787,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
                 id={`${idBase}-precio`}
                 type="search"
                 inputMode="decimal"
-                autoComplete="new-password"
+                {...SIN_SUGERENCIAS}
                 value={formulario.precio}
                 onChange={(evento) => actualizarCampo('precio', evento.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-amber"
@@ -644,7 +832,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
               id={`${idBase}-precio-antes`}
               type="search"
               inputMode="decimal"
-              autoComplete="new-password"
+              {...SIN_SUGERENCIAS}
               value={formulario.precioAntes}
               onChange={(evento) => actualizarCampo('precioAntes', evento.target.value)}
               placeholder="Déjalo vacío si no está en oferta"
@@ -679,6 +867,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             <Etiqueta htmlFor={`${idBase}-descripcion`}>Descripción</Etiqueta>
             <textarea
               id={`${idBase}-descripcion`}
+              {...SIN_SUGERENCIAS}
               rows={3}
               value={formulario.descripcion}
               onChange={(evento) => actualizarCampo('descripcion', evento.target.value)}
@@ -693,7 +882,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
               <input
                 id={`${idBase}-contenido`}
                 type="search"
-                autoComplete="new-password"
+                {...SIN_SUGERENCIAS}
                 value={formulario.contenido}
                 onChange={(evento) => actualizarCampo('contenido', evento.target.value)}
                 placeholder='Ej. "250 ml"'
@@ -705,7 +894,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
               <input
                 id={`${idBase}-rinde`}
                 type="search"
-                autoComplete="new-password"
+                {...SIN_SUGERENCIAS}
                 value={formulario.rinde}
                 onChange={(evento) => actualizarCampo('rinde', evento.target.value)}
                 placeholder='Ej. "3 meses de uso"'
@@ -719,7 +908,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
             <input
               id={`${idBase}-frecuencia`}
               type="search"
-              autoComplete="new-password"
+              {...SIN_SUGERENCIAS}
               value={formulario.frecuencia}
               onChange={(evento) => actualizarCampo('frecuencia', evento.target.value)}
               placeholder='Opcional, ej. "1 vez por semana"'
@@ -934,17 +1123,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
           )}
 
           {!esWeb && (
-          <div>
-            <Etiqueta htmlFor={`${idBase}-proveedor`}>Proveedor</Etiqueta>
-            <input
-              id={`${idBase}-proveedor`}
-              type="search"
-              autoComplete="new-password"
-              value={formulario.proveedor}
-              onChange={(evento) => actualizarCampo('proveedor', evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
-            />
-          </div>
+            <SeccionProveedoresProducto vinculos={vinculos} onCambiar={setVinculos} estado={estadoVinculos} />
           )}
         </div>
 
@@ -978,7 +1157,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
         <div className={`mt-4 flex gap-2 ${esWeb ? 'modal-producto-web__acciones' : ''}`}>
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
           >
@@ -996,6 +1175,14 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
 
       {mostrarCamara && (
         <ModalCamara onCapturar={capturarDesdeCamara} onCerrar={() => setMostrarCamara(false)} />
+      )}
+
+      {confirmandoDescarte && (
+        <ModalConfirmarDescarte
+          cambios={cambios}
+          onSeguir={() => setConfirmandoDescarte(false)}
+          onDescartar={onCerrar}
+        />
       )}
     </div>
   )

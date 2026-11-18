@@ -21,6 +21,8 @@ const ORDENES = {
   'precio-desc': [['precio', false], ['nombre', true]],
   'duracion-asc': [['duracion_min', true, true], ['nombre', true]],
   'duracion-desc': [['duracion_min', false, false], ['nombre', true]],
+  // Los creados antes de que existiera la auditoría no tienen fecha: van al final.
+  reciente: [['creado_en', false, false], ['nombre', true]],
 }
 
 function ordenar(consulta, orden) {

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { formatearFechaISO } from '../lib/fechas.js'
@@ -35,7 +36,6 @@ function EtiquetaCampo({ children, obligatorio, htmlFor }) {
 export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogramada }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
-  useCerrarConEscape(onCerrar)
 
   const [cargandoCatalogo, setCargandoCatalogo] = useState(true)
   const [servicios, setServicios] = useState([])
@@ -168,6 +168,23 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
     onReprogramada(horarioElegido)
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = {
+    servicios: [...serviciosSeleccionados].sort(),
+    asistenteId,
+    fecha,
+    horario: horarioElegido ?? '',
+    nota,
+  }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(
+    valoresBase.current,
+    valoresFormulario,
+    { servicios: 'Servicios', asistenteId: 'Especialista', fecha: 'Fecha', horario: 'Hora', nota: 'Nota' },
+    { sinValor: ['asistenteId'] },
+  )
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando, variante: 'web' })
+
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4">
       <div
@@ -178,7 +195,7 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
           <h2 className="text-base font-semibold text-white">Reprogramar cita</h2>
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             aria-label="Cerrar"
             className="-m-2 rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white"
           >
@@ -320,7 +337,7 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
             <div className="flex gap-2 border-t border-white/10 pt-4">
               <button
                 type="button"
-                onClick={onCerrar}
+                onClick={intentarCerrar}
                 disabled={guardando}
                 className="flex-1 rounded-lg border border-white/15 py-2 text-sm text-white transition-colors hover:border-[var(--lw-gold)] hover:text-[var(--lw-gold)] disabled:opacity-40"
               >
@@ -337,6 +354,7 @@ export default function ModalReprogramarCitaCliente({ cita, onCerrar, onReprogra
           </form>
         )}
       </div>
+      {aviso}
     </div>
   )
 }

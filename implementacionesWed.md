@@ -7332,3 +7332,325 @@ Implementado y probado en **local** (R2 simulado); sin R2 real, bucket, dominio 
   - Anular una reposición ya gastada, rechazado. Eliminar el gasto ligado, rechazado. Con el negocio cerrado, la cajera queda bloqueada.
   - `npm run build` OK. Interfaz sin verificar en navegador.
 - **Corrección relacionada (mismo día):** el Dashboard y Estadísticas sumaban también los gastos **CANCELADOS**: los cancelados a mano en Gastos y ahora las salidas anuladas en Caja chica. Así la utilidad bajaba por dinero que no se gastó. Las dos consultas de `gastos` ahora filtran `estado = 'ACTIVO'`. Según la dueña, el «10 % gastos operativos (estimado)» de la cascada es una reserva de emergencia aparte, no se cruza con los gastos reales, así que se deja igual.
+
+---
+
+## 70. Rendimiento del portal: copia en memoria de las vitrinas, hero móvil y precarga temprana — 2026-11-13 (local, sin commit, sin producción)
+
+Primeros puntos de la auditoría de rendimiento del 2026-11-12 (POS + portal). Solo frontend: sin migraciones ni cambios de datos.
+
+- **Vitrinas de Servicios y Productos con copia en memoria** (`src/lib/copiasEnMemoria.js`, `useCatalogoPublico` con la opción nueva `catalogo`):
+  - Problema: las rutas del portal se desmontan al navegar. Ir de `/servicios` al detalle y volver repetía las 8 lecturas de la vitrina (6 en Productos) y mostraba «Cargando...» cada vez.
+  - Ahora la página pinta al instante lo último que vio (estado `recargando`, que el hook ya tenía) y vuelve a pedir la vitrina en segundo plano. Si la lectura nueva es idéntica se conserva el mismo objeto de datos, así el catálogo no se vuelve a renderizar.
+  - Límites deliberados: solo memoria (se pierde al recargar), 5 minutos de vida, por catálogo **y por cuenta** (nunca se muestra la copia de otra cuenta). La copia nunca sustituye a la lectura: siempre se revalida al montar, y carrito/reserva/pago siguen validando en el servidor.
+  - Si la revalidación falla y hay copia vigente, se sigue mostrando el catálogo en vez de cambiarlo por la pantalla de error. Sin copia, el error y «Reintentar» funcionan como antes.
+  - Las páginas de detalle e Inicio se cubrieron después (§71). Siguen sin copia: Citas y Carrito.
+- **Hero de Inicio en móvil** (`InicioCliente.jsx`): la foto «antes» solo se monta donde puede verse (`any-hover: hover` o primer evento de un puntero no táctil). El revelado ignora el tacto, así que en celular esa foto estaba siempre oculta pero se descargaba (430–495 kB) y se decodificaba a 3024×1698. En escritorio no cambia nada. En esta entrega las fotos seguían siendo solo los cuatro originales; la variante de 1280 px para móvil se añadió después, con el visto bueno del usuario (§71).
+- **Precarga de la foto principal** (`index.html`): un script en línea crea `<link rel="preload" as="image">` de la foto «después» del tema guardado, solo en `/` e `/inicio` y solo si la visita va a montar el portal. Antes el navegador la descubría recién al pintar el hero (tras el JS de entrada, la sesión y los chunks del portal).
+- **Precarga temprana del portal** (`precargaTemprana` en `config/paginasCliente.js`, llamada desde `main.jsx`): el portal y la página de la URL empiezan a bajar antes de resolver la autenticación cuando (a) no hay sesión de Supabase guardada, o (b) la última visita en ese navegador montó el portal (pista `jaise-arbol` en `localStorage`, que escribe `App.jsx`). Con sesión guardada y pista `pos` (o sin pista) no se adelanta nada: una recarga del POS sigue sin descargar el portal (regla de la Fase 5).
+- **Contrato de prueba actualizado:** `scripts/verificar-fase8.cjs` esperaba dos descargas del hero en móvil; ahora espera solo «después» en 390×2 táctil y las dos (high/low) en 1440×1. No se ejecutó ese script completo.
+- **Verificado en Chromium (Playwright) sobre el build de producción y Supabase Local**, 19 de 19 comprobaciones:
+  - móvil 390×844 táctil, temas oscuro y claro: el hero contiene solo la foto «después» original (3024 px, prioridad alta), existe el preload y nunca se pide `hero-antes-claro.webp`;
+  - escritorio 1440×900: se piden las dos fotos una vez cada una (el preload se reutiliza), la máscara parte oculta y se abre al mover el mouse, y la foto principal empieza a bajar antes de que termine el JS de entrada;
+  - Servicios y Productos: al salir a otra pestaña y volver no aparece «Cargando...», se hace exactamente una lectura nueva de la vitrina y el contenido es el mismo;
+  - sin errores de página. `npm run build` OK y `oxlint` sin avisos nuevos.
+  - Nota: en la base local la galería «Resultados reales» usa las mismas fotos del hero como datos de ejemplo, por eso en móvil sigue apareciendo una descarga de `hero-antes-oscuro.webp`: la pide la galería, no el hero.
+- **Sin medir:** el ahorro real de tiempo en un celular con red móvil (en local la red es instantánea).
+
+---
+
+## 71. Rendimiento del portal (2): variante de 1280 px del hero, copia en memoria de detalle e Inicio, y fuentes alojadas en el sitio — 2026-11-13 (local, sin commit, sin producción)
+
+Continuación de §70 (auditoría de rendimiento del 2026-11-12). Solo frontend: sin migraciones ni cambios de datos.
+
+- **Hero: una variante de 1280 px para pantallas chicas.** Decisión del usuario del 2026-11-13 («solo una variante de 1280 px en móvil para no perder calidad»), que ajusta la de octubre de servir únicamente los originales.
+  - `public/inicio-web/hero-{antes,despues}-{oscuro,claro}-1280.webp`: 1280×718, 66–76 kB cada una (los originales pesan 432–500 kB), generadas con ffmpeg desde el mismo original, con su transparencia.
+  - `InicioCliente.jsx` las sirve con `<picture><source media="(max-width: 639px)">`. Se elige por ancho de pantalla y no por densidad para que sea predecible: por debajo de 640 px CSS la variante; desde 640 px (tableta, PC, celular apaisado) siempre el original de 3024 px.
+  - El preload de `index.html` usa la misma consulta de medios, así la foto se descarga una sola vez.
+  - Si cambian las fotos de campaña hay que regenerar las cuatro variantes: el comando está en `docs/diseno-inicio/README.md`.
+- **Copia en memoria generalizada** (`src/lib/copiasEnMemoria.js`, antes `cacheVitrinas.js`): `leerCopia`, `guardarCopia`, `olvidarCopia`, `mismaCopia`. Mismas reglas que en §70 (solo memoria, 5 minutos, siempre se revalida al montar). Ahora la usan también:
+  - **Detalle de servicio y de producto.** Todo lo que carga la pantalla se guarda como un paquete por servicio/producto **y por cuenta** (incluye favorito y mi reseña). Volver a un detalle ya visto lo pinta antes del primer cuadro (`useLayoutEffect`) y lo revalida en segundo plano. Marcar favorito o guardar una reseña descarta la copia, y una lectura que salió antes de ese cambio no lo pisa. El borrador de la reseña no se sobrescribe al revalidar.
+  - **Detalle, primera visita:** las lecturas pasaron de cuatro tandas en serie (principal → relacionados → combo sugerido → fila del combo) a dos. El combo sugerido viaja con la primera tanda; relacionados y combo van juntos en la segunda.
+  - **Inicio:** `useLectura` acepta `{ copia }`. La usan «Lo más pedido», reseñas y galería (datos públicos). La promoción no, porque incluye si esa clienta ya reclamó el cupón.
+  - **Reglas públicas de Recompensas** (`useProgramaRecompensas`): el estimado de puntos ya no muestra «Calculando…» en cada página que se monta. El saldo personal nunca se guarda.
+- **Fuentes alojadas en el sitio.**
+  - Heavitas y Kunaroh pasaron de `.ttf` a `.woff2` (conversión sin pérdida con fontTools; mismos glifos): 122,6 kB → 25,0 kB y 11,9 kB → 5,4 kB. El `.ttf` queda de respaldo en el `@font-face`.
+  - Space Mono, Inter, Instrument Serif y Orbitron ya no se piden a Google Fonts: son los mismos archivos woff2 que servía Google (licencia SIL OFL), en `src/assets/fonts/google/` y declarados en `index.css` con las mismas familias, pesos y `unicode-range`. Ninguna regla `font-family` cambió. Solo se conservan `latin` y `latin-ext`. Se quitaron de `index.html` los `preconnect` y la hoja de Google.
+  - La fuente del logo (Orbitron) se precarga al empezar a descargar el portal (`precargarFuenteLogo` en `config/paginasCliente.js`); el POS no la baja.
+- **Contrato de prueba:** `scripts/verificar-fase8.cjs` espera ahora la variante de 1280 px en móvil y los originales en escritorio. No se ejecutó ese script completo.
+- **Verificado en Chromium (Playwright) sobre el build de producción y Supabase Local**, 34 de 34 comprobaciones:
+  - móvil 430×932 a 3×, temas oscuro y claro: el hero muestra solo la variante «después» de 1280 px a todo el ancho, descargada una vez (preload reutilizado);
+  - escritorio 1440×900: los dos originales de 3024 px, una descarga cada uno, ninguna variante, y el revelado con el mouse funciona; ventana angosta con mouse (600 px): las dos fotos en su variante;
+  - fuentes: ninguna petición a Google; Orbitron, Inter, Space Mono, Instrument Serif, Heavitas y Kunaroh cargan desde el sitio; ningún `.ttf`; Orbitron una sola descarga;
+  - Inicio: al volver, las 8 secciones están desde el primer cuadro y se revalida en segundo plano;
+  - Servicios y Productos: volver del detalle no muestra «Cargando...»; la segunda visita a un detalle pinta exactamente lo mismo desde el primer cuadro y revalida; otro detalle distinto carga lo suyo;
+  - sin errores de página. `npm run build` OK y `oxlint` sin avisos nuevos. Capturas de Inicio en móvil y PC revisadas a ojo.
+- **Sin verificar:** el flujo con sesión iniciada (favorito y reseña descartando la copia) se revisó en código, no en el navegador. (El favorito se verificó después: ver §72.) Tampoco se midió el ahorro de tiempo en una red móvil real.
+- **Datos de prueba locales:** varias fotos de producto apuntan a `fotos-productos/ruta/p.webp`, que no existe en Storage local; el navegador las bloquea. No es un error de la aplicación.
+
+## 72. Rendimiento del portal (3): se quita framer-motion y el perfil de la clienta se lee en paralelo — 2026-11-14 (local, sin commit, sin producción)
+
+Punto 5 de la auditoría de rendimiento (§70). Solo frontend: sin migraciones ni cambios de datos.
+
+- **Por qué.** `framer-motion` solo se usaba en dos sitios y aun así generaba un chunk de 123 kB (≈40 kB comprimidos) que descargaban los dos carritos y Nosotros. Se desinstaló (`package.json` y `package-lock.json`).
+- **`Contador.jsx` (el número que rueda en los carritos).** El resorte ahora es propio: unas 30 líneas con `requestAnimationFrame` que escriben el `transform` de cada fila directo en el DOM, sin renders. El chunk del contador pesa 3,9 kB (1,8 kB comprimido). Se conserva la mecánica:
+  - mismo resorte (rigidez 220, amortiguación 28, masa 1), integrado a paso fijo de 1/240 s para que no dependa de los Hz de la pantalla;
+  - al montar aparece ya en su valor; si el valor cambia a mitad de camino sigue desde la posición y la velocidad que llevaba;
+  - mismo cálculo por fila y mismo «camino más corto» de 9 a 0. Las posiciones de la derecha siguen rodando más rápido (cada una sigue su valor acumulado), igual que antes.
+  - Dos diferencias deliberadas: termina cuando está a menos de 0,005 dígitos del destino (framer cortaba a 0,5 en saltos grandes y remataba con un brinco), y con «reducir movimiento» activado en el sistema el número cambia sin rodar.
+- **Reseñas de Nosotros.** El `<motion.div>` de cada tarjeta pasó a una animación CSS (`.lw-resena-entra` en `index.css`) con los mismos valores: sube 20 px y aparece en 0,5 s, curva `ease-out` (la que framer usa por defecto), 80 ms de retraso por tarjeta en ciclos de 6. Relleno `backwards` para no dejar un `transform` retenido sobre el vidrio. Con «reducir movimiento» no anima.
+- **Verificado en Chromium (Playwright):**
+  - Contador real montado en una página aislada, 17 de 17: se lee el valor correcto al montar y sin animación de entrada; la trayectoria coincide con la solución analítica del resorte (error máximo 0,024 dígitos en un salto de 5 y 0,23 en uno de 50); termina exacto en el dígito y deja de pintar; de 9 a 0 avanza un solo paso; un cambio a mitad de camino no produce salto; cambio de tamaño; paso de 99.50 a 100.50; «reducir movimiento» cambia al instante.
+  - Nosotros → Reseñas sobre el build de producción y Supabase Local, 8 de 8: 24 tarjetas con la animación, duración, retrasos y curva esperados; al terminar quedan visibles, sin `transform` ni animación activa; no se descarga ningún chunk de framer; sin errores de página. Captura revisada a ojo.
+  - `npm run build` OK y `oxlint` sin avisos en los archivos tocados.
+- **Perfil de la clienta en una sola ida y vuelta** (punto 6 de la auditoría, resuelto sin migración). Una clienta no tiene fila en `usuarios`, así que su perfil eran dos lecturas en serie (`usuarios` → 0 filas → `clientes_web`) antes de montar el portal. Ahora `AuthContext.jsx` lanza las dos a la vez cuando la pista local `jaise-arbol` dice «portal» (la misma de `precargaTemprana`, §70; se lee con `arbolRecordado()` de `config/paginasCliente.js`).
+  - Con pista «pos» o sin pista no se adelanta nada: el arranque del POS hace las mismas peticiones que antes (se respeta el contrato de `scripts/verificar-fase5.cjs`: una lectura de cada tabla).
+  - Personal que la última vez miró su perfil de clienta: la lectura adelantada se descarta (una petición pequeña de más).
+  - La auditoría proponía una función SQL `mi_identidad()`. Se descartó: lanzar las dos lecturas en paralelo da la misma espera (una ida y vuelta) sin migración y sin tener que coordinar el despliegue de base de datos y frontend. Unificar las funciones de la vitrina tampoco se hizo: con la copia en memoria (§70–71) ya no hay una espera que ahorrar que justifique una migración a producción.
+- **Verificado con sesión de clienta** (build de producción, Supabase Local), 12 de 12. Se creó una clienta de prueba **solo en Local** con el registro normal (`prueba-rendimiento-…@jaise.test`); su carrito y su favorito se limpiaron al terminar, la cuenta queda.
+  - Arranque: con pista «portal», `clientes_web` sale a la vez que `usuarios` (0 ms de diferencia) y hay una lectura de cada tabla; con pista «pos» sale después de la respuesta de `usuarios`, como antes, y la pista se corrige sola.
+  - Favorito (pendiente de §71): tras marcarlo, salir y volver al detalle, aparece marcado desde el primer cuadro; la copia vieja se descartó.
+  - Contador dentro del carrito real: la cantidad pasa de 1 a 2 rodando (36 posiciones intermedias) y el total queda legible y en reposo. Captura revisada a ojo.
+- **Sin verificar:** guardar una reseña descartando la copia del detalle (solo revisado en código) y el carrito de servicios (usa el mismo componente). Tampoco se midió el ahorro en una red móvil real.
+
+## 73. Total del carrito sin parpadeo y el POS fuera del JS de entrada — 2026-11-14 (local, sin commit, sin producción)
+
+Continuación de §72. Solo frontend: sin migraciones ni cambios de datos.
+
+- **Bug del total del carrito de productos** (reportado por el usuario: «no tiene la animación, cambia de golpe y parpadea»). Es anterior a §72: la fila «Total» solo mostraba el contador con `totalConfirmado`, que es falso mientras se guarda un cambio de cantidad (QA-057). Cada clic la reemplazaba un instante por el texto «Total pendiente del cupón» (aunque no hubiera cupón) y el contador se volvía a montar ya en el valor nuevo, sin rodar.
+  - `CarritoCliente.jsx`: nueva condición `totalMostrable = !cupon || cuponValidado`. Sin cupón el total es una suma local (subtotal + delivery), como la fila del subtotal: se muestra siempre y rueda. Lo que se paga no cambia: el botón de confirmar y el importe de las instrucciones siguen esperando a `totalConfirmado`.
+  - Con cupón se respeta QA-054: mientras el servidor valida, la fila dice «Validando cupón…» y no muestra ningún total. El contador queda montado (oculto) con el último total mostrado (`totalFirme`), así que al confirmarse rueda de ese valor al nuevo.
+  - Verificado en Chromium con sesión de clienta, 11 de 11, con el guardado ralentizado 700 ms: el contador es siempre el mismo nodo, nunca se oculta ni aparece texto en su lugar, rueda de 5.00 a 7.00 y el botón de confirmar sigue deshabilitado mientras se guarda. Con un cupón simulado en el navegador (nada escrito en la base): «Validando cupón…» mientras valida, luego rueda al total con descuento, y al cambiar la cantidad nunca enseña el total sin descuento.
+  - No se ejecutó la suite `tests/e2e/ensayo-ui` (QA-054/QA-057); el texto que comprueba («Validando cupón…» en la fila del total y el importe en las instrucciones de pago) no cambió.
+- **El POS sale del JS de entrada** (punto 7 de la auditoría).
+  - `components/ArmazonPos.jsx` reúne `Layout` + `PestanasCacheadas` (que trae Ventas) detrás de un `import()` (`config/armazonPos.js`, mismo mecanismo reintentable que las páginas del portal). `App.jsx` lo descarga antes de montar el árbol del POS, con el mismo «Cargando...» de siempre; la ruta del POS es ahora un único comodín (`Layout` recibe `children`), y «/» lo resuelve `PestanasCacheadas` como ya hacía con cualquier ruta que el rol no puede ver.
+  - `precargaTemprana()` adelanta el chunk al arrancar cuando hay sesión guardada y la pista local es «pos»: en una recarga del POS se pide a la vez que el perfil, sin espera añadida.
+  - `vite.config.js`: `ArmazonPos.jsx` entra en `RAICES_DE_ATERRIZAJE`, así el chunk y todas sus importaciones estáticas siguen en el precaché de la PWA.
+  - **Medido** (build de producción, JS que necesita cada aterrizaje, gzip): el archivo de entrada pasa de 399,5 a 269,9 kB (122,7 → 86,9 kB gzip). Visitante en Inicio: 207,8 → 182,2 kB (−12 %). Personal en Ventas: 174,2 → 186,9 kB (+7 %).
+  - **Contrapartida:** el empaquetador (Rolldown, reglas por defecto) reparte en archivos pequeños los módulos que el POS comparte con otras pantallas, que antes iban gratis en la entrada. El aterrizaje del POS pasa de 6 a 53 archivos y el del visitante de 32 a 45; el precaché, de 42 a 89 entradas con casi el mismo peso (969 → 978 KiB). En el POS solo se nota en la primera carga de un dispositivo: después todo sale del precaché. No se tocaron las reglas de agrupación de chunks (`codeSplitting`): cambiarían el reparto de toda la app y los contratos de la Fase 8; queda como mejora posible.
+  - Verificado en Chromium con la cuenta de administración de Local, 14 de 14: un visitante no descarga el chunk del POS; el login monta el POS en `/ventas`; cambiar de pestaña conserva Ventas montada; «/» lleva a la pantalla inicial sin desmontar el armazón; en una recarga el chunk sale antes de que responda el perfil, sin pedir nada del portal y con una sola lectura de `usuarios`; el precaché contiene el chunk y sus 53 archivos; sin red con el POS abierto se puede cambiar de pestaña; una recarga sin red arranca y avisa «Sin conexión» (el perfil necesita red, como antes) y «Reintentar» monta el POS al volver la red.
+  - **Sin verificar:** los scripts de contrato de las fases 5 y 8 (`scripts/verificar-fase5.cjs`, `verificar-fase8.cjs`, `verificar-fase8-v2.cjs`) no se ejecutaron; tampoco roles distintos del administrador (cajera, asistente, encargada). El paso de personal a la vista de clienta y de vuelta al POS se comprobó con recarga en cada sentido (5 de 5), no pulsando el botón «Mi perfil de clienta».
+
+## 74. Resumen del carrito sin saltos, canal Realtime solo para el personal y fotos del carrusel de Servicios — 2026-11-14 (local, sin commit, sin producción)
+
+Continuación de §73. Solo frontend: sin migraciones ni cambios de datos.
+
+- **Salto del resumen del carrito de productos** (reportado por el usuario: al subir o bajar el total, la casilla de términos y el botón «Confirmar pedido» bajaban y volvían a su sitio). Causa: mientras se guarda un cambio de cantidad aparecía el párrafo «Guardando los cambios de tu carrito…» entre el total y la casilla, y los empujaba. Medido antes del arreglo: 44 px en PC y 43,5 px en móvil, en cada cambio.
+  - `CarritoCliente.jsx`: ese aviso queda fuera del flujo (posición absoluta en el hueco que separa el total de la casilla) y con la clase nueva `.lw-aviso-tardio` (`index.css`), que lo pinta tras 0,4 s: un guardado normal termina antes y no se llega a ver; solo se lee si la red va lenta. El elemento `role="status"` existe desde el primer instante.
+  - Con cupón pasaba lo mismo por otras tres piezas, corregidas con una condición nueva `cuponEnValidacion` (cupón aplicado cuyo descuento está por confirmarse; no incluye rechazado ni error): «Validando tu cupón…» va ahora en el mismo renglón que «Cambiar / Quitar»; el renglón del descuento se reserva vacío mientras se valida (QA-054 sigue cumpliéndose: no se anuncia ninguna línea «Cupón …»); y el contador del total queda invisible conservando su sitio, con «Validando cupón…» superpuesto, en vez de `display: none` (la fila cambiaba 15 px de alto).
+  - Instrucciones de pago: mientras se guarda o se valida, el importe entre paréntesis es un marcador corto «(S/ …)» en vez de la frase «(se mostrará cuando se guarde tu carrito)», que cambiaba el número de renglones del bloque de pago. La frase larga «(se mostrará cuando se confirme tu cupón)» queda para el estado estable (cupón rechazado, vencido o con error), que es donde la comprueba QA-054. El importe sigue sin escribirse hasta `totalConfirmado` (QA-057).
+  - Verificado en Chromium, 18 de 18, en 1280 px y 390 px, midiendo cuadro a cuadro la posición de la casilla, el botón, el bloque de pago y el alto del panel: 0 px de movimiento sin cupón (guardado lento y rápido) y con un cupón simulado en el navegador. Yape se simuló también solo en el navegador (la clienta de prueba no puede leer `estado_negocio` en Local). La prueba del total de §73 sigue en 11 de 11.
+  - No se ejecutó la suite `tests/e2e/ensayo-ui` (QA-054/QA-057). Los textos que comprueba siguen existiendo; el único que cambió —«se mostrará cuando se guarde tu carrito»— no aparece en ninguna prueba.
+- **Canal Realtime de `estado_negocio` solo para el personal** (punto 8 de la auditoría). Era el único canal de todo el portal: cada clienta con la web abierta mantenía un WebSocket (y una conexión simultánea de Realtime del proyecto) para una fila que casi nunca cambia.
+  - `EstadoNegocioContext.jsx`: la lectura inicial no cambia (mismo efecto y mismas dependencias, una lectura por carga). El canal va en un efecto aparte que solo se suscribe cuando el rol es de personal (también en «Mi perfil de clienta», que conserva el rol).
+  - La clienta relee la fila con `refrescar()` —nuevo en el contexto— al volver a la pestaña y al abrir cualquiera de los dos carritos (ahí se leen Yape/Plin/cuenta), como mucho una vez por minuto.
+  - **Contrapartida:** si el negocio cambia sus datos de pago mientras una clienta tiene el carrito abierto y no sale de la pestaña, los verá al volver a ella o al reabrir el carrito, no al instante.
+  - Verificado en Chromium, 14 de 14: la clienta no abre ningún WebSocket y lee la fila una vez por carga; relee al volver a la pestaña o abrir un carrito solo si pasó un minuto; el personal abre el canal, recibe un `UPDATE` hecho en la base Local y no hace lecturas extra.
+- **Fotos del carrusel de Servicios:** `ServiciosCliente.jsx` montaba las fotos de todos los servicios destacados a la vez; ahora solo la activa y sus vecinas, igual que el carrusel de Productos. En Local solo hay un servicio destacado, así que el caso de cuatro o más láminas no se pudo comprobar.
+- **Miniaturas del bloque «combo»** al final de las fichas de producto y servicio: `loading="lazy"` y `decoding="async"`.
+- **No se hizo, con motivo:**
+  - *Dividir el CSS.* Es un solo archivo de 35,7 kB gzip. Separar la parte del portal ahorraría unos kilobytes solo al personal y cambia el orden de la cascada de toda la app, que no se puede revisar a ojo desde aquí.
+  - *`width`/`height` en las imágenes.* Todas las revisadas están dentro de cajas con alto o proporción fijados por CSS: no desplazan el contenido al cargar.
+
+## 75. «Mis citas» con copia en memoria y lecturas en paralelo; verificador de la fase 5 al día — 2026-11-14 (local, sin commit, sin producción)
+
+Continuación de §74: lo que quedaba de la lista de la auditoría. Solo frontend: sin migraciones ni cambios de datos.
+
+- **«Mis citas» (`CitasCliente.jsx`) con copia en memoria por cuenta.** La ruta se desmonta al salir, así que cada regreso mostraba «Cargando...» y repetía todas las lecturas. Ahora se pinta al instante lo último leído y todo se vuelve a pedir en segundo plano; si algo cambió (por ejemplo, el salón confirmó la cita) se corrige solo, sin recargar.
+  - Clave `claveCitas(cuenta)` (nueva en `lib/copiasEnMemoria.js`): la copia nunca se comparte entre cuentas. Mismas reglas que el resto de copias (solo memoria, 5 minutos, siempre se revalida al montar). Cerrar sesión recarga la página (`useSalir`), así que ninguna copia sobrevive a la sesión.
+  - La copia se guarda por partes, cada una cuando llega: datos base (asistentes, contacto, horario, puntos y fidelización), listas (próximas e historial), citas de cada mes del calendario ya visitado y qué servicios del historial ya tienen reseña.
+  - **Lo que cambia las citas descarta la copia:** cancelar y reprogramar (en la propia pantalla) y reservar (`CarritoServiciosCliente.jsx` llama a `olvidarCopia(claveCitas(...))` tras `agendar_cita_web`). En esos casos se espera al servidor en vez de pintar una lista que ya no es cierta.
+  - Solo se aplica la última lectura de cada tipo: una respuesta que salió antes (de otro mes, o de antes de cancelar) no pisa a la más reciente ni entra en la copia. De paso corrige una carrera que ya existía al cambiar de mes rápido.
+  - Con copia en pantalla, una lectura fallida conserva lo que ya se ve en vez de vaciarlo; y solo se guarda una lectura completa.
+- **La primera visita a Citas también espera menos.** Próximas e historial se pedían después de que terminaran las otras seis lecturas, y cada lectura de citas volvía a pedir `mi_cliente_id()`: tres idas y vueltas en serie antes de quitar «Cargando...». Ahora viajan a la vez que el resto y `mi_cliente_id()` se pide una vez por montaje: dos idas y vueltas en serie, y una llamada menos al abrir (y una menos por cada cambio de mes).
+- **Meses ya visitados del calendario:** al volver a un mes, sus citas se marcan al instante (antes el calendario quedaba sin puntos hasta que respondía el servidor).
+- **Verificado en Chromium, 17 de 17**, con el build de producción contra Supabase Local y una clienta de prueba con tres citas sembradas en Local (y retiradas al terminar): una sola `mi_cliente_id` y lecturas en paralelo en la primera visita; al volver, la lista y el calendario están a los 250 ms con las respuestas del servidor retrasadas 1,3 s y sin que aparezca «Cargando...»; un cambio de estado hecho en la base se refleja solo; cancelar rehace la copia sin la cita; cancelar y salir de inmediato, o reservar desde el carrito de servicios, no pintan la lista vieja.
+  - No se ejercitó en el navegador **reprogramar** (comparte con cancelar la función que descarta la copia).
+- **`scripts/verificar-fase5.cjs` actualizado y ejecutado.** El caso «Restaurar sesión de la clienta» exigía exactamente un canal Realtime; desde §74 la clienta no abre ninguno, así que ahora exige cero. Es un cambio de contrato deliberado, no una prueba relajada: el caso del personal sigue exigiendo un canal.
+  - Ejecutado completo contra Supabase Local (build con base raíz): **20 casos pasan y 12 fallan**. Pasan todos los de sesión, que son los que tocan los cambios de §72–§75: restaurar sesión del personal y de la clienta, refresco de token, el POS no precarga el portal, login → logout → otra clienta, y personal → clienta.
+  - Los 12 fallos son expectativas del verificador (último cambio: 2026-10-13) anteriores a cambios de interfaz ya confirmados en commits, no regresiones de esta tanda; ninguno de los archivos implicados se tocó aquí:
+    - Promociones, Referidos Web, Fidelización Web y los dos F5 de listas (5 casos): cuentan `.cupon-envoltura`, clase que `EnvolturaCupon.jsx` dejó de pintar el 2026-11-11. Las 40 filas y el total sí están (comprobado aparte en el navegador).
+    - Inicio (2 casos): espera la RPC `horario_atencion`, que hoy se llama `horario_atencion_semanal`, y el enlace «Reserva tu cita» del hero, que está oculto a pedido.
+    - Recompensas de la clienta y del visitante, cambio de cuenta con la pantalla abierta y F5-03 (4 casos): esperan un `role="tabpanel"` que la página de Recompensas ya no tiene.
+    - F5-02b (1 caso): pide una segunda cuenta de administración (`adminB`) que no se le pasó.
+  - **Pendiente:** poner al día esos 12 casos del verificador. No se hizo aquí porque es reescribir pruebas de pantallas que esta tanda no tocó.
+- **Repetidas en este build:** la prueba del salto del carrito (20 de 20; se le añadió el contrato central de QA-057 en Local: mientras un guardado está pendiente, las instrucciones de pago no anuncian ningún importe), la del total (11 de 11) y la del canal Realtime (14 de 14).
+- **No se hizo, con motivo:**
+  - *Copia en memoria de los dos carritos.* Abrirlos ya es una sola tanda de lecturas en paralelo, y lo que muestran es justo lo que no debe salir de una copia: cantidades, precios, stock y cupones. Pintar un importe de hace minutos y cambiarlo un instante después bajo el dedo de la clienta es peor que un «Cargando...» breve, y reabre la clase de carrera que cerró QA-057 (una lectura vieja que pisa una cantidad recién cambiada). Se dejan como están.
+  - *Agrupar los trozos pequeños de JS.* Una primera visita al portal pide 93 archivos JS; 44 pesan menos de 600 bytes (íconos sueltos) y suman 12,6 kB. Se descargan en paralelo y no retrasan el primer pintado; agruparlos ahorraría cabeceras, no espera, y cambiaría la lista del precache que comprueban los verificadores de la fase 8.
+- **Sigue sin ejecutarse:** la suite `tests/e2e/ensayo-ui` (QA-054/QA-057). Corre contra la instancia desechable `JaiseEnsayo` y exige `ENSAYO_PASSWORD`, que no está en el entorno de esta sesión.
+
+## 76. Inventario: últimos agregados, registros desplegables, códigos de barras y pestaña Proveedores — 2026-11-17 (local, sin commit, sin producción)
+
+Pedidos de la dueña sobre Inventario, en varias tandas. Migraciones `20261112000013` y `20261112000014`, **aplicadas solo en Local** con `psql` dentro de Docker: `supabase migration up` se niega porque el historial local tiene cinco migraciones remotas (`20261026…`) que no están en la carpeta. No se tocó ese historial.
+
+- **«Últimos agregados» (orden por defecto).** `productos.creado_en` y `productos_vista.ultimo_ingreso` = lo más reciente entre la creación y el último ingreso de stock. La columna se agrega sin default y después se le pone `now()`: con `add column ... default now()` Postgres rellenaría todas las fichas existentes con la fecha de la migración y taparía su último movimiento real. Las fichas antiguas sin movimientos quedan al final. Desempate por nombre e id para que «Cargar más» no repita ni salte filas.
+- **Registros desplegables (solo móvil).** Sin desplegar: nombre, precio de venta, stock, «Agregar stock». Desplegado: foto, impresión de etiqueta, código, categoría, costo/ganancia, proveedores, historial y Editar/Eliminar; lo que antes mostraba el modal de detalle, que queda solo para la tabla de escritorio. El historial (`HistorialStockProducto.jsx`) muestra cuánto se agregó y cuándo, sin el cálculo.
+- **Códigos de barras (`lib/codigoBarras.js`, sin dependencias).** Un producto nuevo nace con un EAN-13 interno (prefijo 2, uso interno de tiendas) y hay un botón para regenerarlo. Etiqueta de 40 × 30 mm para la Niimbot M110 por el diálogo de impresión: EAN-13/EAN-8/UPC-A si el código es válido, Code 128 para cualquier otro. La hoja de códigos (ícono junto al filtro) lista nombre y código de todos los productos y exporta a CSV. No se instaló jsbarcode: el sistema bloqueó la instalación de la dependencia.
+- **Modal de producto.** X para salir (`BotonCerrarModal`) y aviso de descartar con la lista de lo que se perdería (`ModalConfirmarDescarte`), ambos reutilizables en el resto de modales. Sin barra de sugerencias del teclado (`lib/sinSugerencias.js`). Subcategoría oculta (`MOSTRAR_SUBCATEGORIA`), no eliminada.
+- **Proveedores (reemplaza la primera versión de la 0014, que solo había llegado a Local).** El texto suelto «proveedor» del producto duplicaba nombres, perdía contactos y solo admitía uno. Ahora:
+  - `proveedores`: ficha completa (rubro, persona de contacto, celular/WhatsApp, teléfono, correo, web, redes, dirección, distrito, razón social, RUC, condiciones de pago, días de entrega, pedido mínimo, datos para pagarle, notas). Solo la administradora la lee; se escribe con `guardar_proveedor(p_id, p_datos jsonb)` y `eliminar_proveedor()` (con ingresos de stock se desactiva, si no se borra).
+  - `producto_proveedores`: varios proveedores por producto, uno principal. `vincular_proveedores_producto()` reemplaza el conjunto al guardar el producto.
+  - `proveedores_nombres`: id/nombre/activo para que la cajera elija proveedor al agregar stock sin ver contactos.
+  - `agregar_stock(..., p_proveedor_id)` registra de quién llegó cada ingreso y vincula solo al proveedor si no lo estaba.
+  - Los nombres antiguos se convirtieron en fichas y vínculos principales sin hacer `update` sobre `productos`, para no llenar Auditoría. El POS ya no escribe `productos.proveedor`.
+  - UI: pestaña **Proveedores** (`pages/Proveedores.jsx`, solo administradora, cuelga de Inventario en el menú); en el producto, «Agregar proveedor» abre un buscador (`ModalBuscarProveedor`) y cada vinculado muestra solo sus campos con datos; en el historial y en el desplegable, WhatsApp en verde y «Ver detalles» (`ModalDetalleProveedor`, con Editar / Eliminar / Cancelar).
+- **Verificado:** `npm run build`; pruebas SQL en Local dentro de transacciones con `rollback` (crear/editar, duplicado y RUC inválido rechazados, principal, vínculo automático al agregar stock, desactivar vs. eliminar, la cajera no lee fichas ni puede escribir). **No se verificó la interfaz en el navegador** ni se ejecutó `tests/e2e/catalogo-pos-web.test.mjs` (se actualizaron las listas de columnas que usa).
+
+## 77. Historial y Servicios: colores del filtro, fecha al desplegar, fecha de alta de servicios — 2026-11-17 (local, sin commit, sin producción)
+
+- **Historial:**
+  - El ícono del filtro de método de pago toma el color de la cápsula del método elegido (ámbar para «Todos»), con la nueva prop `claseIcono` de `SelectorOrden`.
+  - Al desplegar una venta, su fecha y hora se pintan de verde (lista móvil y tabla) y vuelven al gris al contraerla. Las anuladas siguen en rojo.
+- **Servicios:**
+  - Migración `20261112000015_servicios_creado_en.sql`: `servicios.creado_en` se agrega sin default y luego `default now()`, para no marcar todo como «agregado hoy». Lleva `grant select (creado_en)`, porque `servicios` da SELECT por columna, y un índice.
+  - Los existentes se rellenan con la fila «creado» más antigua de `auditoria`. Ese `update` no genera Auditoría porque `registrar_auditoria()` salta `creado_en`. En Local se rellenaron los 3340.
+  - Nuevo orden «Agregados recientemente» (`reciente` en `buscarServicios.js`, sin fecha al final). La fecha se ve en el desplegable móvil y en la columna «Agregado» de escritorio. `creado_en` no se añadió a `SELECT_SERVICIOS` (columnas editables que comprueba el test e2e), sino solo al listado.
+  - La cápsula Activo/Inactivo pasó a la fila del precio, al extremo derecho, para que el nombre tenga todo el ancho.
+  - `ModalServicio` lleva `BotonCerrarModal` (X) en la cabecera, que hace lo mismo que Cancelar.
+- **Verificado:** `npm run build`; migración aplicada en Local con `psql` (3340/3340 con fecha, 0 filas nuevas en Auditoría). **No se verificó la interfaz en el navegador.**
+
+## 78. X y aviso de «¿Descartar los cambios?» en todos los modales con formulario — 2026-11-17 (local, sin commit, sin producción)
+
+- **Servicios:** el orden por defecto es «Agregados recientemente» (primera opción) y el ícono del orden va ámbar (`seleccionado`), como en Inventario.
+- **Pieza reutilizable:**
+  - `hooks/useAvisoDescarte.jsx` reemplaza el `useCerrarConEscape(onCerrar)` de cada modal. Devuelve `intentarCerrar`, que usan la X, «Cancelar», Esc y el clic en el fondo, y `aviso`, el diálogo que se renderiza dentro del modal.
+  - Con cambios sin guardar abre `ModalConfirmarDescarte` con la lista de lo que se perdería; sin cambios cierra directo. Mientras guarda (`bloqueado`) no cierra, pero sigue en la pila de Esc, así que tampoco cierra el modal de abajo.
+  - `lib/cambiosFormulario.js` arma esa lista con `listarCambios(base, actual, etiquetas, { sinValor })`. Para cada campo muestra «Etiqueta: antes → ahora», o «modificado» si es una lista, un id o una contraseña.
+  - `ModalConfirmarDescarte` tiene `variante="web"` para los modales del portal de clientas.
+- **Aplicado (X en la cabecera y aviso):**
+  - **Servicios e Inventario:** Servicio, Agregar stock.
+  - **Almacén:** Artículo, Movimiento.
+  - **Caja chica:** Movimiento, Chanchito.
+  - **Gastos:** Gasto, Plantillas de gastos (el formulario vuelve a la lista; en la lista la X cierra).
+  - **Deudas:** Deuda, Pago de deuda.
+  - **Personas:** Cliente, Asistente, Persona (Personal), Cambiar mi contraseña.
+  - **Citas y Mi Panel:** Cita, Registrar atención (carrito y edición).
+  - **Mobiliario:** Mueble, Compra.
+  - **Web y configuración:** Promoción, Galería Web, Premio (Recompensas Web), Colores de citas, Horario de atención, Apertura y cierre del POS (los días se comparan contra lo leído de la base y el aviso dice qué día cambió).
+  - **Ventas:** Datos del comprobante.
+  - **Portal de clientas:** Dirección, Reprogramar cita (ya tenían X; ahora también el aviso).
+- **Solo X:** Restablecer contraseña (la contraseña la genera el sistema), los detalles de producto, de artículo de almacén y de cita.
+- **Sin cambios a propósito:** las confirmaciones cortas («¿Eliminar…?», «¿Anular…?»), que ya tienen «Cancelar» y no tienen nada que perder, los buscadores que ya tenían X y los visores de foto y cámara.
+- **Precargas que no cuentan como cambio:** en Nueva cita, la asistente que se propone sola actualiza también la base del aviso.
+- **Verificado:** `npm run build`; oxlint sin avisos nuevos. **No se verificó la interfaz en el navegador.**
+
+## 79. Dashboard: filas que no se parten en móvil, borde aurora con la meta cumplida y pastilla en medio — 2026-11-17 (local, sin commit, sin producción)
+
+- **Filas del Resumen y de la Cascada (móvil):** el monto se partía en dos líneas («−S/» arriba y «356.00» abajo) aunque cabía. Ahora las dos listas usan `FilaMonto` (`src/pages/Dashboard.jsx`): el monto va con `whitespace-nowrap shrink-0`, la etiqueta puede ocupar dos líneas (`min-w-0`) y el punteado se encoge primero (`mx-1.5 min-w-2` en móvil). Se mantiene la estructura que lee `importeFilaDashboard` en los e2e.
+- **Efecto en toda la pestaña: descartado.** Se probaron tres versiones a pedido de la usuaria y se quitaron: un borde aurora en cada tarjeta, un anillo aurora con halo alrededor de la pestaña y un «aura de fondo» de manchas de luz. El Dashboard queda sin marco; solo la tarjeta del Punto de equilibrio lleva la aurora.
+- **«Dashboard» brillando en el menú lateral:** con la meta cumplida, la palabra lleva `.texto-aurora`: los colores de la aurora fluyen por las letras (`background-clip: text` + `pe-flujo`) con un resplandor rosado y sin borde.
+  - El estado lo publica el Dashboard en `src/lib/metaDashboard.js`, un store mínimo con `useSyncExternalStore`, y `MenuLateral` lo lee.
+  - Sigue el filtro elegido en el Dashboard (Hoy, Semana, Mes o Personalizado).
+  - Solo aparece después de que el Dashboard se abrió una vez en la sesión, porque es quien calcula la meta.
+  - **Ícono:** el stroke usa un `linearGradient` SVG que se repite y se desplaza con `animateTransform` (`DegradadoAurora` en `MenuLateral.jsx`; lucide acepta `color="url(#…)"`), más `.icono-aurora` para el resplandor.
+  - **Carita feliz** (`CaritaMetaMenu`) a la derecha de la palabra: la carita de la pastilla «¡Meta cumplida!», sin la pastilla, aparece y desaparece en el mismo ciclo de 8 s (`.menu-carita`).
+    - Confeti en miniatura (`.pe-confeti.pe-confeti-mini`, piezas de 2×4 px en abanico de unos ±30 px), para no salirse de la fila ni del cajón. Con una sola clase lo pisaba `.pe-confeti`, declarado más abajo, y salía a 6×10 px.
+    - `pe-confeti` toma ahora la caída de `--caida`; por defecto sigue siendo 34px.
+- **«¡Meta cumplida!» en medio de la tarjeta:** antes salía por encima y el Dashboard reservaba `pt-8`, que en móvil quedaba como una franja negra bajo los filtros. Ahora la pastilla (`.pe-pastilla-medio`) y el confeti salen del centro de la tarjeta, en PC y en móvil, y se quitó el `pt-8`. Se eliminaron las variantes `pe-pastilla-centrada` y `pe-pastilla-derecha` y el pico de la pastilla.
+- **Envío cobrado:** se confirma que es solo informativo. `ingreso_productos` e `ingreso_servicios` salen de `venta_items` (sin envío) y ninguna suma ni la cascada lo usan. Ahora va debajo de una línea, separado de los montos que sí cuentan.
+- **Verificado:** `npm run build`; oxlint sin avisos nuevos. **No se verificó la interfaz en el navegador.**
+
+## 80. Mi panel: el selector de personal incluye a otras administradoras — 2026-11-17 (local, sin commit, sin producción)
+
+- **Problema:** el selector solo listaba cuentas con rol ASISTENTE, ENCARGADA o PERSONAL_APOYO, además de la cuenta propia con «(yo)». «Todos» no filtra por usuario, así que sí mostraba las atenciones de otras administradoras, pero no se las podía elegir solas.
+  - Lectura de producción (solo SELECT, autorizada): Claudia Sanchez (ADMINISTRADOR) tiene 108 atenciones y no salía en la lista. Una cajera inactiva con 2 atenciones tampoco salía.
+- **Por qué es solo del front:**
+  - La política `usuarios_select` (`id = auth.uid() OR es_admin()`) ya deja al admin leer a todo el personal.
+  - `resumen_mi_panel` filtra por cualquier `p_usuario_id`.
+- **Cambio en `MiPanel.jsx`:**
+  - La lista se pide con `rol <> 'CLIENTE'` y sin la cuenta propia. Las administradoras salen con «(admin)».
+  - `filtroEsAsistente` ahora se apoya en el rol. Con otra administradora se muestra «Total» (precio), no «Pago asistente»; da igual, porque el trigger de comisión guarda sus atenciones al 100% (pago = precio).
+- **Verificado:** `npm run build`; oxlint sin avisos nuevos. **No se verificó la interfaz en el navegador.**
+
+## 81. Mi panel: punto rosa en días con atenciones sin %, aviso que abre y cierra, cabecera rosa al abrir — 2026-11-17 (local, sin commit, sin producción)
+
+- **Punto rosa:** los días con alguna atención `PENDIENTE_PORCENTAJE` y sin % asignado muestran un círculo `bg-purple-300` en la esquina superior izquierda. Lleva un `ring-bg` para que se separe del borde. Así se ubica la atención sin tener que abrirlo todo.
+  - Las que ya tienen % y solo falta confirmar no lo llevan.
+- **El aviso funciona en los dos sentidos:** `avisoAbierto(lista)` mira si todas sus atenciones, y su día, están desplegadas. Se deduce de `diasAbiertos` y `registrosAbiertos`, no se guarda aparte, así no queda desfasado si se cierra un día a mano.
+  - Si está abierto, el texto termina en «Ocultar» y al pulsarlo cierra esas atenciones y sus días, sin tocar los filtros.
+  - Si no, termina en «Ver» y hace lo de siempre.
+- **Cabecera del día abierta:** «N servicios» y la flecha pasan a rosa (`text-purple-300`, como el monto). La fecha queda en blanco.
+- **Verificado:** `npm run build`; oxlint sin avisos nuevos. **No se verificó la interfaz en el navegador.**
+- **Corrección tras revisión del usuario (mismo día):**
+  - **Punto rosa que no salía:** se calculaba con los registros cargados en la lista. La admin entra viendo su propio panel y las notas sin % son de las asistentes, así que no estaban ahí; solo aparecían tras pulsar el aviso, que cambia el filtro.
+    - Ahora sale de `pendientes`, igual que el aviso: el mapa `sinAsignarPorDia` va por clave de día en Lima, dentro de un `useMemo`.
+    - Al abrir un día cuyas atenciones sin % no se ven con el filtro actual (otra persona o una página no cargada), arriba aparece una fila rosa: «N atenciones sin % asignado este día no aparecen con el filtro actual. Ver», que llama a `verPendientes`.
+  - **Cabecera abierta:** también el día y la fecha pasan a rosa; ahora es toda la cabecera.
+  - **Lentitud al abrir y cerrar días:** el `CampoColapsable` del día y el del detalle de cada atención pasan a `diferido`.
+    - Antes cada clic re-renderizaba todas las atenciones de todos los días con su detalle, aunque estuvieran cerrados.
+    - Los derivados de `pendientes` se memorizan.
+    - En `MenuLateral`, los efectos de la meta (degradado SVG animado, `texto-aurora` y confeti) solo se dibujan con el cajón abierto. Cerrado queda montado fuera de pantalla y seguía animándose en bucle.
+  - **Verificado:** `npm run build`; oxlint sin avisos nuevos. **No se verificó la interfaz ni se midió el rendimiento en el navegador.**
+
+## 82. Menú lateral: el brillo de «Dashboard» sin depender de abrir la pestaña, animado solo con el menú abierto — 2026-11-17 (local, sin commit, sin producción)
+
+- **Antes:** la meta solo la publicaba el Dashboard, así que el brillo del menú no aparecía hasta abrir la pestaña una vez en la sesión.
+  - En la sección 81 se ocultaba además todo el efecto con el menú cerrado. El usuario pidió revertirlo: el efecto debe estar siempre y solo animarse al abrir el menú.
+- **`src/lib/metricasDashboard.js` (nuevo):** contiene `obtenerMetricasDashboard(filtro, personalizado)` (`resumen_dashboard` más los gastos del mes prorrateados) y `calcularResultadoDashboard(metricas)` (ingreso neto, cascada y `metaCumplida`).
+  - El Dashboard usa ahora estas dos funciones en vez de su copia inline, así la pestaña y el menú siempre llegan al mismo resultado.
+  - `porcentajeEquilibrio` está copiada ahí para que el menú no arrastre el componente de la tarjeta.
+- **`src/lib/metaDashboard.js`:** el Dashboard montado y cargado manda, con el filtro elegido: llama `publicarMetaCumplida(v, { desdeDashboard: true })` y, al desmontarse, `soltarMetaDashboard()`.
+  - Si no está montado, `actualizarMetaDesdeMenu()` hace el cálculo con el filtro guardado del Dashboard (`leerEstadoVista`, nueva en `estadoVista.js`; por defecto «Mes»).
+  - Hace como mucho una consulta por minuto y no consulta mientras otra está en curso.
+- **`MenuLateral`:** al abrirse, y solo si el rol ve el Dashboard, llama `actualizarMetaDesdeMenu()`.
+  - Con el menú cerrado, la clase `.menu-lateral-quieto` pone `animation: none` a `texto-aurora`, `menu-carita`, `pe-confeti` y `pe-menear`, y el `animateTransform` del degradado SVG no se renderiza.
+  - El brillo sigue ahí, pero estático. Al abrir, las animaciones arrancan desde 0.
+- **Verificado:** `npm run build`; oxlint sin avisos nuevos. **No se verificó la interfaz en el navegador.**
+
+## 83. Citas: WhatsApp de la clienta en el detalle de la cita — 2026-11-17 (local, sin commit, sin producción)
+
+- En el modal de detalle, pegado a la izquierda de la cápsula de estado (antes iba junto al nombre; lo movió el usuario), va un `BotonAccion` verde de WhatsApp, solo ícono y sin borde, igual que en Clientes. Abre `wa.me/<número>` en otra pestaña.
+- Solo aparece si la cita tiene una clienta registrada con teléfono. Sin número, o con una cita que solo lleva `cliente_nombre_referencia`, no se muestra nada.
+- `SELECT_CITAS` pide ahora `clientes(nombre, telefono)`. `clientes` tiene GRANT de SELECT a nivel de tabla para `authenticated` (comprobado en local), así que no hace falta migración.
+- **Verificado:** `npm run build`; oxlint sin avisos. **No se verificó la interfaz en el navegador.**
+
+## 84. Porcentajes: nombres largos que se deslizan en bucle y cabecera rosa al abrir — 2026-11-17 (local, sin commit, sin producción)
+
+- **`src/components/TextoDeslizante.jsx` (nuevo, reutilizable):** si el texto no cabe, en vez de quedar en «…» se desliza de derecha a izquierda hasta mostrar lo que faltaba. Luego espera, se desvanece y vuelve a empezar.
+  - Velocidad fija de 24 px/s, pausa de 0,8 s al inicio y de 0,9 s al final, y vuelta directa al inicio, sin fundido. Se ajustó a pedido del usuario: la primera versión iba a 35 px/s, con pausas de 1,2 y 1,4 s y fundidos de 300 ms.
+  - Usa la Web Animations API para que las pausas y la velocidad no dependan del largo, y solo anima `transform`.
+  - Con `activo=false` o con «reducir movimiento» se comporta como un `truncate` normal.
+  - Mide con `ResizeObserver`, así se recalcula al girar la pantalla o al cambiar de una a dos columnas.
+- **Tarjeta de servicio:** cerrada, el nombre queda en «…». Abierta, se desliza.
+  - Se quitó la línea aparte «…parte oculta» que salía debajo al abrir, junto con `calcularParteOculta`, que la medía con canvas.
+- **Fila de asistente:** el nombre usa `TextoDeslizante` siempre, porque la fila solo existe con la tarjeta abierta.
+- **Cabecera abierta:** el nombre y el precio pasan a `text-purple-300`. La flecha no cambia, y la cápsula N/M conserva su color de estado (verde, rosa o gris), que indica cuántas asistentes tienen %.
+- **Verificado:** `npm run build`; oxlint sin avisos. **No se verificó la interfaz en el navegador.**
+
+## 85. Personal: rol sobre la foto, tarjetas desplegables, filtro de rol en un ícono y «En línea» en tiempo real — 2026-11-17 (local, sin commit, sin producción)
+
+- **Cápsula del rol:** ahora va encima de la foto o de las iniciales, pegadas a la izquierda (`pl-2`). La columna mide lo que la cápsula, hasta 84 px, con `truncate` para «Personal de apoyo». Al lado del nombre solo queda la cápsula Activa/Bloqueada.
+- **Tarjetas desplegables:** la cabecera (rol, foto, nombre, estado, correo, último ingreso o «En línea» y el aviso de ficha) se ve siempre. Editar, Contraseña y Bloquear/Desbloquear van dentro.
+  - Usa `CampoColapsable diferido`, con `ArrowBigDown` y borde izquierdo `purple-300` al abrir, igual que en las otras pestañas.
+- **Filtro de rol:** la fila de chips de rol pasa a un `SelectorOrden` con ícono `Filter` junto al buscador.
+  - Por defecto está en «Todos los roles». El ícono siempre va rosa (`seleccionado` + `claseIcono="text-purple-300"`, también con el menú abierto, que en `sinBorde` caía en ámbar).
+  - Los chips de estado (Todas/Activas/Bloqueadas) se quedan.
+- **«En línea» en tiempo real** (`src/lib/presenciaPersonal.js`, nuevo): usa Supabase Realtime Presence, sin tablas ni migración.
+  - `Layout` (solo el árbol del POS) llama a `iniciarPresencia(usuario.id)` al montar y a `detenerPresencia()` al desmontar. Así se sale al cerrar sesión, al pasar a «modo cliente» o al cerrar la pestaña; en ese último caso, Realtime la quita sola a los pocos segundos.
+  - La clave de presencia es el id de usuario: varias pestañas o dispositivos de la misma persona cuentan como una sola.
+  - El canal es uno solo por cliente, manejado en el módulo. `Personal` lee el estado con `usePersonalEnLinea()` (`useSyncExternalStore`).
+  - En la tarjeta se ve un punto verde sobre la foto y «En línea ahora» en lugar de «Último ingreso». El resumen de arriba suma «En línea: N».
+  - Solo se publica el id. El canal es público de Realtime, así que cualquier cliente con la clave anon podría ver qué ids están conectados, pero no nombres ni correos. Si hiciera falta cerrarlo, se pasaría a un canal privado con política en `realtime.messages`, y eso sí necesitaría migración.
+- **Verificado:** `npm run build`; oxlint sin avisos. **No se verificó la interfaz ni la presencia en el navegador.**
+- **Ajuste posterior:** la cápsula Activa/Bloqueada va fija en el extremo derecho de la fila del nombre (`ml-auto shrink-0`).
+  - Si el nombre no cabe, se desliza en bucle con `TextoDeslizante`, igual que en Porcentajes.
+  - `TextoDeslizante` acepta ahora `children` para conservar «(tú)» en gris.
+- **Fotos alineadas:** la columna del rol y la foto usa `items-start`. Antes, centradas, la foto se corría según lo largo del rol y las tarjetas se veían disparejas; ahora todas las fotos quedan al mismo nivel, pegadas a la izquierda.
+- **No se podía crear personal en Local:** no era un error de código. El contenedor `supabase_edge_runtime_WedJaiseReact` estaba detenido (`Exited (255)` desde hacía 4 días, seguramente tras un reinicio) y `gestionar-personal`, que crea, bloquea y cambia contraseñas, no respondía.
+  - Se arrancó con `docker start` y se creó con la función real la cuenta de prueba «Personal Bloqueado Prueba» (CAJERA, `personal.bloqueado@test.local`), ya bloqueada (`activo = false`, `banned_until` a 100 años).
+- **Segundo ajuste de la cabecera:**
+  - **Fila 1:** el nombre, que se desliza si no cabe, y pegadas en el extremo derecho la cápsula del rol y luego la de estado, más la flecha.
+  - **Fila 2:** la foto, alineada a la izquierda, y el correo, el último ingreso o «En línea» y el aviso de ficha. El nombre queda así encima de la foto.
+- **Desbloquear pide confirmación:** antes lo hacía de frente al tocar el candado. `personaAConfirmar` pasa a ser `{ fila, accion }` y el mismo diálogo sirve para bloquear (botón rojo) y para desbloquear («¿Desbloquear a …?», botón verde). `confirmarAccion` reemplaza a `confirmarBloqueo` y a `desbloquear`.
+
+## 86. Estado de las migraciones en producción — 2026-11-18
+
+- Se comparó el repo con producción (`list_migrations` más una comprobación de solo lectura de un objeto característico de cada migración). Todo lo anterior a `20261112000013` ya estaba aplicado, aunque varias no figuran en el historial de migraciones porque se aplicaron con `execute_sql`: 20261013000002, 20261015150644, 20261110000001/2 y 20261112000001 a 0012.
+- **Ensayo previo:** en la instancia desechable `JaiseEnsayo`, que llegaba hasta 20261008000002, se aplicaron en orden las 31 migraciones siguientes dentro de un único `begin … rollback`, sin errores. Al terminar se comprobó que la instancia quedó como estaba.
+- **Aplicadas en producción el 2026-11-18** (con confirmación explícita del usuario y el SQL exacto de cada archivo):
+  - `20261112000013_productos_ultimo_ingreso`: antes se comprobó que las columnas actuales de `productos_vista` coincidían con el inicio de la nueva definición y que no tenía `reloptions`.
+  - `20261112000015_servicios_creado_en`: los 38 servicios recuperaron su fecha de alta desde Auditoría.
+- **Pendiente:** `20261112000014_proveedores`. Su aplicación por MCP fue rechazada en el permiso y no se ejecutó nada; en producción no existe `proveedores`.
+  - Al aplicarla, convertirá los 198 productos con proveedor en 19 fichas con su vínculo principal.
+  - Hasta entonces, el front de este commit falla en producción en Agregar stock (llama a `agregar_stock` con `p_proveedor_id`), en la pestaña Proveedores y en las secciones de proveedor de Inventario.

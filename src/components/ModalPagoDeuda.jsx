@@ -1,6 +1,8 @@
 import { useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, leerImporte, redondear2 } from '../lib/moneda.js'
@@ -32,7 +34,6 @@ export default function ModalPagoDeuda({
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
-  useCerrarConEscape(onCerrar)
 
   // Al confirmar se propone lo que anotó la cajera, sin pasar del saldo actual (pudo cobrarse algo entretanto).
   const [monto, setMonto] = useState(() => String(notaCobro ? Math.min(Number(notaCobro.monto), saldo) : saldo))
@@ -91,6 +92,12 @@ export default function ModalPagoDeuda({
     onGuardado(restante <= 0)
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = { monto, fecha, nota }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, { monto: 'Monto', fecha: 'Fecha de pago', nota: 'Notas' })
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -100,7 +107,10 @@ export default function ModalPagoDeuda({
         style={{ '--color-foco': 'var(--color-purple-300)' }}
         className="max-h-full w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">{textos.titulo}</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">{textos.titulo}</h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
         <p className="mt-1 text-sm text-ink/60">
           {deuda.clientes.nombre} · debe{' '}
           <span className="font-mono font-semibold text-purple-300">{formatearSoles(saldo)}</span>
@@ -220,7 +230,7 @@ export default function ModalPagoDeuda({
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
           >
@@ -235,6 +245,7 @@ export default function ModalPagoDeuda({
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

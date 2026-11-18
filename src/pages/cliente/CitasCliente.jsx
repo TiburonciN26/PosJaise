@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { obtenerMiClienteId } from '../../lib/clienteWeb.js'
+import { claveCitas, guardarCopia, leerCopia, mismaCopia, olvidarCopia } from '../../lib/copiasEnMemoria.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useCarritoCliente } from '../../context/CarritoClienteContext.jsx'
@@ -333,7 +334,14 @@ export default function CitasCliente() {
   return usuario ? <CitasConSesion key={usuario.id} /> : <CitasPublicasCliente />
 }
 
+// Mes del calendario dentro de la copia en memoria: «2026-10».
+const claveMesCopia = (fecha) => {
+  const { anio, mes } = anioMesEnLima(fecha)
+  return `${anio}-${mes}`
+}
+
 function CitasConSesion() {
+  const { usuario } = useAuth()
   const { mostrarToast } = useToast()
   const { serviciosCarrito, agregarServicio } = useCarritoCliente()
   const { cancelacionPlazoHoras } = useEstadoNegocio()
@@ -343,19 +351,38 @@ function CitasConSesion() {
   // Programa de Recompensas: reglas vigentes y, con el programa activo, el saldo propio (monedas y clasificación SEPARADAS).
   const programa = useProgramaRecompensas(session?.user?.id ?? null)
 
+  // Copia en memoria de esta pantalla (lib/copiasEnMemoria.js), POR CUENTA: son las citas y el saldo de una clienta. La ruta se
+  // desmonta al salir (CLAUDE.md), así que sin copia cada regreso a Citas mostraba «Cargando...» y repetía todo. Con copia se pinta
+  // al instante lo último leído y TODO se vuelve a pedir en segundo plano; si algo cambió (p. ej. el salón confirmó la cita) se
+  // corrige solo. Partes, cada una se guarda cuando llega:
+  //   base    → asistentes, contacto, horario, config de puntos, mis puntos y mi fidelización
+  //   listas  → próximas e historial
+  //   meses   → citas de cada mes del calendario ya visitado («2026-10»)
+  //   resenas → servicios del historial que ya tienen reseña propia
+  // Lo que cambia las citas (cancelar, reprogramar aquí; reservar en el carrito de servicios) descarta listas y meses.
+  const claveCopia = claveCitas(usuario.id)
+  const paqueteRef = useRef(null)
+  if (paqueteRef.current === null) paqueteRef.current = { meses: {}, ...leerCopia(claveCopia) }
+  const guardarParte = (parte) => {
+    paqueteRef.current = { ...paqueteRef.current, ...parte }
+    guardarCopia(claveCopia, paqueteRef.current)
+  }
+  // Solo para los valores iniciales del estado (primer render).
+  const [copiaAlMontar] = useState(() => paqueteRef.current)
+
   const [mesActual, setMesActual] = useState(() => iniciarDia(new Date()))
-  const [citasMes, setCitasMes] = useState([])
-  const [cargandoMes, setCargandoMes] = useState(true)
-  const [proximas, setProximas] = useState([])
-  const [historial, setHistorial] = useState([])
-  const [cargandoInicial, setCargandoInicial] = useState(true)
-  const [asistentesPorId, setAsistentesPorId] = useState(() => new Map())
-  const [contacto, setContacto] = useState(null)
-  const [horario, setHorario] = useState(null)
-  const [misPuntos, setMisPuntos] = useState(null)
-  const [fidelizacion, setFidelizacion] = useState(null)
-  const [cfgPuntos, setCfgPuntos] = useState(null)
-  const [resenasServicioIds, setResenasServicioIds] = useState(() => new Set())
+  const [citasMes, setCitasMes] = useState(() => copiaAlMontar.meses[claveMesCopia(new Date())] ?? [])
+  const [cargandoMes, setCargandoMes] = useState(() => !copiaAlMontar.meses[claveMesCopia(new Date())])
+  const [proximas, setProximas] = useState(() => copiaAlMontar.listas?.proximas ?? [])
+  const [historial, setHistorial] = useState(() => copiaAlMontar.listas?.historial ?? [])
+  const [cargandoInicial, setCargandoInicial] = useState(() => !(copiaAlMontar.base && copiaAlMontar.listas))
+  const [asistentesPorId, setAsistentesPorId] = useState(() => new Map(copiaAlMontar.base?.asistentes ?? []))
+  const [contacto, setContacto] = useState(() => copiaAlMontar.base?.contacto ?? null)
+  const [horario, setHorario] = useState(() => copiaAlMontar.base?.horario ?? null)
+  const [misPuntos, setMisPuntos] = useState(() => copiaAlMontar.base?.misPuntos ?? null)
+  const [fidelizacion, setFidelizacion] = useState(() => copiaAlMontar.base?.fidelizacion ?? null)
+  const [cfgPuntos, setCfgPuntos] = useState(() => copiaAlMontar.base?.cfgPuntos ?? null)
+  const [resenasServicioIds, setResenasServicioIds] = useState(() => new Set(copiaAlMontar.resenas ?? []))
 
   const [diaSeleccionado, setDiaSeleccionado] = useState(null)
   const [histAbierto, setHistAbierto] = useState(false)
@@ -374,31 +401,84 @@ function CitasConSesion() {
   useCerrarConEscape(() => setCitaACancelar(null), Boolean(citaACancelar))
   useModalA11y(panelCancelarRef, Boolean(citaACancelar))
 
+  // mi_cliente_id() se pide UNA vez por montaje (antes, una por cada lectura de citas: dos al abrir la pantalla y otra por cada
+  // cambio de mes). Si la respuesta es null (sin perfil vinculado o fallo) no se recuerda: la siguiente lectura vuelve a preguntar.
+  const miIdRef = useRef(null)
+  function miClienteId() {
+    if (!miIdRef.current) {
+      const promesa = obtenerMiClienteId()
+      miIdRef.current = promesa
+      const soltar = () => {
+        if (miIdRef.current === promesa) miIdRef.current = null
+      }
+      promesa.then((id) => {
+        if (!id) soltar()
+      }, soltar)
+    }
+    return miIdRef.current
+  }
+
+  // Solo la ÚLTIMA lectura de cada tipo se aplica: una respuesta que salió antes (de otro mes, o de antes de cancelar o
+  // reprogramar) no pisa a la más reciente ni entra en la copia. El desmontaje también las descarta.
+  const turnoMesRef = useRef(0)
+  const turnoListasRef = useRef(0)
+  useEffect(() => {
+    const turnoMes = turnoMesRef
+    const turnoListas = turnoListasRef
+    return () => {
+      turnoMes.current += 1
+      turnoListas.current += 1
+    }
+  }, [])
+
+  // Una cita cambió (cancelar, reprogramar): lo guardado de listas y calendario ya no vale hasta que se vuelva a leer.
+  function descartarCitasGuardadas() {
+    turnoMesRef.current += 1
+    turnoListasRef.current += 1
+    const resto = { ...paqueteRef.current, meses: {} }
+    delete resto.listas
+    paqueteRef.current = resto
+    olvidarCopia(claveCopia)
+  }
+
   async function cargarMes(fechaMes) {
-    setCargandoMes(true)
+    const turno = ++turnoMesRef.current
+    const claveMes = claveMesCopia(fechaMes)
+    const guardadas = paqueteRef.current.meses[claveMes]
+    // Mes ya visitado: se pinta de la copia y se revalida sin el «Cargando...» de la lista del día.
+    if (guardadas) setCitasMes((previas) => (mismaCopia(previas, guardadas) ? previas : guardadas))
+    setCargandoMes(!guardadas)
     const { anio, mes } = anioMesEnLima(fechaMes)
     const inicioMes = iniciarMesLima(anio, mes)
     const finMes = iniciarMesLima(anio, mes + 1)
-    const miId = await obtenerMiClienteId()
+    const miId = await miClienteId()
+    if (turno !== turnoMesRef.current) return
     if (!miId) {
       setCitasMes([])
       setCargandoMes(false)
       return
     }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('citas')
       .select(SELECT_CITA)
       .eq('cliente_id', miId)
       .gte('fecha_hora', inicioMes.toISOString())
       .lt('fecha_hora', finMes.toISOString())
       .order('fecha_hora')
-    setCitasMes(data ?? [])
+    if (turno !== turnoMesRef.current) return
     setCargandoMes(false)
+    // Con el mes ya pintado de la copia, un fallo de red no lo vacía.
+    if (error && guardadas) return
+    const citas = data ?? []
+    if (!error) guardarParte({ meses: { ...paqueteRef.current.meses, [claveMes]: citas } })
+    setCitasMes((previas) => (mismaCopia(previas, citas) ? previas : citas))
   }
 
   async function cargarProximasEHistorial() {
+    const turno = ++turnoListasRef.current
     const ahoraIso = new Date().toISOString()
-    const miId = await obtenerMiClienteId()
+    const miId = await miClienteId()
+    if (turno !== turnoListasRef.current) return
     if (!miId) {
       setProximas([])
       setHistorial([])
@@ -419,11 +499,19 @@ function CitasConSesion() {
         .or(`fecha_hora.lt.${ahoraIso},estado.in.(COMPLETADA,CANCELADA,NO_ASISTIO)`)
         .order('fecha_hora', { ascending: false }),
     ])
-    setProximas(proximasRes.data ?? [])
-    setHistorial(historialRes.data ?? [])
+    if (turno !== turnoListasRef.current) return
+    const fallo = Boolean(proximasRes.error || historialRes.error)
+    // Con las listas ya pintadas de la copia, un fallo de red no las vacía.
+    if (fallo && paqueteRef.current.listas) return
+    const listas = { proximas: proximasRes.data ?? [], historial: historialRes.data ?? [] }
+    if (!fallo) guardarParte({ listas })
+    // Idéntico a lo que ya se ve: se conserva el mismo arreglo (ni un render de más, ni se repiten las lecturas de reseñas).
+    setProximas((previas) => (mismaCopia(previas, listas.proximas) ? previas : listas.proximas))
+    setHistorial((previas) => (mismaCopia(previas, listas.historial) ? previas : listas.historial))
   }
 
   function recargarTodo() {
+    descartarCitasGuardadas()
     cargarMes(mesActual)
     cargarProximasEHistorial()
   }
@@ -432,6 +520,9 @@ function CitasConSesion() {
     let vigente = true
 
     async function cargarInicial() {
+      // Próximas e historial viajan A LA VEZ que el resto (antes esperaban a que terminaran las seis lecturas de abajo: dos
+      // idas y vueltas más, en serie, antes de quitar el «Cargando...»).
+      const listasLeidas = cargarProximasEHistorial()
       const [asistentesRes, contactoRes, horarioRes, cfgRes, puntosRes, fidelizacionRes] = await Promise.all([
         supabase.rpc('asistentes_para_citas'),
         supabase.rpc('datos_contacto'),
@@ -441,13 +532,28 @@ function CitasConSesion() {
         supabase.rpc('mi_fidelizacion'),
       ])
       if (!vigente) return
-      setAsistentesPorId(new Map((asistentesRes.data ?? []).map((a) => [a.id, a.nombres_completos])))
-      setContacto(contactoRes.data?.[0] ?? null)
-      setHorario(horarioRes)
-      setCfgPuntos(cfgRes.data ?? null)
-      setMisPuntos(puntosRes.data?.[0] ?? null)
-      setFidelizacion(fidelizacionRes.data?.[0] ?? null)
-      await cargarProximasEHistorial()
+      const guardada = paqueteRef.current.base
+      // Con copia en pantalla, una lectura fallida conserva lo que ya se ve en vez de vaciarlo.
+      const base = {
+        asistentes: asistentesRes.error && guardada ? guardada.asistentes : (asistentesRes.data ?? []).map((a) => [a.id, a.nombres_completos]),
+        contacto: contactoRes.error && guardada ? guardada.contacto : (contactoRes.data?.[0] ?? null),
+        horario: horarioRes,
+        cfgPuntos: cfgRes.error && guardada ? guardada.cfgPuntos : (cfgRes.data ?? null),
+        misPuntos: puntosRes.error && guardada ? guardada.misPuntos : (puntosRes.data?.[0] ?? null),
+        fidelizacion: fidelizacionRes.error && guardada ? guardada.fidelizacion : (fidelizacionRes.data?.[0] ?? null),
+      }
+      // Idéntico a lo que ya se ve: no se toca el estado.
+      if (!guardada || !mismaCopia(guardada, base)) {
+        setAsistentesPorId(new Map(base.asistentes))
+        setContacto(base.contacto)
+        setHorario(base.horario)
+        setCfgPuntos(base.cfgPuntos)
+        setMisPuntos(base.misPuntos)
+        setFidelizacion(base.fidelizacion)
+      }
+      // Solo se guarda una lectura completa: una parcial (algo falló) no se da por buena en la próxima visita.
+      if (![asistentesRes, contactoRes, cfgRes, puntosRes, fidelizacionRes].some((r) => r.error)) guardarParte({ base })
+      await listasLeidas
       if (!vigente) return
       setCargandoInicial(false)
     }
@@ -487,7 +593,7 @@ function CitasConSesion() {
       })
     })
     if (idsCompletadas.size === 0) {
-      setResenasServicioIds(new Set())
+      setResenasServicioIds((previas) => (previas.size === 0 ? previas : new Set()))
       return undefined
     }
     let vigente = true
@@ -502,11 +608,14 @@ function CitasConSesion() {
       ),
     ).then((resultados) => {
       if (!vigente) return
-      setResenasServicioIds(new Set(resultados.filter(Boolean)))
+      const ids = resultados.filter(Boolean)
+      guardarParte({ resenas: ids })
+      setResenasServicioIds((previas) => (previas.size === ids.length && ids.every((id) => previas.has(id)) ? previas : new Set(ids)))
     })
     return () => {
       vigente = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- guardarParte solo toca refs y la clave de la cuenta (fija por montaje)
   }, [historial])
 
   const citasPorDiaMes = useMemo(() => {
@@ -667,6 +776,7 @@ function CitasConSesion() {
   // otro, ej. al reprogramar).
   function irAFecha(fechaHoraIso) {
     const fecha = new Date(fechaHoraIso)
+    descartarCitasGuardadas()
     setMesActual(iniciarDia(fecha))
     setDiaSeleccionado(null)
     cargarProximasEHistorial()

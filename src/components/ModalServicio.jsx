@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Camera, ImagePlus, X } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
+import { listarCambios } from '../lib/cambiosFormulario.js'
 import ModalCamara from './ModalCamara.jsx'
 import Etiqueta from './Etiqueta.jsx'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
 import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
 import { datosPosServicio, datosWebServicio } from '../lib/catalogoCampos.js'
@@ -24,6 +26,35 @@ const BUCKET_FOTOS = 'fotos-servicios'
 // ver implementacionesWed.md / decisión "900px, calidad 0.85".
 const OPCIONES_FOTO_SERVICIO = { ladoMaximo: 900, calidad: 0.85 }
 const OPCION_NUEVA_CATEGORIA = '__nueva__'
+
+// Etiquetas del aviso «se perderá…» (useAvisoDescarte), por modo.
+const CAMPOS_POS = {
+  nombre: 'Nombre',
+  categoriaSeleccionada: 'Categoría',
+  categoriaNueva: 'Nueva categoría',
+  precio: 'Precio',
+  duracionHoras: 'Duración (horas)',
+  duracionMinutos: 'Duración (minutos)',
+  activo: 'Activo',
+}
+const CAMPOS_WEB = {
+  precioVariable: 'Precio variable',
+  notaPrecio: 'Nota del precio',
+  aDomicilio: 'A domicilio',
+  costoDomicilio: 'Costo a domicilio',
+  descripcion: 'Descripción',
+  duracionResultado: 'El resultado dura',
+  comboCon: 'Combo sugerido',
+  enTendencia: 'En tendencia',
+}
+const LISTAS_WEB = {
+  pasos: 'Pasos',
+  especificaciones: 'Especificaciones',
+  herramientas: 'Herramientas',
+  materiales: 'Materiales',
+  cuidadosAntes: 'Cuidados antes',
+  cuidadosDespues: 'Cuidados después',
+}
 
 const formularioVacio = {
   nombre: '',
@@ -191,7 +222,27 @@ export default function ModalServicio({
     (servicio?.cuidados_despues ?? []).map((texto) => ({ texto })),
   )
 
-  useCerrarConEscape(onCerrar)
+  // Qué se perdería al salir sin guardar (solo lo que se edita en cada modo). Ver useAvisoDescarte.
+  const formularioBase = useRef(formulario)
+  const listasBase = useRef({ pasos, especificaciones, herramientas, materiales, cuidadosAntes, cuidadosDespues })
+  const cambios = listarCambios(formularioBase.current, formulario, esWeb ? CAMPOS_WEB : CAMPOS_POS, {
+    sinValor: ['comboCon'],
+  })
+  if (esWeb) {
+    cambios.push(
+      ...listarCambios(
+        listasBase.current,
+        { pasos, especificaciones, herramientas, materiales, cuidadosAntes, cuidadosDespues },
+        LISTAS_WEB,
+      ),
+    )
+    if (fotoNueva) cambios.push('Foto principal nueva (sin guardar)')
+    if (fotoEliminada) cambios.push('Foto principal quitada')
+    const galeriaNuevas = fotosGaleria.filter((foto) => foto.esNueva).length
+    if (galeriaNuevas > 0) cambios.push(`${galeriaNuevas} foto(s) nueva(s) en la galería (sin guardar)`)
+    if (idsGaleriaEliminados.length > 0) cambios.push(`${idsGaleriaEliminados.length} foto(s) quitada(s) de la galería`)
+  }
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
 
   useEffect(() => {
     return () => {
@@ -458,9 +509,12 @@ export default function ModalServicio({
         onSubmit={guardar}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">
-          {esWeb ? 'Contenido Web del servicio' : esEdicion ? 'Editar servicio' : 'Nuevo servicio'}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            {esWeb ? 'Contenido Web del servicio' : esEdicion ? 'Editar servicio' : 'Nuevo servicio'}
+          </h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         {esWeb && (
           <p className="mt-1 text-sm text-ink/70">
@@ -892,7 +946,7 @@ export default function ModalServicio({
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
           >
@@ -911,6 +965,8 @@ export default function ModalServicio({
       {mostrarCamara && (
         <ModalCamara onCapturar={capturarDesdeCamara} onCerrar={() => setMostrarCamara(false)} />
       )}
+
+      {aviso}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
@@ -7,6 +7,7 @@ import { formatearSoles } from '../lib/moneda.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
+import TextoDeslizante from '../components/TextoDeslizante.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 
@@ -20,25 +21,6 @@ const OPCIONES_ORDEN = [
   { id: 'asignados-asc', label: '% asignado (menor a mayor)' },
   { id: 'asignados-desc', label: '% asignado (mayor a menor)' },
 ]
-
-// Mide con canvas (mismo font que el elemento truncado) exactamente qué
-// parte del nombre quedó tapada por el "..." del CSS, carácter por
-// carácter — así lo que se muestra abajo al desplegar es solo lo que no se
-// alcanzó a ver, no una copia del nombre completo.
-let ctxMedicionNombre = null
-
-function calcularParteOculta(nombre, elemento) {
-  if (!elemento || elemento.scrollWidth <= elemento.clientWidth) return ''
-  if (!ctxMedicionNombre) ctxMedicionNombre = document.createElement('canvas').getContext('2d')
-  const estilo = getComputedStyle(elemento)
-  ctxMedicionNombre.font = `${estilo.fontWeight} ${estilo.fontSize} ${estilo.fontFamily}`
-  const anchoDisponible = elemento.clientWidth
-  let corte = nombre.length
-  while (corte > 0 && ctxMedicionNombre.measureText(`${nombre.slice(0, corte)}…`).width > anchoDisponible) {
-    corte--
-  }
-  return nombre.slice(corte).trim()
-}
 
 // Cantidad de asistentes con % asignado por servicio, calculada UNA vez por cambio de datos (antes el comparador del orden
 // recalculaba el conteo en cada comparación y cada tarjeta lo repetía).
@@ -96,9 +78,8 @@ function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuarda
 
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-2.5">
-      <span className="min-w-0 flex-1 truncate text-sm text-ink">
-        {asistente.nombres_completos}
-      </span>
+      {/* Nombre largo: se desliza en bucle en vez de quedar en «…» (la fila solo existe con la tarjeta abierta). */}
+      <TextoDeslizante texto={asistente.nombres_completos} className="flex-1 text-sm text-ink" />
       <div className="flex shrink-0 items-center gap-2">
         <span
           title="Monto que recibe la asistente (calculado automáticamente)"
@@ -144,18 +125,6 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
   // después (para no cortar la animación de cierre ni perder lo escrito). Con cientos de servicios colapsados ya no hay
   // decenas de miles de nodos que nadie ve.
   const [montado, setMontado] = useState(false)
-  const nombreRef = useRef(null)
-  const [parteOculta, setParteOculta] = useState('')
-
-  useLayoutEffect(() => {
-    const elemento = nombreRef.current
-    if (!elemento) return undefined
-    const medir = () => setParteOculta(calcularParteOculta(servicio.nombre, elemento))
-    medir()
-    const observador = new ResizeObserver(medir)
-    observador.observe(elemento)
-    return () => observador.disconnect()
-  }, [servicio.nombre])
 
   const total = asistentesActivos.length
   const colores = coloresIndicador(asignados, total)
@@ -174,10 +143,23 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
         }}
         className="flex w-full items-center gap-2 p-3 text-left"
       >
-        <p ref={nombreRef} className="min-w-0 flex-1 truncate text-sm font-medium text-ink">
-          {servicio.nombre}
-        </p>
-        <span className="shrink-0 font-mono text-xs text-ink/60">{formatearSoles(servicio.precio)}</span>
+        {/* Abierta: la cabecera se pinta rosa (nombre y precio; la flecha no, y la cápsula N/M conserva su color de
+            estado). Si el nombre no cabe, cerrada queda en «…» y abierta se desliza en bucle (antes lo que faltaba
+            aparecía en una línea aparte debajo). */}
+        <TextoDeslizante
+          texto={servicio.nombre}
+          activo={abierto}
+          className={`flex-1 text-sm font-medium transition-colors duration-300 ${
+            abierto ? 'text-purple-300' : 'text-ink'
+          }`}
+        />
+        <span
+          className={`shrink-0 font-mono text-xs transition-colors duration-300 ${
+            abierto ? 'text-purple-300' : 'text-ink/60'
+          }`}
+        >
+          {formatearSoles(servicio.precio)}
+        </span>
         <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-medium ${colores.pill}`}>
           {asignados}/{total}
         </span>
@@ -191,7 +173,6 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
       <CampoColapsable abierto={abierto}>
         {montado && (
           <div className="space-y-1 border-t border-border p-1">
-            {parteOculta && <p className="-mt-1 text-xs text-ink/50">…{parteOculta}</p>}
             {total === 0 ? (
               <p className="text-center text-sm text-ink/60">No hay asistentes activas.</p>
             ) : (

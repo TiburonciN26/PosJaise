@@ -5,21 +5,28 @@ import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 const TEMA_CLASES = {
   amber: {
     activo: 'border-amber bg-amber/10 text-amber',
+    texto: 'text-amber',
     hover: 'hover:border-amber hover:text-amber',
     opcionActiva: 'bg-amber/15 text-amber',
   },
   'purple-300': {
     activo: 'border-purple-300 bg-purple-300/10 text-purple-300',
+    texto: 'text-purple-300',
     hover: 'hover:border-purple-300 hover:text-purple-300',
     opcionActiva: 'bg-purple-300/15 text-purple-300',
   },
   'azul-metal': {
     activo: 'border-azul-metal bg-azul-metal/10 text-azul-metal',
+    texto: 'text-azul-metal',
     hover: 'hover:border-azul-metal hover:text-azul-metal',
     opcionActiva: 'bg-azul-metal/15 text-azul-metal',
   },
 }
 
+// `seleccionado`: el filtro tiene una opción elegida (aunque sea la de por defecto). Pinta el ícono con el color
+// del tema aun con el menú cerrado, solo para dar a entender que hay algo seleccionado.
+// `claseIcono` (opcional, con `sinBorde`): color de texto que reemplaza al del tema, abierto o cerrado, para que el
+// ícono diga *qué* hay elegido (p. ej. el color del método de pago filtrado en Historial).
 export default function SelectorOrden({
   opciones,
   valor,
@@ -28,10 +35,13 @@ export default function SelectorOrden({
   icono: Icono = ArrowUpDown,
   ariaLabel = 'Ordenar por',
   sinBorde = false,
+  seleccionado = false,
+  claseIcono = null,
 }) {
   const [abierto, setAbierto] = useState(false)
   useCerrarConEscape(() => setAbierto(false), abierto, { trabajoPendiente: false })
   const clases = TEMA_CLASES[tema]
+  const colorIcono = claseIcono ?? clases.texto
 
   const temporizadorBlurRef = useRef(null)
   useEffect(() => {
@@ -51,11 +61,15 @@ export default function SelectorOrden({
         className={`flex items-center justify-center rounded-lg border p-2.5 transition-colors ${
           abierto
             ? sinBorde
-              ? 'border-transparent bg-boton-icono text-amber'
+              ? `border-transparent bg-boton-icono ${claseIcono ?? 'text-amber'}`
               : clases.activo
-            : sinBorde
-              ? `border-transparent bg-boton-icono text-ink/70 ${clases.hover}`
-              : `border-dashed border-border-strong text-ink/70 ${clases.hover}`
+            : seleccionado
+              ? sinBorde
+                ? `border-transparent bg-boton-icono ${colorIcono}`
+                : clases.activo
+              : sinBorde
+                ? `border-transparent bg-boton-icono text-ink/70 ${clases.hover}`
+                : `border-dashed border-border-strong text-ink/70 ${clases.hover}`
         }`}
       >
         <Icono className="h-4 w-4" />

@@ -1,47 +1,47 @@
-import { useEffect } from 'react'
-import { motion, useSpring, useTransform } from 'framer-motion'
+import { useLayoutEffect, useRef } from 'react'
 
-// "Counter" real de React Bits — esta vez SÍ es un port fiel del código
-// real (no una reconstrucción a ciegas como el primer intento): se
-// encontró vía el registro `@react-bits` ya configurado en
-// components.json, consultable con las herramientas MCP de shadcn
-// (`npx shadcn view @react-bits/Counter-JS-TW`) — reactbits.dev en sí no
-// tiene MCP propio, pero distribuye sus componentes por el protocolo de
-// registro de shadcn, que sí estaba conectado.
+// "Counter" de React Bits (registro `@react-bits`, `npx shadcn view @react-bits/Counter-JS-TW`): cada dígito es una columna
+// 0–9 que rueda hasta el valor nuevo con un resorte, y da la vuelta de 9 a 0 por el camino más corto.
 //
-// Cambios sobre el original, todos deliberados:
-// - `motion/react` → `framer-motion`: el proyecto ya tiene instalado
-//   `framer-motion` (no el paquete `motion` nuevo) — mismos hooks
-//   (`useSpring`/`useTransform`), solo cambia de dónde se importan.
-// - Prop `value` (número crudo) → `valor` + `decimales` nuevo: el
-//   original calcula sus `places` por default a partir de
-//   `value.toString()`, que en JS le recorta los ceros finales
-//   (`(45).toString()` da `"45"`, nunca `"45.00"`) — para montos en
-//   soles eso da un ancho inconsistente (a veces con decimales, a veces
-//   sin). `calcularPlaces()` fuerza siempre la misma cantidad de
-//   decimales, sea cual sea el valor.
-// - Se sacaron las props de estilo que no hacían falta para este uso
-//   (gradientes de desvanecido arriba/abajo, `containerStyle` a medida,
-//   etc.) — la mecánica real (el resorte por dígito + el truco de
-//   "camino más corto" al dar la vuelta de 9 a 0) se mantiene intacta,
-//   que es la parte que de verdad valía la pena traer fiel.
-function FilaDigito({ resorte, numero, alto }) {
-  const y = useTransform(resorte, (ultimo) => {
-    const valorEnPosicion = ultimo % 10
-    const offset = (10 + numero - valorEnPosicion) % 10
-    let memo = offset * alto
-    // Camino más corto: sin esto, pasar de 9 a 0 se vería "girar hacia
-    // atrás" 9 pasos en vez de avanzar 1 — mismo truco que ya trae el
-    // componente real.
-    if (offset > 5) memo -= 10 * alto
-    return memo
-  })
+// El original lo anima con `useSpring`/`useTransform` de framer-motion. Aquí el resorte es propio (unas 30 líneas): este
+// componente era, junto a un `motion.div` de Nosotros, lo único que usaba framer-motion, y por eso los dos carritos cargaban
+// ~123 kB de librería (≈40 kB comprimidos). Se conserva la mecánica tal cual:
+// - mismo resorte: rigidez 220, amortiguación 28, masa 1 (casi crítico: llega sin rebote visible);
+// - si el valor cambia a mitad de camino, sigue desde la posición y la velocidad que llevaba (no reinicia);
+// - mismo cálculo de desplazamiento por fila y mismo truco de «camino más corto».
+// Diferencias deliberadas: el resorte termina cuando está a menos de 0,005 dígitos del destino (framer cortaba a 0,5 en saltos
+// grandes y remataba con un pequeño brinco), y con «reducir movimiento» activado en el sistema el número cambia sin rodar,
+// como el resto de animaciones del portal.
+//
+// Cambios sobre el componente original que ya venían de antes:
+// - Prop `value` (número crudo) → `valor` + `decimales`: el original calcula sus `places` a partir de `value.toString()`,
+//   que recorta los ceros finales (`(45).toString()` da `"45"`, nunca `"45.00"`) — para montos en soles eso da un ancho
+//   inconsistente. `calcularPlaces()` fuerza siempre la misma cantidad de decimales.
+// - Sin las props de estilo que no hacían falta aquí (gradientes de desvanecido, `containerStyle`, etc.).
+const RIGIDEZ = 220
+const AMORTIGUACION = 28
+// Paso fijo de integración: con pasos de 1/240 s el resultado no depende de los Hz de la pantalla.
+const PASO_S = 1 / 240
+// Tope por cuadro: al volver de una pestaña en segundo plano el resorte continúa, no salta.
+const MAX_CUADRO_S = 0.064
+const REPOSO_DISTANCIA = 0.005
+const REPOSO_VELOCIDAD = 0.01
 
-  return (
-    <motion.span className="absolute inset-0 flex items-center justify-center" style={{ y }}>
-      {numero}
-    </motion.span>
-  )
+const consultaReducir =
+  typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
+
+// Coloca las 10 filas (0–9) de una columna para un valor `posicion` que puede estar a mitad de camino entre dos dígitos.
+function colocarFilas(filas, posicion, alto) {
+  const valorEnPosicion = posicion % 10
+  for (let numero = 0; numero < 10; numero += 1) {
+    const fila = filas[numero]
+    if (!fila) continue
+    const offset = (10 + numero - valorEnPosicion) % 10
+    let y = offset * alto
+    // Camino más corto: sin esto, pasar de 9 a 0 se vería «girar hacia atrás» 9 pasos en vez de avanzar 1.
+    if (offset > 5) y -= 10 * alto
+    fila.style.transform = `translateY(${y}px)`
+  }
 }
 
 function normalizarCercanoAEntero(numero) {
@@ -56,12 +56,50 @@ function valorRedondeadoAPosicion(valor, posicion) {
 
 function Digito({ posicion, valor, alto }) {
   const esPunto = posicion === '.'
-  const valorEnPosicion = esPunto ? 0 : valorRedondeadoAPosicion(valor, posicion)
-  const valorAnimado = useSpring(valorEnPosicion, { stiffness: 220, damping: 28 })
+  const objetivo = esPunto ? 0 : valorRedondeadoAPosicion(valor, posicion)
+  const filasRef = useRef([])
+  // Estado del resorte, fuera de React: se escribe directo en el DOM cuadro a cuadro (sin renders).
+  const resorteRef = useRef(null)
 
-  useEffect(() => {
-    if (!esPunto) valorAnimado.set(valorEnPosicion)
-  }, [valorAnimado, valorEnPosicion, esPunto])
+  // useLayoutEffect: la primera colocación ocurre antes del primer pintado (las filas no se ven apiladas ni un cuadro).
+  useLayoutEffect(() => {
+    if (esPunto) return undefined
+    let resorte = resorteRef.current
+    // Al montar no hay animación: el dígito aparece ya en su valor.
+    if (!resorte) resorte = resorteRef.current = { pos: objetivo, vel: 0 }
+
+    const enReposo = () =>
+      Math.abs(resorte.vel) < REPOSO_VELOCIDAD && Math.abs(objetivo - resorte.pos) < REPOSO_DISTANCIA
+
+    if (consultaReducir?.matches || enReposo()) {
+      resorte.pos = objetivo
+      resorte.vel = 0
+      colocarFilas(filasRef.current, objetivo, alto)
+      return undefined
+    }
+
+    colocarFilas(filasRef.current, resorte.pos, alto)
+    let ultimo = performance.now()
+    let cuadro = requestAnimationFrame(function avanzar(ahora) {
+      let restante = Math.min(Math.max((ahora - ultimo) / 1000, 0), MAX_CUADRO_S)
+      ultimo = ahora
+      while (restante > 0) {
+        const paso = Math.min(restante, PASO_S)
+        resorte.vel += (RIGIDEZ * (objetivo - resorte.pos) - AMORTIGUACION * resorte.vel) * paso
+        resorte.pos += resorte.vel * paso
+        restante -= paso
+      }
+      if (enReposo()) {
+        resorte.pos = objetivo
+        resorte.vel = 0
+      } else {
+        cuadro = requestAnimationFrame(avanzar)
+      }
+      colocarFilas(filasRef.current, resorte.pos, alto)
+    })
+    // Si el valor cambia a mitad de camino, este efecto se relanza y sigue desde `resorte.pos`/`resorte.vel`.
+    return () => cancelAnimationFrame(cuadro)
+  }, [objetivo, alto, esPunto])
 
   if (esPunto) {
     return (
@@ -76,8 +114,16 @@ function Digito({ posicion, valor, alto }) {
       className="relative inline-flex overflow-hidden"
       style={{ height: alto, width: '1ch', fontVariantNumeric: 'tabular-nums' }}
     >
-      {Array.from({ length: 10 }, (_, i) => (
-        <FilaDigito key={i} resorte={valorAnimado} numero={i} alto={alto} />
+      {Array.from({ length: 10 }, (_, numero) => (
+        <span
+          key={numero}
+          ref={(nodo) => {
+            filasRef.current[numero] = nodo
+          }}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          {numero}
+        </span>
       ))}
     </span>
   )

@@ -20,6 +20,11 @@ export function useEstadoVista(clave, inicial) {
   return [valor, actualizar]
 }
 
+// Lectura fuera de React (ej. el menú lateral calcula la meta del Dashboard con el filtro que la usuaria dejó elegido).
+export function leerEstadoVista(clave) {
+  return almacen.get(clave)
+}
+
 export function reiniciarEstadoVista() {
   almacen.clear()
 }

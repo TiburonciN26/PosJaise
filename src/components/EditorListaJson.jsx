@@ -1,4 +1,5 @@
 import { Plus, X } from 'lucide-react'
+import { SIN_SUGERENCIAS } from '../lib/sinSugerencias.js'
 import Etiqueta from './Etiqueta.jsx'
 
 // Editor genérico de listas jsonb (pasos, especificaciones, herramientas,
@@ -32,6 +33,7 @@ export default function EditorListaJson({ etiqueta, items, campos, vacio, onCamb
                 campo.tipo === 'textarea' ? (
                   <textarea
                     key={campo.clave}
+                    {...SIN_SUGERENCIAS}
                     rows={2}
                     value={item[campo.clave] ?? ''}
                     onChange={(evento) => actualizarCampo(indice, campo.clave, evento.target.value)}
@@ -43,7 +45,7 @@ export default function EditorListaJson({ etiqueta, items, campos, vacio, onCamb
                     key={campo.clave}
                     type="search"
                     inputMode={campo.tipo === 'numero' ? 'numeric' : 'text'}
-                    autoComplete="new-password"
+                    {...SIN_SUGERENCIAS}
                     value={item[campo.clave] ?? ''}
                     onChange={(evento) => actualizarCampo(indice, campo.clave, evento.target.value)}
                     placeholder={campo.placeholder}

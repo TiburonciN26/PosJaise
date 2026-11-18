@@ -1,6 +1,8 @@
 import { useId, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
 
@@ -43,7 +45,6 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
-  useCerrarConEscape(onCerrar)
 
   function actualizarCampo(campo, valor) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
@@ -88,6 +89,11 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
     onGuardado(filaGuardada)
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const formularioBase = useRef(formulario)
+  const cambios = listarCambios(formularioBase.current, formulario, { nombre: 'Nombre', telefono: 'Teléfono', sexo: 'Sexo', direccion: 'Dirección', cumpleanos: 'Cumpleaños', notas: 'Notas' })
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className={`${bajoHeader ? 'fixed inset-x-0 bottom-0 top-[59px] sm:top-0' : 'fixed inset-0'} z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4`}>
       <form
@@ -97,9 +103,12 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
         style={{ '--color-foco': 'var(--color-purple-300)' }}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">
-          {esEdicion ? 'Editar cliente' : 'Nuevo cliente'}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            {esEdicion ? 'Editar cliente' : 'Nuevo cliente'}
+          </h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         <div className="mt-4 space-y-3">
           <div>
@@ -191,7 +200,7 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
           >
@@ -206,6 +215,7 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

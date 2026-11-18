@@ -3,7 +3,9 @@ import BotonVoz from './BotonVoz.jsx'
 import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useBusquedaClientes } from '../hooks/useBusquedaClientes.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
@@ -218,7 +220,6 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
   const [modalServicioNuevoAbierto, setModalServicioNuevoAbierto] = useState(false)
 
-  useCerrarConEscape(onCerrar)
 
   useEffect(() => {
     async function cargarListas() {
@@ -248,6 +249,8 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
     setFormulario((anterior) =>
       anterior.asistenteId ? anterior : { ...anterior, asistenteId: miFicha.id },
     )
+    // La precarga no es un cambio del usuario: no debe disparar el aviso de descartar.
+    if (!valoresBase.current.asistenteId) valoresBase.current = { ...valoresBase.current, asistenteId: miFicha.id }
   }, [esEdicion, miFicha])
 
   const busquedaClientes = useBusquedaClientes({ termino: busquedaCliente, activo: mostrarSugerenciasCliente })
@@ -382,6 +385,24 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   // cualquier cita, así que los 3 roles ven el mismo selector.
   const puedeElegirAsistente = true
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = {
+    cliente: busquedaCliente,
+    asistenteId: formulario.asistenteId,
+    fechaHora: formulario.fechaHora,
+    servicios: lineas,
+    adelanto: formulario.adelanto,
+    nota: formulario.nota,
+  }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(
+    valoresBase.current,
+    valoresFormulario,
+    { cliente: 'Cliente', asistenteId: 'Asistente', fechaHora: 'Fecha y hora', servicios: 'Servicios', adelanto: 'Adelanto', nota: 'Nota' },
+    { sinValor: ['asistenteId'] },
+  )
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div
       className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4"
@@ -393,9 +414,12 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
         onSubmit={guardar}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">
-          {esEdicion ? 'Editar cita' : 'Nueva cita'}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            {esEdicion ? 'Editar cita' : 'Nueva cita'}
+          </h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         {cargandoListas ? (
           <p className="mt-4 text-center font-mono text-sm text-ink/60">Cargando...</p>
@@ -731,7 +755,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
           >
@@ -768,6 +792,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
           onGuardado={manejarServicioCreado}
         />
       )}
+      {aviso}
     </div>
   )
 }

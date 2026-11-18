@@ -68,6 +68,7 @@ export default function ServiciosCliente() {
     gruposVisibles, paginaGrupos, totalPaginasGrupos, ventanaOcupada, ventanaConError, irAPaginaGrupos, reintentarVentana,
   } = useCatalogoPublico({
     clave: usuario?.id ?? 'anon',
+    catalogo: 'servicios', // copia en memoria de la vitrina: volver del detalle no repite «Cargando...» (lib/copiasEnMemoria.js)
     categoriaInicial: searchParams.get('categoria') ?? 'todos',
     cargarVitrina: ({ signal }) => cargarVitrinaServicios(supabase, { signal }),
     cargarPagina: (parametros) => leerPaginaCatalogo(supabase, { tabla: 'servicios', columnas: COLUMNAS_SERVICIO_TARJETA, ...parametros }),
@@ -388,19 +389,27 @@ export default function ServiciosCliente() {
             className={`order-1 relative h-[300px] overflow-hidden rounded-[18px] bg-[#050505] sm:h-[420px] lg:order-2 lg:h-[600px] lg:rounded-[22px] ${reducirMovimiento ? '' : 'in-photo'}`}
             style={reducirMovimiento ? undefined : { animationDelay: `${ENTRADA_FIJA.foto}ms` }}
           >
-            {heroServicios.map((s, i) => (
-              <div key={s.id} className="absolute inset-0" style={{ opacity: i === heroIdxSeguro ? 1 : 0, transition: 'opacity 1.1s ease' }}>
-                <img
-                  src={urlPublicaFoto(BUCKET_FOTOS, s.foto_url)}
-                  alt={s.nombre}
-                  className="h-full w-full object-cover"
-                  style={{
-                    transform: `scale(${i === heroIdxSeguro ? 1 : 1.06})`,
-                    transition: 'transform 6s ease-out',
-                  }}
-                />
-              </div>
-            ))}
+            {heroServicios.map((s, i) => {
+              // Solo se piden las fotos del activo y sus vecinos (anterior/siguiente), igual que el carrusel de Productos:
+              // antes se descargaban de golpe las de todos los servicios destacados aunque solo se viera una.
+              const distancia = Math.abs(i - heroIdxSeguro)
+              const cerca = distancia <= 1 || distancia === heroServicios.length - 1
+              return (
+                <div key={s.id} className="absolute inset-0" style={{ opacity: i === heroIdxSeguro ? 1 : 0, transition: 'opacity 1.1s ease' }}>
+                  {cerca && (
+                    <img
+                      src={urlPublicaFoto(BUCKET_FOTOS, s.foto_url)}
+                      alt={s.nombre}
+                      className="h-full w-full object-cover"
+                      style={{
+                        transform: `scale(${i === heroIdxSeguro ? 1 : 1.06})`,
+                        transition: 'transform 6s ease-out',
+                      }}
+                    />
+                  )}
+                </div>
+              )
+            })}
             <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/70" />
 
             <span className="absolute left-4 top-9 inline-flex items-center gap-2 rounded-full bg-[#18181b] px-3 py-1.5 text-[10.5px] sm:text-xs font-semibold uppercase tracking-widest text-[#e8e8ea] sm:hidden">

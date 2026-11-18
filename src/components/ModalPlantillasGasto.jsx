@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import { Pencil, Trash2, Plus, Wallet } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { formatearSoles } from '../lib/moneda.js'
 import BotonAccion from './BotonAccion.jsx'
@@ -18,9 +20,21 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
 
-  useCerrarConEscape(() => {
-    if (modo !== 'lista') volver()
-    else onCerrar()
+  // Esc, la X y «Volver»/«Cancelar»: en el formulario o la confirmación vuelven a la lista; en la lista cierran el
+  // modal. Si el formulario tiene cambios sin guardar, se pregunta antes (con la lista de lo que se perdería).
+  const formularioBase = useRef({ nombre: '', monto: '', activo: true })
+  const cambios =
+    modo === 'form'
+      ? listarCambios(
+          formularioBase.current,
+          { nombre: nombreCampo, monto: montoCampo, activo: activoCampo },
+          { nombre: 'Nombre', monto: 'Monto', activo: 'Activa' },
+        )
+      : []
+  const { intentarCerrar, aviso } = useAvisoDescarte({
+    cambios,
+    onCerrar: modo === 'lista' ? onCerrar : volver,
+    bloqueado: guardando,
   })
 
   function volver() {
@@ -34,6 +48,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
     setNombreCampo('')
     setMontoCampo('')
     setActivoCampo(true)
+    formularioBase.current = { nombre: '', monto: '', activo: true }
     setError(null)
     setModo('form')
   }
@@ -43,6 +58,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
     setNombreCampo(plantilla.nombre)
     setMontoCampo(String(plantilla.monto))
     setActivoCampo(plantilla.activo)
+    formularioBase.current = { nombre: plantilla.nombre, monto: String(plantilla.monto), activo: plantilla.activo }
     setError(null)
     setModo('form')
   }
@@ -121,14 +137,17 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
           <>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold text-ink">Plantillas de gastos fijos</h2>
-              <button
-                type="button"
-                onClick={abrirNueva}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-1.5 text-sm font-semibold text-bg"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Nueva</span>
-              </button>
+              <div className="flex shrink-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={abrirNueva}
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-1.5 text-sm font-semibold text-bg"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Nueva</span>
+                </button>
+                <BotonCerrarModal onClick={intentarCerrar} />
+              </div>
             </div>
             {/* Generación automática: migración 20261112000010 (pg_cron, una vez por mes). */}
             <p className="mt-1 text-sm text-ink/60">
@@ -188,9 +207,12 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
 
         {modo === 'form' && (
           <form onSubmit={guardarPlantilla} autoComplete="off">
-            <h2 className="text-base font-semibold text-ink">
-              {plantillaActual ? 'Editar plantilla' : 'Nueva plantilla'}
-            </h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-ink">
+                {plantillaActual ? 'Editar plantilla' : 'Nueva plantilla'}
+              </h2>
+              <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+            </div>
 
             <div className="mt-4 space-y-3">
               <div>
@@ -261,7 +283,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
-                onClick={volver}
+                onClick={intentarCerrar}
                 disabled={guardando}
                 className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300 disabled:opacity-40"
               >
@@ -280,9 +302,12 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
 
         {modo === 'eliminar' && (
           <>
-            <h2 className="text-base font-semibold text-ink">
-              ¿Eliminar "{plantillaActual.nombre}"?
-            </h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold text-ink">
+                ¿Eliminar "{plantillaActual.nombre}"?
+              </h2>
+              <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+            </div>
             <p className="mt-1 text-sm text-ink/60">
               Esto no elimina los gastos ya generados, solo la plantilla.
             </p>
@@ -314,6 +339,7 @@ export default function ModalPlantillasGasto({ plantillas, onCerrar, onCambio })
           </>
         )}
       </div>
+      {aviso}
     </div>
   )
 }

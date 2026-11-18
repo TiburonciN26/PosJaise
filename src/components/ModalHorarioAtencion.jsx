@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { olvidarHorario } from '../lib/datosNegocioWeb.js'
-import { normalizarSemana } from '../lib/horarioAtencion.js'
+import { NOMBRES_DIA, normalizarSemana } from '../lib/horarioAtencion.js'
 import EditorTurnosSemana from './EditorTurnosSemana.jsx'
 import { estadoInicialTurnos, turnosAGuardar, validarTurnos } from '../lib/turnosSemana.js'
 
@@ -23,8 +24,8 @@ export default function ModalHorarioAtencion({ onCerrar }) {
   const [errorCarga, setErrorCarga] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  const diasBase = useRef(null) // lo leído de la base, para saber qué cambió
 
-  useCerrarConEscape(onCerrar, !guardando)
 
   useEffect(() => {
     let vigente = true
@@ -34,7 +35,9 @@ export default function ModalHorarioAtencion({ onCerrar }) {
         setErrorCarga(true)
         return
       }
-      setDias(estadoInicialTurnos(normalizarSemana(data)))
+      const inicial = estadoInicialTurnos(normalizarSemana(data))
+      diasBase.current = inicial
+      setDias(inicial)
     })
     return () => {
       vigente = false
@@ -76,6 +79,15 @@ export default function ModalHorarioAtencion({ onCerrar }) {
 
   const diasAbiertos = dias?.filter((d) => d.activo).length ?? 0
 
+  // X, «Cancelar» y Esc: con días modificados sin guardar se pregunta antes de cerrar (y se dice cuáles).
+  const cambios = []
+  if (dias && diasBase.current) {
+    dias.forEach((dia, i) => {
+      if (JSON.stringify(dia) !== JSON.stringify(diasBase.current[i])) cambios.push(`${NOMBRES_DIA[dia.dia]}: horario modificado`)
+    })
+  }
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -85,7 +97,10 @@ export default function ModalHorarioAtencion({ onCerrar }) {
         style={{ '--color-foco': 'var(--color-azul-metal)' }}
         className="flex max-h-full w-full max-w-lg flex-col rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">Horario de atención</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">Horario de atención</h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
         <p className="mt-1 text-sm text-ink/60">
           Elige los días que atiende el negocio y su horario. Tus clientas lo ven en la web y solo podrán reservar citas o
           pedir entregas dentro de este horario.
@@ -126,7 +141,7 @@ export default function ModalHorarioAtencion({ onCerrar }) {
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
           >
@@ -141,6 +156,7 @@ export default function ModalHorarioAtencion({ onCerrar }) {
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

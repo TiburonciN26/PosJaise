@@ -83,6 +83,7 @@ export default function ProductosCliente() {
     gruposVisibles, paginaGrupos, totalPaginasGrupos, ventanaOcupada, ventanaConError, irAPaginaGrupos, reintentarVentana,
   } = useCatalogoPublico({
     clave: usuario?.id ?? 'anon',
+    catalogo: 'productos', // copia en memoria de la vitrina: volver del detalle no repite «Cargando...» (lib/copiasEnMemoria.js)
     cargarVitrina: ({ signal }) => cargarVitrinaProductos(supabase, { signal }),
     cargarPagina: (parametros) => leerPaginaCatalogo(supabase, { tabla: 'productos', columnas: COLUMNAS_PRODUCTO_TARJETA, ...parametros }),
     cargarGrupos: (parametros) => cargarVentanaGrupos(supabase, { tabla: 'productos', ...parametros }),

@@ -595,7 +595,9 @@ function limpiar() {
       await ctx.close()
     })
 
-    await caso('Restaurar sesión de la clienta: perfil, estado y canal una sola vez; sin precargar nada del POS', async () => {
+    // Desde implementacionesWed.md §74 la clienta NO abre canal Realtime (solo el personal): su copia de estado_negocio se relee al
+    // volver a la pestaña o al abrir un carrito. Antes este caso exigía exactamente un canal.
+    await caso('Restaurar sesión de la clienta: perfil y estado una sola vez, SIN canal Realtime; sin precargar nada del POS', async () => {
       const { ctx, page, reg } = await abrir(navegador, estados.clienteA)
       await page.goto(`${APP}/inicio`)
       await page.waitForSelector('h1')
@@ -604,7 +606,7 @@ function limpiar() {
       assert.equal(reg.cuantas('clientes_web', 'GET'), 1)
       assert.equal(reg.cuantas('estado_negocio', 'GET'), 1)
       assert.equal(reg.cuantas('rpc/mi_perfil_cliente'), 1)
-      assert.equal(reg.joins.length, 1)
+      assert.equal(reg.joins.length, 0, `la clienta no debe abrir canales: ${reg.joins.length}`)
       await ctx.close()
     })
 

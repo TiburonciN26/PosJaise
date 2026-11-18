@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { ImagePlus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
-import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
+import { listarCambios } from '../lib/cambiosFormulario.js'
+import BotonCerrarModal from './BotonCerrarModal.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import Etiqueta from './Etiqueta.jsx'
 import Interruptor from './Interruptor.jsx'
@@ -122,7 +124,6 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
-  useCerrarConEscape(onCerrar)
   const esEdicion = Boolean(item)
 
   const [titulo, setTitulo] = useState(item?.titulo ?? '')
@@ -257,6 +258,14 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
     onGuardado()
   }
 
+  // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.
+  const valoresFormulario = { titulo, orden, activo }
+  const valoresBase = useRef(valoresFormulario)
+  const cambios = listarCambios(valoresBase.current, valoresFormulario, { titulo: 'Título', orden: 'Orden', activo: 'Activa' })
+  if (fotoAntes.nueva) cambios.push('Foto de «antes» nueva (sin guardar)')
+  if (fotoDespues.nueva) cambios.push('Foto de «después» nueva (sin guardar)')
+  const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
       <form
@@ -265,9 +274,12 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
         style={{ '--color-foco': 'var(--color-azul-metal)' }}
         className="max-h-full w-full max-w-md overflow-y-auto rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
-        <h2 className="text-base font-semibold text-ink">
-          {esEdicion ? 'Editar foto de galería' : 'Nueva foto de galería'}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-ink">
+            {esEdicion ? 'Editar foto de galería' : 'Nueva foto de galería'}
+          </h2>
+          <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
+        </div>
 
         {pendiente && (
           <p className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-ink" data-testid="galeria-guardado-pendiente">
@@ -322,7 +334,7 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={intentarCerrar}
             disabled={guardando}
             className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-azul-metal hover:text-azul-metal disabled:opacity-40"
           >
@@ -337,6 +349,7 @@ export default function ModalGaleriaWeb({ item, onCerrar, onGuardado }) {
           </button>
         </div>
       </form>
+      {aviso}
     </div>
   )
 }

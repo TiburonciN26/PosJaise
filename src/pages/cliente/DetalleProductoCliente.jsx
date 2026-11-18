@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { guardarCopia, leerCopia, mismaCopia, olvidarCopia } from '../../lib/copiasEnMemoria.js'
 import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -98,14 +99,60 @@ export default function DetalleProductoCliente() {
     obtenerCostoDeliveryDesde().then(setCostoEnvioDesde)
   }, [])
 
-  useEffect(() => {
-    let vigente = true
-    setCargando(true)
+  // Copia en memoria de todo lo que carga esta pantalla (lib/copiasEnMemoria.js), por producto Y por cuenta (trae datos
+  // personales: favorito y mi reseña). Volver a un detalle ya visto lo pinta al instante y se revalida en segundo plano.
+  // El stock y el precio de la copia tienen como mucho 5 minutos y se corrigen solos al llegar la lectura nueva; agregar al
+  // carrito valida el stock contra el servidor (CarritoClienteContext.agregarProducto), no contra lo que se ve.
+  const claveCopia = `detalle-producto\u0000${id}\u0000${usuarioId ?? 'anon'}`
+
+  // `conFormulario`: el borrador de la reseña (estrellas y texto) solo se rellena en la PRIMERA aplicación; la revalidación en
+  // segundo plano no pisa lo que la clienta ya esté escribiendo.
+  function aplicarPaquete(paquete, conFormulario) {
+    setProducto(paquete.producto)
+    setGaleria(paquete.galeria)
+    setResumenResenas(paquete.resumenResenas)
+    setResenasPublicas(paquete.resenasPublicas)
+    setMiResena(paquete.miResena)
+    if (conFormulario) {
+      setCalificacionForm(paquete.miResena?.calificacion ?? 0)
+      setComentarioForm(paquete.miResena?.comentario ?? '')
+    }
+    setFavorito(paquete.favorito)
+    setContacto(paquete.contacto)
+    setRelacionados(paquete.relacionados)
+    setCombo(paquete.combo)
+  }
+
+  // Antes de pintar: si hay copia vigente de este producto, se muestra de inmediato (sin el cuadro de «Cargando...»).
+  useLayoutEffect(() => {
+    const guardada = leerCopia(claveCopia)
     setNoEncontrado(false)
     setFotoIdx(0)
+    if (guardada) {
+      aplicarPaquete(guardada, true)
+      setCargando(false)
+    } else {
+      setCargando(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cambiar de producto o de cuenta
+  }, [claveCopia])
+
+  // Sube cada vez que la clienta cambia algo que vive en la copia (favorito, reseña): ver descartarCopia().
+  const cambiosRef = useRef(0)
+  function descartarCopia() {
+    cambiosRef.current += 1
+    olvidarCopia(claveCopia)
+  }
+
+  useEffect(() => {
+    let vigente = true
+    const guardada = leerCopia(claveCopia)
+    const cambiosAlEmpezar = cambiosRef.current
 
     async function cargar() {
-      const [productoRes, galeriaRes, favoritoRes, contactoRes, resumenRes, publicasRes, miResenaRes] =
+      // El combo sugerido no depende de la fila del producto: viaja con la primera tanda (antes era una tercera ida y vuelta
+      // en serie). Si el admin fijó combo_con, ese gana y esta respuesta se ignora.
+      const [productoRes, galeriaRes, favoritoRes, contactoRes, resumenRes, publicasRes, miResenaRes, sugeridoRes] =
         await Promise.all([
           supabase
             .from('productos')
@@ -125,60 +172,61 @@ export default function DetalleProductoCliente() {
           supabase.rpc('resenas_producto_resumen', { p_producto_id: id }),
           supabase.rpc('resenas_producto_publicas', { p_producto_id: id }),
           usuarioId ? supabase.rpc('mi_resena_producto', { p_producto_id: id }) : Promise.resolve({ data: null }),
+          supabase.rpc('productos_combo_sugerido', { p_producto_id: id }),
         ])
 
       if (!vigente) return
 
       if (!productoRes.data) {
+        // Con copia en pantalla, un fallo de red en la revalidación (error, no «0 filas») no la reemplaza por «no encontrado».
+        if (guardada && productoRes.error) return
+        olvidarCopia(claveCopia)
         setNoEncontrado(true)
         setCargando(false)
         return
       }
 
-      setProducto(productoRes.data)
-      setGaleria(galeriaRes.data ?? [])
-      setResumenResenas(resumenRes.data?.[0] ?? null)
-      setResenasPublicas((publicasRes.data ?? []).slice(0, 3))
-      const propia = Array.isArray(miResenaRes.data) ? miResenaRes.data[0] : miResenaRes.data
-      // QA-008: sin reseña propia la RPC devuelve una fila con todo nulo (truthy);
-      // solo cuenta como reseña si trae id.
-      setMiResena(propia?.id ? propia : null)
-      setCalificacionForm(propia?.id ? (propia.calificacion ?? 0) : 0)
-      setComentarioForm(propia?.id ? (propia.comentario ?? '') : '')
-      setFavorito(Boolean(favoritoRes.data))
-      setContacto(contactoRes.data?.[0] ?? null)
-
-      const { data: rel } = await supabase
-        .from('productos')
-        .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url')
-        .eq('activo', true)
-        .eq('categoria', productoRes.data.categoria)
-        .neq('id', id)
-        .order('nombre')
-        .limit(4)
-
-      if (vigente) setRelacionados(rel ?? [])
-
       // Combo sugerido (migración 122): el override manual del admin
-      // (combo_con) gana; si no lo puso, se calcula el producto que más
+      // (combo_con) gana; si no lo puso, se usa el producto que más
       // veces se compró junto a este (productos_combo_sugerido()).
-      let comboId = productoRes.data.combo_con
-      if (!comboId) {
-        const { data: sugerido } = await supabase.rpc('productos_combo_sugerido', { p_producto_id: id })
-        comboId = sugerido?.[0]?.producto_id ?? null
-      }
-      if (comboId) {
-        const { data: comboData } = await supabase
+      const comboId = productoRes.data.combo_con || sugeridoRes.data?.[0]?.producto_id || null
+      // Relacionados y combo dependen de la fila del producto (categoría / combo_con): van juntos en una segunda tanda, en
+      // paralelo (antes eran dos idas y vueltas más, una detrás de otra).
+      const [relRes, comboRes] = await Promise.all([
+        supabase
           .from('productos')
-          .select('id, nombre, precio, precio_antes, stock_actual, foto_url')
-          .eq('id', comboId)
+          .select('id, nombre, categoria, subcategoria, precio, precio_antes, stock_actual, foto_url')
           .eq('activo', true)
-          .maybeSingle()
-        if (vigente) setCombo(comboData ?? null)
-      } else if (vigente) {
-        setCombo(null)
-      }
+          .eq('categoria', productoRes.data.categoria)
+          .neq('id', id)
+          .order('nombre')
+          .limit(4),
+        comboId
+          ? supabase.from('productos').select('id, nombre, precio, precio_antes, stock_actual, foto_url').eq('id', comboId).eq('activo', true).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ])
 
+      const propia = Array.isArray(miResenaRes.data) ? miResenaRes.data[0] : miResenaRes.data
+      const paquete = {
+        producto: productoRes.data,
+        galeria: galeriaRes.data ?? [],
+        resumenResenas: resumenRes.data?.[0] ?? null,
+        resenasPublicas: (publicasRes.data ?? []).slice(0, 3),
+        // QA-008: sin reseña propia la RPC devuelve una fila con todo nulo (truthy);
+        // solo cuenta como reseña si trae id.
+        miResena: propia?.id ? propia : null,
+        favorito: Boolean(favoritoRes.data),
+        contacto: contactoRes.data?.[0] ?? null,
+        relacionados: relRes.data ?? [],
+        combo: comboRes.data ?? null,
+      }
+      // Si mientras tanto la clienta cambió algo de la copia (favorito, reseña), no se pisa su cambio con esta lectura, que
+      // salió antes.
+      if (cambiosRef.current !== cambiosAlEmpezar) return
+      guardarCopia(claveCopia, paquete)
+      if (!vigente) return
+      // Idéntico a lo que ya se ve: no se toca el estado (ni un render de más).
+      if (!guardada || !mismaCopia(guardada, paquete)) aplicarPaquete(paquete, !guardada)
       setCargando(false)
     }
 
@@ -186,7 +234,8 @@ export default function DetalleProductoCliente() {
     return () => {
       vigente = false
     }
-  }, [id, usuarioId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- claveCopia = id + cuenta
+  }, [id, usuarioId, claveCopia])
 
   // Galería (producto_fotos, migración 119): si el producto todavía no
   // tiene ninguna foto propia ahí, cae a la única foto de
@@ -284,6 +333,7 @@ export default function DetalleProductoCliente() {
       mostrarToast('No se pudo actualizar tus favoritos.', 'error')
       return
     }
+    descartarCopia() // la copia en memoria ya no refleja el favorito
     setFavorito((valor) => !valor)
   }
 
@@ -315,6 +365,7 @@ export default function DetalleProductoCliente() {
       return
     }
 
+    descartarCopia() // la copia en memoria ya no refleja mi reseña
     setMiResena(data)
     setMostrarFormResena(false)
     mostrarToast('¡Gracias! Tu reseña se publicará cuando el admin la revise.', 'exito')
@@ -920,7 +971,7 @@ export default function DetalleProductoCliente() {
               <div className="flex items-center gap-3.5">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[10px] bg-[#151517]">
                   {urlPublicaFoto(BUCKET_FOTOS, producto.foto_url) ? (
-                    <img src={urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)} alt="" className="h-full w-full object-cover" />
+                    <img src={urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full" style={{ background: degradadoServicio(producto) }} />
                   )}
@@ -936,7 +987,7 @@ export default function DetalleProductoCliente() {
               <Link to={`/productos/${combo.id}`} className="flex items-center gap-3.5">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[10px] bg-[#151517]">
                   {urlPublicaFoto(BUCKET_FOTOS, combo.foto_url) ? (
-                    <img src={urlPublicaFoto(BUCKET_FOTOS, combo.foto_url)} alt="" className="h-full w-full object-cover" />
+                    <img src={urlPublicaFoto(BUCKET_FOTOS, combo.foto_url)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full" style={{ background: degradadoServicio(combo) }} />
                   )}

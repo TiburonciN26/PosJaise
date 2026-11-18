@@ -130,22 +130,28 @@ async function desplazarHastaMapa(page, bloque = 'center') {
     await ctx.close()
     return { pedidos, attrs }
   }
-  await caso('Hero oscuro 390×2: dos WebP de 3024 px intactos, prioridad alta solo en «después»', async () => {
+  // La foto «antes» solo se monta donde puede verse (algún puntero con hover: any-hover). En un celular el revelado ignora el
+  // tacto, así que ya no se descarga; en escritorio siguen pidiéndose las dos.
+  // Pantalla chica (< 640 px CSS): UNA variante de 1280×718 generada del mismo original (<picture><source media>, decisión del
+  // usuario del 2026-11-13). Desde 640 px, siempre los originales de 3024×1698. La <img> sigue sin srcset propio.
+  await caso('Hero oscuro 390×2 (táctil): solo la variante «después» de 1280 px, con prioridad alta; «antes» no se monta', async () => {
     const r = await heroPedido(baseD, { width: 390, height: 844 }, 2, 'oscuro')
     const nombres = r.pedidos.map((p) => p.url).sort()
-    assert.deepEqual(nombres, ['hero-antes-oscuro.webp', 'hero-despues-oscuro.webp'], `pedidos: ${nombres}`)
-    assert.ok(r.pedidos.every((p) => p.bytes < 500 * 1024), JSON.stringify(r.pedidos))
-    assert.ok(r.attrs.every((a) => a.srcset === null && a.ancho === 3024 && a.alto === 1698), JSON.stringify(r.attrs))
+    assert.deepEqual(nombres, ['hero-despues-oscuro-1280.webp'], `pedidos: ${nombres}`)
+    assert.ok(r.pedidos.every((p) => p.bytes < 100 * 1024), JSON.stringify(r.pedidos))
+    assert.ok(r.attrs.every((a) => a.srcset === null && a.ancho === 1280 && a.alto === 718), JSON.stringify(r.attrs))
     const despues = r.attrs.find((a) => a.alt === 'Resultado después del servicio'), antes = r.attrs.find((a) => a.alt === '')
-    assert.equal(despues.fp, 'high'); assert.equal(antes.fp, 'low')
+    assert.equal(despues.fp, 'high'); assert.equal(antes, undefined, 'la foto «antes» no debe montarse sin puntero con hover')
   })
-  await caso('Hero claro 390×2 y oscuro 1440×1: los mismos WebP originales sin srcset', async () => {
+  await caso('Hero claro 390×2 (solo la variante «después» de 1280 px) y oscuro 1440×1 (los dos originales de 3024 px, «antes» con prioridad baja)', async () => {
     const m = await heroPedido(baseD, { width: 390, height: 844 }, 2, 'claro')
-    assert.deepEqual(m.pedidos.map((p) => p.url).sort(), ['hero-antes-claro.webp', 'hero-despues-claro.webp'])
+    assert.deepEqual(m.pedidos.map((p) => p.url).sort(), ['hero-despues-claro-1280.webp'])
     const e = await heroPedido(baseD, { width: 1440, height: 900 }, 1, 'oscuro')
     assert.deepEqual(e.pedidos.map((p) => p.url).sort(), ['hero-antes-oscuro.webp', 'hero-despues-oscuro.webp'])
-    assert.ok([...m.attrs, ...e.attrs].every((a) => a.srcset === null && a.ancho === 3024 && a.alto === 1698))
-    assert.ok([...m.pedidos, ...e.pedidos].every((p) => p.bytes < 500 * 1024))
+    assert.equal(e.attrs.find((a) => a.alt === '')?.fp, 'low'); assert.equal(e.attrs.find((a) => a.alt === 'Resultado después del servicio')?.fp, 'high')
+    assert.ok(m.attrs.every((a) => a.srcset === null && a.ancho === 1280 && a.alto === 718), JSON.stringify(m.attrs))
+    assert.ok(e.attrs.every((a) => a.srcset === null && a.ancho === 3024 && a.alto === 1698), JSON.stringify(e.attrs))
+    assert.ok(m.pedidos.every((p) => p.bytes < 100 * 1024) && e.pedidos.every((p) => p.bytes < 500 * 1024))
   })
 
   await caso('Precarga de pestañas del portal: con Save-Data no se descargan en reposo (≈330 kB menos); con conexión normal sigue igual', async () => {
