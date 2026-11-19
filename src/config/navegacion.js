@@ -47,10 +47,10 @@ const ROLES_ALMACEN = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA', 'PER
 
 export const secciones = [
   { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ROLES_CAJA },
+  { path: '/historial', label: 'Historial', icono: History, roles: ROLES_CAJA },
   { path: '/inventario', label: 'Inventario', icono: Package, roles: ROLES_CAJA },
   // Registro de proveedores (20261112000014): solo la administradora; en el menú lateral se revela al desplegar Inventario.
   { path: '/proveedores', label: 'Proveedores', icono: Truck, roles: ['ADMINISTRADOR'], padre: '/inventario' },
-  { path: '/historial', label: 'Historial', icono: History, roles: ROLES_CAJA },
   { path: '/servicios', label: 'Servicios', icono: Scissors, roles: ROLES_CAJA },
   {
     path: '/dashboard',
@@ -97,8 +97,6 @@ export const secciones = [
   // Va después de Mi Panel a propósito: rutaInicialPara() toma la PRIMERA sección visible del rol, y la asistente y el
   // personal de apoyo deben seguir aterrizando en Mi Panel.
   { path: '/almacen', label: 'Almacén', icono: Warehouse, roles: ROLES_ALMACEN, tema: 'rosa' },
-  // Preguntas frecuentes (boleta, factura, contadora, IGV) para quien cobra. Mismos roles que Ventas.
-  { path: '/ayuda', label: 'Ayuda', icono: CircleHelp, roles: ROLES_CAJA },
   { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   // Cuentas de acceso del POS (alta, bloqueo, roles). Las fichas del equipo (perfil público) viven en Web → Equipo.
   { path: '/personal', label: 'Personal', icono: UserPlus, roles: ['ADMINISTRADOR'], tema: 'rosa' },
@@ -109,6 +107,8 @@ export const secciones = [
     roles: ['ADMINISTRADOR'],
     tema: 'rosa',
   },
+  // Preguntas frecuentes (boleta, factura, contadora, IGV) para quien cobra. Mismos roles que Ventas.
+  { path: '/ayuda', label: 'Ayuda', icono: CircleHelp, roles: ROLES_CAJA },
   {
     // Admin-only a propósito (antes también la veían Cajera/Asistente):
     // esta pestaña pasa a ser el panel administrativo de la pestaña Web
