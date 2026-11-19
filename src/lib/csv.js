@@ -28,3 +28,63 @@ export function descargarArchivo(nombre, contenido) {
   enlace.click()
   URL.revokeObjectURL(url)
 }
+
+// Lee un CSV (el que se exportó, devuelto por la contadora y quizá guardado por Excel). Devuelve una lista de objetos
+// con las cabeceras normalizadas (minúsculas, sin tildes ni espacios laterales). Acepta , o ; como separador (Excel en
+// español guarda con «;»), comillas con "" dentro, BOM al inicio y saltos \r\n. Quita la comilla simple que aCSV()
+// antepone a los valores que empiezan con = + - @.
+export function parsearCSV(texto) {
+  const contenido = String(texto ?? '').replace(/^﻿/, '')
+  const primeraLinea = contenido.split(/\r?\n/, 1)[0] ?? ''
+  const separador = (primeraLinea.match(/;/g) ?? []).length > (primeraLinea.match(/,/g) ?? []).length ? ';' : ','
+
+  const filas = []
+  let fila = []
+  let campo = ''
+  let entreComillas = false
+  for (let i = 0; i < contenido.length; i += 1) {
+    const caracter = contenido[i]
+    if (entreComillas) {
+      if (caracter === '"' && contenido[i + 1] === '"') {
+        campo += '"'
+        i += 1
+      } else if (caracter === '"') {
+        entreComillas = false
+      } else {
+        campo += caracter
+      }
+    } else if (caracter === '"') {
+      entreComillas = true
+    } else if (caracter === separador) {
+      fila.push(campo)
+      campo = ''
+    } else if (caracter === '\n' || caracter === '\r') {
+      if (caracter === '\r' && contenido[i + 1] === '\n') i += 1
+      fila.push(campo)
+      campo = ''
+      filas.push(fila)
+      fila = []
+    } else {
+      campo += caracter
+    }
+  }
+  if (campo !== '' || fila.length > 0) {
+    fila.push(campo)
+    filas.push(fila)
+  }
+
+  const filasConDatos = filas.filter((f) => f.some((c) => c.trim() !== ''))
+  if (filasConDatos.length === 0) return []
+  const cabeceras = filasConDatos[0].map((c) =>
+    c
+      .trim()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase(),
+  )
+  return filasConDatos.slice(1).map((valores) =>
+    Object.fromEntries(
+      cabeceras.map((cabecera, indice) => [cabecera, (valores[indice] ?? '').trim().replace(/^'(?=[=+\-@])/, '')]),
+    ),
+  )
+}

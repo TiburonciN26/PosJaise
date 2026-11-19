@@ -11,7 +11,9 @@ import { CircleAlert } from 'lucide-react'
 //     <AyudaCampo>Mismo dato que se edita desde Ventas.</AyudaCampo>
 //   </div>
 // (No usar con ErrorCampo: ese es para errores de validación.)
-export default function AyudaCampo({ children, etiqueta = 'Ver ayuda' }) {
+// `hacia`: 'abajo' (por defecto) o 'arriba'. Con 'arriba' el globo se despliega por encima del ícono; úsalo cuando el ícono
+// está al final de la pantalla (p. ej. el carrito de Ventas), para que abrirlo no obligue a hacer scroll hacia abajo.
+export default function AyudaCampo({ children, etiqueta = 'Ver ayuda', hacia = 'abajo' }) {
   const [abierto, setAbierto] = useState(false)
   const raiz = useRef(null)
   const idMensaje = useId()
@@ -60,7 +62,9 @@ export default function AyudaCampo({ children, etiqueta = 'Ver ayuda' }) {
           ref={ajustarAlViewport}
           id={idMensaje}
           role="note"
-          className="ayuda-campo__mensaje absolute left-0 top-full z-20 mt-1.5 w-64 rounded-lg border border-border bg-surface-2 p-2.5 text-xs font-normal text-ink/70 shadow-lg transition-[opacity,transform] duration-200 ease-out starting:-translate-y-1 starting:opacity-0 motion-reduce:transition-none"
+          className={`ayuda-campo__mensaje absolute left-0 z-20 w-64 rounded-lg border border-border bg-surface-2 p-2.5 text-xs font-normal text-ink/70 shadow-lg transition-[opacity,transform] duration-200 ease-out starting:opacity-0 motion-reduce:transition-none ${
+            hacia === 'arriba' ? 'bottom-full mb-1.5 starting:translate-y-1' : 'top-full mt-1.5 starting:-translate-y-1'
+          }`}
         >
           {children}
         </span>

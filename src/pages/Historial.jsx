@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Download, Filter, History } from 'lucide-react'
+import { ArrowBigDown, Download, FileText, Filter, History, MessageCircle, Upload } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -7,16 +7,27 @@ import { calcularRango, formatearFechaISO, sumarDias } from '../lib/fechas.js'
 import { formatearSoles } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import { useDebounce } from '../hooks/useDebounce.js'
-import { aCSV, descargarArchivo } from '../lib/csv.js'
+import { aCSV, descargarArchivo, parsearCSV } from '../lib/csv.js'
+import { adjuntarPdfComprobante, enviarPdfPorWhatsApp, verPdfComprobante } from '../lib/comprobantesPdf.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
+import MenuOpcionesHistorial from '../components/MenuOpcionesHistorial.jsx'
 import { useEncabezadoTablaPegado } from '../hooks/useEncabezadoTablaPegado.js'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
+import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
+import {
+  boletaRequiereDni,
+  desglosarIGV,
+  etiquetaDocumento,
+  formatearCelular,
+  nombreComprobante,
+  normalizarCelular,
+} from '../lib/comprobante.js'
 import { useEstadoVista } from '../lib/estadoVista.js'
 
 const OPCIONES_ORDEN = [
@@ -38,7 +49,15 @@ const OPCIONES_METODO = [
 const TAMANO_PAGINA = 50
 
 const SELECT_VENTAS =
-  'id, codigo, fecha, estado, total, metodo_pago, clientes(nombre), venta_items(tipo, cantidad)'
+  'id, codigo, fecha, estado, total, metodo_pago, comprobante_tipo, comprobante_numero, comprobante_estado, clientes(nombre), venta_items(tipo, cantidad)'
+
+const SELECT_DETALLE_VENTA =
+  'id, codigo, fecha, estado, total, descuento_pct, descuento_monto, metodo_pago, monto_recibido, vendedor_id, comprobante_tipo, comprobante_numero, comprobante_tipo_doc, comprobante_documento, comprobante_nombre, comprobante_direccion, comprobante_celular, comprobante_pdf, comprobante_estado, comprobante_legal, clientes(nombre, telefono)'
+
+// Para la lista que se le pasa a la contadora: una fila por venta con boleta/factura.
+// `pedidos_web` trae lo que la clienta eligió en la web (tipo, RUC, razón social).
+const SELECT_VENTAS_COMPROBANTES =
+  'codigo, fecha, total, metodo_pago, comprobante_tipo, comprobante_numero, comprobante_tipo_doc, comprobante_documento, comprobante_nombre, comprobante_direccion, comprobante_celular, comprobante_estado, comprobante_legal, clientes(nombre, telefono), venta_items(tipo, nombre, cantidad, precio_unitario, subtotal), pedidos_web(tipo_comprobante, ruc, razon_social)'
 
 // Select propio para exportarCSV(): la lista paginada no necesita
 // monto_recibido/vendedor_id ni los detalles de cada item, pero el CSV sí
@@ -109,13 +128,273 @@ function formatearFechaHora(fechaIso) {
   return `${fechaStr} ${horaStr}`
 }
 
+const redondearCentimos = (valor) => Math.round(valor * 100) / 100
+
+// Una sola celda legible con lo vendido: «2 x Corte (servicio) a S/ 25.00 | 1 x Shampoo a S/ 30.00».
+function detalleParaContadora(items) {
+  return items
+    .map(
+      (item) =>
+        `${item.cantidad} x ${item.nombre}${item.tipo === 'SERVICIO' ? ' (servicio)' : ''} a S/ ${Number(item.precio_unitario).toFixed(2)}`,
+    )
+    .join(' | ')
+}
+
 function nombreClienteDeVenta(venta) {
   const clientes = venta?.clientes
   if (!clientes) return ''
   return Array.isArray(clientes) ? (clientes[0]?.nombre ?? '') : (clientes.nombre ?? '')
 }
 
-function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, onConfirmarAnular }) {
+// Etiqueta «Boleta»/«Factura» de la fila: ámbar mientras la contadora no la emitió, verde cuando sí.
+function PildoraComprobante({ venta }) {
+  if (!venta.comprobante_tipo) return null
+  const emitido = venta.comprobante_estado === 'EMITIDO'
+  return (
+    <span
+      title={`${nombreComprobante(venta.comprobante_tipo)} ${venta.comprobante_numero ?? ''} · ${
+        emitido ? 'emitida por la contadora' : 'pendiente de emitir'
+      }`}
+      className={`shrink-0 rounded border px-1 py-0.5 font-mono text-[10px] font-medium ${
+        emitido ? 'border-green/40 bg-green/10 text-green' : 'border-amber/40 bg-amber/10 text-amber'
+      }`}
+    >
+      {nombreComprobante(venta.comprobante_tipo)}
+      <span className="sr-only">{emitido ? ' emitida' : ' pendiente de emitir'}</span>
+    </span>
+  )
+}
+
+// Boleta/factura de la venta: datos del comprador, estado frente a la contadora y,
+// para la admin, registrar / corregir / marcar como emitida.
+function BloqueComprobante({
+  detalle,
+  esAdmin,
+  onRegistrar,
+  onEditar,
+  onCambiarEstado,
+  onAdjuntarPdf,
+  onVerPdf,
+  onEnviarWhatsApp,
+}) {
+  const [numeroLegal, setNumeroLegal] = useState('')
+  const [guardando, setGuardando] = useState(false)
+  const [trabajandoPdf, setTrabajandoPdf] = useState(false)
+  const inputPdfRef = useRef(null)
+  const anulada = detalle.estado === 'ANULADA'
+
+  async function cambiarEstado(emitido) {
+    if (guardando) return
+    setGuardando(true)
+    await onCambiarEstado(emitido, numeroLegal)
+    setGuardando(false)
+    setNumeroLegal('')
+  }
+
+  // Ojo con el orden: tanto «Ver PDF» como «Enviar por WhatsApp» abren una ventana, y el navegador solo lo permite si
+  // ocurre dentro del clic, antes de cualquier espera.
+  async function conPdf(accion) {
+    if (trabajandoPdf) return
+    setTrabajandoPdf(true)
+    await accion()
+    setTrabajandoPdf(false)
+  }
+
+  async function alElegirPdf(evento) {
+    const archivo = evento.target.files?.[0]
+    evento.target.value = ''
+    if (archivo) await conPdf(() => onAdjuntarPdf(archivo))
+  }
+
+  if (!detalle.comprobante_tipo) {
+    if (!esAdmin || anulada) return null
+    return (
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-ink/60">
+        <span>Sin comprobante.</span>
+        {['BOLETA', 'FACTURA'].map((tipo) => (
+          <button
+            key={tipo}
+            type="button"
+            onClick={() => onRegistrar(tipo)}
+            className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber"
+          >
+            Registrar {nombreComprobante(tipo).toLowerCase()}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  const emitido = detalle.comprobante_estado === 'EMITIDO'
+  const esFactura = detalle.comprobante_tipo === 'FACTURA'
+  const { base, igv } = desglosarIGV(detalle.total)
+  // El celular del comprobante manda; si la venta no lo guardó (p. ej. una venta web) se usa el del cliente.
+  const celularEnvio = normalizarCelular(detalle.comprobante_celular ?? detalle.clientes?.telefono)
+  const tienePdf = Boolean(detalle.comprobante_pdf)
+
+  return (
+    <div className="mt-3 rounded-lg border border-border bg-bg px-3 py-2.5 text-xs">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-medium text-ink">
+          {nombreComprobante(detalle.comprobante_tipo)}{' '}
+          <span className="font-mono text-amber">{detalle.comprobante_numero}</span>
+        </span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            emitido ? 'bg-green/15 text-green' : 'bg-amber/15 text-amber'
+          }`}
+        >
+          {emitido ? 'Emitida por la contadora' : 'Pendiente de emitir'}
+        </span>
+      </div>
+
+      <div className="mt-1.5 space-y-0.5 text-ink/60">
+        {detalle.comprobante_documento && (
+          <p>
+            {etiquetaDocumento(esFactura ? 'RUC' : (detalle.comprobante_tipo_doc ?? 'DNI'))}: <span className="font-mono text-ink/80">{detalle.comprobante_documento}</span>
+          </p>
+        )}
+        {detalle.comprobante_nombre && (
+          <p>
+            {esFactura ? 'Razón social' : 'Nombre'}: <span className="text-ink/80">{detalle.comprobante_nombre}</span>
+          </p>
+        )}
+        {detalle.comprobante_direccion && (
+          <p>
+            Dirección: <span className="text-ink/80">{detalle.comprobante_direccion}</span>
+          </p>
+        )}
+        <p>
+          WhatsApp:{' '}
+          {celularEnvio ? (
+            <span className="font-mono text-ink/80">{formatearCelular(celularEnvio)}</span>
+          ) : (
+            <span className="text-amber">sin celular</span>
+          )}
+        </p>
+        <p>
+          Op. gravada <span className="font-mono text-ink/80">{formatearSoles(base)}</span> · IGV{' '}
+          <span className="font-mono text-ink/80">{formatearSoles(igv)}</span>
+        </p>
+        {emitido && detalle.comprobante_legal && (
+          <p>
+            N° emitido: <span className="font-mono text-ink/80">{detalle.comprobante_legal}</span>
+          </p>
+        )}
+      </div>
+
+      {esAdmin && !anulada && (
+        <>
+          {/* PDF oficial que devuelve la contadora + envío por WhatsApp. */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              ref={inputPdfRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              className="hidden"
+              onChange={alElegirPdf}
+              aria-label="Elegir el PDF oficial del comprobante"
+            />
+            {tienePdf ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => conPdf(onVerPdf)}
+                  disabled={trabajandoPdf}
+                  className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                >
+                  Ver PDF oficial
+                </button>
+                <button
+                  type="button"
+                  onClick={() => inputPdfRef.current?.click()}
+                  disabled={trabajandoPdf}
+                  className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                >
+                  Cambiar PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => conPdf(() => onEnviarWhatsApp(celularEnvio))}
+                  disabled={trabajandoPdf || !celularEnvio}
+                  title={celularEnvio ? 'Abrir WhatsApp con el PDF' : 'Falta el celular: edita los datos del comprobante'}
+                  className="flex items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Enviar por WhatsApp
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => inputPdfRef.current?.click()}
+                disabled={trabajandoPdf}
+                className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+              >
+                {trabajandoPdf ? 'Subiendo...' : 'Adjuntar PDF oficial'}
+              </button>
+            )}
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {!emitido ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onEditar}
+                  className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber"
+                >
+                  Editar datos
+                </button>
+                <input
+                  type="search"
+                  autoComplete="new-password"
+                  value={numeroLegal}
+                  onChange={(evento) => setNumeroLegal(evento.target.value)}
+                  placeholder="N° emitido (opcional)"
+                  aria-label="Número del comprobante emitido por la contadora"
+                  className="w-52 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-amber"
+                />
+                <button
+                  type="button"
+                  onClick={() => cambiarEstado(true)}
+                  disabled={guardando}
+                  className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+                >
+                  Marcar emitida
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => cambiarEstado(false)}
+                disabled={guardando}
+                className="rounded-lg border border-border-strong px-3 py-1.5 text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+              >
+                Volver a pendiente
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function DetalleVenta({
+  estado,
+  esAdmin,
+  onImprimir,
+  onIniciarAnular,
+  onCancelarAnular,
+  onConfirmarAnular,
+  onRegistrarComprobante,
+  onEditarComprobante,
+  onCambiarEstadoComprobante,
+  onAdjuntarPdf,
+  onVerPdf,
+  onEnviarWhatsApp,
+}) {
   const { cargando, error, detalle, items, vendedorNombre, confirmandoAnular, anulando } = estado
   // Cliente/asistente por servicio: dato adicional, no molesta si se
   // muestra siempre — se oculta detrás de un toggle por fila (sin ícono,
@@ -234,6 +513,17 @@ function DetalleVenta({ estado, onImprimir, onIniciarAnular, onCancelarAnular, o
         </div>
       </div>
 
+      <BloqueComprobante
+        detalle={detalle}
+        esAdmin={esAdmin}
+        onRegistrar={onRegistrarComprobante}
+        onEditar={onEditarComprobante}
+        onCambiarEstado={onCambiarEstadoComprobante}
+        onAdjuntarPdf={onAdjuntarPdf}
+        onVerPdf={onVerPdf}
+        onEnviarWhatsApp={onEnviarWhatsApp}
+      />
+
       </div>
 
       {/* Botones a la izquierda; descuento y pago a la derecha, bajo el carrito */}
@@ -346,6 +636,11 @@ export default function Historial({ activo = true }) {
   const [detalles, setDetalles] = useState({})
   const [ventaParaImprimir, setVentaParaImprimir] = useState(null)
   const [exportando, setExportando] = useState(false)
+  const [exportandoComprobantes, setExportandoComprobantes] = useState(false)
+  const [importando, setImportando] = useState(false)
+  const inputImportarRef = useRef(null)
+  // Modal de datos del comprador: { ventaId, tipo, total, inicial } o null.
+  const [modalComprobante, setModalComprobante] = useState(null)
   const primeraCargaHecha = useRef(false)
   // M1 de la 4ª auditoría: cargarMasVentas no llevaba el mismo guard
   // `vigente` que ya usa la carga inicial — si cambiabas de filtro/búsqueda
@@ -363,13 +658,7 @@ export default function Historial({ activo = true }) {
     }))
 
     const [ventaRes, itemsRes] = await Promise.all([
-      supabase
-        .from('ventas')
-        .select(
-          'id, codigo, fecha, estado, total, descuento_pct, descuento_monto, metodo_pago, monto_recibido, vendedor_id, clientes(nombre)',
-        )
-        .eq('id', ventaId)
-        .single(),
+      supabase.from('ventas').select(SELECT_DETALLE_VENTA).eq('id', ventaId).single(),
       supabase
         .from('venta_items')
         .select(
@@ -479,6 +768,152 @@ export default function Historial({ activo = true }) {
     }))
     mostrarToast('Venta anulada. Se devolvió el stock.', 'exito')
     cargarVentas(vigenteRef.current, true)
+  }
+
+  function abrirModalComprobante(ventaId, tipo) {
+    const detalle = detalles[ventaId]?.detalle
+    if (!detalle) return
+    const mismoTipo = detalle.comprobante_tipo === tipo
+    setModalComprobante({
+      ventaId,
+      tipo,
+      total: detalle.total,
+      celularCliente: normalizarCelular(detalle.clientes?.telefono),
+      inicial: mismoTipo
+        ? {
+            celular: detalle.comprobante_celular ?? '',
+            tipoDocumento: detalle.comprobante_tipo_doc ?? 'DNI',
+            documento: detalle.comprobante_documento ?? '',
+            nombre: detalle.comprobante_nombre ?? '',
+            direccion: detalle.comprobante_direccion ?? '',
+          }
+        : null,
+    })
+  }
+
+  // Registra el comprobante de una venta que no lo tiene, o corrige los datos de uno pendiente.
+  async function guardarComprobante(datos) {
+    if (!modalComprobante) return
+    const { ventaId } = modalComprobante
+    const { error: errorRpc } = await supabase.rpc('registrar_comprobante_venta', {
+      p_venta_id: ventaId,
+      p_tipo: datos.tipo,
+      p_tipo_documento: datos.tipo === 'BOLETA' ? datos.tipoDocumento : null,
+      p_documento: datos.documento || null,
+      p_celular: datos.celular || null,
+      p_nombre: datos.nombre || null,
+      p_direccion: datos.direccion || null,
+    })
+    if (errorRpc) {
+      mostrarToast(errorRpc.message, 'error')
+      return
+    }
+    setModalComprobante(null)
+    mostrarToast('Comprobante guardado.')
+    cargarDetalleVenta(ventaId)
+    cargarVentas(vigenteRef.current, true)
+  }
+
+  async function cambiarEstadoComprobante(ventaId, emitido, numeroLegal) {
+    const { error: errorRpc } = await supabase.rpc('actualizar_estado_comprobante', {
+      p_venta_id: ventaId,
+      p_emitido: emitido,
+      p_numero_legal: numeroLegal?.trim() || null,
+    })
+    if (errorRpc) {
+      mostrarToast(errorRpc.message, 'error')
+      return
+    }
+    setDetalles((anterior) => ({
+      ...anterior,
+      [ventaId]: {
+        ...anterior[ventaId],
+        detalle: {
+          ...anterior[ventaId].detalle,
+          comprobante_estado: emitido ? 'EMITIDO' : 'PENDIENTE',
+          comprobante_legal: emitido ? numeroLegal?.trim() || null : null,
+        },
+      },
+    }))
+    mostrarToast(emitido ? 'Comprobante marcado como emitido.' : 'Comprobante vuelto a pendiente.')
+    cargarVentas(vigenteRef.current, true)
+  }
+
+  async function adjuntarPdf(ventaId, archivo) {
+    const { error: errorPdf } = await adjuntarPdfComprobante(ventaId, archivo)
+    if (errorPdf) {
+      mostrarToast(errorPdf, 'error')
+      return
+    }
+    mostrarToast('PDF adjuntado.')
+    cargarDetalleVenta(ventaId)
+  }
+
+  async function verPdf(ventaId) {
+    const ruta = detalles[ventaId]?.detalle?.comprobante_pdf
+    if (!ruta) return
+    if (!(await verPdfComprobante(ruta))) mostrarToast('No se pudo abrir el PDF.', 'error')
+  }
+
+  // Sin esperas antes de enviarPdfPorWhatsApp: abre la ventana dentro del clic (si no, el navegador la bloquea).
+  async function enviarWhatsApp(ventaId, celular) {
+    const detalle = detalles[ventaId]?.detalle
+    if (!detalle?.comprobante_pdf) {
+      mostrarToast('Adjunta primero el PDF oficial.', 'error')
+      return
+    }
+    if (!celular) {
+      mostrarToast('Falta el celular: edita los datos del comprobante.', 'error')
+      return
+    }
+    const salio = await enviarPdfPorWhatsApp({
+      rutaPdf: detalle.comprobante_pdf,
+      celular,
+      tipo: detalle.comprobante_tipo,
+      numeroLegal: detalle.comprobante_legal,
+      nombre: detalle.comprobante_nombre || nombreClienteDeVenta(detalle),
+    })
+    if (!salio) mostrarToast('No se pudo preparar el mensaje de WhatsApp.', 'error')
+  }
+
+  // Lo que devuelve la contadora: el mismo CSV que se le exportó, con la columna «numero_emitido» llena. Marca como
+  // emitidas, de una vez, las ventas con comprobante pendiente que tengan número.
+  async function importarNumerosEmitidos(evento) {
+    const archivo = evento.target.files?.[0]
+    evento.target.value = ''
+    if (!archivo || importando) return
+    if (archivo.size > 2 * 1024 * 1024) {
+      mostrarToast('El archivo es demasiado grande.', 'error')
+      return
+    }
+    setImportando(true)
+    try {
+      const filas = parsearCSV(await archivo.text())
+      if (filas.length === 0 || !('codigo' in filas[0]) || !('numero_emitido' in filas[0])) {
+        mostrarToast('El archivo debe ser el CSV de boletas y facturas, con las columnas «codigo» y «numero_emitido».', 'error')
+        return
+      }
+      const { data, error: errorRpc } = await supabase.rpc('importar_numeros_comprobantes', {
+        p_filas: filas.map((fila) => ({ codigo: fila.codigo, numero_legal: fila.numero_emitido })),
+      })
+      if (errorRpc) {
+        mostrarToast(errorRpc.message, 'error')
+        return
+      }
+      const lista = (codigos) => codigos.slice(0, 3).join(', ') + (codigos.length > 3 ? '…' : '')
+      const partes = [`${data.actualizadas} marcadas como emitidas`]
+      if (data.ya_emitidas.length) partes.push(`${data.ya_emitidas.length} ya estaban emitidas`)
+      if (data.no_encontradas.length) partes.push(`no existen: ${lista(data.no_encontradas)}`)
+      if (data.sin_comprobante.length) partes.push(`sin comprobante: ${lista(data.sin_comprobante)}`)
+      if (data.anuladas.length) partes.push(`anuladas: ${lista(data.anuladas)}`)
+      if (data.invalidas.length) partes.push(`número inválido: ${lista(data.invalidas)}`)
+      mostrarToast(`${partes.join(' · ')}.`, data.actualizadas > 0 ? 'exito' : 'error')
+      // Las filas abiertas muestran el estado anterior: se vuelven a pedir.
+      abiertos.forEach((ventaId) => cargarDetalleVenta(ventaId))
+      cargarVentas(vigenteRef.current, true)
+    } finally {
+      setImportando(false)
+    }
   }
 
   const filtroEfectivo = esAdmin ? filtro : 'hoy'
@@ -658,6 +1093,114 @@ export default function Historial({ activo = true }) {
     mostrarToast(`Exportadas ${ventasExport.length} ventas (${filas.length} filas).`, 'exito')
   }
 
+  // Lista para la contadora: una fila por venta (activa) del período con boleta o
+  // factura. Las ventas que vienen de un pedido web y no se registraron en el POS
+  // salen con lo que la clienta eligió en la web y estado «SIN REGISTRAR».
+  async function exportarComprobantes() {
+    if (exportandoComprobantes) return
+    setExportandoComprobantes(true)
+    const { desde, hasta } = calcularRango(filtroEfectivo, personalizado)
+
+    const { data, error: errorExport } = await supabase
+      .from('ventas')
+      .select(SELECT_VENTAS_COMPROBANTES)
+      .eq('estado', 'ACTIVA')
+      .gte('fecha', desde.toISOString())
+      .lt('fecha', hasta.toISOString())
+      .order('fecha', { ascending: true })
+
+    setExportandoComprobantes(false)
+
+    if (errorExport) {
+      mostrarToast('No se pudo exportar los comprobantes.', 'error')
+      return
+    }
+
+    const filas = []
+    for (const venta of data ?? []) {
+      const pedido = Array.isArray(venta.pedidos_web) ? venta.pedidos_web[0] : venta.pedidos_web
+      const tipo = venta.comprobante_tipo ?? pedido?.tipo_comprobante
+      if (!tipo) continue
+
+      const registrado = Boolean(venta.comprobante_tipo)
+      const documento = registrado
+        ? venta.comprobante_documento
+        : tipo === 'FACTURA'
+          ? pedido?.ruc
+          : null
+      const { base, igv } = desglosarIGV(venta.total)
+      const items = venta.venta_items ?? []
+      const subtotalItems = redondearCentimos(items.reduce((acumulado, item) => acumulado + Number(item.subtotal), 0))
+      filas.push({
+        fecha: formatearFechaHora(venta.fecha),
+        codigo: venta.codigo,
+        origen: pedido ? 'WEB' : 'POS',
+        tipo: nombreComprobante(tipo).toUpperCase(),
+        numero_interno: venta.comprobante_numero ?? '',
+        tipo_documento: documento
+          ? tipo === 'FACTURA'
+            ? 'RUC'
+            : registrado
+              ? (venta.comprobante_tipo_doc ?? 'DNI')
+              : 'DNI'
+          : '',
+        documento: documento ?? '',
+        nombre_razon_social: registrado
+          ? (venta.comprobante_nombre ?? nombreClienteDeVenta(venta))
+          : (pedido?.razon_social ?? nombreClienteDeVenta(venta)),
+        direccion: venta.comprobante_direccion ?? '',
+        celular: normalizarCelular(venta.comprobante_celular ?? venta.clientes?.telefono) ?? '',
+        detalle: detalleParaContadora(items),
+        subtotal_items: subtotalItems.toFixed(2),
+        descuento: Math.max(0, redondearCentimos(subtotalItems - Number(venta.total))).toFixed(2),
+        cargo_adicional: Math.max(0, redondearCentimos(Number(venta.total) - subtotalItems)).toFixed(2),
+        op_gravada: base.toFixed(2),
+        igv: igv.toFixed(2),
+        total: Number(venta.total).toFixed(2),
+        metodo_pago: venta.metodo_pago,
+        estado_comprobante: registrado
+          ? venta.comprobante_estado === 'EMITIDO'
+            ? 'EMITIDO'
+            : 'PENDIENTE'
+          : 'SIN REGISTRAR',
+        numero_emitido: venta.comprobante_legal ?? '',
+      })
+    }
+
+    if (filas.length === 0) {
+      mostrarToast('No hay boletas ni facturas en este período.', 'error')
+      return
+    }
+
+    const sufijo = `${formatearFechaISO(desde)}_a_${formatearFechaISO(sumarDias(hasta, -1))}`
+    descargarArchivo(
+      `comprobantes_${sufijo}.csv`,
+      aCSV(filas, [
+        'fecha',
+        'codigo',
+        'origen',
+        'tipo',
+        'numero_interno',
+        'tipo_documento',
+        'documento',
+        'nombre_razon_social',
+        'direccion',
+        'celular',
+        'detalle',
+        'subtotal_items',
+        'descuento',
+        'cargo_adicional',
+        'op_gravada',
+        'igv',
+        'total',
+        'metodo_pago',
+        'estado_comprobante',
+        'numero_emitido',
+      ]),
+    )
+    mostrarToast(`Exportados ${filas.length} comprobantes para la contadora.`)
+  }
+
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
@@ -695,31 +1238,86 @@ export default function Historial({ activo = true }) {
           tema="amber"
           sinBorde
         />
-        <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" sinBorde />
-        <SelectorOrden
-          opciones={OPCIONES_METODO}
-          valor={filtroMetodo}
-          onCambiar={setFiltroMetodo}
-          tema="amber"
-          sinBorde
-          icono={Filter}
-          seleccionado
-          claseIcono={CLASE_ICONO_FILTRO_METODO[filtroMetodo] ?? 'text-amber'}
-          ariaLabel="Filtrar por método de pago"
-        />
+        {/* Orden, filtro y descargas: en PC y tablet van sueltos; en celular se agrupan tras la rueda. */}
+        <div className="hidden shrink-0 items-center gap-2 sm:flex">
+          <SelectorOrden opciones={OPCIONES_ORDEN} valor={orden} onCambiar={setOrden} tema="amber" sinBorde />
+          <SelectorOrden
+            opciones={OPCIONES_METODO}
+            valor={filtroMetodo}
+            onCambiar={setFiltroMetodo}
+            tema="amber"
+            sinBorde
+            icono={Filter}
+            seleccionado
+            claseIcono={CLASE_ICONO_FILTRO_METODO[filtroMetodo] ?? 'text-amber'}
+            ariaLabel="Filtrar por método de pago"
+          />
+
+          {esAdmin && (
+            <button
+              type="button"
+              onClick={exportarCSV}
+              disabled={exportando}
+              aria-label="Exportar CSV del período"
+              title="Exportar CSV del período"
+              className="flex shrink-0 items-center justify-center rounded-lg border border-transparent p-2.5 text-ink/70 transition-colors hover:text-amber disabled:opacity-40"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+          )}
+          {esAdmin && (
+            <button
+              type="button"
+              onClick={exportarComprobantes}
+              disabled={exportandoComprobantes}
+              aria-label="Exportar boletas y facturas del período para la contadora"
+              title="Exportar boletas y facturas para la contadora"
+              className="flex shrink-0 items-center justify-center rounded-lg border border-transparent p-2.5 text-ink/70 transition-colors hover:text-amber disabled:opacity-40"
+            >
+              <FileText className="h-4 w-4" />
+            </button>
+          )}
+          {esAdmin && (
+            <button
+              type="button"
+              onClick={() => inputImportarRef.current?.click()}
+              disabled={importando}
+              aria-label="Importar números emitidos por la contadora"
+              title="Importar números emitidos (CSV devuelto por la contadora)"
+              className="flex shrink-0 items-center justify-center rounded-lg border border-transparent p-2.5 text-ink/70 transition-colors hover:text-amber disabled:opacity-40"
+            >
+              <Upload className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {esAdmin && (
-          <button
-            type="button"
-            onClick={exportarCSV}
-            disabled={exportando}
-            aria-label="Exportar CSV del período"
-            title="Exportar CSV del período"
-            className="flex shrink-0 items-center justify-center rounded-lg border border-transparent p-2.5 text-ink/70 transition-colors hover:text-amber disabled:opacity-40"
-          >
-            <Download className="h-4 w-4" />
-          </button>
+          <input
+            ref={inputImportarRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={importarNumerosEmitidos}
+            aria-label="Elegir el CSV con los números emitidos"
+          />
         )}
+
+        <MenuOpcionesHistorial
+          opcionesOrden={OPCIONES_ORDEN}
+          orden={orden}
+          onOrden={setOrden}
+          opcionesMetodo={OPCIONES_METODO}
+          metodo={filtroMetodo}
+          onMetodo={setFiltroMetodo}
+          claseIconoMetodo={CLASE_ICONO_FILTRO_METODO[filtroMetodo] ?? 'text-amber'}
+          esAdmin={esAdmin}
+          onExportarVentas={exportarCSV}
+          exportandoVentas={exportando}
+          onExportarComprobantes={exportarComprobantes}
+          exportandoComprobantes={exportandoComprobantes}
+          onImportar={() => inputImportarRef.current?.click()}
+          importando={importando}
+        />
       </div>
 
       {/* Resumen del período: viene de una función SQL (resumen_historial),
@@ -810,6 +1408,7 @@ export default function Historial({ activo = true }) {
                       >
                         {codigoCorto(venta.codigo)}
                       </span>
+                      <PildoraComprobante venta={venta} />
                       <span
                         className={`truncate font-mono text-xs transition-colors duration-300 ${
                           anulada ? 'text-red line-through' : abierto ? 'text-green' : 'text-ink/60'
@@ -852,10 +1451,19 @@ export default function Historial({ activo = true }) {
                     {(abierto || detalles[venta.id]) && (
                       <DetalleVenta
                         estado={infoDetalle}
+                        esAdmin={esAdmin}
                         onImprimir={() => imprimirVenta(venta.id)}
                         onIniciarAnular={() => iniciarAnular(venta.id)}
                         onCancelarAnular={() => cancelarAnular(venta.id)}
                         onConfirmarAnular={() => confirmarAnular(venta.id)}
+                        onRegistrarComprobante={(tipo) => abrirModalComprobante(venta.id, tipo)}
+                        onEditarComprobante={() => abrirModalComprobante(venta.id, infoDetalle.detalle?.comprobante_tipo)}
+                        onCambiarEstadoComprobante={(emitido, numero) =>
+                          cambiarEstadoComprobante(venta.id, emitido, numero)
+                        }
+                        onAdjuntarPdf={(archivo) => adjuntarPdf(venta.id, archivo)}
+                        onVerPdf={() => verPdf(venta.id)}
+                        onEnviarWhatsApp={(celular) => enviarWhatsApp(venta.id, celular)}
                       />
                     )}
                   </CampoColapsable>
@@ -902,6 +1510,11 @@ export default function Historial({ activo = true }) {
                           }`}
                         >
                           <span>{codigoCorto(venta.codigo)}</span>
+                          {venta.comprobante_tipo && (
+                            <span className="ml-2 align-middle">
+                              <PildoraComprobante venta={venta} />
+                            </span>
+                          )}
                           {/* El tachado/rojo no lo anuncia un lector de pantalla; en móvil hay una píldora «Anulada» visible. */}
                           {anulada && <span className="sr-only">Anulada</span>}
                         </td>
@@ -951,10 +1564,21 @@ export default function Historial({ activo = true }) {
                             {(abierto || detalles[venta.id]) && (
                               <DetalleVenta
                                 estado={infoDetalle}
+                                esAdmin={esAdmin}
                                 onImprimir={() => imprimirVenta(venta.id)}
                                 onIniciarAnular={() => iniciarAnular(venta.id)}
                                 onCancelarAnular={() => cancelarAnular(venta.id)}
                                 onConfirmarAnular={() => confirmarAnular(venta.id)}
+                                onRegistrarComprobante={(tipo) => abrirModalComprobante(venta.id, tipo)}
+                                onEditarComprobante={() =>
+                                  abrirModalComprobante(venta.id, infoDetalle.detalle?.comprobante_tipo)
+                                }
+                                onCambiarEstadoComprobante={(emitido, numero) =>
+                                  cambiarEstadoComprobante(venta.id, emitido, numero)
+                                }
+                                onAdjuntarPdf={(archivo) => adjuntarPdf(venta.id, archivo)}
+                                onVerPdf={() => verPdf(venta.id)}
+                                onEnviarWhatsApp={(celular) => enviarWhatsApp(venta.id, celular)}
                               />
                             )}
                           </CampoColapsable>
@@ -978,6 +1602,18 @@ export default function Historial({ activo = true }) {
             </button>
           )}
         </>
+      )}
+
+      {modalComprobante && (
+        <ModalDatosComprobante
+          tipo={modalComprobante.tipo}
+          inicial={modalComprobante.inicial}
+          total={modalComprobante.total}
+          celularCliente={modalComprobante.celularCliente}
+          dniObligatorio={modalComprobante.tipo === 'BOLETA' && boletaRequiereDni(modalComprobante.total)}
+          onGuardar={guardarComprobante}
+          onCerrar={() => setModalComprobante(null)}
+        />
       )}
 
       <TicketImprimible

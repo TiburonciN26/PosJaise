@@ -1,4 +1,20 @@
 import { createPortal } from 'react-dom'
+import { desglosarIGV, etiquetaDocumento, formatearCelular } from '../lib/comprobante.js'
+
+// Va al pie de las boletas y facturas que imprime el POS. Aún no son comprobantes electrónicos: los emite la contadora.
+// Para quitarla basta con dejar esta constante en '' (el pie no se dibuja si está vacía).
+// El texto completo se arma en leyendaComprobante(): lleva el WhatsApp al que se enviará el PDF y el plazo de entrega.
+const LEYENDA_COMPROBANTE = 'Documento de control interno.'
+const PLAZO_ENTREGA_BOLETA = '1 a 3 días hábiles'
+const PLAZO_ENTREGA_FACTURA = '1 día hábil'
+
+function leyendaComprobante(detalle) {
+  if (!LEYENDA_COMPROBANTE) return ''
+  const plazo = detalle.comprobante_tipo === 'FACTURA' ? PLAZO_ENTREGA_FACTURA : PLAZO_ENTREGA_BOLETA
+  const celular = formatearCelular(detalle.comprobante_celular)
+  const destino = celular ? ` por WhatsApp al ${celular}` : ''
+  return `${LEYENDA_COMPROBANTE} Su comprobante electrónico (PDF) se enviará${destino} en ${plazo}.`
+}
 
 function formatearMonto(monto) {
   return `S/ ${monto.toFixed(2)}`
@@ -45,6 +61,12 @@ export default function TicketImprimible({ detalle, items }) {
   const subtotal = items.reduce((acumulado, item) => acumulado + item.subtotal, 0)
   const hayDescuento = detalle.descuento_pct > 0 || detalle.descuento_monto > 0
 
+  // Si la venta pidió boleta o factura, el ticket sale con ese encabezado, el
+  // número interno (B-/F-), los datos del comprador y el desglose de IGV.
+  const esFactura = detalle.comprobante_tipo === 'FACTURA'
+  const llevaComprobante = Boolean(detalle.comprobante_tipo)
+  const { base: opGravada, igv } = desglosarIGV(detalle.total)
+
   return createPortal(
     <div id="ticket-impresion" className="hidden print:block">
       <div style={estiloTicket}>
@@ -52,12 +74,39 @@ export default function TicketImprimible({ detalle, items }) {
           {/* Espacio reservado para logo, si más adelante se agrega uno */}
           <p>.</p>
           <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold' }}>POS JAISE</p>
+          {llevaComprobante && (
+            <>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 'bold' }}>
+                {esFactura ? 'FACTURA' : 'BOLETA DE VENTA'}
+              </p>
+              <p style={{ margin: 0, fontWeight: 'bold' }}>N° {detalle.comprobante_numero}</p>
+            </>
+          )}
           <p style={{ margin: 0 }}>{separador}</p>
         </div>
 
         <p style={{ margin: 0 }}>Venta: {detalle.codigo}</p>
         <p style={{ margin: 0 }}>{formatearFechaHora(detalle.fecha)}</p>
-        {detalle.clientes?.nombre && <p style={{ margin: 0 }}>Cliente: {detalle.clientes.nombre}</p>}
+        {llevaComprobante ? (
+          <>
+            {detalle.comprobante_documento && (
+              <p style={{ margin: 0 }}>
+                {etiquetaDocumento(esFactura ? 'RUC' : (detalle.comprobante_tipo_doc ?? 'DNI'))}: {detalle.comprobante_documento}
+              </p>
+            )}
+            {detalle.comprobante_nombre && (
+              <p style={{ margin: 0 }}>
+                {esFactura ? 'Razón social' : 'Cliente'}: {detalle.comprobante_nombre}
+              </p>
+            )}
+            {detalle.comprobante_direccion && <p style={{ margin: 0 }}>Dirección: {detalle.comprobante_direccion}</p>}
+            {!detalle.comprobante_nombre && detalle.clientes?.nombre && (
+              <p style={{ margin: 0 }}>Cliente: {detalle.clientes.nombre}</p>
+            )}
+          </>
+        ) : (
+          detalle.clientes?.nombre && <p style={{ margin: 0 }}>Cliente: {detalle.clientes.nombre}</p>
+        )}
         {detalle.estado === 'ANULADA' && (
           <p style={{ margin: 0, fontWeight: 'bold' }}>*** VENTA ANULADA ***</p>
         )}
@@ -89,6 +138,19 @@ export default function TicketImprimible({ detalle, items }) {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Descuento{detalle.descuento_pct > 0 ? ` (${detalle.descuento_pct}%)` : ''}</span>
               <span>-{formatearMonto(subtotal - detalle.total)}</span>
+            </div>
+          </>
+        )}
+
+        {llevaComprobante && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Op. gravada</span>
+              <span>{formatearMonto(opGravada)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>IGV (18%)</span>
+              <span>{formatearMonto(igv)}</span>
             </div>
           </>
         )}
@@ -131,6 +193,11 @@ export default function TicketImprimible({ detalle, items }) {
 
         <p style={{ margin: '8px 0 0', textAlign: 'center' }}>{separador}</p>
         <p style={{ margin: '2px 0 0', textAlign: 'center' }}>¡Gracias por su compra!</p>
+        {llevaComprobante && leyendaComprobante(detalle) && (
+          <p style={{ margin: '4px 0 0', textAlign: 'center', fontSize: '8px', lineHeight: 1.3 }}>
+            {leyendaComprobante(detalle)}
+          </p>
+        )}
       </div>
     </div>,
     document.body,

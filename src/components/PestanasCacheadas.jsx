@@ -27,6 +27,7 @@ import { alLiberarFormulario, formularioEditado, formularioEnviado, tieneFormula
 const Citas = componenteDiferido(() => import('../pages/Citas.jsx'), 'Citas')
 const Inventario = componenteDiferido(() => import('../pages/Inventario.jsx'), 'Inventario')
 const Historial = componenteDiferido(() => import('../pages/Historial.jsx'), 'Historial')
+const Ayuda = componenteDiferido(() => import('../pages/Ayuda.jsx'), 'Ayuda')
 const Servicios = componenteDiferido(() => import('../pages/Servicios.jsx'), 'Servicios')
 const Dashboard = componenteDiferido(() => import('../pages/Dashboard.jsx'), 'Dashboard')
 const MiPanel = componenteDiferido(() => import('../pages/MiPanel.jsx'), 'MiPanel')
@@ -62,6 +63,7 @@ const PAGINAS = {
   '/citas': Citas,
   '/inventario': Inventario,
   '/historial': Historial,
+  '/ayuda': Ayuda,
   '/servicios': Servicios,
   '/dashboard': Dashboard,
   '/mi-panel': MiPanel,

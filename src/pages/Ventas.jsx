@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { X, ShoppingCart, Scissors, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
@@ -22,7 +23,16 @@ import ModalCliente from '../components/ModalCliente.jsx'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
-import { boletaRequiereDni, comprobanteCompleto } from '../lib/comprobante.js'
+import {
+  boletaRequiereDni,
+  comprobanteCompleto,
+  etiquetaDocumento,
+  formatearCelular,
+  normalizarCelular,
+  nombreComprobante,
+  UMBRAL_DNI_BOLETA,
+} from '../lib/comprobante.js'
+import AyudaCampo from '../components/AyudaCampo.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 import { componenteDiferido } from '../lib/moduloDiferido.js'
 import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
@@ -31,6 +41,42 @@ import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
 // se carga solo cuando se abre el escáner, no en el bundle principal.
 // F8-01: reintentable; si su código no llega (sin red o versión retirada) el fallo queda en su ventana, no en Ventas.
 const ModalEscanerCodigoBarras = componenteDiferido(() => import('../components/ModalEscanerCodigoBarras.jsx'), 'ModalEscanerCodigoBarras')
+
+// Orientación breve para quien cobra y no maneja el tema de comprobantes: cuándo corresponde cada uno y qué datos pedir.
+// El detalle (IGV, plazos, qué entregar) vive en la pestaña Ayuda, a la que enlaza cada globo. Ninguno emite ante SUNAT:
+// la contadora emite el legal.
+const T = 'font-semibold text-ink'
+const ENLACE_AYUDA = (
+  <Link to="/ayuda" className="mt-2 block underline hover:text-azul-metal">
+    Ver más en Ayuda
+  </Link>
+)
+
+const AYUDA_BOLETA = (
+  <>
+    <strong className={T}>Boleta:</strong> para una persona que compra para sí misma (la mayoría de las ventas).
+    <span className="mt-1.5 block">
+      • Menos de S/ {UMBRAL_DNI_BOLETA}: no hace falta pedir datos.
+      <br />• Desde S/ {UMBRAL_DNI_BOLETA}: pide documento (DNI, carné de extranjería o pasaporte) y nombre.
+      <br />• Hace falta un celular para enviarle el PDF por WhatsApp.
+    </span>
+    {ENLACE_AYUDA}
+  </>
+)
+
+const AYUDA_FACTURA = (
+  <>
+    <strong className={T}>Factura:</strong> solo si quien compra la pide a nombre de una empresa. Pídele:
+    <span className="mt-1.5 block">
+      • <strong className={T}>RUC</strong> (11 dígitos)
+      <br />• <strong className={T}>Razón social</strong>
+      <br />• Dirección fiscal (opcional)
+      <br />• Celular para enviarle el PDF por WhatsApp
+      <br />Sin RUC no hay factura: usa Boleta.
+    </span>
+    {ENLACE_AYUDA}
+  </>
+)
 
 // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
 const DURACION_SALIDA = 300
@@ -377,6 +423,28 @@ export default function Ventas({ activo = true }) {
   // se anota y se valida; aún no viaja al servidor ni se emite a SUNAT.
   const [comprobante, setComprobante] = useState(null)
   const [modalComprobante, setModalComprobante] = useState(null) // 'BOLETA' | 'FACTURA' | null
+  // Celular del cliente elegido (botón «Seleccionar cliente»): el PDF del comprobante se envía a ese WhatsApp, así que solo se
+  // pide un celular aparte si no hay cliente de la base o no tiene uno válido. El resultado de ModalBuscarCliente ya trae
+  // `telefono`; si el cliente viene de otro lado (p. ej. una atención) se consulta por su id.
+  const [telefonoClienteConsultado, setTelefonoClienteConsultado] = useState(null)
+  const clienteId = cliente?.id ?? null
+  const clienteTraeTelefono = cliente?.telefono !== undefined
+  useEffect(() => {
+    if (!clienteId || clienteTraeTelefono) return undefined
+    let vigente = true
+    supabase
+      .from('clientes')
+      .select('telefono')
+      .eq('id', clienteId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (vigente) setTelefonoClienteConsultado(data?.telefono ?? null)
+      })
+    return () => {
+      vigente = false
+      setTelefonoClienteConsultado(null)
+    }
+  }, [clienteId, clienteTraeTelefono])
 
   // setTimeout "sueltos" (fuera de un useEffect: quitar fila, cancelar
   // venta, cerrar sugerencias al perder foco) que si el componente se
@@ -721,13 +789,17 @@ export default function Ventas({ activo = true }) {
   // es solo mirar si queda algo suelto.
   const hayAtencionesPendientes = pendientesFuera > 0
 
+  const celularCliente = normalizarCelular(cliente?.telefono ?? telefonoClienteConsultado)
+  // Con cliente que tiene celular manda el del cliente; si no, el que se escribió en la ventana del comprobante.
+  const celularComprobante = celularCliente ?? normalizarCelular(comprobante?.celular)
+
   const puedeCobrar =
     carrito.length > 0 &&
     metodoPago !== null &&
     !haySobreStock &&
     (metodoPago !== 'Efectivo' || recibidoNumerico >= total) &&
     (!esCupon || codigoCupon === '' || Boolean(cuponPreview)) &&
-    comprobanteCompleto(comprobante, total)
+    comprobanteCompleto(comprobante, total, celularComprobante)
 
   // Boleta/Factura: tocar el botón activo lo quita (vuelve a "sin comprobante").
   // La boleta no pide datos salvo desde el umbral de DNI; la factura siempre.
@@ -736,8 +808,9 @@ export default function Ventas({ activo = true }) {
       setComprobante(null)
       return
     }
-    if (tipo === 'BOLETA' && !boletaRequiereDni(total)) {
-      setComprobante({ tipo, documento: '', nombre: '', direccion: '' })
+    // Sin ventana solo si la boleta es chica y ya hay un celular al que mandar el PDF (el del cliente).
+    if (tipo === 'BOLETA' && !boletaRequiereDni(total) && celularCliente) {
+      setComprobante({ tipo, tipoDocumento: 'DNI', documento: '', nombre: '', direccion: '', celular: null })
       return
     }
     setModalComprobante(tipo)
@@ -907,15 +980,35 @@ export default function Ventas({ activo = true }) {
       p_codigo_cupon: esCupon && codigoCupon ? codigoCupon : null,
     })
 
-    setCobrando(false)
-
     if (error) {
+      setCobrando(false)
       setErrorCobro(error.message)
       return
     }
 
     const venta = Array.isArray(data) ? data[0] : data
-    setVentaConfirmada({ ...venta, comprobante })
+
+    // La venta ya está cobrada. Si pidió boleta/factura se registra ahora;
+    // `cobrando` sigue en true hasta terminar para que no se pueda cobrar dos veces
+    // el mismo carrito mientras viaja esta segunda llamada.
+    let comprobanteRegistrado = null
+    let errorComprobante = null
+    if (comprobante) {
+      const { data: numero, error: errorRpc } = await supabase.rpc('registrar_comprobante_venta', {
+        p_venta_id: venta.venta_id,
+        p_tipo: comprobante.tipo,
+        p_tipo_documento: comprobante.tipo === 'BOLETA' && comprobante.documento ? comprobante.tipoDocumento : null,
+        p_celular: celularComprobante,
+        p_documento: comprobante.documento || null,
+        p_nombre: comprobante.nombre || null,
+        p_direccion: comprobante.direccion || null,
+      })
+      if (errorRpc) errorComprobante = errorRpc.message
+      else comprobanteRegistrado = { ...comprobante, numero }
+    }
+    setCobrando(false)
+
+    setVentaConfirmada({ ...venta, comprobante: comprobanteRegistrado, errorComprobante })
 
     // B3 de la 4ª auditoría: se imprime con los items que devuelve el
     // servidor (venta.items — nombre/precio ya resueltos contra el
@@ -936,6 +1029,17 @@ export default function Ventas({ activo = true }) {
         monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
         monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
         clientes: cliente ? { nombre: cliente.nombre } : null,
+        comprobante_tipo: comprobanteRegistrado?.tipo ?? null,
+        comprobante_numero: comprobanteRegistrado?.numero ?? null,
+        comprobante_celular: comprobanteRegistrado ? celularComprobante : null,
+        comprobante_tipo_doc: comprobanteRegistrado?.documento
+          ? comprobanteRegistrado.tipo === 'FACTURA'
+            ? 'RUC'
+            : comprobanteRegistrado.tipoDocumento
+          : null,
+        comprobante_documento: comprobanteRegistrado?.documento || null,
+        comprobante_nombre: comprobanteRegistrado?.nombre || null,
+        comprobante_direccion: comprobanteRegistrado?.direccion || null,
       },
       items: (venta.items ?? []).map((item, indice) => ({ id: indice, ...item })),
     })
@@ -1521,52 +1625,60 @@ export default function Ventas({ activo = true }) {
               </div>
             </CampoColapsable>
 
-            {/* Boleta/Factura oculto a pedido (no eliminado): quitar `hidden` para volver a mostrarlo.
-                Mientras está oculto, `comprobante` queda en null y no bloquea el cobro. */}
-            <div className="mt-3 hidden">
+            {/* Boleta/Factura: no emite ante SUNAT. Guarda la solicitud en la venta
+                (registrar_comprobante_venta), imprime el documento en el ticket y la
+                admin exporta la lista desde Historial para que la contadora emita el legal. */}
+            <div className="mt-3">
               <p className="mb-1.5 text-xs text-ink">Comprobante</p>
               <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 {[
-                  { tipo: 'BOLETA', nombre: 'Boleta', Icono: Receipt },
-                  { tipo: 'FACTURA', nombre: 'Factura', Icono: ScrollText },
+                  { tipo: 'BOLETA', nombre: 'Boleta', Icono: Receipt, ayuda: AYUDA_BOLETA },
+                  { tipo: 'FACTURA', nombre: 'Factura', Icono: ScrollText, ayuda: AYUDA_FACTURA },
                 ].map((opcion) => (
-                  <button
-                    key={opcion.tipo}
-                    type="button"
-                    aria-pressed={comprobante?.tipo === opcion.tipo}
-                    onClick={() => elegirComprobante(opcion.tipo)}
-                    className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[11px] transition-colors sm:text-sm ${
-                      comprobante?.tipo === opcion.tipo
-                        ? 'border-amber bg-amber/10 text-amber'
-                        : 'border-border bg-bg text-ink hover:border-border-strong'
-                    }`}
-                  >
-                    <opcion.Icono className="h-4 w-4 shrink-0" />
-                    {opcion.nombre}
-                  </button>
+                  <div key={opcion.tipo} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      aria-pressed={comprobante?.tipo === opcion.tipo}
+                      onClick={() => elegirComprobante(opcion.tipo)}
+                      className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-[11px] transition-colors sm:text-sm ${
+                        comprobante?.tipo === opcion.tipo
+                          ? 'border-amber bg-amber/10 text-amber'
+                          : 'border-border bg-bg text-ink hover:border-border-strong'
+                      }`}
+                    >
+                      <opcion.Icono className="h-4 w-4 shrink-0" />
+                      {opcion.nombre}
+                    </button>
+                    <AyudaCampo etiqueta={`Ayuda sobre ${opcion.nombre.toLowerCase()}`} hacia="arriba">
+                      {opcion.ayuda}
+                    </AyudaCampo>
+                  </div>
                 ))}
               </div>
               {comprobante && (
                 <p className="mt-1.5 text-[11px] text-ink/60">
                   {comprobante.documento
-                    ? `${comprobante.tipo === 'FACTURA' ? 'RUC' : 'DNI'} ${comprobante.documento}${
+                    ? `${etiquetaDocumento(comprobante.tipo === 'FACTURA' ? 'RUC' : comprobante.tipoDocumento)} ${comprobante.documento}${
                         comprobante.nombre ? ` · ${comprobante.nombre}` : ''
                       }`
                     : boletaRequiereDni(total) || comprobante.tipo === 'FACTURA'
                       ? 'Sin datos del comprador.'
                       : ''}
-                  {!comprobanteCompleto(comprobante, total) && (
+                  {celularComprobante && ` · WhatsApp ${formatearCelular(celularComprobante)}`}
+                  {!comprobanteCompleto(comprobante, total, celularComprobante) && (
                     <span className="text-amber"> Faltan datos. </span>
                   )}{' '}
-                  {(comprobante.tipo === 'FACTURA' || boletaRequiereDni(total)) && (
-                    <button
-                      type="button"
-                      onClick={() => setModalComprobante(comprobante.tipo)}
-                      className="underline hover:text-amber"
-                    >
-                      {comprobanteCompleto(comprobante, total) ? 'Editar' : 'Completar'}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setModalComprobante(comprobante.tipo)}
+                    className="underline hover:text-amber"
+                  >
+                    {!comprobanteCompleto(comprobante, total, celularComprobante)
+                      ? 'Completar'
+                      : comprobante.documento || comprobante.nombre
+                        ? 'Editar'
+                        : 'Agregar datos'}
+                  </button>
                 </p>
               )}
             </div>
@@ -1670,6 +1782,7 @@ export default function Ventas({ activo = true }) {
           inicial={comprobante?.tipo === modalComprobante ? comprobante : null}
           total={total}
           dniObligatorio={modalComprobante === 'BOLETA' && boletaRequiereDni(total)}
+          celularCliente={celularCliente}
           onGuardar={(datos) => {
             setComprobante(datos)
             setModalComprobante(null)
@@ -1714,9 +1827,16 @@ export default function Ventas({ activo = true }) {
               {ventaConfirmada.codigo} · {formatearSoles(ventaConfirmada.total)}
             </p>
             {ventaConfirmada.comprobante && (
-              <p className="mt-2 text-xs text-amber">
-                {ventaConfirmada.comprobante.tipo === 'FACTURA' ? 'Factura' : 'Boleta'} pedida: aún no se emite a SUNAT
-                (falta conectar el proveedor).
+              <p className="mt-2 text-xs text-ink/70">
+                {nombreComprobante(ventaConfirmada.comprobante.tipo)}{' '}
+                <span className="font-mono text-amber">{ventaConfirmada.comprobante.numero}</span> registrada. Queda
+                pendiente de emitir por la contadora.
+              </p>
+            )}
+            {ventaConfirmada.errorComprobante && (
+              <p className="mt-2 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
+                La venta se cobró, pero no se pudo registrar el comprobante: {ventaConfirmada.errorComprobante} Regístralo
+                desde Historial.
               </p>
             )}
             <button

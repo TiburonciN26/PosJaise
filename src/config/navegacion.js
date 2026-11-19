@@ -30,6 +30,7 @@ import {
   Warehouse,
   Banknote,
   Truck,
+  CircleHelp,
 } from 'lucide-react'
 
 // Roles de personal: ADMINISTRADOR (todo), CAJERA (vende/cobra), ASISTENTE (citas + su panel de pagos),
@@ -96,6 +97,8 @@ export const secciones = [
   // Va después de Mi Panel a propósito: rutaInicialPara() toma la PRIMERA sección visible del rol, y la asistente y el
   // personal de apoyo deben seguir aterrizando en Mi Panel.
   { path: '/almacen', label: 'Almacén', icono: Warehouse, roles: ROLES_ALMACEN, tema: 'rosa' },
+  // Preguntas frecuentes (boleta, factura, contadora, IGV) para quien cobra. Mismos roles que Ventas.
+  { path: '/ayuda', label: 'Ayuda', icono: CircleHelp, roles: ROLES_CAJA },
   { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   // Cuentas de acceso del POS (alta, bloqueo, roles). Las fichas del equipo (perfil público) viven en Web → Equipo.
   { path: '/personal', label: 'Personal', icono: UserPlus, roles: ['ADMINISTRADOR'], tema: 'rosa' },
