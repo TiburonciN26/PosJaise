@@ -12,7 +12,6 @@ import {
   MapPin,
   StickyNote,
   IdCard,
-  Building2,
   Venus,
   Mars,
   Users,
@@ -55,7 +54,7 @@ import SeccionResenas from './SeccionResenas.jsx'
 import SeccionPedidos from './SeccionPedidos.jsx'
 
 const SELECT_PERFIL =
-  'id, nombre, telefono, sexo, direccion, cumpleanos, notas, foto_url, cliente_web_id, dni, ruc, razon_social, ' +
+  'id, nombre, telefono, sexo, direccion, cumpleanos, notas, foto_url, cliente_web_id, dni, ' +
   'codigo_referido, creado_en, clientes_web(email, creado_en, direcciones_cliente(id, etiqueta, direccion, referencia, predeterminada))'
 
 // `chico`: para valores de texto (fecha y hora, nombre de servicio) que no caben en el tamaño de una cifra.
@@ -276,9 +275,6 @@ export default function PerfilCliente({ clienteId, version, onVolver, onEditar, 
             <Dato icono={Cake} etiqueta="Cumpleaños" destacado>{cliente.cumpleanos && diaCorto(cliente.cumpleanos)}</Dato>
             <Dato icono={Hourglass} etiqueta="Edad">{anios != null && `${anios} ${anios === 1 ? 'año' : 'años'}`}</Dato>
             <Dato icono={IdCard} etiqueta="DNI" mono>{cliente.dni}</Dato>
-            <Dato icono={Building2} etiqueta="RUC / Razón social">
-              {(cliente.ruc || cliente.razon_social) && [cliente.ruc, cliente.razon_social].filter(Boolean).join(' · ')}
-            </Dato>
             <Dato icono={MapPin} etiqueta={direccionesWeb.length > 1 ? 'Direcciones' : 'Dirección'}>
               {direccionesWeb.length > 0
                 ? direccionesWeb.map((dir) => (
