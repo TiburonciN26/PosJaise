@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ArrowBigDown } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import IconoFlechaDesplegable from './IconoFlechaDesplegable.jsx'
 
 // Pestaña de la barra del header (solo escritorio: en móvil las pestañas viven en el drawer y la pantalla trae su propio selector)
 // que NO navega al pulsarla: palabra + flecha son un solo botón que abre la lista de subsecciones, y solo al elegir una se entra a
@@ -62,9 +62,9 @@ export default function MenuSeccionesPestana({ ruta, label, secciones, etiqueta 
         >
           {label}
         </span>
-        <ArrowBigDown
+        <IconoFlechaDesplegable
           aria-hidden="true"
-          className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''} ${
+          className={`h-3 w-3 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''} ${
             enPestana || abierto ? 'text-[#a9c6ec]' : 'text-white/60'
           }`}
         />

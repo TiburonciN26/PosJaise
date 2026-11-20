@@ -10,6 +10,11 @@ import { ToastProvider } from './context/ToastContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import AvisoActualizacionPWA from './components/AvisoActualizacionPWA.jsx'
 import { precargaTemprana } from './config/paginasCliente.js'
+import { instalarReporteDeErrores, opcionesDeRaiz } from './lib/reportarError.js'
+
+// Registro de errores en producción (lib/reportarError.js → tabla errores_cliente, la lee solo el admin). Se instala antes de
+// montar React para no perder un fallo temprano; los errores que atrapan los límites de React llegan por `opcionesDeRaiz`.
+instalarReporteDeErrores()
 
 // Visitante (o clienta que ya usó el portal en este navegador): el portal y la página de la URL empiezan a descargarse YA, en
 // paralelo con la lectura de la sesión, en vez de después (ver precargaTemprana). El POS no descarga nada de esto.
@@ -19,7 +24,7 @@ precargaTemprana()
 // global: un error que llegaba hasta ahí desmontaba también el aviso, y desaparecía el único botón «Actualizar» (el que respeta
 // el trabajo pendiente). Las pantallas y ventanas que se cargan aparte tienen además su propio límite local
 // (LimiteCargaDiferida): un fallo de descarga ya no llega a este nivel.
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById('root'), opcionesDeRaiz).render(
   <StrictMode>
     <ErrorBoundary>
       <ThemeProvider>

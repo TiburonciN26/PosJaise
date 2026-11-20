@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Minus, Pencil, Plus, Trash2, Warehouse } from 'lucide-react'
+import { Minus, Pencil, Plus, Trash2, Warehouse } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -23,6 +23,7 @@ import ModalDetalleArticuloAlmacen from '../components/ModalDetalleArticuloAlmac
 import HistorialArticuloAlmacen from '../components/HistorialArticuloAlmacen.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 // Almacén: cosas internas del negocio que NO se venden (agua para las trabajadoras, papel, guantes, limpieza…). Misma
 // estructura que Inventario, pero aparte de «productos». Migración 20261112000011_almacen:
@@ -416,9 +417,9 @@ export default function Almacen({ activo = true }) {
                         {esAdmin && (
                           <td className="px-3 py-2.5">
                             <div className="flex justify-end">
-                              <ArrowBigDown
+                              <IconoFlechaDesplegable
                                 aria-hidden="true"
-                                className={`h-4 w-4 transition-transform duration-300 ${
+                                className={`h-3 w-3 transition-transform duration-300 ${
                                   abierto ? 'rotate-180 text-purple-300' : 'text-ink/60'
                                 }`}
                               />

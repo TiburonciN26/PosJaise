@@ -89,12 +89,20 @@ td:first-child{width:32%;font-weight:bold;background:#f2f2f2}td:last-child{white
 <body><h1>Libro de Reclamaciones — Hoja de reclamación</h1><p class="sub">Ley N.º 29571, Código de Protección y Defensa del Consumidor</p>
 <table>${filas.map(([k, v]) => `<tr><td>${escaparHtml(k)}</td><td>${escaparHtml(v)}</td></tr>`).join('')}</table>
 <p class="pie">La formulación del reclamo no impide acudir a otras vías de solución de controversias ni es requisito previo para interponer una denuncia ante el INDECOPI.</p>
-<script>window.onload=function(){window.print()}</script></body></html>`
+</body></html>`
   const ventana = window.open('', '_blank')
   if (!ventana) return false
   ventana.document.open()
   ventana.document.write(html)
   ventana.document.close()
+  // Se imprime desde AQUÍ y no con un <script> dentro del HTML: la ventana nueva hereda la Content-Security-Policy de la
+  // app, que no permite scripts inline (cloudflare/_headers, scripts/lib/csp.mjs).
+  const imprimir = () => {
+    ventana.focus()
+    ventana.print()
+  }
+  if (ventana.document.readyState === 'complete') imprimir()
+  else ventana.addEventListener('load', imprimir, { once: true })
   return true
 }
 

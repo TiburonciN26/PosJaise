@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ArrowBigDown } from 'lucide-react'
 import { anioMesEnLima } from '../lib/fechas.js'
+import IconoFlechaDesplegable from './IconoFlechaDesplegable.jsx'
 
 // La clienta no usa "Personalizado" (poner dos fechas le resulta complicado):
 // se oculta, y "Este mes" pasa a ser un desplegable de meses (ver BotonMes).
@@ -104,7 +104,7 @@ function BotonMes({ filtro, onCambiarFiltro, personalizado, onCambiarPersonaliza
         }`}
       >
         <span className="truncate">{etiqueta}</span>
-        <ArrowBigDown size={12} className={`shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+        <IconoFlechaDesplegable className={`h-3 w-3 shrink-0 transition-transform ${abierto ? 'rotate-180' : ''}`} />
       </button>
       {abierto && (
         <ul

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Lock, Unlock, ArrowBigDown, Percent } from 'lucide-react'
+import { Lock, Unlock, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -10,6 +10,7 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import TextoDeslizante from '../components/TextoDeslizante.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 // QA-050: cuántas tarjetas se pintan a la vez. Los datos siguen COMPLETOS en memoria (lectura por bloques, QA-046) y la
 // búsqueda y el orden recorren todo el catálogo; solo el DOM se acota.
@@ -163,8 +164,8 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
         <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-medium ${colores.pill}`}>
           {asignados}/{total}
         </span>
-        <ArrowBigDown
-          className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+        <IconoFlechaDesplegable
+          className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
             abierto ? 'rotate-180' : ''
           }`}
         />

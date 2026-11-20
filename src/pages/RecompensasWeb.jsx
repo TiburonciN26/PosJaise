@@ -728,8 +728,8 @@ function FilaProteccion({ servicio, prot, valores, abierto, destacado, onAlterna
             El porcentaje de asistente es una ESTIMACIÓN que tú defines sobre el precio realmente cobrado en la atención:
             no consulta las comisiones reales y puede no cubrir una comisión real mayor. La protección total de un cupón es la
             suma de todo el carrito. Guardar con todo en 0 es una decisión explícita (el servicio admite neto 0).
-            «Sin configurar» no es cero: los cupones descuentan hasta el 50 % del precio. Esto no cambia Porcentajes,
-            comisiones ni pagos reales.
+            «Sin configurar» no es cero: los cupones descuentan hasta el 50 % del precio. Esto no cambia las comisiones
+            ni los pagos reales.
           </p>
           <div className="mt-3 flex gap-2">
             <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">

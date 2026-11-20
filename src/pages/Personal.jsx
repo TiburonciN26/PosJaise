@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowBigDown, Filter, KeyRound, Lock, LockOpen, Pencil, Plus, Users } from 'lucide-react'
+import { AlertTriangle, Filter, KeyRound, Lock, LockOpen, Pencil, Plus, Users } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
@@ -25,6 +25,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import ModalPersonal from '../components/ModalPersonal.jsx'
 import ModalClavePersonal from '../components/ModalClavePersonal.jsx'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 // Filtro de rol (antes una fila de chips): va en el ícono de embudo junto al buscador.
 const OPCIONES_ROL = [{ id: 'todos', label: 'Todos los roles' }, ...ROLES_PERSONAL.map(({ id, label }) => ({ id, label }))]
@@ -271,8 +272,8 @@ export default function Personal({ activo = true }) {
                     >
                       {bloqueada ? 'Bloqueada' : 'Activa'}
                     </span>
-                    <ArrowBigDown
-                      className={`ml-0.5 h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                    <IconoFlechaDesplegable
+                      className={`ml-0.5 h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                         abierta ? 'rotate-180' : ''
                       }`}
                     />

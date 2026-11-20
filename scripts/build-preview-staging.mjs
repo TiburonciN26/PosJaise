@@ -15,6 +15,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, rmSync, copyFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { escanearTextoSalida, validarSupabase, REF_PRODUCCION, REF_STAGING } from './lib/entornos-supabase.mjs'
+import { agregarCspAHeaders } from './lib/csp.mjs'
 
 const PROYECTO_PAGES = 'pos-jaise-preview'
 const argv = process.argv.slice(2)
@@ -59,6 +60,8 @@ copyFileSync(resolve('cloudflare/_headers'), join(salida, '_headers'))
 // (Pages ya añade X-Robots-Tag: noindex a *.pages.dev, esto es solo cinturón y tirantes en el mismo archivo)
 const headers = readFileSync(join(salida, '_headers'), 'utf8') + '\n/*\n  X-Robots-Tag: noindex, nofollow\n'
 writeFileSync(join(salida, '_headers'), headers)
+// Misma CSP que producción, con los orígenes de staging (scripts/lib/csp.mjs).
+agregarCspAHeaders(salida, { ...process.env, ...env })
 
 // Verificación del artefacto
 function archivos(d) { return readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? archivos(join(d, e.name)) : [join(d, e.name)])) }

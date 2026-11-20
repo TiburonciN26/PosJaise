@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { PlusCircle, Pencil, Trash2, Ban, Package, ArrowBigDown, ShieldCheck } from 'lucide-react'
+import { PlusCircle, Pencil, Trash2, Ban, Package, ShieldCheck } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
@@ -9,13 +9,14 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const TABLA_LABELS = {
   usuarios: 'Usuarios',
   asistentes: 'Asistentes',
   productos: 'Productos',
   servicios: 'Servicios',
-  porcentajes: 'Porcentajes',
+  porcentajes: 'Comisiones',
   gastos: 'Gastos',
   gastos_recurrentes: 'Plantillas de gasto',
   clientes: 'Clientes',
@@ -409,8 +410,8 @@ export default function Auditoria({ activo = true }) {
                         </span>
                       </div>
                     </div>
-                    <ArrowBigDown
-                      className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                    <IconoFlechaDesplegable
+                      className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                         abierto ? 'rotate-180' : ''
                       }`}
                     />

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Download, FileText, Filter, History, MessageCircle, Upload } from 'lucide-react'
+import { Download, FileText, Filter, History, MessageCircle, Upload } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -29,6 +29,7 @@ import {
   normalizarCelular,
 } from '../lib/comprobante.js'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'fecha-desc', label: 'Más recientes primero' },
@@ -1435,8 +1436,8 @@ export default function Historial({ activo = true }) {
                       >
                         {venta.metodo_pago}
                       </span>
-                      <ArrowBigDown
-                        className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                      <IconoFlechaDesplegable
+                        className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                           abierto ? 'rotate-180' : ''
                         }`}
                       />
@@ -1551,8 +1552,8 @@ export default function Historial({ activo = true }) {
                           {formatearSoles(venta.total)}
                         </td>
                         <td className="px-3 py-2.5 text-right">
-                          <ArrowBigDown
-                            className={`ml-auto h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                          <IconoFlechaDesplegable
+                            className={`ml-auto h-3 w-3 text-ink/60 transition-transform duration-300 ${
                               abierto ? 'rotate-180' : ''
                             }`}
                           />

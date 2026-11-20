@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { ArrowBigDown, CircleHelp } from 'lucide-react'
+import { CircleHelp } from 'lucide-react'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { UMBRAL_DNI_BOLETA } from '../lib/comprobante.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 // Preguntas frecuentes de quien cobra y no maneja el tema de comprobantes. Cada respuesta es una lista de párrafos
 // (texto plano, para poder buscar en ellos); un párrafo que empieza con «• » se muestra como viñeta.
@@ -181,8 +182,8 @@ function Pregunta({ item, abierta, onAlternar }) {
         <span className={`text-sm font-medium transition-colors duration-300 ${abierta ? 'text-amber' : 'text-ink'}`}>
           {item.pregunta}
         </span>
-        <ArrowBigDown
-          className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${abierta ? 'rotate-180' : ''}`}
+        <IconoFlechaDesplegable
+          className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${abierta ? 'rotate-180' : ''}`}
         />
       </button>
       <CampoColapsable abierto={abierta}>

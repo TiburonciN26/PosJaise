@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  ArrowBigDown,
   Eye,
   EyeOff,
   Search,
@@ -49,6 +48,7 @@ import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 import ModalColoresCitas from '../components/ModalColoresCitas.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 import { colorDeCita, estiloTarjetaCita } from '../lib/coloresCitas.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const DIAS_CORTOS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
 const MESES = [
@@ -680,8 +680,8 @@ export default function Citas({ activo = true }) {
                 className="flex w-full items-center gap-1 truncate rounded-lg px-2 py-1.5 text-sm font-medium capitalize text-ink hover:bg-surface-2"
               >
                 <span className="truncate">{tituloRango}</span>
-                <ArrowBigDown
-                  className={`h-3.5 w-3.5 shrink-0 text-ink/50 transition-transform duration-300 ${
+                <IconoFlechaDesplegable
+                  className={`h-3 w-3 shrink-0 text-ink/50 transition-transform duration-300 ${
                     mesAbierto ? 'rotate-180' : ''
                   }`}
                 />
@@ -768,7 +768,7 @@ export default function Citas({ activo = true }) {
                 className="flex max-w-28 items-center gap-1 truncate rounded-lg border border-border bg-surface-2 px-2 py-1.5 text-xs text-ink outline-none focus:border-purple-300"
               >
                 <span className="truncate">{nombreFiltroActual}</span>
-                <ArrowBigDown
+                <IconoFlechaDesplegable
                   className={`h-3 w-3 shrink-0 text-ink/50 transition-transform duration-300 ${
                     filtroAbierto ? 'rotate-180' : ''
                   }`}

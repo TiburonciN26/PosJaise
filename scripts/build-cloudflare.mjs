@@ -12,6 +12,7 @@ import { copyFileSync, existsSync, readFileSync, readdirSync, rmSync, writeFileS
 import { join, resolve } from 'node:path'
 import { swExcluyeMedios } from './lib/sw-medios.mjs'
 import { entornoDeCloudflare, escanearTextoSalida, validarSupabase, REF_PRODUCCION, REF_STAGING } from './lib/entornos-supabase.mjs'
+import { agregarCspAHeaders, NOMBRE_CABECERA } from './lib/csp.mjs'
 
 const falla = (m) => { console.error('build-cloudflare: ' + m); process.exit(1) }
 const salida = resolve(process.env.CF_OUT_DIR ?? 'dist')
@@ -31,6 +32,26 @@ if (process.env.CF_PAGES) {
 // Solo para las pruebas de las salvaguardas: valida y sale ANTES de iniciar Vite.
 if (process.argv.includes('--solo-validar')) { console.log('validación OK (--solo-validar: no se compila)'); process.exit(0) }
 
+// Puerta de despliegue (auditoría global 2026-11-20, hallazgo 18.1). Cloudflare Pages ejecuta ESTE script en cada push,
+// así que si el lint o los tests autónomos fallan, no hay build y no se publica nada: queda la versión anterior.
+// Corre siempre en Cloudflare (CF_PAGES) y en local con --verificar (`npm run verificar`): el mismo camino en los dos.
+// Vía de escape para un arreglo urgente con un test roto: variable SALTAR_VERIFICACION=1 en el entorno de Pages
+// (Settings → Variables), y quitarla en cuanto se arregle el test. Queda impreso en el log del build.
+if (process.env.CF_PAGES || process.argv.includes('--verificar')) {
+  if (process.env.SALTAR_VERIFICACION === '1') {
+    console.warn('build-cloudflare: ⚠ SALTAR_VERIFICACION=1 — se publica SIN lint ni tests. Quitar la variable cuanto antes.')
+  } else {
+    for (const [nombre, args] of [
+      ['lint (oxlint)', [resolve('node_modules/oxlint/bin/oxlint')]],
+      ['tests autónomos (npm test)', [resolve('scripts/probar-unitarios.mjs')]],
+    ]) {
+      console.log(`build-cloudflare: verificando — ${nombre}`)
+      const v = spawnSync(process.execPath, args, { stdio: 'inherit' })
+      if (v.status !== 0) falla(`${nombre} falló: NO se compila ni se publica. Corrige y vuelve a hacer push (o ver SALTAR_VERIFICACION arriba).`)
+    }
+  }
+}
+
 const vite = resolve('node_modules/vite/bin/vite.js')
 const r = spawnSync(process.execPath, [vite, 'build', '--outDir', salida, '--emptyOutDir'], {
   stdio: 'inherit',
@@ -40,6 +61,13 @@ if (r.status !== 0) process.exit(r.status ?? 1)
 
 rmSync(resolve(salida, '404.html'), { force: true })
 copyFileSync(resolve('cloudflare/_headers'), resolve(salida, '_headers'))
+// CSP (scripts/lib/csp.mjs): orígenes de ESTE build (los mismos VITE_* que leyó Vite: .env + entorno, el entorno manda)
+// y hashes de los scripts inline del index.html ya compilado.
+{
+  const { loadEnv } = await import('vite')
+  const politica = agregarCspAHeaders(salida, loadEnv('production', process.cwd(), 'VITE_'))
+  console.log(`build-cloudflare: ${NOMBRE_CABECERA} (${politica.length} caracteres)`)
+}
 // Entrega de medios por Pages Functions (functions/medios*): SOLO /medios y /medios/* invocan Functions; el resto
 // (SPA, assets, sw.js) sigue siendo estático. Debe estar en la SALIDA (dist), no en la raíz del repo.
 writeFileSync(resolve(salida, '_routes.json'), JSON.stringify({ version: 1, include: ['/medios', '/medios/*'], exclude: [] }, null, 2) + '\n')

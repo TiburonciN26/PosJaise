@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, Plus, Package, ArrowBigDown, ImageOff, ZoomIn, Barcode, Printer } from 'lucide-react'
+import { Pencil, Trash2, Plus, Package, ImageOff, ZoomIn, Barcode, Printer } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -29,6 +29,7 @@ import EstadoVacio from '../components/EstadoVacio.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 // «Últimos agregados»: lo más reciente primero, sea una ficha nueva o una existente a la que se le sumó stock
 // (`ultimo_ingreso` de productos_vista, migración 20261112000013). Es el orden por defecto.
@@ -457,8 +458,8 @@ export default function Inventario({ activo = true }) {
                       aria-label={abierto ? 'Contraer' : 'Expandir'}
                       className="shrink-0 p-1.5"
                     >
-                      <ArrowBigDown
-                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
+                      <IconoFlechaDesplegable
+                        className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
                       />
                     </button>
                   </div>

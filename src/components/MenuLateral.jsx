@@ -1,28 +1,38 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ArrowBigDown, Smile } from 'lucide-react'
+import { Smile } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { secciones } from '../config/navegacion.js'
 import IconoMartillo from './IconoMartillo.jsx'
+import IconoFlechaDesplegable from './IconoFlechaDesplegable.jsx'
 import { actualizarMetaDesdeMenu, useMetaCumplida } from '../lib/metaDashboard.js'
+import { usePantallaAncha } from '../hooks/usePantallaAncha.js'
 
-function clasesFila(seccion, isActive, opacidadRosaInactiva, opacidadRojoInactiva) {
-  const esRosa = seccion.tema === 'rosa'
-  const esRojo = seccion.tema === 'azul-metal'
-  if (esRojo) {
-    return isActive
-      ? 'border-azul-metal bg-surface-2 text-azul-metal'
-      : `border-transparent ${opacidadRojoInactiva} hover:bg-surface-2 hover:text-azul-metal`
-  }
-  if (esRosa) {
-    return isActive
-      ? 'border-purple-300 bg-surface-2 text-purple-300'
-      : `border-transparent ${opacidadRosaInactiva} hover:bg-surface-2 hover:text-purple-300`
-  }
-  return isActive
-    ? 'border-amber bg-surface-2 text-amber'
-    : 'border-transparent text-ink/70 hover:bg-surface-2 hover:text-ink'
+// Color de cada pestaña (`tema` en config/navegacion.js; sin `tema` = ámbar). Clases escritas
+// enteras para que Tailwind las encuentre. `inactivo` trae dos opacidades: en claro un poco más fuerte, porque el
+// acento a 70% quedaba poco legible sobre el fondo claro (en oscuro se deja como estaba).
+const ACENTOS = {
+  ambar: {
+    activo: 'border-amber bg-surface-2 text-amber',
+    inactivo: { oscuro: 'text-ink/70', claro: 'text-ink/70' },
+    hover: 'hover:bg-surface-2 hover:text-ink',
+  },
+  rosa: {
+    activo: 'border-purple-300 bg-surface-2 text-purple-300',
+    inactivo: { oscuro: 'text-purple-300/70', claro: 'text-purple-300/90' },
+    hover: 'hover:bg-surface-2 hover:text-purple-300',
+  },
+  'azul-metal': {
+    activo: 'border-azul-metal bg-surface-2 text-azul-metal',
+    inactivo: { oscuro: 'text-azul-metal/70', claro: 'text-azul-metal/90' },
+    hover: 'hover:bg-surface-2 hover:text-azul-metal',
+  },
+}
+
+function clasesFila(seccion, isActive, tema) {
+  const acento = ACENTOS[seccion.tema] ?? ACENTOS.ambar
+  return isActive ? acento.activo : `border-transparent ${acento.inactivo[tema] ?? acento.inactivo.oscuro} ${acento.hover}`
 }
 
 // Meta del Dashboard cumplida: el ícono de «Dashboard» se pinta con este
@@ -31,10 +41,13 @@ function clasesFila(seccion, isActive, opacidadRosaInactiva, opacidadRojoInactiv
 // barra del Punto de equilibrio.
 const ID_DEGRADADO_AURORA = 'degradado-aurora-menu'
 const COLORES_AURORA = ['#d8b4fe', '#ed8bac', '#ffd9a0', '#8ff0ab', '#9ad1ff', '#d8b4fe']
+// En tema claro los pastel no se leen sobre blanco: mismos matices oscurecidos (igual que .texto-aurora en index.css).
+const COLORES_AURORA_CLARO = ['#7c3aed', '#c2456b', '#b45309', '#15803d', '#2563eb', '#7c3aed']
 
 // `animar` = el menú está abierto. Cerrado, el cajón sigue montado fuera de pantalla: sin esto el degradado se seguía
 // desplazando en bucle (repintando el ícono) detrás de cualquier pestaña.
-function DegradadoAurora({ animar }) {
+function DegradadoAurora({ animar, claro }) {
+  const colores = claro ? COLORES_AURORA_CLARO : COLORES_AURORA
   const sinMovimiento =
     !animar ||
     (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
@@ -50,8 +63,8 @@ function DegradadoAurora({ animar }) {
           y2="0"
           spreadMethod="repeat"
         >
-          {COLORES_AURORA.map((color, indice) => (
-            <stop key={indice} offset={indice / (COLORES_AURORA.length - 1)} stopColor={color} />
+          {colores.map((color, indice) => (
+            <stop key={indice} offset={indice / (colores.length - 1)} stopColor={color} />
           ))}
           {!sinMovimiento && (
             <animateTransform
@@ -110,9 +123,13 @@ function CaritaMetaMenu() {
   )
 }
 
-export default function MenuLateral({ abierto, onCerrar }) {
+// Tablets y PC (md+): el menú es una columna FIJA a la izquierda, siempre visible, sin fondo oscuro ni hamburguesa.
+// Móvil: cajón que se desliza sobre el contenido (abierto/onCerrar, con el fondo oscuro para cerrarlo).
+export default function MenuLateral({ abierto: abiertoMovil, onCerrar }) {
   const { rol } = useAuth()
   const { tema } = useTheme()
+  const fijo = usePantallaAncha()
+  const abierto = abiertoMovil || fijo
   // Con la meta del Dashboard cumplida, la palabra «Dashboard» brilla con los
   // colores de la aurora (sin borde; .texto-aurora en index.css).
   const metaCumplida = useMetaCumplida()
@@ -149,37 +166,41 @@ export default function MenuLateral({ abierto, onCerrar }) {
     })
   }
 
-  // En claro, el rosa pastel a 70% quedaba poco legible sobre el fondo
-  // claro — un poco más de opacidad, solo acá (pestañas inactivas del
-  // menú lateral) y solo en este tema; en oscuro se deja como estaba.
-  const opacidadRosaInactiva = tema === 'claro' ? 'text-purple-300/90' : 'text-purple-300/70'
-  const opacidadRojoInactiva = tema === 'claro' ? 'text-azul-metal/90' : 'text-azul-metal/70'
-
   return (
     <div
-      className={`absolute inset-0 z-20 ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`}
+      className={
+        fijo
+          ? 'relative h-full w-48 shrink-0'
+          : `absolute inset-0 z-20 ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`
+      }
       aria-hidden={!abierto}
     >
-      <button
-        type="button"
-        aria-label="Cerrar menú"
-        tabIndex={abierto ? 0 : -1}
-        onClick={onCerrar}
-        className={`absolute inset-0 bg-black/35 transition-opacity duration-300 ease-in-out ${
-          abierto ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-      />
+      {!fijo && (
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          tabIndex={abierto ? 0 : -1}
+          onClick={onCerrar}
+          className={`absolute inset-0 bg-black/35 transition-opacity duration-300 ease-in-out ${
+            abierto ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
+        />
+      )}
 
       <nav
-        className={`absolute inset-y-0 left-0 flex w-48 flex-col overflow-y-auto overscroll-contain border-r border-border bg-bg py-3 transition-transform duration-300 ease-in-out ${
-          abierto
-            ? 'translate-x-0 shadow-[4px_0_16px_rgba(0,0,0,0.45)]'
-            : 'menu-lateral-quieto -translate-x-full pointer-events-none'
+        className={`absolute inset-y-0 left-0 flex w-48 flex-col overflow-y-auto overscroll-contain border-r border-border bg-bg py-3 ${
+          fijo
+            ? ''
+            : `transition-transform duration-300 ease-in-out ${
+                abierto
+                  ? 'translate-x-0 shadow-[4px_0_16px_rgba(0,0,0,0.45)]'
+                  : 'menu-lateral-quieto -translate-x-full pointer-events-none'
+              }`
         }`}
       >
         {/* El brillo de la meta siempre está; solo se anima con el menú abierto (.menu-lateral-quieto en index.css
             corta las animaciones y, al abrir, arrancan desde el principio: la carita y el confeti salen enseguida). */}
-        {metaCumplida && <DegradadoAurora animar={abierto} />}
+        {metaCumplida && <DegradadoAurora animar={abierto} claro={tema === 'claro'} />}
         {seccionesTop.map((seccion) => {
           const hijos = seccionesVisibles.filter((otra) => otra.padre === seccion.path)
           const tieneHijos = hijos.length > 0
@@ -195,11 +216,12 @@ export default function MenuLateral({ abierto, onCerrar }) {
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 border-l-2 py-2.5 pl-4 text-sm transition-colors duration-150 ${
                       tieneHijos ? 'pr-9' : 'pr-4'
-                    } ${clasesFila(seccion, isActive, opacidadRosaInactiva, opacidadRojoInactiva)}`
+                    } ${clasesFila(seccion, isActive, tema)}`
                   }
                 >
                   {seccion.animado ? (
-                    <IconoMartillo animando={abierto} className="h-4 w-4 shrink-0" />
+                    // En la columna fija no martilla en bucle (estaría siempre a la vista): solo en el cajón móvil.
+                    <IconoMartillo animando={abiertoMovil && !fijo} className="h-4 w-4 shrink-0" />
                   ) : metaCumplida && seccion.path === '/dashboard' ? (
                     <seccion.icono
                       color={`url(#${ID_DEGRADADO_AURORA})`}
@@ -227,31 +249,41 @@ export default function MenuLateral({ abierto, onCerrar }) {
                     tabIndex={abierto ? 0 : -1}
                     className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-ink/40 transition-colors hover:text-ink"
                   >
-                    <ArrowBigDown
-                      className={`h-3.5 w-3.5 transition-transform duration-300 ${
-                        expandido ? 'rotate-180' : ''
-                      }`}
+                    <IconoFlechaDesplegable
+                      className={`h-3 w-3 transition-transform duration-300 ${expandido ? 'rotate-180' : ''}`}
                     />
                   </button>
                 )}
               </div>
 
-              {tieneHijos &&
-                expandido &&
-                hijos.map((hijo) => (
-                  <NavLink
-                    key={hijo.path}
-                    to={hijo.path}
-                    tabIndex={abierto ? 0 : -1}
-                    onClick={onCerrar}
-                    className={({ isActive }) =>
-                      `flex items-center gap-2.5 border-l-2 py-2.5 pl-8 pr-4 text-sm transition-colors duration-150 ${clasesFila(hijo, isActive, opacidadRosaInactiva, opacidadRojoInactiva)}`
-                    }
-                  >
-                    <hijo.icono className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{hijo.label}</span>
-                  </NavLink>
-                ))}
+              {/* Subpestañas: siempre montadas y animadas por alto (grid-rows 0fr ↔ 1fr) + fundido, así se deslizan
+                  al abrir Y al cerrar (antes aparecían/desaparecían de golpe). Cerradas: fuera del Tab y del lector. */}
+              {tieneHijos && (
+                <div
+                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out motion-reduce:transition-none ${
+                    expandido ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  }`}
+                  aria-hidden={!expandido}
+                  inert={!expandido}
+                >
+                  <div className="min-h-0 overflow-hidden">
+                    {hijos.map((hijo) => (
+                      <NavLink
+                        key={hijo.path}
+                        to={hijo.path}
+                        tabIndex={abierto && expandido ? 0 : -1}
+                        onClick={onCerrar}
+                        className={({ isActive }) =>
+                          `flex items-center gap-2.5 border-l-2 py-2.5 pl-8 pr-4 text-sm transition-colors duration-150 ${clasesFila(hijo, isActive, tema)}`
+                        }
+                      >
+                        <hijo.icono className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{hijo.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}

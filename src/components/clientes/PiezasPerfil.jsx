@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { ArrowBigDown, Globe, UserRound } from 'lucide-react'
+import { Globe, UserRound } from 'lucide-react'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
 import CampoColapsable from '../CampoColapsable.jsx'
+import IconoFlechaDesplegable from '../IconoFlechaDesplegable.jsx'
 
 // Piezas compartidas por la lista de Clientes (tabla de PC y tarjetas del celular) y el perfil de cada clienta.
 
@@ -101,8 +102,8 @@ export function SeccionPerfil({ icono: Icono, titulo, contador, children, abiert
         {contador != null && (
           <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 font-mono text-xs text-ink/70">{contador}</span>
         )}
-        <ArrowBigDown
-          className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${abierta ? 'rotate-180' : ''}`}
+        <IconoFlechaDesplegable
+          className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${abierta ? 'rotate-180' : ''}`}
         />
       </button>
       <CampoColapsable abierto={abierta}>

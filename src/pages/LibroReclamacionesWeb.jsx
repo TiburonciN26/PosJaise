@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, BookOpen } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { useToast } from '../context/ToastContext.jsx'
@@ -9,6 +9,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   day: 'numeric',
@@ -227,8 +228,8 @@ export default function LibroReclamacionesWeb({ activo = true }) {
                   >
                     {reclamo.estado === 'ATENDIDO' ? 'Atendido' : vencido ? 'Plazo vencido' : 'Pendiente'}
                   </span>
-                  <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                  <IconoFlechaDesplegable
+                    className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                       abierto ? 'rotate-180' : ''
                     }`}
                   />

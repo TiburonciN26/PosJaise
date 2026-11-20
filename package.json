@@ -9,6 +9,8 @@
     "build": "vite build",
     "build:cloudflare": "node scripts/build-cloudflare.mjs",
     "lint": "oxlint",
+    "test": "node scripts/probar-unitarios.mjs",
+    "verificar": "node scripts/build-cloudflare.mjs --verificar",
     "preview": "vite preview"
   },
   "dependencies": {

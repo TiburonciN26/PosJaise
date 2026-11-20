@@ -7943,3 +7943,99 @@ Para volver a los datos de prueba: `-DesdeRespaldo <carpeta>`. Probado en Local 
 ## 94. POS: el tema claro/oscuro sale del menú de perfil al encabezado — 2026-11-20
 
 El interruptor de tema, que ocupaba todo el ancho dentro del menú de usuario, ahora es un botón compacto en el encabezado (`Header.jsx`), a la izquierda de la campana. Muestra el icono del tema actual (sol o luna) junto a su nombre, "Claro" u "Oscuro"; en móvil (menos de 640 px) solo el icono. `SwitchTema` ya no tiene la opción `anchoCompleto`, que solo usaba el POS; el portal de clientas sigue usando la píldora dentro de su menú. No necesita migración.
+
+## 95. POS: menú lateral fijo en tablets y PC y pestañas reordenadas — 2026-11-20
+
+**Menú fijo.** Desde 768 px (`md`: tablets y PC), el menú lateral es una columna fija a la izquierda, siempre visible. No hay fondo oscuro ni botón hamburguesa, y el contenido ocupa el resto del ancho (`Layout.jsx` en fila). En móvil sigue siendo el cajón de siempre. El hook `usePantallaAncha.js` decide entre los dos modos. En la columna fija, el martillo de "Web" no se anima en bucle.
+
+**Orden.** Es el orden original con estos movimientos pedidos: Clientes (con Deudas) pasa debajo de Servicios, Citas debajo de Clientes, Dashboard debajo de Mi Panel, Mobiliario debajo de Almacén, Comisiones encima de Mobiliario, Estadísticas y Auditoría encima de Personal, Personal encima de Web y Ayuda al final. Además, tres pestañas pasan a ser subpestañas: Mobiliario dentro de Almacén (las dos son cosas internas que no se venden), Estadísticas dentro de Dashboard (las dos son reportes) y Comisiones dentro de Personal (los % se asignan por asistente). Queda así: Ventas, Historial, Inventario (con Proveedores), Servicios, Clientes (con Deudas), Citas, Mi Panel, Dashboard (con Estadísticas), Gastos, Caja chica, Almacén (con Mobiliario), Chanchito, Auditoría, Personal (con Comisiones), Web y Ayuda. Los colores siguen siendo los de siempre (ámbar, rosa y azul metálico de Web). Se probaron otro orden y colores por grupo, pero se descartaron. En `MenuLateral.jsx`, los colores salen ahora de la tabla `ACENTOS` (uno por `tema`) en lugar de los `if` de antes, con el mismo resultado.
+
+**Pestaña de entrada por rol.** La fija `INICIO_POR_ROL` en `navegacion.js`: Ventas para ADMINISTRADOR, CAJERA y ENCARGADA; Mi Panel para ASISTENTE y PERSONAL_APOYO. Antes la decidía la primera pestaña visible, y eso ataba el orden del menú.
+
+**"Porcentajes" pasa a llamarse "Comisiones"** en el menú y en los textos que remiten a esa pestaña: Personal, Mi Panel, Auditoría y Recompensas. La ruta sigue siendo `/porcentajes`. No necesita migración.
+
+## 96. Flecha nueva para todos los desplegables, y "Dashboard" legible en tema claro — 2026-11-20
+
+**Flecha.** Los 44 desplegables y acordeones del POS y del portal (32 archivos) dejan de usar la `ArrowBigDown` de lucide (la flecha con colita) y pasan a `IconoFlechaDesplegable`. Es el chevron relleno que eligió la dueña, `public/icons/nuevaFlecha.svg`. Va en línea con `currentColor`, así que sigue al tema y al hover. Mide 12×12 en todos lados: antes había tamaños de 12, 14, 16 y 20 px. Se mantiene el giro de 180° al abrir. Se probó primero en Inventario del menú lateral y se descartó una punta triangular antes de elegir este diseño. La convención quedó actualizada en CLAUDE.md.
+
+**Dashboard en tema claro.** Con la meta cumplida, la palabra y el icono de Dashboard del menú brillan con un degradado "aurora" de pastel, que casi no se veía sobre blanco. En claro, ahora usa los mismos matices oscurecidos (violeta, rosa, ámbar, verde y azul, cada uno legible sobre blanco) y un resplandor más tenue (`index.css` y `COLORES_AURORA_CLARO` en `MenuLateral.jsx`). En oscuro no cambia nada.
+
+## 97. Subpestañas animadas, nombre en el botón de descuento y Transferencia legible en tema claro — 2026-11-20
+
+- **Menú lateral:** las subpestañas (las de Inventario, Clientes, Dashboard, Almacén, Personal y Web) se deslizan al abrir y al cerrar: transición de alto `grid-rows` 0fr ↔ 1fr con fundido, en 300 ms. Antes aparecían de golpe. Cerradas siguen montadas, pero quedan fuera del Tab y del lector de pantalla (`inert`).
+- **Ventas, botón de descuento** (alterna entre %, S/ y cupón): en PC (`lg+`) muestra a la izquierda del ícono "Descuento" para % y S/, y "Cupón" para cupón. En móvil y tablet sigue siendo solo el ícono.
+- **Transferencia en tema claro:** el ícono de los botones de pago se invertía siempre a blanco y en claro no se veía. Ahora lo hace la clase `.icono-transferencia`: blanco atenuado en oscuro y gris oscuro en claro. Su acento `gray-300`, usado como texto (botón seleccionado en Ventas, etiqueta en Historial), pasa en claro a `#4b5563`.
+
+## 98. Seguridad: cabeceras anti-iframe, Storage sin listado anónimo y con límites, y dependencias al día — 2026-11-20
+
+Primeros arreglos de la auditoría global (`docs/auditorias/auditoria-global-2026-11-20.md`, hallazgos 7.1, 7.2, 7.3 y 7.6).
+
+- **Dependencias:** `npm audit fix` sube `react-router-dom` 7.18.1 → 7.18.6 y `vite` 8.1.3 → 8.3.8, sin cambio de versión mayor. Las dependencias de producción quedan con 0 vulnerabilidades. Siguen 7 moderadas en `shadcn` (`ts-morph`), que es solo de desarrollo y pide un cambio de mayor; se dejaron.
+- **Cabeceras (`cloudflare/_headers`):** `X-Frame-Options: DENY` y `Content-Security-Policy: frame-ancestors 'none'` (ningún sitio ajeno puede cargar el POS en un iframe para engañar un clic), HSTS sin `includeSubDomains` y `Permissions-Policy` (cámara y micrófono solo para el propio origen, sin geolocalización ni USB). Esa CSP **solo** trae `frame-ancestors`: no restringe scripts ni conexiones. La CSP completa sigue pendiente (primero en Report-Only). Se probó en Chromium que el `<iframe srcdoc>` con el que `lib/codigoBarras.js` imprime etiquetas sigue cargando.
+- **Migración `20261120000001_endurecer_storage_y_descripcion_fila.sql`:**
+  - Límite de 5 MB y solo `image/webp|jpeg|png` en los 7 buckets públicos de fotos y en los 2 de comprobantes que sube la clienta. Antes una clienta con sesión podía alojar HTML, SVG o archivos de cualquier tamaño en el dominio de Supabase del proyecto.
+  - La política SELECT de los buckets públicos ya no es para `anon`. Solo servía para **listar** el bucket con la anon key; ver una foto por su URL pública no pasa por RLS. Ahora cada SELECT tiene la misma condición que el DELETE del bucket (admin o carpeta propia), porque Storage exige SELECT además de DELETE para `remove()`.
+  - `descripcion_de_fila()` ya no es ejecutable por `anon`/`authenticated`: devolvía el nombre de una clienta o asistente a partir de un UUID sin sesión. Solo la llama el trigger `registrar_auditoria()` (security definer), que sigue funcionando.
+  - Verificado en Local contra la API real: anon lista 0 archivos en buckets que sí tienen fotos, la RPC da 401, una admin y una clienta suben y **borran** su foto, la clienta no ve carpetas ajenas, y se rechazan `text/html`, `image/svg+xml` y 6 MB.
+
+## 99. `npm test`, `npm run verificar` y CI en GitHub Actions — 2026-11-20
+
+Auditoría global, hallazgo 18.1: había 129 archivos de tests, pero ningún script `test` ni CI, así que cada push a `main` se publicaba sin probar nada.
+
+- **`npm test`** (`scripts/probar-unitarios.mjs`) corre con `node --test` los 12 tests **autónomos** de `tests/e2e/`: lógica pura y componentes renderizados con SSR, sin base de datos, navegador ni contraseñas. Hoy son 102 casos en ~8 s. La lista es explícita a propósito: los otros 16 `*.test.mjs` exigen la rama `testing` y Supabase Local y en `main` fallan siempre. Un test autónomo nuevo hay que agregarlo a esa lista.
+- **`npm run verificar`** = lint + test + `build:cloudflare`. Es lo mismo que corre **`.github/workflows/verificar.yml`** en cada push o PR a `main`, sin secretos. Se probó en una copia limpia del repo (sin `.env`, `npm ci` desde cero): pasa. **No detiene la publicación de Cloudflare**, que compila cada push en paralelo: un ✗ avisa, nada más. Para que bloquee hay dos caminos: exigir este check en la protección de `main` y trabajar con PR, o usar `npm run verificar` como comando de build de Pages.
+- **Tests que estaban desactualizados (no eran regresiones):** al correrlos, 3 de los autónomos fallaban porque la app cambió a propósito y nadie los actualizó.
+  - `niveles-visuales` y `tarjetas-cupon-niveles`: desde `0c035b1` las promociones se llaman «Oferta» (rubí) y bienvenida/referido/fidelización «Especial» (verde). Además la tarjeta (`EnvolturaCupon`) expone el nivel en `data-categoria` y la atenuación en `data-apagada`, ya no en `cupon-n-*` / `opacity-50`.
+  - `destino-login`: comparaba el **orden** del menú, que cambió en §95. Ahora compara el conjunto de rutas por rol (ENCARGADA suma Caja chica, Almacén y Ayuda; PERSONAL_APOYO suma Almacén, como hicieron `eadaf1f` y `c24696c`) y comprueba que ENCARGADA no tenga ninguna pantalla exclusiva del administrador.
+- **Git Bash en Windows:** abre el repo como `c:\` (unidad en minúscula) y entonces `tarjetas-cupon-niveles` cargaba React dos veces («reading 'useState'»). `probar-unitarios.mjs` normaliza la unidad.
+- **Lint:** `.oxlintrc.json` ignora `.codex/`, `dist*/` y `.wrangler/` (evidencia y salidas, no código de la app).
+- `CLAUDE.md` ya no dice que no hay tests ni CI.
+
+## 100. Registro de errores de la app en producción (tabla `errores_cliente`) — 2026-11-20
+
+Auditoría global, hallazgo 20.1: los errores solo llegaban al `console.error` del navegador de quien los sufría.
+
+- **Por qué tabla propia y no Sentry:** no hace falta cuenta ni DSN, ningún dato sale a un tercero y es gratis. Si algún día se quiere Sentry, solo cambia `src/lib/reportarError.js`.
+- **Migración `20261120000002_errores_cliente.sql`:**
+  - Tabla `errores_cliente`, que solo lee y borra el administrador (RLS con `es_admin()`).
+  - RPC `registrar_error_cliente(jsonb)` (security definer), ejecutable por anon y authenticated, porque el portal público también falla. Agrupa el mismo error dentro de 1 hora (`veces`, `fecha_ultima`) y tiene topes de 300 errores nuevos cada 10 min en total y 30 por usuario: pasado el tope descarta en silencio.
+  - Tacha en el servidor correos, secuencias de 8 o más dígitos (DNI, teléfono, tarjeta) y JWT, y guarda la ruta sin `?` ni `#`.
+  - `pg_cron` `purgar-errores-cliente` (05:15 UTC) borra lo que lleva más de 30 días sin repetirse.
+- **Frontend:** `instalarReporteDeErrores()` (eventos `error` y `unhandledrejection` de `window`) y `opcionesDeRaiz` en `createRoot` (`onCaughtError`/`onUncaughtError` de React 19). Así llega todo lo que atrapan `ErrorBoundary` y cada `LimiteCargaDiferida` sin tocarlos. Reglas:
+  - nunca lanza;
+  - sin red no envía (el POS offline es esperable);
+  - máximo 10 envíos por carga y cada error una sola vez;
+  - ignora extensiones, «Script error.», `ResizeObserver loop` y `AbortError`;
+  - en `npm run dev` no envía salvo con `VITE_REPORTAR_ERRORES_DEV=1`.
+  
+  Cada error lleva versión (`VITE_BUILD_ID`, el commit que pone `build-cloudflare`), árbol (`pos`/`portal`), navegador y usuario/rol. Para un error capturado a mano: `reportarError(error, { origen: 'manual' })`.
+- **Dónde verlos:** por ahora en Supabase Studio, tabla `errores_cliente` (ordenar por `fecha_ultima`). Una pestaña en el POS queda como siguiente paso opcional.
+- **Verificado en Local:**
+  - SQL con todo revertido: anon escribe por la RPC pero no lee ni inserta directo; la cajera no lee y la admin sí; se probaron el tachado, la agrupación y los dos topes.
+  - E2E en Chromium contra Vite: un error global (con el correo tachado), una promesa rechazada con un error tipo Supabase, y una pantalla cuya descarga falla (llega como `carga` con la pila de componentes, y el aviso «Reintentar» sigue visible). El ruido y la repetición no se envían.
+
+## 101. Un test roto detiene la publicación en Cloudflare — 2026-11-20
+
+Sigue a §99: la CI de GitHub avisaba, pero Cloudflare Pages publicaba igual, porque compila cada push por su cuenta.
+
+- **`scripts/build-cloudflare.mjs`** corre ahora **oxlint + `npm test` antes de compilar** cuando está en Cloudflare (`CF_PAGES`) o con `--verificar`. Si algo falla, aborta sin generar `dist`: no hay nada que publicar y queda la versión anterior. Se eligió esto, y no la protección de `main` con PR ni el cambio del comando de build en el panel, porque no cambia la forma de trabajar (push directo a `main`), no toca la configuración de Cloudflare y queda versionado en el repo. Suma unos 10 s al build.
+- **Vía de escape** para un arreglo urgente con un test roto: la variable `SALTAR_VERIFICACION=1` en el entorno de Pages. El build lo avisa con ⚠ en el log. Hay que quitarla en cuanto se arregle.
+- **`npm run verificar`** es ahora `node scripts/build-cloudflare.mjs --verificar`, el mismo camino que Cloudflare. La CI de GitHub lo usa igual, para dejar el ✓/✗ visible en cada commit.
+- **Consecuencia práctica:** si un cambio intencional de interfaz o de comportamiento rompe un test autónomo, el test se actualiza **en el mismo commit**, o no se publica.
+- **Verificado:** pasa con el repo actual. En una copia con un test roto aborta con código 1 y sin `dist`. Con `SALTAR_VERIFICACION=1` avisa y compila. `probar-salvaguardas-entornos.mjs` sigue en 43/43 (`--solo-validar` sale antes de la verificación). El lockfile incluye los binarios Linux de oxlint y rolldown que usa el build de Pages.
+
+## 102. Content-Security-Policy completa, en modo «solo aviso» — 2026-11-20
+
+Auditoría global, hallazgo 7.1 (segunda parte; la protección anti-iframe ya era obligatoria desde §98).
+
+- **`scripts/lib/csp.mjs`** genera la política **al compilar**. `build-cloudflare.mjs` y `build-preview-staging.mjs` la agregan al bloque `/*` de `dist/_headers`. Se genera y no se escribe a mano porque:
+  - los orígenes de Supabase (https y wss para Realtime) y de medios R2 salen del entorno de **ese** build;
+  - los dos scripts inline de `index.html` (tema y precarga del hero) se permiten por hash SHA-256 calculado del HTML ya compilado.
+  
+  Política: `default-src 'self'`; scripts del propio origen + hashes + Culqi; sin `unsafe-inline` ni `unsafe-eval` en scripts; `style-src 'unsafe-inline'` (React usa `style={{…}}`); `img-src`/`connect-src` con Supabase y medios; `frame-src` Google Maps y Culqi; `object-src 'none'`, `base-uri`/`form-action 'self'`, `frame-ancestors 'none'`. Unos 600 caracteres (Cloudflare admite 2000 por línea; el build falla si se pasa).
+- **Modo actual: `Content-Security-Policy-Report-Only`.** No bloquea nada. `reportarError.js` escucha `securitypolicyviolation` y manda cada aviso a `errores_cliente` con origen `csp` (migración `20261120000003`, que suma `csp` a los orígenes aceptados), sin `?` ni `#` en la URL bloqueada. Para activarla de verdad se cambia `MODO = 'bloquear'` en `csp.mjs`, después de un tiempo sin avisos legítimos en producción.
+- **Bug encontrado al probar:** los hashes no coincidían porque `index.html` tiene CRLF y el parser HTML los convierte en LF antes de que el navegador calcule el hash. En modo bloqueo eso habría apagado el tema sin parpadeo y la precarga del hero. Se normaliza y hay un test para ese caso.
+- **Libro de Reclamaciones:** la hoja imprimible ya no lleva `<script>window.print()</script>` inline (la ventana nueva hereda la CSP): la imprime la ventana que la abre.
+- **Tests:** `tests/e2e/csp.test.mjs` (7 casos, en `npm test` y por tanto en la puerta de despliegue). Cubre orígenes del entorno, build sin variables, que nunca aparezcan `unsafe-inline`/`eval` en scripts, CRLF, y que una CSP escrita a mano en `_headers` haga fallar el build.
+- **Verificado en Chromium** con `dist/` servido con las cabeceras generadas: portal sin sesión (Inicio, Servicios, Productos, Nosotros bajando hasta el mapa, Login) y POS con admin (Ventas, Historial, Inventario, Citas, Dashboard), en modo aviso **y forzando la política como obligatoria**: 0 avisos y 0 errores de JS. Una violación provocada llegó a `errores_cliente` sin el token de la consulta.
+- **No ejercitado en Local:** el checkout de Culqi (cuenta sin validar) y los medios R2 (sin `VITE_MEDIOS_*` en Local). Son justo lo que el modo aviso debe vigilar en producción antes de activar el bloqueo.

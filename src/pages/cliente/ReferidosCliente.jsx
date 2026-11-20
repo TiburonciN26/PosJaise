@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowBigDown, Check, Copy, Gift, MessageCircle, UserCircle, Users } from 'lucide-react'
+import { Check, Copy, Gift, MessageCircle, UserCircle, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatearSoles } from '../../lib/moneda.js'
@@ -8,6 +8,7 @@ import { formatearFechaCupon } from '../../lib/cupones.js'
 import { useCuponesNuevos } from '../../hooks/useCuponesNuevos.js'
 import TarjetaCupon from '../../components/TarjetaCupon.jsx'
 import CampoColapsable from '../../components/CampoColapsable.jsx'
+import IconoFlechaDesplegable from '../../components/IconoFlechaDesplegable.jsx'
 
 // Orígenes propios de Referidos — Fidelización tiene los suyos
 // (§7.58) y su propio historial en FidelizacionCliente.jsx, no se
@@ -215,7 +216,7 @@ export default function ReferidosCliente() {
               className="mt-3 flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white"
             >
               Ver historial
-              <ArrowBigDown
+              <IconoFlechaDesplegable
                 className={`h-3 w-3 transition-transform duration-300 ${historialAbierto ? 'rotate-180' : ''}`}
               />
             </button>

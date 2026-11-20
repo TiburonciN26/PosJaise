@@ -45,6 +45,9 @@ const ROLES_CITAS = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA']
 // (migración 20261112000011_almacen).
 const ROLES_ALMACEN = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO']
 
+// Orden del menú lateral: el original, con los movimientos pedidos el 20/11/2026 (implementacionesWed.md §95).
+// Las hijas (`padre`) van justo después de su madre: si el rol no ve a la
+// madre, la hija aparece suelta en ese lugar. El orden ya NO decide a qué pestaña entra cada rol (INICIO_POR_ROL, abajo).
 export const secciones = [
   { path: '/ventas', label: 'Ventas', icono: ShoppingCart, roles: ROLES_CAJA },
   { path: '/historial', label: 'Historial', icono: History, roles: ROLES_CAJA },
@@ -52,29 +55,6 @@ export const secciones = [
   // Registro de proveedores (20261112000014): solo la administradora; en el menú lateral se revela al desplegar Inventario.
   { path: '/proveedores', label: 'Proveedores', icono: Truck, roles: ['ADMINISTRADOR'], padre: '/inventario' },
   { path: '/servicios', label: 'Servicios', icono: Scissors, roles: ROLES_CAJA },
-  {
-    path: '/dashboard',
-    label: 'Dashboard',
-    icono: LayoutDashboard,
-    roles: ['ADMINISTRADOR'],
-    tema: 'rosa',
-  },
-  {
-    path: '/mi-panel',
-    label: 'Mi Panel',
-    icono: UserCircle,
-    roles: ROLES_PANEL,
-    tema: 'rosa',
-  },
-  {
-    path: '/citas',
-    label: 'Citas',
-    icono: CalendarClock,
-    roles: ROLES_CITAS,
-    tema: 'rosa',
-  },
-  { path: '/estadisticas', label: 'Estadísticas', icono: BarChart3, roles: ['ADMINISTRADOR'], tema: 'rosa' },
-  { path: '/auditoria', label: 'Auditoría', icono: ShieldCheck, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   { path: '/clientes', label: 'Clientes', icono: Users, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   {
     path: '/deudas',
@@ -84,31 +64,46 @@ export const secciones = [
     // (migración 20261112000001_deudas_notas_cobro).
     roles: ROLES_CAJA,
     tema: 'rosa',
-    // Netamente ligada a Clientes: en el menú lateral (móvil) no aparece
-    // como pestaña suelta, solo se revela al desplegar Clientes (ver
-    // MenuLateral.jsx). En el nav de escritorio (Header.jsx) sí aparece
-    // como una pestaña más — esa barra no tiene jerarquía de submenús.
+    // Netamente ligada a Clientes: en el menú lateral no aparece como pestaña suelta, solo se revela al desplegar
+    // Clientes (ver MenuLateral.jsx). La cajera, que no ve Clientes, la ve suelta.
     padre: '/clientes',
   },
-  { path: '/porcentajes', label: 'Porcentajes', icono: Percent, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/citas', label: 'Citas', icono: CalendarClock, roles: ROLES_CITAS, tema: 'rosa' },
+  { path: '/mi-panel', label: 'Mi Panel', icono: UserCircle, roles: ROLES_PANEL, tema: 'rosa' },
+  { path: '/dashboard', label: 'Dashboard', icono: LayoutDashboard, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  {
+    path: '/estadisticas',
+    label: 'Estadísticas',
+    icono: BarChart3,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rosa',
+    padre: '/dashboard',
+  },
   { path: '/gastos', label: 'Gastos', icono: Wallet, roles: ROLES_CAJA, tema: 'rosa' },
   // Fondo fijo en efectivo para gastos menores (20261112000012): los mismos roles que manejan Gastos / Ventas.
   { path: '/caja-chica', label: 'Caja chica', icono: Banknote, roles: ROLES_CAJA, tema: 'rosa' },
-  // Va después de Mi Panel a propósito: rutaInicialPara() toma la PRIMERA sección visible del rol, y la asistente y el
-  // personal de apoyo deben seguir aterrizando en Mi Panel.
   { path: '/almacen', label: 'Almacén', icono: Warehouse, roles: ROLES_ALMACEN, tema: 'rosa' },
-  { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
-  // Cuentas de acceso del POS (alta, bloqueo, roles). Las fichas del equipo (perfil público) viven en Web → Equipo.
-  { path: '/personal', label: 'Personal', icono: UserPlus, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   {
     path: '/mobiliario',
     label: 'Mobiliario',
     icono: Armchair,
     roles: ['ADMINISTRADOR'],
     tema: 'rosa',
+    padre: '/almacen',
   },
-  // Preguntas frecuentes (boleta, factura, contadora, IGV) para quien cobra. Mismos roles que Ventas.
-  { path: '/ayuda', label: 'Ayuda', icono: CircleHelp, roles: ROLES_CAJA },
+  { path: '/chanchito', label: 'Chanchito', icono: PiggyBank, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  { path: '/auditoria', label: 'Auditoría', icono: ShieldCheck, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  // Cuentas de acceso del POS (alta, bloqueo, roles). Las fichas del equipo (perfil público) viven en Web → Equipo.
+  { path: '/personal', label: 'Personal', icono: UserPlus, roles: ['ADMINISTRADOR'], tema: 'rosa' },
+  // El % de comisión de cada asistente por servicio (la ruta sigue siendo /porcentajes). Cuelga de Personal.
+  {
+    path: '/porcentajes',
+    label: 'Comisiones',
+    icono: Percent,
+    roles: ['ADMINISTRADOR'],
+    tema: 'rosa',
+    padre: '/personal',
+  },
   {
     // Admin-only a propósito (antes también la veían Cajera/Asistente):
     // esta pestaña pasa a ser el panel administrativo de la pestaña Web
@@ -234,15 +229,24 @@ export const secciones = [
     tema: 'azul-metal',
     padre: '/web',
   },
+
+  // Al final: preguntas frecuentes (boleta, factura, contadora, IGV) para quien cobra. Mismos roles que Ventas.
+  { path: '/ayuda', label: 'Ayuda', icono: CircleHelp, roles: ROLES_CAJA },
 ]
 
-// Ruta de aterrizaje por rol — antes App.jsx/PestanasCacheadas.jsx tenían
-// "/ventas" fijo a mano en dos lugares. Bug real: Ventas es
-// ADMINISTRADOR/CAJERA (ver arriba), así que una ASISTENTE (que no está
-// en esa lista) caía en un fallback que la mandaba... de vuelta a
-// "/ventas" — pantalla negra permanente, nunca llegaba a ver nada. Se
-// usa el primer ítem de `secciones` (en su orden real) que el rol SÍ
-// puede ver — para ASISTENTE, eso es "/mi-panel", tal como debía ser.
+// Pestaña a la que entra cada rol al iniciar sesión. Antes salía de "la primera sección visible" y eso ataba el orden
+// del menú (la asistente debía ver Mi Panel antes que Citas). Bug histórico que esto sigue evitando: una ASISTENTE no
+// ve Ventas, y un "/ventas" fijo la dejaba en pantalla negra para siempre.
+const INICIO_POR_ROL = {
+  ADMINISTRADOR: '/ventas',
+  CAJERA: '/ventas',
+  ENCARGADA: '/ventas',
+  ASISTENTE: '/mi-panel',
+  PERSONAL_APOYO: '/mi-panel',
+}
+
 export function rutaInicialPara(rol) {
+  const fija = INICIO_POR_ROL[rol]
+  if (fija && secciones.some((seccion) => seccion.path === fija && seccion.roles.includes(rol))) return fija
   return secciones.find((seccion) => seccion.roles.includes(rol))?.path ?? '/ventas'
 }

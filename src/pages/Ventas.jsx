@@ -1300,12 +1300,14 @@ export default function Ventas({ activo = true }) {
                     : 'Descuento por monto fijo — cambiar a cupón'
               }
               title="Cambiar tipo de descuento"
-              className={`flex shrink-0 items-center justify-center rounded-lg border p-1.5 transition-colors ${
+              className={`flex shrink-0 items-center justify-center gap-1 rounded-lg border p-1.5 transition-colors lg:px-2 ${
                 valorDescuento || codigoCupon
                   ? 'border-red/50 text-red'
                   : 'border-border-strong text-ink/70 hover:border-red'
               }`}
             >
+              {/* Solo en PC (lg+): el nombre a la izquierda del ícono. En móvil/tablet queda solo el ícono. */}
+              <span className="hidden text-xs leading-none lg:inline">{esCupon ? 'Cupón' : 'Descuento'}</span>
               {esDescuentoPorcentaje ? (
                 <Percent className="h-3.5 w-3.5" />
               ) : esCupon ? (
@@ -1509,12 +1511,12 @@ export default function Ventas({ activo = true }) {
                       {metodo.nombre === 'Tarjeta' ? (
                         <span className="shrink-0 text-sm leading-none">💳</span>
                       ) : (
+                        // Transferencia: su SVG es negro; .icono-transferencia (index.css) lo pinta claro en oscuro y
+                        // oscuro en claro (antes se invertía siempre y en tema claro no se veía).
                         <img
                           src={metodo.icono}
                           alt=""
-                          className={`h-4 w-4 shrink-0 ${
-                            metodo.nombre === 'Transferencia' ? 'opacity-80 brightness-0 invert' : ''
-                          }`}
+                          className={`h-4 w-4 shrink-0 ${metodo.nombre === 'Transferencia' ? 'icono-transferencia' : ''}`}
                         />
                       )}
                       <span className="sm:hidden">{metodo.nombreCorto}</span>

@@ -1,4 +1,4 @@
-import { ArrowBigDown } from 'lucide-react'
+import IconoFlechaDesplegable from './IconoFlechaDesplegable.jsx'
 
 // Paginador de las listas administrativas (Fase 5). Siempre informa el TOTAL del servidor para el filtro vigente («41–80 de 429
 // pedidos»), así el contador no depende de cuántas filas caben en la página; los botones aparecen solo si hay más de una página.
@@ -18,13 +18,13 @@ export default function PaginadorLista({ pagina, totalPaginas, total, tam, ocupa
             <span aria-hidden="true" className="text-sm font-semibold">«</span>
           </button>
           <button type="button" onClick={() => onPagina(pagina - 1)} disabled={pagina <= 1 || ocupado} aria-label="Página anterior" className={clase}>
-            <ArrowBigDown className="h-4 w-4 rotate-90" />
+            <IconoFlechaDesplegable className="h-3 w-3 rotate-90" />
           </button>
           <span className="min-w-[110px] text-center text-sm text-ink" aria-live="polite">
             Página <b className="font-semibold">{pagina}</b> de {totalPaginas}
           </span>
           <button type="button" onClick={() => onPagina(pagina + 1)} disabled={pagina >= totalPaginas || ocupado} aria-label="Página siguiente" className={clase}>
-            <ArrowBigDown className="h-4 w-4 -rotate-90" />
+            <IconoFlechaDesplegable className="h-3 w-3 -rotate-90" />
           </button>
           <button type="button" onClick={() => onPagina(totalPaginas)} disabled={pagina >= totalPaginas || ocupado} aria-label="Última página" className={clase}>
             <span aria-hidden="true" className="text-sm font-semibold">»</span>

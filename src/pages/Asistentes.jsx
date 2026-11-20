@@ -11,7 +11,6 @@ import {
   CalendarDays,
   KeyRound,
   MessageCircle,
-  ArrowBigDown,
   UserCog,
   Crown,
   Globe,
@@ -31,6 +30,7 @@ import ModalAsistente from '../components/ModalAsistente.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const CAMPOS_OPCIONALES = [
   'telefono',
@@ -354,8 +354,8 @@ export default function Asistentes({ activo = true }) {
                       aria-label={abierto ? 'Contraer' : 'Expandir'}
                       className="p-1.5"
                     >
-                      <ArrowBigDown
-                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                      <IconoFlechaDesplegable
+                        className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
                           abierto ? 'rotate-180' : ''
                         }`}
                       />

@@ -1,5 +1,4 @@
 import { useId, useRef, useState } from 'react'
-import { ArrowBigDown } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useModalA11y } from '../hooks/useModalA11y.js'
@@ -15,6 +14,7 @@ import Etiqueta from './Etiqueta.jsx'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
 import CampoColapsable from './CampoColapsable.jsx'
 import ModalConfirmarDescarte from './ModalConfirmarDescarte.jsx'
+import IconoFlechaDesplegable from './IconoFlechaDesplegable.jsx'
 
 const CLASE_CAMPO =
   'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber'
@@ -145,7 +145,7 @@ export default function ModalProveedor({ proveedor = null, nombreInicial = '', o
             aria-expanded={mostrarMas}
             className="flex items-center gap-1 text-xs text-ink/60 transition-colors hover:text-amber"
           >
-            <ArrowBigDown className={`h-3.5 w-3.5 transition-transform duration-300 ${mostrarMas ? 'rotate-180' : ''}`} />
+            <IconoFlechaDesplegable className={`h-3 w-3 transition-transform duration-300 ${mostrarMas ? 'rotate-180' : ''}`} />
             Más datos del proveedor
           </button>
           <CampoColapsable abierto={mostrarMas} diferido>

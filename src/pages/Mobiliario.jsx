@@ -3,7 +3,6 @@ import {
   Pencil,
   Trash2,
   Plus,
-  ArrowBigDown,
   Armchair,
   MapPin,
   Ruler,
@@ -34,6 +33,7 @@ import ModalCompraMobiliario from '../components/ModalCompraMobiliario.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const CAMPOS_OPCIONALES = [
   'marca',
@@ -410,8 +410,8 @@ export default function Mobiliario({ activo = true }) {
                     aria-label={abierto ? 'Contraer' : 'Expandir'}
                     className="shrink-0 p-1.5"
                   >
-                    <ArrowBigDown
-                      className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                    <IconoFlechaDesplegable
+                      className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
                         abierto ? 'rotate-180' : ''
                       }`}
                     />

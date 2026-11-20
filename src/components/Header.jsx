@@ -29,12 +29,13 @@ export default function Header({ menuAbierto, onToggleMenu }) {
     <header className="tema-negro-fondo border-b border-border bg-surface">
       <div className="flex items-center justify-between gap-4 px-4 py-[7px]">
         <div className="flex min-w-0 items-center">
+          {/* md+ (tablets y PC): el menú lateral queda fijo (MenuLateral.jsx), la hamburguesa sobra. */}
           <button
             type="button"
             onClick={onToggleMenu}
             aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={menuAbierto}
-            className={`-ml-[7px] shrink-0 p-2.5 transition-colors duration-150 ${
+            className={`-ml-[7px] shrink-0 p-2.5 transition-colors duration-150 md:hidden ${
               menuAbierto ? colorHamburguesaAbierta : 'text-ink'
             }`}
           >

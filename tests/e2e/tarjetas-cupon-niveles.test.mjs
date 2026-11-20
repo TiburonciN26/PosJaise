@@ -30,10 +30,13 @@ const cupon = (extra) => ({
   codigo: 'TEST01', origen: 'RECOMPENSA_MONEDAS', nivel_minimo: 'BASICO', valor: 5, tipo_descuento: 'MONTO_FIJO',
   estado: 'DISPONIBLE', creado_en: '2026-10-01T12:00:00Z', ...extra,
 });
-const nivelesEn = (c) => renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: c })).match(/cupon-n-(plata|oro|diamante|rubi|verde)\b/g);
+// La tarjeta (EnvolturaCupon) expone el nivel en data-categoria del <article class="cpi">: plata/oro/diamante, «oferta»
+// (promociones, rubí) o «especial» (bienvenida/referido/fidelización, verde). Antes era la clase cupon-n-*.
+const nivelesEn = (c) =>
+  [...renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: c })).matchAll(/data-categoria="(plata|oro|diamante|oferta|especial)"/g)].map((m) => m[1]);
 
 describe('QA-064 · la tarjeta de cupón usa el nivel de negocio, no el valor del descuento', () => {
-  const ESPERADO = { BASICO: 'cupon-n-plata', PREMIUM: 'cupon-n-oro', VIP: 'cupon-n-diamante' };
+  const ESPERADO = { BASICO: 'plata', PREMIUM: 'oro', VIP: 'diamante' };
 
   test('premios por monedas y por sellos: BASICO→Plata, PREMIUM→Oro, VIP→Diamante, con cualquier valor o tipo de descuento', () => {
     for (const origen of ['RECOMPENSA_MONEDAS', 'RECOMPENSA_SELLOS']) {
@@ -45,30 +48,30 @@ describe('QA-064 · la tarjeta de cupón usa el nivel de negocio, no el valor de
     }
   });
 
-  test('el cupón de una promoción por fechas es Especial (rubí), con cualquier valor, y no depende del nivel', () => {
+  test('el cupón de una promoción por fechas es Oferta (rubí), con cualquier valor, y no depende del nivel', () => {
     for (const valor of [1, 20, 500]) {
       for (const nivel of Object.keys(ESPERADO)) {
-        assert.deepEqual(nivelesEn(cupon({ origen: 'PROMOCION', nivel_minimo: nivel, valor })), ['cupon-n-rubi']);
+        assert.deepEqual(nivelesEn(cupon({ origen: 'PROMOCION', nivel_minimo: nivel, valor })), ['oferta']);
       }
     }
   });
 
-  test('bienvenida, referido y fidelización: acabado VERDE propio, con cualquier valor y nivel', () => {
+  test('bienvenida, referido y fidelización: categoría Especial (acabado verde), con cualquier valor y nivel', () => {
     for (const origen of ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION']) {
-      assert.deepEqual(nivelesEn(cupon({ origen, valor: 50, tipo_descuento: 'PORCENTAJE' })), ['cupon-n-verde'], origen);
-      assert.deepEqual(nivelesEn(cupon({ origen, valor: 1 })), ['cupon-n-verde'], origen);
+      assert.deepEqual(nivelesEn(cupon({ origen, valor: 50, tipo_descuento: 'PORCENTAJE' })), ['especial'], origen);
+      assert.deepEqual(nivelesEn(cupon({ origen, valor: 1 })), ['especial'], origen);
     }
   });
 
   test('un cupón vencido o ya canjeado conserva su nivel (solo se atenúa)', () => {
     const html = renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: cupon({ nivel_minimo: 'VIP', estado: 'CANJEADO' }) }));
-    assert.match(html, /cupon-n-diamante/);
-    assert.match(html, /opacity-50/);
+    assert.match(html, /data-categoria="diamante"/);
+    assert.match(html, /data-apagada="true"/);
   });
 
   test('el rótulo de la tarjeta dice el mismo nivel que su color', () => {
     for (const [nivel, nombre] of [['BASICO', 'Plata'], ['PREMIUM', 'Oro'], ['VIP', 'Diamante']]) {
-      assert.match(renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: cupon({ nivel_minimo: nivel }) })), new RegExp(`· ${nombre}<`));
+      assert.match(renderToStaticMarkup(React.createElement(TarjetaCupon, { cupon: cupon({ nivel_minimo: nivel }) })), new RegExp(`Cupón ${nombre}<`));
     }
   });
 });
@@ -88,16 +91,16 @@ describe('QA-078 · la tarjeta de cupón y el vencimiento', () => {
   });
 
   test('vencido sin usar: dice «Vencido», conserva nivel y se atenúa, y NO ofrece «Mostrar en caja»', () => {
-    for (const [nivel, clase] of [['BASICO', 'cupon-n-plata'], ['PREMIUM', 'cupon-n-oro'], ['VIP', 'cupon-n-diamante']]) {
+    for (const [nivel, categoria] of [['BASICO', 'plata'], ['PREMIUM', 'oro'], ['VIP', 'diamante']]) {
       const h = html(cupon({ nivel_minimo: nivel, vigente_hasta: VENCIDO, vencido: true }));
       assert.match(h, />Vencido</);
-      assert.match(h, new RegExp(clase));
-      assert.match(h, /opacity-50/);
+      assert.match(h, new RegExp(`data-categoria="${categoria}"`));
+      assert.match(h, /data-apagada="true"/);
       assert.doesNotMatch(h, /Mostrar en caja|Muéstralo en caja/);
     }
     for (const origen of ['PROMOCION', 'REFERIDO_BIENVENIDA', 'FIDELIZACION']) {
       const h = html(cupon({ origen, vigente_hasta: VENCIDO, vencido: true }));
-      assert.match(h, /cupon-n-(rubi|verde)/);
+      assert.match(h, /data-categoria="(oferta|especial)"/);
       assert.doesNotMatch(h, /Mostrar en caja/);
     }
   });

@@ -7,7 +7,6 @@ import {
   Trash2,
   Ban,
   Plus,
-  ArrowBigDown,
   User,
   Users,
   Clock,
@@ -36,6 +35,7 @@ import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const OPCION_TODOS = 'todos'
 const TAMANO_PAGINA = 50
@@ -633,7 +633,7 @@ export default function MiPanel({ activo = true }) {
           <NotebookPen className="h-4 w-4 shrink-0 text-amber" />
           <span>
             {esAdmin
-              ? `${cuantas(pendientesEsperando.length)} sin % asignado. Asígnalo en Porcentajes para que la puedan confirmar. ${avisoEsperandoAbierto ? 'Ocultar' : 'Ver'}`
+              ? `${cuantas(pendientesEsperando.length)} sin % asignado. Asígnalo en Comisiones para que la puedan confirmar. ${avisoEsperandoAbierto ? 'Ocultar' : 'Ver'}`
               : `${cuantas(pendientesEsperando.length)} pendiente${pendientesEsperando.length === 1 ? '' : 's'} de comisión: esperando que el administrador asigne tu porcentaje. ${avisoEsperandoAbierto ? 'Ocultar' : 'Ver'}`}
           </span>
         </button>
@@ -717,8 +717,8 @@ export default function MiPanel({ activo = true }) {
                   <span className="shrink-0 font-mono text-sm text-purple-300">
                     {formatearSoles(totalDia)}
                   </span>
-                  <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 transition-[transform,color] duration-300 ${
+                  <IconoFlechaDesplegable
+                    className={`h-3 w-3 shrink-0 transition-[transform,color] duration-300 ${
                       abierto ? 'rotate-180 text-purple-300' : 'text-ink/60'
                     }`}
                   />
@@ -816,8 +816,8 @@ export default function MiPanel({ activo = true }) {
                                     {formatearSoles(montoDeRegistro(registro, esAdmin && !filtroEsAsistente))}
                                   </span>
                                 )}
-                                <ArrowBigDown
-                                  className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                                <IconoFlechaDesplegable
+                                  className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
                                     registroAbierto ? 'rotate-180' : ''
                                   }`}
                                 />
@@ -857,7 +857,7 @@ export default function MiPanel({ activo = true }) {
                                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                                     {esPropio
                                       ? 'Pendiente de comisión — no cuenta en tus totales hasta que el administrador asigne tu % y la confirmes.'
-                                      : `Sin % asignado. Asígnalo en Porcentajes; después ${nombreDuena} la confirma.`}
+                                      : `Sin % asignado. Asígnalo en Comisiones; después ${nombreDuena} la confirma.`}
                                   </div>
                                 ))}
 

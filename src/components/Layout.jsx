@@ -31,12 +31,14 @@ export default function Layout({ children }) {
         />
 
         {/* relative + overflow-hidden: alto fijo (viewport - header), el scroll
-            del contenido va dentro de <main>, así el drawer nunca se estira */}
-        <div className="relative flex-1 overflow-hidden">
-          <main className="h-full overflow-y-auto">
+            del contenido va dentro de <main>, así el drawer nunca se estira.
+            md+ (tablets y PC): fila con el menú fijo a la izquierda y el contenido al lado;
+            en móvil el menú es un cajón absoluto encima del contenido. */}
+        <div className="relative flex flex-1 overflow-hidden">
+          <MenuLateral abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
+          <main className="h-full min-w-0 flex-1 overflow-y-auto">
             {children ?? <Outlet />}
           </main>
-          <MenuLateral abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
         </div>
       </div>
 

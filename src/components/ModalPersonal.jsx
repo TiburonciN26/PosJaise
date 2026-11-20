@@ -159,7 +159,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
           {llevaFicha && (
             <p className="mt-3 rounded-lg border border-purple-300/30 bg-purple-300/10 px-3 py-2 text-xs text-ink/80">
               Su ficha ya está creada. Para que pueda registrar servicios, asígnale su % de comisión por
-              servicio en la pestaña <strong>Porcentajes</strong>; mientras tanto solo podrá anotarlos como
+              servicio en la pestaña <strong>Comisiones</strong>; mientras tanto solo podrá anotarlos como
               pendientes.
             </p>
           )}
@@ -322,7 +322,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
 
             {esEdicion && ROLES_CON_FICHA.includes(rol) && !ROLES_CON_FICHA.includes(persona.rol) && (
               <p className="rounded-lg border border-purple-300/30 bg-purple-300/10 px-3 py-2 text-xs text-ink/80">
-                Al guardar se le crea su ficha de asistente. Recuerda asignarle sus % en Porcentajes.
+                Al guardar se le crea su ficha de asistente. Recuerda asignarle sus % en Comisiones.
               </p>
             )}
           </div>

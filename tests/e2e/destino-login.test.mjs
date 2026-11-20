@@ -34,8 +34,14 @@ test('resolverDestino personal: solo pantallas del POS que su rol puede abrir; s
 
 test('resolverDestino ENCARGADA (cajera + asistente): ve ventas y su panel, nunca lo de admin', async () => {
   const { secciones } = await import('../../src/config/navegacion.js');
-  const rutasEncargada = secciones.filter((s) => s.roles.includes('ENCARGADA')).map((s) => s.path);
-  assert.deepEqual(rutasEncargada, ['/ventas', '/inventario', '/historial', '/servicios', '/mi-panel', '/citas', '/deudas', '/gastos']);
+  // Conjunto, no orden: el orden del menú es diseño y cambia (§95 de implementacionesWed.md). Caja chica, Almacén y Ayuda
+  // se sumaron con eadaf1f / c24696c. Lo que no puede cambiar en silencio es QUÉ pantallas ve.
+  const rutasEncargada = secciones.filter((s) => s.roles.includes('ENCARGADA')).map((s) => s.path).sort();
+  assert.deepEqual(rutasEncargada, ['/almacen', '/ayuda', '/caja-chica', '/citas', '/deudas', '/gastos', '/historial', '/inventario', '/mi-panel', '/servicios', '/ventas']);
+  // Y ninguna pantalla exclusiva del administrador (sea cual sea el menú en el futuro).
+  const soloAdmin = secciones.filter((s) => s.roles.length === 1 && s.roles[0] === 'ADMINISTRADOR').map((s) => s.path);
+  assert.ok(soloAdmin.length > 0);
+  for (const ruta of soloAdmin) assert.ok(!rutasEncargada.includes(ruta), ruta);
   assert.equal(resolverDestino('ENCARGADA', '/inventario'), '/inventario');
   assert.equal(resolverDestino('ENCARGADA', '/mi-panel'), '/mi-panel');
   assert.equal(resolverDestino('ENCARGADA', '/dashboard'), '/ventas');
@@ -71,10 +77,11 @@ test('Deudas: la consultan admin, cajera y encargada (notas de cobro); la asiste
   assert.notEqual(resolverDestino('ASISTENTE', '/deudas'), '/deudas');
 });
 
-test('PERSONAL_APOYO (viene a ayudar por días): solo Mi Panel, cualquier otra ruta cae ahí', async () => {
+test('PERSONAL_APOYO (viene a ayudar por días): solo Mi Panel y Almacén, cualquier otra ruta cae en Mi Panel', async () => {
   const { secciones } = await import('../../src/config/navegacion.js');
-  const rutasApoyo = secciones.filter((s) => s.roles.includes('PERSONAL_APOYO')).map((s) => s.path);
-  assert.deepEqual(rutasApoyo, ['/mi-panel']);
+  const rutasApoyo = secciones.filter((s) => s.roles.includes('PERSONAL_APOYO')).map((s) => s.path).sort();
+  // Almacén (ROLES_ALMACEN) se abrió a PERSONAL_APOYO con eadaf1f: registra salidas de insumos.
+  assert.deepEqual(rutasApoyo, ['/almacen', '/mi-panel']);
   assert.equal(resolverDestino('PERSONAL_APOYO', undefined), '/mi-panel');
   for (const ruta of ['/ventas', '/citas', '/servicios', '/inventario', '/deudas', '/gastos', '/dashboard', '/personal']) {
     assert.equal(resolverDestino('PERSONAL_APOYO', ruta), '/mi-panel', ruta);

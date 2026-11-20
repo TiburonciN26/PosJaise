@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Pencil, Trash2, Plus, ArrowBigDown, Download, Wallet, Ban, Clock, User } from 'lucide-react'
+import { Pencil, Trash2, Plus, Download, Wallet, Ban, Clock, User } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -21,6 +21,7 @@ import ModalPlantillasGasto from '../components/ModalPlantillasGasto.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const MAX_NOMBRES_VISIBLES = 3
 
@@ -425,8 +426,8 @@ export default function Gastos({ activo = true }) {
             className="flex w-full items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-sm text-ink outline-none focus:border-purple-300"
           >
             <span className="min-w-0 flex-1 truncate text-left">{MESES[mes - 1]}</span>
-            <ArrowBigDown
-              className={`h-3.5 w-3.5 shrink-0 text-ink/50 transition-transform duration-300 ${
+            <IconoFlechaDesplegable
+              className={`h-3 w-3 shrink-0 text-ink/50 transition-transform duration-300 ${
                 mesAbierto ? 'rotate-180' : ''
               }`}
             />
@@ -557,8 +558,8 @@ export default function Gastos({ activo = true }) {
                     </div>
                     <p className="mt-1 truncate text-xs text-ink/60">{resumenNombres(fijos)}</p>
                   </div>
-                  <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                  <IconoFlechaDesplegable
+                    className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                       fijosAbiertos ? 'rotate-180' : ''
                     }`}
                   />
@@ -604,8 +605,8 @@ export default function Gastos({ activo = true }) {
                     </div>
                     <p className="mt-1 truncate text-xs text-ink/60">{resumenNombres(variables)}</p>
                   </div>
-                  <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                  <IconoFlechaDesplegable
+                    className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                       variablesAbiertos ? 'rotate-180' : ''
                     }`}
                   />
@@ -668,8 +669,8 @@ export default function Gastos({ activo = true }) {
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex justify-end">
-                          <ArrowBigDown
-                            className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                          <IconoFlechaDesplegable
+                            className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
                               fijosAbiertos ? 'rotate-180' : ''
                             }`}
                           />
@@ -724,8 +725,8 @@ export default function Gastos({ activo = true }) {
                       </td>
                       <td className="px-3 py-2.5">
                         <div className="flex justify-end">
-                          <ArrowBigDown
-                            className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                          <IconoFlechaDesplegable
+                            className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
                               variablesAbiertos ? 'rotate-180' : ''
                             }`}
                           />

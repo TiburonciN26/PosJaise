@@ -454,6 +454,16 @@ main:has(.modal-producto-web:not(.hidden *)) {
 .icono-aurora {
   filter: drop-shadow(0 0 5px rgba(237, 139, 172, 0.6));
 }
+/* En claro, los pastel de la aurora casi desaparecen sobre el fondo blanco. Mismos matices en sus versiones oscuras
+   (cada una ≥4.5:1 sobre blanco) y un resplandor mucho más tenue. El ícono usa la misma paleta
+   (COLORES_AURORA_CLARO en MenuLateral.jsx). */
+[data-tema='claro'] .texto-aurora {
+  background-image: linear-gradient(90deg, #7c3aed, #c2456b, #b45309, #15803d, #2563eb, #7c3aed);
+  filter: drop-shadow(0 0 4px rgba(194, 69, 107, 0.2));
+}
+[data-tema='claro'] .icono-aurora {
+  filter: drop-shadow(0 0 3px rgba(194, 69, 107, 0.25));
+}
 /* Carita feliz a la derecha de «Dashboard»: aparece y desaparece con el
    mismo ciclo de 8 s que la pastilla de la tarjeta, y un confeti diminuto
    que cae poco (--caida) para no invadir las filas vecinas. */
@@ -1087,6 +1097,21 @@ main:has(.modal-producto-web:not(.hidden *)) {
 }
 [data-tema='claro'] .text-orange-400 {
   color: var(--color-naranja-texto);
+}
+/* Transferencia (Ventas, Historial): su acento es gray-300, que como texto sobre blanco no se lee. En claro, gris
+   oscuro del mismo matiz (≥7:1 sobre blanco); en oscuro sigue el gray-300 de siempre. */
+[data-tema='claro'] :is(.text-gray-300, .hover\:text-gray-300:hover) {
+  color: #4b5563;
+}
+/* Ícono de Transferencia en los botones de pago de Ventas: el SVG viene negro. En oscuro se vuelve blanco atenuado;
+   en claro queda gris oscuro (antes se invertía también en claro y desaparecía sobre el fondo blanco). */
+.icono-transferencia {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+[data-tema='claro'] .icono-transferencia {
+  filter: brightness(0);
+  opacity: 0.7;
 }
 
 /* Variantes con opacidad del rosa (pestañas inactivas del header y del

@@ -3,11 +3,27 @@
 #  · /assets/* lleva hash en el nombre → inmutable.
 #  · HTML, service worker y manifest SIEMPRE se revalidan: un POS no puede quedar con un
 #    shell viejo (el aviso de actualización PWA depende de que sw.js sea fresco).
-# Sin CSP a propósito en esta fase: el portal usa Google Fonts/Maps y Culqi; una CSP se
-# define y prueba aparte. Nada aquí toca la API de Supabase (otro origen).
+# Seguridad (auditoría global 2026-11-20, hallazgo 7.1):
+#  · Anti-clickjacking: nadie puede cargar el POS/portal dentro de un iframe ajeno (p. ej. para
+#    engañar un clic en «Anular venta»). X-Frame-Options para navegadores viejos + la directiva
+#    CSP frame-ancestors, que es la estándar. Esa CSP SOLO trae frame-ancestors: no restringe
+#    scripts, estilos ni conexiones, así que no puede romper Maps, Culqi ni Supabase.
+#  · HSTS sin includeSubDomains: así no obliga HTTPS a otros subdominios de un dominio propio.
+#  · Permissions-Policy: cámara (escáner de códigos/ModalCamara) y micrófono (BotonVoz) solo para
+#    este origen; geolocalización y USB desactivados (la app no los usa, tampoco el iframe de Maps).
+#    `payment` NO se bloquea: el checkout de Culqi (iframe) podría usar Payment Request.
+#  · La CSP COMPLETA (script-src, connect-src…) NO se escribe aquí: la genera scripts/lib/csp.mjs al
+#    compilar (orígenes del entorno + hashes de los scripts inline de index.html) y la agrega a este
+#    bloque /* en dist/_headers. Hoy va como Content-Security-Policy-Report-Only (solo avisa; los avisos
+#    llegan a errores_cliente). Escribir otra CSP aquí hace fallar el build a propósito.
+# Nada aquí toca la API de Supabase (otro origen).
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Strict-Transport-Security: max-age=31536000
+  Permissions-Policy: camera=(self), microphone=(self), geolocation=(), usb=()
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

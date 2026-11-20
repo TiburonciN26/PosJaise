@@ -1,6 +1,7 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowBigDown, Search, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
+import IconoFlechaDesplegable from './IconoFlechaDesplegable.jsx'
 
 // Barra fija del catálogo de Servicios y Productos: etiqueta "Categorías n",
 // el chip de la categoría activa («Todos» por defecto) que abre una lista
@@ -96,7 +97,7 @@ export default function BarraCatalogo({
               className="inline-flex h-[34px] max-w-full items-center gap-1.5 whitespace-nowrap border-0 bg-transparent px-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--lw-fg)] transition-opacity hover:opacity-70"
             >
               <span className="truncate">{categoriaActiva}</span>
-              <ArrowBigDown aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
+              <IconoFlechaDesplegable aria-hidden="true" className={`h-3 w-3 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${abierto ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Lista (no botones-chip): filas planas como el selector de Recompensas. */}

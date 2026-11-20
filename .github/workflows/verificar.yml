@@ -1,0 +1,49 @@
+name: Verificar
+
+# Auditoría global 2026-11-20, hallazgo 18.1: hasta ahora cada push a main se publicaba en Cloudflare Pages sin ejecutar
+# ninguna comprobación. Este workflow corre lo mismo que `npm run verificar` en local:
+#   · lint (oxlint)
+#   · tests autónomos (`npm test`, scripts/probar-unitarios.mjs): lógica pura y componentes, sin base de datos
+#   · build de Cloudflare (`npm run build:cloudflare`): compila y revisa la salida (sin /PosJaise/, sin 404.html,
+#     _headers presentes, sin credenciales privilegiadas)
+# No usa ningún secreto ni toca Supabase: sin CF_PAGES el build no valida entorno, y las VITE_* vacías solo fallarían
+# al abrir la app, no al compilar. La suite QA/E2E (Playwright + Supabase Local) sigue siendo un paso local.
+#
+# Lo que DETIENE la publicación no es este workflow: es scripts/build-cloudflare.mjs, que en Cloudflare Pages (CF_PAGES)
+# corre lint + tests antes de compilar y aborta el build si fallan. Este workflow es el mismo chequeo visible en GitHub
+# (✓/✗ en cada commit y PR), útil para ver el detalle sin abrir el log de Cloudflare.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Los tests autónomos no abren navegador: no descargar Chromium.
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # lint + tests autónomos + build de Cloudflare, por el mismo camino que usa Pages (build-cloudflare.mjs --verificar).
+      - name: Verificar
+        run: npm run verificar

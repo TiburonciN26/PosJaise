@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Trash2, Plus, Scissors, Clock, ArrowBigDown, CalendarPlus } from 'lucide-react'
+import { Pencil, Trash2, Plus, Scissors, Clock, CalendarPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -21,6 +21,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'reciente', label: 'Agregados recientemente' }, // por defecto (como «Últimos agregados» en Inventario)
@@ -258,8 +259,8 @@ export default function Servicios({ activo = true }) {
                       aria-label={abierto ? 'Contraer' : 'Expandir'}
                       className="shrink-0 p-1.5"
                     >
-                      <ArrowBigDown
-                        className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${
+                      <IconoFlechaDesplegable
+                        className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
                           abierto ? 'rotate-180' : ''
                         }`}
                       />

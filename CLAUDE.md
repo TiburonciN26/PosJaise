@@ -7,9 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 "Pos Jaise Beauty Academy" — a POS + booking + client web portal for a
 hair/beauty salon. React 19 + Vite + Tailwind v4 (CSS-first, no config
 file — tokens/utilities live in `src/index.css`) + Supabase (Postgres,
-Auth, Storage, Realtime) + react-router-dom v7. No test runner is set
-up (no `test` script, no test framework installed) — don't invent one
-unless asked.
+Auth, Storage, Realtime) + react-router-dom v7. Tests use the built-in
+`node --test` runner (plus Playwright for the local QA suite) — there's
+no Jest/Vitest; don't add one unless asked. Two layers, see
+`tests/e2e/README.md`: `npm test` runs only the **self-contained**
+tests (pure logic + SSR-rendered components, no DB/browser/passwords),
+listed explicitly in `scripts/probar-unitarios.mjs`; everything else
+in `tests/e2e/` needs the `testing` branch + Supabase Local and fails
+on purpose elsewhere. A new self-contained test must be added to that
+list or it never runs.
 
 ## Commands
 
@@ -17,11 +23,21 @@ unless asked.
 npm run dev       # Vite dev server (this is how the app is actually tested — see below)
 npm run build     # production build (vite build) — run this after any change to confirm no compile errors
 npm run lint      # oxlint
+npm test          # self-contained node --test suite (~10 s) — run after touching src/lib, cupones, navegación or TarjetaCupon
+npm run verificar # lint + test + build:cloudflare (build-cloudflare.mjs --verificar) — the same gate Cloudflare runs; run before pushing
 npm run preview   # serve the production build locally
 ```
 
-There is no CI and no deployed environment the user tests against day
-to day — they test exclusively via `npm run dev` locally. Production
+**Deploys are gated**: on Cloudflare (`CF_PAGES`), `scripts/build-cloudflare.mjs`
+runs oxlint + `npm test` *before* building and aborts if either fails — so a
+broken self-contained test means nothing gets published (the previous
+version stays live). Escape hatch for an urgent fix: `SALTAR_VERIFICACION=1`
+in Pages' env vars, removed right after. A failing test after an
+intentional UI/behavior change means the *test* must be updated in the
+same commit. CI (`.github/workflows/verificar.yml`, no secrets) runs the
+same `npm run verificar` on every push/PR for a visible ✓/✗. There's no deployed
+environment the user tests against day to day — they test exclusively
+via `npm run dev` locally. Production
 is **Cloudflare Pages**: every push to `main` auto-deploys with
 `npm run build:cloudflare` (`scripts/build-cloudflare.mjs`), which
 fails the deploy if the built `index.html` mentions `/PosJaise/`, if a
@@ -223,11 +239,28 @@ re-derived per tab:
 
 - Confirmations: the global `useToast()` (fixed banner, fades), never a
   layout-shifting inline banner.
+- CSP is generated at build time by `scripts/lib/csp.mjs` (env origins +
+  SHA-256 of index.html's inline scripts, CRLF-normalized) and appended to
+  `dist/_headers` — never hand-write one in `cloudflare/_headers` (the build
+  fails). Currently Report-Only; violations land in `errores_cliente` with
+  origen `csp`. A new external origin (script, iframe, API, image host) must be
+  added in `csp.mjs`; no inline `<script>` in HTML written at runtime
+  (`window.open` + `document.write` inherits the CSP — print from the opener).
+- Production errors go to `public.errores_cliente` (admin-only, read it
+  in Studio) via `src/lib/reportarError.js`: render/boundary errors, window
+  errors and unhandled rejections are captured automatically (wired in
+  `main.jsx`). Only call `reportarError(error, { origen: 'manual' })` for
+  an error you *catch and swallow* that someone should still see — never
+  pass form/cart/sale data in it. Disabled in `npm run dev` unless
+  `VITE_REPORTAR_ERRORES_DEV=1`.
 - Every modal closes on Esc via `useCerrarConEscape()` (it manages a
   shared stack so only the top-most modal responds).
 - Required form fields: label + red `*`, via `<Etiqueta obligatorio>`.
-- Dropdown/accordion carets: `ArrowBigDown` from lucide, rotated with
-  `rotate-180`, not `ChevronDown`.
+- Dropdown/accordion carets: `<IconoFlechaDesplegable />`
+  (`src/components/IconoFlechaDesplegable.jsx`, the filled chevron from
+  `public/icons/nuevaFlecha.svg`), 12×12 (`h-3 w-3`), rotated with
+  `rotate-180` + `transition-transform`. Not lucide's `ArrowBigDown` (replaced
+  everywhere on 2026-11-20) nor `ChevronDown`.
 - `#3ECF6A` green is reserved for a handful of final commit-style CTAs
   (e.g. confirm an order) — not a general-purpose accent.
 

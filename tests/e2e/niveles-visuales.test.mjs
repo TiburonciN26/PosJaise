@@ -31,17 +31,18 @@ describe('QA-064 · nivel visual = nivel de negocio', () => {
     }
   });
 
-  test('las promociones por fechas son «Especial» sea cual sea su valor o nivel', () => {
+  // Nombres desde 0c035b1: promociones = «Oferta» (rubí); bienvenida/referido/fidelización = «Especial» (verde). Ver lib/cupones.js.
+  test('las promociones por fechas son «Oferta» sea cual sea su valor o nivel', () => {
     for (const valor of [1, 20, 500]) {
-      assert.equal(nivelDeCupon({ origen: 'PROMOCION', nivel_minimo: 'BASICO', valor, tipo_descuento: 'PORCENTAJE' }).nombre, 'Especial');
-      assert.equal(nivelDeCupon({ origen: 'PROMOCION', nivel_minimo: 'VIP', valor, tipo_descuento: 'MONTO_FIJO' }).nombre, 'Especial');
+      assert.equal(nivelDeCupon({ origen: 'PROMOCION', nivel_minimo: 'BASICO', valor, tipo_descuento: 'PORCENTAJE' }).nombre, 'Oferta');
+      assert.equal(nivelDeCupon({ origen: 'PROMOCION', nivel_minimo: 'VIP', valor, tipo_descuento: 'MONTO_FIJO' }).nombre, 'Oferta');
     }
     assert.equal(nivelDeCupon({ origen: 'PROMOCION', nivel_minimo: 'BASICO', valor: 5 }).chispas, 'roja');
   });
 
-  test('bienvenida, referido y fidelización son «Verde» (fuera de la escala), con cualquier valor', () => {
+  test('bienvenida, referido y fidelización son «Especial» (acabado verde, fuera de la escala), con cualquier valor', () => {
     for (const origen of ['REFERIDO_BIENVENIDA', 'REFERIDO_RECOMPENSA', 'FIDELIZACION']) {
-      for (const valor of [1, 50]) assert.equal(nivelDeCupon({ origen, nivel_minimo: 'BASICO', valor, tipo_descuento: 'PORCENTAJE' }).nombre, 'Verde');
+      for (const valor of [1, 50]) assert.equal(nivelDeCupon({ origen, nivel_minimo: 'BASICO', valor, tipo_descuento: 'PORCENTAJE' }).nombre, 'Especial');
     }
     assert.equal(nivelDeCupon({ origen: 'FIDELIZACION', valor: 20 }).chispas, 'verde');
   });

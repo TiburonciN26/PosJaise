@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowBigDown, Pencil, Plus, Trash2, Truck, Package } from 'lucide-react'
+import { Pencil, Plus, Trash2, Truck, Package } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -17,6 +17,7 @@ import ContactoProveedor from '../components/ContactoProveedor.jsx'
 import DatosProveedor from '../components/DatosProveedor.jsx'
 import ModalProveedor from '../components/ModalProveedor.jsx'
 import ModalEliminarProveedor from '../components/ModalEliminarProveedor.jsx'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 // Proveedores (migración 20261112000014; cuelga de Inventario en el menú, solo administradora). Registro dedicado: aquí se
 // crean, editan y eliminan proveedores libremente, sin vincularlos a ningún producto. Se vinculan desde el modal del
@@ -224,8 +225,8 @@ export default function Proveedores({ activo = true }) {
                     aria-label={abierto ? 'Contraer' : 'Expandir'}
                     className="shrink-0 p-1.5"
                   >
-                    <ArrowBigDown
-                      className={`h-4 w-4 text-ink/60 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
+                    <IconoFlechaDesplegable
+                      className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
                     />
                   </button>
                 </div>

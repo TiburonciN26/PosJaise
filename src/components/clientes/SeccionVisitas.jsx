@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ArrowBigDown, Scissors, ShoppingBag, Receipt } from 'lucide-react'
+import { Scissors, ShoppingBag, Receipt } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useListaAcumulada } from '../../hooks/useListaAcumulada.js'
 import { diaLargo, hora, soles, ESTADOS_SERVICIO, TAMANO_PAGINA_PERFIL } from '../../lib/perfilCliente.js'
 import CampoColapsable from '../CampoColapsable.jsx'
 import { Capsula, EstadoLista } from './PiezasPerfil.jsx'
+import IconoFlechaDesplegable from '../IconoFlechaDesplegable.jsx'
 
 // Una fila por DÍA (hora de Lima): qué se hizo, quién la atendió, qué compró y cuánto pagó. Sale de visitas_cliente()
 // (migración 20261118000001), que agrupa en el servidor las atenciones y las ventas de la clienta.
@@ -60,8 +61,8 @@ export default function SeccionVisitas({ clienteId }) {
                 <span className={`shrink-0 font-mono text-sm font-semibold ${abierto ? 'text-purple-300' : 'text-green'}`}>
                   {soles(visita.total_pagado)}
                 </span>
-                <ArrowBigDown
-                  className={`h-4 w-4 shrink-0 transition-transform duration-300 ${
+                <IconoFlechaDesplegable
+                  className={`h-3 w-3 shrink-0 transition-transform duration-300 ${
                     abierto ? 'rotate-180 text-purple-300' : 'text-ink/60'
                   }`}
                 />

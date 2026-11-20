@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { ArrowBigDown, Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
+import { Gift, Sparkles, Stamp, Ticket } from 'lucide-react'
 import CampoColapsable from '../../../components/CampoColapsable.jsx'
 import AyudaCampo from '../../../components/AyudaCampo.jsx'
 import { formatearFechaSoloDia } from '../../../lib/fechas.js'
 import { AvisoError, Desplegable, Pildora } from './ui.jsx'
 import { formatearCantidad } from '../../../lib/programaRecompensas.js'
+import IconoFlechaDesplegable from '../../../components/IconoFlechaDesplegable.jsx'
 
 const VISITAS_POR_RECOMPENSA = 5
 
@@ -152,7 +153,7 @@ export default function SeccionSellos({ datos, cuponSellos, historial: recursoHi
                 className="flex w-full items-center justify-center gap-1.5 text-xs text-white/50 transition-colors hover:text-white"
               >
                 Ver historial de visitas
-                <ArrowBigDown
+                <IconoFlechaDesplegable
                   className={`h-3 w-3 transition-transform duration-300 ${historialAbierto ? 'rotate-180' : ''}`}
                 />
               </button>

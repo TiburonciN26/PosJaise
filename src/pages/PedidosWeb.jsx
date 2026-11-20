@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowBigDown, Bike, Image, MapPin, Phone, Receipt, ShieldCheck, ShoppingBag, Store, Ticket } from 'lucide-react'
+import { Bike, Image, MapPin, Phone, Receipt, ShieldCheck, ShoppingBag, Store, Ticket } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
@@ -15,6 +15,7 @@ import EstadoVacio from '../components/EstadoVacio.jsx'
 import FiltroEstadoContadores from '../components/FiltroEstadoContadores.jsx'
 import PaginadorLista from '../components/PaginadorLista.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
+import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
 
 const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
 
@@ -241,8 +242,8 @@ export default function PedidosWeb({ activo = true }) {
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${etiqueta.clase}`}>
                     {etiqueta.texto}
                   </span>
-                  <ArrowBigDown
-                    className={`h-4 w-4 shrink-0 text-ink/60 transition-transform duration-300 ${
+                  <IconoFlechaDesplegable
+                    className={`h-3 w-3 shrink-0 text-ink/60 transition-transform duration-300 ${
                       abierto ? 'rotate-180' : ''
                     }`}
                   />

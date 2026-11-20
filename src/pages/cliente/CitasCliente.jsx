@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowBigDown,
   ArrowRight,
   CalendarClock,
   ChevronLeft,
@@ -49,6 +48,7 @@ import ModalReprogramarCitaCliente from '../../components/ModalReprogramarCitaCl
 import AyudaCampo from '../../components/AyudaCampo.jsx'
 import ComoGanasPuntosYSellos from './citas/ComoGanasPuntosYSellos.jsx'
 import CitasPublicasCliente from './CitasPublicasCliente.jsx'
+import IconoFlechaDesplegable from '../../components/IconoFlechaDesplegable.jsx'
 
 const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -290,7 +290,7 @@ function SeccionPuntos({ titulo = 'Puntos', nivel, children }) {
             Nivel {nivel}
           </span>
         )}
-        <ArrowBigDown aria-hidden="true" className={`h-5 w-5 shrink-0 text-white/50 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+        <IconoFlechaDesplegable aria-hidden="true" className={`h-3 w-3 shrink-0 text-white/50 transition-transform ${abierto ? 'rotate-180' : ''}`} />
       </button>
       <ContenidoDesplegable id={contenidoId} abierto={abierto}>
         <div className="mt-3 max-sm:mt-1">{children}</div>
@@ -1267,7 +1267,7 @@ function CitasConSesion() {
             >
               <h2 className="sm:text-xl lw-titulo-heavitas text-base uppercase">Historial</h2>
               <span className="flex-1" />
-              <ArrowBigDown aria-hidden="true" className={`h-5 w-5 text-white/50 transition-transform ${histAbierto ? 'rotate-180' : ''}`} />
+              <IconoFlechaDesplegable aria-hidden="true" className={`h-3 w-3 text-white/50 transition-transform ${histAbierto ? 'rotate-180' : ''}`} />
             </button>
             <ContenidoDesplegable id={historialContenidoId} abierto={histAbierto}>
               {historial.length === 0 ? (
