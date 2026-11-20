@@ -135,7 +135,11 @@ re-derived per tab:
   sufficient — it does NOT auto-authorize applying to prod. Once verified
   locally, always ask the user for explicit confirmation before using MCP
   to apply that migration to production; don't treat a prior approval
-  (of this or any other migration) as blanket authorization. Only after
+  (of this or any other migration) as blanket authorization. **When the
+  user's message itself says to commit/push and upload the migration(s)
+  ("has el commit, push y sube la migración"), that IS the confirmation**:
+  apply the pending ones via MCP, register their file version, then
+  commit and push — without asking again or re-auditing the whole schema. Only after
   that confirmation, apply the *same* SQL to prod via the Supabase MCP
   tools (`apply_migration` / `execute_sql` / `list_projects`, project
   `WedJaiseReact`). The MCP talks directly to the remote project and
@@ -145,9 +149,37 @@ re-derived per tab:
   `sql/`) and tell the user to run it manually (SQL Editor in prod, or
   `migration up` locally).
 - The local project isn't linked (`supabase link`) to the remote one —
-  `db push`/`db pull` aren't part of the flow today. If that changes
-  later, check that the remote migration history (via MCP) and the local
-  one haven't drifted out of sync.
+  `db push`/`db pull` aren't part of the flow today.
+- **Local and prod were synchronized on 2026-11-20** (schema, function
+  bodies, permissions, cron, and both migration histories list exactly the
+  repo's files). Keep it that way:
+  - *Pending in prod* = repo files whose version isn't in prod's
+    `supabase_migrations.schema_migrations`. MCP `apply_migration` records
+    the migration under the *current timestamp*, not the file's — so right
+    after applying, `insert into supabase_migrations.schema_migrations
+    (version, name) values ('<file version>', '<file name>') on conflict do
+    nothing`. Prod also keeps 63 legacy rows with old numbering (pre-repo);
+    they're harmless.
+  - Never apply an experimental branch's migrations to the local DB and
+    then abandon the branch (that's how `wip/comprobantes` left
+    `clientes.ruc` etc. only in Local and broke the client profile in
+    prod). If you do, revert them in Local before switching back.
+  - Local now has prod's permission defaults (no automatic grants to
+    `anon`/`authenticated`), so a missing GRANT fails in Local too. After
+    `supabase db reset`, run `supabase/scripts/permisos_produccion.sql`.
+  - To audit parity, run `supabase/scripts/huella_esquema.sql` in both
+    (Local via `docker exec -i supabase_db_WedJaiseReact psql -U postgres
+    -d postgres -t -A -q < file`, prod via MCP `execute_sql`): the one-line
+    output must be identical.
+  - The prod MCP tool blocks `DELETE` statements; DDL via
+    `apply_migration` and `INSERT` via `execute_sql` go through.
+  - To reproduce a bug the client reports in prod, copy prod's DATA into
+    Local (prod is only read): the user runs
+    `powershell -ExecutionPolicy Bypass -File scripts\copiar-datos-prod-a-local.ps1`
+    in their own terminal (it asks for the Session pooler string and the DB
+    password — never ask for them in chat). It backs up Local's data to
+    `%TEMP%` first; `-DesdeRespaldo <folder>` restores that backup. Storage
+    files (photos, PDFs) aren't copied.
 - **RLS and GRANTs are two separate, independently-enforced gates.**
   RLS row-filtering returns HTTP 200 with fewer/no rows. A missing
   column/table GRANT returns HTTP 403 for the *entire* request —

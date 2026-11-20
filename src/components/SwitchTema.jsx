@@ -13,12 +13,8 @@ const COLORES = {
 }
 
 // Sin props usa el tema del POS; el portal cliente pasa el suyo (TemaWebContext).
-// `anchoCompleto` estira la píldora al ancho del contenedor (menú POS).
-export default function SwitchTema({
-  tema: temaProp,
-  alternarTema: alternarProp,
-  anchoCompleto = false,
-}) {
+// (El POS ya no la usa: su tema se cambia con el botón compacto del Header.)
+export default function SwitchTema({ tema: temaProp, alternarTema: alternarProp }) {
   const temaPos = useTheme()
   const tema = temaProp ?? temaPos.tema
   const alternarTema = alternarProp ?? temaPos.alternarTema
@@ -32,9 +28,7 @@ export default function SwitchTema({
       aria-checked={esOscuro}
       aria-label={esOscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
       onClick={alternarTema}
-      className={`relative inline-block h-8 shrink-0 cursor-pointer rounded-full shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)] transition-colors duration-300 ease-out ${
-        anchoCompleto ? 'w-full' : 'w-[104px]'
-      }`}
+      className="relative inline-block h-8 w-[104px] shrink-0 cursor-pointer rounded-full shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)] transition-colors duration-300 ease-out"
       style={{ backgroundColor: colores.fondo }}
     >
       <span

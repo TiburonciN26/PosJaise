@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Menu, Moon, Sun, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -10,7 +10,8 @@ import IconoCampana from './IconoCampana.jsx'
 
 export default function Header({ menuAbierto, onToggleMenu }) {
   const { rol } = useAuth()
-  const { tema } = useTheme()
+  const { tema, alternarTema } = useTheme()
+  const esOscuro = tema === 'oscuro'
   const { mostrarToast } = useToast()
   const { pathname } = useLocation()
   const seccionesVisibles = secciones.filter((seccion) => seccion.roles.includes(rol))
@@ -80,6 +81,19 @@ export default function Header({ menuAbierto, onToggleMenu }) {
             el logo quedó como firma de marca al fondo de ese menú, no como
             disparador de nada. */}
         <div className="flex shrink-0 items-center gap-1">
+          {/* Tema claro/oscuro: antes era la píldora SwitchTema a todo el ancho dentro del menú
+              de usuario; ahora va aquí, a mano, como un botón compacto. Muestra el icono y el
+              nombre del tema ACTUAL (como la píldora); en móvil solo el icono. */}
+          <button
+            type="button"
+            onClick={alternarTema}
+            aria-label={esOscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            title={esOscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            className="mr-0.5 flex items-center gap-1.5 rounded-lg p-1.5 text-ink transition-colors hover:text-amber sm:px-2"
+          >
+            {esOscuro ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            <span className="hidden text-sm font-medium sm:inline">{esOscuro ? 'Oscuro' : 'Claro'}</span>
+          </button>
           {/* Campana de notificaciones para el personal — solo el ícono
               por ahora (sin badge real: todavía no existe ningún sistema
               de notificaciones para el staff, esa es una tarea aparte,

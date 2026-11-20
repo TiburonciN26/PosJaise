@@ -7912,3 +7912,34 @@ No necesita migración: solo cambia el front.
     - **Ayuda:** nuevas preguntas (por qué se pide el celular, importar números en lote, enviar el PDF por WhatsApp).
     - **El PDF A4 de la referencia (formato Mifact) lo genera el emisor autorizado, no el POS:** el QR, el hash, la serie y «Autorizado mediante Resolución…» solo pueden ponerlos quienes tienen esa autorización. El POS guarda y reenvía el PDF que devuelve la contadora (o el proveedor, si la clienta lo elige más adelante).
     - **Verificado en Local:** 14 casos SQL (celular con +51, formatos inválidos, conservar celular al editar, PDF con ruta ajena o inexistente, permisos por rol, reemplazo de PDF, importación con todas las categorías); Storage por REST (admin sube; cajera 403; PNG 415; 6 MB 413; enlace de 30 días abierto sin sesión; bucket no público); ida y vuelta del CSV exportado por el lector. \`npm run build\` y lint pasan. No se vio en pantalla ni se envió un WhatsApp real.
+
+## 93. Local y Producción sincronizados (esquema, permisos e historial de migraciones) — 2026-11-20
+
+**Problema.** En Producción aparecían errores que en Local no ocurrían. Por ejemplo, el perfil de la clienta pedía `clientes.ruc` y `razon_social`, que solo existían en Local. Además, cada vez que se pedía "commit, push y sube la migración" había que revisar a mano qué faltaba en cada base. Al comparar las dos bases objeto por objeto salieron tres causas:
+
+1. **Restos de `wip/comprobantes` en Local.** Las 5 migraciones `20261026*` (proveedor SUNAT, cancelado) estaban aplicadas en Local pero no existen en `main`. Dejaban las tablas `comprobantes` y `comprobante_series`, 8 funciones, columnas en `clientes`, `clientes_web` y `estado_negocio`, y un `confirmar_venta` de 10 parámetros en lugar del de 9 que usa Producción. Además, `guardar_colores_citas` estaba en Local con las tildes dañadas ("invÃ¡lido").
+2. **Permisos por defecto distintos.** El Supabase local (CLI) da todos los permisos a `anon`, `authenticated` y `service_role` sobre cada tabla y función nueva. Producción no da ninguno: solo existen los `GRANT` que escribe cada migración. Por eso una migración sin su `GRANT` funcionaba en Local y daba 403 en Producción.
+3. **Historiales desordenados.** Producción tenía 99 registros, muchos con otra numeración: lo aplicado por el SQL Editor no quedaba registrado, y lo aplicado por el MCP queda con la hora en que se aplicó, no con la versión del archivo. Al historial local le faltaban las 7 migraciones más recientes, aunque sí estaban aplicadas.
+
+**Qué se hizo.** No hubo cambios de esquema en Producción.
+- **Local:** se eliminaron los restos de `wip`. Se restauraron `confirmar_venta` (9 parámetros) y `guardar_colores_citas` desde sus migraciones de `main`. Se copiaron los permisos de Producción, incluidos los permisos por defecto para objetos nuevos. El historial quedó con exactamente las 182 migraciones del repo.
+- **Producción:** se registraron en el historial las 182 versiones del repo. Siguen ahí 63 registros antiguos con otra numeración, que no afectan: el MCP bloquea los `DELETE`.
+- **Comprobación:** `supabase/scripts/huella_esquema.sql` saca una línea con columnas, constraints, índices, políticas, triggers, vistas, funciones, permisos efectivos, permisos por defecto, buckets y cron. Hoy da exactamente lo mismo en las dos bases.
+- **Después de un `supabase db reset`:** hay que correr `supabase/scripts/permisos_produccion.sql` (solo Local), porque el reset vuelve a dar los permisos amplios del CLI.
+- **CLAUDE.md:** documenta el flujo nuevo. Pendiente en Producción es todo archivo del repo cuya versión no está en su historial. Después de `apply_migration` se registra la versión del archivo. Si el pedido dice "commit, push y sube la migración", esa frase ya es la autorización.
+
+Para borrar los 63 registros antiguos de Producción (opcional, desde el SQL Editor):
+`delete from supabase_migrations.schema_migrations where version < '20260930072802' or version in ('20261118051004','20261118051106','20261118223741','20261118224649');`
+
+**Datos de Producción en Local.** Para reproducir en Local los fallos que reporta la clienta sin tocar sus datos, se usa `scripts/copiar-datos-prod-a-local.ps1`. El script hace tres cosas:
+- Respalda en `%TEMP%` los datos locales actuales.
+- Descarga con `pg_dump` (solo lectura) los datos de Producción: todas las tablas de `public` más `auth.users` y `auth.identities`. Las contraseñas pasan tal cual, así que en Local se entra con las mismas cuentas que en Producción.
+- Reemplaza los datos de Local en una sola transacción, con los triggers y las revisiones de claves foráneas apagados durante la carga. Si algo falla, Local queda como estaba.
+
+La cadena de conexión y la contraseña de Producción se piden al correrlo y no se guardan. El volcado de Producción tiene datos personales y se borra al terminar. Las fotos y PDFs de Storage no se copian.
+
+Para volver a los datos de prueba: `-DesdeRespaldo <carpeta>`. Probado en Local el 20/11/2026 con ese mismo modo: se vació todo y se recargó el respaldo, y los conteos quedaron iguales.
+
+## 94. POS: el tema claro/oscuro sale del menú de perfil al encabezado — 2026-11-20
+
+El interruptor de tema, que ocupaba todo el ancho dentro del menú de usuario, ahora es un botón compacto en el encabezado (`Header.jsx`), a la izquierda de la campana. Muestra el icono del tema actual (sol o luna) junto a su nombre, "Claro" u "Oscuro"; en móvil (menos de 640 px) solo el icono. `SwitchTema` ya no tiene la opción `anchoCompleto`, que solo usaba el POS; el portal de clientas sigue usando la píldora dentro de su menú. No necesita migración.

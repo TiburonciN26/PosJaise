@@ -11,7 +11,6 @@ import ModalHorarioPos from './ModalHorarioPos.jsx'
 import { supabase } from '../lib/supabase.js'
 import { normalizarHorarioPos, proximoEventoPos, textoProximoEvento } from '../lib/horarioPos.js'
 import Interruptor from './Interruptor.jsx'
-import SwitchTema from './SwitchTema.jsx'
 import {
   eliminarFoto,
   procesarImagen,
@@ -34,8 +33,8 @@ function iniciales(nombre) {
 
 // Menú de usuario (avatar, esquina derecha del header): junta lo que
 // antes vivía disperso — datos de la cuenta con foto editable, estado
-// del negocio (con su botón único, admin-only) y tema claro/oscuro — más
-// cerrar sesión. Reemplaza al logo+MenuEstadoNegocio: el logo pasa acá,
+// del negocio (con su botón único, admin-only) — más cerrar sesión (el
+// tema claro/oscuro salió al Header, junto a la campana). Reemplaza al logo+MenuEstadoNegocio: el logo pasa acá,
 // abajo del todo, como firma de marca en vez de disparador de un menú.
 export default function MenuUsuario() {
   const { usuario, rol, actualizarFotoPerfil, entrarComoClienta } = useAuth()
@@ -310,10 +309,6 @@ export default function MenuUsuario() {
                 Apertura y cierre automático
               </button>
             )}
-          </div>
-
-          <div className="mt-3">
-            <SwitchTema anchoCompleto />
           </div>
 
           <button
