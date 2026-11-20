@@ -24,6 +24,7 @@ const AUTONOMOS = [
   'promociones-admin',
   'recompensas-fase2-limpieza',
   'sanear-salidas',
+  'seo',
   'tarjetas-cupon-niveles',
 ]
 

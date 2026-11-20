@@ -23,6 +23,7 @@ import BarraCatalogo from '../../components/BarraCatalogo.jsx'
 import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 const BUCKET_FOTOS = 'fotos-productos'
 const POR_FILA = POR_CATEGORIA
@@ -65,6 +66,7 @@ const CINTA_MEDIDAS = {
 // solo cae al texto genérico por categoría en los que todavía no la
 // tienen (mismo criterio que ServiciosCliente.jsx).
 export default function ProductosCliente() {
+  useMetaPagina({ titulo: 'Productos', descripcion: 'Productos de belleza y cuidado de Jaise Beauty Academy. Compra en línea y recoge en el salón o pide delivery.' })
   const { agregarProducto } = useCarritoCliente()
   const requerirSesion = useRequerirSesion()
   const { mostrarToast } = useToast()

@@ -13,14 +13,17 @@ import { join, resolve } from 'node:path'
 import { swExcluyeMedios } from './lib/sw-medios.mjs'
 import { entornoDeCloudflare, escanearTextoSalida, validarSupabase, REF_PRODUCCION, REF_STAGING } from './lib/entornos-supabase.mjs'
 import { agregarCspAHeaders, NOMBRE_CABECERA } from './lib/csp.mjs'
+import { escribirSeo } from './lib/seo.mjs'
 
 const falla = (m) => { console.error('build-cloudflare: ' + m); process.exit(1) }
 const salida = resolve(process.env.CF_OUT_DIR ?? 'dist')
 let refEsperado = null
+let entornoCf = null // 'produccion' | 'preview' en Cloudflare; null en un build local
 
 if (process.env.CF_PAGES) {
   const ent = entornoDeCloudflare(process.env)
   if (!ent.ok) falla(ent.motivo)
+  entornoCf = ent.entorno
   const v = validarSupabase({ url: process.env.VITE_SUPABASE_URL, clave: process.env.VITE_SUPABASE_ANON_KEY, entorno: ent.entorno })
   if (!v.ok) falla(v.motivo)
   refEsperado = v.refEsperado
@@ -65,8 +68,19 @@ copyFileSync(resolve('cloudflare/_headers'), resolve(salida, '_headers'))
 // y hashes de los scripts inline del index.html ya compilado.
 {
   const { loadEnv } = await import('vite')
-  const politica = agregarCspAHeaders(salida, loadEnv('production', process.cwd(), 'VITE_'))
+  const envVite = loadEnv('production', process.cwd(), 'VITE_')
+  const politica = agregarCspAHeaders(salida, envVite)
   console.log(`build-cloudflare: ${NOMBRE_CABECERA} (${politica.length} caracteres)`)
+  // SEO (scripts/lib/seo.mjs): robots.txt + sitemap.xml. Preview de Cloudflare: no indexar. El catálogo (ids de servicios y
+  // productos para el sitemap) se consulta solo en producción, o en local con --sitemap-con-catalogo para probarlo.
+  const { secciones } = await import('../src/config/navegacion.js')
+  const resumen = await escribirSeo(salida, {
+    env: envVite,
+    indexar: entornoCf !== 'preview',
+    rutasPos: secciones.map((s) => s.path),
+    consultarCatalogo: entornoCf === 'produccion' || process.argv.includes('--sitemap-con-catalogo'),
+  })
+  console.log(`build-cloudflare: ${resumen}`)
 }
 // Entrega de medios por Pages Functions (functions/medios*): SOLO /medios y /medios/* invocan Functions; el resto
 // (SPA, assets, sw.js) sigue siendo estático. Debe estar en la SALIDA (dist), no en la raíz del repo.

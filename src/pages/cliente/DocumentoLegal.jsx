@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { FileText } from 'lucide-react'
 import { FECHA_LEGAL, RUTAS_LEGALES, VERSION_LEGAL } from '../../config/legal.js'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 // Plantilla común de las páginas legales públicas (sin sesión, como el Libro de
 // Reclamaciones). Los datos del negocio los da hooks/useDatosNegocioLegal.js.
@@ -17,6 +18,7 @@ const OTROS_DOCUMENTOS = [
 ]
 
 export default function DocumentoLegal({ titulo, introduccion, secciones, rutaActual }) {
+  useMetaPagina({ titulo, descripcion: introduccion })
   return (
     <div className="lw-margen-pagina animate-entrada-pestana flex-1 overflow-y-auto pb-4 md:pb-8">
       <article className="mx-auto w-full max-w-3xl space-y-4 lw-gutter-detalle">

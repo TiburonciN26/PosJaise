@@ -21,6 +21,7 @@ import BarraCatalogo from '../../components/BarraCatalogo.jsx'
 import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import PaginadorCatalogo from '../../components/PaginadorCatalogo.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 const BUCKET_FOTOS = 'fotos-servicios'
 const POR_FILA = POR_CATEGORIA
@@ -50,6 +51,7 @@ const INTERVALO_HERO_MS = 5000
 // el hero la usa si el admin ya la escribió, y solo cae al texto
 // genérico por categoría en servicios que todavía no la tienen.
 export default function ServiciosCliente() {
+  useMetaPagina({ titulo: 'Servicios', descripcion: 'Manicure en gel, sistemas artificiales, pedicure, cejas, pestañas, depilación, micropigmentación y maquillaje. Mira precios y reserva tu cita en línea.' })
   const { serviciosCarrito, agregarServicio } = useCarritoCliente()
   const requerirSesion = useRequerirSesion()
   const [searchParams] = useSearchParams()

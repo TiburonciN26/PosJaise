@@ -11,6 +11,7 @@ import { obtenerContacto } from '../lib/datosNegocioWeb.js'
 import { useLectura } from '../hooks/useLectura.js'
 import { obtenerFotosLogin } from '../lib/fotosLogin.js'
 import FotosLogin from '../components/FotosLogin.jsx'
+import { useMetaPagina } from '../hooks/useMetaPagina.js'
 import './Login.css'
 
 function MarcaLogin({ className = '' }) {
@@ -38,6 +39,7 @@ function MarcaLogin({ className = '' }) {
 // un dispositivo compartido conviene además que el personal rechace el
 // "¿Guardar contraseña?" del navegador.
 export default function Login() {
+  useMetaPagina({ titulo: 'Ingresar', indexable: false })
   const { tema } = useTemaWeb()
   const contacto = useLectura(obtenerContacto).datos
   const fotos = useLectura(obtenerFotosLogin).datos

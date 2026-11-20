@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { guardarCopia, leerCopia, mismaCopia, olvidarCopia } from '../../lib/copiasEnMemoria.js'
 import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -76,6 +77,11 @@ export default function DetalleServicioCliente() {
 
   // Migaja completa en el header: Inicio | Servicios | categoría | nombre.
   useRegistrarMigajas(servicio ? [{ titulo: servicio.categoria ?? 'General', ruta: servicio.categoria ? `/servicios?categoria=${encodeURIComponent(servicio.categoria)}` : undefined }, { titulo: servicio.nombre }] : [])
+  // SEO: cada servicio se indexa con su nombre y su descripción (o una genérica con la categoría).
+  useMetaPagina({
+    titulo: servicio?.nombre,
+    descripcion: servicio && (servicio.descripcion || `${servicio.nombre}${servicio.categoria ? ` (${servicio.categoria})` : ''} en Jaise Beauty Academy. Reserva tu cita en línea.`),
+  })
   const [galeria, setGaleria] = useState([])
   const [combo, setCombo] = useState(null)
   const [relacionados, setRelacionados] = useState([])

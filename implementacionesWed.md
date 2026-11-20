@@ -8039,3 +8039,32 @@ Auditoría global, hallazgo 7.1 (segunda parte; la protección anti-iframe ya er
 - **Tests:** `tests/e2e/csp.test.mjs` (7 casos, en `npm test` y por tanto en la puerta de despliegue). Cubre orígenes del entorno, build sin variables, que nunca aparezcan `unsafe-inline`/`eval` en scripts, CRLF, y que una CSP escrita a mano en `_headers` haga fallar el build.
 - **Verificado en Chromium** con `dist/` servido con las cabeceras generadas: portal sin sesión (Inicio, Servicios, Productos, Nosotros bajando hasta el mapa, Login) y POS con admin (Ventas, Historial, Inventario, Citas, Dashboard), en modo aviso **y forzando la política como obligatoria**: 0 avisos y 0 errores de JS. Una violación provocada llegó a `errores_cliente` sin el token de la consulta.
 - **No ejercitado en Local:** el checkout de Culqi (cuenta sin validar) y los medios R2 (sin `VITE_MEDIOS_*` en Local). Son justo lo que el modo aviso debe vigilar en producción antes de activar el bloqueo.
+
+## 103. SEO del portal: meta y vista previa al compartir, títulos por página, robots, sitemap y ficha del salón — 2026-11-20
+
+Auditoría global, hallazgo 19.1: el portal no tenía descripción, Open Graph, `robots.txt` ni `sitemap.xml`, y todas las páginas se llamaban «Pos Jaise Beauty Academy». Cloudflare respondía `/robots.txt` con el `index.html` de la SPA.
+
+- **`index.html`:**
+  - Título público «Jaise Beauty Academy · Uñas, cejas, pestañas y belleza».
+  - `description`, Open Graph (`og:title/description/url/image`, `es_PE`) y `twitter:card`.
+  - `og:image` = **`public/og-jaise.jpg`** (1200×630, 87 kB), generada con Playwright desde el hero de Inicio con las tipografías de la marca.
+  - Las URLs absolutas usan `__SITIO__`, que reemplaza `vite.config.js` con `sitioDe()`: `VITE_SITIO_URL` o, sin ella, `https://pos-jaise.pages.dev`.
+  - Los textos solo nombran servicios que existen en el catálogo (manicure en gel, sistemas artificiales, pedicure, cejas, pestañas, depilación, micropigmentación y maquillaje). No mencionan cursos ni ciudad, porque el negocio no la registra.
+- **`src/hooks/useMetaPagina.js`:**
+  - Cada página pública fija su título («X | Jaise Beauty Academy»), su descripción (≤160 caracteres, cortada en un espacio), `og:*` y `<link rel="canonical">` sin `?consulta`, y lo restaura al desmontarse.
+  - Las páginas de detalle usan el nombre y la descripción del servicio, del producto o de la persona del equipo.
+  - Login lleva `noindex`, igual que un perfil del equipo que no existe.
+  - Se editan los elementos de `index.html` en vez de renderizar `<title>` de React 19, que dejaría dos títulos (el navegador muestra el primero).
+  - El POS fija «POS · Jaise Beauty Academy» en `Layout.jsx`.
+- **Datos estructurados** (`src/lib/datosEstructurados.js` + `hooks/useDatosEstructuradosSalon.js`, en Inicio): JSON-LD `BeautySalon` con dirección (`addressCountry: PE`), teléfono en formato +51, redes y horario agrupado por turnos, armados **solo** con `datos_contacto()` y `horario_atencion_semanal()` (lo que falta se omite). Es un bloque de datos: la CSP no lo afecta.
+- **`scripts/lib/seo.mjs`** (lo llama `build-cloudflare.mjs`):
+  - `robots.txt` bloquea las pantallas exclusivas del POS (derivadas de `navegacion.js`, así una pantalla nueva entra sola) y las privadas de la clienta. **No** bloquea `/servicios` ni `/citas`, que comparten ruta con el POS.
+  - `sitemap.xml` con las 10 rutas públicas y, **en producción**, cada `/servicios/:id` y `/productos/:id` activos, consultados con la clave pública. En Local, con la copia de datos de prod, salen 336 páginas. Si la consulta falla, el sitemap sale con las rutas fijas y el build sigue.
+  - En el preview de Cloudflare: `Disallow: /` y sin sitemap.
+- **Tests:** `tests/e2e/seo.test.mjs` (10 casos, en `npm test` y en la puerta de despliegue). Cubre el dominio, que ninguna regla de robots tape una ruta pública, la consulta del catálogo con un `fetch` falso y su fallo, el JSON-LD sin datos inventados, el teléfono, el horario y el recorte de descripciones.
+- **Verificado en Chromium** sobre `dist/` con sus cabeceras:
+  - título, canonical y robots correctos en Inicio, Servicios, un servicio, Productos, un producto, Nosotros, Términos y Login (`noindex`);
+  - JSON-LD en Inicio con los datos reales, retirado al navegar a Servicios;
+  - 0 avisos de CSP y 0 errores de JS;
+  - `robots.txt`, `sitemap.xml` y `og-jaise.jpg` se sirven como archivos.
+- **Después de publicar:** dar de alta el sitio en Google Search Console y enviar el sitemap; probar la vista previa pegando el enlace en WhatsApp. Si algún día hay dominio propio, basta definir `VITE_SITIO_URL` en Pages.

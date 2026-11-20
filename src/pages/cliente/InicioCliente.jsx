@@ -21,6 +21,8 @@ import MapaDiferido from '../../components/MapaDiferido.jsx'
 import ShinyText from '../../components/ShinyText.jsx'
 import CuponFlotanteInicio from '../../components/CuponFlotanteInicio.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
+import { useDatosEstructuradosSalon } from '../../hooks/useDatosEstructuradosSalon.js'
 
 // Cuatro WebP entregados por el usuario (3024×1698), sin recomprimir ni
 // generar variantes. Cada tema usa directamente su par antes/después.
@@ -268,6 +270,9 @@ async function leerGaleriaInicio() {
 }
 
 export default function InicioCliente() {
+  // SEO: Inicio usa el título y la descripción de index.html (la marca sola); solo fija el canonical.
+  useMetaPagina()
+  useDatosEstructuradosSalon() // ficha del negocio para Google (dirección, teléfono, horario, redes)
   const { mostrarToast } = useToast()
   const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
   const { tema } = useTemaWeb()

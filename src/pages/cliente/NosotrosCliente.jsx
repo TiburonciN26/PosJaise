@@ -17,6 +17,7 @@ import PieClienteWeb from './PieClienteWeb.jsx'
 import SelectorDesplegable from './recompensas/SelectorDesplegable.jsx'
 import { seccionesNosotros } from '../../config/navegacionCliente.js'
 import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 const formatoFechaResena = new Intl.DateTimeFormat('es-PE', {
   day: 'numeric',
@@ -605,6 +606,7 @@ function SeccionProximamente({ icono: Icono, mensaje }) {
 // mientras el admin no cargue ninguna foto (o si algún día se agrega
 // una 5ta sección que todavía no tenga nada).
 export default function NosotrosCliente() {
+  useMetaPagina({ titulo: 'Nosotros', descripcion: 'Conoce a Jaise Beauty Academy: nuestro equipo, nuestro trabajo, dónde estamos y cómo contactarnos.' })
   // La subsección vive en la URL (?seccion=...) para que el menú desplegable del header (PortalCliente) pueda cambiarla.
   const [params, setParams] = useSearchParams()
   const claveParam = params.get('seccion')

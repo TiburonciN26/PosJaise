@@ -18,6 +18,7 @@ import SeccionSellosReal from './recompensas/SeccionSellosReal.jsx'
 import SeccionCupones from './recompensas/SeccionCupones.jsx'
 import SeccionMovimientos from './recompensas/SeccionMovimientos.jsx'
 import SeccionComo from './recompensas/SeccionComo.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 function PuertaSesion() {
   return (
@@ -82,6 +83,7 @@ function recursosDeSeccion(clave, programaReal) {
 // useRecursosRecompensas.js): un fallo parcial se avisa en su sección,
 // con reintento solo de ese recurso, y no bloquea las demás.
 export default function RecompensasCliente({ publico = false }) {
+  useMetaPagina({ titulo: 'Recompensas', descripcion: 'Acumula puntos y sellos con cada visita y cámbialos por descuentos y cupones en Jaise Beauty Academy.' })
   const { session } = useAuth()
   const perfilCtx = usePerfilClienteOpcional()
   const perfil = perfilCtx?.perfil ?? null

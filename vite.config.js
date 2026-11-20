@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
+import { sitioDe } from './scripts/lib/seo.mjs'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -92,6 +93,13 @@ export default defineConfig(({ mode }) => {
       {
         name: 'marca-build-id',
         transformIndexHtml: (html) => (process.env.VITE_BUILD_ID ? html.replace('</head>', `<meta name="build-id" content="${process.env.VITE_BUILD_ID.replace(/[^\w.-]/g, '')}" /></head>`) : html),
+      },
+      // SEO (auditoría 2026-11-20, 19.1): Open Graph exige URLs ABSOLUTAS (og:url, og:image). index.html escribe
+      // __SITIO__ y aquí se reemplaza por el dominio público: VITE_SITIO_URL o, sin ella, el de producción. Es la misma
+      // función que usan robots.txt y sitemap.xml (scripts/lib/seo.mjs), así nunca apuntan a dominios distintos.
+      {
+        name: 'sitio-publico',
+        transformIndexHtml: (html) => html.replaceAll('__SITIO__', sitioDe(loadEnv(mode, process.cwd(), 'VITE_'))),
       },
       tailwindcss(),
       shell,

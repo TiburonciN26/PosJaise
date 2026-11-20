@@ -49,6 +49,7 @@ import AyudaCampo from '../../components/AyudaCampo.jsx'
 import ComoGanasPuntosYSellos from './citas/ComoGanasPuntosYSellos.jsx'
 import CitasPublicasCliente from './CitasPublicasCliente.jsx'
 import IconoFlechaDesplegable from '../../components/IconoFlechaDesplegable.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 const NOMBRES_MES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -328,6 +329,7 @@ function BotonAgendar({ destino }) {
 // idéntico, "Próximas citas" se ve siempre (consulta aparte, sin límite
 // de mes) y tocar un día solo filtra la lista — no reemplaza a "Próximas".
 export default function CitasCliente() {
+  useMetaPagina({ titulo: 'Reserva tu cita', descripcion: 'Elige tus servicios, el día y la hora, y reserva tu cita en Jaise Beauty Academy en pocos pasos.' })
   const { usuario } = useAuth()
   // Nunca montar hooks ni consultas de agenda/saldo para un visitante. La clave
   // descarta el estado anterior si cambia la cuenta con la pantalla abierta.

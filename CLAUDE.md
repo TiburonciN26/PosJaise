@@ -239,6 +239,12 @@ re-derived per tab:
 
 - Confirmations: the global `useToast()` (fixed banner, fades), never a
   layout-shifting inline banner.
+- SEO: every public client page calls `useMetaPagina({ titulo, descripcion })`
+  (`src/hooks/useMetaPagina.js`) — don't render `<title>`/`<meta>` with React 19
+  (index.html already has them; you'd get two titles). A NEW public route must
+  also be added to `RUTAS_PUBLICAS` in `scripts/lib/seo.mjs` (sitemap); POS
+  screens are blocked in robots.txt automatically from `navegacion.js`. SEO
+  copy only states facts from the DB/catalog (no city, no courses).
 - CSP is generated at build time by `scripts/lib/csp.mjs` (env origins +
   SHA-256 of index.html's inline scripts, CRLF-normalized) and appended to
   `dist/_headers` — never hand-write one in `cloudflare/_headers` (the build

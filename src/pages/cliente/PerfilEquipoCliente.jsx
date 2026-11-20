@@ -4,6 +4,7 @@ import { ArrowLeft, User } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { urlPublicaFoto } from '../../lib/imagenes.js'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 // Perfil de una persona del equipo (destino de "Conoce más de ..."). Fuente:
 // equipo_para_web(), solo fichas activas y publicadas. Versión inicial: foto y
@@ -13,6 +14,11 @@ export default function PerfilEquipoCliente() {
   const { id } = useParams()
   const [persona, setPersona] = useState(null)
   const [cargando, setCargando] = useState(true)
+  useMetaPagina({
+    titulo: persona?.nombres_completos,
+    descripcion: persona && `${persona.nombres_completos}${persona.especialidad ? `, ${persona.especialidad}` : ''}: parte del equipo de Jaise Beauty Academy.`,
+    indexable: cargando || Boolean(persona), // un id que no existe no se indexa
+  })
 
   useEffect(() => {
     let vigente = true

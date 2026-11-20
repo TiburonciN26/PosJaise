@@ -3,6 +3,7 @@ import { BookOpen, CheckCircle2, Printer } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 
 // Libro de Reclamaciones virtual (Ley 29571 / D.S. 011-2011-PCM, INDECOPI).
 // Vive dentro de la web, sin sesión: un visitante puede presentar su reclamo.
@@ -107,6 +108,7 @@ td:first-child{width:32%;font-weight:bold;background:#f2f2f2}td:last-child{white
 }
 
 export default function LibroReclamacionesCliente() {
+  useMetaPagina({ titulo: 'Libro de Reclamaciones', descripcion: 'Libro de Reclamaciones virtual de Jaise Beauty Academy, conforme al Código de Protección y Defensa del Consumidor.' })
   const { usuario } = useAuth()
   const [proveedor, setProveedor] = useState(null)
   const [formulario, setFormulario] = useState(formularioVacio)

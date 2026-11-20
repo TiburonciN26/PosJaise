@@ -86,7 +86,29 @@
          fonts.googleapis.com / fonts.gstatic.com. Para sumar una familia o un peso, ver el comentario de ese bloque. -->
     <!-- La del logo del header del portal (Orbitron) se precarga desde src/config/paginasCliente.js (precargarFuenteLogo), solo
          cuando la visita monta el portal: el POS no la usa y no la descarga. -->
-    <title>Pos Jaise Beauty Academy</title>
+    <!-- SEO (auditoría 2026-11-20, 19.1). Lo que ven los buscadores y la vista previa al compartir el enlace por
+         WhatsApp/Facebook (sus bots NO ejecutan JS: leen solo estas etiquetas). Cada página del portal cambia título,
+         descripción y canonical al montarse (src/hooks/useMetaPagina.js). __SITIO__ lo reemplaza vite.config.js por el
+         dominio público. og-jaise.jpg: 1200×630, generada desde el hero de Inicio. -->
+    <meta
+      name="description"
+      content="Jaise Beauty Academy: manicure en gel, uñas acrílicas y sistemas artificiales, pedicure, cejas, pestañas, depilación, micropigmentación y maquillaje. Reserva tu cita en línea."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jaise Beauty Academy" />
+    <meta property="og:locale" content="es_PE" />
+    <meta property="og:title" content="Jaise Beauty Academy · Uñas, cejas, pestañas y belleza" />
+    <meta
+      property="og:description"
+      content="Manicure en gel, sistemas artificiales, pedicure, cejas, pestañas, micropigmentación y maquillaje. Reserva tu cita en línea."
+    />
+    <meta property="og:url" content="__SITIO__/inicio" />
+    <meta property="og:image" content="__SITIO__/og-jaise.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jaise Beauty Academy: uñas y belleza" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Jaise Beauty Academy · Uñas, cejas, pestañas y belleza</title>
   </head>
   <body>
     <div id="root"></div>

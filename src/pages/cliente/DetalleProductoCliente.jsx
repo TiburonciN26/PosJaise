@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { guardarCopia, leerCopia, mismaCopia, olvidarCopia } from '../../lib/copiasEnMemoria.js'
 import { useRegistrarMigajas } from '../../context/MigajasExtraContext.jsx'
+import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import {
   AlertCircle,
@@ -69,6 +70,11 @@ export default function DetalleProductoCliente() {
 
   // Migaja completa en el header: Inicio | Productos | categoría | nombre.
   useRegistrarMigajas(producto ? [{ titulo: producto.categoria ?? 'General' }, { titulo: producto.nombre }] : [])
+  // SEO: cada producto se indexa con su nombre y su descripción (o una genérica con la categoría).
+  useMetaPagina({
+    titulo: producto?.nombre,
+    descripcion: producto && (producto.descripcion || `${producto.nombre}${producto.categoria ? ` (${producto.categoria})` : ''} en la tienda de Jaise Beauty Academy.`),
+  })
   const [galeria, setGaleria] = useState([])
   const [combo, setCombo] = useState(null)
   const [relacionados, setRelacionados] = useState([])
