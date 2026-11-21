@@ -44,6 +44,7 @@ import CampoSubirArchivo from '../../components/CampoSubirArchivo.jsx'
 import Contador from '../../components/Contador.jsx'
 import { abrirCheckoutCulqi, cobrarPedidoConTarjeta, culqiConfigurado, precargarCulqi } from '../../lib/culqi.js'
 import IconoFlechaDesplegable from '../../components/IconoFlechaDesplegable.jsx'
+import { calcularResumenCarritoWeb, centavos } from '../../lib/cobro.js'
 
 const BUCKET_FOTOS_PRODUCTOS = 'fotos-productos'
 const BUCKET_COMPROBANTES_PEDIDOS = 'comprobantes-pedidos-web'
@@ -236,7 +237,6 @@ const VALIDACION_NINGUNA = { estado: 'ninguno', descuento: 0, motivo: '', firma:
 // QA-057: identidad de una validación = productos marcados + CANTIDADES + precios. Una respuesta del servidor solo vale para la
 // firma con la que se pidió; cualquier cambio (cantidad, selección, precio recargado) la deja sin efecto.
 const firmaDe = (productos) => productos.map((p) => `${p.id}:${p.cantidad}:${p.precio}`).sort().join(',')
-const centavos = (n) => Math.round(Number(n) * 100)
 
 // Carrito tal como está GUARDADO en el servidor (cantidades y precios vigentes).
 async function leerCarritoGuardado() {
@@ -985,11 +985,7 @@ export default function CarritoCliente() {
   }
 
   const productosMarcados = productos.filter((p) => p.marcado && p.stock > 0)
-  const subtotal = productosMarcados.reduce((suma, p) => suma + p.precio * p.cantidad, 0)
-  const subtotalSinDescuento = productosMarcados.reduce((suma, p) => suma + (p.precioAntes ?? p.precio) * p.cantidad, 0)
-  const descuentoProductos = subtotalSinDescuento - subtotal
   const zona = zonas.find((z) => z.id === zonaId)
-  const costoDelivery = entrega === 'DELIVERY' ? (zona?.costo ?? 0) : 0
   const cupon = cuponAplicado ? cupones.find((c) => c.codigo === cuponAplicado) : null
   // Solo un descuento CONFIRMADO por el servidor entra en el total.
   const firmaCarrito = firmaDe(productosMarcados)
@@ -999,7 +995,13 @@ export default function CarritoCliente() {
   const cuponUtilizable = !cupon || estadoEfectivoCupon(cupon).utilizable
   const cuponValidado = Boolean(cupon) && cuponUtilizable && validacion.estado === 'ok' && validacion.firma === firmaCarrito && !hayPendientes
   const descuentoCupon = cuponValidado ? validacion.descuento : 0
-  const total = Math.max(0, subtotal + costoDelivery - descuentoCupon)
+  // Subtotal, ahorro por precios rebajados, delivery y total: lib/cobro.js (probado en tests/e2e/cobro.test.mjs).
+  const { subtotal, descuentoProductos, costoDelivery, total, totalSinDescuentos, hayAhorroTotal } = calcularResumenCarritoWeb({
+    productosMarcados,
+    entrega,
+    zona,
+    descuentoCupon,
+  })
   // Con un cupón aplicado, el total solo es el que se paga cuando el servidor lo confirmó; con guardados en curso, nunca.
   const totalConfirmado = !hayPendientes && cuponUtilizable && (!cupon || cuponValidado)
   // Si la fila «Total» puede mostrar un número. Sin cupón el total es una suma local (subtotal + delivery), igual que la fila
@@ -1020,8 +1022,6 @@ export default function CarritoCliente() {
   // valor derivado de props/estado anteriores.)
   const [totalFirme, setTotalFirme] = useState(total)
   if (totalMostrable && totalFirme !== total) setTotalFirme(total)
-  const totalSinDescuentos = subtotalSinDescuento + costoDelivery
-  const hayAhorroTotal = totalSinDescuentos > total
   const cuponesDisponibles = cupones.filter((c) => estadoEfectivoCupon(c).utilizable)
   const cuponesUsados = cupones.filter((c) => !estadoEfectivoCupon(c).utilizable)
 

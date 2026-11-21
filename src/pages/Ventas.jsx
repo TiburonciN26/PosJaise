@@ -9,7 +9,8 @@ import { useCarrito } from '../context/CarritoContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
-import { formatearSoles, redondear2, sumarMontos } from '../lib/moneda.js'
+import { formatearSoles } from '../lib/moneda.js'
+import { calcularMontoPosTarjeta, calcularTotalesVenta, desglosarMontoTarjeta, limpiarCodigoCupon, normalizarDescuentoTecleado } from '../lib/cobro.js'
 import { interpretarCuponCaja } from '../lib/cupones.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
@@ -36,6 +37,8 @@ import AyudaCampo from '../components/AyudaCampo.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 import { componenteDiferido } from '../lib/moduloDiferido.js'
 import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
+import { useContadorAnimado } from '../hooks/useContadorAnimado.js'
+import FilaTicket from '../components/ventas/FilaTicket.jsx'
 
 // El lector de códigos de barras (@zxing) pesa varios cientos de KB;
 // se carga solo cuando se abre el escáner, no en el bundle principal.
@@ -81,13 +84,6 @@ const AYUDA_FACTURA = (
 // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
 const DURACION_SALIDA = 300
 
-// Deslizar (izquierda o derecha) una fila del carrito más de esto la
-// elimina, igual que tocar el botón ✕ que reemplaza en táctil.
-const UMBRAL_ARRASTRE_ELIMINAR = 90
-// Movimiento mínimo antes de considerarlo un arrastre y no un tap sobre
-// la fila (nombre/precio, no los controles con su propio onClick).
-const UMBRAL_ARRASTRE_INICIO = 8
-
 // Rutas con BASE_URL (no "/icons/..." a secas): Vite no reescribe strings dentro de JSX, y cuando la app vivía bajo un
 // prefijo (GitHub Pages, ya retirado) la ruta absoluta daba 404 (A1 de la 3ª auditoría). Se conserva por si la base cambia.
 const metodosPago = [
@@ -126,227 +122,8 @@ const metodosPago = [
 // solo billete y no hay que hacer la cuenta a mano.
 const MONTOS_RAPIDOS_EFECTIVO = [10, 20, 50, 100]
 
-// Comisión de Culqi (POS físico): 3.44% + IGV sobre el % (~4.0592% neto), o
-// un mínimo de S/ 3.50 + IGV (S/ 4.13) si el % no llega a cubrirlo. Se
-// calcula el monto inverso para que, después de la comisión, al negocio le
-// quede exactamente el total de la venta — nunca asume la comisión del banco.
-const TASA_COMISION_TARJETA = 0.040592
-const COMISION_MINIMA_TARJETA = 4.13
-
-function calcularMontoPosTarjeta(total) {
-  const montoPorcentaje = total / (1 - TASA_COMISION_TARJETA)
-  const montoFijo = total + COMISION_MINIMA_TARJETA
-  return redondear2(Math.max(montoPorcentaje, montoFijo))
-}
-
-// Desglose de lo que se digita en el POS: venta + comisión (3.44% o mínimo
-// S/ 3.50) + IGV 18% sobre la comisión = monto. Solo lectura: se deriva del
-// monto escrito, que es el único campo editable.
-function desglosarMontoTarjeta(monto) {
-  const porPorcentaje = monto * 0.0344
-  const esMinimo = porPorcentaje * 1.18 < COMISION_MINIMA_TARJETA
-  const comision = esMinimo ? 3.5 : porPorcentaje
-  const igv = esMinimo ? COMISION_MINIMA_TARJETA - 3.5 : porPorcentaje * 0.18
-  return {
-    monto,
-    comision,
-    igv,
-    venta: monto - comision - igv,
-    etiquetaComision: esMinimo ? 'mín.' : '3.44%',
-  }
-}
-
-function useContadorAnimado(valorObjetivo, duracionMs = 350) {
-  const [valorMostrado, setValorMostrado] = useState(valorObjetivo)
-  const valorAnteriorRef = useRef(valorObjetivo)
-
-  useEffect(() => {
-    const inicio = valorAnteriorRef.current
-    const fin = valorObjetivo
-
-    if (inicio === fin) return undefined
-
-    const prefiereMovimientoReducido = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
-    if (prefiereMovimientoReducido) {
-      valorAnteriorRef.current = fin
-      setValorMostrado(fin)
-      return undefined
-    }
-
-    const inicioTiempo = performance.now()
-    let frame
-
-    function animar(ahora) {
-      const progreso = Math.min((ahora - inicioTiempo) / duracionMs, 1)
-      setValorMostrado(inicio + (fin - inicio) * progreso)
-      if (progreso < 1) {
-        frame = requestAnimationFrame(animar)
-      } else {
-        valorAnteriorRef.current = fin
-      }
-    }
-
-    frame = requestAnimationFrame(animar)
-    return () => cancelAnimationFrame(frame)
-  }, [valorObjetivo, duracionMs])
-
-  return valorMostrado
-}
-
-function FilaTicket({
-  item,
-  stockDisponible,
-  resaltada,
-  saliendo,
-  esTactil,
-  onCambiarCantidad,
-  onQuitar,
-}) {
-  const subtotal = item.cantidad * item.precioUnitario
-  const esProducto = item.tipo === 'PRODUCTO'
-  const superaStock = esProducto && item.cantidad > stockDisponible
-  const enElLimite = esProducto && item.cantidad >= stockDisponible
-
-  // Deslizar para eliminar (reemplaza el botón ✕ en táctil, ver esTactil
-  // más abajo): arrastreX sigue al dedo 1:1 mientras se arrastra, y se
-  // usa también para el tinte rojo de fondo (progreso hacia el umbral).
-  // touch-pan-y en el contenedor deja el scroll vertical de la lista
-  // intacto — solo el gesto horizontal lo captura este handler.
-  const [arrastreX, setArrastreX] = useState(0)
-  const [arrastrando, setArrastrando] = useState(false)
-  const inicioRef = useRef({ x: 0, iniciado: false, ignorar: false })
-
-  function manejarPointerDown(evento) {
-    if (!esTactil || saliendo) return
-    // Empezar el gesto sobre +/-/precio no debe interpretarse como
-    // swipe — esos controles ya tienen su propio onClick.
-    const ignorar = Boolean(evento.target.closest('button, input'))
-    inicioRef.current = { x: evento.clientX, iniciado: false, ignorar }
-    if (!ignorar) evento.currentTarget.setPointerCapture?.(evento.pointerId)
-  }
-
-  function manejarPointerMove(evento) {
-    if (!esTactil || saliendo || inicioRef.current.ignorar || evento.buttons === 0) return
-    const deltaX = evento.clientX - inicioRef.current.x
-
-    if (!inicioRef.current.iniciado) {
-      if (Math.abs(deltaX) < UMBRAL_ARRASTRE_INICIO) return
-      inicioRef.current.iniciado = true
-      setArrastrando(true)
-    }
-
-    setArrastreX(Math.max(-140, Math.min(140, deltaX)))
-  }
-
-  function soltar(evento) {
-    evento.currentTarget.releasePointerCapture?.(evento.pointerId)
-    if (!inicioRef.current.iniciado) return
-    inicioRef.current.iniciado = false
-    setArrastrando(false)
-
-    if (Math.abs(arrastreX) >= UMBRAL_ARRASTRE_ELIMINAR) {
-      setArrastreX(0)
-      onQuitar(item.id)
-    } else {
-      setArrastreX(0)
-    }
-  }
-
-  const progresoEliminar = Math.min(1, Math.abs(arrastreX) / UMBRAL_ARRASTRE_ELIMINAR)
-
-  return (
-    <div
-      onPointerDown={manejarPointerDown}
-      onPointerMove={manejarPointerMove}
-      onPointerUp={soltar}
-      onPointerCancel={soltar}
-      style={
-        saliendo
-          ? undefined
-          : {
-              transform: arrastreX ? `translateX(${arrastreX}px)` : undefined,
-              backgroundColor: `color-mix(in srgb, var(--color-red) ${Math.round(progresoEliminar * 85)}%, transparent)`,
-              transition: arrastrando ? 'none' : undefined,
-            }
-      }
-      className={`${esTactil ? 'grid-cols-[1fr_5rem_auto]' : 'grid-cols-[minmax(0,1fr)_5rem_5rem_1.5rem]'} touch-pan-y grid items-center gap-5 overflow-hidden px-(--separador-vertical) py-2 sm:px-6 transition-[transform_300ms_ease-in,opacity_150ms_ease-in_150ms,background-color_150ms_ease-out] ${
-        saliendo ? 'pointer-events-none -translate-x-full opacity-0 animate-flash-rojo' : 'translate-x-0 opacity-100'
-      } ${resaltada ? 'animate-flash-verde' : ''}`}
-    >
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          {item.tipo === 'SERVICIO' && (
-            <span className="rounded border border-blue/40 bg-blue/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-blue">
-              Servicio
-            </span>
-          )}
-          <span className="truncate text-sm text-ink">{item.nombre}</span>
-        </div>
-        {item.tipo === 'SERVICIO' ? (
-          (item.clienteNombre || item.atendidoPor) && (
-            <div className="mt-0.5 text-[11px] leading-tight text-ink/50">
-              {item.clienteNombre && <p className="truncate">Para: {item.clienteNombre}</p>}
-              {item.atendidoPor && <p className="truncate">Hecho por: {item.atendidoPor}</p>}
-            </div>
-          )
-        ) : (
-          <span className="font-mono text-xs text-ink/60">
-            S/ {item.precioUnitario.toFixed(1)} c/u
-          </span>
-        )}
-        {(superaStock || enElLimite) && (
-          <p className="font-mono text-[11px] text-red">
-            {superaStock ? 'Stock insuficiente' : `Stock máx: ${stockDisponible}`}
-          </p>
-        )}
-      </div>
-
-      <div className="flex items-center justify-center gap-1.5">
-        {esProducto ? (
-          <>
-            {item.cantidad > 1 && (
-              <button
-                type="button"
-                onClick={() => onCambiarCantidad(item.id, -1)}
-                className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber"
-              >
-                −
-              </button>
-            )}
-            <span className="w-4 text-center font-mono text-sm text-ink">{item.cantidad}</span>
-            <button
-              type="button"
-              onClick={() => onCambiarCantidad(item.id, 1)}
-              disabled={enElLimite}
-              className="flex h-6 w-6 items-center justify-center rounded border border-border-strong text-ink/70 transition-colors hover:border-amber disabled:pointer-events-none disabled:opacity-30"
-            >
-              +
-            </button>
-          </>
-        ) : (
-          <span className="w-4 text-center font-mono text-sm text-ink/60">1</span>
-        )}
-      </div>
-
-      <span className="whitespace-nowrap text-right font-mono text-sm text-ink">
-        {subtotal.toFixed(1)}
-      </span>
-
-      {!esTactil && (
-        <button
-          type="button"
-          onClick={() => onQuitar(item.id)}
-          aria-label="Quitar"
-          className="text-ink/30 transition-colors hover:text-red"
-        >
-          ✕
-        </button>
-      )}
-    </div>
-  )
-}
+// Comisión de Culqi (monto a digitar en el POS de tarjeta y su desglose) y los totales del carrito: lib/cobro.js
+// (módulo puro con tests en tests/e2e/cobro.test.mjs).
 
 export default function Ventas({ activo = true }) {
   const { mostrarToast } = useToast()
@@ -584,30 +361,10 @@ export default function Ventas({ activo = true }) {
   const busquedaProductos = useBusquedaProductosVenta({ termino: busqueda })
   const sugerencias = busquedaProductos.resultados
 
-  const subtotal = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
-  const valorDescuentoNumero = parseFloat(valorDescuento) || 0
-  const esDescuentoPorcentaje = tipoDescuento === 'porcentaje'
-  const esCupon = tipoDescuento === 'cupon'
-  const descuentoPctAplicado = esDescuentoPorcentaje
-    ? Math.min(100, Math.max(0, valorDescuentoNumero))
-    : 0
-  // Bug real reportado (cupón de Fidelización, 20%): esto SIEMPRE trataba
-  // cuponPreview.valor como monto fijo en soles, sin mirar tipoDescuento —
-  // el "Total"/"Vuelto" que veía la cajera en pantalla no coincidía con lo
-  // que confirmar_venta() termina cobrando de verdad en el servidor (que sí
-  // ya distinguía % de monto fijo, ver 97_cupones_fidelizacion.sql). Mismo
-  // cálculo que ya existía acá abajo para el descuento manual por %.
-  const montoDescuento = esCupon
-    ? cuponPreview?.tipoDescuento === 'PORCENTAJE'
-      ? redondear2(subtotal * ((cuponPreview.valor ?? 0) / 100))
-      : redondear2(Math.min(cuponPreview?.valor ?? 0, subtotal))
-    : esDescuentoPorcentaje
-      ? redondear2(subtotal * (descuentoPctAplicado / 100))
-      : redondear2(Math.min(Math.max(valorDescuentoNumero, 0), subtotal))
-  const total = redondear2(subtotal - montoDescuento)
+  // Totales (subtotal, descuento manual o de cupón, total y vuelto): lib/cobro.js, probado en tests/e2e/cobro.test.mjs.
+  const { subtotal, esDescuentoPorcentaje, esCupon, descuentoPctAplicado, montoDescuento, total, recibidoNumerico, vuelto } =
+    calcularTotalesVenta({ carrito, tipoDescuento, valorDescuento, cuponPreview, montoRecibido })
   const totalMostrado = useContadorAnimado(total)
-  const recibidoNumerico = parseFloat(montoRecibido) || 0
-  const vuelto = redondear2(recibidoNumerico - total)
   const montoPosTarjetaSugerido = calcularMontoPosTarjeta(total)
   const desgloseTarjeta = desglosarMontoTarjeta(montoPosTarjetaSugerido)
   const montoPosTarjetaNumerico = parseFloat(montoPosTarjeta) || 0
@@ -736,23 +493,7 @@ export default function Ventas({ activo = true }) {
   }
 
   function actualizarDescuento(valor) {
-    if (esDescuentoPorcentaje) {
-      const soloDigitos = valor.replace(/[^0-9]/g, '').slice(0, 3)
-      setValorDescuento(soloDigitos === '' ? '' : String(Math.min(100, parseInt(soloDigitos, 10))))
-      return
-    }
-    // Monto fijo en soles: dígitos + un único punto decimal, sin tope de caracteres.
-    const limpio = valor.replace(/[^0-9.]/g, '')
-    const primerPunto = limpio.indexOf('.')
-    setValorDescuento(
-      primerPunto === -1
-        ? limpio
-        : limpio.slice(0, primerPunto + 1) + limpio.slice(primerPunto + 1).replace(/\./g, ''),
-    )
-  }
-
-  function limpiarCodigoCupon(valor) {
-    return String(valor).replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6)
+    setValorDescuento(normalizarDescuentoTecleado(valor, esDescuentoPorcentaje))
   }
 
   function actualizarCodigoCupon(valor) {
@@ -1422,8 +1163,8 @@ export default function Ventas({ activo = true }) {
               >
                 {carrito.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-                    <ShoppingCart className="h-10 w-10 text-white/20" />
-                    <p className="font-mono text-sm text-white/30">El carrito está vacío</p>
+                    <ShoppingCart className="h-10 w-10 text-ink/20" />
+                    <p className="font-mono text-sm text-ink/50">El carrito está vacío</p>
                   </div>
                 ) : (
                   carrito.map((item) => (

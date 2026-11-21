@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import { mkdtempSync, readFileSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { RUTAS_PUBLICAS, SITIO_POR_DEFECTO, escribirSeo, rutasBloqueadas, rutasDelCatalogo, sitioDe, textoRobots, xmlSitemap } from '../../scripts/lib/seo.mjs'
+import { RUTAS_PUBLICAS, SITIO_POR_DEFECTO, escribirSeo, metaVerificacionGoogle, rutasBloqueadas, rutasDelCatalogo, sitioDe, textoRobots, xmlSitemap } from '../../scripts/lib/seo.mjs'
 import { construirLdSalon, horarioSchema, telefonoInternacional } from '../../src/lib/datosEstructurados.js'
 import { recortarDescripcion } from '../../src/hooks/useMetaPagina.js'
 
@@ -29,6 +29,15 @@ test('robots bloquea TODAS las pantallas exclusivas del POS y las privadas, pero
   for (const privada of ['/mi-perfil', '/carrito', '/citas/carrito', '/historial', '/login']) assert.ok(bloqueadas.includes(privada), privada)
   // Ninguna regla Disallow es prefijo de una ruta pública (robots compara por prefijo)
   for (const b of bloqueadas) for (const p of RUTAS_PUBLICAS) assert.ok(!p.startsWith(b), `Disallow: ${b} bloquearía ${p}`)
+})
+
+test('verificación de Search Console: acepta el token o la etiqueta pegada; rechaza cualquier otra cosa', () => {
+  const token = 'aBc123_-XyZaBc123_-XyZaBc123_-XyZaBc123_-X'
+  assert.equal(metaVerificacionGoogle(token), token)
+  assert.equal(metaVerificacionGoogle(`<meta name="google-site-verification" content="${token}" />`), token)
+  for (const malo of [undefined, '', 'corto', '"><script>alert(1)</script>', `${token}" onload="x`]) {
+    assert.equal(metaVerificacionGoogle(malo), null, String(malo))
+  }
 })
 
 test('robots: producción con Sitemap; preview «Disallow: /» sin sitemap', () => {

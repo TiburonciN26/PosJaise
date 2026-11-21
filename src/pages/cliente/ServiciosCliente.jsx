@@ -435,7 +435,7 @@ export default function ServiciosCliente() {
               </div>
             )}
 
-            <div className="absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] sm:text-xs font-medium uppercase tracking-widest text-white">
+            <div className="lw-sobre-oscuro absolute inset-x-4 bottom-4 flex items-end justify-between text-[11px] sm:text-xs font-medium uppercase tracking-widest text-white">
               <span className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--lw-rose)]" />
                 {String(heroIdxSeguro + 1).padStart(2, '0')} / {String(heroServicios.length).padStart(2, '0')}

@@ -27,6 +27,17 @@ export const RUTAS_PUBLICAS = [
   '/politica-de-privacidad',
 ]
 
+/**
+ * Token de verificación de Google Search Console (VITE_GOOGLE_SITE_VERIFICATION). Acepta el valor de content="…" o la
+ * etiqueta <meta> entera pegada tal cual. Devuelve solo el token (letras, dígitos, _ y -) o null si no hay uno válido:
+ * nunca se inyecta texto arbitrario en index.html.
+ */
+export function metaVerificacionGoogle(valor) {
+  const texto = String(valor ?? '').trim()
+  const token = texto.match(/content=["']([^"']+)["']/)?.[1] ?? texto
+  return /^[A-Za-z0-9_-]{10,100}$/.test(token) ? token : null
+}
+
 /** Rutas privadas del portal (RutaPrivada en App.jsx) y el login: nada que indexar. */
 export const RUTAS_PRIVADAS_PORTAL = ['/login', '/mi-perfil', '/carrito', '/citas/carrito', '/historial', '/mis-resenas']
 

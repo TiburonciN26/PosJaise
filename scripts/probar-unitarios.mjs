@@ -13,6 +13,7 @@ import { resolve } from 'node:path'
 
 const AUTONOMOS = [
   'catalogo-publico-botones',
+  'cobro',
   'colector-respuestas',
   'csp',
   'cupones-categorias',

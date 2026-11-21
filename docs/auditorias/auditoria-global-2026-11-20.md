@@ -261,6 +261,8 @@ Las tablas con RLS y sin políticas (`almacen_movimientos`, `caja_chica_*`, `hor
 **Lo que está bien:** `lang="es"`, regla global `:focus-visible` con anillo de 2 px en `index.css:959`, 534 atributos `aria-*`, 132 `role=`, 209 `htmlFor`, 155 `autoComplete`, `useModalA11y` con trampa de foco y cierre con Esc en todos los modales, 45 bloques `prefers-reduced-motion`, solo 6 `onClick` en elementos que no son botones, y una suite `a11y-modales.spec.mjs`.
 
 #### 8.1 Contraste de texto secundario por debajo de AA
+
+> **Corrección tras medir (2026-11-20, §104):** la estimación de abajo se hizo leyendo clases, no midiendo. Medido en el navegador, el tema **oscuro** solo tenía 2 fallos: la app ya compensa esas opacidades. Los 244 restantes estaban en el tema **claro**, por los pares `--color-*-texto` evaluados contra blanco y no contra los fondos reales. Corregido: 0 fallos.
 - **Severidad:** 🟠 Alto
 - **Descripción:** hay 144 usos de `text-ink/40` o menos (y `text-white/40`, `/30`…). Calculado sobre los tokens: `#fff` al 40 % sobre `--color-bg #0a0a0a` da ≈ **3,8:1**; `#000` al 40 % sobre `#f8fafc` (tema claro) da ≈ **2,9:1**. WCAG 1.4.3 exige 4,5:1 en texto normal.
 - **Agravante:** 188 textos de 9–11 px. Con ese tamaño, un contraste bajo es casi ilegible para una persona mayor o en el celular a pleno sol.
@@ -480,8 +482,8 @@ No se encontró ninguna vulnerabilidad crítica explotable hoy. Lo más urgente 
 7. 🟡 CSP en *Report-Only* ✅ (§102: generada al compilar, avisos a `errores_cliente`, 0 avisos en Local incluso forzada). Falta pasarla a obligatoria (`MODO = 'bloquear'` en `scripts/lib/csp.mjs`) tras vigilar Culqi y los medios R2 en prod.
 8. ✅ Quitar el listado anónimo de buckets (hecho junto con el ítem 3). Pendiente: decidir si `fotos-clientes` debe ser privado (7.2).
 9. ✅ SEO del portal: meta/OG, títulos por ruta, robots, sitemap, JSON-LD (19.1). *§103. Pendiente fuera del código: alta en Google Search Console y envío del sitemap.*
-10. Contraste del texto secundario y tamaño mínimo de 12 px (8.1, 9.1).
-11. Partir `Ventas.jsx` y `CarritoCliente.jsx` en hook de dominio + lógica pura + subcomponentes (1.1).
+10. ✅ Contraste del texto secundario (8.1): **medido** en el navegador, de 246 fallos a 0 en 28 pantalla×tema (§104). 🟡 Tamaño mínimo de 12 px y `input` ≥16 px en móvil (9.1): decisión de diseño pendiente.
+11. 🟡 Partir `Ventas.jsx` y `CarritoCliente.jsx` en hook de dominio + lógica pura + subcomponentes (1.1). *Hecho (§106): la lógica pura del cobro, con 13 tests en la puerta de despliegue; `FilaTicket` y `useContadorAnimado` a archivos propios (Ventas 1 860 → 1 601 líneas). Falta: panel de cobro/comprobante de Ventas y la división de `CarritoCliente`.*
 12. Tipos generados de Supabase + `checkJs` en `lib/` (4.1).
 13. Turnstile en el Libro de Reclamaciones (16.1).
 

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
-import { sitioDe } from './scripts/lib/seo.mjs'
+import { metaVerificacionGoogle, sitioDe } from './scripts/lib/seo.mjs'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -97,9 +97,16 @@ export default defineConfig(({ mode }) => {
       // SEO (auditoría 2026-11-20, 19.1): Open Graph exige URLs ABSOLUTAS (og:url, og:image). index.html escribe
       // __SITIO__ y aquí se reemplaza por el dominio público: VITE_SITIO_URL o, sin ella, el de producción. Es la misma
       // función que usan robots.txt y sitemap.xml (scripts/lib/seo.mjs), así nunca apuntan a dominios distintos.
+      // Verificación de Google Search Console (método «Etiqueta HTML»): el token va en la variable
+      // VITE_GOOGLE_SITE_VERIFICATION del entorno de Cloudflare Pages, no en el repo. Sin la variable no se añade nada.
       {
         name: 'sitio-publico',
-        transformIndexHtml: (html) => html.replaceAll('__SITIO__', sitioDe(loadEnv(mode, process.cwd(), 'VITE_'))),
+        transformIndexHtml: (html) => {
+          const env = loadEnv(mode, process.cwd(), 'VITE_')
+          const salida = html.replaceAll('__SITIO__', sitioDe(env))
+          const token = metaVerificacionGoogle(env.VITE_GOOGLE_SITE_VERIFICATION)
+          return token ? salida.replace('</head>', `<meta name="google-site-verification" content="${token}" /></head>`) : salida
+        },
       },
       tailwindcss(),
       shell,

@@ -59,7 +59,7 @@ export default function MapaDiferido({ direccion, titulo = 'Ubicación en el map
         >
           <MapPin className="h-8 w-8" />
           <span className="text-sm">Ver mapa</span>
-          <span className="max-w-full truncate text-xs text-white/40">{direccion}</span>
+          <span className="max-w-full truncate text-xs text-white/60">{direccion}</span>
         </button>
       )}
     </div>

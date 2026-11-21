@@ -1049,14 +1049,17 @@ main:has(.modal-producto-web:not(.hidden *)) {
      que la corrección separa el ROL: rellenos/bordes/pills no se
      tocan; el acento-texto usa estos pares oscurecidos del mismo matiz
      (todos ≥4.5:1 sobre blanco), aplicados por override de las
-     utilidades .text-* de abajo, sin tocar componentes. */
-  --color-amber-texto: #9a6700;
-  --color-green-texto: #15803d;
-  --color-red-texto: #dc2626;
+     utilidades .text-* de abajo, sin tocar componentes.
+     Auditoría 2026-11-20 (8.1): medidos en el navegador, los valores anteriores daban 4.05–4.35:1 sobre los fondos
+     REALES (#f1f5f9 de surface-2, #ebebed del portal), no sobre blanco puro. Mismo matiz, 3–9 % más oscuros: ≥4.6:1
+     sobre todos. Antes: amber #9a6700, green #15803d, red #dc2626, blue #2563eb, rosa #c2456b, naranja #c2410c. */
+  --color-amber-texto: #8d5e00;
+  --color-green-texto: #147839;
+  --color-red-texto: #c92323;
   --color-azul-metal: #4a78b0;
-  --color-blue-texto: #2563eb;
-  --color-rosa-texto: #c2456b;
-  --color-naranja-texto: #c2410c;
+  --color-blue-texto: #235ddd;
+  --color-rosa-texto: #b13f62;
+  --color-naranja-texto: #b73d0b;
 
   /* Anillo de foco (regla :focus-visible, más abajo): en claro, el
      ámbar de marca no contrasta sobre blanco — usa el par de texto. */
@@ -1076,6 +1079,11 @@ main:has(.modal-producto-web:not(.hidden *)) {
  * para pisar a la de Tailwind solo cuando corresponde). */
 [data-tema='claro'] :is(.text-amber, .hover\:text-amber:hover) {
   color: var(--color-amber-texto);
+}
+/* Pastillas de estado ámbar (Pendiente en Citas, avisos…): texto ámbar SOBRE su propio tinte bg-amber/NN. El tinte
+   oscurece un poco el fondo y el par de texto quedaba en 4.31:1 (medido). Un escalón más oscuro solo en ese caso. */
+[data-tema='claro'] :is([class*='bg-amber/'].text-amber, [class*='bg-amber/'] .text-amber) {
+  color: #7d5300;
 }
 [data-tema='claro'] :is(.text-green, .hover\:text-green:hover) {
   color: var(--color-green-texto);
@@ -1116,9 +1124,10 @@ main:has(.modal-producto-web:not(.hidden *)) {
 
 /* Variantes con opacidad del rosa (pestañas inactivas del header y del
  * menú lateral): mismo par de texto, apenas atenuado — mantiene la
- * distinción activa/inactiva sin volver a caer bajo 4.5:1. */
+ * distinción activa/inactiva sin volver a caer bajo 4.5:1.
+ * Auditoría 2026-11-20: al 85 % SÍ caía (3.65:1 medido en el menú lateral). Al 95 % con el rosa nuevo: ≥4.7:1. */
 [data-tema='claro'] :is(.text-purple-300\/70, .text-purple-300\/90) {
-  color: color-mix(in oklab, var(--color-rosa-texto) 85%, transparent);
+  color: color-mix(in oklab, var(--color-rosa-texto) 95%, transparent);
 }
 
 /* C1b: .text-bg existe para "texto sobre acento sólido" (botones
@@ -3554,7 +3563,7 @@ input[type='search']::-webkit-search-decoration {
   --overlay: rgba(0, 0, 0, 0.2);
   --text: #000000;
   --text-secondary: #4b5563;
-  --text-muted: #6b7280;
+  --text-muted: #5f6672; /* antes #6b7280: 4.06:1 sobre --bg (#ebebed). Ahora ≥4.86:1 (auditoría 2026-11-20, 8.1) */
   --text-body: #374151;
   --border: #e5e7eb;
   --border-strong: #9ca3af;
@@ -3576,7 +3585,7 @@ input[type='search']::-webkit-search-decoration {
   --lw-card: var(--bg-subtle);
   --lw-border: var(--border);
   --lw-subtitle: var(--text-body);
-  --lw-gold: #4a78b0;
+  --lw-gold: #426a9c; /* antes #4a78b0: 3.83–4.14:1 como texto («PASO 1», enlaces). Mismo azul, ≥4.67:1 (auditoría 8.1) */
   --lw-metal-azul: var(--metal);
   --lw-badge-text: var(--badge-text);
   color-scheme: light;
@@ -3879,6 +3888,16 @@ input[type='search']::-webkit-search-decoration {
 .lw-claro .lw-sobre-foto .hover\:bg-white:hover {
   background-color: #ffffff;
   color: #000000;
+}
+/* Texto SOBRE un recuadro que es oscuro en ambos temas (foto, video, contador encima de una imagen), sin cambiar el
+   fondo como hace .lw-sobre-foto. En claro, las reglas de «Texto» de arriba oscurecen text-white, text-white/NN y los
+   grises claros: sobre un recuadro negro quedaban ilegibles (1.03:1 el contador de Servicios, 2.78:1 el de Nosotros).
+   `revert-layer` deshace ESTA capa sin capa (overrides del tema) y devuelve el valor de la utilidad de Tailwind
+   (@layer utilities): text-white/70 vuelve a ser blanco al 70 %, sin repetir cada color aquí. Poner la clase en el
+   recuadro oscuro; el texto que solo hereda color necesita su text-white explícito. (Auditoría 2026-11-20, 8.1.) */
+.lw-claro .lw-sobre-oscuro :is(.text-white, [class^='text-white/'], [class*=' text-white/'], [class~='text-[#a6a6a6]'], [class~='text-[#e8e8ea]'], [class~='text-[#d9d9dc]']),
+.lw-claro .lw-sobre-oscuro:is(.text-white, [class^='text-white/'], [class*=' text-white/']) {
+  color: revert-layer;
 }
 .lw-claro .lw-cta-hero {
   background: var(--surface-glass);

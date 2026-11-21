@@ -8068,3 +8068,52 @@ Auditoría global, hallazgo 19.1: el portal no tenía descripción, Open Graph, 
   - 0 avisos de CSP y 0 errores de JS;
   - `robots.txt`, `sitemap.xml` y `og-jaise.jpg` se sirven como archivos.
 - **Después de publicar:** dar de alta el sitio en Google Search Console y enviar el sitemap; probar la vista previa pegando el enlace en WhatsApp. Si algún día hay dominio propio, basta definir `VITE_SITIO_URL` en Pages.
+
+## 104. Contraste de texto (WCAG AA) medido en el navegador: de 246 fallos a 0 — 2026-11-20
+
+Auditoría global, hallazgo 8.1. Se **midió** en vez de estimar: un recorrido con Playwright sobre `dist/` calcula, para cada texto visible, el contraste contra su fondo efectivo. Normaliza cualquier sintaxis de color (oklch, color-mix) con un canvas y mezcla las capas semitransparentes y la opacidad heredada. Aplica 4,5:1 al texto normal y 3:1 al grande. Recorrió 14 pantallas (portal: Inicio, Servicios, Productos, Nosotros, Citas, Recompensas, Login; POS como admin: Ventas, Historial, Inventario, Citas, Clientes, Gastos, Dashboard) × tema oscuro y claro.
+
+- **Resultado antes:** 246 fallos, casi todos en **tema claro**. El oscuro solo tenía 2. La estimación del informe («≈3,8:1 en oscuro») estaba equivocada: se corrigió allí.
+- **Causa principal:** los «pares de texto» del tema claro (`--color-*-texto`) daban ≥4,5:1 sobre blanco puro, pero 4,05–4,35:1 sobre los fondos reales (`#f1f5f9` de surface-2, `#ebebed` del portal). Se oscurecieron 3–9 % con el mismo matiz:
+  - amber `#8d5e00`, green `#147839`, red `#c92323`, blue `#235ddd`, rosa `#b13f62`, naranja `#b73d0b`;
+  - en el portal claro, `--lw-gold` `#426a9c` y `--text-muted` `#5f6672`.
+  
+  Los rellenos y bordes de marca no cambian.
+- **Menú lateral del POS en claro:** las pestañas rosas inactivas usaban el rosa al 85 % (3,65:1, aunque el comentario decía lo contrario). Ahora van al 95 %.
+- **Pastillas ámbar sobre su tinte** (`bg-amber/NN` + `text-amber`, p. ej. «Pendiente» en Citas): un escalón más oscuro (`#7d5300`) solo en ese caso.
+- **Texto sobre recuadros que son oscuros en ambos temas:** nueva clase `.lw-sobre-oscuro`, que con `color: revert-layer` deshace la reescritura del tema claro y devuelve el color original de la utilidad de Tailwind. Se aplicó al contador «01 / 03» sobre la foto de Servicios y Productos (1,03:1, era invisible) y al número de cada tarjeta del equipo en Nosotros (2,78:1). A diferencia de `.lw-sobre-foto`, no pinta fondo.
+- **Puntuales:**
+  - Ventas, «El carrito está vacío»: `text-white/30` era blanco sobre blanco en claro (1,01:1). Pasa a `text-ink/50`.
+  - Dirección en el botón del mapa: `text-white/40` → `/60`.
+- **Resultado después:** **0 fallos** en las 28 combinaciones. Captura del POS en claro revisada: mismo aspecto, más legible.
+- **No se tocó el tamaño de letra:** quedan ~190 textos de 9–11 px. WCAG no fija un mínimo (1.4.4 trata del zoom), así que es una decisión de diseño pendiente con la dueña. Los `input` de menos de 16 px provocan zoom automático en iOS Safari (ver informe, 9.1).
+
+## 105. Verificación de Google Search Console por variable de entorno — 2026-11-20
+
+Para dar de alta el portal en Search Console sin escribir el token en el repo. `vite.config.js` (plugin `sitio-publico`) añade `<meta name="google-site-verification">` a `index.html` **solo** si existe `VITE_GOOGLE_SITE_VERIFICATION` en el entorno del build. Acepta el valor de `content` o la etiqueta completa pegada tal cual; `metaVerificacionGoogle()` (`scripts/lib/seo.mjs`) solo deja pasar un token `[A-Za-z0-9_-]{10,100}`, así que no se puede inyectar HTML por ahí. Test en `seo.test.mjs`.
+
+Pasos del alta (los hace la dueña de la cuenta de Google):
+1. En Search Console: «Agregar propiedad» → «Prefijo de la URL» → `https://pos-jaise.pages.dev/` → método «Etiqueta HTML» → copiar la etiqueta.
+2. En Cloudflare Pages → proyecto → Settings → Variables (Production): `VITE_GOOGLE_SITE_VERIFICATION` = la etiqueta o su `content`.
+3. Volver a publicar: Deployments → último de producción → «Retry deployment» (no hace falta un commit).
+4. En Search Console, «Verificar». Después: Sitemaps → enviar `sitemap.xml`.
+
+## 106. Ventas y carrito del portal: la aritmética del cobro, bajo test — 2026-11-20
+
+Auditoría global, hallazgo 1.1 (primer paso). `Ventas.jsx` (1 860 líneas, 30 `useState`) y `CarritoCliente.jsx` mezclaban el cálculo del dinero con la interfaz, y ese cálculo no tenía ni un test. El comentario de Ventas recordaba un bug real: un cupón del 20 % se mostraba como S/ 20.
+
+- **`src/lib/cobro.js`** (módulo puro). Las fórmulas se movieron **tal cual**, con el mismo redondeo, los mismos topes y el mismo orden de operaciones:
+  - `calcularTotalesVenta()`: subtotal, descuento en % o S/ (con topes), cupón en % o fijo, total y vuelto.
+  - `calcularMontoPosTarjeta()` y `desglosarMontoTarjeta()`: comisión de Culqi.
+  - `normalizarDescuentoTecleado()`, `limpiarCodigoCupon()`.
+  - Del portal: `calcularResumenCarritoWeb()` (subtotal, ahorro por precio rebajado, delivery solo con DELIVERY, total nunca negativo) y `centavos()`.
+- **`tests/e2e/cobro.test.mjs`** (13 casos, en `npm test` y por tanto en la puerta de despliegue):
+  - casos calculados a mano;
+  - el cupón del 20 % (descuenta el 20 %, no S/ 20);
+  - que tras la comisión de Culqi al negocio le quede **el total de la venta ±1 céntimo**, recorriendo totales de S/ 0,50 a S/ 3 000;
+  - que lo que se paga viaja en céntimos enteros, de modo que el error de coma flotante de `0.1 + 0.2` no llega a Culqi ni al servidor.
+- **Movimientos sin cambios de lógica** (verificados línea por línea contra el original): `useContadorAnimado` → `src/hooks/useContadorAnimado.js`; `FilaTicket` y los umbrales del gesto de deslizar → `src/components/ventas/FilaTicket.jsx`. **`Ventas.jsx`: 1 860 → 1 601 líneas.**
+- **Verificado en Chromium** sobre `dist/`:
+  - Ventas como admin: carrito vacío S/ 0.00; 1 × producto de S/ 15 → S/ 15.00; 10 % → S/ 13.50; S/ 20 recibidos en efectivo → vuelto S/ 6.50; «150» en el % se corrige a 100 y el total queda en S/ 0.00. Sin confirmar la venta, sin errores de JS.
+  - Carrito del portal de una clienta (solo lectura): S/ 20.00 + delivery S/ 10.00 = S/ 30.00, sin escrituras.
+- **Pendiente:** los dos `exhaustive-deps` de Ventas («Exacto» y monto de tarjeta, intencionales), el resto de la división de Ventas (panel de cobro, comprobante) y `CarritoCliente.jsx`, que sigue con 1 578 líneas.

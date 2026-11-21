@@ -139,7 +139,7 @@ function TarjetaEquipo({ persona, indice, refTarjeta, animacion }) {
       className={`group liquid-glass flex flex-row overflow-hidden rounded-none sm:flex-col ${animacion.className}`}
       style={animacion.style}
     >
-      <div className="relative min-h-[150px] w-28 shrink-0 overflow-hidden bg-black sm:aspect-[4/5] sm:min-h-0 sm:w-auto">
+      <div className="lw-sobre-oscuro relative min-h-[150px] w-28 shrink-0 overflow-hidden bg-black sm:aspect-[4/5] sm:min-h-0 sm:w-auto">
         <div className="absolute inset-0 flex items-center justify-center transition-transform duration-[600ms] ease-[cubic-bezier(.2,.7,.2,1)] group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100">
           {urlFoto ? (
             <img src={urlFoto} alt="" className="h-full w-full object-cover" loading="lazy" />
