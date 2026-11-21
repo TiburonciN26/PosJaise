@@ -4,6 +4,7 @@
   "ignorePatterns": [".codex/**", "dist/**", "dist-*/**", "cloudflare/medios-worker/.wrangler/**"],
   "rules": {
     "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }]
   },
   "overrides": [

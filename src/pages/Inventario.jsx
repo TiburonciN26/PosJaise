@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Pencil, Trash2, Plus, Package, ImageOff, ZoomIn, Barcode, Printer } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
@@ -211,13 +211,16 @@ export default function Inventario({ activo = true }) {
     setHayMas((data ?? []).length === TAMANO_PAGINA)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarProductos (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarProductos(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarProductos(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     return () => {
       vigente.actual = false
     }

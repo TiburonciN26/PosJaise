@@ -30,6 +30,12 @@ if (process.env.CF_PAGES) {
   console.log(`build-cloudflare: entorno=${ent.entorno} rama=${ent.rama} backend=${v.refEsperado === REF_PRODUCCION ? 'negocio' : 'staging'} clave=${v.tipoClave}`)
   // Marca de versión = commit corto (permite distinguir builds y probar la actualización PWA).
   if (process.env.CF_PAGES_COMMIT_SHA && !process.env.VITE_BUILD_ID) process.env.VITE_BUILD_ID = process.env.CF_PAGES_COMMIT_SHA.slice(0, 8)
+  // Libro de Reclamaciones (migración 20261120000005): sin la clave del sitio de Turnstile el formulario no puede
+  // obtener token y la Edge Function rechaza todo envío. Es obligatorio por ley: en producción no se publica sin ella.
+  if (!process.env.VITE_TURNSTILE_SITE_KEY?.trim()) {
+    if (ent.entorno === 'produccion') falla('falta VITE_TURNSTILE_SITE_KEY (Cloudflare Turnstile del Libro de Reclamaciones) en las variables de Pages')
+    console.warn('build-cloudflare: aviso: sin VITE_TURNSTILE_SITE_KEY, el Libro de Reclamaciones de este preview no podrá enviarse')
+  }
 }
 
 // Solo para las pruebas de las salvaguardas: valida y sale ANTES de iniciar Vite.

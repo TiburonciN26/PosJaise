@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { Globe, UserRound } from 'lucide-react'
-import { urlPublicaFoto } from '../../lib/imagenes.js'
+import { useUrlFotoCliente } from '../../hooks/useUrlFotoCliente.js'
 import CampoColapsable from '../CampoColapsable.jsx'
 import IconoFlechaDesplegable from '../IconoFlechaDesplegable.jsx'
 
 // Piezas compartidas por la lista de Clientes (tabla de PC y tarjetas del celular) y el perfil de cada clienta.
-
-const BUCKET_FOTOS_CLIENTES = 'fotos-clientes'
 
 function iniciales(nombre) {
   const partes = (nombre ?? '').trim().split(/\s+/)
@@ -28,7 +26,8 @@ const TAMANOS_AVATAR = {
 // iniciales. Estado de error propio por avatar: si una foto no carga, no tumba las demás.
 export function AvatarCliente({ cliente, tamano = 'md' }) {
   const [errorFoto, setErrorFoto] = useState(false)
-  const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS_CLIENTES, cliente.foto_url) : null
+  const urlFirmada = useUrlFotoCliente(cliente.foto_url)
+  const urlFoto = !errorFoto ? urlFirmada : null
 
   return (
     <div

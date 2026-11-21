@@ -107,7 +107,7 @@ export default function PerfilCliente({ clienteId, version, onVolver, onEditar, 
     const vigente = { actual: true }
     setEstado((a) => ({ ...a, cargando: true, error: null }))
     Promise.all([
-      supabase.from('clientes').select(SELECT_PERFIL).eq('id', clienteId).maybeSingle(),
+      supabase.from('clientes_admin').select(SELECT_PERFIL).eq('id', clienteId).maybeSingle(),
       supabase.rpc('perfil_cliente_resumen', { p_cliente_id: clienteId }),
     ]).then(([clienteRes, resumenRes]) => {
       if (!vigente.actual) return

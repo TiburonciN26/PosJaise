@@ -15,7 +15,7 @@ const urlDe = (ref) => `https://${ref}.supabase.co`
 const ROTO = `${b64({ alg: 'HS256' })}.%%%no-base64%%%.firma`
 const TERCERO = 'abcdefghijklmnopqrst'
 const base = { CF_PAGES: '1', CF_PAGES_BRANCH: 'testing', RAMA_PRODUCCION: 'main', VITE_SUPABASE_URL: urlDe(S), VITE_SUPABASE_ANON_KEY: anon(S) }
-const prod = { CF_PAGES_BRANCH: 'main', VITE_SUPABASE_URL: urlDe(P), VITE_SUPABASE_ANON_KEY: anon(P) }
+const prod = { CF_PAGES_BRANCH: 'main', VITE_SUPABASE_URL: urlDe(P), VITE_SUPABASE_ANON_KEY: anon(P), VITE_TURNSTILE_SITE_KEY: '1x00000000000000000000AA' }
 
 const CF = 'scripts/build-cloudflare.mjs'
 const PV = 'scripts/build-preview-staging.mjs'
@@ -25,6 +25,8 @@ const casos = [
   ['cf preview → staging + publishable', CF, { VITE_SUPABASE_ANON_KEY: publishable }, true],
   ['cf producción → negocio + anon JWT', CF, prod, true],
   ['cf producción → negocio + publishable', CF, { ...prod, VITE_SUPABASE_ANON_KEY: publishable }, true],
+  ['cf producción sin VITE_TURNSTILE_SITE_KEY (Libro de Reclamaciones)', CF, { ...prod, VITE_TURNSTILE_SITE_KEY: '' }, false],
+  ['cf preview sin VITE_TURNSTILE_SITE_KEY → solo aviso', CF, { VITE_TURNSTILE_SITE_KEY: '' }, true],
   ['cf rama de producción configurada distinta de main (cloudflare-produccion) → negocio', CF, { ...prod, CF_PAGES_BRANCH: 'cloudflare-produccion', RAMA_PRODUCCION: 'cloudflare-produccion' }, true],
   ['cf main es PREVIEW si la producción es otra rama → staging', CF, { CF_PAGES_BRANCH: 'main', RAMA_PRODUCCION: 'cloudflare-produccion' }, true],
   ['cf main es PREVIEW si la producción es otra rama → negocio rechazado', CF, { ...prod, RAMA_PRODUCCION: 'cloudflare-produccion' }, false],

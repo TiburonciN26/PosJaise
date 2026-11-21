@@ -80,7 +80,7 @@ export default function DetalleServicioCliente() {
   // SEO: cada servicio se indexa con su nombre y su descripción (o una genérica con la categoría).
   useMetaPagina({
     titulo: servicio?.nombre,
-    descripcion: servicio && (servicio.descripcion || `${servicio.nombre}${servicio.categoria ? ` (${servicio.categoria})` : ''} en Jaise Beauty Academy. Reserva tu cita en línea.`),
+    descripcion: servicio && (servicio.descripcion || `${servicio.nombre}${servicio.categoria ? ` (${servicio.categoria})` : ''} en Jaise Beauty Academy, Nuevo Chimbote. Reserva tu cita en línea.`),
   })
   const [galeria, setGaleria] = useState([])
   const [combo, setCombo] = useState(null)

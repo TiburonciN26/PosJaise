@@ -1,0 +1,15 @@
+/* Capa base de shadcn (@layer base). Parte 20 de src/index.css: el orden de los @import fija la cascada. */
+/*
+ ---break---
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

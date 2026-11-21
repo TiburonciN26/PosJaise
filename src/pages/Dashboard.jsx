@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles } from '../lib/moneda.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
@@ -69,12 +69,15 @@ export default function Dashboard({ activo = true }) {
     setCargando(false)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarDatos (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarDatos(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarDatos(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     return () => {
       vigente.actual = false
     }

@@ -1,0 +1,68 @@
+/* Ajustes del portal añadidos al final (sellos, selectores, AyudaCampo, botones con borde). Parte 21 de src/index.css: el orden de los @import fija la cascada. */
+/* La ayuda de visitas puede salir de la tarjeta y cubrir el historial. */
+.landing-web .sellos-tarjeta {
+  overflow: visible;
+  z-index: 10;
+}
+
+/* Los selectores desplazan la lista completa, sin revelar filas por altura. */
+.landing-web .recompensas-selector__lista {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: transform 180ms ease-out, opacity 180ms ease-out, visibility 0s 180ms;
+}
+.landing-web .recompensas-selector__lista[data-abierto='true'] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-web .recompensas-selector__lista { transition: none; }
+}
+
+/* AyudaCampo respeta el tema propio del portal, independiente del POS. */
+.landing-web .ayuda-campo__boton { color: var(--lw-muted); }
+.landing-web .ayuda-campo__boton:hover,
+.landing-web .ayuda-campo__boton[aria-expanded='true'] { color: var(--lw-gold); }
+.landing-web .ayuda-campo__mensaje {
+  color: var(--lw-fg);
+  background-color: var(--lw-card);
+  border-color: var(--lw-border);
+}
+
+/* Botones con borde de todo el portal cliente, incluidas tarjetas,
+   subpestañas y diálogos. El padding de PC se conserva.
+   Los selectores de clase completa distinguen border de border-t/border-b,
+   que también se usan en encabezados desplegables y filas de contenido. */
+@media (width < 40rem) {
+  .landing-web h1:not(.inicio-hero-titulo) {
+    font-size: var(--fontzise-h1);
+  }
+
+  .landing-web :is(button, a, [role='button']):is(
+    [class~='border'], [class~='border-2'], [class~='border-4'],
+    .lw-cta-hero, .lw-seg, .lw-pago-opcion, .lw-comprobante-opcion,
+    .lw-wa-ayuda, .cpi-reclamar, .pie-cliente__reclamos
+  ),
+  .landing-web .lw-subir-captura {
+    padding-block: var(--pading-vertical-boton);
+    padding-inline: var(--pading-horizontal-boton);
+  }
+
+  /* En botones de texto, el contenido y el padding determinan el alto.
+     Los controles de solo icono y el avatar conservan su geometría. */
+  .landing-web :is(button, a, [role='button']):is(
+    [class~='border'], [class~='border-2'], [class~='border-4'],
+    .lw-cta-hero, .lw-seg, .lw-pago-opcion, .lw-comprobante-opcion,
+    .lw-wa-ayuda, .cpi-reclamar, .pie-cliente__reclamos
+  ):not([aria-label='Menú de cuenta']):not(:has(> svg:only-child, > img:only-child)),
+  .landing-web .lw-subir-captura {
+    height: auto;
+    min-height: 0;
+    line-height: normal;
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { PlusCircle, Pencil, Trash2, Ban, Package, ShieldCheck } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { aLima, calcularRango, claveDiaLima, formatearFechaISO } from '../lib/fechas.js'
@@ -283,13 +283,16 @@ export default function Auditoria({ activo = true }) {
     setHayMas(siguientes.length === TAMANO_PAGINA)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarEntradas (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarEntradas(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarEntradas(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     if (!silencioso) setDiasAbiertos(new Set())
     return () => {
       vigente.actual = false

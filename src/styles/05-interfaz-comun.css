@@ -1,0 +1,324 @@
+/* Interfaz común: entradas de modal/desplegable/pestaña, anchos de pestaña, scroll, foto con borde de luz. Parte 05 de src/index.css: el orden de los @import fija la cascada. */
+/* Martillo de la pestaña "Web... Próximamente": cocked-back con pausa
+   (anticipación), golpe rápido, rebote breve y vuelta a cocked-back. El
+   pivote va en el JSX (transform-origin cerca del mango) para que gire
+   como si golpeara en vez de rotar sobre el centro del ícono. */
+@keyframes martillar {
+  0%, 30% {
+    transform: rotate(-28deg);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: rotate(14deg);
+    animation-timing-function: ease-out;
+  }
+  62% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(-28deg);
+  }
+}
+
+/* Chispas: invisibles casi todo el ciclo, aparecen justo en el golpe (50%,
+   sincronizado con martillar) y salen disparadas hacia --dx/--dy antes de
+   desvanecerse. --dx/--dy son fijos por chispa (ver IconoMartillo.jsx), no
+   se animan en sí — solo el transform que los usa. */
+@keyframes chispa-martillo {
+  0%, 48% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  52% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  75% {
+    transform: translate(var(--dx), var(--dy)) scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* C3+A3 (useModalA11y.js): estas dos clases se agregan vía classList.add
+   en JS, no aparecen como className literal en ningún JSX — por eso van
+   como CSS a mano en vez de pasar por @theme --animate-x (Tailwind
+   necesita ver el nombre de la clase como texto en un archivo para
+   generarla; acá alcanza con que exista la regla). */
+@keyframes entrada-modal {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes entrada-overlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entrada-modal {
+  animation: entrada-modal 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-entrada-overlay {
+  animation: entrada-overlay 180ms ease-out;
+}
+
+/* M3: los desplegables (SelectorOrden, sugerencias de búsqueda en
+   Ventas) aparecían en 0ms — seco al lado de acordeones/menús que sí
+   animan. Entrada breve con la duración "media" de la escala. */
+@keyframes entrada-dropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-entrada-dropdown {
+  animation: entrada-dropdown var(--dur-media) cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top;
+}
+
+/* M4: PestanasCacheadas mantiene cada pestaña montada y alterna
+   display:none/contents — instantáneo (bien, no se paga red de nuevo),
+   pero visualmente seco. Solo opacity, sin transform: no debe competir
+   con el layout ancla-al-viewport de Ventas (panel de cobro). */
+@keyframes entrada-pestana {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-entrada-pestana {
+  animation: entrada-pestana 120ms ease-out;
+}
+
+/* Ancho máximo compartido de las pestañas del POS en pantallas lg+.
+   Las páginas lo usan con `lg:max-w-(--ancho-pestana)`; cambiar el valor
+   acá lo cambia en todas. Va en :root (no en @theme) para que Tailwind
+   no lo descarte por no tener una utilidad generada a partir de él. */
+:root {
+  --ancho-pestana: 90rem;
+  /* Distancia entre el header y lo primero de cada pestaña (igual al buscador de Ventas). Pestañas con barra pegajosa la aplican como padding-top de la barra. */
+  --separador-horizontal: 10px;
+  /* Padding lateral de las pestañas (bordes izquierdo/derecho de la pantalla). */
+  --separador-vertical: 10px;
+  /* Margen lateral extra de las pestañas de la web de clientes en PC/tablet (>= 640px). Un solo valor para todas;
+     lo usan .lw-margen-pagina y .lw-margen-pagina-suma (abajo, junto a .lw-gutter). */
+  --margen-pagina-cliente: 40px;
+  /* Separadores SECUNDARIOS: padding interno de los bloques/tarjetas dentro de
+     una pestaña (formularios, tarjetas de lista). Variables propias para poder
+     ajustarlos sin mover los márgenes de pantalla de arriba. `horizontal` =
+     arriba/abajo, `vertical` = izquierda/derecha (misma convención). */
+  --separador-horizontal-secundario: 10px;
+  --separador-vertical-secundario: 10px;
+  /* Padding interno de botones en móvil. El nombre anterior se conserva
+     como alias para las clases que ya lo utilizan. */
+  --pading-vertical-boton: 3px;
+  --pading-verical-boton: var(--pading-vertical-boton);
+  --pading-horizontal-boton: 7px;
+  /* Tamaño de los h1 del portal cliente en móvil (excepto el hero de Inicio). */
+  --fontzise-h1: 20px;
+}
+/* Los separadores internos compactos se aplican solo en móvil. */
+@media (min-width: 40rem) {
+  :root {
+    --separador-horizontal-secundario: 12px;
+    --separador-vertical-secundario: 12px;
+  }
+}
+
+/* El scroll se conserva al desplegar contenido: el navegador no debe
+   anclarse a los bloques inferiores y desplazar el título pulsado. */
+.citas-cliente-scroll {
+  overflow-anchor: none;
+}
+
+.citas-desplegable {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 280ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 220ms ease;
+}
+
+.citas-desplegable[data-abierto='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.citas-desplegable__recorte {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .citas-desplegable {
+    transition: none;
+  }
+
+  .citas-cliente-contenido button[aria-expanded] > svg {
+    transition: none;
+  }
+}
+
+@media (width < 40rem) {
+  .landing-web .citas-cliente-contenido.lw-gutter-detalle {
+    padding-inline: var(--separador-vertical);
+  }
+
+  .citas-cliente-contenido h2 {
+    font-size: 0.75rem;
+  }
+
+  .citas-cliente-contenido .citas-cliente-tarjeta {
+    padding-block: var(--separador-horizontal-secundario);
+    padding-inline: var(--separador-vertical-secundario);
+  }
+
+  /* El encabezado conserva su altura al abrir y cerrar. Los paddings
+     interiores del encabezado y el contenido suman 4 px en la unión. */
+  .citas-cliente-contenido .citas-cliente-historial > button {
+    padding-bottom: 0.125rem;
+  }
+
+  .citas-cliente-contenido .citas-cliente-historial .citas-desplegable__recorte > p,
+  .citas-cliente-contenido .citas-cliente-historial .citas-desplegable__recorte > div > :first-child {
+    padding-top: 0.125rem;
+  }
+}
+
+/* En lg+ (PC) se mantienen los 0.75rem originales; los 10px son solo móvil. */
+@media (min-width: 64rem) {
+  :root {
+    --separador-horizontal: 0.75rem;
+    --separador-vertical: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flash-verde,
+  .animate-flash-rojo,
+  .animate-deslizar-pestana,
+  .animate-brillo-barra,
+  .animate-brillo-texto,
+  .animate-brillo-tarjeta,
+  .animate-elevar-flecha,
+  .animate-martillar,
+  .animate-chispa-martillo,
+  .animate-entrada-modal,
+  .animate-entrada-overlay,
+  .animate-entrada-dropdown,
+  .animate-entrada-pestana {
+    animation: none;
+  }
+
+  .foto-borde-luz {
+    animation: none;
+  }
+}
+
+/* Registra el ángulo como tipo <angle> animable — sin esto, animar una
+   variable custom por keyframes no interpola (salta de golpe). Es lo que
+   permite girar SOLO el gradiente de fondo sin usar transform: rotate en
+   el elemento (eso giraba la caja entera, incluida la foto de adentro —
+   el bug de la vuelta anterior). */
+@property --angulo-luz-foto {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes girar-luz-foto {
+  to {
+    --angulo-luz-foto: 360deg;
+  }
+}
+
+/* Miniatura de foto de producto (ModalDetalleProducto): borde ámbar con
+   un punto brillante que recorre todo el borde en bucle, dejando una
+   estela de luz atrás (efecto "cometa"), invitando a tocarla para
+   expandirla.
+   Técnica "padding reveal": este elemento tiene el conic-gradient de
+   fondo y 2px de padding; el hijo directo (la foto, con su propio fondo
+   opaco) tapa todo excepto ese anillo de 2px, donde se asoma el
+   gradiente. Solo se anima el ángulo "from" del gradiente (arriba) — el
+   elemento en sí queda quieto, la foto de adentro nunca gira. */
+.foto-borde-luz {
+  padding: 2px;
+  --angulo-luz-foto: 0deg;
+  background: conic-gradient(
+    from var(--angulo-luz-foto),
+    var(--color-amber) 0deg,
+    var(--color-amber) 280deg,
+    #ffe7b3 320deg,
+    #fff8e8 345deg,
+    var(--color-amber) 360deg
+  );
+  animation: girar-luz-foto 3.5s linear infinite;
+}
+
+:root {
+  /* Radio de borde estándar del proyecto: usar rounded-lg (8px) en componentes */
+  --radius: 0.625rem;
+  color-scheme: dark;
+  /* Anillo de foco de teclado (regla :focus-visible más abajo). En
+     oscuro el ámbar de marca contrasta de sobra; claro lo redefine. */
+  --color-foco: var(--color-amber);
+  /* M3 de la 5ª auditoría: las duraciones de motion convivían sin
+     escala (150/200/300/350/500ms repartidos sin criterio). Estos tres
+     tokens son la referencia única de acá en más — rápida para
+     hover/press, media para dropdowns/colapsables, lenta para overlays
+     y el fundido de tema. */
+  --dur-rapida: 150ms;
+  --dur-media: 250ms;
+  --dur-lenta: 350ms;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}

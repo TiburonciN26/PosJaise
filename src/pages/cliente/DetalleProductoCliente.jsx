@@ -73,7 +73,7 @@ export default function DetalleProductoCliente() {
   // SEO: cada producto se indexa con su nombre y su descripción (o una genérica con la categoría).
   useMetaPagina({
     titulo: producto?.nombre,
-    descripcion: producto && (producto.descripcion || `${producto.nombre}${producto.categoria ? ` (${producto.categoria})` : ''} en la tienda de Jaise Beauty Academy.`),
+    descripcion: producto && (producto.descripcion || `${producto.nombre}${producto.categoria ? ` (${producto.categoria})` : ''} en la tienda de Jaise Beauty Academy, Nuevo Chimbote.`),
   })
   const [galeria, setGaleria] = useState([])
   const [combo, setCombo] = useState(null)

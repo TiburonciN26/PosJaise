@@ -66,7 +66,7 @@ const CINTA_MEDIDAS = {
 // solo cae al texto genérico por categoría en los que todavía no la
 // tienen (mismo criterio que ServiciosCliente.jsx).
 export default function ProductosCliente() {
-  useMetaPagina({ titulo: 'Productos', descripcion: 'Productos de belleza y cuidado de Jaise Beauty Academy. Compra en línea y recoge en el salón o pide delivery.' })
+  useMetaPagina({ titulo: 'Productos', descripcion: 'Productos de belleza y cuidado de Jaise Beauty Academy. Compra en línea y recoge en el salón de Nuevo Chimbote o pide delivery.' })
   const { agregarProducto } = useCarritoCliente()
   const requerirSesion = useRequerirSesion()
   const { mostrarToast } = useToast()

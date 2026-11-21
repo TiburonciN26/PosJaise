@@ -1,0 +1,274 @@
+/* Tarjeta de puntos (TarjetaPuntos.jsx, .tp-*). Parte 09 de src/index.css: el orden de los @import fija la cascada. */
+/* Tarjeta de puntos ("Mis puntos", TarjetaPuntos.jsx) — recreación de la
+   referencia animada que trajo el usuario ("Niveles de Tarjeta
+   Rewards"): tarjeta 3D que gira al arrastrar, con degradado metálico +
+   brillo que dependen del NIVEL REAL del cliente (Básico/Premium/VIP,
+   calculado en el servidor por mis_puntos(), ver 88_puntos.sql) — a
+   diferencia de la referencia, no hay selector manual (ese era solo para
+   previsualizar los 3 niveles en la demo; acá cada cliente ve siempre
+   SU propio nivel). Los colores de cada nivel se asignan como variables
+   CSS por inline style desde React según el nivel que devolvió el
+   servidor, nunca a mano por el cliente. Todo el "lienzo" se dibuja a un
+   tamaño de diseño fijo (1160×800) y se escala para caber en su
+   contenedor (ver `ajustarEscala` en TarjetaPuntos.jsx), igual que la
+   referencia original — así ningún cálculo de posición en px se rompe
+   en pantallas chicas. */
+.tp-stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.tp-lienzo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1160px;
+  height: 800px;
+  transform-origin: 0 0;
+  font-family: inherit;
+}
+.tp-wrap {
+  position: absolute;
+  left: 80px;
+  top: 85px;
+  width: 1000px;
+  height: 630px;
+  perspective: 2200px;
+}
+.tp-card {
+  position: relative;
+  width: 1000px;
+  height: 630px;
+  transform-style: preserve-3d;
+  cursor: grab;
+  touch-action: none;
+}
+.tp-card.tp-arrastrando {
+  cursor: grabbing;
+}
+.tp-cara {
+  position: absolute;
+  inset: 0;
+  border-radius: 44px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--tp-g);
+  box-shadow:
+    0 0 80px var(--tp-glow),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.3),
+    inset 0 -8px 30px rgba(0, 0, 0, 0.35);
+}
+.tp-cara.tp-dorso {
+  transform: rotateY(180deg);
+  background: var(--tp-gb);
+}
+.tp-iri {
+  position: absolute;
+  inset: 0;
+  opacity: var(--tp-iri, 0);
+  mix-blend-mode: soft-light;
+  background: linear-gradient(120deg, #ffb3d9, #b3e5ff 25%, #d4ffb3 45%, #fff0b3 60%, #d9b3ff 80%, #b3fff6);
+}
+.tp-tinta {
+  color: var(--tp-ink);
+  text-shadow:
+    0 1px 0 var(--tp-inkhi),
+    0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+.tp-marca {
+  position: absolute;
+  left: 64px;
+  top: 56px;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 10px;
+}
+.tp-nivel-badge {
+  position: absolute;
+  right: 64px;
+  top: 60px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  padding: 10px 22px;
+  border: 2px solid currentColor;
+  opacity: 0.8;
+  border-radius: 999px;
+}
+.tp-chip {
+  position: absolute;
+  left: 64px;
+  top: 170px;
+}
+.tp-etiqueta {
+  position: absolute;
+  left: 64px;
+  top: 300px;
+  font-size: 22px;
+  letter-spacing: 6px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.tp-puntos {
+  position: absolute;
+  left: 60px;
+  top: 334px;
+  font-size: 120px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.tp-puntos span {
+  font-size: 34px;
+  letter-spacing: 6px;
+  margin-left: 14px;
+}
+.tp-barra {
+  position: absolute;
+  left: 64px;
+  top: 492px;
+  width: 560px;
+  height: 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+.tp-barra i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 10px;
+  background: var(--tp-ink);
+}
+.tp-siguiente {
+  position: absolute;
+  left: 64px;
+  bottom: 40px;
+  font-size: 19px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.tp-nombre {
+  position: absolute;
+  right: 64px;
+  bottom: 40px;
+  max-width: 420px;
+  font-size: 24px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tp-estrella {
+  position: absolute;
+  right: 70px;
+  top: 220px;
+  width: 200px;
+  height: 200px;
+  opacity: 0.55;
+}
+.tp-estrella-dorso {
+  position: absolute;
+  right: 64px;
+  bottom: 56px;
+  width: 170px;
+  height: 170px;
+  opacity: 0.6;
+}
+.tp-franja {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 70px;
+  height: 110px;
+  background: var(--tp-franja);
+}
+.tp-firma {
+  position: absolute;
+  left: 64px;
+  top: 220px;
+  width: 560px;
+  height: 80px;
+  border-radius: 10px;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0 8px, rgba(255, 255, 255, 0.2) 8px 16px);
+  border: 2px solid rgba(0, 0, 0, 0.25);
+}
+.tp-info {
+  position: absolute;
+  left: 64px;
+  top: 340px;
+  width: 600px;
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.tp-marca-dorso {
+  position: absolute;
+  left: 64px;
+  bottom: 48px;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: 8px;
+}
+/* Fase 6: brillo y destello se mueven con TRANSFORM (compuesto), no con `left` ni reescribiendo el gradiente en cada cuadro (antes
+   forzaba layout y repintado continuos). El gradiente del brillo es fijo y vive en ::before (el doble de grande para poder
+   desplazarlo); TarjetaPuntos.jsx / FondoNivel.jsx solo actualizan --gx / --gy y el transform del destello. */
+.tp-glare {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mix-blend-mode: soft-light;
+  --gx: 0px;
+  --gy: 0px;
+}
+.tp-glare::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 248, 220, 0.7), rgba(255, 248, 220, 0) 24%);
+  transform: translate(var(--gx), var(--gy));
+  will-change: transform;
+}
+.tp-sheen {
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 60%;
+  height: 180%;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0)  100%
+  );
+  transform: translateX(0) rotate(18deg);
+  will-change: transform;
+  mix-blend-mode: overlay;
+}
+.tp-card.tp-pop {
+  animation: tp-pop 0.7s ease;
+}
+@keyframes tp-pop {
+  0% {
+    filter: brightness(1);
+  }
+  30% {
+    filter: brightness(1.5);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-card.tp-pop {
+    animation: none;
+  }
+}

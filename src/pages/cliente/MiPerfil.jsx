@@ -13,10 +13,9 @@ import {
   procesarImagen,
   subirFoto,
   tipoDeImagenValido,
-  urlPublicaFoto,
 } from '../../lib/imagenes.js'
+import { BUCKET_FOTOS_CLIENTES as BUCKET_FOTOS, useUrlFotoCliente } from '../../hooks/useUrlFotoCliente.js'
 
-const BUCKET_FOTOS = 'fotos-clientes'
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
@@ -100,6 +99,7 @@ export default function MiPerfil() {
   const [mostrarConfirmarVinculo, setMostrarConfirmarVinculo] = useState(false)
 
   const [errorFoto, setErrorFoto] = useState(false)
+  const urlFotoFirmada = useUrlFotoCliente(perfil?.foto_url)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const inputFotoRef = useRef(null)
 
@@ -225,7 +225,7 @@ export default function MiPerfil() {
     }
   }
 
-  const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS, perfil?.foto_url) : null
+  const urlFoto = !errorFoto ? urlFotoFirmada : null
 
   return (
     <div className="lw-margen-pagina-suma animate-entrada-pestana flex-1 overflow-y-auto px-(--separador-vertical) pb-4 md:pb-8">

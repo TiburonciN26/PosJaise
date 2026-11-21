@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 import { Plus, MessageCircle, Users, Filter, ArrowRight } from 'lucide-react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
@@ -51,6 +51,8 @@ const TAMANO_PAGINA = 50
 // direcciones_cliente tiene la FK real (cliente_web_id), no "clientes"
 // directamente. Un cliente cargado a mano (sin cuenta Web) no trae nada
 // acá — para esos se sigue mostrando la columna `direccion` de siempre.
+// Se lee de la vista `clientes_admin`: dirección, notas y DNI ya no se pueden leer de la tabla `clientes`
+// (privilegio mínimo, migración 20261120000004); conteos y borrados siguen yendo a la tabla.
 const SELECT_CLIENTES =
   'id, nombre, telefono, sexo, direccion, cumpleanos, notas, foto_url, cliente_web_id, ' +
   'clientes_web(email, direcciones_cliente(id, etiqueta, direccion, referencia, predeterminada))'
@@ -89,7 +91,7 @@ function aplicarFiltroCumpleanos(consulta, orden) {
 }
 
 function construirConsultaClientes({ busqueda, orden, sexo }) {
-  let consulta = aplicarFiltroBusqueda(supabase.from('clientes').select(SELECT_CLIENTES), busqueda)
+  let consulta = aplicarFiltroBusqueda(supabase.from('clientes_admin').select(SELECT_CLIENTES), busqueda)
   consulta = aplicarFiltroCumpleanos(aplicarFiltroSexo(consulta, sexo), orden)
   // Menor a mayor = cumpleaños más reciente primero. El nombre queda como desempate.
   if (orden === 'edad-asc') consulta = consulta.order('cumpleanos', { ascending: false, nullsFirst: false })
@@ -261,13 +263,16 @@ export default function Clientes({ activo = true }) {
     setHayMas((data ?? []).length === TAMANO_PAGINA)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarClientes (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarClientes(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarClientes(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     return () => {
       vigente.actual = false
     }

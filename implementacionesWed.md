@@ -8117,3 +8117,59 @@ Auditoría global, hallazgo 1.1 (primer paso). `Ventas.jsx` (1 860 líneas, 30 `
   - Ventas como admin: carrito vacío S/ 0.00; 1 × producto de S/ 15 → S/ 15.00; 10 % → S/ 13.50; S/ 20 recibidos en efectivo → vuelto S/ 6.50; «150» en el % se corrige a 100 y el total queda en S/ 0.00. Sin confirmar la venta, sin errores de JS.
   - Carrito del portal de una clienta (solo lectura): S/ 20.00 + delivery S/ 10.00 = S/ 30.00, sin escrituras.
 - **Pendiente:** los dos `exhaustive-deps` de Ventas («Exacto» y monto de tarjeta, intencionales), el resto de la división de Ventas (panel de cobro, comprobante) y `CarritoCliente.jsx`, que sigue con 1 578 líneas.
+
+**Actualización 2026-11-20 — Search Console activado:** propiedad «Prefijo de la URL» `https://pos-jaise.pages.dev/` **verificada con el método de archivo HTML**: `public/google31688c444909e427.html`, publicado en `850eb88`. Cloudflare Pages lo redirige (308) a la ruta sin extensión y Google lo acepta igual. **No borrar ese archivo**: si desaparece, Google retira la verificación. La vía de la etiqueta por `VITE_GOOGLE_SITE_VERIFICATION` queda como segundo método opcional.
+- `sitemap.xml` enviado el mismo día. Search Console lo mostró primero como «No se ha podido obtener», el estado inicial habitual: el archivo responde 200, `application/xml`, es XML válido con 346 URLs y también responde 200 al user-agent de Googlebot.
+- La inspección de `/inicio` confirmó que el portal **aún no estaba en Google**. La «Solicitud de indexación» manual devolvió «Cuota superada», el cupo diario de una propiedad nueva: reintentar otro día. Los informes de Rendimiento e Indexación tardan unos días en tener datos.
+
+## 107. SEO local: Nuevo Chimbote — 2026-11-20
+
+El negocio confirmó la ubicación: **Av. Argentina H-12, Nuevo Chimbote (Áncash, Perú)**. Hasta ahora el SEO omitía la ciudad porque la base solo guarda «Av. Argentina H-12» y no se publican datos sin confirmar. Las búsquedas locales («uñas Nuevo Chimbote», «manicure cerca de mí») dependen de ella.
+
+- **JSON-LD `BeautySalon`** (`src/lib/datosEstructurados.js`): `address` incluye ahora `addressLocality: Nuevo Chimbote`, `addressRegion: Áncash` y `addressCountry: PE`, desde la constante `UBICACION_NEGOCIO`. La calle sigue viniendo de `datos_contacto()`; la ciudad se publica aunque falten los datos de contacto.
+- **`index.html`:** título «Jaise Beauty Academy · Uñas y belleza en Nuevo Chimbote»; la `description` empieza por «Salón de belleza en Nuevo Chimbote: …»; `og:title` y `og:description` con la dirección.
+- **Por página:** Servicios («Servicios en Nuevo Chimbote»), Nosotros, Citas y Productos mencionan la ciudad. Las descripciones de respaldo de cada servicio o producto sin descripción propia terminan en «…Jaise Beauty Academy, Nuevo Chimbote».
+- **Si el salón se muda:** cambiar `UBICACION_NEGOCIO` y los textos de `index.html` (anotado en `CLAUDE.md`).
+- **Verificado:** `seo.test.mjs` exige la dirección completa en el JSON-LD. En Chromium sobre `dist/`, títulos, descripciones y JSON-LD con la ciudad; 0 avisos de CSP y 0 errores de JS.
+
+## 108. Seguridad: datos de clientas solo para quien los necesita, fotos privadas y Turnstile en el Libro de Reclamaciones — 2026-11-20
+
+Cierre de los tres pendientes de seguridad de la auditoría global (7.5, 7.2 y 16.1). **Dos migraciones nuevas y una Edge Function nueva: nada de esto está en producción todavía.**
+
+- **Privilegio mínimo en `clientes` (migración `20261120000004`, Ley 29733).**
+  - **Antes:** cualquier rol del personal (asistente, apoyo, cajera) podía pedir por la API el DNI, la dirección y las notas de todas las clientas, aunque solo la administradora tiene la pantalla Clientes.
+  - **Ahora:** `authenticated` tiene SELECT por columna, sin `dni`, `direccion` ni `notas` (el mismo patrón que `productos.costo`). La administradora lee la ficha completa por la vista **`clientes_admin`**, que filtra `es_admin()` con `security_barrier`. Clientes.jsx y PerfilCliente leen de ella; los conteos y el borrado siguen en la tabla.
+  - **ModalCliente** pide de vuelta solo columnas permitidas: un `.select()` sin columnas pediría `*` y daría 403, incluso a la administradora. Completa el resto con lo que envió.
+  - **Para el resto del personal no cambia nada:** Ventas, Citas (incluido el calendario de cumpleaños), Deudas, Historial y Mi Panel ya pedían solo nombre, teléfono y cumpleaños.
+- **`fotos-clientes` pasa a privado (misma migración).** Antes, cualquiera con la ruta veía la foto de perfil de una clienta, sin sesión. Ahora se lee con URL firmada de 1 h: `src/hooks/useUrlFotoCliente.js`, con una caché compartida de una firma por ruta. La clienta ve la suya (política de carpeta propia) y la administradora todas (política nueva `fotos_clientes_select_admin`). Los archivos no se mueven.
+- **Turnstile en el Libro de Reclamaciones (migración `20261120000005` + Edge Function `registrar-reclamo`).**
+  - **Flujo:** el formulario muestra el widget de Cloudflare Turnstile (`src/components/WidgetTurnstile.jsx`) y envía `{ datos, token }` a la función. La función verifica el token con Cloudflare y solo entonces llama, como service_role, a `registrar_reclamo_verificado()`.
+  - **Permisos:** `anon` y `authenticated` ya no pueden ejecutar `registrar_reclamo` ni el envoltorio.
+  - **Enlace con la clienta:** si quien reclama tiene sesión, la función valida su JWT y enlaza el reclamo a su cuenta (antes lo hacía `auth.uid()`).
+  - **Sin el secreto configurado no se registra nada (falla cerrada):** la persona ve un mensaje para pedir el libro en físico.
+  - **Configuración:** CSP con `https://challenges.cloudflare.com` en `script-src` y `frame-src`. El build de **producción falla** sin `VITE_TURNSTILE_SITE_KEY`, porque el libro es obligatorio por ley; en un preview solo avisa. `probar-salvaguardas-entornos.mjs` tiene casos nuevos (45/45).
+- **Verificado en Local.**
+  - **API con sesiones de cada rol (27 casos):** asistente y cajera reciben 403 en dni/notas/direccion/`*` y 0 filas en `clientes_admin`. La administradora: vista con `clientes_web` embebido, búsqueda, conteo, y alta/edición/borrado con DNI y notas. Foto: la URL pública da 400; firman la administradora y la dueña de la foto, pero no la asistente ni la cajera.
+  - **Edge Function:** sin token → 400; token rechazado (clave de prueba que siempre falla) → 403; cuerpo no JSON → 400; cuerpo enorme → 413; validación de la RPC → 400 con su mensaje; token válido → constancia, y con sesión queda enlazado a la clienta. Las RPC directas dan 401/403.
+  - **Navegador (`npm run dev`):** el widget entrega token y el reclamo queda registrado con su constancia. Clientes (administradora) carga con el avatar firmado; Mi perfil (clienta) muestra su foto; la cajera recorre Ventas, Citas, Deudas e Historial sin ningún 4xx ni error de JS.
+  - `npm run verificar`: 134/134.
+- **Antes de publicar (en este orden):**
+  1. Crear el widget de Turnstile en Cloudflare para `pos-jaise.pages.dev`.
+  2. Poner `TURNSTILE_SECRET_KEY` en los secrets de Supabase (prod) y `VITE_TURNSTILE_SITE_KEY` en las variables de Pages (producción).
+  3. Desplegar la Edge Function con `verify_jwt = false`.
+  4. Aplicar las migraciones `20261120000004` y `20261120000005` y registrar sus versiones.
+  5. Hacer el push del front.
+
+## 109. Código: avisos de dependencias de los hooks a cero y CSS partido por tema — 2026-11-20
+
+- **`exhaustive-deps`: de 16 avisos a 0, y la regla pasa a `error`** (`.oxlintrc.json`): ahora la puerta de despliegue impide que vuelvan.
+  - **11 pantallas del POS** (CajaChica, Auditoría, Almacén, Deudas, Dashboard, Clientes, Mi Panel, Historial, Estadísticas, Inventario, Gastos): el efecto que carga al abrir o al cambiar un filtro llamaba a `cargarX()` sin declararla. Ahora la llama a través de `useEffectEvent` (React 19.2): corre exactamente en los mismos momentos que antes y siempre con los filtros actuales. **Sin cambio de comportamiento.**
+  - **Ventas («Exacto» y monto POS de tarjeta)**: los dos efectos que siguen al total pasan a `useEffectEvent`, con la lógica idéntica.
+  - **`SelectorProductoBuscable`**: corrige un fallo real. Sin resultados vigentes creaba un `[]` nuevo en cada render y el efecto del producto elegido volvía a correr en cada render; ahora usa un arreglo vacío constante.
+  - **`ModalRegistroAtencion`**: la carga inicial de listas pasa a `useEffectEvent` (una vez por apertura, como antes).
+  - **`useModalA11y`**: la etiqueta de respaldo `aria-label` va en su propio efecto, así que se actualiza si cambia sin rearmar la trampa de foco.
+- **`src/index.css` partido en 21 archivos de `src/styles/`** (`01-pos-editor-catalogo-web.css` … `21-portal-ajustes.css`). `index.css` queda como la lista de `@import` y **el orden numérico es el orden de la cascada**. Las `url()` de las fuentes se ajustaron a `../assets/`. **El CSS compilado es idéntico byte a byte** (los 4 archivos de `dist/assets`, incluido el principal de 207 812 B).
+  - **No se hizo** la carga de CSS por árbol (POS / portal, hallazgo 5.1). Medido: de 36 kB con gzip, 18 kB son utilidades de Tailwind, que se generan en un solo archivo para los dos árboles; las reglas exclusivas del portal son unos 6 kB y las del POS menos. Ahorraría 2 a 6 kB a cambio de reordenar la cascada en dos árboles y dos temas, y el riesgo no compensa.
+- **Verificado:**
+  - lint completo sin errores; `npm test` 134/134.
+  - **Navegador (`npm run dev`, Local):** como administradora, Dashboard, Estadísticas, Inventario, Historial, Deudas, Gastos, Caja chica, Almacén, Auditoría y Clientes consultan al abrirse, y buscar «Tur» en Clientes vuelve a consultar. En Ventas, «Exacto» da Recibido 15; con 10 % sigue al total (13.5); un Recibido tecleado a mano (20) no se toca, y no se confirmó ninguna venta. Como asistente, Mi Panel carga sus registros. Sin errores de JS ni respuestas ≥400.

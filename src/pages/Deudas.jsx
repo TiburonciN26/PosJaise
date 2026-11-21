@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { Pencil, Trash2, Plus, CheckCheck, HandCoins, Filter, Coins, X, NotebookPen, Check, Ban } from 'lucide-react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
@@ -157,12 +157,15 @@ export default function Deudas({ activo = true }) {
     setCargando(false)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarDeudas (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarDeudas(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarDeudas(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     return () => {
       vigente.actual = false
     }

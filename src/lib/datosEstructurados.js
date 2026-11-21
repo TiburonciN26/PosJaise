@@ -2,10 +2,12 @@
 // negocio en búsquedas locales («uñas cerca de mí»): dirección, teléfono, horario y redes. Módulo PURO (sin Supabase ni
 // navegador) para poder probarlo con node --test; lo monta hooks/useDatosEstructuradosSalon.js en Inicio.
 //
-// Solo se publican datos que vienen de la base (datos_contacto(), horario_atencion_semanal()), nunca inventados: sin
-// ciudad ni distrito porque el negocio no los registra. Lo que falta, se omite.
+// Calle, teléfono, redes y horario vienen de la base (datos_contacto(), horario_atencion_semanal()); lo que falta, se
+// omite. La ciudad no está en la base (la dirección guardada es solo «Av. Argentina H-12»): la confirmó el negocio el
+// 2026-11-20 y vive en UBICACION_NEGOCIO. Si el salón se muda, cambiarla aquí (y en los textos SEO de index.html).
 
 export const NOMBRE_NEGOCIO = 'Jaise Beauty Academy'
+export const UBICACION_NEGOCIO = { localidad: 'Nuevo Chimbote', region: 'Áncash', pais: 'PE' }
 const DIAS_SCHEMA = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] // índice = día ISO
 
 /** Teléfono peruano a formato internacional: 9 dígitos que empiezan con 9 → +51…; cualquier otro, tal cual (solo dígitos y +). */
@@ -46,7 +48,13 @@ export function construirLdSalon({ sitio, contacto, semana }) {
   }
   const telefono = telefonoInternacional(contacto?.telefono)
   if (telefono) ld.telephone = telefono
-  if (contacto?.direccion?.trim()) ld.address = { '@type': 'PostalAddress', streetAddress: contacto.direccion.trim(), addressCountry: 'PE' }
+  ld.address = {
+    '@type': 'PostalAddress',
+    ...(contacto?.direccion?.trim() ? { streetAddress: contacto.direccion.trim() } : {}),
+    addressLocality: UBICACION_NEGOCIO.localidad,
+    addressRegion: UBICACION_NEGOCIO.region,
+    addressCountry: UBICACION_NEGOCIO.pais,
+  }
   const redes = [contacto?.instagram_url, contacto?.facebook_url, contacto?.tiktok_url].filter((u) => /^https:\/\//.test(u ?? ''))
   if (redes.length) ld.sameAs = redes
   const horario = horarioSchema(semana)

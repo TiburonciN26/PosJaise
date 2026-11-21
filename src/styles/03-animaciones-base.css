@@ -1,0 +1,96 @@
+/* Animaciones compartidas (flash, brillos de tarjeta…). Parte 03 de src/index.css: el orden de los @import fija la cascada. */
+@keyframes flash-verde {
+  from {
+    background-color: color-mix(in srgb, var(--color-green) 30%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-rojo {
+  from {
+    background-color: color-mix(in srgb, var(--color-red) 30%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes deslizar-pestana {
+  from {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes brillo-barra {
+  0% {
+    transform: translateX(-100%);
+  }
+  41% {
+    transform: translateX(350%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes brillo-texto {
+  0% {
+    background-position: 160% 0;
+  }
+  41% {
+    background-position: -60% 0;
+  }
+  100% {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes brillo-tarjeta {
+  0% {
+    transform: translateX(-100%);
+  }
+  41% {
+    transform: translateX(300%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Segundo brillo, intercalado con brillo-tarjeta: mientras ese recorre toda
+   la tarjeta en el primer ~41% del bucle, este ilumina solo el borde a la
+   mitad del hueco que queda libre (antes de que el bucle vuelva a
+   empezar), más sutil (opacidad, no toda la superficie). Pensado para usar
+   con la MISMA duración que brillo-tarjeta (8.5s) en el mismo elemento. */
+@keyframes brillo-borde-tarjeta {
+  0%, 55% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  85%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes elevar-flecha {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+}

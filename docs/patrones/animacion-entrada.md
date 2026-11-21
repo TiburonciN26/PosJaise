@@ -15,7 +15,7 @@ y `filter` — nunca layout.
 
 ## Piezas
 
-1. **CSS global** (`src/index.css`, bajo `.landing-web`): 4 clases +
+1. **CSS global** (`src/styles/17-portal-componentes.css`, antes en `src/index.css`; bajo `.landing-web`): 4 clases +
    keyframes ya definidas y listas para reusar en cualquier pestaña —
    **no crear otras nuevas** salvo que el diseño pida un movimiento
    distinto:

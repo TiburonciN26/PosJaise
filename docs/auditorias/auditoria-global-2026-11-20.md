@@ -480,20 +480,20 @@ No se encontró ninguna vulnerabilidad crítica explotable hoy. Lo más urgente 
 5. ✅ Scripts `test`/`verificar` + workflow de CI (18.1); `CLAUDE.md` actualizado. *Hecho el 2026-11-20 (§99). Despliegue bloqueado desde `build-cloudflare.mjs`: en Cloudflare corre lint + tests antes de compilar (§101). De paso se corrigieron 3 tests desactualizados y el lint dejó de recorrer `.codex/`.*
 6. ✅ Observabilidad de errores (20.1). *Tabla propia `errores_cliente` + `lib/reportarError.js`, sin Sentry (§100). Migración `20261120000002` aplicada en Local; pendiente en prod. Opcional: una pestaña en el POS para leerlos.*
 7. 🟡 CSP en *Report-Only* ✅ (§102: generada al compilar, avisos a `errores_cliente`, 0 avisos en Local incluso forzada). Falta pasarla a obligatoria (`MODO = 'bloquear'` en `scripts/lib/csp.mjs`) tras vigilar Culqi y los medios R2 en prod.
-8. ✅ Quitar el listado anónimo de buckets (hecho junto con el ítem 3). Pendiente: decidir si `fotos-clientes` debe ser privado (7.2).
+8. ✅ Quitar el listado anónimo de buckets (hecho junto con el ítem 3). ✅ `fotos-clientes` privado con URL firmada (§108, migración `20261120000004`; pendiente en prod).
 9. ✅ SEO del portal: meta/OG, títulos por ruta, robots, sitemap, JSON-LD (19.1). *§103. Pendiente fuera del código: alta en Google Search Console y envío del sitemap.*
 10. ✅ Contraste del texto secundario (8.1): **medido** en el navegador, de 246 fallos a 0 en 28 pantalla×tema (§104). 🟡 Tamaño mínimo de 12 px y `input` ≥16 px en móvil (9.1): decisión de diseño pendiente.
 11. 🟡 Partir `Ventas.jsx` y `CarritoCliente.jsx` en hook de dominio + lógica pura + subcomponentes (1.1). *Hecho (§106): la lógica pura del cobro, con 13 tests en la puerta de despliegue; `FilaTicket` y `useContadorAnimado` a archivos propios (Ventas 1 860 → 1 601 líneas). Falta: panel de cobro/comprobante de Ventas y la división de `CarritoCliente`.*
 12. Tipos generados de Supabase + `checkJs` en `lib/` (4.1).
-13. Turnstile en el Libro de Reclamaciones (16.1).
+13. ✅ Turnstile en el Libro de Reclamaciones (16.1). *§108: Edge Function `registrar-reclamo` + migración `20261120000005`; pendiente en prod, requiere crear el widget en Cloudflare.*
 
 ### 🟡 Medias
-14. Corregir los 14 `exhaustive-deps` (3.1), empezando por Ventas y `SelectorProductoBuscable`.
-15. Separar `index.css` por árbol y registrar los tokens en `@theme` (5.1, 14.1).
+14. ✅ Corregir los `exhaustive-deps` (3.1). *§109: 16 → 0 con `useEffectEvent` y un arreglo estable en `SelectorProductoBuscable`; la regla pasa a `error`.*
+15. 🟡 Separar `index.css` (14.1) ✅: 21 archivos en `src/styles/`, CSS compilado idéntico (§109). La carga por árbol (5.1) se descartó tras medir: ahorraría 2–6 kB con gzip. Falta registrar los tokens en `@theme`.
 16. Fuentes a WOFF2 con subconjunto (6.1).
 17. TanStack Query en el portal (17).
 18. Capa `lib/repos/` para las consultas (1.2).
-19. Privilegio mínimo en `clientes` para ASISTENTE/PERSONAL_APOYO (7.5), decisión de negocio.
+19. ✅ Privilegio mínimo en `clientes` (7.5). *§108: DNI, dirección y notas solo para ADMINISTRADOR (vista `clientes_admin`); el resto del personal conserva nombre, teléfono y cumpleaños. Pendiente en prod.*
 20. Repo privado o `.codex/` fuera del repo; el lint debe ignorarlo (1.3).
 
 ### 🟢 Bajas

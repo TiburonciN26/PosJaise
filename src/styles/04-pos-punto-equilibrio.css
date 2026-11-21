@@ -1,0 +1,289 @@
+/* Punto de equilibrio del Dashboard («Aurora») y su eco en el menú lateral. Parte 04 de src/index.css: el orden de los @import fija la cascada. */
+/* =========================================================
+   Punto de equilibrio (Dashboard) — diseño "Aurora"
+   Spec: docs/diseño-puntoEquilibrio/ (export .html del lienzo, escritorio
+   y móvil). Dos estados:
+   · Aún no cubre (<100%): barra lavanda con perilla luminosa al final.
+   · Meta cumplida (≥100%): borde aurora girando, dos manchas de luz a la
+     deriva detrás, barra arcoíris que fluye con destello, y cada 8 s una
+     pastilla "¡Meta cumplida!" + confeti en medio de la tarjeta. La palabra
+     «Dashboard» del menú lateral brilla con .texto-aurora.
+   Los colores del arcoíris/aurora son fijos (iguales en ambos temas); el
+   lavanda de la barra sigue a --color-purple-300 (en claro pasa a rosa,
+   como el resto de ese acento).
+   ========================================================= */
+@property --pe-angulo {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.pe-relleno {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-purple-300) 45%, #5b3bb0),
+    var(--color-purple-300)
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-purple-300) 45%, transparent);
+}
+
+.pe-perilla {
+  background: #ffffff;
+  box-shadow: 0 0 10px 3px color-mix(in srgb, var(--color-purple-300) 80%, transparent);
+}
+
+/* Borde aurora: técnica "padding reveal" (1px de padding con el
+   conic-gradient de fondo; la tarjeta de adentro tapa todo menos el anillo).
+   Solo gira el ángulo del gradiente, la caja queda quieta. */
+.pe-aurora {
+  padding: 1px;
+  border-radius: calc(var(--radius-lg) + 1px);
+  background: conic-gradient(from var(--pe-angulo), #d8b4fe, #ed8bac, #ffd9a0, #8ff0ab, #9ad1ff, #d8b4fe);
+  box-shadow: 0 0 30px rgba(237, 139, 172, 0.18);
+  animation: pe-girar 6s linear infinite;
+}
+
+.pe-mancha {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.pe-mancha-a {
+  --pe-deriva: 110px;
+  animation: pe-deriva 9s ease-in-out infinite;
+}
+.pe-mancha-b {
+  --pe-deriva: -110px;
+  animation: pe-deriva 11s ease-in-out infinite;
+}
+@media (min-width: 64rem) {
+  .pe-mancha-a {
+    --pe-deriva: 220px;
+  }
+  .pe-mancha-b {
+    --pe-deriva: -240px;
+  }
+}
+
+.pe-flujo {
+  background: linear-gradient(90deg, #d8b4fe, #ed8bac, #ffd9a0, #8ff0ab, #9ad1ff, #d8b4fe);
+  background-size: 300% 100%;
+  box-shadow: 0 0 14px rgba(237, 139, 172, 0.5);
+  animation: pe-flujo 5s linear infinite;
+}
+
+.pe-destello {
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: pe-destello 3.4s ease-in-out infinite;
+}
+
+.pe-subir {
+  animation: pe-subir 1.5s ease-out infinite;
+}
+
+.pe-menear {
+  animation: pe-menear 0.5s ease-in-out infinite;
+}
+
+.pe-pastilla {
+  background: #0f2a1a;
+  border: 1px solid #3ecf6a;
+  box-shadow: 0 0 18px rgba(62, 207, 106, 0.45);
+  opacity: 0;
+}
+/* En medio de la tarjeta (PC y móvil). Antes salía por encima y el Dashboard
+   le reservaba 32px vacíos arriba (pt-8), que en móvil se veían como una
+   franja negra bajo los filtros. */
+.pe-pastilla-medio {
+  animation: pe-pastilla-medio 8s ease-out infinite;
+}
+
+/* Texto aurora (palabra «Dashboard» del menú lateral con la meta cumplida):
+   los colores del anillo fluyendo por las letras (mismo pe-flujo que la
+   barra) más un resplandor rosado. Sin borde. */
+.texto-aurora {
+  background: linear-gradient(90deg, #d8b4fe, #ed8bac, #ffd9a0, #8ff0ab, #9ad1ff, #d8b4fe);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  font-weight: 600;
+  filter: drop-shadow(0 0 6px rgba(237, 139, 172, 0.55));
+  animation: pe-flujo 5s linear infinite;
+}
+/* Su ícono: el stroke usa el degradado SVG animado de MenuLateral
+   (#degradado-aurora-menu); aquí solo el mismo resplandor. */
+.icono-aurora {
+  filter: drop-shadow(0 0 5px rgba(237, 139, 172, 0.6));
+}
+/* En claro, los pastel de la aurora casi desaparecen sobre el fondo blanco. Mismos matices en sus versiones oscuras
+   (cada una ≥4.5:1 sobre blanco) y un resplandor mucho más tenue. El ícono usa la misma paleta
+   (COLORES_AURORA_CLARO en MenuLateral.jsx). */
+[data-tema='claro'] .texto-aurora {
+  background-image: linear-gradient(90deg, #7c3aed, #c2456b, #b45309, #15803d, #2563eb, #7c3aed);
+  filter: drop-shadow(0 0 4px rgba(194, 69, 107, 0.2));
+}
+[data-tema='claro'] .icono-aurora {
+  filter: drop-shadow(0 0 3px rgba(194, 69, 107, 0.25));
+}
+/* Carita feliz a la derecha de «Dashboard»: aparece y desaparece con el
+   mismo ciclo de 8 s que la pastilla de la tarjeta, y un confeti diminuto
+   que cae poco (--caida) para no invadir las filas vecinas. */
+.menu-carita {
+  opacity: 0;
+  animation: menu-carita 8s ease-out infinite;
+}
+/* Doble clase: .pe-confeti se declara más abajo y, con la misma
+   especificidad, pisaba este tamaño (salía a 6×10 px). */
+.pe-confeti.pe-confeti-mini {
+  width: 2px;
+  height: 4px;
+  border-radius: 0.5px;
+  --caida: 6px;
+}
+/* Menú lateral cerrado (sigue montado fuera de pantalla): el brillo queda, pero
+   sin animar, para no repintar en bucle detrás de las pestañas. Al abrirse se
+   quita la clase y las animaciones arrancan desde 0 (carita y confeti salen
+   enseguida en vez de a mitad de ciclo). */
+.menu-lateral-quieto .texto-aurora,
+.menu-lateral-quieto .menu-carita,
+.menu-lateral-quieto .pe-confeti,
+.menu-lateral-quieto .pe-menear {
+  animation: none;
+}
+@keyframes menu-carita {
+  0%, 3% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  9% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  12%, 32% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  38%, 100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.pe-confeti {
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  opacity: 0;
+  z-index: 3;
+  pointer-events: none;
+  animation: pe-confeti 8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+
+@keyframes pe-girar {
+  to {
+    --pe-angulo: 360deg;
+  }
+}
+@keyframes pe-deriva {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(var(--pe-deriva));
+  }
+}
+@keyframes pe-flujo {
+  to {
+    background-position: 300% 0;
+  }
+}
+@keyframes pe-destello {
+  0% {
+    transform: translateX(-140%);
+  }
+  55%, 100% {
+    transform: translateX(420%);
+  }
+}
+@keyframes pe-subir {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+}
+@keyframes pe-menear {
+  0%, 100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(12deg);
+  }
+}
+@keyframes pe-pastilla-medio {
+  0%, 3% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 10px)) scale(0.85);
+  }
+  9% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% - 4px)) scale(1.05);
+  }
+  12% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  32% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  38%, 100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 10px)) scale(1);
+  }
+}
+@keyframes pe-confeti {
+  0%, 4% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  6% {
+    opacity: 1;
+  }
+  28% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+  }
+  36%, 100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--dy) + var(--caida, 34px))) rotate(var(--rot));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pe-aurora,
+  .pe-mancha-a,
+  .pe-mancha-b,
+  .pe-flujo,
+  .pe-destello,
+  .pe-subir,
+  .pe-menear,
+  .pe-pastilla-medio,
+  .pe-confeti,
+  .texto-aurora {
+    animation: none;
+  }
+  /* Sin animación la carita quedaría invisible (parte en opacity 0). */
+  .menu-carita {
+    animation: none;
+    opacity: 1;
+  }
+}

@@ -47,6 +47,13 @@ test('sin variables (build local sin .env) la política sigue siendo válida y e
   assert.ok(!p.includes('undefined') && !p.includes('null'))
 })
 
+test('Turnstile (Libro de Reclamaciones): su script y su iframe, y nada más de Cloudflare', () => {
+  const p = construirCsp({}, [])
+  assert.ok(directiva(p, 'script-src').includes('https://challenges.cloudflare.com'))
+  assert.ok(directiva(p, 'frame-src').includes('https://challenges.cloudflare.com'))
+  assert.ok(!directiva(p, 'connect-src').includes('https://challenges.cloudflare.com'))
+})
+
 test('nunca permite scripts inline sin hash, eval, objetos ni que otro sitio la enmarque', () => {
   const p = construirCsp({ VITE_SUPABASE_URL: 'http://127.0.0.1:54321' }, [])
   const script = directiva(p, 'script-src')

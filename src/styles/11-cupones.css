@@ -1,0 +1,188 @@
+/* Cupones por nivel (Plata/Oro), cupón rojo de Inicio, chispas y etiqueta Nuevo. Parte 11 de src/index.css: el orden de los @import fija la cascada. */
+/* ===========================================================
+   Cupones (Referidos / Cupones y ofertas) — diseño por nivel.
+   Solo las tarjetas en sí (pedido del usuario, con una referencia
+   HTML de 3 niveles) — reutiliza los mismos umbrales de nivelCupon()
+   (lib/cupones.js): Bronce sigue con color plano vía Tailwind
+   (border-[#c8935a]/50 bg-[#c8935a]/10, ver TarjetaCupon.jsx), acá
+   solo van Plata/Oro — los dos únicos que necesitan gradiente/brillo
+   que Tailwind no puede expresar solo. --lw-gold ya existe en el
+   scope .landing-web, se reutiliza tal cual.
+   =========================================================== */
+.cupon-tarjeta,
+.cupon-chispa {
+  /* Dorado propio del cupón Oro: --lw-gold pasó a azul metálico en el
+     rediseño del portal (§7.36) y teñía las tarjetas Oro de azul. */
+  --cupon-oro: #ffd700;
+}
+
+.cupon-tarjeta {
+  position: relative;
+  overflow: hidden;
+  /* Muescas semicirculares a media altura de cada lado: aspecto de ticket.
+     Dos máscaras de media tarjeta (51% para que se solapen sin costura). */
+  -webkit-mask:
+    radial-gradient(ellipse 5px 9px at 0 50%, #0000 97%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(ellipse 5px 9px at 100% 50%, #0000 97%, #000) 100% 0 / 51% 100% no-repeat;
+  mask:
+    radial-gradient(ellipse 5px 9px at 0 50%, #0000 97%, #000) 0 0 / 51% 100% no-repeat,
+    radial-gradient(ellipse 5px 9px at 100% 50%, #0000 97%, #000) 100% 0 / 51% 100% no-repeat;
+}
+
+/* Cupón rojo (promoción activa de Inicio): mismo lenguaje que .cupon-oro
+   (borde degradado + glow que respira + destello que cruza), en rojo. El
+   glow tiene keyframes propios: cupon-glow usa --lw-gold, que es azul. */
+.cupon-rojo {
+  --cupon-rojo: #ff2d3f;
+  border: 1px solid transparent;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cupon-rojo) 16%, transparent), transparent 55%)
+      padding-box,
+    linear-gradient(#120708, #120708) padding-box,
+    linear-gradient(120deg, var(--cupon-rojo), #ffb3ba 38%, var(--cupon-rojo) 58%, #5a1219 100%) border-box;
+  animation: cupon-glow-rojo 4.5s ease-in-out infinite;
+}
+.cupon-rojo::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -45%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 218, 0.2), transparent);
+  transform: skewX(-20deg);
+  animation: cupon-sheen 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cupon-rojo-canjeado {
+  /* Cupón ya reclamado: borde opaco y sin luz (ni glow ni destello). */
+  background:
+    linear-gradient(#120708, #120708) padding-box,
+    linear-gradient(#3a1a1d, #3a1a1d) border-box;
+  animation: none;
+  box-shadow: none;
+}
+.cupon-rojo-canjeado::after {
+  display: none;
+}
+
+.cupon-texto-rojo {
+  background: linear-gradient(100deg, #ff2d3f 0%, #ff2d3f 35%, #ffd0d4 50%, #ff2d3f 65%, #ff2d3f 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cupon-brillo-texto 4.5s linear infinite;
+}
+
+@keyframes cupon-glow-rojo {
+  0%,
+  100% {
+    box-shadow: 0 0 26px -6px rgba(255, 45, 63, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 52px 0 rgba(255, 45, 63, 0.5);
+  }
+}
+
+.cupon-chispa {
+  position: absolute;
+  color: var(--cupon-oro);
+  opacity: 0;
+  animation: cupon-titilar 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px var(--cupon-oro));
+  pointer-events: none;
+}
+
+.cupon-chispa.cupon-chispa-roja {
+  --cupon-oro: #ff4d5e;
+}
+
+/* La etiqueta "Nuevo" se calcula en JS (useCuponesNuevos.js) — se
+   muestra una sola vez, la primera vez que el cliente ve ese cupón. */
+.cupon-etiqueta-nueva {
+  position: absolute;
+  top: -9px;
+  right: -6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1.5px solid #ff2d3f;
+  background: #050505;
+  color: #ff2d3f;
+  text-shadow: 0 0 8px rgba(255, 45, 63, 0.55);
+  box-shadow:
+    0 0 10px -1px rgba(255, 45, 63, 0.55),
+    inset 0 0 6px -2px rgba(255, 45, 63, 0.5);
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* Fase 10A: el destello recorre la tarjeta con transform (compositor), no con `left`. Animar `left` forzaba layout en cada
+   cuadro y el navegador lo contaba como desplazamiento de diseño: CLS 0,2–0,4 en Inicio con la promoción visible. Mismo
+   recorrido que antes (de -45% a 130% del ancho de la tarjeta = 175% ÷ 34% de ancho propio ≈ 515%), igual que
+   cupon-sheen-pasada de los cupones metálicos (Fase 1). */
+@keyframes cupon-sheen {
+  0% {
+    transform: translateX(0) skewX(-20deg);
+  }
+  55%,
+  100% {
+    transform: translateX(515%) skewX(-20deg);
+  }
+}
+
+@keyframes cupon-brillo-texto {
+  0% {
+    background-position: 130% 0;
+  }
+  100% {
+    background-position: -130% 0;
+  }
+}
+
+@keyframes cupon-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 26px -6px color-mix(in srgb, var(--lw-gold) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 52px 0 color-mix(in srgb, var(--lw-gold) 50%, transparent);
+  }
+}
+
+@keyframes cupon-titilar {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(0.4) rotate(90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cupon-plata::after,
+  .cupon-oro,
+  .cupon-oro::after,
+  .cupon-texto-oro,
+  .cupon-rojo,
+  .cupon-rojo::after,
+  .cupon-texto-rojo,
+  .cupon-chispa {
+    animation: none;
+  }
+}

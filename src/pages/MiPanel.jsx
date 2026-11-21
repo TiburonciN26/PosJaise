@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   NotebookPen,
@@ -338,13 +338,16 @@ export default function MiPanel({ activo = true }) {
     setHayMas((data ?? []).length === TAMANO_PAGINA)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarRegistros (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarRegistros(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarRegistros(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     if (!silencioso) {
       setDiasAbiertos(new Set())
       setRegistrosAbiertos(new Set())

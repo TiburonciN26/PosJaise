@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { Minus, Pencil, Plus, Trash2, Warehouse } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -143,13 +143,16 @@ export default function Almacen({ activo = true }) {
     cargar(vigenteRef.current, true)
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargar (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargar(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     vigenteRef.current = vigente
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargar(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     return () => {
       vigente.actual = false
     }

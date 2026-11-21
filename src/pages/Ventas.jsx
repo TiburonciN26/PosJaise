@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { X, ShoppingCart, Scissors, Check, User, Camera, Mic, Percent, Lock, Unlock, Ticket, Receipt, ScrollText } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
@@ -377,12 +377,16 @@ export default function Ventas({ activo = true }) {
   // otro valor (uno tecleado a mano, o un monto rápido como 10/20/50/100),
   // no se toca — por eso el resto de botones de Efectivo no se ven
   // afectados por esto, solo Exacto.
+  // Solo debe reaccionar a cambios del TOTAL: useEffectEvent lee el Recibido actual sin que teclear en él lo dispare.
   const totalAnteriorRef = useRef(total)
-  useEffect(() => {
-    if (montoRecibido === String(totalAnteriorRef.current) && total !== totalAnteriorRef.current) {
-      setMontoRecibido(String(total))
+  const seguirTotalConExacto = useEffectEvent((totalNuevo) => {
+    if (montoRecibido === String(totalAnteriorRef.current) && totalNuevo !== totalAnteriorRef.current) {
+      setMontoRecibido(String(totalNuevo))
     }
-    totalAnteriorRef.current = total
+    totalAnteriorRef.current = totalNuevo
+  })
+  useEffect(() => {
+    seguirTotalConExacto(total)
   }, [total])
 
   // Mismo patrón que "Exacto" arriba: el monto a digitar en POS se
@@ -391,14 +395,14 @@ export default function Ventas({ activo = true }) {
   // con el último sugerido, se actualiza junto con él; si el cajero ya lo
   // editó a otro valor, no se toca.
   const sugeridoAnteriorRef = useRef(montoPosTarjetaSugerido)
-  useEffect(() => {
-    if (
-      montoPosTarjeta === String(sugeridoAnteriorRef.current) &&
-      montoPosTarjetaSugerido !== sugeridoAnteriorRef.current
-    ) {
-      setMontoPosTarjeta(String(montoPosTarjetaSugerido))
+  const seguirSugeridoPos = useEffectEvent((sugeridoNuevo) => {
+    if (montoPosTarjeta === String(sugeridoAnteriorRef.current) && sugeridoNuevo !== sugeridoAnteriorRef.current) {
+      setMontoPosTarjeta(String(sugeridoNuevo))
     }
-    sugeridoAnteriorRef.current = montoPosTarjetaSugerido
+    sugeridoAnteriorRef.current = sugeridoNuevo
+  })
+  useEffect(() => {
+    seguirSugeridoPos(montoPosTarjetaSugerido)
   }, [montoPosTarjetaSugerido])
 
   // Vista previa del cupón: no decide nada por sí sola (el canje real y

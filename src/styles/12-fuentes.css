@@ -1,0 +1,157 @@
+/* @font-face de las fuentes autoalojadas (Kunaroh, Heavitas, Instrument Serif, Inter, Orbitron, Space Mono). Parte 12 de src/index.css: el orden de los @import fija la cascada. */
+/* ═══════════════════════════════════════════════════════
+   Hero de Inicio — nuevo lenguaje visual (a partir de una referencia
+   HTML nueva del usuario, ver implementacionesWed.md §7.36-7.38): arranca
+   SOLO en el hero de InicioCliente.jsx, "por ahora" a pedido explícito
+   del usuario — el resto de la Web se queda con el look dorado/
+   liquid-glass hasta que se migre página por página. Por eso estas
+   clases NO tocan --lw-gold ni ninguna del bloque .landing-web de
+   arriba, viven aparte con su propio degradado azul/acento (el header
+   de PortalCliente.jsx sí usa ese mismo celeste, pero solo cuando la
+   ruta activa es /inicio — ver comentario ahí).
+   Kunaroh NO está en Google Fonts (family=Kunaroh devuelve 400 "Font
+   family not found" — se probó en vivo) — por eso el título caía a
+   Orbitron pese al fallback declarado. El .ttf que trajo la referencia
+   es la fuente real, así que va como @font-face local. */
+@font-face {
+  font-family: 'Kunaroh';
+  /* woff2 primero (misma fuente, comprimida sin pérdida desde el .ttf); el .ttf queda de respaldo y como original. */
+  src: url('../assets/fonts/Kunaroh.woff2') format('woff2'), url('../assets/fonts/Kunaroh.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Heavitas: reservada para títulos importantes de pantallas nuevas de la
+   Web ("Tu carrito", "Tus cupones" — ver el diseño de docs/diseno-carrito/)
+   en blanco sólido, sin cursiva ni degradado — a diferencia de Kunaroh
+   (logo/Inicio) o del acento serif itálico de otras secciones. Mismo
+   motivo que Kunaroh arriba: no está en Google Fonts, va como @font-face
+   local con el .ttf que subió el usuario. */
+@font-face {
+  font-family: 'Heavitas';
+  /* woff2 primero (misma fuente, comprimida sin pérdida desde el .ttf); el .ttf queda de respaldo y como original. */
+  src: url('../assets/fonts/Heavitas.woff2') format('woff2'), url('../assets/fonts/Heavitas.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fuentes que antes venían de Google Fonts (Space Mono, Inter, Instrument Serif y Orbitron), ahora ALOJADAS AQUÍ.
+   Por qué: la hoja de fonts.googleapis.com y los archivos de fonts.gstatic.com eran dos conexiones a otros servidores
+   (DNS + TLS cada una) antes de poder pintar el texto con su letra; Orbitron es el logo del header, así que el logo
+   parpadeaba en cada primera carga. Servidas desde el mismo origen viajan por la conexión ya abierta, quedan en la caché
+   del service worker (funcionan sin red) y no dependen de un tercero.
+   Son EXACTAMENTE los mismos archivos woff2 que servía Google (descargados el 2026-11-13; licencia SIL OFL, que permite
+   alojarlos), con los mismos nombres de familia, pesos y unicode-range: ninguna regla font-family cambia. Solo se
+   conservan los subconjuntos latin y latin-ext (la web está en español); el navegador descarga un archivo únicamente
+   si la página usa esa familia, ese peso y algún carácter de su rango. Inter y Orbitron son variables: un archivo cubre
+   todos sus pesos. Para añadir una familia o un peso: bajar su woff2 y sumar aquí su @font-face. */
+/* Instrument Serif 400 cursiva · latin-ext */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/google/instrument-serif-latin-ext-400-italic.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Instrument Serif 400 cursiva · latin */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/google/instrument-serif-latin-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Instrument Serif 400 · latin-ext */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/google/instrument-serif-latin-ext-400.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Instrument Serif 400 · latin */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/google/instrument-serif-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Inter 400–700 · latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/google/inter-latin-ext-400-700.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Inter 400–700 · latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/google/inter-latin-400-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Orbitron 700–900 · latin */
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src: url('../assets/fonts/google/orbitron-latin-700-900.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Space Mono 400 · latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/google/space-mono-latin-ext-400.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Space Mono 400 · latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/google/space-mono-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Space Mono 700 · latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/google/space-mono-latin-ext-700.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Space Mono 700 · latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/google/space-mono-latin-700.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+.lw-titulo-heavitas {
+  margin: 0;
+  font-family: 'Heavitas', 'Inter', sans-serif;
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}

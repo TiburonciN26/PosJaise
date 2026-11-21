@@ -8,6 +8,8 @@ import Etiqueta from './Etiqueta.jsx'
 import { edad } from '../lib/edad.js'
 import { formatearFechaISO } from '../lib/fechas.js'
 
+const COLUMNAS_DEVUELTAS = 'id, nombre, telefono, sexo, cumpleanos, foto_url, cliente_web_id'
+
 const formularioVacio = {
   nombre: '',
   telefono: '',
@@ -85,9 +87,12 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
     // columna no lo borraría sin querer. (Hoy solo se edita desde el perfil, que sí lo trae.)
     if (!esEdicion || 'dni' in cliente) datos.dni = formulario.dni.trim() || null
 
+    // DNI, dirección y notas se pueden escribir pero no leer de la tabla (solo por la vista clientes_admin,
+    // migración 20261120000004): un `.select()` sin columnas pediría `*` y daría 403. Se devuelven las columnas
+    // permitidas y lo enviado completa el resto.
     const { data: filaGuardada, error: errorGuardado } = esEdicion
-      ? await supabase.from('clientes').update(datos).eq('id', cliente.id).select().single()
-      : await supabase.from('clientes').insert(datos).select().single()
+      ? await supabase.from('clientes').update(datos).eq('id', cliente.id).select(COLUMNAS_DEVUELTAS).single()
+      : await supabase.from('clientes').insert(datos).select(COLUMNAS_DEVUELTAS).single()
 
     setGuardando(false)
 
@@ -102,7 +107,7 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
       return
     }
 
-    onGuardado(filaGuardada)
+    onGuardado({ ...datos, ...filaGuardada })
   }
 
   // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de cerrar y se dice qué se perdería.

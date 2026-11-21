@@ -101,7 +101,7 @@ test('horario schema.org: agrupa días con el mismo turno y respeta los dos turn
   assert.deepEqual(horarioSchema(null), [])
 })
 
-test('JSON-LD BeautySalon: solo datos de la base, sin inventar; lo que falta se omite', () => {
+test('JSON-LD BeautySalon: calle/teléfono/redes/horario de la base y la ciudad confirmada; lo que falta se omite', () => {
   const ld = construirLdSalon({
     sitio: 'https://x.pe',
     contacto: { direccion: ' Av. Argentina H-12 ', telefono: '917160188', instagram_url: 'https://instagram.com/j', facebook_url: '', tiktok_url: 'javascript:x' },
@@ -109,12 +109,19 @@ test('JSON-LD BeautySalon: solo datos de la base, sin inventar; lo que falta se 
   })
   assert.equal(ld['@type'], 'BeautySalon')
   assert.equal(ld.url, 'https://x.pe/inicio')
-  assert.deepEqual(ld.address, { '@type': 'PostalAddress', streetAddress: 'Av. Argentina H-12', addressCountry: 'PE' })
+  assert.deepEqual(ld.address, {
+    '@type': 'PostalAddress',
+    streetAddress: 'Av. Argentina H-12',
+    addressLocality: 'Nuevo Chimbote',
+    addressRegion: 'Áncash',
+    addressCountry: 'PE',
+  })
   assert.equal(ld.telephone, '+51917160188')
   assert.deepEqual(ld.sameAs, ['https://instagram.com/j']) // la vacía y la no-https se descartan
-  assert.ok(!('addressLocality' in ld.address), 'no se inventa ciudad')
+  // Sin datos de contacto: sin teléfono, redes ni calle; la ciudad (confirmada por el negocio) se mantiene.
   const minimo = construirLdSalon({ sitio: 'https://x.pe', contacto: null, semana: null })
-  assert.deepEqual(Object.keys(minimo).sort(), ['@context', '@type', 'image', 'logo', 'name', 'url'])
+  assert.deepEqual(Object.keys(minimo).sort(), ['@context', '@type', 'address', 'image', 'logo', 'name', 'url'])
+  assert.deepEqual(minimo.address, { '@type': 'PostalAddress', addressLocality: 'Nuevo Chimbote', addressRegion: 'Áncash', addressCountry: 'PE' })
   assert.equal(construirLdSalon({ sitio: '', contacto: {}, semana: [] }), null)
 })
 

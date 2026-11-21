@@ -51,7 +51,7 @@ const INTERVALO_HERO_MS = 5000
 // el hero la usa si el admin ya la escribió, y solo cae al texto
 // genérico por categoría en servicios que todavía no la tienen.
 export default function ServiciosCliente() {
-  useMetaPagina({ titulo: 'Servicios', descripcion: 'Manicure en gel, sistemas artificiales, pedicure, cejas, pestañas, depilación, micropigmentación y maquillaje. Mira precios y reserva tu cita en línea.' })
+  useMetaPagina({ titulo: 'Servicios en Nuevo Chimbote', descripcion: 'Manicure en gel, sistemas artificiales, pedicure, cejas, pestañas, depilación, micropigmentación y maquillaje en Nuevo Chimbote. Mira precios y reserva tu cita en línea.' })
   const { serviciosCarrito, agregarServicio } = useCarritoCliente()
   const requerirSesion = useRequerirSesion()
   const [searchParams] = useSearchParams()

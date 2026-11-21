@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useId, useRef, useState } from 'react'
 import BotonVoz from './BotonVoz.jsx'
 import { X, User, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
@@ -270,30 +270,32 @@ export default function ModalRegistroAtencion({
     )
   }, [busquedaClienteDebounced, mostrarSugerenciasCliente, usaCarrito])
 
-  useEffect(() => {
-    async function cargarListas() {
-      // Modo carrito (Registrar atención / completar cita): los clientes se buscan en el
-      // servidor al escribir (QA-043); no se descarga la tabla completa. Solo la edición de un
-      // registro usa un <select>: se carga la primera página y SIEMPRE el cliente actual del
-      // registro (si no, un cliente fuera de la primera página se vería como "sin cliente").
-      // Los servicios tampoco se descargan (QA-046): se buscan en el servidor al escribir; solo las
-      // categorías (para «Crear servicio») se leen completas.
-      const [categorias, resClientes, resActual] = await Promise.all([
-        categoriasDeServicios(supabase).catch(() => []),
-        esEdicion ? supabase.from('clientes').select('id, nombre').order('nombre') : Promise.resolve({ data: [] }),
-        esEdicion && registro?.cliente_id
-          ? supabase.from('clientes').select('id, nombre').eq('id', registro.cliente_id).maybeSingle()
-          : Promise.resolve({ data: null }),
-      ])
-      const lista = resClientes.data ?? []
-      if (resActual.data && !lista.some((c) => c.id === resActual.data.id)) {
-        lista.push(resActual.data)
-        lista.sort((a, b) => a.nombre.localeCompare(b.nombre))
-      }
-      setCategoriasExistentes(categorias)
-      setClientes(lista)
-      setCargandoListas(false)
+  // Listas iniciales del modal: se cargan UNA vez al abrirlo, con el registro con que se abrió. useEffectEvent lee
+  // esEdicion/registro sin convertirlos en dependencias (el modal se monta por cada apertura).
+  const cargarListas = useEffectEvent(async () => {
+    // Modo carrito (Registrar atención / completar cita): los clientes se buscan en el
+    // servidor al escribir (QA-043); no se descarga la tabla completa. Solo la edición de un
+    // registro usa un <select>: se carga la primera página y SIEMPRE el cliente actual del
+    // registro (si no, un cliente fuera de la primera página se vería como "sin cliente").
+    // Los servicios tampoco se descargan (QA-046): se buscan en el servidor al escribir; solo las
+    // categorías (para «Crear servicio») se leen completas.
+    const [categorias, resClientes, resActual] = await Promise.all([
+      categoriasDeServicios(supabase).catch(() => []),
+      esEdicion ? supabase.from('clientes').select('id, nombre').order('nombre') : Promise.resolve({ data: [] }),
+      esEdicion && registro?.cliente_id
+        ? supabase.from('clientes').select('id, nombre').eq('id', registro.cliente_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ])
+    const lista = resClientes.data ?? []
+    if (resActual.data && !lista.some((c) => c.id === resActual.data.id)) {
+      lista.push(resActual.data)
+      lista.sort((a, b) => a.nombre.localeCompare(b.nombre))
     }
+    setCategoriasExistentes(categorias)
+    setClientes(lista)
+    setCargandoListas(false)
+  })
+  useEffect(() => {
     cargarListas()
   }, [])
 

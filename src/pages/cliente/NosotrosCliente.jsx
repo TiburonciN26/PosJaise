@@ -606,7 +606,7 @@ function SeccionProximamente({ icono: Icono, mensaje }) {
 // mientras el admin no cargue ninguna foto (o si algún día se agrega
 // una 5ta sección que todavía no tenga nada).
 export default function NosotrosCliente() {
-  useMetaPagina({ titulo: 'Nosotros', descripcion: 'Conoce a Jaise Beauty Academy: nuestro equipo, nuestro trabajo, dónde estamos y cómo contactarnos.' })
+  useMetaPagina({ titulo: 'Nosotros', descripcion: 'Conoce a Jaise Beauty Academy, salón de belleza en Av. Argentina H-12, Nuevo Chimbote: nuestro equipo, nuestro trabajo y cómo contactarnos.' })
   // La subsección vive en la URL (?seccion=...) para que el menú desplegable del header (PortalCliente) pueda cambiarla.
   const [params, setParams] = useSearchParams()
   const claveParam = params.get('seccion')

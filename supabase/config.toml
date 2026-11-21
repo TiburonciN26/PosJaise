@@ -424,3 +424,8 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# Libro de Reclamaciones: público (se llena sin cuenta). La protección es Cloudflare Turnstile, verificado
+# dentro de la función antes de escribir (ver supabase/functions/registrar-reclamo/index.ts).
+[functions.registrar-reclamo]
+verify_jwt = false

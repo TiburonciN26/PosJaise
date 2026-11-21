@@ -119,9 +119,10 @@ grant execute on function public.productos_vitrina_publica(integer,integer,integ
 revoke all on function public.recompensas_reglas_publicas() from public, anon, authenticated, service_role;
 grant execute on function public.recompensas_reglas_publicas() to anon;
 grant execute on function public.recompensas_reglas_publicas() to authenticated;
+-- 20261120000005: el libro solo se escribe por la Edge Function registrar-reclamo (Turnstile) como service_role.
 revoke all on function public.registrar_reclamo(jsonb) from public, anon, authenticated, service_role;
-grant execute on function public.registrar_reclamo(jsonb) to anon;
-grant execute on function public.registrar_reclamo(jsonb) to authenticated;
+revoke all on function public.registrar_reclamo_verificado(jsonb,uuid) from public, anon, authenticated, service_role;
+grant execute on function public.registrar_reclamo_verificado(jsonb,uuid) to service_role;
 revoke all on function public.resenas_inicio() from public, anon, authenticated, service_role;
 grant execute on function public.resenas_inicio() to anon;
 grant execute on function public.resenas_inicio() to authenticated;
@@ -333,7 +334,7 @@ grant execute on function public.asistentes_validar_duena() to public;
 revoke all on function public.calcular_comision_registro_servicio() from public, anon, authenticated, service_role;
 grant execute on function public.calcular_comision_registro_servicio() to public;
 revoke all on function public.descripcion_de_fila(text,jsonb) from public, anon, authenticated, service_role;
-grant execute on function public.descripcion_de_fila(text,jsonb) to public;
+-- 20261120000001: sin EXECUTE para nadie (solo la usa el trigger de auditoría, que corre como dueño).
 revoke all on function public.generar_codigo_cupon() from public, anon, authenticated, service_role;
 grant execute on function public.generar_codigo_cupon() to public;
 revoke all on function public.generar_codigo_referido() from public, anon, authenticated, service_role;
@@ -400,7 +401,12 @@ grant insert, select, update, delete, truncate, references, trigger, maintain on
 grant truncate, references, trigger, maintain on table public.cita_servicios to service_role;
 revoke all on table public.clientes from public, anon, authenticated, service_role;
 grant truncate, references, trigger, maintain on table public.clientes to anon;
-grant insert, select, update, delete, truncate, references, trigger, maintain on table public.clientes to authenticated;
+grant insert, update, delete, truncate, references, trigger, maintain on table public.clientes to authenticated;
+-- 20261120000004: SELECT por columna, sin dni/direccion/notas (la ficha completa va por clientes_admin).
+grant select (id, nombre, telefono, sexo, cumpleanos, foto_url, cliente_web_id, puntos_bono, codigo_referido, referido_por, fidelizacion_recompensas_reclamadas, creado_en) on table public.clientes to authenticated;
+revoke all on table public.clientes_admin from public, anon, authenticated, service_role;
+grant select on table public.clientes_admin to authenticated;
+grant truncate, references, trigger, maintain on table public.clientes_admin to service_role;
 grant truncate, references, trigger, maintain on table public.clientes to service_role;
 revoke all on table public.deuda_pagos from public, anon, authenticated, service_role;
 grant truncate, references, trigger, maintain on table public.deuda_pagos to anon;

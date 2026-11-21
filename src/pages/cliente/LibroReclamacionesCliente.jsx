@@ -4,11 +4,14 @@ import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 import { useMetaPagina } from '../../hooks/useMetaPagina.js'
+import { useTemaWeb } from '../../context/TemaWebContext.jsx'
+import WidgetTurnstile, { CLAVE_SITIO_TURNSTILE } from '../../components/WidgetTurnstile.jsx'
 
 // Libro de Reclamaciones virtual (Ley 29571 / D.S. 011-2011-PCM, INDECOPI).
 // Vive dentro de la web, sin sesión: un visitante puede presentar su reclamo.
-// Se guarda con registrar_reclamo() (security definer, ver migración
-// 20261009000004); el administrador lo atiende desde Web → Libro de Reclamaciones.
+// Se guarda por la Edge Function registrar-reclamo, que primero verifica Cloudflare Turnstile (anti-bots) y luego
+// llama a registrar_reclamo_verificado() (migraciones 20261009000004 y 20261120000005: el navegador ya no puede
+// escribir el libro directamente). El administrador lo atiende desde Web → Libro de Reclamaciones.
 // Al enviar, la hoja se muestra en pantalla y se puede imprimir/guardar como PDF:
 // la persona se queda con su copia aunque no haya correo automático.
 
@@ -117,6 +120,11 @@ export default function LibroReclamacionesCliente() {
   const [constancia, setConstancia] = useState(null)
   const [datosEnviados, setDatosEnviados] = useState(null)
   const [avisoImpresion, setAvisoImpresion] = useState('')
+  const { tema } = useTemaWeb()
+  // Token de Turnstile: sirve una sola vez, así que tras cada intento se vuelve a montar el widget (versionTurnstile).
+  const [tokenTurnstile, setTokenTurnstile] = useState(null)
+  const [versionTurnstile, setVersionTurnstile] = useState(0)
+  const [turnstileNoCarga, setTurnstileNoCarga] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -145,39 +153,47 @@ export default function LibroReclamacionesCliente() {
     // Honeypot: se finge éxito sin enviar nada.
     if (formulario.sitioWeb) return
 
-    setEnviando(true)
-    const { data, error: errorRpc } = await supabase.rpc('registrar_reclamo', {
-      p_datos: {
-        nombre: formulario.nombre,
-        tipo_documento: formulario.tipoDocumento,
-        numero_documento: formulario.numeroDocumento,
-        domicilio: formulario.domicilio,
-        telefono: formulario.telefono,
-        email: formulario.email,
-        menor_de_edad: formulario.menorDeEdad,
-        apoderado_nombre: formulario.apoderadoNombre,
-        bien_tipo: formulario.bienTipo,
-        bien_descripcion: formulario.bienDescripcion,
-        monto_reclamado: formulario.montoReclamado,
-        tipo: formulario.tipo,
-        detalle: formulario.detalle,
-        pedido: formulario.pedido,
-        conformidad: formulario.conformidad,
-      },
-    })
-    setEnviando(false)
-
-    if (errorRpc) {
-      const esDeValidacion = ['22023', '54000'].includes(errorRpc.code)
-      setError(
-        esDeValidacion
-          ? errorRpc.message
-          : 'No se pudo registrar tu reclamo. Revisa tu conexión e intenta de nuevo.',
-      )
+    if (!tokenTurnstile) {
+      setError('Completa la verificación de seguridad (el recuadro de arriba) antes de enviar.')
       return
     }
 
-    const fila = Array.isArray(data) ? data[0] : data
+    setEnviando(true)
+    const { data, error: errorFuncion } = await supabase.functions.invoke('registrar-reclamo', {
+      body: {
+        token: tokenTurnstile,
+        datos: {
+          nombre: formulario.nombre,
+          tipo_documento: formulario.tipoDocumento,
+          numero_documento: formulario.numeroDocumento,
+          domicilio: formulario.domicilio,
+          telefono: formulario.telefono,
+          email: formulario.email,
+          menor_de_edad: formulario.menorDeEdad,
+          apoderado_nombre: formulario.apoderadoNombre,
+          bien_tipo: formulario.bienTipo,
+          bien_descripcion: formulario.bienDescripcion,
+          monto_reclamado: formulario.montoReclamado,
+          tipo: formulario.tipo,
+          detalle: formulario.detalle,
+          pedido: formulario.pedido,
+          conformidad: formulario.conformidad,
+        },
+      },
+    })
+    setEnviando(false)
+    setTokenTurnstile(null)
+    setVersionTurnstile((v) => v + 1)
+
+    // La función responde { error } con un mensaje para la persona (validación, tope por hora, verificación);
+    // si ni siquiera hubo respuesta, el problema es la conexión.
+    const fila = data?.reclamo
+    if (errorFuncion || !fila) {
+      const cuerpo = await errorFuncion?.context?.json?.().catch(() => null)
+      setError(cuerpo?.error ?? 'No se pudo registrar tu reclamo. Revisa tu conexión e intenta de nuevo.')
+      return
+    }
+
     setDatosEnviados(formulario)
     setConstancia(fila)
     window.scrollTo?.({ top: 0 })
@@ -382,6 +398,19 @@ export default function LibroReclamacionesCliente() {
             respuesta en un plazo no mayor a 15 días hábiles, prorrogable por otros 15 según la
             complejidad del caso.
           </p>
+          {CLAVE_SITIO_TURNSTILE && !turnstileNoCarga ? (
+            <WidgetTurnstile
+              key={versionTurnstile}
+              tema={tema === 'claro' ? 'light' : 'dark'}
+              onToken={setTokenTurnstile}
+              onError={() => setTurnstileNoCarga(true)}
+            />
+          ) : (
+            <p className="rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
+              La verificación de seguridad no cargó. Recarga la página; si sigue sin aparecer, acércate al local o
+              escríbenos por WhatsApp y te entregamos el libro en físico.
+            </p>
+          )}
           {error && (
             <p className="rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">{error}</p>
           )}

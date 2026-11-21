@@ -1,0 +1,14 @@
+/* Impresión de tickets (58 mm). Parte 10 de src/index.css: el orden de los @import fija la cascada. */
+/* Impresión de tickets: el ticket se monta vía portal directo en
+   document.body (fuera de #root), así que basta con ocultar toda
+   la app al imprimir — lo único que queda visible es el ticket. */
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  #root {
+    display: none;
+  }
+}

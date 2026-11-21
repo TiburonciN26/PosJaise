@@ -1,0 +1,120 @@
+/* Editor de producto del Catálogo Web (POS): ancho de tabla en PC. Parte 01 de src/index.css: el orden de los @import fija la cascada. */
+/* Catálogo Web: el editor de producto usa el ancho de la tabla solo en PC.
+   La ficha de Inventario y la disposición móvil conservan su ancho compacto. */
+.modal-producto-web-overlay {
+  top: 59px;
+  align-items: flex-start;
+  padding-block: var(--separador-horizontal);
+}
+
+/* El scroll de las pestañas vive en main, no en body. Al abrir la ficha,
+   se retira su barra para que tabla y modal compartan el mismo centro. */
+main:has(.modal-producto-web:not(.hidden *)) {
+  overflow-y: hidden;
+}
+
+:root:not([data-tema='claro']) .modal-producto-web :is(input:not([type='checkbox']):not([type='file']):not([type='hidden']), textarea) {
+  background-color: #0a0a0a;
+  color: #f5f5f5;
+  color-scheme: dark;
+}
+
+:root:not([data-tema='claro']) .modal-producto-web :is(input, textarea)::placeholder {
+  color: #a3a3a3;
+}
+
+@media (min-width: 64rem) {
+  .modal-producto-web {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(var(--ancho-pestana) - 2 * var(--separador-vertical));
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .modal-producto-web__cabecera,
+  .modal-producto-web__acciones {
+    flex-shrink: 0;
+    padding: 1rem 1.25rem;
+  }
+
+  .modal-producto-web__cabecera {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .modal-producto-web__cuerpo {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding: 0 1.25rem 1rem;
+  }
+
+  .modal-producto-web__principal {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(20rem, 1fr);
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .modal-producto-web__principal > *,
+  .modal-producto-web__datos-campos > *,
+  .modal-producto-web__detalle > *,
+  .modal-producto-web__visibilidad > * {
+    min-width: 0;
+    margin-block: 0;
+  }
+
+  .modal-producto-web__datos,
+  .modal-producto-web__medios,
+  .modal-producto-web__detalle > * {
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 0.875rem;
+  }
+
+  .modal-producto-web__datos-campos,
+  .modal-producto-web__detalle {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .modal-producto-web__descripcion {
+    grid-column: 1 / -1;
+  }
+
+  .modal-producto-web__galeria select {
+    min-width: 0;
+  }
+
+  .modal-producto-web__visibilidad {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    border-top: 1px solid var(--color-border);
+    padding-top: 1rem;
+  }
+
+  .modal-producto-web__visibilidad input {
+    flex-shrink: 0;
+  }
+
+  .modal-producto-web__acciones {
+    justify-content: flex-end;
+    margin-top: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .modal-producto-web__acciones button {
+    flex: 0 1 11rem;
+    padding-inline: 1rem;
+  }
+}
+
+@media (min-width: 80rem) {
+  .modal-producto-web__detalle {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

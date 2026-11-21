@@ -5,6 +5,10 @@ import { buscarProductosCombo, productoNombrePorId } from '../lib/buscarProducto
 import { SIN_SUGERENCIAS } from '../lib/sinSugerencias.js'
 import { useDebounce } from '../hooks/useDebounce.js'
 
+// Arreglo vacío ESTABLE: un `[]` nuevo en cada render hacía que el efecto que busca el producto elegido corriera
+// en cada render mientras no hubiera resultados vigentes (aviso exhaustive-deps de la auditoría).
+const SIN_RESULTADOS = []
+
 // <select> de productos con buscador (combo sugerido de la ficha Web). Mismo contrato que SelectorServicioBuscable:
 // opciones = resultado ACOTADO de la búsqueda en el servidor + SIEMPRE la ficha actualmente elegida (se pide por ID si
 // cae fuera de los resultados), de modo que abrir/editar nunca pierde la selección guardada. Respuestas viejas se
@@ -30,7 +34,7 @@ export default function SelectorProductoBuscable({ id, valor, onCambiar, textoVa
   }, [debounced, excluirId, intento])
 
   const vigente = resultado !== null && resultado.para === texto
-  const opcionesBusqueda = vigente && resultado.ok ? resultado.datos : []
+  const opcionesBusqueda = vigente && resultado.ok ? resultado.datos : SIN_RESULTADOS
 
   useEffect(() => {
     if (!valor) {

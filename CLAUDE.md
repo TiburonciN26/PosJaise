@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Pos Jaise Beauty Academy" — a POS + booking + client web portal for a
 hair/beauty salon. React 19 + Vite + Tailwind v4 (CSS-first, no config
-file — tokens/utilities live in `src/index.css`) + Supabase (Postgres,
+file — tokens/utilities live in `src/index.css` + `src/styles/`) + Supabase (Postgres,
 Auth, Storage, Realtime) + react-router-dom v7. Tests use the built-in
 `node --test` runner (plus Playwright for the local QA suite) — there's
 no Jest/Vitest; don't add one unless asked. Two layers, see
@@ -85,8 +85,8 @@ becomes a `CLIENTE`) — `MenuUsuarioCliente.jsx` gives them a way back.
 
 Everything under the client portal lives inside a single `.landing-web`
 wrapper class (`PortalCliente.jsx`), which is where the CSS custom
-properties `--lw-gold`, `--lw-rose`, `--lw-metal-azul` are declared in
-`index.css`. Anything that needs those vars — including anything
+properties `--lw-gold`, `--lw-rose`, `--lw-metal-azul` are declared
+(`src/styles/08-portal-base.css`, `13-portal-titulos-y-cta.css`). Anything that needs those vars — including anything
 rendered via `createPortal` — must be inserted as a *descendant* of the
 `.landing-web` node, not `document.body`.
 
@@ -105,11 +105,13 @@ unmount/remount the DOM node on every toggle, which kills any CSS
 it jumps instead of animating). Keep the tag stable; vary only
 className/style.
 
-`src/index.css` has a large hand-written section (design tokens,
-`.landing-web` utilities, animation keyframes) followed by a
-`/* ---break--- */` marker and then the shadcn/Tailwind `@layer base`
-block appended by `shadcn init`. Add new custom CSS **above** that
-marker, not after.
+`src/index.css` is only the list of `@import`s: Tailwind/shadcn/fonts, then
+the hand-written CSS split by topic into `src/styles/01-…css` … `21-…css`
+(2026-11-20, byte-identical build output). **The numeric order IS the
+cascade order** — put a new rule in the part it belongs to; if it must
+beat a rule from another part, it goes in a later part. Custom rules stay
+unlayered; shadcn's `@layer base` lives in `20-shadcn-base.css`. Font
+`url()`s in `12-fuentes.css` are relative to `src/styles/` (`../assets/…`).
 
 Reusable UI patterns for this portal, factored out so they don't get
 re-derived per tab:
@@ -117,7 +119,7 @@ re-derived per tab:
   + `docs/patrones/animacion-entrada.md` — the "page assembles itself"
   entrance-animation pattern, standard for every client-web tab. Read
   the pattern doc before reimplementing this for a new tab.
-- `.iri-*` classes in `index.css` — the iridescent 3D-tilt card, used by
+- `.iri-*` classes in `src/styles/07-portal-catalogo-iridiscente.css` — the iridescent 3D-tilt card, used by
   `ProductosCliente.jsx` (superseded by the flat card
   `TarjetaServicioCliente.jsx` for Servicios — don't mix the two
   styles).
@@ -213,7 +215,25 @@ re-derived per tab:
   explicit `grant select (col) on productos to authenticated` or it
   will 403 the first query that requests it. Check
   `information_schema.column_privileges` for the target table before
-  assuming a plain `ADD COLUMN` is enough.
+  assuming a plain `ADD COLUMN` is enough. **`clientes` follows the same
+  pattern** (2026-11-20, migration `20261120000004`): `authenticated` can't
+  SELECT `dni`, `direccion` or `notas`; the admin reads the full record via
+  the `clientes_admin` view (owner-rights, `where es_admin()`). So: a new
+  `clientes` column needs its own column grant (or to be added to the view),
+  never `.select()`/`select('*')` on `clientes` (403, even for the admin —
+  name the columns), and admin screens that need those three fields read
+  `clientes_admin`.
+- `fotos-clientes` is a **private** bucket: show client photos with
+  `useUrlFotoCliente(ruta)` (`src/hooks/useUrlFotoCliente.js`, signed URL,
+  shared cache), never `urlPublicaFoto('fotos-clientes', …)`. Readable by the
+  client herself (own folder) and the admin.
+- The Libro de Reclamaciones is written ONLY through the Edge Function
+  `registrar-reclamo` (Cloudflare Turnstile verified server-side, then
+  `registrar_reclamo_verificado()` as service_role); anon/authenticated
+  can't call the RPCs. Needs `VITE_TURNSTILE_SITE_KEY` (Pages env — the
+  production build fails without it) and the `TURNSTILE_SECRET_KEY` Supabase
+  secret. Local uses Cloudflare's public test keys (`.env.local`,
+  `supabase/functions/.env`); run `supabase functions serve` to test it.
 - Primary keys on business tables (`servicios`, `productos`, `citas`,
   …) are `uuid` (`gen_random_uuid()`), not sequential integers. Don't
   write code that does arithmetic on `.id` (sorting by "recency",
@@ -244,7 +264,14 @@ re-derived per tab:
   (index.html already has them; you'd get two titles). A NEW public route must
   also be added to `RUTAS_PUBLICAS` in `scripts/lib/seo.mjs` (sitemap); POS
   screens are blocked in robots.txt automatically from `navegacion.js`. SEO
-  copy only states facts from the DB/catalog (no city, no courses).
+  copy only states facts from the DB/catalog or confirmed by the business (no
+  courses). Location, confirmed 2026-11-20: Av. Argentina H-12, **Nuevo
+  Chimbote** (Áncash, PE) — the city isn't in the DB, it lives in
+  `UBICACION_NEGOCIO` (`src/lib/datosEstructurados.js`) and in index.html's
+  SEO copy; change both if the salon moves.
+  `public/google31688c444909e427.html` is the Google Search Console
+  ownership verification (property `https://pos-jaise.pages.dev/`) — never
+  delete or rename it, or Google drops the verification.
 - CSP is generated at build time by `scripts/lib/csp.mjs` (env origins +
   SHA-256 of index.html's inline scripts, CRLF-normalized) and appended to
   `dist/_headers` — never hand-write one in `cloudflare/_headers` (the build

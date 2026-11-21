@@ -1,0 +1,304 @@
+/* Foco visible, CTAs, tema claro del POS, html/body, scrollbars y buscadores. Parte 06 de src/index.css: el orden de los @import fija la cascada. */
+/* C2 de la auditoría frontend (WCAG 2.4.7): el proyecto usa
+ * outline-none en todos los inputs y ningún botón declara estado de
+ * foco — un usuario de teclado navegaba sin saber dónde estaba parado.
+ * :focus-visible solo se activa con teclado (los clics de mouse/touch
+ * no muestran el anillo, así la UI táctil queda igual que siempre).
+ * :where() deja la especificidad en cero: cualquier componente puede
+ * pisarlo declarando su propio foco si algún día lo necesita. */
+:where(button, a, input, select, textarea, [role='switch']):focus-visible {
+  outline: 2px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+/* Pedido del usuario: los campos de texto no llevan el anillo exterior de
+ * foco (el borde de color interior ya marca cuál está activo). Los
+ * botones y enlaces conservan el anillo de teclado. */
+:where(input, select, textarea):focus-visible {
+  outline: none;
+}
+
+/* A4 de la auditoría frontend: los CTAs sólidos (Cobrar, Guardar,
+ * Entrar, el FAB, filtros activos) no tenían NINGÚN feedback de
+ * hover/press — .text-bg ya es, en toda la app, la marca de "texto
+ * sobre un acento sólido" (bg-amber/bg-purple-300/bg-green + text-bg),
+ * así que basta esta única regla para darle microinteracción a los
+ * ~25 CTAs de golpe, sin tocar un componente. :where() = especificidad
+ * cero: donde un botón ya declara su propio active:scale-* (el FAB),
+ * ese gana y esta regla queda inerte para esa propiedad. */
+@media (hover: hover) {
+  :where(button.text-bg, a.text-bg):hover {
+    filter: brightness(1.08);
+  }
+}
+:where(button.text-bg, a.text-bg) {
+  transition:
+    filter 150ms ease,
+    transform 100ms ease;
+}
+:where(button.text-bg, a.text-bg):active {
+  transform: scale(0.98);
+}
+
+/* Tema claro: se activa poniendo data-tema="claro" en <html> (ver
+ * ThemeContext.jsx). Mismos nombres de variable que @theme arriba —
+ * el selector de atributo pesa más que el :root plano de arriba, así
+ * que gana en cascada sin !important. No pure-white: fondo gris muy
+ * suave, cards en blanco real (así se distinguen del fondo), bordes
+ * sutiles. color-scheme: light además le pide al navegador pintar
+ * los controles NATIVOS en claro — scrollbars, <input type="date">/
+ * "datetime-local" (los calendarios), <select> — sin eso quedarían
+ * oscuros aunque el resto de la UI ya esté en claro.
+ *
+ * Solo se tocan los NEUTROS (fondo/superficie/borde/texto). Los
+ * acentos (amber y el "rosa pastel" purple-300, más verde/azul/rojo/
+ * naranja) son sub-temas de marca/estado — quedan EXACTAMENTE
+ * iguales en los dos temas principales, sin excepción: no se
+ * redeclaran acá, así que siguen tomando el valor de @theme de
+ * arriba pase lo que pase con data-tema.
+ */
+:root[data-tema='claro'] {
+  color-scheme: light;
+
+  /* Gris/azul ultra suave (slate-50) en vez de blanco puro — así las
+     cards (--color-surface, blanco real, sin cambios) "flotan" encima.
+     A7 de la auditoría frontend: surface-2/3 y los bordes eran beige
+     cálido (#f1efe9…) mientras bg/ink ya eran slate frío — tres
+     temperaturas de neutro conviviendo (fondo azulado, inputs beige,
+     texto frío) se leía "casi bien pero raro". Unificado a la escala
+     slate completa. */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #e2e8f0;
+  --color-tabla: #ffffff;
+  --color-boton-icono: #f1f5f9;
+
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Texto principal en negro puro (pedido explícito: en claro todas las
+     letras negras, salvo las de color y los placeholders). */
+  --color-ink: #000000;
+
+  /* A1 de la auditoría frontend — texto secundario (etiquetas,
+     subtítulos, metadatos): slate-600 real, no opacidad sobre ink.
+     Legible (7.6:1 sobre blanco, pasa AAA) pero visualmente distinto
+     del texto principal, así la jerarquía no se aplana. Lo consume la
+     regla [class*='text-ink/'] de abajo. */
+  --color-ink-secundario: #000000;
+
+  /* Único acento que sí cambia entre temas (pedido explícito): el
+     "rosa pastel" (Asistentes/Porcentajes) pasa a #ED8BAC solo en
+     claro — en oscuro sigue el lavanda original de @theme, sin tocar. */
+  --color-purple-300: #ed8bac;
+
+  /* C1 de la auditoría — los acentos usados COMO TEXTO sobre
+     superficies claras no llegan ni a 3:1 (amber sobre blanco: 2.0).
+     La identidad pide acentos de MARCA idénticos en ambos temas, así
+     que la corrección separa el ROL: rellenos/bordes/pills no se
+     tocan; el acento-texto usa estos pares oscurecidos del mismo matiz
+     (todos ≥4.5:1 sobre blanco), aplicados por override de las
+     utilidades .text-* de abajo, sin tocar componentes.
+     Auditoría 2026-11-20 (8.1): medidos en el navegador, los valores anteriores daban 4.05–4.35:1 sobre los fondos
+     REALES (#f1f5f9 de surface-2, #ebebed del portal), no sobre blanco puro. Mismo matiz, 3–9 % más oscuros: ≥4.6:1
+     sobre todos. Antes: amber #9a6700, green #15803d, red #dc2626, blue #2563eb, rosa #c2456b, naranja #c2410c. */
+  --color-amber-texto: #8d5e00;
+  --color-green-texto: #147839;
+  --color-red-texto: #c92323;
+  --color-azul-metal: #4a78b0;
+  --color-blue-texto: #235ddd;
+  --color-rosa-texto: #b13f62;
+  --color-naranja-texto: #b73d0b;
+
+  /* Anillo de foco (regla :focus-visible, más abajo): en claro, el
+     ámbar de marca no contrasta sobre blanco — usa el par de texto. */
+  --color-foco: var(--color-amber-texto);
+}
+
+/* Texto secundario en claro: antes se forzaba ink al 100% (legible pero
+ * jerarquía aplanada: etiquetas y valores se veían igual que el texto
+ * principal). Ahora usa el token secundario. En oscuro no se toca:
+ * sobre #0d0d0d las opacidades ya funcionan bien. */
+[data-tema='claro'] [class*='text-ink/'] {
+  color: var(--color-ink-secundario);
+}
+
+/* C1 (continuación): override de las utilidades de TEXTO de acento en
+ * claro — la clase base y su variante hover (con :hover en el selector
+ * para pisar a la de Tailwind solo cuando corresponde). */
+[data-tema='claro'] :is(.text-amber, .hover\:text-amber:hover) {
+  color: var(--color-amber-texto);
+}
+/* Pastillas de estado ámbar (Pendiente en Citas, avisos…): texto ámbar SOBRE su propio tinte bg-amber/NN. El tinte
+   oscurece un poco el fondo y el par de texto quedaba en 4.31:1 (medido). Un escalón más oscuro solo en ese caso. */
+[data-tema='claro'] :is([class*='bg-amber/'].text-amber, [class*='bg-amber/'] .text-amber) {
+  color: #7d5300;
+}
+[data-tema='claro'] :is(.text-green, .hover\:text-green:hover) {
+  color: var(--color-green-texto);
+}
+[data-tema='claro'] :is(.text-red, .hover\:text-red:hover) {
+  color: var(--color-red-texto);
+}
+/* Azul metálico de la pestaña Web (POS): como TEXTO en claro usa el extremo
+   oscuro del mismo acero (#2f578c, ~7:1 sobre blanco). El #4a78b0 de
+   --color-azul-metal se queda para rellenos/bordes. */
+[data-tema='claro'] :is(.text-azul-metal, .hover\:text-azul-metal:hover, .text-azul-metal\/70, .text-azul-metal\/90) {
+  color: #2f578c;
+}
+[data-tema='claro'] :is(.text-blue, .hover\:text-blue:hover) {
+  color: var(--color-blue-texto);
+}
+[data-tema='claro'] :is(.text-purple-300, .hover\:text-purple-300:hover) {
+  color: var(--color-rosa-texto);
+}
+[data-tema='claro'] .text-orange-400 {
+  color: var(--color-naranja-texto);
+}
+/* Transferencia (Ventas, Historial): su acento es gray-300, que como texto sobre blanco no se lee. En claro, gris
+   oscuro del mismo matiz (≥7:1 sobre blanco); en oscuro sigue el gray-300 de siempre. */
+[data-tema='claro'] :is(.text-gray-300, .hover\:text-gray-300:hover) {
+  color: #4b5563;
+}
+/* Ícono de Transferencia en los botones de pago de Ventas: el SVG viene negro. En oscuro se vuelve blanco atenuado;
+   en claro queda gris oscuro (antes se invertía también en claro y desaparecía sobre el fondo blanco). */
+.icono-transferencia {
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+[data-tema='claro'] .icono-transferencia {
+  filter: brightness(0);
+  opacity: 0.7;
+}
+
+/* Variantes con opacidad del rosa (pestañas inactivas del header y del
+ * menú lateral): mismo par de texto, apenas atenuado — mantiene la
+ * distinción activa/inactiva sin volver a caer bajo 4.5:1.
+ * Auditoría 2026-11-20: al 85 % SÍ caía (3.65:1 medido en el menú lateral). Al 95 % con el rosa nuevo: ≥4.7:1. */
+[data-tema='claro'] :is(.text-purple-300\/70, .text-purple-300\/90) {
+  color: color-mix(in oklab, var(--color-rosa-texto) 95%, transparent);
+}
+
+/* C1b: .text-bg existe para "texto sobre acento sólido" (botones
+ * Guardar/Cobrar, FAB, filtros activos). En oscuro resuelve a #0d0d0d
+ * (texto oscuro sobre ámbar: 9.6:1 ✓). En claro, --color-bg es casi
+ * blanco y esos botones quedaban con texto blanquecino sobre ámbar
+ * (2:1, ilegible). Los acentos sólidos son idénticos en ambos temas,
+ * así que el texto encima debe ser oscuro SIEMPRE (≥5.7:1 sobre los
+ * cinco acentos). */
+[data-tema='claro'] .text-bg {
+  color: var(--color-ink);
+}
+
+/* Títulos, menús y demás texto "importante" en negrita en claro —
+ * en oscuro se deja tal cual (no se pidió cambiarlo ahí). h1-h3 ya
+ * suelen traer font-semibold (600) por className; acá se refuerza a
+ * 700 SOLO en claro. Los links de <nav> (pestañas del header y del
+ * menú lateral) no traían ningún peso propio — se les da 600. */
+[data-tema='claro'] h1,
+[data-tema='claro'] h2,
+[data-tema='claro'] h3 {
+  font-weight: 700;
+}
+
+[data-tema='claro'] nav a {
+  font-weight: 600;
+}
+
+/* Fundido suave al cambiar de tema — SOLO mientras el toggle está en
+ * curso. ThemeContext.alternarTema le pone .cambiando-tema al <html>
+ * justo antes de invertir data-tema y se la quita a los 500ms. Fuera de
+ * ese instante NO hay ninguna transición global: así no se anima por
+ * accidente ningún otro cambio de color de la app (lo que antes hacía
+ * "saltar"/parpadear valores y filas), y el menú lateral desliza sin
+ * tirones porque no compite con transiciones de color permanentes.
+ *
+ * Se incluye transform (con su propia curva) porque el thumb del switch
+ * de tema se mueve exactamente en el mismo toggle — sin esto, el
+ * !important le quitaría su transición y saltaría de golpe en vez de
+ * deslizarse. Cubre ::before/::after para que ningún pseudo-elemento
+ * coloreado quede fuera del fundido. */
+@media (prefers-reduced-motion: no-preference) {
+  html.cambiando-tema,
+  html.cambiando-tema *,
+  html.cambiando-tema *::before,
+  html.cambiando-tema *::after {
+    transition:
+      background-color 350ms ease,
+      border-color 350ms ease,
+      color 350ms ease,
+      fill 350ms ease,
+      stroke 350ms ease,
+      transform 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}
+
+/* Cambio de tema con View Transitions (ThemeContext.alternarTema): mismo
+ * fundido de 350 ms que el de arriba, pero sobre la captura de la página. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 350ms;
+  animation-timing-function: ease;
+}
+
+/* Fondo también en <html>: en móvil la franja detrás de los botones del
+   sistema (Android) queda fuera de #root/body y se veía BLANCA; pintando el
+   canvas del tema ahí se ve negro en oscuro y claro en claro. */
+html {
+  background-color: var(--color-bg);
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Scrollbars sutiles y delgadas, sin flechitas, en cualquier
+   contenedor con scroll (Firefox + navegadores basados en Chromium) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-strong);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Los buscadores usan <input type="search"> (evita que Chrome/Safari
+   ofrezcan autocompletar con contraseñas/tarjetas/direcciones guardadas
+   sobre un campo que solo busca texto) — sin este reset, WebKit dibuja su
+   propia "x" nativa encima del botón de limpiar que la app ya tiene. */
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}

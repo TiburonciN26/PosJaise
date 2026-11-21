@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Pencil, Trash2, Plus, Download, Wallet, Ban, Clock, User } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
@@ -243,12 +243,15 @@ export default function Gastos({ activo = true }) {
     if (!errorConsulta) setPlantillas(data ?? [])
   }
 
+  // useEffectEvent: el efecto corre solo cuando cambian sus dependencias, pero llama a la versión más reciente
+  // de cargarGastos (lee los filtros actuales) sin volver a dispararse cada vez que esa función se recrea.
+  const cargarDesdeEfecto = useEffectEvent((vigente, silencioso) => cargarGastos(vigente, silencioso))
   useEffect(() => {
     if (!activo) return undefined
     const vigente = { actual: true }
     const silencioso = primeraCargaHecha.current
     primeraCargaHecha.current = true
-    cargarGastos(vigente, silencioso)
+    cargarDesdeEfecto(vigente, silencioso)
     if (!silencioso) {
       setFijosAbiertos(false)
       setVariablesAbiertos(false)

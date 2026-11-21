@@ -22,6 +22,8 @@ export const NOMBRE_CABECERA = MODO === 'bloquear' ? 'Content-Security-Policy' :
 const CULQI = 'https://*.culqi.com'
 // Mapa de Contacto/Inicio (components/MapaDiferido.jsx): iframe de Google Maps embebido.
 const MAPAS = ['https://www.google.com', 'https://maps.google.com']
+// Cloudflare Turnstile del Libro de Reclamaciones (components/WidgetTurnstile.jsx): su script y su iframe.
+const TURNSTILE = 'https://challenges.cloudflare.com'
 
 /** Origen (protocolo + host + puerto) de una URL absoluta http(s); null si es relativa, vacía o inválida. */
 export function origenDe(url) {
@@ -58,14 +60,14 @@ export function construirCsp(env = {}, hashes = []) {
 
   const directivas = [
     ['default-src', ["'self'"]],
-    ['script-src', ["'self'", ...hashes, 'https://js.culqi.com', CULQI]],
+    ['script-src', ["'self'", ...hashes, 'https://js.culqi.com', CULQI, TURNSTILE]],
     // 'unsafe-inline' en estilos: React usa style={{…}} (atributos style) en muchos componentes. Es de bajo riesgo.
     ['style-src', ["'self'", "'unsafe-inline'"]],
     ['img-src', ["'self'", 'data:', 'blob:', supabase, ...mediosPublicos]],
     ['font-src', ["'self'", 'data:']],
     ['connect-src', ["'self'", supabase, supabaseWs, mediosApi, ...mediosPublicos, CULQI]],
     ['media-src', ["'self'", 'blob:']],
-    ['frame-src', [...MAPAS, CULQI]],
+    ['frame-src', [...MAPAS, CULQI, TURNSTILE]],
     ['worker-src', ["'self'"]],
     ['manifest-src', ["'self'"]],
     ['object-src', ["'none'"]],

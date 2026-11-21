@@ -60,8 +60,6 @@ export function useModalA11y(panelRef, activoSolicitado = true, etiquetaFallback
     if (titulo) {
       if (!titulo.id) titulo.id = `modal-titulo-${++contadorId}`
       panel.setAttribute('aria-labelledby', titulo.id)
-    } else if (etiquetaFallback) {
-      panel.setAttribute('aria-label', etiquetaFallback)
     }
 
     // Los paneles a pantalla completa (ModalCamara, ModalVisorFoto — el
@@ -119,4 +117,13 @@ export function useModalA11y(panelRef, activoSolicitado = true, etiquetaFallback
       if (disparador?.isConnected) disparador.focus()
     }
   }, [activo, panelRef])
+
+  // Nombre accesible de respaldo (modales sin h1/h2/h3 visible, ej. ModalCamara). Efecto aparte, declarado DESPUÉS
+  // del principal (que ya fijó aria-labelledby si hay título): si la etiqueta cambia, se actualiza sin rearmar la
+  // trampa de foco ni el bloqueo de scroll.
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!activo || !etiquetaFallback || !panel || panel.hasAttribute('aria-labelledby')) return
+    panel.setAttribute('aria-label', etiquetaFallback)
+  }, [activo, etiquetaFallback, panelRef])
 }

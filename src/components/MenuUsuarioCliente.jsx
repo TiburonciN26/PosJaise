@@ -20,9 +20,8 @@ import { useTemaWeb } from '../context/TemaWebContext.jsx'
 import SwitchTema from './SwitchTema.jsx'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
 import { useSalir } from '../hooks/useSalir.js'
-import { urlPublicaFoto } from '../lib/imagenes.js'
+import { useUrlFotoCliente } from '../hooks/useUrlFotoCliente.js'
 
-const BUCKET_FOTOS = 'fotos-clientes'
 
 // Todas las opciones de acá ya tienen pantalla real. "Tus citas" no va
 // acá:
@@ -69,6 +68,7 @@ export default function MenuUsuarioCliente() {
   const [abierto, setAbierto] = useState(false)
   const [confirmandoSalir, setConfirmandoSalir] = useState(false)
   const [errorFoto, setErrorFoto] = useState(false)
+  const urlFotoFirmada = useUrlFotoCliente(perfil?.foto_url)
   const menuRef = useRef(null)
 
   // Cerrar sesión vuelve al inicio público (useSalir), no al formulario de login.
@@ -98,7 +98,7 @@ export default function MenuUsuarioCliente() {
     }
   }
 
-  const urlFoto = !errorFoto ? urlPublicaFoto(BUCKET_FOTOS, perfil?.foto_url) : null
+  const urlFoto = !errorFoto ? urlFotoFirmada : null
 
   return (
     <div ref={menuRef} className="relative flex h-11 min-w-11 shrink-0 flex-row-reverse items-center justify-center">
