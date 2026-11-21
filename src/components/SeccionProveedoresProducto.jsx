@@ -1,26 +1,13 @@
-import { useState } from 'react'
 import { Plus, Star, X } from 'lucide-react'
 import DatosProveedor from './DatosProveedor.jsx'
-import ModalBuscarProveedor from './ModalBuscarProveedor.jsx'
 
 // Proveedores de un producto dentro de su modal (modo POS). Ya no se escribe un nombre: «Agregar proveedor» abre el
 // buscador de la tabla de proveedores. Cada vinculado muestra solo los datos que tiene escritos, con la estrella para
 // marcar el principal y la X para quitarlo. `vinculos` = [{ proveedor, principal }]; los cambios se guardan junto con el
-// producto (vincular_proveedores_producto).
-export default function SeccionProveedoresProducto({ vinculos, onCambiar, estado = 'listo' }) {
-  const [buscando, setBuscando] = useState(false)
-
-  function agregar(proveedor) {
-    setBuscando(false)
-    onCambiar([...vinculos, { proveedor, principal: vinculos.length === 0 }])
-  }
-
-  function quitar(id) {
-    const restantes = vinculos.filter((v) => v.proveedor.id !== id)
-    // Si se quitó el principal, el siguiente pasa a serlo (un producto con proveedores siempre tiene uno principal).
-    if (restantes.length > 0 && !restantes.some((v) => v.principal)) restantes[0] = { ...restantes[0], principal: true }
-    onCambiar(restantes)
-  }
+// producto (vincular_proveedores_producto). El buscador («Agregar proveedor», con «+ Nuevo proveedor» dentro) NO se monta aquí:
+// esta sección está dentro del <form> del producto y un <form> dentro de otro no es válido — el envío de «Nuevo proveedor»
+// lo hacía el navegador (recargaba la página y se perdía todo). ModalProducto lo monta FUERA del form; aquí solo se pide abrirlo.
+export default function SeccionProveedoresProducto({ vinculos, onCambiar, onAgregar, onQuitar, estado = 'listo' }) {
 
   function marcarPrincipal(id) {
     onCambiar(vinculos.map((v) => ({ ...v, principal: v.proveedor.id === id })))
@@ -58,7 +45,7 @@ export default function SeccionProveedoresProducto({ vinculos, onCambiar, estado
                   </button>
                   <button
                     type="button"
-                    onClick={() => quitar(proveedor.id)}
+                    onClick={() => onQuitar(proveedor)}
                     aria-label={`Quitar a ${proveedor.nombre} de este producto`}
                     className="rounded-lg p-1.5 text-ink/50 transition-colors hover:text-red"
                   >
@@ -74,21 +61,13 @@ export default function SeccionProveedoresProducto({ vinculos, onCambiar, estado
 
           <button
             type="button"
-            onClick={() => setBuscando(true)}
+            onClick={onAgregar}
             className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border-strong py-2 text-sm text-ink/70 transition-colors hover:border-amber hover:text-amber"
           >
             <Plus className="h-4 w-4" />
             Agregar proveedor
           </button>
         </div>
-      )}
-
-      {buscando && (
-        <ModalBuscarProveedor
-          excluirIds={vinculos.map((v) => v.proveedor.id)}
-          onSeleccionar={agregar}
-          onCerrar={() => setBuscando(false)}
-        />
       )}
     </div>
   )

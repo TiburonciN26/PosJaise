@@ -63,6 +63,7 @@ export default function ModalCodigosBarras({ onCerrar }) {
   }, [productos, busqueda])
 
   const conCodigo = productos.filter((p) => p.codigo_barras).length
+  const sinCodigo = productos.length - conCodigo
 
   function exportar() {
     descargarArchivo(
@@ -85,7 +86,7 @@ export default function ModalCodigosBarras({ onCerrar }) {
             <h2 className="text-base font-semibold text-ink">Códigos de barras</h2>
             {!cargando && !error && (
               <p className="text-xs text-ink/60">
-                {productos.length} productos · {conCodigo} con código
+                {productos.length} productos · {conCodigo} con código · {sinCodigo} sin código
               </p>
             )}
           </div>

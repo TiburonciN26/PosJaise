@@ -9,6 +9,9 @@ import Etiqueta from './Etiqueta.jsx'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
 import ModalConfirmarDescarte from './ModalConfirmarDescarte.jsx'
 import SeccionProveedoresProducto from './SeccionProveedoresProducto.jsx'
+import ModalBuscarProveedor from './ModalBuscarProveedor.jsx'
+import SelectorDesplegable from './SelectorDesplegable.jsx'
+import ModalConfirmarAccion from './ModalConfirmarAccion.jsx'
 import { COLUMNAS_PROVEEDOR } from '../lib/proveedores.js'
 import { useToast } from '../context/ToastContext.jsx'
 import AyudaCampo from './AyudaCampo.jsx'
@@ -240,6 +243,8 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
   // con el producto. Si no se pudieron leer ('error'), NO se tocan al guardar (no se borran por una lectura fallida).
   const { mostrarToast } = useToast()
   const [vinculos, setVinculos] = useState([])
+  const [proveedorAQuitar, setProveedorAQuitar] = useState(null) // proveedor pendiente de confirmar al pulsar su X
+  const [buscandoProveedor, setBuscandoProveedor] = useState(false) // buscador de proveedores (se monta fuera del <form>)
   const [estadoVinculos, setEstadoVinculos] = useState(esEdicion && !esWeb ? 'cargando' : 'listo')
   const vinculosBase = useRef([])
 
@@ -303,12 +308,13 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
     listasAhora.forEach((lista, i) => {
       if (JSON.stringify(lista) !== JSON.stringify(listasAntes[i])) cambios.push(`${NOMBRES_LISTAS[i]}: modificado`)
     })
-    if (fotoNueva) cambios.push('Foto principal nueva (sin guardar)')
-    if (fotoEliminada) cambios.push('Foto principal quitada')
     const galeriaNuevas = fotosGaleria.filter((foto) => foto.esNueva).length
     if (galeriaNuevas > 0) cambios.push(`${galeriaNuevas} foto(s) nueva(s) en la galería (sin guardar)`)
     if (idsGaleriaEliminados.length > 0) cambios.push(`${idsGaleriaEliminados.length} foto(s) quitada(s) de la galería`)
   }
+
+  if (fotoNueva) cambios.push('Foto principal nueva (sin guardar)')
+  if (fotoEliminada) cambios.push('Foto principal quitada')
 
   // X, «Cancelar» y Esc: con cambios sin guardar se pregunta antes de descartar (nunca se pierde nada en silencio).
   function intentarCerrar() {
@@ -468,6 +474,16 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
       ? [producto.categoria, ...categoriasExistentes]
       : categoriasExistentes
 
+  // Quitar un proveedor (ya confirmado). Si era el principal, el siguiente pasa a serlo (un producto con proveedores siempre
+  // tiene uno principal).
+  function quitarProveedor(id) {
+    setVinculos((actuales) => {
+      const restantes = actuales.filter((v) => v.proveedor.id !== id)
+      if (restantes.length > 0 && !restantes.some((v) => v.principal)) restantes[0] = { ...restantes[0], principal: true }
+      return restantes
+    })
+  }
+
   // Guarda de entrada: un segundo envío (clic doble, Enter) mientras el primero sigue
   // en curso se ignora, aunque el estado `guardando` aún no se haya repintado.
   const guardandoRef = useRef(false)
@@ -502,7 +518,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
     // Si hay foto nueva, se sube primero: si el guardado en BD falla
     // después, borramos el archivo recién subido para no dejar huérfanos.
     let rutaFotoSubida = null
-    if (esWeb && fotoNueva) {
+    if (fotoNueva) {
       if (subidaPrincipal.current?.blob === fotoNueva.blob) {
         rutaFotoSubida = subidaPrincipal.current.ruta // reintento: ya estaba subida
       } else {
@@ -526,7 +542,8 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
     // Cada modo guarda SOLO sus columnas (ver el comentario del componente).
     const datosPos = datosPosProducto({ formulario, categoriaFinal, precio: precioNumerico, costo: costoNumerico })
     const datosWeb = datosWebProducto({ formulario, fotoFinal, especificaciones, modoUso, idealPara, tips, ingredientes, libreDe })
-    const datos = esWeb ? datosWeb : datosPos
+    // En POS la foto solo se escribe si la persona la tocó: así un guardado de precio/stock no pisa una foto cambiada en otra pestaña.
+    const datos = esWeb ? datosWeb : fotoNueva || fotoEliminada ? { ...datosPos, foto_url: fotoFinal } : datosPos
 
     const resultadoGuardado = esEdicion
       ? await supabase.from('productos').update(datos).eq('id', producto.id).select('id').single()
@@ -575,7 +592,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
     principalIncierta.current = false
     const fotoAnterior = fotoPersistida.current
     fotoPersistida.current = fotoFinal
-    if (esWeb && fotoAnterior && fotoAnterior !== fotoFinal) eliminarFoto(BUCKET_FOTOS, fotoAnterior)
+    if (fotoAnterior && fotoAnterior !== fotoFinal && (esWeb || fotoNueva || fotoEliminada)) eliminarFoto(BUCKET_FOTOS, fotoAnterior)
 
     // Galería (producto_fotos): se procesa DESPUÉS de que el producto ya
     // tiene id real. Ningún error se ignora (ver lib/galeriaFotos.js): si algo
@@ -637,6 +654,56 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
         : null,
     )
   }
+
+  // Foto principal: la MISMA columna (productos.foto_url) que se edita en Web → Catálogo, así que lo que se cambie aquí o allá
+  // se ve en los dos (cada pestaña se vuelve a leer al activarse).
+  const bloqueFoto = (
+          <div>
+    <Etiqueta>Foto</Etiqueta>
+    <div className="flex items-center gap-3">
+      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
+        {previewFoto ? (
+          <img src={previewFoto} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <ImagePlus className="h-6 w-6 text-ink/40" />
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2">
+        <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber">
+          <ImagePlus className="h-3.5 w-3.5" />
+          {procesandoFoto ? 'Procesando...' : previewFoto ? 'Cambiar foto' : 'Elegir foto'}
+          <input
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onChange={elegirFoto}
+            disabled={procesandoFoto}
+            className="hidden"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => setMostrarCamara(true)}
+          disabled={procesandoFoto}
+          className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
+        >
+          <Camera className="h-3.5 w-3.5" />
+          {procesandoFoto ? 'Procesando...' : 'Tomar foto'}
+        </button>
+        {previewFoto && (
+          <button
+            type="button"
+            onClick={quitarFoto}
+            className="flex w-fit items-center gap-1 text-xs text-ink/60 transition-colors hover:text-red"
+          >
+            <X className="h-3 w-3" />
+            Quitar foto
+          </button>
+        )}
+      </div>
+    </div>
+    {errorFoto && <p className="mt-1 text-xs text-red">{errorFoto}</p>}
+  </div>
+  )
 
   return (
     <div className={`fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4 ${esWeb ? 'modal-producto-web-overlay lg:px-(--separador-vertical)' : ''}`}>
@@ -710,20 +777,17 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <Etiqueta htmlFor={`${idBase}-categoria`}>Categoría</Etiqueta>
-              <select
+<SelectorDesplegable
                 id={`${idBase}-categoria`}
-                value={formulario.categoriaSeleccionada}
-                onChange={(evento) => actualizarCampo('categoriaSeleccionada', evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
-              >
-                <option value="">Selecciona categoría</option>
-                {opcionesCategoria.map((categoria) => (
-                  <option key={categoria} value={categoria}>
-                    {categoria}
-                  </option>
-                ))}
-                <option value={OPCION_NUEVA_CATEGORIA}>+ Nueva categoría</option>
-              </select>
+                valor={formulario.categoriaSeleccionada}
+                onCambiar={(categoria) => actualizarCampo('categoriaSeleccionada', categoria)}
+                placeholder="Selecciona categoría"
+                opciones={[
+                  { valor: '', label: 'Selecciona categoría' },
+                  ...opcionesCategoria.map((categoria) => ({ valor: categoria, label: categoria })),
+                  { valor: OPCION_NUEVA_CATEGORIA, label: '+ Nueva categoría' },
+                ]}
+              />
 
               {formulario.categoriaSeleccionada === OPCION_NUEVA_CATEGORIA && (
                 <input
@@ -920,51 +984,7 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
           </section>
           <section className="modal-producto-web__medios space-y-3" aria-label="Fotos del producto">
           <h3 className="hidden text-sm font-semibold text-ink lg:block">Fotos del producto</h3>
-          <div>
-            <Etiqueta>Foto</Etiqueta>
-            <div className="flex items-center gap-3">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface-2">
-                {previewFoto ? (
-                  <img src={previewFoto} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <ImagePlus className="h-6 w-6 text-ink/40" />
-                )}
-              </div>
-              <div className="flex flex-1 flex-col gap-2">
-                <label className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber">
-                  <ImagePlus className="h-3.5 w-3.5" />
-                  {procesandoFoto ? 'Procesando...' : previewFoto ? 'Cambiar foto' : 'Elegir foto'}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    onChange={elegirFoto}
-                    disabled={procesandoFoto}
-                    className="hidden"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setMostrarCamara(true)}
-                  disabled={procesandoFoto}
-                  className="flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-border-strong px-3 py-1.5 text-xs text-ink transition-colors hover:border-amber hover:text-amber disabled:opacity-40"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  {procesandoFoto ? 'Procesando...' : 'Tomar foto'}
-                </button>
-                {previewFoto && (
-                  <button
-                    type="button"
-                    onClick={quitarFoto}
-                    className="flex w-fit items-center gap-1 text-xs text-ink/60 transition-colors hover:text-red"
-                  >
-                    <X className="h-3 w-3" />
-                    Quitar foto
-                  </button>
-                )}
-              </div>
-            </div>
-            {errorFoto && <p className="mt-1 text-xs text-red">{errorFoto}</p>}
-          </div>
+          {bloqueFoto}
 
           <div>
             <Etiqueta>Galería (Frente / Textura / En uso / Detrás)</Etiqueta>
@@ -1122,8 +1142,16 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
           </>
           )}
 
+          {!esWeb && bloqueFoto}
+
           {!esWeb && (
-            <SeccionProveedoresProducto vinculos={vinculos} onCambiar={setVinculos} estado={estadoVinculos} />
+            <SeccionProveedoresProducto
+              vinculos={vinculos}
+              onCambiar={setVinculos}
+              onAgregar={() => setBuscandoProveedor(true)}
+              onQuitar={setProveedorAQuitar}
+              estado={estadoVinculos}
+            />
           )}
         </div>
 
@@ -1172,6 +1200,31 @@ export default function ModalProducto({ producto, categoriasExistentes = [], mod
           </button>
         </div>
       </form>
+
+      {/* Fuera del <form> del producto a propósito: «+ Nuevo proveedor» trae su propio <form>, y anidarlos hacía que el
+          navegador enviara el formulario del proveedor de forma nativa (recarga de la página: se perdía el producto). */}
+      {buscandoProveedor && (
+        <ModalBuscarProveedor
+          excluirIds={vinculos.map((v) => v.proveedor.id)}
+          onSeleccionar={(proveedor) => {
+            setBuscandoProveedor(false)
+            setVinculos((actuales) => [...actuales, { proveedor, principal: actuales.length === 0 }])
+          }}
+          onCerrar={() => setBuscandoProveedor(false)}
+        />
+      )}
+
+      {proveedorAQuitar && (
+        <ModalConfirmarAccion
+          titulo={`¿Quitar a ${proveedorAQuitar.nombre}?`}
+          texto="Dejará de estar vinculado a este producto cuando guardes los cambios."
+          onCancelar={() => setProveedorAQuitar(null)}
+          onConfirmar={() => {
+            quitarProveedor(proveedorAQuitar.id)
+            setProveedorAQuitar(null)
+          }}
+        />
+      )}
 
       {mostrarCamara && (
         <ModalCamara onCapturar={capturarDesdeCamara} onCerrar={() => setMostrarCamara(false)} />

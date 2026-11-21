@@ -166,12 +166,15 @@ export default function MenuLateral({ abierto: abiertoMovil, onCerrar }) {
     })
   }
 
+  // z-30 (no z-20): el panel de total/pago de Ventas es `fixed z-20` en móvil y
+  // vive dentro de <main>, que va DESPUÉS del menú en el DOM; con el mismo z-index
+  // ese panel se pintaba encima del cajón abierto.
   return (
     <div
       className={
         fijo
           ? 'relative h-full w-48 shrink-0'
-          : `absolute inset-0 z-20 ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`
+          : `absolute inset-0 z-30 ${abierto ? 'pointer-events-auto' : 'pointer-events-none'}`
       }
       aria-hidden={!abierto}
     >
@@ -247,7 +250,7 @@ export default function MenuLateral({ abierto: abiertoMovil, onCerrar }) {
                     aria-label={expandido ? `Ocultar ${hijos[0].label}` : `Mostrar ${hijos[0].label}`}
                     aria-expanded={expandido}
                     tabIndex={abierto ? 0 : -1}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-ink/40 transition-colors hover:text-ink"
+                    className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-boton-icono text-ink transition-colors hover:bg-surface-3"
                   >
                     <IconoFlechaDesplegable
                       className={`h-3 w-3 transition-transform duration-300 ${expandido ? 'rotate-180' : ''}`}

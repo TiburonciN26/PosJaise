@@ -33,7 +33,7 @@ import ModalCompraMobiliario from '../components/ModalCompraMobiliario.jsx'
 import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
-import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
+import BotonFlechaDesplegable from '../components/BotonFlechaDesplegable.jsx'
 
 const CAMPOS_OPCIONALES = [
   'marca',
@@ -404,18 +404,7 @@ export default function Mobiliario({ activo = true }) {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => alternarAbierto(mueble.id)}
-                    aria-label={abierto ? 'Contraer' : 'Expandir'}
-                    className="shrink-0 p-1.5"
-                  >
-                    <IconoFlechaDesplegable
-                      className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
-                        abierto ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
+                  <BotonFlechaDesplegable abierto={abierto} onClick={() => alternarAbierto(mueble.id)} />
                 </div>
 
                 <BarraCompletitud porcentaje={porcentaje} colores={colores} />

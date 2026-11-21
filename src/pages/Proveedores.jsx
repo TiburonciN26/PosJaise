@@ -17,7 +17,7 @@ import ContactoProveedor from '../components/ContactoProveedor.jsx'
 import DatosProveedor from '../components/DatosProveedor.jsx'
 import ModalProveedor from '../components/ModalProveedor.jsx'
 import ModalEliminarProveedor from '../components/ModalEliminarProveedor.jsx'
-import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
+import BotonFlechaDesplegable from '../components/BotonFlechaDesplegable.jsx'
 
 // Proveedores (migración 20261112000014; cuelga de Inventario en el menú, solo administradora). Registro dedicado: aquí se
 // crean, editan y eliminan proveedores libremente, sin vincularlos a ningún producto. Se vinculan desde el modal del
@@ -219,16 +219,7 @@ export default function Proveedores({ activo = true }) {
                     </p>
                   </div>
                   <ContactoProveedor celular={proveedor.celular} />
-                  <button
-                    type="button"
-                    onClick={() => alternarAbierto(proveedor.id)}
-                    aria-label={abierto ? 'Contraer' : 'Expandir'}
-                    className="shrink-0 p-1.5"
-                  >
-                    <IconoFlechaDesplegable
-                      className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${abierto ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                  <BotonFlechaDesplegable abierto={abierto} onClick={() => alternarAbierto(proveedor.id)} />
                 </div>
 
                 <CampoColapsable abierto={abierto} diferido>

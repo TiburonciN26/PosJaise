@@ -38,6 +38,8 @@
   /* Filas de tabla/buscador (--color-tabla) y botones de ícono (--color-boton-icono) */
   --color-tabla: #0a0a0a;
   --color-boton-icono: #101010;
+  /* Submenús desplegables (p. ej. totales de Inventario): más hundidos que el fondo de la página, sin borde */
+  --color-submenu: #000000;
 
   /* Bordes */
   --color-border: #2a2a2a;

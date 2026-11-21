@@ -21,7 +21,7 @@ import EsqueletoLista from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
-import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
+import BotonFlechaDesplegable from '../components/BotonFlechaDesplegable.jsx'
 
 const OPCIONES_ORDEN = [
   { id: 'reciente', label: 'Agregados recientemente' }, // por defecto (como «Últimos agregados» en Inventario)
@@ -253,18 +253,7 @@ export default function Servicios({ activo = true }) {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => alternarAbierto(servicio.id)}
-                      aria-label={abierto ? 'Contraer' : 'Expandir'}
-                      className="shrink-0 p-1.5"
-                    >
-                      <IconoFlechaDesplegable
-                        className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
-                          abierto ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
+                    <BotonFlechaDesplegable abierto={abierto} onClick={() => alternarAbierto(servicio.id)} />
                   </div>
 
                   <CampoColapsable abierto={abierto}>

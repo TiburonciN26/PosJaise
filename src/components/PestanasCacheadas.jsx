@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { memo, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { secciones, rutaInicialPara } from '../config/navegacion.js'
@@ -160,7 +160,12 @@ function precargarPantallasDelRol(rol) {
   }
 }
 
-function PantallaCacheada({ ruta, activa, Pagina, proteger, volver }) {
+// memo: al navegar solo cambian `activa` de la pantalla que sale y la que entra; sin memo, Pantallas re-renderizaba TODAS las
+// montadas (hasta 6, varias de más de mil líneas) en cada clic del menú. Por eso `volver` llega como dos strings (estables) y el
+// objeto se arma aquí con useMemo: pasar un objeto nuevo por render rompería el memo. Los cambios de contexto (auth, carrito…)
+// siguen llegando a cada página: memo solo evita los re-renders que venían del padre.
+const PantallaCacheada = memo(function PantallaCacheada({ ruta, activa, Pagina, proteger, volverA, volverEtiqueta }) {
+  const volver = useMemo(() => (volverA ? { a: volverA, etiqueta: volverEtiqueta } : undefined), [volverA, volverEtiqueta])
   const protegerAqui = useCallback((id, valor) => proteger(ruta, id, valor), [proteger, ruta])
   return (
     <div
@@ -188,7 +193,7 @@ function PantallaCacheada({ ruta, activa, Pagina, proteger, volver }) {
       </PaginaActivaContext.Provider>
     </div>
   )
-}
+})
 
 function Pantallas() {
   const { pathname } = useLocation()
@@ -302,8 +307,18 @@ function Pantallas() {
       {aRenderizar.map((ruta) => {
         const Pagina = PAGINAS[ruta]
         if (!Pagina) return null
-        const volver = inicial && inicial.path !== ruta ? { a: inicial.path, etiqueta: inicial.label } : undefined
-        return <PantallaCacheada key={ruta} ruta={ruta} activa={ruta === pathname} Pagina={Pagina} proteger={proteger} volver={volver} />
+        const volverA = inicial && inicial.path !== ruta ? inicial.path : undefined
+        return (
+          <PantallaCacheada
+            key={ruta}
+            ruta={ruta}
+            activa={ruta === pathname}
+            Pagina={Pagina}
+            proteger={proteger}
+            volverA={volverA}
+            volverEtiqueta={volverA ? inicial.label : undefined}
+          />
+        )
       })}
     </>
   )

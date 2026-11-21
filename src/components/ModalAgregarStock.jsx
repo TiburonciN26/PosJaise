@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
 import { listarCambios } from '../lib/cambiosFormulario.js'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
+import SelectorDesplegable from './SelectorDesplegable.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 import { useProveedores } from '../hooks/useProveedores.js'
@@ -125,33 +126,21 @@ export default function ModalAgregarStock({ producto, esAdmin = false, onCerrar,
           </div>
 
           <div>
-            <label className="mb-1 block text-xs text-ink/60">Proveedor</label>
-            <select
-              value={proveedorElegido}
-              onChange={(evento) => setProveedorId(evento.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-amber"
-            >
-              <option value="">Sin proveedor</option>
-              {delProducto.length > 0 && (
-                <optgroup label="De este producto">
-                  {delProducto.map((p, indice) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}
-                      {indice === 0 && p.id === producto.proveedor_id ? ' (principal)' : ''}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {otros.length > 0 && (
-                <optgroup label="Otros proveedores">
-                  {otros.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+            <label htmlFor="agregar-stock-proveedor" className="mb-1 block text-xs text-ink/60">Proveedor</label>
+            <SelectorDesplegable
+              id="agregar-stock-proveedor"
+              valor={proveedorElegido}
+              onCambiar={setProveedorId}
+              opciones={[
+                { valor: '', label: 'Sin proveedor' },
+                ...delProducto.map((p, indice) => ({
+                  valor: p.id,
+                  label: `${p.nombre}${indice === 0 && p.id === producto.proveedor_id ? ' (principal)' : ''}`,
+                  grupo: 'De este producto',
+                })),
+                ...otros.map((p) => ({ valor: p.id, label: p.nombre, grupo: 'Otros proveedores' })),
+              ]}
+            />
             {proveedorElegido && !vinculadosIds.includes(proveedorElegido) && (
               <p className="mt-1 text-[11px] text-ink/50">Quedará vinculado a este producto como otro de sus proveedores.</p>
             )}

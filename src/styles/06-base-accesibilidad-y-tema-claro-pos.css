@@ -73,6 +73,7 @@
   --color-surface-3: #e2e8f0;
   --color-tabla: #ffffff;
   --color-boton-icono: #f1f5f9;
+  --color-submenu: #e9eef4;
 
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
@@ -152,6 +153,10 @@
 }
 [data-tema='claro'] :is(.text-purple-300, .hover\:text-purple-300:hover) {
   color: var(--color-rosa-texto);
+}
+/* Proveedor principal (Inventario): amarillo como TEXTO en claro usa un ocre oscuro del mismo matiz (≥4.5:1 sobre blanco). */
+[data-tema='claro'] .text-yellow-400 {
+  color: #826000;
 }
 [data-tema='claro'] .text-orange-400 {
   color: var(--color-naranja-texto);

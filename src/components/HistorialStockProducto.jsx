@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Truck } from 'lucide-react'
+import { Star, StickyNote, Truck } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
+import { guardarCacheDesplegable, leerCacheDesplegable } from '../lib/cacheDesplegable.js'
 import ContactoProveedor from './ContactoProveedor.jsx'
-import ModalDetalleProveedor from './ModalDetalleProveedor.jsx'
 
 function formatearFechaHoraCorta(fechaIso) {
   const fecha = new Date(fechaIso)
@@ -22,21 +22,20 @@ function formatearFechaHoraCorta(fechaIso) {
 
 // Historial de cargas de stock de un producto (quién, cuándo, cuánto). Solo ADMINISTRADOR: la RPC
 // `historial_stock_producto` lo exige, así que para otros roles no se renderiza ni se consulta nada.
-// Lo usan el modal de detalle (escritorio) y el registro desplegable de Inventario (móvil). Cada ingreso dice de qué
-// proveedor llegó, con WhatsApp y «Ver detalles» (ficha en un modal con Editar/Eliminar). `onProveedorCambio` avisa al
-// padre si se editó o eliminó un proveedor desde aquí.
-export default function HistorialStockProducto({ productoId, esAdmin, proveedorHabitualId = null, onProveedorCambio }) {
-  const [historial, setHistorial] = useState([])
-  const [cargando, setCargando] = useState(esAdmin)
+// Lo usa el detalle desplegable de Inventario (tarjeta móvil y fila de la tabla). Cada ingreso dice de qué proveedor llegó,
+// con su WhatsApp; la ficha del proveedor («Ver detalles», el ojo) vive solo en el bloque de Proveedores del producto, no aquí.
+export default function HistorialStockProducto({ productoId, esAdmin, proveedorHabitualId = null }) {
+  const claveCache = `historial:${productoId}`
+  const previo = esAdmin ? leerCacheDesplegable(claveCache) : undefined
+  // Con una lectura previa se muestra al instante y se refresca en silencio (ver lib/cacheDesplegable.js).
+  const [historial, setHistorial] = useState(previo ?? [])
+  const [cargando, setCargando] = useState(esAdmin && previo === undefined)
   const [error, setError] = useState(null)
-  const [intento, setIntento] = useState(0)
-  const [proveedorDetalle, setProveedorDetalle] = useState(null) // id | null
 
   useEffect(() => {
     if (!esAdmin) return undefined
 
     let vigente = true
-    setCargando(true)
     setError(null)
 
     supabase.rpc('historial_stock_producto', { p_producto_id: productoId }).then(({ data, error: errorRpc }) => {
@@ -45,6 +44,7 @@ export default function HistorialStockProducto({ productoId, esAdmin, proveedorH
         setError('No se pudo cargar el historial de stock.')
       } else {
         setHistorial(data ?? [])
+        guardarCacheDesplegable(claveCache, data ?? [])
       }
       setCargando(false)
     })
@@ -52,9 +52,11 @@ export default function HistorialStockProducto({ productoId, esAdmin, proveedorH
     return () => {
       vigente = false
     }
-  }, [productoId, esAdmin, intento])
+  }, [productoId, esAdmin, claveCache])
 
   if (!esAdmin) return null
+
+  const esPrincipal = (mov) => Boolean(proveedorHabitualId) && mov.proveedor_id === proveedorHabitualId
 
   return (
     <div className="mt-4">
@@ -75,45 +77,33 @@ export default function HistorialStockProducto({ productoId, esAdmin, proveedorH
                 <span className="text-green">+{mov.cantidad_agregada}</span>
                 <span className="shrink-0 text-[11px] text-ink/50">{formatearFechaHoraCorta(mov.fecha)}</span>
               </div>
-              {(mov.nota || mov.usuario_nombre) && (
-                <p className="truncate text-[11px] text-ink/50">
-                  {[mov.usuario_nombre || 'Usuario eliminado', mov.nota].filter(Boolean).join(' · ')}
+              <p className="truncate text-[11px] text-ink/50">{mov.usuario_nombre || 'Usuario eliminado'}</p>
+              {/* Nota del ingreso (si la tiene), con su ícono a la izquierda. */}
+              {mov.nota && (
+                <p className="mt-0.5 flex items-start gap-1 text-[11px] text-ink/50">
+                  <StickyNote className="mt-px h-3 w-3 shrink-0" aria-label="Nota" role="img" />
+                  <span className="min-w-0 break-words">{mov.nota}</span>
                 </p>
               )}
-              {/* De qué proveedor llegó ESTE ingreso; si no es el habitual del producto se resalta como «otro proveedor». */}
+              {/* De qué proveedor llegó ESTE ingreso: el principal del producto va en amarillo (ícono, nombre y estrella); los
+                  demás, sin color (ya no se rotulan «otro proveedor»: se deduce por la estrella). */}
               {mov.proveedor_nombre && (
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p
                     className={`flex min-w-0 items-center gap-1 text-[11px] ${
-                      proveedorHabitualId && mov.proveedor_id !== proveedorHabitualId ? 'text-amber' : 'text-ink/60'
+                      esPrincipal(mov) ? 'font-medium text-yellow-400' : 'text-ink/60'
                     }`}
                   >
                     <Truck className="h-3 w-3 shrink-0" />
                     <span className="truncate">{mov.proveedor_nombre}</span>
-                    {proveedorHabitualId && mov.proveedor_id !== proveedorHabitualId && (
-                      <span className="shrink-0">· otro proveedor</span>
-                    )}
+                    {esPrincipal(mov) && <Star className="h-3 w-3 shrink-0 fill-yellow-400" aria-label="Proveedor principal" role="img" />}
                   </p>
-                  <ContactoProveedor
-                    celular={mov.proveedor_celular}
-                    onVerDetalles={() => setProveedorDetalle(mov.proveedor_id)}
-                  />
+                  <ContactoProveedor celular={mov.proveedor_celular} />
                 </div>
               )}
             </li>
           ))}
         </ul>
-      )}
-
-      {proveedorDetalle && (
-        <ModalDetalleProveedor
-          proveedorId={proveedorDetalle}
-          onCerrar={() => setProveedorDetalle(null)}
-          onCambio={() => {
-            setIntento((n) => n + 1) // nombre / celular nuevos en el historial
-            onProveedorCambio?.()
-          }}
-        />
       )}
     </div>
   )
