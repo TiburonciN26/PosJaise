@@ -52,14 +52,17 @@ const separador = '-'.repeat(32)
 export default function TicketImprimible({ detalle, items }) {
   if (!detalle) return null
 
-  const vuelto =
-    detalle.monto_recibido != null ? detalle.monto_recibido - detalle.total : null
+  // Lo que se cobró hoy: el total de la venta menos el adelanto que la clienta ya había entregado (ventas.adelanto_monto).
+  const aCobrar = detalle.total - (Number(detalle.adelanto_monto) || 0)
+  const vuelto = detalle.monto_recibido != null ? detalle.monto_recibido - aCobrar : null
 
   // El descuento general se aplica sobre el total ya sumado (no por línea),
   // así que el subtotal se reconstruye sumando los items — si no se muestra
   // aparte, las líneas del ticket no cuadrarían a simple vista con el TOTAL.
   const subtotal = items.reduce((acumulado, item) => acumulado + item.subtotal, 0)
   const hayDescuento = detalle.descuento_pct > 0 || detalle.descuento_monto > 0
+  // Adelanto de la cita: dinero que la clienta ya entregó al agendar. Va en su propia línea (no es un descuento).
+  const adelanto = Number(detalle.adelanto_monto) || 0
 
   // Si la venta pidió boleta o factura, el ticket sale con ese encabezado, el
   // número interno (B-/F-), los datos del comprador y el desglose de IGV.
@@ -129,16 +132,18 @@ export default function TicketImprimible({ detalle, items }) {
 
         <p style={{ margin: '2px 0' }}>{separador}</p>
 
-        {hayDescuento && (
+        {(hayDescuento || adelanto > 0) && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Subtotal</span>
               <span>{formatearMonto(subtotal)}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Descuento{detalle.descuento_pct > 0 ? ` (${detalle.descuento_pct}%)` : ''}</span>
-              <span>-{formatearMonto(subtotal - detalle.total)}</span>
-            </div>
+            {hayDescuento && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Descuento{detalle.descuento_pct > 0 ? ` (${detalle.descuento_pct}%)` : ''}</span>
+                <span>-{formatearMonto(subtotal - detalle.total)}</span>
+              </div>
+            )}
           </>
         )}
 
@@ -159,6 +164,19 @@ export default function TicketImprimible({ detalle, items }) {
           <span>TOTAL</span>
           <span>{formatearMonto(detalle.total)}</span>
         </div>
+
+        {adelanto > 0 && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>Adelanto de la cita</span>
+              <span>-{formatearMonto(adelanto)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+              <span>A COBRAR HOY</span>
+              <span>{formatearMonto(aCobrar)}</span>
+            </div>
+          </>
+        )}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px' }}>
           <span>Método de pago</span>
@@ -186,7 +204,7 @@ export default function TicketImprimible({ detalle, items }) {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Comisión tarjeta</span>
-              <span>{formatearMonto(detalle.monto_pos_tarjeta - detalle.total)}</span>
+              <span>{formatearMonto(detalle.monto_pos_tarjeta - aCobrar)}</span>
             </div>
           </>
         )}

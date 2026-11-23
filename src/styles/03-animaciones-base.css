@@ -84,6 +84,47 @@
   }
 }
 
+/* Manito de acuerdo (BotonAcuerdo): saluda un instante y descansa, para llamar la atención sin distraer. */
+@keyframes manito-saludo {
+  0%, 55%, 100% {
+    transform: rotate(0deg);
+  }
+  65% {
+    transform: rotate(-16deg);
+  }
+  75% {
+    transform: rotate(12deg);
+  }
+  85% {
+    transform: rotate(-8deg);
+  }
+  93% {
+    transform: rotate(4deg);
+  }
+}
+
+/* Latido verde del botón cuando una parte ya confirmó y falta la otra. */
+@keyframes manito-pulso {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-green) 50%, transparent);
+  }
+  70%, 100% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--color-green) 0%, transparent);
+  }
+}
+
+/* Acuerdo cerrado por las dos partes: la manito «salta» una vez. */
+@keyframes manito-pop {
+  0% {
+    transform: scale(0.5) rotate(-12deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
 @keyframes elevar-flecha {
   0% {
     transform: translateY(0);

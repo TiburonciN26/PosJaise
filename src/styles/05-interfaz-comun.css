@@ -146,6 +146,38 @@
   }
 }
 
+/* Título de TODOS los modales (lo marca useModalA11y): con el interlineado normal (1.5) el texto quedaba ~4 px más abajo que el
+   padding lateral y el título se veía descentrado respecto al borde. Con interlineado ajustado queda a la misma distancia del
+   borde arriba que a la izquierda. Sin capa: gana a text-base/leading-* de Tailwind. */
+[data-titulo-modal] {
+  line-height: 1.1;
+}
+
+/* Campo fecha y hora (InputFechaHora): el indicador nativo (calendario en PC, flecha en Chrome de Android) queda invisible
+   sobre el ícono propio y ocupa la franja derecha del campo, así tocar el ícono abre el selector igual que antes. */
+.input-fecha-hora {
+  position: relative;
+  /* Chrome de Android dibuja además una flecha «▾» como parte de la apariencia nativa del campo: sin esto se veía montada sobre
+     el calendario. El alto mínimo evita que el campo se aplaste sin esa apariencia (iOS). */
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 2.375rem;
+  text-align: left;
+}
+
+.input-fecha-hora::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.75rem;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
 /* El scroll se conserva al desplegar contenido: el navegador no debe
    anclarse a los bloques inferiores y desplazar el título pulsado. */
 .citas-cliente-scroll {
@@ -223,6 +255,9 @@
   .animate-elevar-flecha,
   .animate-martillar,
   .animate-chispa-martillo,
+  .animate-manito-saludo,
+  .animate-manito-pulso,
+  .animate-manito-pop,
   .animate-entrada-modal,
   .animate-entrada-overlay,
   .animate-entrada-dropdown,

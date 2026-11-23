@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Lock, Unlock, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { leerServicios } from '../lib/buscarServicios.js'
@@ -56,14 +57,29 @@ function coloresIndicador(asignados, total) {
   return { pill: 'bg-surface-2 text-ink/60' }
 }
 
-function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuardar }) {
+// autoEditar + token: este es el % que pidieron asignar desde Citas («Sin comisión» → ícono de %): la fila se destraba y el campo
+// recibe el foco para escribir el porcentaje directamente.
+function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuardar, autoEditar = false, token = null }) {
   const [bloqueado, setBloqueado] = useState(true)
   const [valor, setValor] = useState(porcentajeActual != null ? String(porcentajeActual) : '')
+  const inputRef = useRef(null)
 
   useEffect(() => {
     setValor(porcentajeActual != null ? String(porcentajeActual) : '')
     setBloqueado(true)
   }, [porcentajeActual])
+
+  // Declarado DESPUÉS del efecto de arriba (que bloquea al montar): el último en correr gana. El foco espera a que termine de
+  // desplegarse la tarjeta (el input no es enfocable mientras sigue bloqueado ni mientras está plegado).
+  useEffect(() => {
+    if (!autoEditar) return undefined
+    setBloqueado(false)
+    const temporizador = setTimeout(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }, 350)
+    return () => clearTimeout(temporizador)
+  }, [autoEditar, token])
 
   async function confirmarYBloquear() {
     setBloqueado(true)
@@ -90,6 +106,7 @@ function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuarda
         </span>
         <div className="flex items-center gap-1">
           <input
+            ref={inputRef}
             type="search"
             inputMode="numeric"
             autoComplete="new-password"
@@ -120,7 +137,7 @@ function FilaAsistentePorcentaje({ precio, asistente, porcentajeActual, onGuarda
   )
 }
 
-function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap, asignados, onGuardar }) {
+function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap, asignados, onGuardar, solicitud }) {
   const [abierto, setAbierto] = useState(false)
   // QA-050: las filas de asistentes (un input por asistente) se montan la PRIMERA vez que la tarjeta se abre y se conservan
   // después (para no cortar la animación de cierre ni perder lo escrito). Con cientos de servicios colapsados ya no hay
@@ -129,6 +146,15 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
 
   const total = asistentesActivos.length
   const colores = coloresIndicador(asignados, total)
+
+  // Pedido desde Citas: esta tarjeta se abre sola. Corre al montarse y cada vez que llega un pedido nuevo (token).
+  const pedida = solicitud?.servicioId === servicio.id
+  const tokenPedido = solicitud?.token
+  useEffect(() => {
+    if (!pedida) return
+    setMontado(true)
+    setAbierto(true)
+  }, [pedida, tokenPedido])
 
   return (
     <div
@@ -184,6 +210,8 @@ function TarjetaServicioPorcentaje({ servicio, asistentesActivos, porcentajesMap
                   asistente={asistente}
                   porcentajeActual={porcentajesMap.get(`${servicio.id}_${asistente.id}`) ?? null}
                   onGuardar={(asistenteId, valor) => onGuardar(servicio.id, asistenteId, valor)}
+                  autoEditar={pedida && solicitud.asistenteId === asistente.id}
+                  token={tokenPedido}
                 />
               ))
             )}
@@ -220,6 +248,23 @@ export default function Porcentajes({ activo = true }) {
   const [ventana, setVentana] = useState({ clave: '', n: TAMANO_VENTANA })
   const primeraCargaHecha = useRef(false)
   const numColumnas = useNumeroColumnas()
+
+  // Pedido desde el modal de Cita (ícono de % junto a «Sin comisión»): llega por el estado de la navegación con el servicio y la
+  // asistente. Se filtra por el nombre del servicio (así queda a la vista aunque haya cientos), se abre su tarjeta y se destraba
+  // el % de esa asistente. Al guardarlo se restaura la búsqueda anterior y el pedido se da por atendido. `tokenAtendidoRef`
+  // evita repetirlo cada vez que se vuelve a esta pestaña con el mismo estado de navegación.
+  const location = useLocation()
+  const [solicitud, setSolicitud] = useState(null)
+  const tokenAtendidoRef = useRef(null)
+  const busquedaPreviaRef = useRef(null)
+  useEffect(() => {
+    const pedido = location.state?.asignarPorcentaje
+    if (!activo || !pedido || tokenAtendidoRef.current === pedido.token) return
+    tokenAtendidoRef.current = pedido.token
+    busquedaPreviaRef.current = busqueda
+    setBusqueda(pedido.servicioNombre ?? '')
+    setSolicitud(pedido)
+  }, [activo, location.state, busqueda, setBusqueda])
 
   async function cargarTodo(vigente = { actual: true }, silencioso = false) {
     if (!silencioso) setCargando(true)
@@ -325,6 +370,11 @@ export default function Porcentajes({ activo = true }) {
 
     mostrarToast('Porcentaje guardado.', 'exito')
     cargarPorcentajes()
+    if (busquedaPreviaRef.current !== null) {
+      setBusqueda(busquedaPreviaRef.current)
+      busquedaPreviaRef.current = null
+      setSolicitud(null)
+    }
   }
 
   const filtrados = busqueda.trim()
@@ -393,6 +443,7 @@ export default function Porcentajes({ activo = true }) {
                     porcentajesMap={porcentajesMap}
                     asignados={conteos.get(servicio.id) ?? 0}
                     onGuardar={guardarPorcentaje}
+                    solicitud={solicitud}
                   />
                 ))}
             </div>

@@ -123,8 +123,9 @@ test('QA-031: el envío no se resta de los descuentos y el neto de Dashboard sig
   expect(redondear(durante.filas.descuentos - antes.filas.descuentos)).toBe(0);
   expect(redondear(durante.filas.envio - antes.filas.envio)).toBe(costoEnvio);
   // 2026-11-12: el envío pasa al repartidor y ya no es ingreso (migración
-  // 20261112000007). Neto = bruto − descuentos, sin sumar envio_cobrado.
-  const netoDashboard = (f) => redondear(Number(f.ingreso_productos) + Number(f.ingreso_servicios) - Number(f.descuentos));
+  // 20261112000007). Desde la migración 20261122000002 ingreso_productos/ingreso_servicios ya son netos (después de descuentos):
+  // neto = productos + servicios, sin restar descuentos ni sumar envio_cobrado.
+  const netoDashboard = (f) => redondear(Number(f.ingreso_productos) + Number(f.ingreso_servicios));
   expect(netoDashboard(durante.fila), 'neto de Dashboard = Ingreso neto de Estadísticas').toBe(durante.neto);
   expect(redondear(durante.neto - antes.neto), 'el neto sube solo lo vendido (el envío no es ingreso)').toBe(1);
 

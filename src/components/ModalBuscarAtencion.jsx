@@ -1,4 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { supabase } from '../lib/supabase.js'
+import { agruparAtencionesPorCita } from '../lib/adelantoCita.js'
 import BotonVoz from './BotonVoz.jsx'
 import { X, ClipboardCheck, User, ListFilter } from 'lucide-react'
 import { useCerrarConEscape } from '../hooks/useCerrarConEscape.js'
@@ -62,6 +64,24 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
   const idsExcluidos = new Set(excluirIds)
   const filtradas = busquedaAtenciones.resultados.filter((atencion) => !idsExcluidos.has(atencion.id))
 
+  // Adelanto que la clienta dejó en Citas por cada atención listada (misma RPC que usa el carrito de Ventas: solo trae lo que
+  // aún no se descontó). Es un aviso: si la consulta falla simplemente no se muestra y la lista funciona igual.
+  const claveIdsListados = filtradas.map((atencion) => atencion.id).join(',')
+  const [adelantos, setAdelantos] = useState([])
+  useEffect(() => {
+    if (!claveIdsListados) {
+      setAdelantos([])
+      return undefined
+    }
+    let vigente = true
+    supabase.rpc('adelantos_pendientes_de_atenciones', { p_registro_ids: claveIdsListados.split(',') }).then(({ data, error }) => {
+      if (vigente) setAdelantos(error || !Array.isArray(data) ? [] : data)
+    })
+    return () => {
+      vigente = false
+    }
+  }, [claveIdsListados])
+
   // Agrupadas por cliente para que la cajera vea de un vistazo todo lo
   // pendiente de la misma persona. Los grupos salen en el orden de la
   // primera atención de cada uno (ya ordenada por fecha según `orden`), así
@@ -75,12 +95,21 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
       }
       mapa.get(clave).atenciones.push(atencion)
     }
-    return Array.from(mapa.values())
+    // Dentro de cada clienta, las atenciones de una misma cita con adelanto forman un bloque (ver agruparAtencionesPorCita).
+    return Array.from(mapa.values()).map((grupo) => ({
+      ...grupo,
+      elementos: agruparAtencionesPorCita(grupo.atenciones, adelantos),
+    }))
   })()
-  // Índice plano en el MISMO orden en que se dibuja, para que las flechas/Enter
-  // recorran la lista tal como se ve.
-  const visibles = gruposFiltrados.flatMap((grupo) => grupo.atenciones)
-  const indicePorId = new Map(visibles.map((atencion, indice) => [atencion.id, indice]))
+  // Índice plano (un elemento = una atención suelta o un bloque de cita) en el MISMO orden en que se dibuja, para que las
+  // flechas/Enter recorran la lista tal como se ve.
+  const visibles = gruposFiltrados.flatMap((grupo) => grupo.elementos)
+  const indicePorElemento = new Map(visibles.map((elemento, indice) => [elemento, indice]))
+
+  // Elegir un elemento agrega TODAS sus atenciones (un bloque baja entero al carrito: su adelanto se descuenta en ese cobro).
+  function seleccionarElemento(elemento) {
+    elemento.atenciones.forEach((atencion) => onSeleccionar(atencion))
+  }
 
   function manejarCambioBusqueda(valor) {
     setBusqueda(valor)
@@ -117,11 +146,11 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
     if (!listo) return
 
     if (indiceActivo >= 0 && visibles[indiceActivo]) {
-      onSeleccionar(visibles[indiceActivo])
+      seleccionarElemento(visibles[indiceActivo])
       return
     }
     if (visibles.length === 1) {
-      onSeleccionar(visibles[0])
+      seleccionarElemento(visibles[0])
     }
   }
 
@@ -221,30 +250,46 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
                   <User className="h-3.5 w-3.5 shrink-0 text-ink/60" />
                   <span className="truncate">{grupo.clienteNombre}</span>
                 </p>
-                <div className="pl-3">
-                  {grupo.atenciones.map((atencion) => {
-                    const indice = indicePorId.get(atencion.id)
+                <div className="px-3">
+                  {grupo.elementos.map((elemento) => {
+                    const indice = indicePorElemento.get(elemento)
+                    const esBloque = elemento.atenciones.length > 1
                     return (
                       <button
-                        key={atencion.id}
+                        key={elemento.atenciones[0].id}
                         type="button"
                         onMouseEnter={() => setIndiceActivo(indice)}
-                        onClick={() => onSeleccionar(atencion)}
-                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                          indice === indiceActivo
-                            ? 'bg-amber/15 text-amber'
-                            : 'text-ink/80 hover:bg-surface-2'
-                        }`}
+                        onClick={() => seleccionarElemento(elemento)}
+                        className={`block w-full rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                          esBloque ? 'my-1 border border-green/40' : ''
+                        } ${indice === indiceActivo ? 'bg-amber/15 text-amber' : 'text-ink/80 hover:bg-surface-2'}`}
                       >
-                        <div className="min-w-0">
-                          <p className="truncate">{atencion.servicios?.nombre ?? 'Servicio'}</p>
-                          <p className="truncate font-mono text-[10px] text-ink/40">
-                            {formatearFechaCorta(atencion.fecha)}
+                        {esBloque && (
+                          <p className="mb-1 font-mono text-[10px] text-green">
+                            Misma cita · se cobran juntas
+                            {elemento.adelanto ? ` · Adelanto ${formatearSoles(elemento.adelanto)}` : ''}
                           </p>
+                        )}
+                        <div className="space-y-1.5">
+                          {elemento.atenciones.map((atencion) => (
+                            <div key={atencion.id} className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate">{atencion.servicios?.nombre ?? 'Servicio'}</p>
+                                <p className="truncate font-mono text-[10px] text-ink/40">
+                                  {formatearFechaCorta(atencion.fecha)}
+                                </p>
+                              </div>
+                              <div className="shrink-0 text-right">
+                                <p className="font-mono text-amber">{formatearSoles(atencion.precio)}</p>
+                                {!esBloque && elemento.adelanto && (
+                                  <p className="font-mono text-[10px] text-green">
+                                    Adelanto {formatearSoles(elemento.adelanto)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <span className="shrink-0 font-mono text-amber">
-                          {formatearSoles(atencion.precio)}
-                        </span>
                       </button>
                     )
                   })}

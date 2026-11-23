@@ -2,17 +2,14 @@ import { Link, useLocation } from 'react-router-dom'
 import { Menu, Moon, Sun, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../context/ThemeContext.jsx'
-import { useToast } from '../context/ToastContext.jsx'
 import { secciones } from '../config/navegacion.js'
 import MenuUsuario from './MenuUsuario.jsx'
 import IconoMartillo from './IconoMartillo.jsx'
-import IconoCampana from './IconoCampana.jsx'
 
 export default function Header({ menuAbierto, onToggleMenu }) {
   const { rol } = useAuth()
   const { tema, alternarTema } = useTheme()
   const esOscuro = tema === 'oscuro'
-  const { mostrarToast } = useToast()
   const { pathname } = useLocation()
   const seccionesVisibles = secciones.filter((seccion) => seccion.roles.includes(rol))
   const seccionActual = seccionesVisibles.find((seccion) => pathname.startsWith(seccion.path))
@@ -95,17 +92,10 @@ export default function Header({ menuAbierto, onToggleMenu }) {
             {esOscuro ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             <span className="hidden text-sm font-medium sm:inline">{esOscuro ? 'Oscuro' : 'Claro'}</span>
           </button>
-          {/* Campana de notificaciones para el personal — solo el ícono
-              por ahora (sin badge real: todavía no existe ningún sistema
-              de notificaciones para el staff, esa es una tarea aparte,
-              futura — ver implementacionesWed.md). Tocarla no abre nada
-              todavía, a propósito. */}
-          <IconoCampana
-            grande
-            contador={0}
-            className="mr-1.5 text-ink hover:text-amber"
-            onClick={() => mostrarToast('Notificaciones del personal — próximamente.', 'info')}
-          />
+          {/* Campana de notificaciones del personal: OCULTA por ahora (pedido de la dueña; todavía no existe un sistema de
+              notificaciones para el staff). Para volver a mostrarla: importar IconoCampana y useToast y poner aquí
+              <IconoCampana grande contador={0} className="mr-1.5 text-ink hover:text-amber"
+                onClick={() => mostrarToast('Notificaciones del personal — próximamente.', 'info')} />. */}
           <MenuUsuario />
         </div>
       </div>

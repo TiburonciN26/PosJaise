@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 import { formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles } from '../lib/moneda.js'
 import TarjetaResumen from '../components/TarjetaResumen.jsx'
@@ -6,6 +6,8 @@ import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import { EsqueletoResumen } from '../components/Esqueleto.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 import TarjetaPuntoEquilibrio from '../components/TarjetaPuntoEquilibrio.jsx'
+import DetalleDashboard from '../components/DetalleDashboard.jsx'
+import { PESTANA_INICIAL_DETALLE, esPestanaDetalle } from '../lib/detalleDashboard.js'
 import { publicarMetaCumplida, soltarMetaDashboard } from '../lib/metaDashboard.js'
 import {
   METRICAS_VACIAS,
@@ -44,6 +46,24 @@ export default function Dashboard({ activo = true }) {
     return { desde: hoyStr, hasta: hoyStr }
   })
 
+  // Pestaña abierta de «Detalle del período» (sobrevive a que la pantalla se desmonte, como el filtro de fechas).
+  const [pestanaDetalle, setPestanaDetalle] = useEstadoVista('/dashboard:detalle', PESTANA_INICIAL_DETALLE)
+  const tarjetaDetalle = useRef(null)
+  // Alto de la barra de fechas fija (la primera hija «sticky»): el buscador del detalle se pega justo debajo, no encima.
+  const raiz = useRef(null)
+  useLayoutEffect(() => {
+    const nodo = raiz.current
+    const barra = nodo?.querySelector(':scope > .sticky')
+    if (!nodo || !barra) return undefined
+    const medir = () => nodo.style.setProperty('--alto-filtros', `${barra.offsetHeight}px`)
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(barra)
+    return () => observador.disconnect()
+  }, [])
+  // Sube con cada lectura de métricas: el detalle descarta lo que ya había leído y vuelve a pedirlo.
+  const [versionDatos, setVersionDatos] = useState(0)
+
   const [metricas, setMetricas] = useState(METRICAS_VACIAS)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
@@ -66,6 +86,7 @@ export default function Dashboard({ activo = true }) {
     }
 
     setMetricas(nuevas)
+    setVersionDatos((n) => n + 1)
     setCargando(false)
   }
 
@@ -83,17 +104,18 @@ export default function Dashboard({ activo = true }) {
     }
   }, [activo, filtro, personalizado.desde, personalizado.hasta])
 
-  // QA-024: ingresoProductos/ingresoServicios suman venta_items.subtotal (antes
-  // del descuento de la venta). Estadísticas parte de sum(ventas.total), ya
-  // descontado — la cascada debe partir del mismo ingreso neto en ambas
-  // pantallas, o la ganancia final difiere para el mismo período.
+  // QA-024: Estadísticas parte de sum(ventas.total), ya descontado — la cascada debe partir del mismo ingreso en ambas
+  // pantallas, o la ganancia final difiere para el mismo período. Desde 2026-11-22 (migración 20261122000002)
+  // ingresoProductos/ingresoServicios ya son lo que de verdad entró: el descuento de cada venta se reparte entre sus ítems
+  // (antes sumaban venta_items.subtotal, el importe ANTES del descuento, y el «bruto» mostraba plata que nunca entró). Por eso
+  // «Descuentos» es solo informativo (ya está restado) y la cascada no lo vuelve a restar.
   //
   // QA-031 separó el envío de "Descuentos" (ventas.total lo incluye). Desde el
   // 2026-11-12 el envío NO es ingreso: la clienta lo paga y se le entrega
   // completo al repartidor, así que contarlo inflaba la ganancia en ese monto.
-  // Neto = bruto − descuentos = sum(ventas.total − envío), el mismo "Ingreso
-  // neto" de Estadísticas (migración 20261112000007). envioCobrado queda solo
-  // como dato informativo en el Resumen del período.
+  // Ingreso = sum(ventas.total − envío), el mismo "Ingreso neto" de Estadísticas
+  // (migración 20261112000007). envioCobrado queda solo como dato informativo
+  // en el Resumen del período.
   // (El cálculo está en calcularResultadoDashboard, compartido con el menú lateral.)
   const gananciaProductos = metricas.ingresoProductos - metricas.costoProductos
 
@@ -116,7 +138,6 @@ export default function Dashboard({ activo = true }) {
 
   const pasosPrevios = [
     { etiqueta: 'Ingreso bruto', valor: ingresoBruto },
-    { etiqueta: 'Descuentos', valor: -metricas.descuentos },
     { etiqueta: '10% gastos operativos (estimado)', valor: -gastosOperativos },
     { etiqueta: 'Costo de productos vendidos', valor: -metricas.costoProductos },
     { etiqueta: 'Comisión pagada a asistentes', valor: -metricas.comisionesPagadas },
@@ -127,14 +148,15 @@ export default function Dashboard({ activo = true }) {
   // 7 montos) — mismo formato visual que la cascada de ganancia de más
   // abajo, cada fila conserva el color que tenía su tarjeta.
   const filasResumen = [
-    { etiqueta: 'Ingreso bruto', valor: ingresoBruto, positivo: true, clase: 'text-green' },
-    { etiqueta: 'Descuentos', valor: metricas.descuentos, positivo: false, clase: 'text-red' },
-    { etiqueta: 'Ingreso productos', valor: metricas.ingresoProductos, positivo: true, clase: 'text-amber' },
-    { etiqueta: 'Ingreso servicios', valor: metricas.ingresoServicios, positivo: true, clase: 'text-blue' },
-    { etiqueta: 'Gastos productos', valor: metricas.costoProductos, positivo: false, clase: 'text-red' },
-    { etiqueta: 'Ganancia productos', valor: gananciaProductos, positivo: true, clase: 'text-green' },
-    { etiqueta: 'Comisiones a pagar', valor: metricas.comisionesPagadas, positivo: false, clase: 'text-red' },
-    { etiqueta: ETIQUETA_GASTOS[filtro], valor: metricas.gastosMes, positivo: false, clase: 'text-blue' },
+    { etiqueta: 'Ingreso bruto', valor: ingresoBruto, positivo: true, clase: 'text-green', pestana: 'productos' },
+    { etiqueta: 'Ingreso productos', valor: metricas.ingresoProductos, positivo: true, clase: 'text-amber', pestana: 'productos' },
+    { etiqueta: 'Ingreso servicios', valor: metricas.ingresoServicios, positivo: true, clase: 'text-blue', pestana: 'servicios' },
+    // Solo informa cuánto se descontó: ya está restado del ingreso de arriba (no se resta otra vez en la cascada).
+    { etiqueta: 'Descuentos', nota: 'ya restados del ingreso', valor: metricas.descuentos, positivo: false, clase: 'text-red', pestana: 'descuentos' },
+    { etiqueta: 'Gastos productos', valor: metricas.costoProductos, positivo: false, clase: 'text-red', pestana: 'productos' },
+    { etiqueta: 'Ganancia productos', valor: gananciaProductos, positivo: true, clase: 'text-green', pestana: 'productos' },
+    { etiqueta: 'Comisiones a pagar', valor: metricas.comisionesPagadas, positivo: false, clase: 'text-red', pestana: 'comisiones' },
+    { etiqueta: ETIQUETA_GASTOS[filtro], valor: metricas.gastosMes, positivo: false, clase: 'text-blue', pestana: 'gastos' },
     // Solo informativo (sin signo, en gris): el envío pasa al repartidor y no
     // entra en ningún cálculo de ganancia.
     {
@@ -143,11 +165,20 @@ export default function Dashboard({ activo = true }) {
       valor: metricas.envioCobrado,
       informativo: true,
       clase: 'text-ink/50',
+      pestana: 'envios',
     },
   ]
 
+  // Tocar una fila del Resumen abre su pestaña en «Detalle del período» y baja hasta ella.
+  function abrirDetalle(pestana) {
+    if (!esPestanaDetalle(pestana)) return
+    setPestanaDetalle(pestana)
+    tarjetaDetalle.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div
+      ref={raiz}
       className="animate-entrada-pestana px-(--separador-vertical) pb-6 pt-0 lg:mx-auto lg:w-full lg:max-w-(--ancho-pestana)"
       style={{ '--color-foco': 'var(--color-purple-300)' }}
     >
@@ -197,20 +228,28 @@ export default function Dashboard({ activo = true }) {
           {/* Resumen del período: lista (antes eran tarjetas sueltas) */}
           <div className="rounded-lg border border-border bg-surface p-4 order-2 lg:order-2">
             <h2 className="text-sm font-semibold text-ink">Resumen del período</h2>
-            <div className="mt-3 space-y-2">
+            <p className="mt-0.5 text-xs text-ink/50">Toca una fila para ver su detalle.</p>
+            <div className="mt-3 space-y-1">
               {filasResumen.map((fila) => (
-                <FilaMonto
+                // El botón envuelve la fila sin cambiar su estructura (etiqueta hija directa, monto único span.font-mono).
+                <button
                   key={fila.etiqueta}
-                  etiqueta={fila.etiqueta}
-                  nota={fila.nota}
-                  claseMonto={`text-sm ${fila.clase}`}
-                  // El envío va aparte, bajo una línea: es solo informativo
-                  // y no entra en ninguna suma.
-                  className={fila.informativo ? 'border-t border-border pt-2' : ''}
+                  type="button"
+                  onClick={() => abrirDetalle(fila.pestana)}
+                  aria-label={`Ver detalle de ${fila.etiqueta}`}
+                  className={`-mx-2 block w-[calc(100%+1rem)] rounded-lg px-2 py-1 text-left transition-colors hover:bg-surface-3 ${
+                    fila.informativo ? 'mt-1 border-t border-border pt-2' : ''
+                  }`}
                 >
-                  {!fila.informativo && (fila.positivo ? '+' : '−')}
-                  {formatearSoles(Math.abs(fila.valor))}
-                </FilaMonto>
+                  <FilaMonto
+                    etiqueta={fila.etiqueta}
+                    nota={fila.nota}
+                    claseMonto={`text-sm ${fila.clase}`}
+                  >
+                    {!fila.informativo && (fila.positivo ? '+' : '−')}
+                    {formatearSoles(Math.abs(fila.valor))}
+                  </FilaMonto>
+                </button>
               ))}
             </div>
           </div>
@@ -254,6 +293,18 @@ export default function Dashboard({ activo = true }) {
             </div>
           </div>
           </div>
+
+          <DetalleDashboard
+            ref={tarjetaDetalle}
+            pestana={pestanaDetalle}
+            onCambiarPestana={setPestanaDetalle}
+            filtro={filtro}
+            personalizado={personalizado}
+            activo={activo}
+            version={versionDatos}
+            gastosPeriodo={metricas.gastosMes}
+            etiquetaGastos={ETIQUETA_GASTOS[filtro]}
+          />
         </>
       )}
     </div>

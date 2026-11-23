@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Fecha y hora — celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Space+Mono:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#f5a623}a:hover{color:#ffc35c}
+.dia{background:transparent}
+.chip{background:#101010}
+.icono-btn{background:transparent}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0a0a0a; font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; color: #ffffff; position: relative; overflow: hidden;">
+
+  <div style="padding: 20px 16px; display: flex; flex-direction: column; gap: 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Nueva cita</h2>
+      <button type="button" class="icono-btn" aria-label="Cerrar" style="width: 44px; height: 44px; border: 0; border-radius: 8px; color: #ffffff; display: flex; align-items: center; justify-content: center;">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span id="lbl-fecha-m" style="font-size: 14px; font-weight: 500;">Fecha y hora <span style="color: #f06565;">*</span></span>
+      <button type="button" aria-labelledby="lbl-fecha-m" onClick="{{abrir}}" style="{{estiloCampo}}">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>
+        <span style="flex: 1 1 auto; text-align: left; font-size: 15px; font-weight: 500;">{{resumenCorto}}</span>
+        <span style="font-family: 'Space Mono', monospace; font-size: 14px; color: #f5a623;">{{resumenHora}}</span>
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label for="adelanto-m" style="font-size: 14px; font-weight: 500;">Adelanto o abono</label>
+      <input id="adelanto-m" placeholder="S/ Opcional" style="height: 44px; box-sizing: border-box; border-radius: 8px; border: 1px solid #2a2a2a; background: #141414; color: #ffffff; padding: 0 12px; font: inherit; font-size: 15px;">
+    </div>
+  </div>
+
+  <sc-if value="{{abierto}}" hint-placeholder-val="{{ true }}">
+    <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.65);"></div>
+    <div role="dialog" aria-label="Elegir fecha y hora" style="position: absolute; left: 0; right: 0; bottom: 0; height: 730px; box-sizing: border-box; background: #141414; border-top: 1px solid #363636; border-radius: 20px 20px 0 0; padding: 8px 16px 20px; display: flex; flex-direction: column; gap: 10px;">
+      <div aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: #363636;"></div>
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="margin: 0; font-size: 17px; font-weight: 700;">Fecha y hora</h3>
+        <button type="button" onClick="{{irHoy}}" style="height: 44px; border: 0; background: transparent; color: #f5a623; font: inherit; font-size: 14px; font-weight: 600; padding: 0 4px;">Ir a hoy</button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <button type="button" class="icono-btn" aria-label="Mes anterior" disabled="{{sinAnterior}}" onClick="{{mesAnterior}}" style="{{estiloAnterior}}">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+        </button>
+        <span style="flex: 1 1 auto; text-align: center; font-size: 16px; font-weight: 600;">{{tituloMes}}</span>
+        <button type="button" class="icono-btn" aria-label="Mes siguiente" onClick="{{mesSiguiente}}" style="width: 44px; height: 44px; border: 0; border-radius: 8px; color: #ffffff; display: flex; align-items: center; justify-content: center;">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 600;">
+        <abbr title="lunes" style="text-decoration: none;">L</abbr>
+        <abbr title="martes" style="text-decoration: none;">M</abbr>
+        <abbr title="miércoles" style="text-decoration: none;">M</abbr>
+        <abbr title="jueves" style="text-decoration: none;">J</abbr>
+        <abbr title="viernes" style="text-decoration: none;">V</abbr>
+        <abbr title="sábado" style="text-decoration: none;">S</abbr>
+        <abbr title="domingo" style="text-decoration: none;">D</abbr>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px;">
+        <sc-for list="{{celdas}}" as="c" hint-placeholder-count="35">
+          <sc-if value="{{c.vacia}}" hint-placeholder-val="{{ false }}">
+            <span aria-hidden="true" style="height: 42px;"></span>
+          </sc-if>
+          <sc-if value="{{c.esDia}}" hint-placeholder-val="{{ true }}">
+            <button type="button" class="dia" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}" disabled="{{c.pasado}}" onClick="{{c.pick}}" style="{{c.estilo}}">{{c.num}}</button>
+          </sc-if>
+        </sc-for>
+      </div>
+
+      <div aria-hidden="true" style="height: 1px; background: #2a2a2a; margin: 2px 0;"></div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+        <span style="font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Horario</span>
+        <span style="font-size: 14px; font-weight: 600;">{{diaCorto}}</span>
+      </div>
+      <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+        <sc-for list="{{grupos}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6);">{{g.titulo}} <span style="color: #f5a623;">· {{g.sub}}</span></span>
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px;">
+              <sc-for list="{{g.items}}" as="s" hint-placeholder-count="6">
+                <button type="button" class="chip" aria-label="{{s.aria}}" aria-pressed="{{s.pressed}}" onClick="{{s.pick}}" style="{{s.estilo}}">{{s.hora}}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <button type="button" onClick="{{cerrar}}" style="height: 50px; border: 0; border-radius: 12px; background: #f5a623; color: #0a0a0a; font: inherit; font-size: 15px; font-weight: 700;">{{textoListo}}</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var MESES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+var DIAS_CORTO = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+var HOY = new Date(2026, 10, 22);
+var INICIO = 9 * 60;
+var FIN = 19 * 60 + 30;
+var PASO = 30;
+
+function mayus(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+function partirHora(min) {
+  var h = Math.floor(min / 60);
+  var m = min % 60;
+  var h12 = ((h + 11) % 12) + 1;
+  return { hora: h12 + ':' + (m < 10 ? '0' + m : m), ampm: h < 12 ? 'a. m.' : 'p. m.' };
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { verA: 2026, verM: 10, selA: 2026, selM: 10, selD: 22, slot: 9 * 60, abierto: true };
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state;
+    var primero = new Date(s.verA, s.verM, 1);
+    var desfase = (primero.getDay() + 6) % 7;
+    var diasMes = new Date(s.verA, s.verM + 1, 0).getDate();
+    var base = 'height: 42px; border-radius: 10px; border: 1px solid transparent; font: inherit; font-size: 15px; color: #ffffff; padding: 0;';
+
+    var celdas = [];
+    for (var i = 0; i < desfase; i++) celdas.push({ vacia: true, esDia: false });
+    for (var d = 1; d <= diasMes; d++) {
+      (function (d) {
+        var f = new Date(s.verA, s.verM, d);
+        var pasado = f.getTime() < HOY.getTime();
+        var esHoy = f.getTime() === HOY.getTime();
+        var elegido = s.selA === s.verA && s.selM === s.verM && s.selD === d;
+        var estilo = base;
+        if (elegido) estilo += ' background: #f5a623; color: #0a0a0a; font-weight: 700;';
+        else if (esHoy) estilo += ' border-color: #f5a623; color: #f5a623; font-weight: 700;';
+        else if (pasado) estilo += ' color: rgba(255,255,255,0.25);';
+        celdas.push({
+          vacia: false, esDia: true, num: d, pasado: pasado, estilo: estilo,
+          pressed: elegido ? 'true' : 'false',
+          aria: DIAS[f.getDay()] + ' ' + d + ' de ' + MESES[s.verM] + (esHoy ? ' (hoy)' : ''),
+          pick: function () { self.setState({ selA: s.verA, selM: s.verM, selD: d }); }
+        });
+      })(d);
+    }
+
+    var grupos = [
+      { titulo: 'Mañana', sub: 'a. m.', items: [] },
+      { titulo: 'Tarde', sub: 'p. m.', items: [] },
+      { titulo: 'Noche', sub: 'p. m.', items: [] }
+    ];
+    for (var min = INICIO; min <= FIN; min += PASO) {
+      (function (min) {
+        var p = partirHora(min);
+        var elegido = s.slot === min;
+        var g = min < 12 * 60 ? 0 : (min < 18 * 60 ? 1 : 2);
+        var estilo = 'height: 36px; border-radius: 8px; font-family: \'Space Mono\', monospace; font-size: 14px; padding: 0;';
+        estilo += elegido ? ' background: #f5a623; border: 1px solid #f5a623; color: #0a0a0a; font-weight: 700;' : ' border: 1px solid #2a2a2a; color: #ffffff;';
+        grupos[g].items.push({
+          hora: p.hora, estilo: estilo, pressed: elegido ? 'true' : 'false',
+          aria: p.hora + ' ' + p.ampm,
+          pick: function () { self.setState({ slot: min }); }
+        });
+      })(min);
+    }
+
+    var fSel = new Date(s.selA, s.selM, s.selD);
+    var hSel = partirHora(s.slot);
+    var esMesHoy = s.verA === HOY.getFullYear() && s.verM === HOY.getMonth();
+
+    return {
+      celdas: celdas,
+      grupos: grupos,
+      abierto: s.abierto,
+      tituloMes: mayus(MESES[s.verM]) + ' ' + s.verA,
+      diaCorto: DIAS_CORTO[fSel.getDay()] + ' ' + s.selD + ' ' + MESES_CORTO[s.selM],
+      resumenCorto: DIAS_CORTO[fSel.getDay()] + ' ' + s.selD + ' ' + MESES_CORTO[s.selM] + ' ' + s.selA,
+      resumenHora: hSel.hora + ' ' + hSel.ampm,
+      textoListo: 'Listo · ' + DIAS_CORTO[fSel.getDay()] + ' ' + s.selD + ' ' + MESES_CORTO[s.selM] + ', ' + hSel.hora + ' ' + hSel.ampm,
+      sinAnterior: esMesHoy,
+      estiloAnterior: 'width: 44px; height: 44px; border: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; ' + (esMesHoy ? 'color: rgba(255,255,255,0.25);' : 'color: #ffffff;'),
+      estiloCampo: 'height: 50px; width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 10px; background: #141414; color: #ffffff; font: inherit; border: 1px solid ' + (s.abierto ? '#f5a623' : '#2a2a2a') + ';',
+      abrir: function () { self.setState({ abierto: true }); },
+      cerrar: function () { self.setState({ abierto: false }); },
+      mesAnterior: function () {
+        if (esMesHoy) return;
+        var m = s.verM - 1, a = s.verA;
+        if (m < 0) { m = 11; a -= 1; }
+        self.setState({ verA: a, verM: m });
+      },
+      mesSiguiente: function () {
+        var m = s.verM + 1, a = s.verA;
+        if (m > 11) { m = 0; a += 1; }
+        self.setState({ verA: a, verM: m });
+      },
+      irHoy: function () {
+        self.setState({ verA: HOY.getFullYear(), verM: HOY.getMonth(), selA: HOY.getFullYear(), selM: HOY.getMonth(), selD: HOY.getDate() });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -77,7 +77,7 @@ test('Deudas: la consultan admin, cajera y encargada (notas de cobro); la asiste
   assert.notEqual(resolverDestino('ASISTENTE', '/deudas'), '/deudas');
 });
 
-test('PERSONAL_APOYO (viene a ayudar por días): solo Mi Panel y Almacén, cualquier otra ruta cae en Mi Panel', async () => {
+test('PERSONAL_APOYO (viene a ayudar por días): solo Mis atenciones y Almacén, cualquier otra ruta cae en Mis atenciones', async () => {
   const { secciones } = await import('../../src/config/navegacion.js');
   const rutasApoyo = secciones.filter((s) => s.roles.includes('PERSONAL_APOYO')).map((s) => s.path).sort();
   // Almacén (ROLES_ALMACEN) se abrió a PERSONAL_APOYO con eadaf1f: registra salidas de insumos.

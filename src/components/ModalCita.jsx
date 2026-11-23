@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import BotonVoz from './BotonVoz.jsx'
-import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle, Check, Percent } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
@@ -11,20 +11,57 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 import Etiqueta from './Etiqueta.jsx'
+import { SIN_SUGERENCIAS } from '../lib/sinSugerencias.js'
+import InputFechaHora from './InputFechaHora.jsx'
+import AyudaCampo from './AyudaCampo.jsx'
 import ModalCliente from './ModalCliente.jsx'
 import ModalServicio from './ModalServicio.jsx'
 import { categoriasDeServicios, LIMITE_SERVICIOS } from '../lib/buscarServicios.js'
 import { useBusquedaServicios } from '../hooks/useBusquedaServicios.js'
+import { useServiciosConComision } from '../hooks/useServiciosConComision.js'
+import { useInasistenciasClienta } from '../hooks/useInasistenciasClienta.js'
+import { useHorarioAtencionSemana } from '../hooks/useHorarioAtencionSemana.js'
+import { textoInasistencias } from '../lib/inasistencias.js'
+import { adelantoSuperaTotal, totalServiciosCita } from '../lib/adelantoCita.js'
+import { formatearSoles } from '../lib/moneda.js'
+import { avisoHorarioCita } from '../lib/avisoHorarioCita.js'
+import { horaSugeridaCita } from '../lib/horaSugeridaCita.js'
+import { citasQueChocan, textoChoques } from '../lib/choquesCita.js'
+import { useCitasDeAsistenteEnElDia } from '../hooks/useCitasDeAsistenteEnElDia.js'
+import SelectorDesplegable from './SelectorDesplegable.jsx'
+
+// Asistente y Adelanto o abono: etiqueta a la izquierda y campo a la derecha, en una sola línea (7rem + hueco de 0.5rem
+// = la sangría que usa el mensaje de ayuda para quedar alineado bajo el campo).
+// Alto del carrito: mínimo = 1 servicio (la fila mide 66 px: nombre 20 + duración 34 + relleno 12). Sin máximo ni scroll: con más
+// servicios se expande para mostrarlos completos (ver listaCarritoRef).
+const ALTO_MIN_CARRITO = 66
+const FILA_CAMPO = 'grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-2'
+const SANGRIA_MENSAJE = 'pl-[7.5rem]'
 
 // Umbrales del swipe-to-delete del carrito — mismos valores que el
-// carrito de Ventas/Mi Panel, para que el gesto se sienta idéntico.
+// carrito de Ventas/Mis atenciones, para que el gesto se sienta idéntico.
 const UMBRAL_ARRASTRE_ELIMINAR = 90
 const UMBRAL_ARRASTRE_INICIO = 8
 
-function FilaLineaCita({ linea, esTactil, onCambiarPrecio, onCambiarDuracion, onQuitar }) {
+// Columnas del carrito (cabecera «Servicio / Precio» y filas): nombre, precio y, solo con mouse, el botón ✕. En táctil se quita
+// deslizando la fila, así que no hay tercera columna.
+// La columna del precio mide lo justo para «S/ + campo de 4rem» (5.5rem): antes eran 7.5rem y el vacío a la izquierda del «S/» le quitaba
+// ancho al nombre del servicio.
+const COLUMNAS_CARRITO = (esTactil) => (esTactil ? 'grid-cols-[1fr_5.5rem]' : 'grid-cols-[1fr_5.5rem_1.5rem]')
+
+// sinComision: este servicio no tiene % para la asistente elegida (solo avisa; igual se puede agendar). resaltada: línea
+// recién agregada — destello verde, igual que el carrito de Ventas/Registro de atención.
+// onAsignarComision (solo la administradora): lleva a Comisiones con este servicio abierto para escribir el % de esta asistente.
+function FilaLineaCita({ linea, esTactil, sinComision = false, resaltada = false, onAsignarComision, onCambiarPrecio, onCambiarDuracion, onQuitar }) {
   const [arrastreX, setArrastreX] = useState(0)
   const [arrastrando, setArrastrando] = useState(false)
   const inicioRef = useRef({ x: 0, iniciado: false, ignorar: false })
+  const filaRef = useRef(null)
+
+  // La lista del carrito tiene alto máximo y scroll: si la línea nueva cayó fuera de la vista, se trae para que se vea el destello.
+  useEffect(() => {
+    if (resaltada) filaRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [resaltada])
 
   function manejarPointerDown(evento) {
     if (!esTactil) return
@@ -63,6 +100,7 @@ function FilaLineaCita({ linea, esTactil, onCambiarPrecio, onCambiarDuracion, on
 
   return (
     <div
+      ref={filaRef}
       onPointerDown={manejarPointerDown}
       onPointerMove={manejarPointerMove}
       onPointerUp={soltar}
@@ -72,46 +110,63 @@ function FilaLineaCita({ linea, esTactil, onCambiarPrecio, onCambiarDuracion, on
         backgroundColor: `color-mix(in srgb, var(--color-red) ${Math.round(progresoEliminar * 85)}%, transparent)`,
         transition: arrastrando ? 'none' : undefined,
       }}
-      className="touch-pan-y px-3 py-2 transition-[transform_200ms_ease-in,background-color_150ms_ease-out]"
+      className={`${COLUMNAS_CARRITO(esTactil)} touch-pan-y grid items-start gap-2 px-3 py-1.5 transition-[transform_200ms_ease-in,background-color_150ms_ease-out] ${resaltada ? 'animate-flash-verde' : ''}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="min-w-0 flex-1 truncate text-sm text-ink">{linea.nombre}</p>
-        {!esTactil && (
-          <button
-            type="button"
-            onClick={onQuitar}
-            aria-label="Quitar servicio"
-            className="shrink-0 text-ink/30 transition-colors hover:text-red"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-ink/50">S/</span>
-          <input
-            type="search"
-            inputMode="decimal"
-            autoComplete="new-password"
-            value={linea.precio}
-            onChange={(evento) => onCambiarPrecio(evento.target.value)}
-            className="w-16 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
-          />
-        </div>
-        <div className="flex items-center gap-1">
+      <div className="min-w-0">
+        <p className="truncate text-sm text-ink">{linea.nombre}</p>
+        <div className="mt-1 flex items-center gap-1">
           <input
             type="search"
             inputMode="numeric"
-            autoComplete="new-password"
+            {...SIN_SUGERENCIAS}
             value={linea.duracionMin}
             onChange={(evento) => onCambiarDuracion(evento.target.value)}
+            aria-label={`Duración de ${linea.nombre} en minutos`}
             className="w-12 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
           />
           <span className="text-xs text-ink/50">min</span>
         </div>
+        {sinComision && (
+          <div className="mt-1 flex items-start gap-1.5 text-[11px] text-orange-400">
+            <p className="min-w-0 flex-1">Sin comisión: este servicio no tiene % asignado para esta asistente.</p>
+            {onAsignarComision && (
+              <button
+                type="button"
+                onClick={onAsignarComision}
+                aria-label="Asignar comisión en la pestaña Comisiones"
+                title="Asignar comisión en Comisiones"
+                className="shrink-0 rounded-md border border-orange-400/50 p-1 text-orange-400 transition-colors hover:bg-orange-400/10"
+              >
+                <Percent className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      <div className="flex items-center justify-end gap-1">
+        <span className="text-xs text-ink/50">S/</span>
+        <input
+          type="search"
+          inputMode="decimal"
+          {...SIN_SUGERENCIAS}
+          value={linea.precio}
+          onChange={(evento) => onCambiarPrecio(evento.target.value)}
+          aria-label={`Precio de ${linea.nombre}`}
+          className="w-16 rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
+        />
+      </div>
+
+      {!esTactil && (
+        <button
+          type="button"
+          onClick={onQuitar}
+          aria-label="Quitar servicio"
+          className="mt-1.5 text-ink/30 transition-colors hover:text-red"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   )
 }
@@ -133,6 +188,18 @@ function formularioDesdeCita(cita) {
     fechaHora: aInputDatetimeLima(new Date(cita.fecha_hora)),
     nota: cita.nota ?? '',
     adelanto: cita.adelanto != null ? String(cita.adelanto) : '',
+  }
+}
+
+// «Agendar otra igual» (desde una cita completada): misma clienta, asistente y servicios, y la misma hora 4 semanas después (el día de
+// la semana no cambia). Sin nota ni adelanto: eran de la cita anterior. Todo se puede cambiar antes de guardar.
+const MS_CUATRO_SEMANAS = 28 * 24 * 60 * 60 * 1000
+function formularioDesdePlantilla(cita) {
+  return {
+    ...formularioDesdeCita(cita),
+    fechaHora: aInputDatetimeLima(new Date(new Date(cita.fecha_hora).getTime() + MS_CUATRO_SEMANAS)),
+    nota: '',
+    adelanto: '',
   }
 }
 
@@ -167,19 +234,32 @@ function validar(formulario, lineas, puedeElegirAsistente, clienteReferencia) {
   if (formulario.adelanto.trim()) {
     const adelanto = parseFloat(formulario.adelanto)
     if (Number.isNaN(adelanto) || adelanto < 0) return 'El adelanto no es válido.'
+    if (adelantoSuperaTotal(formulario.adelanto, totalServiciosCita(lineas))) {
+      return 'El adelanto no puede ser mayor al total de los servicios.'
+    }
   }
 
   return null
 }
 
-export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado }) {
+// `plantilla`: cita de la que se copian clienta, asistente y servicios para agendar una NUEVA cita (no es edición).
+export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCerrar, onGuardado }) {
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const { usuario } = useAuth()
+  const navigate = useNavigate()
   // QA-001: la RLS de servicios solo deja insertar al ADMINISTRADOR; no se
   // ofrece una acción que el servidor va a rechazar.
   const puedeCrearServicio = usuario.rol === 'ADMINISTRADOR'
+  // Igual con los clientes: la RLS de clientes solo deja INSERTAR a la ADMINISTRADORA (clientes_insert_admin). A asistente,
+  // encargada y cajera no se les ofrece «Registrar como cliente nuevo» (fallaba al guardar); pueden elegir una clienta ya
+  // registrada o usar un nombre de referencia sin guardar.
+  const puedeCrearCliente = usuario.rol === 'ADMINISTRADOR'
+  // Solo la administradora asigna comisiones: desde el aviso «Sin comisión» del carrito va a la pestaña Comisiones, que abre
+  // ese servicio y destraba el campo del % de esta asistente. El modal sigue abierto (la pantalla de Citas queda montada y
+  // oculta, con la cita a medias intacta); al volver, el aviso se apaga solo si el % ya se asignó.
+  const puedeAsignarComision = usuario.rol === 'ADMINISTRADOR'
   const esEdicion = Boolean(cita)
 
   const [categoriasExistentes, setCategoriasExistentes] = useState([])
@@ -187,39 +267,89 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const [cargandoListas, setCargandoListas] = useState(true)
 
   const [formulario, setFormulario] = useState(() =>
-    esEdicion ? formularioDesdeCita(cita) : formularioVacio(fechaSugerida),
+    esEdicion
+      ? formularioDesdeCita(cita)
+      : plantilla
+        ? formularioDesdePlantilla(plantilla)
+        : formularioVacio(horaSugeridaCita(fechaSugerida ?? new Date(), null)),
   )
-  const [lineas, setLineas] = useState(() => (esEdicion ? lineasDesdeCita(cita) : []))
+  const [lineas, setLineas] = useState(() =>
+    esEdicion
+      ? lineasDesdeCita(cita)
+      : plantilla
+        ? lineasDesdeCita(plantilla).map((linea) => ({ ...linea, id: `copia-${linea.id}` }))
+        : [],
+  )
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
-  // Igual que el carrito de Ventas/Mi Panel: en táctil se elimina
+  // Igual que el carrito de Ventas/Mis atenciones: en táctil se elimina
   // deslizando la fila, en mouse/trackpad se conserva el botón ✕.
   const [esTactil] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
   )
 
   // Buscadores de cliente/servicio — mismo patrón que el carrito de
-  // atenciones de Mi Panel: precargan todo al enfocar, ícono que se
+  // atenciones de Mis atenciones: precargan todo al enfocar, ícono que se
   // convierte en "✕" en cuanto hay texto, y blur manual al elegir para que
   // no se quede el borde de foco encendido con la lista ya cerrada.
+  const base = cita ?? plantilla
   const [busquedaCliente, setBusquedaCliente] = useState(() =>
-    esEdicion ? (cita.clientes?.nombre ?? cita.cliente_nombre_referencia ?? '') : '',
+    base ? (base.clientes?.nombre ?? base.cliente_nombre_referencia ?? '') : '',
   )
   // Cliente "de referencia" (sin guardar en Clientes) — mutuamente
   // excluyente con formulario.clienteId: escribir de nuevo en el buscador
   // o elegir un cliente real limpia esto.
   const [clienteReferencia, setClienteReferencia] = useState(() =>
-    esEdicion && !cita.cliente_id ? (cita.cliente_nombre_referencia ?? '') : '',
+    base && !base.cliente_id ? (base.cliente_nombre_referencia ?? '') : '',
   )
+  // Quien no puede registrar clientas y agenda con un nombre de referencia: se le recomienda pedir nombre completo y celular
+  // y anotarlos en la Nota, para que la administradora cree la ficha (la cita muestra «Sin cliente» hasta entonces).
+  const pideDatosClienta = !puedeCrearCliente && !formulario.clienteId && Boolean(clienteReferencia.trim())
+  // Avisos que no bloquean el guardado: la clienta ya faltó a citas anteriores / la cita cae fuera del horario de atención.
+  const inasistencias = useInasistenciasClienta(formulario.clienteId || null, esEdicion ? cita.id : null)
+  const semanaAtencion = useHorarioAtencionSemana()
+  const citasAsistenteDia = useCitasDeAsistenteEnElDia(
+    formulario.asistenteId || null,
+    formulario.fechaHora.split('T')[0],
+    esEdicion ? cita.id : null,
+  )
+  const fechaElegidaRef = useRef(false)
   const [mostrarSugerenciasCliente, setMostrarSugerenciasCliente] = useState(false)
   const [busquedaServicio, setBusquedaServicio] = useState('')
   const [mostrarSugerenciasServicio, setMostrarSugerenciasServicio] = useState(false)
   const inputClienteRef = useRef(null)
   const inputServicioRef = useRef(null)
 
+  // Alto objetivo del carrito = lo que mide la lista, con un mínimo de 1 servicio. Se mide con ResizeObserver: también
+  // cambia sola si una fila crece (aviso «Sin comisión») o se quita una. Se mide ANTES de pintar, así abrir «Editar cita» con
+  // 3 servicios ya aparece expandido, sin animación de entrada.
+  const listaCarritoRef = useRef(null)
+  const [altoCarrito, setAltoCarrito] = useState(ALTO_MIN_CARRITO)
+  useLayoutEffect(() => {
+    const lista = listaCarritoRef.current
+    if (!lista) return undefined
+    const medir = () => setAltoCarrito(Math.max(ALTO_MIN_CARRITO, lista.offsetHeight))
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(lista)
+    return () => observador.disconnect()
+  }, [cargandoListas])
+
   const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
   const [modalServicioNuevoAbierto, setModalServicioNuevoAbierto] = useState(false)
 
+  // Línea recién agregada: destello verde de 450 ms (mismo feedback que el carrito de Ventas).
+  const [lineaFlash, setLineaFlash] = useState(null)
+  useEffect(() => {
+    if (!lineaFlash) return undefined
+    const temporizador = setTimeout(() => setLineaFlash(null), 450)
+    return () => clearTimeout(temporizador)
+  }, [lineaFlash])
+
+  // Servicios con % de comisión para la asistente elegida (null = nada que validar). Cualquier servicio se puede agendar,
+  // pero se avisa desde ya de los que no tienen % para que la administradora lo resuelva antes de completar la cita.
+  const serviciosConComision = useServiciosConComision(formulario.asistenteId)
+  const sinComision = (servicioId) => serviciosConComision != null && !serviciosConComision.has(servicioId)
 
   useEffect(() => {
     async function cargarListas() {
@@ -259,15 +389,49 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   const hayCoincidenciaExacta = sugerenciasCliente.some(
     (c) => c.nombre.trim().toLowerCase() === busquedaCliente.trim().toLowerCase(),
   )
+  const estadoClienteRef = useRef({ texto: '', clienteId: '', referencia: '', coincidencia: null })
+  estadoClienteRef.current = {
+    texto: busquedaCliente,
+    clienteId: formulario.clienteId,
+    referencia: clienteReferencia,
+    coincidencia: sugerenciasCliente.find(
+      (c) => c.nombre.trim().toLowerCase() === busquedaCliente.trim().toLowerCase(),
+    ) ?? null,
+  }
   const busquedaServicios = useBusquedaServicios({ termino: busquedaServicio, activo: mostrarSugerenciasServicio })
   const sugerenciasServicio = busquedaServicios.resultados
   // Una ficha idéntica al texto escrito: no se ofrece crear otra (QA-046).
   const hayServicioExacto = sugerenciasServicio.some(
     (s) => s.nombre.trim().toLowerCase() === busquedaServicio.trim().toLowerCase(),
   )
+  function irAAsignarComision(linea) {
+    navigate('/porcentajes', {
+      state: {
+        asignarPorcentaje: {
+          servicioId: linea.servicioId,
+          servicioNombre: linea.nombre,
+          asistenteId: formulario.asistenteId,
+          token: Date.now(),
+        },
+      },
+    })
+  }
+
   function actualizarCampo(campo, valor) {
+    if (campo === 'fechaHora') fechaElegidaRef.current = true
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }))
   }
+
+  // Cita nueva: la hora por defecto es la APERTURA del día elegido en el calendario. Al abrir el modal se propone 9:00 a. m. (o la
+  // próxima media hora si hoy ya pasó la apertura) y, cuando llega el horario de atención, se corrige a la apertura real de ese
+  // día, siempre que la persona no haya elegido ya una fecha. No cuenta como cambio del usuario (aviso de descartar).
+  useEffect(() => {
+    if (esEdicion || plantilla || !semanaAtencion || fechaElegidaRef.current) return
+    const fechaHora = aInputDatetimeLima(horaSugeridaCita(fechaSugerida ?? new Date(), semanaAtencion))
+    setFormulario((anterior) => (anterior.fechaHora === fechaHora ? anterior : { ...anterior, fechaHora }))
+    valoresBase.current = { ...valoresBase.current, fechaHora }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semanaAtencion])
 
   function seleccionarCliente(cliente) {
     actualizarCampo('clienteId', cliente.id)
@@ -275,6 +439,22 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
     setBusquedaCliente(cliente.nombre)
     setMostrarSugerenciasCliente(false)
     inputClienteRef.current?.blur()
+  }
+
+  // Al salir del campo con un nombre escrito que no se eligió de la lista (clic fuera, Tab…), se toma como cliente de referencia,
+  // igual que «Usar "…" (referencia, sin guardar)». Antes quedaba el texto sin cliente asignado: no salía el aviso de «no
+  // registrada» y «Agendar» seguía apagado sin explicación. Si el texto coincide con una clienta registrada, se elige esa.
+  // Se lee de la ref (valores al momento de disparar), no del cierre del blur: en esos 150 ms se pudo elegir de la lista o limpiar.
+  function confirmarClienteEscrito() {
+    const { texto, clienteId, referencia, coincidencia } = estadoClienteRef.current
+    const nombre = texto.trim()
+    if (!nombre || clienteId || referencia.trim()) return
+    if (coincidencia) {
+      seleccionarCliente(coincidencia)
+      return
+    }
+    actualizarCampo('clienteId', '')
+    setClienteReferencia(nombre)
   }
 
   function usarClienteReferencia() {
@@ -293,15 +473,18 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
   function agregarLineaServicio(servicio) {
     if (!servicio) return
     const servicioId = servicio.id
+    const idLinea = `${servicioId}-${Date.now()}`
+    setLineaFlash(idLinea)
+    // El servicio recién agregado va ARRIBA de la lista (el carrito se expande hacia abajo y lo nuevo queda a la vista).
     setLineas((anterior) => [
-      ...anterior,
       {
-        id: `${servicioId}-${Date.now()}`,
+        id: idLinea,
         servicioId,
         nombre: servicio.nombre,
         duracionMin: servicio.duracion_min ? String(servicio.duracion_min) : '30',
         precio: servicio.precio != null ? String(servicio.precio) : '',
       },
+      ...anterior,
     ])
     setBusquedaServicio('')
     setMostrarSugerenciasServicio(false)
@@ -380,6 +563,20 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
     onGuardado()
   }
 
+  // Colores de «llenado» (como «Registrar atención») y tope del adelanto: no puede pasar de la suma de los precios del carrito.
+  const clienteLleno = Boolean(formulario.clienteId || clienteReferencia.trim())
+  const totalServicios = totalServiciosCita(lineas)
+  const adelantoLleno = formulario.adelanto.trim() !== ''
+  const adelantoExcedido = adelantoSuperaTotal(formulario.adelanto, totalServicios)
+
+  const duracionTotalMin = lineas.reduce((total, linea) => total + (parseInt(linea.duracionMin, 10) || 0), 0)
+  const avisoHorario = avisoHorarioCita({ fechaHora: formulario.fechaHora, duracionTotalMin, semana: semanaAtencion })
+  // Choque: la asistente elegida ya tiene otra cita pendiente que se cruza con esta hora y duración. Solo avisa (no bloquea).
+  const avisoChoque = textoChoques(
+    asistentes.find((a) => a.id === formulario.asistenteId)?.nombres_completos,
+    citasQueChocan({ fechaHora: formulario.fechaHora, duracionTotalMin, citas: citasAsistenteDia }),
+  )
+
   // Antes solo el admin podía elegir/reasignar el selector completo de
   // asistentes; ahora cajera y asistente también pueden reasignar
   // cualquier cita, así que los 3 roles ven el mismo selector.
@@ -445,9 +642,17 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                       setMostrarSugerenciasCliente(true)
                     }}
                     onFocus={() => setMostrarSugerenciasCliente(true)}
-                    onBlur={() => setTimeout(() => setMostrarSugerenciasCliente(false), 150)}
+                    onBlur={() =>
+                      setTimeout(() => {
+                        setMostrarSugerenciasCliente(false)
+                        confirmarClienteEscrito()
+                      }, 150)
+                    }
                     placeholder="Buscar cliente..."
-                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                    // Cliente elegido (o nombre de referencia): borde, fondo y nombre en rosa, igual que «Registrar atención».
+                    className={`w-full rounded-lg border py-2 pl-3 pr-9 text-sm outline-none transition-colors focus:border-purple-300 ${
+                      clienteLleno ? 'border-purple-300 bg-purple-300/10 text-purple-300' : 'border-border bg-surface-2 text-ink'
+                    }`}
                   />
                   {busquedaCliente ? (
                     <button
@@ -463,7 +668,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                       <X className="h-4 w-4" />
                     </button>
                   ) : (
-                    <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                    <User className={`pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${clienteLleno ? 'text-purple-300' : 'text-ink/40'}`} />
                   )}
   
                   {mostrarSugerenciasCliente && (
@@ -515,32 +720,50 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                               Usar "{busquedaCliente.trim()}" (referencia, sin guardar)
                             </span>
                           </button>
-                          <button
-                            type="button"
-                            onMouseDown={(evento) => evento.preventDefault()}
-                            onClick={() => {
-                              setMostrarSugerenciasCliente(false)
-                              setModalClienteNuevoAbierto(true)
-                            }}
-                            className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3"
-                          >
-                            <UserRoundPlus className="h-4 w-4 shrink-0" />
-                            <span className="truncate">
-                              Registrar "{busquedaCliente.trim()}" como cliente nuevo
-                            </span>
-                          </button>
+                          {puedeCrearCliente && (
+                            <button
+                              type="button"
+                              onMouseDown={(evento) => evento.preventDefault()}
+                              onClick={() => {
+                                setMostrarSugerenciasCliente(false)
+                                setModalClienteNuevoAbierto(true)
+                              }}
+                              className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-left text-sm text-purple-300 transition-colors hover:bg-surface-3"
+                            >
+                              <UserRoundPlus className="h-4 w-4 shrink-0" />
+                              <span className="truncate">
+                                Registrar "{busquedaCliente.trim()}" como cliente nuevo
+                              </span>
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
                   )}
                 </div>
-                <BotonVoz onTexto={(texto) => {
- setBusquedaCliente(texto)
- actualizarCampo('clienteId', '')
- setClienteReferencia('')
- setMostrarSugerenciasCliente(true)
- }} />
               </div>
+              {puedeCrearCliente && !formulario.clienteId && clienteReferencia.trim() && (
+                <div className="mt-1 text-[11px] text-orange-400">
+                  <p>
+                    Cliente no registrado. Regístrala desde el campo Cliente.
+                    {formulario.nota.trim() && ' Mira la Nota: quizá trae sus datos.'}
+                  </p>
+                  {formulario.nota.trim() && (
+                    <p className="mt-0.5 line-clamp-2 text-ink/60">Nota: {formulario.nota.trim()}</p>
+                  )}
+                </div>
+              )}
+              {textoInasistencias(inasistencias, { conAdelanto: Number(formulario.adelanto) > 0 }) && (
+                <p className="mt-1 text-[11px] text-orange-400">
+                  {textoInasistencias(inasistencias, { conAdelanto: Number(formulario.adelanto) > 0 })}
+                </p>
+              )}
+              {pideDatosClienta && (
+                <p className="mt-1 text-[11px] text-orange-400">
+                  «{clienteReferencia}» no está registrada y tú no puedes registrarla. Pídele su nombre completo y su celular
+                  y anótalos en la Nota, para que la administradora la registre.
+                </p>
+              )}
             </div>
 
             <div>
@@ -563,7 +786,10 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                     onFocus={() => setMostrarSugerenciasServicio(true)}
                     onBlur={() => setTimeout(() => setMostrarSugerenciasServicio(false), 150)}
                     placeholder="Buscar servicio..."
-                    className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                    // Con al menos un servicio agregado: borde y fondo celestes, igual que «Registrar atención».
+                    className={`w-full rounded-lg border py-2 pl-3 pr-9 text-sm outline-none transition-colors focus:border-purple-300 ${
+                      lineas.length > 0 ? 'border-blue bg-blue/10 text-blue' : 'border-border bg-surface-2 text-ink'
+                    }`}
                   />
                   {busquedaServicio ? (
                     <button
@@ -575,7 +801,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                       <X className="h-4 w-4" />
                     </button>
                   ) : (
-                    <Scissors className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                    <Scissors className={`pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${lineas.length > 0 ? 'text-blue' : 'text-ink/40'}`} />
                   )}
   
                   {mostrarSugerenciasServicio &&
@@ -590,11 +816,20 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                             className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
                           >
                             <span className="truncate">{servicio.nombre}</span>
-                            {servicio.duracion_min && (
-                              <span className="shrink-0 font-mono text-xs text-ink/60">
-                                {servicio.duracion_min} min
-                              </span>
-                            )}
+                            <span className="flex shrink-0 items-center gap-1.5 font-mono text-xs text-ink/60">
+                              {servicio.duracion_min && <span>{servicio.duracion_min} min</span>}
+                              {servicio.precio != null && <span>{Number(servicio.precio).toFixed(2)}</span>}
+                              {/* Check verde = este servicio ya tiene % de comisión para la asistente elegida. Sin check, se
+                                  puede agregar igual: el carrito avisa que no tiene comisión. */}
+                              {serviciosConComision?.has(servicio.id) && (
+                                <Check
+                                  className="h-3.5 w-3.5 text-green"
+                                  strokeWidth={3}
+                                  role="img"
+                                  aria-label="Tiene porcentaje asignado"
+                                />
+                              )}
+                            </span>
                           </button>
                         ))}
                         {sugerenciasServicio.length >= LIMITE_SERVICIOS && (
@@ -642,93 +877,133 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                       </div>
                     )}
                 </div>
-                <BotonVoz onTexto={(texto) => {
- setBusquedaServicio(texto)
- setMostrarSugerenciasServicio(true)
- }} />
               </div>
             </div>
 
-            <div className="rounded-lg border border-border">
-              <div className="max-h-[220px] divide-y divide-border overflow-y-auto">
-                {lineas.length === 0 ? (
-                  <div className="flex items-center justify-center py-6">
-                    <p className="text-sm text-ink/40">Sin servicios</p>
-                  </div>
-                ) : (
-                  lineas.map((linea) => (
-                    <FilaLineaCita
-                      key={linea.id}
-                      linea={linea}
-                      esTactil={esTactil}
-                      onCambiarPrecio={(precio) => actualizarPrecioLinea(linea.id, precio)}
-                      onCambiarDuracion={(duracionMin) => actualizarDuracionLinea(linea.id, duracionMin)}
-                      onQuitar={() => quitarLinea(linea.id)}
-                    />
-                  ))
-                )}
+            <div className="rounded-lg border border-border bg-bg">
+              <div
+                className={`${COLUMNAS_CARRITO(esTactil)} grid gap-2 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink/60`}
+              >
+                <span>Servicio</span>
+                <span className="text-right">Precio</span>
+                {!esTactil && <span />}
+              </div>
+              {/* Alto animado: por defecto hay espacio para 1 servicio; con cada uno más se expande hacia abajo con suavidad
+                  (sin scroll: todos se ven completos) y al quitarlo vuelve a cerrarse igual. */}
+              <div
+                style={{ height: altoCarrito }}
+                className="overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none"
+              >
+                <div ref={listaCarritoRef} className="divide-y divide-border">
+                  {lineas.length === 0 ? (
+                    <div className="flex items-center justify-center" style={{ height: ALTO_MIN_CARRITO }}>
+                      <p className="text-sm text-ink/40">Sin servicios</p>
+                    </div>
+                  ) : (
+                    lineas.map((linea) => (
+                      <FilaLineaCita
+                        key={linea.id}
+                        linea={linea}
+                        esTactil={esTactil}
+                        sinComision={sinComision(linea.servicioId)}
+                        onAsignarComision={puedeAsignarComision ? () => irAAsignarComision(linea) : undefined}
+                        resaltada={linea.id === lineaFlash}
+                        onCambiarPrecio={(precio) => actualizarPrecioLinea(linea.id, precio)}
+                        onCambiarDuracion={(duracionMin) => actualizarDuracionLinea(linea.id, duracionMin)}
+                        onQuitar={() => quitarLinea(linea.id)}
+                      />
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
             <div>
-              <Etiqueta obligatorio={!puedeElegirAsistente} htmlFor={`${idBase}-asistente`}>
-                Asistente
-              </Etiqueta>
-              {puedeElegirAsistente ? (
-                <>
-                  <select
+              <div className={FILA_CAMPO}>
+                <Etiqueta obligatorio={!puedeElegirAsistente} htmlFor={`${idBase}-asistente`} className="block">
+                  Asistente
+                </Etiqueta>
+                {puedeElegirAsistente ? (
+                  <SelectorDesplegable
                     id={`${idBase}-asistente`}
-                    value={formulario.asistenteId}
-                    onChange={(evento) => actualizarCampo('asistenteId', evento.target.value)}
-                    className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none focus:border-purple-300"
-                  >
-                    <option value="">Asistente pendiente</option>
-                    {asistentes.map((asistente) => (
-                      <option key={asistente.id} value={asistente.id}>
-                        {asistente.nombres_completos}
-                      </option>
-                    ))}
-                  </select>
-                  {!formulario.asistenteId && (
-                    <p className="mt-1 text-[11px] text-orange-400">
-                      Sin asistente todavía no se puede completar la cita — comunícate con el
-                      administrador para asignar una.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink/70">
-                  {miFicha?.nombres_completos ?? 'Sin ficha de asistente vinculada'}
+                    valor={formulario.asistenteId}
+                    onCambiar={(valor) => actualizarCampo('asistenteId', valor)}
+                    opciones={[
+                      { valor: '', label: 'Asistente pendiente' },
+                      ...asistentes.map((asistente) => ({ valor: asistente.id, label: asistente.nombres_completos })),
+                    ]}
+                  />
+                ) : (
+                  <p className="rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink/70">
+                    {miFicha?.nombres_completos ?? 'Sin ficha de asistente vinculada'}
+                  </p>
+                )}
+              </div>
+              {puedeElegirAsistente && !formulario.asistenteId && (
+                <p className={`mt-1 text-[11px] text-orange-400 ${SANGRIA_MENSAJE}`}>
+                  Sin asistente todavía no se puede completar la cita — comunícate con el
+                  administrador para asignar una.
                 </p>
               )}
             </div>
 
             <div>
               <Etiqueta obligatorio htmlFor={`${idBase}-fecha`}>Fecha y hora</Etiqueta>
-              <input
+              <InputFechaHora
                 id={`${idBase}-fecha`}
-                type="datetime-local"
+                bloquearDiasPasados
+                resaltado={Boolean(formulario.fechaHora)}
                 value={formulario.fechaHora}
                 onChange={(evento) => actualizarCampo('fechaHora', evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
               />
+              {avisoHorario && <p className="mt-1 text-[11px] text-orange-400">{avisoHorario}</p>}
+              {avisoChoque && <p className="mt-1 text-[11px] text-orange-400">{avisoChoque}</p>}
             </div>
 
             <div>
-              <Etiqueta htmlFor={`${idBase}-adelanto`}>Adelanto o abono</Etiqueta>
-              <div className="flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-3 py-2 focus-within:border-purple-300">
-                <span className="text-sm text-ink/50">S/</span>
+            <div className={FILA_CAMPO}>
+              <div className="flex items-center gap-1">
+                <Etiqueta htmlFor={`${idBase}-adelanto`} className="block">Adelanto o abono</Etiqueta>
+                <AyudaCampo etiqueta="Ayuda sobre el adelanto">
+                  Al cobrar la atención de esta cita en Ventas, el adelanto se descuenta solo (en soles); el precio del
+                  servicio no cambia. No hace falta acordarse de él.
+                </AyudaCampo>
+              </div>
+              {/* Con monto escrito: borde, fondo y texto en verde (rojo si pasa del total de los servicios). */}
+              <div
+                className={`flex items-center gap-1 rounded-lg border px-3 py-2 transition-colors ${
+                  adelantoExcedido
+                    ? 'border-red bg-red/10'
+                    : adelantoLleno
+                      ? 'border-green bg-green/10 focus-within:border-purple-300'
+                      : 'border-border bg-surface-2 focus-within:border-purple-300'
+                }`}
+              >
+                <span className={`text-sm ${adelantoExcedido ? 'text-red' : adelantoLleno ? 'text-green' : 'text-ink/50'}`}>S/</span>
                 <input
                   id={`${idBase}-adelanto`}
                   type="search"
                   inputMode="decimal"
-                  autoComplete="new-password"
+                  {...SIN_SUGERENCIAS}
                   value={formulario.adelanto}
                   onChange={(evento) => actualizarCampo('adelanto', evento.target.value)}
+                  aria-invalid={adelantoExcedido}
                   placeholder="Opcional"
-                  className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink/60"
+                  className={`w-full bg-transparent text-sm outline-none placeholder:text-ink/60 ${
+                    adelantoExcedido ? 'text-red' : adelantoLleno ? 'text-green' : 'text-ink'
+                  }`}
                 />
               </div>
+            </div>
+            {/* Fuera de la grilla de 2 columnas (si no, se encajonaba bajo la etiqueta) y corto, para que entre en una línea
+                también en el celular. */}
+            {adelantoExcedido && (
+              <p role="alert" className="mt-1 text-[11px] text-red">
+                {lineas.length === 0
+                  ? 'Primero agrega los servicios.'
+                  : `El adelanto no puede superar ${formatearSoles(totalServicios)}.`}
+              </p>
+            )}
             </div>
 
             <div>
@@ -738,7 +1013,7 @@ export default function ModalCita({ cita, fechaSugerida, onCerrar, onGuardado })
                 autoComplete="off"
                 value={formulario.nota}
                 onChange={(evento) => actualizarCampo('nota', evento.target.value)}
-                placeholder="Opcional"
+                placeholder={pideDatosClienta ? 'Nombre completo y celular de la clienta' : 'Opcional'}
                 rows={3}
                 className="w-full resize-none rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/60 focus:border-purple-300"
               />

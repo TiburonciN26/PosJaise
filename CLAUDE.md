@@ -294,6 +294,9 @@ re-derived per tab:
   `public/icons/nuevaFlecha.svg`), 12×12 (`h-3 w-3`), rotated with
   `rotate-180` + `transition-transform`. Not lucide's `ArrowBigDown` (replaced
   everywhere on 2026-11-20) nor `ChevronDown`.
+- Every expandable row/card/accordion slides open and closed smoothly (`CampoColapsable`, `diferido` in lists) and its header
+  paints in the screen's theme colour while open, returning to normal on close — never a bare `{abierto && <Detalle/>}`. Closed
+  rows are ONE line (title + amount + caret); the rest lives inside. Recipe: `docs/patrones/desplegable-animado.md`.
 - `#3ECF6A` green is reserved for a handful of final commit-style CTAs
   (e.g. confirm an order) — not a general-purpose accent.
 

@@ -7,14 +7,19 @@ import {
   Trash2,
   Ban,
   Plus,
-  User,
   Users,
-  Clock,
   CheckCircle2,
   AlertTriangle,
-  UserCircle,
+  User,
+  UserRound,
+  Clock,
+  X,
+  NotebookText,
+  UserPlus,
   Eye,
   EyeOff,
+  Handshake,
+  MessageSquareWarning,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -25,22 +30,27 @@ import { useDebounce } from '../hooks/useDebounce.js'
 import { aLima, calcularRango, claveDiaLima, esHoyLima, formatearFechaISO } from '../lib/fechas.js'
 import { formatearSoles, sumarMontos } from '../lib/moneda.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
+import { discrepanciaDe, estadoAcuerdo } from '../lib/discrepanciaAtencion.js'
 import BarraBusqueda from '../components/BarraBusqueda.jsx'
 import SelectorOrden from '../components/SelectorOrden.jsx'
 import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
+import BotonAcuerdo from '../components/BotonAcuerdo.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
+import ModalBuscarCliente from '../components/ModalBuscarCliente.jsx'
+import ModalCliente from '../components/ModalCliente.jsx'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
 import IconoFlechaDesplegable from '../components/IconoFlechaDesplegable.jsx'
+import TextoDeslizante from '../components/TextoDeslizante.jsx'
 
 const OPCION_TODOS = 'todos'
 const TAMANO_PAGINA = 50
 const SELECT_REGISTROS =
-  'id, usuario_id, servicio_id, cliente_id, precio, fecha, nota, estado, porcentaje_aplicado, pago_asistente, servicios(nombre), clientes(nombre), usuarios(nombre_completo)'
+  'id, usuario_id, servicio_id, cliente_id, precio, fecha, nota, estado, porcentaje_aplicado, pago_asistente, cliente_nombre_referencia, servicios(nombre), clientes(nombre), usuarios(nombre_completo), registro_discrepancias(id, creada_en, admin_acuerdo_en, duena_acuerdo_en, resuelta_en, retirada_en)'
 const RESUMEN_VACIO = { cantidad: 0, total: 0 }
 
 function formatearHora(fechaIso) {
@@ -109,6 +119,56 @@ function nombreUsuarioDe(registro) {
   return Array.isArray(usuarios) ? (usuarios[0]?.nombre_completo ?? null) : (usuarios.nombre_completo ?? null)
 }
 
+// «Angela Yaya De la Cruz» → «Angela» (en móvil la fila solo muestra el primer nombre).
+function primerNombre(nombreCompleto) {
+  return (nombreCompleto ?? '').trim().split(/\s+/)[0]
+}
+
+// Dentro de un día, las atenciones se agrupan por clienta para no repetir su nombre en cada servicio. El orden es el
+// de la lista (la clienta con la atención más reciente queda arriba) y se conserva el de sus servicios.
+function agruparPorCliente(registros) {
+  const grupos = new Map()
+  for (const registro of registros) {
+    // Sin ficha pero con nombre de referencia (cita completada sin clienta registrada): se agrupa por ese nombre y se rotula
+    // «sin registrar» para que se vea que falta asignarla.
+    const referencia = registro.cliente_id ? null : (registro.cliente_nombre_referencia ?? null)
+    const clave = registro.cliente_id ?? (referencia ? `ref:${referencia}` : 'sin-cliente')
+    if (!grupos.has(clave)) {
+      grupos.set(clave, {
+        clave,
+        nombre: registro.clientes?.nombre ?? (referencia ? `${referencia} (sin registrar)` : 'Cliente eliminado'),
+        registros: [],
+      })
+    }
+    grupos.get(clave).registros.push(registro)
+  }
+  return Array.from(grupos.values())
+}
+
+function formatearDiaCorto(fechaIso) {
+  return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', timeZone: 'America/Lima' })
+    .format(new Date(fechaIso))
+    .replace('.', '')
+}
+
+// Estado de una atención que no es «activa», en el hueco del precio: en móvil solo un ícono de color (no cabe la
+// etiqueta en una fila), desde sm la etiqueta completa.
+function EstadoRegistro({ cancelado, pendiente, porcentajeNota }) {
+  const { Icono, texto, claseTexto, claseFondo } = cancelado
+    ? { Icono: Ban, texto: 'Cancelada', claseTexto: 'text-red', claseFondo: 'bg-red/15' }
+    : pendiente && porcentajeNota != null
+      ? { Icono: CheckCircle2, texto: 'Por confirmar', claseTexto: 'text-green', claseFondo: 'bg-green/15' }
+      : { Icono: AlertTriangle, texto: 'Pendiente', claseTexto: 'text-orange-400', claseFondo: 'bg-orange-400/15' }
+  return (
+    <>
+      <Icono role="img" aria-label={texto} className={`h-4 w-4 sm:hidden ${claseTexto}`} />
+      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium max-sm:hidden ${claseFondo} ${claseTexto}`}>
+        {texto}
+      </span>
+    </>
+  )
+}
+
 export default function MiPanel({ activo = true }) {
   const { usuario, rol } = useAuth()
   const esAdmin = rol === 'ADMINISTRADOR'
@@ -125,6 +185,10 @@ export default function MiPanel({ activo = true }) {
   // Atenciones PENDIENTE_PORCENTAJE («notas» sin %), de cualquier fecha: alimentan el aviso de arriba y dicen, por
   // registro, si la administradora ya asignó el % (entonces la dueña puede confirmarla). Ver cargarPendientes().
   const [pendientes, setPendientes] = useState([])
+  // Discrepancias ABIERTAS (de cualquier fecha) que alimentan el aviso celeste de arriba: la admin ve las de todo el personal;
+  // cada persona, las de sus atenciones (la RLS ya lo limita). Cada una lleva {id, fecha, usuario_id} de su atención.
+  const [discrepancias, setDiscrepancias] = useState([])
+  const [acuerdoEnCurso, setAcuerdoEnCurso] = useState(null)
   const [resumen, setResumen] = useState(RESUMEN_VACIO)
   const [hayMas, setHayMas] = useState(false)
   const [cargandoMas, setCargandoMas] = useState(false)
@@ -152,6 +216,10 @@ export default function MiPanel({ activo = true }) {
   const [registroACancelar, setRegistroACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
   const [confirmandoId, setConfirmandoId] = useState(null)
+  // Atención (nota pendiente de clienta) a la que se está eligiendo clienta + el modal de «Registrar cliente nuevo» (solo admin).
+  const [registroAAsignar, setRegistroAAsignar] = useState(null)
+  const [nombreClienteNuevo, setNombreClienteNuevo] = useState('')
+  const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
   const [ocultarCancelados, setOcultarCancelados] = useState(true)
   const [diasAbiertos, setDiasAbiertos] = useState(() => new Set())
   const [registrosAbiertos, setRegistrosAbiertos] = useState(() => new Set())
@@ -244,7 +312,7 @@ export default function MiPanel({ activo = true }) {
     if (!usuario) return
     let consulta = supabase
       .from('registro_servicios')
-      .select('id, usuario_id, servicio_id, fecha')
+      .select('id, usuario_id, servicio_id, fecha, cliente_id, cliente_nombre_referencia')
       .eq('estado', 'PENDIENTE_PORCENTAJE')
       .order('fecha')
     if (!esAdmin) consulta = consulta.eq('usuario_id', usuario.id)
@@ -263,13 +331,48 @@ export default function MiPanel({ activo = true }) {
     const porClave = new Map(
       (porcentajes ?? []).map((p) => [`${p.asistentes.usuario_id}|${p.servicio_id}`, Number(p.porcentaje)]),
     )
-    setPendientes(data.map((r) => ({ ...r, porcentaje: porClave.get(`${r.usuario_id}|${r.servicio_id}`) ?? null })))
+    setPendientes(
+      data.map((r) => ({
+        ...r,
+        porcentaje: porClave.get(`${r.usuario_id}|${r.servicio_id}`) ?? null,
+        // Falta registrar a la clienta (cita completada con solo un nombre de referencia). Las notas viejas sin clienta
+        // porque la ficha se borró no llevan nombre de referencia y no cuentan.
+        sinCliente: r.cliente_id == null && r.cliente_nombre_referencia != null,
+      })),
+    )
+  }
+
+  async function cargarDiscrepancias(vigente = { actual: true }) {
+    if (!usuario) return
+    const { data, error: errorDiscrepancias } = await supabase
+      .from('registro_discrepancias')
+      .select('registro_id, admin_acuerdo_en, duena_acuerdo_en, registro_servicios!inner(usuario_id, fecha)')
+      .is('resuelta_en', null)
+      .is('retirada_en', null)
+    if (!vigente.actual) return
+    if (errorDiscrepancias || !data?.length) {
+      setDiscrepancias([])
+      return
+    }
+    setDiscrepancias(
+      data
+        .map((d) => {
+          const registro = Array.isArray(d.registro_servicios) ? d.registro_servicios[0] : d.registro_servicios
+          if (!registro) return null
+          // yoConfirme: ya pulsé la manito en esta discrepancia (soy la dueña de la atención o, si no, la administradora)
+          // y falta la otra parte. Separa los avisos: celeste = me toca a mí, verde = espero a la otra persona.
+          const { yoConfirme } = estadoAcuerdo({ ...d, abierta: true }, registro.usuario_id === usuario.id)
+          return { id: d.registro_id, fecha: registro.fecha, usuario_id: registro.usuario_id, yoConfirme }
+        })
+        .filter(Boolean),
+    )
   }
 
   async function cargarRegistros(vigente = { actual: true }, silencioso = false) {
     if (!usuario) return
     if (!silencioso) setCargando(true)
     cargarPendientes(vigente)
+    cargarDiscrepancias(vigente)
     const { desde, hasta } = calcularRango(filtro, personalizado)
     // Una recarga silenciosa (tras guardar/eliminar) conserva las filas ya cargadas con «Cargar más» para que el scroll no salte.
     const cantidad = silencioso ? Math.min(Math.max(registros.length, TAMANO_PAGINA), 1000) : TAMANO_PAGINA
@@ -357,6 +460,36 @@ export default function MiPanel({ activo = true }) {
     }
   }, [activo, usuario, filtro, personalizado.desde, personalizado.hasta, usuarioFiltro, filtroActivo])
 
+  // Tiempo real: si otra persona cambia algo que me afecta (marca una discrepancia, confirma el acuerdo, registra o cancela una
+  // atención, asigna clienta/%), esta pestaña se actualiza sola, sin refrescar. La RLS filtra los eventos: cada persona solo
+  // recibe los de sus atenciones; la administradora, todos. Cada evento solo dispara una recarga silenciosa (igual que tras
+  // guardar), agrupando ráfagas (un RPC puede tocar varias filas) y, al volver a la pestaña/app tras estar en segundo plano
+  // (el celular suspende el socket y se pierden eventos), recarga una vez. Requiere que las tablas estén en la publicación
+  // supabase_realtime (migración 20261123000001).
+  const recargarPorCambio = useEffectEvent(() => cargarRegistros(vigenteRef.current, true))
+  useEffect(() => {
+    if (!activo || !usuario) return undefined
+    let temporizador = null
+    const programar = () => {
+      clearTimeout(temporizador)
+      temporizador = setTimeout(recargarPorCambio, 400)
+    }
+    const alVolver = () => {
+      if (document.visibilityState === 'visible') programar()
+    }
+    const canal = supabase
+      .channel(`mis-atenciones-${usuario.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registro_servicios' }, programar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registro_discrepancias' }, programar)
+      .subscribe()
+    document.addEventListener('visibilitychange', alVolver)
+    return () => {
+      clearTimeout(temporizador)
+      document.removeEventListener('visibilitychange', alVolver)
+      supabase.removeChannel(canal)
+    }
+  }, [activo, usuario])
+
   function alternarDia(clave) {
     setDiasAbiertos((anterior) => {
       const siguiente = new Set(anterior)
@@ -414,6 +547,51 @@ export default function MiPanel({ activo = true }) {
     mostrarToast('Atención cancelada.', 'exito')
     cargarRegistros(vigenteRef.current, true)
   }
+
+  // Asigna una clienta registrada a una nota pendiente (RPC asignar_cliente_atencion_pendiente: toda la cita de una vez).
+  async function asignarClienta(registro, clienteElegido) {
+    if (!clienteElegido?.id) return
+    const { error: errorAsignar } = await supabase.rpc('asignar_cliente_atencion_pendiente', {
+      p_registro_id: registro.id,
+      p_cliente_id: clienteElegido.id,
+    })
+    setRegistroAAsignar(null)
+    setModalClienteNuevoAbierto(false)
+    if (errorAsignar) {
+      mostrarToast(errorAsignar.message || 'No se pudo asignar la clienta.', 'error')
+      return
+    }
+    mostrarToast(`Clienta asignada: ${clienteElegido.nombre}.`, 'exito')
+    cargarRegistros(vigenteRef.current, true)
+  }
+
+  // Discrepancias: todo pasa por RPC (el servidor decide quién puede qué). Mientras una está en curso se bloquean las demás
+  // acciones de esa atención para no mandar dos veces el mismo clic.
+  async function ejecutarDiscrepancia(registro, nombreRpc, alExito) {
+    if (acuerdoEnCurso) return
+    setAcuerdoEnCurso(registro.id)
+    const { data, error: errorRpc } = await supabase.rpc(nombreRpc, { p_registro_id: registro.id })
+    setAcuerdoEnCurso(null)
+    if (errorRpc) {
+      mostrarToast(errorRpc.message || 'No se pudo completar la acción.', 'error')
+      return
+    }
+    mostrarToast(alExito(data), 'exito')
+    cargarRegistros(vigenteRef.current, true)
+  }
+
+  const marcarDiscrepancia = (registro) =>
+    ejecutarDiscrepancia(
+      registro,
+      'marcar_discrepancia_atencion',
+      () => `Discrepancia marcada: ${nombreUsuarioDe(registro) ?? 'la persona'} verá el aviso en su panel.`,
+    )
+  const retirarDiscrepancia = (registro) =>
+    ejecutarDiscrepancia(registro, 'retirar_discrepancia_atencion', () => 'Discrepancia retirada.')
+  const confirmarAcuerdo = (registro) =>
+    ejecutarDiscrepancia(registro, 'confirmar_acuerdo_atencion', (estado) =>
+      estado === 'RESUELTA' ? 'Acuerdo exitoso.' : 'Acuerdo enviado: falta que la otra parte lo confirme.',
+    )
 
   async function confirmarPendiente(registro) {
     if (confirmandoId) return
@@ -492,7 +670,7 @@ export default function MiPanel({ activo = true }) {
 
   // Derivados de `pendientes` memorizados: abrir/cerrar un día re-renderiza la pestaña entera y no hace falta
   // recalcularlos en cada clic (solo cambian al recargar).
-  const { porcentajeDePendiente, pendientesListas, pendientesEsperando, sinAsignarPorDia } = useMemo(() => {
+  const { porcentajeDePendiente, sinClienteDePendiente, pendientesListas, pendientesEsperando, pendientesSinCliente, sinAsignarPorDia } = useMemo(() => {
     const esperando = pendientes.filter((p) => p.porcentaje == null)
     // Atenciones sin % por día (clave Lima). Sale de `pendientes`, no de la lista cargada: la lista puede estar
     // filtrada por persona (la admin entra viendo su propio panel y las notas son de las asistentes) o paginada, y el
@@ -505,13 +683,23 @@ export default function MiPanel({ activo = true }) {
     }
     return {
       porcentajeDePendiente: new Map(pendientes.map((p) => [p.id, p.porcentaje])),
-      pendientesListas: pendientes.filter((p) => p.porcentaje != null),
+      sinClienteDePendiente: new Map(pendientes.map((p) => [p.id, p.sinCliente])),
+      // «Lista para confirmar» = ya tiene % Y clienta registrada.
+      pendientesListas: pendientes.filter((p) => p.porcentaje != null && !p.sinCliente),
       pendientesEsperando: esperando,
+      pendientesSinCliente: pendientes.filter((p) => p.sinCliente),
       sinAsignarPorDia: porDia,
     }
   }, [pendientes])
   const avisoListasAbierto = avisoAbierto(pendientesListas)
   const avisoEsperandoAbierto = avisoAbierto(pendientesEsperando)
+  const avisoSinClienteAbierto = avisoAbierto(pendientesSinCliente)
+  // Discrepancias abiertas separadas por a quién le toca: «por responder» (yo aún no confirmé el acuerdo) y «esperando» (ya lo
+  // confirmé y falta la otra persona).
+  const discrepanciasPorResponder = useMemo(() => discrepancias.filter((d) => !d.yoConfirme), [discrepancias])
+  const discrepanciasEsperando = useMemo(() => discrepancias.filter((d) => d.yoConfirme), [discrepancias])
+  const avisoDiscrepanciasAbierto = avisoAbierto(discrepanciasPorResponder)
+  const avisoDiscrepanciasEsperandoAbierto = avisoAbierto(discrepanciasEsperando)
   const cuantas = (n) => (n === 1 ? '1 atención' : `${n} atenciones`)
 
   const registrosFiltrados = busqueda.trim()
@@ -556,6 +744,17 @@ export default function MiPanel({ activo = true }) {
             sinBorde
           />
         )}
+
+        {/* Solo PC: «Registrar atención» a la derecha del filtro de personal (sin filtro, al final de la barra). En móvil lo
+            reemplaza el botón flotante. */}
+        <button
+          type="button"
+          onClick={() => setModalRegistro('nuevo')}
+          className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2 text-sm font-semibold text-bg lg:flex"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Registrar atención</span>
+        </button>
       </div>
 
       {/* Filtros de fecha */}
@@ -567,7 +766,7 @@ export default function MiPanel({ activo = true }) {
         tema="purple-300"
       />
 
-      {/* Resumen del período + Registrar atención (desktop) */}
+      {/* Resumen del período */}
       <div className="mt-3 flex items-center justify-between gap-2 text-sm">
         {/* Resumen del período: viene del RPC resumen_mi_panel, no del array
             cargado — así sigue exacto aunque la lista de abajo esté paginada.
@@ -580,29 +779,20 @@ export default function MiPanel({ activo = true }) {
             onClick={() => setOcultarCancelados((anterior) => !anterior)}
             aria-label={ocultarCancelados ? 'Mostrar canceladas' : 'Ocultar canceladas'}
             title={ocultarCancelados ? 'Mostrar canceladas' : 'Ocultar canceladas'}
-            className={`p-1 transition-colors ${
+            className={`inline-flex items-center gap-1.5 p-1 transition-colors lg:ml-2 ${
               ocultarCancelados ? 'text-red' : 'text-ink/40 hover:text-purple-300'
             }`}
           >
             {ocultarCancelados ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {/* Solo PC: el texto dice lo que hará el clic. */}
+            <span className="text-xs max-lg:hidden">{ocultarCancelados ? 'Ver anuladas' : 'Ocultar anuladas'}</span>
           </button>
         </span>
 
-        <div className="flex items-center gap-3">
-          <span className="pr-[35px] text-ink/60">
-            {filtroEsAsistente ? 'Pago asistente' : 'Total'}:{' '}
-            <span className="font-mono font-semibold text-green">{formatearSoles(resumen.total)}</span>
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setModalRegistro('nuevo')}
-            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-purple-300 px-3 py-2 text-sm font-semibold text-bg lg:flex"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Registrar atención</span>
-          </button>
-        </div>
+        <span className="pr-[35px] text-ink/60">
+          {filtroEsAsistente ? 'Pago asistente' : 'Total'}:{' '}
+          <span className="font-mono font-semibold text-green">{formatearSoles(resumen.total)}</span>
+        </span>
       </div>
 
       <FiltrosFecha.CamposPersonalizado
@@ -622,8 +812,8 @@ export default function MiPanel({ activo = true }) {
           <CheckCircle2 className="h-4 w-4 shrink-0 text-green" />
           <span>
             {esAdmin
-              ? `${cuantas(pendientesListas.length)} ya ${pendientesListas.length === 1 ? 'tiene' : 'tienen'} su % asignado: falta que quien la anotó la confirme. ${avisoListasAbierto ? 'Ocultar' : 'Ver'}`
-              : `El administrador asignó tu porcentaje: ${pendientesListas.length === 1 ? 'tienes 1 atención' : `tienes ${pendientesListas.length} atenciones`} por confirmar. ${avisoListasAbierto ? 'Ocultar' : 'Ver'}`}
+              ? `${cuantas(pendientesListas.length)} ya ${pendientesListas.length === 1 ? 'tiene' : 'tienen'} su clienta y su %: falta que quien la anotó la confirme. ${avisoListasAbierto ? 'Ocultar' : 'Ver'}`
+              : `${pendientesListas.length === 1 ? 'Tienes 1 atención lista' : `Tienes ${pendientesListas.length} atenciones listas`} para confirmar (ya ${pendientesListas.length === 1 ? 'tiene' : 'tienen'} su clienta y su %). ${avisoListasAbierto ? 'Ocultar' : 'Ver'}`}
           </span>
         </button>
       )}
@@ -642,6 +832,54 @@ export default function MiPanel({ activo = true }) {
         </button>
       )}
 
+      {pendientesSinCliente.length > 0 && (
+        <button
+          type="button"
+          onClick={() => verPendientes(pendientesSinCliente)}
+          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-amber"
+        >
+          <UserPlus className="h-4 w-4 shrink-0 text-amber" />
+          <span>
+            {esAdmin
+              ? `${cuantas(pendientesSinCliente.length)} sin clienta registrada. Regístrala en Clientes y asígnala a la atención. ${avisoSinClienteAbierto ? 'Ocultar' : 'Ver'}`
+              : `${cuantas(pendientesSinCliente.length)} pendiente${pendientesSinCliente.length === 1 ? '' : 's'} de clienta: esperando que la administradora la registre. ${avisoSinClienteAbierto ? 'Ocultar' : 'Ver'}`}
+          </span>
+        </button>
+      )}
+
+      {/* Discrepancias abiertas: celeste tenue (no es un riesgo, solo algo por aclarar entre la administradora y quien atendió). */}
+      {discrepanciasPorResponder.length > 0 && (
+        <button
+          type="button"
+          onClick={() => verPendientes(discrepanciasPorResponder)}
+          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-blue/30 bg-blue/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-blue"
+        >
+          <Handshake className="h-4 w-4 shrink-0 text-blue" />
+          <span>
+            {esAdmin
+              ? `${cuantas(discrepanciasPorResponder.length)} en discrepancia: conversen ${discrepanciasPorResponder.length === 1 ? 'la atención' : 'las atenciones'} con el personal y confirmen el acuerdo. ${avisoDiscrepanciasAbierto ? 'Ocultar' : 'Ver'}`
+              : `${discrepanciasPorResponder.length === 1 ? 'Hay 1 atención que necesita' : `Hay ${discrepanciasPorResponder.length} atenciones que necesitan`} ser conversada${discrepanciasPorResponder.length === 1 ? '' : 's'} con el administrador. ${avisoDiscrepanciasAbierto ? 'Ocultar' : 'Ver'}`}
+          </span>
+        </button>
+      )}
+      {/* Ya confirmé el acuerdo y falta la otra persona: verde (de mi parte está listo), con la referencia a quién falta. */}
+      {discrepanciasEsperando.length > 0 && (
+        <button
+          type="button"
+          onClick={() => verPendientes(discrepanciasEsperando)}
+          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-green/40 bg-green/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-green"
+        >
+          <Handshake className="h-4 w-4 shrink-0 text-green" />
+          <span>
+            {`${cuantas(discrepanciasEsperando.length)} con tu acuerdo enviado: esperando que ${
+              esAdmin
+                ? discrepanciasEsperando.length === 1 ? 'la otra persona lo confirme' : 'el personal lo confirme'
+                : 'el administrador lo confirme'
+            }. ${avisoDiscrepanciasEsperandoAbierto ? 'Ocultar' : 'Ver'}`}
+          </span>
+        </button>
+      )}
+
       {error && (
         <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
           {error}
@@ -652,7 +890,7 @@ export default function MiPanel({ activo = true }) {
         <EsqueletoGrupos />
       ) : registrosFiltrados.length === 0 ? (
         <EstadoVacio
-          icono={UserCircle}
+          icono={NotebookText}
           mensaje={
             busqueda.trim()
               ? 'No se encontraron atenciones.'
@@ -731,7 +969,9 @@ export default function MiPanel({ activo = true }) {
                     las atenciones de todos los días con su detalle (cientos de filas) y abrir/cerrar se sentía lento.
                     No hay borradores dentro (solo lectura y botones), así que desmontarlos no pierde nada. */}
                 <CampoColapsable abierto={abierto} diferido>
-                  <div className="space-y-2 border-t border-border p-3">
+                  {/* Padding lateral mínimo (px-1) y el resto lo pone cada fila (var − 4px): así el texto de cada atención
+                      queda a la misma distancia del borde que el de la cabecera del día. */}
+                  <div className="space-y-1 border-t border-border px-1 py-1.5 sm:space-y-2 sm:py-3">
                     {sinAsignarOcultas.length > 0 && (
                       <button
                         type="button"
@@ -745,7 +985,16 @@ export default function MiPanel({ activo = true }) {
                         </span>
                       </button>
                     )}
-                    {grupo.registros.map((registro) => {
+                    {agruparPorCliente(grupo.registros).map((clienteGrupo) => (
+                      <div key={clienteGrupo.clave} className="overflow-hidden rounded-lg bg-surface-2">
+                        {/* Cabecera de la clienta: su nombre una sola vez (la fecha ya está en la cabecera del día);
+                            debajo, un renglón por servicio. */}
+                        <div className="flex items-center gap-1.5 px-[calc(var(--separador-vertical-secundario)-0.25rem)] pt-2 sm:pt-2.5">
+                          <User aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-ink/60" />
+                          <p className="min-w-0 truncate text-sm font-semibold text-ink">{clienteGrupo.nombre}</p>
+                        </div>
+                        <div className="divide-y divide-border/60">
+                    {clienteGrupo.registros.map((registro) => {
                       const tieneComision =
                         registro.porcentaje_aplicado != null && registro.pago_asistente != null
                       const cancelado = registro.estado === 'CANCELADO'
@@ -760,24 +1009,113 @@ export default function MiPanel({ activo = true }) {
                       // Porcentajes; confirmarla o cancelarla es de la dueña (RLS + RPC, migración 20261112000003).
                       const esPropio = registro.usuario_id === usuario?.id
                       const porcentajeNota = pendiente ? (porcentajeDePendiente.get(registro.id) ?? null) : null
-                      const puedeConfirmar = pendiente && esPropio && porcentajeNota != null
-                      const puedeEditar = !cancelado && !pendiente && esAdmin
-                      const puedeCancelar = !cancelado && (pendiente ? esPropio && esHoy : esAdmin || esHoy)
-                      const puedeEliminar = !pendiente && esAdmin
+                      // Cita completada con la clienta solo como nombre: la dueña o la administradora la asignan a una clienta registrada.
+                      const faltaClienta = pendiente && (sinClienteDePendiente.get(registro.id) ?? false)
+                      const puedeAsignarClienta = faltaClienta && (esPropio || esAdmin)
+                      const puedeConfirmar = pendiente && esPropio && porcentajeNota != null && !faltaClienta
+                      // La administradora ya NO edita, cancela ni elimina las atenciones de otras personas (lo impide también la
+                      // base, migración 20261122000001): solo las suyas. Si algo no cuadra en una ajena abre una discrepancia
+                      // y se resuelve hablando. La dueña sigue cancelando la suya (hoy; la admin, cualquier día).
+                      const puedeEditar = !cancelado && !pendiente && esAdmin && esPropio
+                      const puedeCancelar = !cancelado && esPropio && (pendiente ? esHoy : esAdmin || esHoy)
+                      const puedeEliminar = !pendiente && esAdmin && esPropio
                       const puedeAsignarPorcentaje = pendiente && !esPropio && esAdmin && porcentajeNota == null
                       const nombreDuena = nombreUsuarioDe(registro) ?? 'quien la anotó'
+                      const discrepancia = discrepanciaDe(registro)
+                      const discrepanciaAbierta = discrepancia?.abierta ?? false
+                      const puedeMarcarDiscrepancia = esAdmin && !esPropio && !cancelado && !discrepanciaAbierta
+                      // Quién ya confirmó el acuerdo: yo (según mi lado: la dueña o la administradora) y/o la otra parte.
+                      const { estado: estadoManito, yoConfirme: miAcuerdo, otroConfirmo: otroAcuerdo } = estadoAcuerdo(discrepancia, esPropio)
+                      // Solo la administradora ve quién atendió (el resto solo ve sus propias atenciones).
+                      const atendio = esAdmin ? nombreUsuarioDe(registro) : null
                       const registroAbierto = registrosAbiertos.has(registro.id)
+
+                      // Acciones de la atención (editar, anular, eliminar, discrepancia…). En móvil van abajo y centradas; en PC (lg) van
+                      // a la derecha de la fila de «Atendió» y el cálculo. Se pinta dos veces (una por tamaño) y CSS oculta una.
+                      const hayAcciones =
+                        puedeConfirmar || puedeEditar || puedeCancelar || puedeEliminar || puedeAsignarPorcentaje || puedeAsignarClienta || puedeMarcarDiscrepancia
+                      const botonesAcciones = (clases) => (
+                        <div className={clases}>
+                                  {puedeConfirmar && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={CheckCircle2}
+                                      texto="Confirmar"
+                                      color="verde"
+                                      onClick={() => confirmarPendiente(registro)}
+                                    />
+                                  )}
+                                  {puedeAsignarClienta && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={UserPlus}
+                                      texto="Asignar clienta"
+                                      color="celeste"
+                                      onClick={() => setRegistroAAsignar(registro)}
+                                    />
+                                  )}
+                                  {puedeAsignarPorcentaje && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={Percent}
+                                      texto="Asignar %"
+                                      color="morado"
+                                      onClick={() => navigate('/porcentajes')}
+                                    />
+                                  )}
+                                  {puedeMarcarDiscrepancia && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={MessageSquareWarning}
+                                      texto="Marcar discrepancia (hay que conversarla)"
+                                      etiquetaPc="Iniciar discrepancia"
+                                      color="celeste"
+                                      onClick={() => marcarDiscrepancia(registro)}
+                                    />
+                                  )}
+                                  {puedeEditar && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={Pencil}
+                                      texto="Editar"
+                                      color="celeste"
+                                      onClick={() => setModalRegistro(registro)}
+                                    />
+                                  )}
+                                  {puedeCancelar && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={Ban}
+                                      texto="Cancelar"
+                                      color="rojo"
+                                      onClick={() => setRegistroACancelar(registro)}
+                                    />
+                                  )}
+                                  {puedeEliminar && (
+                                    <BotonAccion
+                      sinBorde
+                      fondo
+                                      icono={Trash2}
+                                      texto="Eliminar"
+                                      color="rojo"
+                                      onClick={() => setRegistroAEliminar(registro)}
+                                    />
+                                  )}
+                        </div>
+                      )
+                      const filaAtendio = esAdmin && (atendio || (!cancelado && !pendiente && !tieneComision))
+                      const mostrarCalculo = esAdmin && !cancelado && !pendiente && tieneComision
 
                       return (
                         <div
                           key={registro.id}
-                          className={`rounded-lg ${
-                            cancelado
-                              ? 'border border-red/40 bg-red/5'
-                              : pendiente
-                                ? 'border border-orange-400/40 bg-orange-400/5'
-                                : 'bg-surface-2'
-                          }`}
+                          className={cancelado ? 'bg-red/5' : discrepanciaAbierta ? 'bg-blue/5' : pendiente ? 'bg-orange-400/5' : undefined}
                         >
                           <div
                             onClick={() => alternarRegistro(registro.id)}
@@ -786,74 +1124,100 @@ export default function MiPanel({ activo = true }) {
                             tabIndex={0}
                             aria-expanded={registroAbierto}
                             aria-label={registroAbierto ? 'Contraer' : 'Expandir'}
-                            className="cursor-pointer p-2.5"
+                            className="cursor-pointer px-[calc(var(--separador-vertical-secundario)-0.25rem)] py-1 sm:py-1.5"
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <p
-                                className={`min-w-0 flex-1 truncate text-sm font-medium ${
-                                  cancelado
-                                    ? 'text-red line-through'
-                                    : pendiente
-                                      ? 'text-orange-400'
-                                      : 'text-ink'
-                                }`}
-                              >
-                                {registro.servicios?.nombre ?? 'Servicio eliminado'}
-                              </p>
-
-                              <div className="flex shrink-0 items-center gap-1.5">
-                                {cancelado ? (
-                                  <span className="rounded-full bg-red/15 px-2 py-0.5 text-[11px] font-medium text-red">
-                                    Cancelada
-                                  </span>
-                                ) : pendiente && porcentajeNota != null ? (
-                                  <span className="rounded-full bg-green/15 px-2 py-0.5 text-[11px] font-medium text-green">
-                                    Por confirmar
-                                  </span>
-                                ) : pendiente ? (
-                                  <span className="rounded-full bg-orange-400/15 px-2 py-0.5 text-[11px] font-medium text-orange-400">
-                                    Pendiente
-                                  </span>
-                                ) : (
-                                  <span className="font-mono text-sm text-ink">
-                                    {formatearSoles(montoDeRegistro(registro, esAdmin && !filtroEsAsistente))}
-                                  </span>
-                                )}
-                                <IconoFlechaDesplegable
-                                  className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
-                                    registroAbierto ? 'rotate-180' : ''
-                                  }`}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-ink/60">
-                              {esAdmin && nombreUsuarioDe(registro) && (
-                                <span className="flex items-center gap-1 text-purple-300">
-                                  <Users className="h-3.5 w-3.5" />
-                                  {nombreUsuarioDe(registro)}
-                                </span>
+                            {/* Una sola línea por servicio: quién atendió · servicio · hora · precio (y la flecha). La
+                                columna de quién atendió solo aparece cuando el panel mezcla personas (administradora);
+                                en móvil lleva solo el primer nombre. Servicio y nombre se deslizan en bucle si no caben. */}
+                            <div
+                              className={`grid items-center gap-x-1 sm:gap-x-2 ${
+                                atendio
+                                  ? 'grid-cols-[3.75rem_minmax(0,1fr)_auto_minmax(2.5rem,auto)_0.75rem] sm:grid-cols-[10.5rem_minmax(0,1fr)_6.25rem_6rem_0.75rem]'
+                                  : 'grid-cols-[minmax(0,1fr)_auto_minmax(2.5rem,auto)_0.75rem] sm:grid-cols-[minmax(0,1fr)_6.25rem_6rem_0.75rem]'
+                              }`}
+                            >
+                              {atendio && (
+                                // En PC (sm+) un ícono de persona antecede al nombre de quien realizó el servicio; en móvil
+                                // la columna sigue siendo solo el primer nombre.
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <UserRound aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-purple-300 max-sm:hidden" />
+                                  <TextoDeslizante texto={atendio} className="min-w-0 flex-1 text-xs text-purple-300">
+                                    <span className="sm:hidden">{primerNombre(atendio)}</span>
+                                    <span className="max-sm:hidden">{atendio}</span>
+                                  </TextoDeslizante>
+                                </div>
                               )}
-                              <span className="flex items-center gap-1">
-                                <User className="h-3.5 w-3.5 text-ink/60" />
-                                {registro.clientes?.nombre ?? 'Cliente eliminado'}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5 text-ink/60" />
+                              <TextoDeslizante
+                                texto={registro.servicios?.nombre ?? 'Servicio eliminado'}
+                                className={`text-sm font-medium ${
+                                  cancelado ? 'text-red line-through' : pendiente ? 'text-orange-400' : 'text-ink'
+                                }`}
+                              />
+                              <span className="flex items-center gap-1 whitespace-nowrap text-xs text-ink/60">
+                                <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-ink/40 max-sm:hidden" />
                                 {formatearHora(registro.fecha)}
                               </span>
+                              <div className="flex items-center justify-end">
+                                {cancelado || pendiente ? (
+                                  <EstadoRegistro cancelado={cancelado} pendiente={pendiente} porcentajeNota={faltaClienta ? null : porcentajeNota} />
+                                ) : (
+                                  <span className="font-mono text-sm text-green">
+                                    {/* En móvil se omite «S/» (el agrupador del día sí lo conserva). */}
+                                    <span className="max-sm:hidden">S/ </span>
+                                    {montoDeRegistro(registro, esAdmin && !filtroEsAsistente).toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                              <IconoFlechaDesplegable
+                                className={`h-3 w-3 text-ink/60 transition-transform duration-300 ${
+                                  registroAbierto ? 'rotate-180' : ''
+                                }`}
+                              />
                             </div>
                           </div>
 
                           <CampoColapsable abierto={registroAbierto} diferido>
-                            <div className="space-y-2 border-t border-border/60 px-2.5 pb-2.5 pt-2">
-                              {pendiente &&
+                            <div className="space-y-2 border-t border-border/60 px-[calc(var(--separador-vertical-secundario)-0.25rem)] pb-2.5 pt-2">
+                              {/* Quién atendió (nombre completo) y, a la derecha, el aviso si aún no tiene % (el % aplicado va en el cálculo).
+                                  En PC (lg) la misma fila lleva además el cálculo y, al extremo derecho, las acciones. */}
+                              {(filaAtendio || hayAcciones) && (
+                                <div className={`items-start justify-between gap-2 lg:flex lg:items-center ${filaAtendio ? 'flex' : 'max-lg:hidden'}`}>
+                                  <div className="flex min-w-0 flex-1 items-start justify-between gap-2 lg:items-center lg:justify-start lg:gap-4">
+                                    <p className="min-w-0 text-xs text-ink/60">{atendio ? `Atendió: ${atendio}` : ''}</p>
+                                    {mostrarCalculo && (
+                                      <p className="hidden font-mono text-xs text-ink/70 lg:block">
+                                        {formatearSoles(registro.precio)} ×{' '}
+                                        <span className="text-yellow-300">{registro.porcentaje_aplicado}%</span> ={' '}
+                                        <span className="font-semibold text-green">{formatearSoles(registro.pago_asistente)}</span>
+                                      </p>
+                                    )}
+                                    {esAdmin && !cancelado && !pendiente && !tieneComision && (
+                                      <span className="flex shrink-0 items-center gap-1 text-xs text-orange-400">
+                                        <AlertTriangle className="h-3.5 w-3.5" />
+                                        Sin % asignado
+                                      </span>
+                                    )}
+                                  </div>
+                                  {hayAcciones && botonesAcciones('hidden shrink-0 items-center gap-1.5 lg:flex')}
+                                </div>
+                              )}
+                              {faltaClienta && (
+                                <div className="flex items-center gap-1.5 rounded-lg bg-orange-400/10 px-2.5 py-1.5 text-xs text-orange-400">
+                                  <UserPlus className="h-3.5 w-3.5 shrink-0" />
+                                  {`«${registro.cliente_nombre_referencia}» aún no está registrada como clienta. ${
+                                    esAdmin
+                                      ? 'Regístrala en Clientes y asígnala aquí'
+                                      : 'Pide a la administradora que la registre, o asígnala si ya existe'
+                                  }; hasta entonces no cuenta en los totales ni sale en Ventas.`}
+                                </div>
+                              )}
+                              {pendiente && !faltaClienta &&
                                 (porcentajeNota != null ? (
                                   <div className="flex items-center gap-1.5 rounded-lg bg-green/10 px-2.5 py-1.5 text-xs text-green">
                                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                                     {esPropio
-                                      ? `El administrador asignó tu porcentaje (${porcentajeNota}%). Ya puedes confirmarla.`
-                                      : `% asignado (${porcentajeNota}%). Falta que ${nombreDuena} la confirme.`}
+                                      ? `Lista para confirmar: ya tiene su clienta y tu porcentaje (${porcentajeNota}%).`
+                                      : `Clienta y % asignados (${porcentajeNota}%). Falta que ${nombreDuena} la confirme.`}
                                   </div>
                                 ) : (
                                   <div className="flex items-center gap-1.5 rounded-lg bg-orange-400/10 px-2.5 py-1.5 text-xs text-orange-400">
@@ -864,79 +1228,71 @@ export default function MiPanel({ activo = true }) {
                                   </div>
                                 ))}
 
-                              {!cancelado && !pendiente && (
-                                <div className="flex flex-wrap items-center gap-3">
-                                  {esAdmin && tieneComision && (
-                                    <span className="rounded-full bg-green/15 px-2 py-0.5 font-mono text-xs font-semibold text-green">
-                                      Pago asistente: {formatearSoles(registro.pago_asistente)}
-                                    </span>
+                              {!esAdmin && !cancelado && !pendiente && !tieneComision && (
+                                <p className="text-xs text-orange-400">Sin comisión asignada</p>
+                              )}
+
+                              {/* Discrepancia: la abre la administradora; se cierra cuando las dos partes confirman con la manito. No
+                                  bloquea nada (celeste tenue: es algo por aclarar, no un riesgo). Resuelta, queda como constancia en verde. */}
+                              {discrepancia?.abierta && (
+                                <div className="rounded-lg border border-blue/30 bg-blue/10 px-2.5 py-2 text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <div className="min-w-0 flex-1 space-y-1">
+                                      <p className="flex items-start gap-1.5 text-blue">
+                                        <MessageSquareWarning className="mt-px h-3.5 w-3.5 shrink-0" />
+                                        <span>
+                                          {esPropio
+                                            ? 'Hay una atención que necesita ser conversada con el administrador.'
+                                            : `Atención en discrepancia: conversen con ${nombreDuena} y, al llegar a un acuerdo, confirmen con la manito.`}
+                                        </span>
+                                      </p>
+                                      <p className={miAcuerdo ? 'text-green' : 'text-ink/70'}>
+                                        {miAcuerdo
+                                          ? `Acuerdo enviado. Esperando ${esPropio ? 'al administrador' : `a ${nombreDuena}`}.`
+                                          : `${otroAcuerdo ? `${esPropio ? 'El administrador' : nombreDuena} ya confirmó. ` : ''}Llegaron a un acuerdo, confirmar.`}
+                                      </p>
+                                    </div>
+                                    <BotonAcuerdo
+                                      conTextoPc
+                                      estado={estadoManito}
+                                      yaConfirme={miAcuerdo}
+                                      ocupado={acuerdoEnCurso === registro.id}
+                                      onClick={() => confirmarAcuerdo(registro)}
+                                    />
+                                  </div>
+                                  {esAdmin && !esPropio && (
+                                    <button
+                                      type="button"
+                                      onClick={() => retirarDiscrepancia(registro)}
+                                      disabled={acuerdoEnCurso === registro.id}
+                                      className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-ink/50 underline-offset-2 transition-colors hover:text-red hover:underline disabled:opacity-40"
+                                    >
+                                      {/* Solo PC: una X roja pequeña a la izquierda del texto. */}
+                                      <X aria-hidden="true" className="h-3 w-3 shrink-0 text-red max-lg:hidden" />
+                                      Retirar discrepancia
+                                    </button>
                                   )}
-                                  {!esAdmin && !tieneComision && (
-                                    <span className="text-xs text-orange-400">
-                                      Sin comisión asignada
-                                    </span>
-                                  )}
-                                  {esAdmin &&
-                                    (tieneComision ? (
-                                      <span className="flex items-center gap-1 text-xs text-yellow-300">
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                        {registro.porcentaje_aplicado}%
-                                      </span>
-                                    ) : (
-                                      <span className="flex items-center gap-1 text-xs text-orange-400">
-                                        <AlertTriangle className="h-3.5 w-3.5" />
-                                        Sin % asignado
-                                      </span>
-                                    ))}
                                 </div>
+                              )}
+                              {discrepancia && !discrepancia.abierta && (
+                                <div className="flex items-center gap-1.5 rounded-lg bg-green/10 px-2.5 py-1.5 text-xs text-green">
+                                  <BotonAcuerdo estado="resuelto" />
+                                  <span>Acuerdo exitoso · {formatearDiaCorto(discrepancia.resuelta_en)}</span>
+                                </div>
+                              )}
+
+                              {/* Cómo se calculó el pago (solo la administradora): precio del servicio × % = pago. */}
+                              {mostrarCalculo && (
+                                <p className="font-mono text-xs text-ink/70 lg:hidden">
+                                  {formatearSoles(registro.precio)} ×{' '}
+                                  <span className="text-yellow-300">{registro.porcentaje_aplicado}%</span> ={' '}
+                                  <span className="font-semibold text-green">{formatearSoles(registro.pago_asistente)}</span>
+                                </p>
                               )}
 
                               {/* Cancelada: solo Eliminar (admin) sigue disponible —
                                   Editar/Cancelar no aplican a una atención ya cancelada. */}
-                              {(puedeConfirmar || puedeEditar || puedeCancelar || puedeEliminar || puedeAsignarPorcentaje) && (
-                                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                                  {puedeConfirmar && (
-                                    <BotonAccion
-                                      icono={CheckCircle2}
-                                      texto="Confirmar"
-                                      color="verde"
-                                      onClick={() => confirmarPendiente(registro)}
-                                    />
-                                  )}
-                                  {puedeAsignarPorcentaje && (
-                                    <BotonAccion
-                                      icono={Percent}
-                                      texto="Asignar %"
-                                      color="morado"
-                                      onClick={() => navigate('/porcentajes')}
-                                    />
-                                  )}
-                                  {puedeEditar && (
-                                    <BotonAccion
-                                      icono={Pencil}
-                                      texto="Editar"
-                                      color="celeste"
-                                      onClick={() => setModalRegistro(registro)}
-                                    />
-                                  )}
-                                  {puedeCancelar && (
-                                    <BotonAccion
-                                      icono={Ban}
-                                      texto="Cancelar"
-                                      color="rojo"
-                                      onClick={() => setRegistroACancelar(registro)}
-                                    />
-                                  )}
-                                  {puedeEliminar && (
-                                    <BotonAccion
-                                      icono={Trash2}
-                                      texto="Eliminar"
-                                      color="rojo"
-                                      onClick={() => setRegistroAEliminar(registro)}
-                                    />
-                                  )}
-                                </div>
-                              )}
+                              {hayAcciones && botonesAcciones('flex flex-wrap items-center justify-center gap-1.5 lg:hidden')}
 
                               {registro.nota && (
                                 <p className="text-xs text-ink/60">{registro.nota}</p>
@@ -946,6 +1302,9 @@ export default function MiPanel({ activo = true }) {
                         </div>
                       )
                     })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CampoColapsable>
               </div>
@@ -980,6 +1339,33 @@ export default function MiPanel({ activo = true }) {
             setModalRegistro(null)
             mostrarToast(esNuevo ? 'Atención registrada.' : 'Atención actualizada.', 'exito')
             cargarRegistros(vigenteRef.current, true)
+          }}
+        />
+      )}
+
+      {registroAAsignar && !modalClienteNuevoAbierto && (
+        <ModalBuscarCliente
+          ventaRapida={false}
+          onSeleccionar={(clienteElegido) => asignarClienta(registroAAsignar, clienteElegido)}
+          onRegistrarNuevo={
+            esAdmin
+              ? (nombre) => {
+                  setNombreClienteNuevo(nombre)
+                  setModalClienteNuevoAbierto(true)
+                }
+              : undefined
+          }
+          onCerrar={() => setRegistroAAsignar(null)}
+        />
+      )}
+
+      {registroAAsignar && modalClienteNuevoAbierto && (
+        <ModalCliente
+          nombreInicial={nombreClienteNuevo || registroAAsignar.cliente_nombre_referencia || ''}
+          onCerrar={() => setModalClienteNuevoAbierto(false)}
+          onGuardado={(clienteCreado) => {
+            if (clienteCreado) asignarClienta(registroAAsignar, clienteCreado)
+            else setModalClienteNuevoAbierto(false)
           }}
         />
       )}

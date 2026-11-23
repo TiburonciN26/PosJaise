@@ -76,7 +76,6 @@ export const NIVELES = {
 // Mismos colores que la pestaña Citas.
 export const ESTADOS_CITA = {
   PENDIENTE: { label: 'Pendiente', clase: 'border-amber/50 bg-amber/15 text-amber' },
-  CONFIRMADA: { label: 'Confirmada', clase: 'border-blue/50 bg-blue/15 text-blue' },
   COMPLETADA: { label: 'Completada', clase: 'border-green/50 bg-green/15 text-green' },
   CANCELADA: { label: 'Cancelada', clase: 'border-border-strong bg-surface-2 text-ink/50' },
   NO_ASISTIO: { label: 'No asistió', clase: 'border-red/50 bg-red/15 text-red' },

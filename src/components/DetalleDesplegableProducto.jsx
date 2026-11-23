@@ -6,8 +6,9 @@ import ProveedoresDelProducto from './ProveedoresDelProducto.jsx'
 // Detalle de un producto de Inventario dentro de su fila/tarjeta desplegable (reemplaza al modal de detalle). Lo comparten
 // las tarjetas del móvil y la fila desplegable de la tabla de escritorio.
 //   · Columna izquierda: la foto (miniatura en móvil) y, centrados debajo, [código de barras][código][impresora].
-//   · Columna derecha: PROVEEDORES. En escritorio también el historial de stock, debajo; en móvil el historial pasa abajo, a
-//     todo el ancho de la tarjeta (la columna derecha es angosta).
+//   · Columna derecha: PROVEEDORES.
+//   · Debajo, a todo el ancho (móvil y escritorio, al nivel de la foto): el historial de stock — tabla en escritorio, tarjetas
+//     en móvil.
 // La «Venta» no se repite (está en el encabezado); costo y ganancia tampoco en escritorio (columnas de la tabla). En móvil el
 // encabezado no los trae, así que ahí sí se muestran (solo admin).
 const formatearNumero = (monto) => monto.toFixed(2)
@@ -40,13 +41,13 @@ export default function DetalleDesplegableProducto({
             </span>
           </div>
           <div className="flex shrink-0 gap-2">
-            <BotonAccion icono={Pencil} texto="Editar" color="celeste" onClick={() => onEditar(producto)} />
-            <BotonAccion icono={Trash2} texto="Eliminar" color="rojo" onClick={() => onEliminar(producto)} />
+            <BotonAccion sinBorde relleno icono={Pencil} texto="Editar" color="celeste" onClick={() => onEditar(producto)} />
+            <BotonAccion sinBorde relleno icono={Trash2} texto="Eliminar" color="rojo" onClick={() => onEliminar(producto)} />
           </div>
         </div>
       )}
 
-      <div className="flex flex-col items-center gap-1.5 lg:row-span-2">
+      <div className="flex flex-col items-center gap-1.5">
         {/* Foto: tocarla la amplía; el lápiz (solo admin) abre el selector para CAMBIARLA. Es la misma foto que se edita en
             Web → Catálogo (productos.foto_url), así que el cambio se ve en los dos sitios. */}
         <div className="relative h-24 w-24 shrink-0 lg:h-40 lg:w-full">
@@ -133,7 +134,7 @@ export default function DetalleDesplegableProducto({
         />
       </div>
 
-      <div className="col-span-2 min-w-0 lg:col-span-1 lg:col-start-2">
+      <div className="col-span-2 min-w-0">
         <HistorialStockProducto
           key={`${producto.id}-${producto.stock_actual}-${versionProveedores}`}
           productoId={producto.id}

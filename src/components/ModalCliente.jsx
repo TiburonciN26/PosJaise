@@ -42,7 +42,7 @@ function validar(formulario) {
   return null
 }
 
-export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuardado, bajoHeader = true }) {
+export default function ModalCliente({ cliente, nombreInicial, notaGuia, onCerrar, onGuardado, bajoHeader = true }) {
   const idBase = useId()
   const panelRef = useRef(null)
   useModalA11y(panelRef)
@@ -130,6 +130,14 @@ export default function ModalCliente({ cliente, nombreInicial, onCerrar, onGuard
           </h2>
           <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
         </div>
+
+        {/* Nota que dejó quien agendó la cita (nombre completo, celular…): sirve de guía para llenar la ficha, no se guarda sola. */}
+        {!esEdicion && notaGuia?.trim() && (
+          <div className="mt-3 rounded-lg border border-blue/30 bg-blue/10 px-2.5 py-2 text-xs">
+            <p className="font-medium text-blue">Nota de la cita (guía)</p>
+            <p className="mt-0.5 whitespace-pre-line break-words text-ink/80">{notaGuia}</p>
+          </div>
+        )}
 
         <div className="mt-4 space-y-3">
           <div>

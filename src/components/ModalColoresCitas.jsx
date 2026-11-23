@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase.js'
 import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
 import { listarCambios } from '../lib/cambiosFormulario.js'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
+import AyudaCampo from './AyudaCampo.jsx'
 import { useModalA11y } from '../hooks/useModalA11y.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { CLAVES_COLOR_CITA, REGEX_COLOR, estiloTarjetaCita } from '../lib/coloresCitas.js'
@@ -65,13 +66,15 @@ export default function ModalColoresCitas({ coloresIniciales, onCerrar, onGuarda
         className="flex max-h-full w-full max-w-md flex-col rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)"
       >
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-ink">Colores de las citas</h2>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <h2 className="text-base font-semibold text-ink">Colores de las citas</h2>
+            <AyudaCampo etiqueta="Ayuda sobre los colores de las citas">
+              Cada tarjeta de cita toma el color del rol de quien la agendó. Las que agenda la clienta desde la web usan el
+              color de «Cliente Web».
+            </AyudaCampo>
+          </div>
           <BotonCerrarModal onClick={intentarCerrar} disabled={guardando} />
         </div>
-        <p className="mt-1 text-sm text-ink/60">
-          Cada tarjeta de cita toma el color del rol de quien la agendó. Las que agenda la clienta desde la web usan el
-          color de «Cliente Web».
-        </p>
 
         <div className="-mx-1 mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto px-1">
           {CLAVES_COLOR_CITA.map(({ clave, label }) => {

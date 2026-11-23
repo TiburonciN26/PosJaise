@@ -4,7 +4,7 @@ import {
   History,
   Scissors,
   LayoutDashboard,
-  UserCircle,
+  NotebookText,
   BarChart3,
   ShieldCheck,
   Users,
@@ -35,7 +35,7 @@ import {
 
 // Roles de personal: ADMINISTRADOR (todo), CAJERA (vende/cobra), ASISTENTE (citas + su panel de pagos),
 // ENCARGADA (la unión de CAJERA + ASISTENTE, sin ser admin) y PERSONAL_APOYO (chicas que vienen solo cuando hay mucho
-// tráfico: ÚNICAMENTE Mi Panel, para anotar lo que atendieron). El resto de pantallas decide por `esAdmin`, así que
+// tráfico: ÚNICAMENTE Mis atenciones, para anotar lo que atendieron). El resto de pantallas decide por `esAdmin`, así que
 // agregar un rol aquí basta para el menú; la seguridad real la pone la RLS (migraciones rol_encargada y
 // rol_personal_apoyo).
 const ROLES_CAJA = ['ADMINISTRADOR', 'CAJERA', 'ENCARGADA']
@@ -69,7 +69,7 @@ export const secciones = [
     padre: '/clientes',
   },
   { path: '/citas', label: 'Citas', icono: CalendarClock, roles: ROLES_CITAS, tema: 'rosa' },
-  { path: '/mi-panel', label: 'Mi Panel', icono: UserCircle, roles: ROLES_PANEL, tema: 'rosa' },
+  { path: '/mi-panel', label: 'Mis atenciones', icono: NotebookText, roles: ROLES_PANEL, tema: 'rosa' },
   { path: '/dashboard', label: 'Dashboard', icono: LayoutDashboard, roles: ['ADMINISTRADOR'], tema: 'rosa' },
   {
     path: '/estadisticas',
@@ -235,7 +235,7 @@ export const secciones = [
 ]
 
 // Pestaña a la que entra cada rol al iniciar sesión. Antes salía de "la primera sección visible" y eso ataba el orden
-// del menú (la asistente debía ver Mi Panel antes que Citas). Bug histórico que esto sigue evitando: una ASISTENTE no
+// del menú (la asistente debía ver Mis atenciones antes que Citas). Bug histórico que esto sigue evitando: una ASISTENTE no
 // ve Ventas, y un "/ventas" fijo la dejaba en pantalla negra para siempre.
 const INICIO_POR_ROL = {
   ADMINISTRADOR: '/ventas',

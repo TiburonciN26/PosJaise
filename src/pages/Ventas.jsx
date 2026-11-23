@@ -12,6 +12,7 @@ import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { formatearSoles } from '../lib/moneda.js'
 import { calcularMontoPosTarjeta, calcularTotalesVenta, desglosarMontoTarjeta, limpiarCodigoCupon, normalizarDescuentoTecleado } from '../lib/cobro.js'
 import { interpretarCuponCaja } from '../lib/cupones.js'
+import { calcularAdelantoSugerido } from '../lib/adelantoCita.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
 import InputBusqueda from '../components/InputBusqueda.jsx'
@@ -305,7 +306,7 @@ export default function Ventas({ activo = true }) {
     }
   }
 
-  // Las atenciones pendientes (registradas en Mi Panel o al completar una
+  // Las atenciones pendientes (registradas en Mis atenciones o al completar una
   // cita, todavía sin cobrar) — a diferencia de productos/clientes, esta
   // lista cambia seguido (cualquier asistente puede registrar/vender una en
   // cualquier momento) así que no se refresca sola en segundo plano, solo
@@ -361,11 +362,35 @@ export default function Ventas({ activo = true }) {
   const busquedaProductos = useBusquedaProductosVenta({ termino: busqueda })
   const sugerencias = busquedaProductos.resultados
 
-  // Totales (subtotal, descuento manual o de cupón, total y vuelto): lib/cobro.js, probado en tests/e2e/cobro.test.mjs.
-  const { subtotal, esDescuentoPorcentaje, esCupon, descuentoPctAplicado, montoDescuento, total, recibidoNumerico, vuelto } =
-    calcularTotalesVenta({ carrito, tipoDescuento, valorDescuento, cuponPreview, montoRecibido })
+  // Adelanto de la cita de la que viene cada atención del carrito. La procedencia se deduce en el servidor
+  // (adelantos_pendientes_de_atenciones, a partir del enlace cita → atención): aquí solo se pide para las atenciones que hay
+  // en el carrito. El precio de la línea sigue siendo el original y el adelanto se resta del total en su PROPIA línea: NO es un
+  // descuento (es dinero que la clienta ya entregó), así que no toca el campo de descuento —que queda para descuentos reales o
+  // cupones, que conviven con él— ni cuenta como «Descuentos» en el Dashboard. Ver migración 20261121000007.
+  const [adelantosCarrito, setAdelantosCarrito] = useState([])
+  useEffect(() => {
+    if (!activo || !claveServiciosCarrito) {
+      setAdelantosCarrito([])
+      return undefined
+    }
+    let vigente = true
+    supabase
+      .rpc('adelantos_pendientes_de_atenciones', { p_registro_ids: claveServiciosCarrito.split(',') })
+      .then(({ data, error }) => {
+        // Si falla la consulta no se resta nada: cobrar sigue funcionando como siempre (el adelanto es una ayuda).
+        if (vigente) setAdelantosCarrito(error || !Array.isArray(data) ? [] : data)
+      })
+    return () => {
+      vigente = false
+    }
+  }, [activo, claveServiciosCarrito])
+  const adelantoSugerido = calcularAdelantoSugerido(carrito, adelantosCarrito)
+
+  // Totales (subtotal, descuento manual o de cupón, adelanto, total y vuelto): lib/cobro.js, probado en tests/e2e/cobro.test.mjs.
+  const { subtotal, esDescuentoPorcentaje, esCupon, descuentoPctAplicado, montoDescuento, adelantoAplicado, total, aCobrar, recibidoNumerico, vuelto } =
+    calcularTotalesVenta({ carrito, tipoDescuento, valorDescuento, cuponPreview, montoRecibido, adelanto: adelantoSugerido })
   const totalMostrado = useContadorAnimado(total)
-  const montoPosTarjetaSugerido = calcularMontoPosTarjeta(total)
+  const montoPosTarjetaSugerido = calcularMontoPosTarjeta(aCobrar)
   const desgloseTarjeta = desglosarMontoTarjeta(montoPosTarjetaSugerido)
   const montoPosTarjetaNumerico = parseFloat(montoPosTarjeta) || 0
 
@@ -378,7 +403,7 @@ export default function Ventas({ activo = true }) {
   // no se toca — por eso el resto de botones de Efectivo no se ven
   // afectados por esto, solo Exacto.
   // Solo debe reaccionar a cambios del TOTAL: useEffectEvent lee el Recibido actual sin que teclear en él lo dispare.
-  const totalAnteriorRef = useRef(total)
+  const totalAnteriorRef = useRef(aCobrar)
   const seguirTotalConExacto = useEffectEvent((totalNuevo) => {
     if (montoRecibido === String(totalAnteriorRef.current) && totalNuevo !== totalAnteriorRef.current) {
       setMontoRecibido(String(totalNuevo))
@@ -386,8 +411,8 @@ export default function Ventas({ activo = true }) {
     totalAnteriorRef.current = totalNuevo
   })
   useEffect(() => {
-    seguirTotalConExacto(total)
-  }, [total])
+    seguirTotalConExacto(aCobrar)
+  }, [aCobrar])
 
   // Mismo patrón que "Exacto" arriba: el monto a digitar en POS se
   // precalcula con la fórmula de Culqi, pero es editable a mano (el cajero
@@ -489,7 +514,7 @@ export default function Ventas({ activo = true }) {
     }
     setMetodoPago(nombre)
     if (nombre === 'Efectivo' && !montoRecibido) {
-      setMontoRecibido(String(total))
+      setMontoRecibido(String(aCobrar))
     }
     if (nombre === 'Tarjeta' && !montoPosTarjeta) {
       setMontoPosTarjeta(String(montoPosTarjetaSugerido))
@@ -542,7 +567,7 @@ export default function Ventas({ activo = true }) {
     carrito.length > 0 &&
     metodoPago !== null &&
     !haySobreStock &&
-    (metodoPago !== 'Efectivo' || recibidoNumerico >= total) &&
+    (metodoPago !== 'Efectivo' || recibidoNumerico >= aCobrar) &&
     (!esCupon || codigoCupon === '' || Boolean(cuponPreview)) &&
     comprobanteCompleto(comprobante, total, celularComprobante)
 
@@ -723,6 +748,7 @@ export default function Ventas({ activo = true }) {
       p_descuento_monto: esDescuentoPorcentaje || esCupon ? 0 : montoDescuento,
       p_monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
       p_codigo_cupon: esCupon && codigoCupon ? codigoCupon : null,
+      p_adelanto_monto: adelantoAplicado,
     })
 
     if (error) {
@@ -753,7 +779,7 @@ export default function Ventas({ activo = true }) {
     }
     setCobrando(false)
 
-    setVentaConfirmada({ ...venta, comprobante: comprobanteRegistrado, errorComprobante })
+    setVentaConfirmada({ ...venta, cobrado: aCobrar, comprobante: comprobanteRegistrado, errorComprobante })
 
     // B3 de la 4ª auditoría: se imprime con los items que devuelve el
     // servidor (venta.items — nombre/precio ya resueltos contra el
@@ -770,6 +796,7 @@ export default function Ventas({ activo = true }) {
         total: venta.total,
         descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
         descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
+        adelanto_monto: adelantoAplicado,
         metodo_pago: metodoPago,
         monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
         monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
@@ -1225,7 +1252,9 @@ export default function Ventas({ activo = true }) {
               >
                 {montoDescuento > 0 && (
                   <span className="text-red">
-                    {esCupon ? `Cupón ${codigoCupon}` : `Descuento${esDescuentoPorcentaje ? ` (${descuentoPctAplicado}%)` : ''}`}
+                    {esCupon
+                      ? `Cupón ${codigoCupon}`
+                      : `Descuento${esDescuentoPorcentaje ? ` (${descuentoPctAplicado}%)` : ''}`}
                     :{' '}
                     <span className="font-mono">-{formatearSoles(montoDescuento)}</span>
                   </span>
@@ -1236,6 +1265,20 @@ export default function Ventas({ activo = true }) {
                   </span>
                 )}
               </div>
+            )}
+
+            {/* Adelanto de la cita: plata que la clienta ya entregó (no es un descuento, que va en rojo). El total de la venta no
+                cambia; lo que baja es lo que se cobra hoy. */}
+            {adelantoAplicado > 0 && (
+              <>
+                <p className="mt-1 text-sm text-blue">
+                  Adelanto de la cita: <span className="font-mono">-{formatearSoles(adelantoAplicado)}</span>
+                </p>
+                <p className="mt-1 flex items-baseline justify-between text-sm text-ink">
+                  <span>A cobrar hoy</span>
+                  <span className="font-mono text-lg font-semibold text-amber">{formatearSoles(aCobrar)}</span>
+                </p>
+              </>
             )}
 
             <div className="mt-3">
@@ -1288,9 +1331,9 @@ export default function Ventas({ activo = true }) {
                   <div className="flex shrink-0 items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setMontoRecibido(String(total))}
+                      onClick={() => setMontoRecibido(String(aCobrar))}
                       className={`shrink-0 rounded-md border px-2.5 py-2 text-[11px] font-medium transition-colors ${
-                        montoRecibido === String(total)
+                        montoRecibido === String(aCobrar)
                           ? 'border-green bg-green/10 text-green'
                           : 'border-border-strong text-ink/70 hover:border-amber'
                       }`}
@@ -1321,7 +1364,7 @@ export default function Ventas({ activo = true }) {
                 <label className="mb-1 block text-xs text-ink">Digitar en POS</label>
                 <div className="flex min-h-[38px] items-center justify-between gap-2 rounded-lg border border-green bg-surface-2 px-3 py-2 font-mono">
                   <span className="min-w-0 truncate text-[11px] text-ink/60">
-                    {total.toFixed(2)} + {desgloseTarjeta.comision.toFixed(2)} com. +{' '}
+                    {aCobrar.toFixed(2)} + {desgloseTarjeta.comision.toFixed(2)} com. +{' '}
                     {desgloseTarjeta.igv.toFixed(2)} IGV
                   </span>
                   <span className="shrink-0 text-sm font-semibold text-green">
@@ -1479,11 +1522,17 @@ export default function Ventas({ activo = true }) {
             setCliente(clienteElegido)
             setModalClienteAbierto(false)
           }}
-          onRegistrarNuevo={(nombre) => {
-            setModalClienteAbierto(false)
-            setNombreClienteNuevo(nombre)
-            setModalRegistroClienteAbierto(true)
-          }}
+          // Crear fichas es solo de la administradora (cajera y encargada fallarían al guardar): sin este callback el modal
+          // no ofrece «Registrar … como cliente nuevo». La «venta rápida» (sin guardar) sigue disponible para todas.
+          onRegistrarNuevo={
+            esAdmin
+              ? (nombre) => {
+                  setModalClienteAbierto(false)
+                  setNombreClienteNuevo(nombre)
+                  setModalRegistroClienteAbierto(true)
+                }
+              : undefined
+          }
           onCerrar={() => setModalClienteAbierto(false)}
         />
       )}
@@ -1572,6 +1621,9 @@ export default function Ventas({ activo = true }) {
             <h2 className="mt-2 text-base font-semibold text-ink">Venta confirmada</h2>
             <p className="mt-1 font-mono text-sm text-ink/60">
               {ventaConfirmada.codigo} · {formatearSoles(ventaConfirmada.total)}
+              {ventaConfirmada.cobrado != null && ventaConfirmada.cobrado !== Number(ventaConfirmada.total) && (
+                <span className="block text-xs">Cobrado hoy: {formatearSoles(ventaConfirmada.cobrado)}</span>
+              )}
             </p>
             {ventaConfirmada.comprobante && (
               <p className="mt-2 text-xs text-ink/70">

@@ -1,0 +1,23 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-22T15:00:00Z" },
+  "title": "Selector fecha y hora",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1000, "h": 780, "title": "Escritorio — modal Nueva cita", "is_interactive": true },
+    "Movil.dc.html": { "x": 1080, "y": 0, "w": 390, "h": 844, "title": "Celular — hoja inferior", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Movil.dc.html"],
+  "notes": {
+    "supuestos": {
+      "x": 1550,
+      "y": 0,
+      "w": 340,
+      "size": "m",
+      "fill": "orange",
+      "text": "Boceto para reemplazar el campo «Fecha y hora» actual (fecha nativa + 3 desplegables).\n\n• Un solo campo con la fecha escrita en texto claro.\n• Al tocarlo: calendario en español (semana desde el lunes, hoy marcado, días pasados apagados) + horarios en botones agrupados Mañana / Tarde / Noche.\n• Elegir un horario cierra el panel en escritorio.\n• Horarios de ejemplo: de 30 en 30, de 9:00 a. m. a 7:30 p. m. En la app saldrían del horario de atención del salón.\n\nPrueba: botón Play en cada artboard."
+    }
+  },
+  "designSystems": []
+}

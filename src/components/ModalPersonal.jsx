@@ -292,7 +292,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
                     type="button"
                     onClick={() => setVerPassword((v) => !v)}
                     aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-ink/70 hover:border-purple-300"
+                    className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-lg border border-border text-ink/70 hover:border-purple-300"
                   >
                     {verPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -301,7 +301,7 @@ export default function ModalPersonal({ persona, esYo, onCerrar, onGuardado }) {
                     onClick={() => setPassword(generarPassword())}
                     aria-label="Generar contraseña"
                     title="Generar contraseña"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-ink/70 hover:border-purple-300"
+                    className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-lg border border-border text-ink/70 hover:border-purple-300"
                   >
                     <Sparkles className="h-4 w-4" />
                   </button>

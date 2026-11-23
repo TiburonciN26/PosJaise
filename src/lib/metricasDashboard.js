@@ -84,8 +84,10 @@ export async function obtenerMetricasDashboard(filtro, personalizado) {
 // La cascada completa a partir de las métricas. Ver en Dashboard.jsx el porqué del ingreso neto (QA-024, QA-031: el
 // envío no es ingreso, se le entrega al repartidor).
 export function calcularResultadoDashboard(metricas) {
-  const ingresoBruto = metricas.ingresoProductos + metricas.ingresoServicios
-  const ingresoNeto = redondear2(ingresoBruto - metricas.descuentos)
+  // ingresoProductos/ingresoServicios ya vienen DESPUÉS de descuentos (migración 20261122000002: el descuento de cada venta se
+  // reparte entre sus ítems), o sea lo que de verdad entró. `descuentos` queda como dato informativo: no se resta otra vez.
+  const ingresoBruto = redondear2(metricas.ingresoProductos + metricas.ingresoServicios)
+  const ingresoNeto = ingresoBruto
   const cascada = calcularCascadaGanancia({
     ingresoBruto: ingresoNeto,
     costoProductos: metricas.costoProductos,

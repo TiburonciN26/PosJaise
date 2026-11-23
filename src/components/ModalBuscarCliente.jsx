@@ -10,7 +10,9 @@ import EstadoVacio from './EstadoVacio.jsx'
 // Caja → Seleccionar cliente. La búsqueda (nombre o teléfono) se hace en el SERVIDOR (QA-043): antes se
 // recibía la tabla completa, que el servidor corta en 1000 filas, y una ficha existente fuera de esa primera
 // página aparecía como inexistente con la oferta de venta rápida o de crearla de nuevo.
-export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, onCerrar }) {
+// ventaRapida: ofrece «Usar … (venta rápida, sin guardar)» (solo tiene sentido al cobrar). Sin `onRegistrarNuevo` tampoco se ofrece
+// «Registrar … como cliente nuevo» (crear fichas es solo de la administradora): así Mis atenciones puede usarlo solo para ASIGNAR una clienta ya registrada.
+export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, onCerrar, ventaRapida = true }) {
   const panelRef = useRef(null)
   useModalA11y(panelRef)
   const [busqueda, setBusqueda] = useState('')
@@ -67,7 +69,7 @@ export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, on
       onSeleccionar(filtrados[0])
       return
     }
-    if (filtrados.length === 0 && busqueda.trim()) {
+    if (ventaRapida && filtrados.length === 0 && busqueda.trim()) {
       onSeleccionar({ id: null, nombre: busqueda.trim() })
     }
   }
@@ -177,17 +179,19 @@ export default function ModalBuscarCliente({ onSeleccionar, onRegistrarNuevo, on
 
         {busqueda.trim() && (listo || error) && (
           <div className="shrink-0 divide-y divide-border border-t border-border">
-            <button
-              type="button"
-              onClick={() => onSeleccionar({ id: null, nombre: busqueda.trim() })}
-              className="flex w-full items-center gap-2 bg-amber/5 px-3 py-2.5 text-left text-amber transition-colors hover:bg-amber/10"
-            >
-              <UserPlus className="h-4 w-4 shrink-0" />
-              <span className="truncate text-sm">
-                Usar "{busqueda.trim()}" (venta rápida, sin guardar)
-              </span>
-            </button>
-            {listo && !hayCoincidenciaExacta && (
+            {ventaRapida && (
+              <button
+                type="button"
+                onClick={() => onSeleccionar({ id: null, nombre: busqueda.trim() })}
+                className="flex w-full items-center gap-2 bg-amber/5 px-3 py-2.5 text-left text-amber transition-colors hover:bg-amber/10"
+              >
+                <UserPlus className="h-4 w-4 shrink-0" />
+                <span className="truncate text-sm">
+                  Usar "{busqueda.trim()}" (venta rápida, sin guardar)
+                </span>
+              </button>
+            )}
+            {listo && !hayCoincidenciaExacta && onRegistrarNuevo && (
             <button
               type="button"
               onClick={() => onRegistrarNuevo(busqueda.trim())}

@@ -377,7 +377,7 @@ export default function Gastos({ activo = true }) {
   const fijos = gastos.filter((g) => g.tipo === 'FIJO')
   const variables = gastos.filter((g) => g.tipo === 'VARIABLE')
 
-  // Cancelado no cuenta en el total (mismo criterio que Mi Panel/Citas/
+  // Cancelado no cuenta en el total (mismo criterio que Mis atenciones/Citas/
   // Ventas), pero sigue en la lista tachado — no desaparece.
   const totalFijos = sumarMontos(
     fijos.filter((g) => g.estado !== 'CANCELADO'),

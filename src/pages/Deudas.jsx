@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import { Pencil, Trash2, Plus, CheckCheck, HandCoins, Filter, Coins, X, NotebookPen, Check, Ban } from 'lucide-react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { Pencil, Trash2, Plus, CheckCheck, HandCoins, Filter, Coins, X, NotebookPen, Check, Ban, ArrowRight } from 'lucide-react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import { useToast } from '../context/ToastContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -292,12 +292,24 @@ export default function Deudas({ activo = true }) {
         </div>
       )}
 
-      <p className="mt-3 text-sm text-ink/60">
-        {OPCIONES_FILTRO.find((o) => o.id === filtroEstado)?.label}:{' '}
-        <span className="font-mono font-semibold text-purple-300">{deudas.length}</span>
-        {' · '}
-        <span className="font-mono font-semibold text-purple-300">{formatearSoles(totalVisible)}</span>
-      </p>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-sm text-ink/60">
+          {OPCIONES_FILTRO.find((o) => o.id === filtroEstado)?.label}:{' '}
+          <span className="font-mono font-semibold text-purple-300">{deudas.length}</span>
+          {' · '}
+          <span className="font-mono font-semibold text-purple-300">{formatearSoles(totalVisible)}</span>
+        </p>
+        {/* Enlace de vuelta: Clientes tiene «Ver deudas». La cajera no ve Clientes, así que solo la administradora lo ve. */}
+        {esAdmin && (
+          <Link
+            to="/clientes"
+            className="inline-flex shrink-0 items-center gap-1 text-sm text-purple-300 transition-colors hover:text-purple-200"
+          >
+            Ver clientes
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
+      </div>
 
       {notasPorConfirmar > 0 && filtroEstado !== 'por_confirmar' && (
         <button

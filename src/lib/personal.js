@@ -10,15 +10,15 @@ import { supabase } from './supabase.js'
 
 export const ROLES_PERSONAL = [
   { id: 'ADMINISTRADOR', label: 'Administrador', detalle: 'Ve y hace todo.' },
-  { id: 'ENCARGADA', label: 'Encargada', detalle: 'Vende y atiende: caja + su Mi Panel.' },
+  { id: 'ENCARGADA', label: 'Encargada', detalle: 'Vende y atiende: caja + su pestaña Mis atenciones.' },
   { id: 'CAJERA', label: 'Cajera', detalle: 'Ventas, inventario básico y gastos.' },
-  { id: 'ASISTENTE', label: 'Asistente', detalle: 'Citas y su Mi Panel de pagos.' },
-  { id: 'PERSONAL_APOYO', label: 'Personal de apoyo', detalle: 'Solo su Mi Panel: viene a ayudar por días.' },
+  { id: 'ASISTENTE', label: 'Asistente', detalle: 'Citas y su pestaña Mis atenciones (pagos).' },
+  { id: 'PERSONAL_APOYO', label: 'Personal de apoyo', detalle: 'Solo su pestaña Mis atenciones: viene a ayudar por días.' },
 ]
 
 export const ETIQUETA_ROL = Object.fromEntries(ROLES_PERSONAL.map((rol) => [rol.id, rol.label]))
 
-// Roles que atienden servicios y por eso necesitan ficha (comisión, citas, Mi Panel).
+// Roles que atienden servicios y por eso necesitan ficha (comisión, citas, Mis atenciones).
 export const ROLES_CON_FICHA = ['ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO']
 
 export const MIN_PASSWORD = 8

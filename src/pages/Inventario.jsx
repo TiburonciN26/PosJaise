@@ -468,13 +468,13 @@ export default function Inventario({ activo = true }) {
               desplegar: foto, código, categoría, costo/ganancia (admin), proveedores, historial de stock (admin) y, en
               móvil, Editar/Eliminar (admin). Al abrirse, el nombre se pinta de ámbar (se apaga al cerrar), como en Almacén. */}
           {!esEscritorio && (
-            <div className="mt-3 grid grid-cols-1 gap-2.5">
+            <div className="mt-3 divide-y divide-border border-y border-border">
               {productos.map((producto) => {
                 const abierto = abiertos.has(producto.id)
                 const urlFoto = urlPublicaFoto(BUCKET_FOTOS, producto.foto_url)
                 return (
-                  <div key={producto.id} className="rounded-lg border border-border bg-surface transition-colors hover:border-amber/40">
-                    <div className="flex items-center gap-2 p-2">
+                  <div key={producto.id}>
+                    <div className="flex items-center gap-2 px-1 py-2">
                       <div
                         onClick={() => alternarAbierto(producto.id)}
                         onKeyDown={manejarActivacionTeclado(() => alternarAbierto(producto.id))}
@@ -509,7 +509,7 @@ export default function Inventario({ activo = true }) {
                     </div>
 
                     <CampoColapsable abierto={abierto} diferido>
-                      <div className="border-t border-border p-3">
+                      <div className="px-1 pb-6 pt-1">
                         <DetalleDesplegableProducto
                           producto={producto}
                           esAdmin={esAdmin}

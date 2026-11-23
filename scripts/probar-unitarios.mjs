@@ -12,10 +12,16 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const AUTONOMOS = [
+  'adelanto-cita',
   'catalogo-publico-botones',
   'cobro',
+  'discrepancia-atencion',
+  'busqueda-citas',
+  'citas-avisos',
+  'selector-fecha-hora',
   'colector-respuestas',
   'csp',
+  'detalle-dashboard',
   'cupones-categorias',
   'cupones-vigencia-efectiva',
   'destino-login',

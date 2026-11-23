@@ -121,7 +121,7 @@ export function iniciarMesLima(anio, mesIndiceCero) {
 }
 
 // Clave estable para agrupar filas por día calendario en Lima (ej. el
-// listado de Auditoría/Mi Panel, agrupado por día) — antes se agrupaba con
+// listado de Auditoría/Mis atenciones, agrupado por día) — antes se agrupaba con
 // getFullYear/getMonth/getDate locales, que podían mandar una fila de las
 // 11pm al grupo del día siguiente en un dispositivo con otra zona horaria.
 export function claveDiaLima(fecha) {

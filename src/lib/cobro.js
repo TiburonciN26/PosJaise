@@ -43,8 +43,13 @@ export function desglosarMontoTarjeta(monto) {
  * @param {string} p.valorDescuento   lo tecleado en el campo de descuento (% o S/)
  * @param {{ valor?: number, tipoDescuento?: string } | null} p.cuponPreview   cupón verificado (solo en tipo 'cupon')
  * @param {string} p.montoRecibido    efectivo recibido tecleado
+ * @param {number} [p.adelanto]       adelanto de cita disponible para este ticket (src/lib/adelantoCita.js). NO es un descuento ni
+ *                                    cambia el total de la venta: es plata que la clienta YA entregó, así que solo rebaja lo que se
+ *                                    cobra hoy (`aCobrar`).
+ * Devuelve `total` (lo que vale la venta: subtotal − descuento real) y `aCobrar` (total − adelanto: lo que se recibe en caja ahora,
+ * sobre lo que se calculan efectivo, vuelto y el monto a digitar en el POS de tarjeta).
  */
-export function calcularTotalesVenta({ carrito, tipoDescuento, valorDescuento, cuponPreview, montoRecibido }) {
+export function calcularTotalesVenta({ carrito, tipoDescuento, valorDescuento, cuponPreview, montoRecibido, adelanto = 0 }) {
   const subtotal = sumarMontos(carrito, (item) => item.cantidad * item.precioUnitario)
   const valorDescuentoNumero = parseFloat(valorDescuento) || 0
   const esDescuentoPorcentaje = tipoDescuento === 'porcentaje'
@@ -65,10 +70,15 @@ export function calcularTotalesVenta({ carrito, tipoDescuento, valorDescuento, c
     : esDescuentoPorcentaje
       ? redondear2(subtotal * (descuentoPctAplicado / 100))
       : redondear2(Math.min(Math.max(valorDescuentoNumero, 0), subtotal))
+  // El total de la venta es subtotal − descuento real: el adelanto NO lo cambia (el servidor lo guarda aparte en
+  // ventas.adelanto_monto y el Dashboard solo cuenta como «Descuentos» el descuento real). Lo que se cobra HOY es el total menos
+  // el adelanto, y este nunca puede ser más que el total.
   const total = redondear2(subtotal - montoDescuento)
+  const adelantoAplicado = redondear2(Math.min(Math.max(Number(adelanto) || 0, 0), total))
+  const aCobrar = redondear2(total - adelantoAplicado)
   const recibidoNumerico = parseFloat(montoRecibido) || 0
-  const vuelto = redondear2(recibidoNumerico - total)
-  return { subtotal, valorDescuentoNumero, esDescuentoPorcentaje, esCupon, descuentoPctAplicado, montoDescuento, total, recibidoNumerico, vuelto }
+  const vuelto = redondear2(recibidoNumerico - aCobrar)
+  return { subtotal, valorDescuentoNumero, esDescuentoPorcentaje, esCupon, descuentoPctAplicado, montoDescuento, adelantoAplicado, total, aCobrar, recibidoNumerico, vuelto }
 }
 
 /**

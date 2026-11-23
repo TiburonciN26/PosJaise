@@ -59,6 +59,8 @@ export function useModalA11y(panelRef, activoSolicitado = true, etiquetaFallback
     const titulo = panel.querySelector('h1, h2, h3')
     if (titulo) {
       if (!titulo.id) titulo.id = `modal-titulo-${++contadorId}`
+      // Marca el título para que el CSS (05-interfaz-comun.css) le quite el aire de arriba que deja su interlineado.
+      titulo.setAttribute('data-titulo-modal', '')
       panel.setAttribute('aria-labelledby', titulo.id)
     }
 

@@ -90,7 +90,7 @@ export default function ModalCambiarClave({ onCerrar }) {
                 type="button"
                 onClick={() => setVer((v) => !v)}
                 aria-label={ver ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border text-ink/70 hover:border-amber"
+                className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-lg border border-border text-ink/70 hover:border-amber"
               >
                 {ver ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

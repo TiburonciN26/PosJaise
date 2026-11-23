@@ -64,7 +64,6 @@ const DIAS_LARGOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Vier
 
 const ETIQUETAS_ESTADO = {
   PENDIENTE: { texto: 'Pendiente', clase: 'border border-dashed border-[var(--lw-gold)]/60 text-[var(--lw-gold)]' },
-  CONFIRMADA: { texto: 'Confirmada', clase: 'bg-[var(--lw-gold)] text-black' },
   COMPLETADA: { texto: 'Completada', clase: 'bg-green/15 text-green' },
   CANCELADA: { texto: 'Cancelada', clase: 'bg-white/10 text-white/50' },
   NO_ASISTIO: { texto: 'No asistió', clase: 'bg-red/15 text-red' },
@@ -93,12 +92,12 @@ const CLASE_BLOQUE =
 // (estado_negocio.cancelacion_plazo_horas, 115_estado_negocio_adelanto.sql);
 // acá solo evita mostrar un botón que el servidor igual va a rechazar.
 function puedeModificar(cita, plazoHoras) {
-  if (!['PENDIENTE', 'CONFIRMADA'].includes(cita.estado)) return false
+  if (cita.estado !== 'PENDIENTE') return false
   return new Date(cita.fecha_hora).getTime() - Date.now() > plazoHoras * 60 * 60 * 1000
 }
 
 function esVigente(cita) {
-  return ['PENDIENTE', 'CONFIRMADA'].includes(cita.estado) && new Date(cita.fecha_hora).getTime() >= Date.now()
+  return cita.estado === 'PENDIENTE' && new Date(cita.fecha_hora).getTime() >= Date.now()
 }
 
 function totalCita(cita) {
@@ -492,7 +491,7 @@ function CitasConSesion() {
         .select(SELECT_CITA)
         .eq('cliente_id', miId)
         .gte('fecha_hora', ahoraIso)
-        .in('estado', ['PENDIENTE', 'CONFIRMADA'])
+        .eq('estado', 'PENDIENTE')
         .order('fecha_hora'),
       supabase
         .from('citas')

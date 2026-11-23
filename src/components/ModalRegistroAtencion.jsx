@@ -1,6 +1,5 @@
-import { useEffect, useEffectEvent, useId, useRef, useState } from 'react'
-import BotonVoz from './BotonVoz.jsx'
-import { X, User, Scissors, UserRoundPlus, PlusCircle } from 'lucide-react'
+import { useEffect, useEffectEvent, useId, useLayoutEffect, useRef, useState } from 'react'
+import { X, User, Scissors, UserRoundPlus, PlusCircle, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
@@ -12,6 +11,7 @@ import { useModalA11y } from '../hooks/useModalA11y.js'
 import { aInputDatetimeLima, deInputDatetimeLima } from '../lib/fechas.js'
 import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 import Etiqueta from './Etiqueta.jsx'
+import InputFechaHora from './InputFechaHora.jsx'
 import ModalCliente from './ModalCliente.jsx'
 import ModalServicio from './ModalServicio.jsx'
 import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
@@ -20,6 +20,10 @@ import { useBusquedaServicios } from '../hooks/useBusquedaServicios.js'
 
 // Umbrales del swipe-to-delete del carrito de servicios — mismos valores que
 // el carrito de Ventas (FilaTicket), para que el gesto se sienta idéntico.
+// Alto del carrito de servicios: mínimo = 1 servicio (la fila mide ~53 px: nombre 20 + cálculo 16 + relleno 16). Sin máximo ni scroll:
+// con más servicios se expande con suavidad para mostrarlos completos (igual que el carrito de Nueva cita; ver listaCarritoRef).
+const ALTO_MIN_CARRITO = 53
+
 const UMBRAL_ARRASTRE_ELIMINAR = 90
 const UMBRAL_ARRASTRE_INICIO = 8
 
@@ -30,13 +34,21 @@ function FilaLineaServicio({
   esTactil,
   permitirQuitar = true,
   estricto = false,
+  resaltada = false,
   onCambiarPrecio,
   onQuitar,
 }) {
   const [arrastreX, setArrastreX] = useState(0)
   const [arrastrando, setArrastrando] = useState(false)
   const inicioRef = useRef({ x: 0, iniciado: false, ignorar: false })
+  const filaRef = useRef(null)
   const puedeArrastrar = esTactil && permitirQuitar
+
+  // La lista del carrito es de alto fijo y con scroll: si la línea nueva cayó fuera de la vista, se trae a la vista
+  // para que el destello verde se vea.
+  useEffect(() => {
+    if (resaltada) filaRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [resaltada])
 
   function manejarPointerDown(evento) {
     if (!puedeArrastrar) return
@@ -80,6 +92,7 @@ function FilaLineaServicio({
 
   return (
     <div
+      ref={filaRef}
       onPointerDown={manejarPointerDown}
       onPointerMove={manejarPointerMove}
       onPointerUp={soltar}
@@ -89,14 +102,14 @@ function FilaLineaServicio({
         backgroundColor: `color-mix(in srgb, var(--color-red) ${Math.round(progresoEliminar * 85)}%, transparent)`,
         transition: arrastrando ? 'none' : undefined,
       }}
-      className={`${permitirQuitar && !esTactil ? 'grid-cols-[1fr_6.5rem_1.5rem]' : 'grid-cols-[1fr_6.5rem]'} touch-pan-y grid items-center gap-2 px-3 py-2 transition-[transform_200ms_ease-in,background-color_150ms_ease-out]`}
+      className={`${permitirQuitar && !esTactil ? 'grid-cols-[1fr_3.5rem_1.5rem]' : 'grid-cols-[1fr_3.5rem]'} touch-pan-y grid items-center gap-2 px-3 py-2 transition-[transform_200ms_ease-in,background-color_150ms_ease-out] ${resaltada ? 'animate-flash-verde' : ''}`}
     >
       <div className="min-w-0">
         <p className="truncate text-sm text-ink">{nombre}</p>
         {porcentaje == null ? (
           <p className={`text-[11px] ${estricto ? 'text-red' : 'text-orange-400'}`}>
             {estricto
-              ? 'Sin % asignado — no se puede completar. Comunícate con el administrador.'
+              ? 'Sin % asignado — anótalo como pendiente o avisa a la administradora.'
               : 'Sin % asignado'}
           </p>
         ) : (
@@ -114,7 +127,7 @@ function FilaLineaServicio({
         autoComplete="new-password"
         value={linea.precio}
         onChange={(evento) => onCambiarPrecio(evento.target.value)}
-        className="w-[8ch] justify-self-end rounded-lg border border-border bg-surface px-2 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
+        className="w-[6ch] justify-self-end rounded-lg border border-border bg-surface px-1.5 py-1 text-right font-mono text-sm text-ink outline-none focus:border-purple-300"
       />
 
       {!esTactil && permitirQuitar && (
@@ -178,10 +191,12 @@ export default function ModalRegistroAtencion({
   // QA-001: la RLS de servicios solo deja insertar al ADMINISTRADOR; no se
   // ofrece una acción que el servidor va a rechazar.
   const puedeCrearServicio = usuario.rol === 'ADMINISTRADOR'
+  // Lo mismo con los clientes: la RLS (clientes_insert_admin) solo deja insertar al administrador.
+  const puedeCrearCliente = usuario.rol === 'ADMINISTRADOR'
   const esEdicion = Boolean(registro)
   const esCompletarCita = !esEdicion && Boolean(citaId)
   // El carrito de varios servicios aplica tanto al registro nuevo "de cero"
-  // (botón/FAB "Registrar atención" en Mi Panel, líneas agregables a mano)
+  // (botón/FAB "Registrar atención" en Mis atenciones, líneas agregables a mano)
   // como a completar una cita (líneas fijas, las que trae la cita) — editar
   // una atención ya guardada es el único caso que sigue siendo un registro
   // individual con el formulario simple.
@@ -244,12 +259,32 @@ export default function ModalRegistroAtencion({
   const [resultadosCliente, setResultadosCliente] = useState([])
   const [estadoBusquedaCliente, setEstadoBusquedaCliente] = useState('ok') // 'buscando' | 'ok' | 'error'
   const secuenciaBusquedaCliente = useRef(0)
+  // Alto objetivo del carrito = lo que mide la lista, con un mínimo de 1 servicio. Se mide con ResizeObserver (también cambia sola si una
+  // fila crece, p. ej. el aviso «Sin % asignado») y ANTES de pintar, así al abrir «Completar cita» con 3 servicios ya sale expandido.
+  const listaCarritoRef = useRef(null)
+  const [altoCarrito, setAltoCarrito] = useState(ALTO_MIN_CARRITO)
+  useLayoutEffect(() => {
+    const lista = listaCarritoRef.current
+    if (!lista) return undefined
+    const medir = () => setAltoCarrito(Math.max(ALTO_MIN_CARRITO, lista.offsetHeight))
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(lista)
+    return () => observador.disconnect()
+  }, [cargandoListas])
+
   const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
   const [modalServicioNuevoAbierto, setModalServicioNuevoAbierto] = useState(false)
 
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
-
+  // Línea recién agregada al carrito: destello verde de 450 ms, igual que el ticket de Ventas.
+  const [lineaFlash, setLineaFlash] = useState(null)
+  useEffect(() => {
+    if (!lineaFlash) return undefined
+    const temporizador = setTimeout(() => setLineaFlash(null), 450)
+    return () => clearTimeout(temporizador)
+  }, [lineaFlash])
 
   // Búsqueda de clientes en el servidor. Cada petición lleva un número de secuencia: si el texto
   // cambia mientras una respuesta vuela, la respuesta vieja se descarta (no pisa a la nueva).
@@ -396,6 +431,14 @@ export default function ModalRegistroAtencion({
     !cargandoAsistenteDueno &&
     lineas.some((linea) => porcentajeParaServicio(linea.servicioId) == null)
 
+  // Cita agendada con la clienta solo como nombre de referencia (sin ficha en Clientes): mientras no se elija una clienta
+  // registrada en este modal, la cita se completa igual pero la atención queda como NOTA PENDIENTE en Mis atenciones hasta que la
+  // administradora la registre (o la asigne a una existente). El nombre sale de la cita, no de lo que haya en el buscador.
+  const nombreReferenciaCita = esCompletarCita ? (valoresIniciales?.clienteReferencia ?? '').trim() : ''
+  const sinClienteRegistrado = Boolean(nombreReferenciaCita) && !clienteIdMultiple
+  // Cualquiera de las dos faltas (sin % o sin clienta registrada) se resuelve con el mismo botón «anotar como pendiente».
+  const hayPendiente = hayLineaSinComision || sinClienteRegistrado
+
   // Con el buscador vacío, includes('') es siempre true — así al enfocar el
   // campo (antes de escribir nada) ya se ven todos los servicios/clientes
   // precargados.
@@ -437,14 +480,17 @@ export default function ModalRegistroAtencion({
   function agregarLinea(servicio) {
     if (!servicio) return
     const servicioId = servicio.id
+    const idLinea = `${servicioId}-${Date.now()}`
+    setLineaFlash(idLinea)
+    // El servicio recién agregado va ARRIBA de la lista (igual que en Nueva cita).
     setLineas((anterior) => [
-      ...anterior,
       {
-        id: `${servicioId}-${Date.now()}`,
+        id: idLinea,
         servicioId,
         nombre: servicio?.nombre ?? '',
         precio: servicio ? String(servicio.precio) : '',
       },
+      ...anterior,
     ])
     setBusquedaServicio('')
     setMostrarSugerenciasServicio(false)
@@ -542,8 +588,9 @@ export default function ModalRegistroAtencion({
     evento.preventDefault()
     const comoNota = opciones.comoNota === true
 
-    if (!clienteIdMultiple) {
-      setError('Selecciona un cliente.')
+    // Sin clienta elegida solo se sigue si es una cita con clienta de referencia y se pidió anotarla como pendiente.
+    if (!clienteIdMultiple && !(comoNota && sinClienteRegistrado)) {
+      setError(sinClienteRegistrado ? 'Elige una clienta registrada, o completa la cita anotándola como pendiente.' : 'Selecciona un cliente.')
       return
     }
     if (lineas.length === 0) {
@@ -561,10 +608,10 @@ export default function ModalRegistroAtencion({
         return
       }
     }
-    if (hayLineaSinComision && !comoNota) {
+    if (hayPendiente && !comoNota) {
       setError(
         esCompletarCita
-          ? 'Asigna un % de comisión para cada servicio antes de completar la cita.'
+          ? 'Falta la comisión de algún servicio o la clienta registrada: completa la cita anotándola como pendiente.'
           : 'Asigna un % de comisión para cada servicio, o guárdalo como nota pendiente.',
       )
       return
@@ -581,8 +628,11 @@ export default function ModalRegistroAtencion({
         p_items: lineas.map((linea) => ({
           cita_servicio_id: linea.citaServicioId,
           precio: parseFloat(linea.precio),
+          // Con «Anotar como pendiente» el servidor completa la cita igual: deja como nota pendiente (PENDIENTE_PORCENTAJE)
+          // los servicios sin % y, si la clienta no está registrada, todos; los demás se registran activos.
+          ...(comoNota ? { permitir_pendiente: true } : {}),
         })),
-        p_cliente_id: clienteIdMultiple,
+        p_cliente_id: clienteIdMultiple || null,
         p_fecha: fechaIso,
         p_nota: notaMultiple.trim() || null,
       })
@@ -598,7 +648,8 @@ export default function ModalRegistroAtencion({
         return
       }
 
-      onGuardado()
+      // Se avisa si quedó algo como nota pendiente para que la pestaña lo diga (no es lo mismo que «atención registrada»).
+      onGuardado({ conPendientes: hayPendiente })
       return
     }
 
@@ -615,7 +666,7 @@ export default function ModalRegistroAtencion({
         porcentaje_aplicado: porcentaje,
         pago_asistente: porcentaje != null ? (precioLinea * porcentaje) / 100 : null,
         // Sin % resuelto, queda como nota pendiente (no cuenta en ningún
-        // total hasta que se le asigne un % y se confirme desde Mi Panel)
+        // total hasta que se le asigne un % y se confirme desde Mis atenciones)
         // — el resto de las líneas del mismo carrito se registran oficial
         // si ya tienen su % resuelto, sin que una arrastre a la otra.
         ...(porcentaje == null ? { estado: 'PENDIENTE_PORCENTAJE' } : {}),
@@ -705,19 +756,27 @@ export default function ModalRegistroAtencion({
                       onFocus={() => setMostrarSugerenciasCliente(true)}
                       onBlur={() => setTimeout(() => setMostrarSugerenciasCliente(false), 150)}
                       placeholder="Buscar cliente..."
-                      className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                      // Clienta elegida: borde, fondo y nombre en rosa (igual que el botón «Cliente» de Ventas).
+                      className={`w-full rounded-lg border py-2 pl-3 pr-9 text-sm outline-none transition-colors focus:border-purple-300 ${
+                        clienteIdMultiple
+                          ? 'border-purple-300 bg-purple-300/10 text-purple-300'
+                          : 'border-border bg-surface-2 text-ink'
+                      }`}
                     />
                     {busquedaCliente ? (
                       <button
                         type="button"
-                        onClick={() => setBusquedaCliente('')}
+                        onClick={() => {
+                          setBusquedaCliente('')
+                          setClienteIdMultiple('')
+                        }}
                         aria-label="Limpiar búsqueda"
                         className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/60 transition-colors hover:text-ink"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     ) : (
-                      <User className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                      <User className={`pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${clienteIdMultiple ? 'text-purple-300' : 'text-ink/40'}`} />
                     )}
   
                     {mostrarSugerenciasCliente && (
@@ -746,7 +805,10 @@ export default function ModalRegistroAtencion({
                             <span className="truncate">{cliente.nombre}</span>
                           </button>
                         ))}
-                        {!buscandoCliente && estadoBusquedaCliente === 'ok' && busquedaCliente.trim() && !hayCoincidenciaExacta && (
+                        {!buscandoCliente && estadoBusquedaCliente === 'ok' && busquedaCliente.trim() && !puedeCrearCliente && sugerenciasCliente.length === 0 && (
+                          <p className="px-3 py-2 text-xs text-ink/60">No hay clientes que coincidan.</p>
+                        )}
+                        {!buscandoCliente && estadoBusquedaCliente === 'ok' && busquedaCliente.trim() && puedeCrearCliente && !hayCoincidenciaExacta && (
                           <button
                             type="button"
                             onMouseDown={(evento) => evento.preventDefault()}
@@ -767,11 +829,6 @@ export default function ModalRegistroAtencion({
                       </div>
                     )}
                   </div>
-                  <BotonVoz onTexto={(texto) => {
- setBusquedaCliente(texto)
- setClienteIdMultiple('')
- setMostrarSugerenciasCliente(true)
- }} />
                 </div>
               </div>
 
@@ -796,7 +853,12 @@ export default function ModalRegistroAtencion({
                       onFocus={() => setMostrarSugerenciasServicio(true)}
                       onBlur={() => setTimeout(() => setMostrarSugerenciasServicio(false), 150)}
                       placeholder="Buscar servicio..."
-                      className="w-full rounded-lg border border-border bg-surface-2 py-2 pl-3 pr-9 text-sm text-ink outline-none focus:border-purple-300"
+                      // Con al menos un servicio agregado: borde y fondo celestes (igual que «Agregar servicio» en Ventas).
+                      className={`w-full rounded-lg border py-2 pl-3 pr-9 text-sm outline-none transition-colors focus:border-purple-300 ${
+                        lineas.length > 0
+                          ? 'border-blue bg-blue/10 text-blue'
+                          : 'border-border bg-surface-2 text-ink'
+                      }`}
                     />
                     {busquedaServicio ? (
                       <button
@@ -808,7 +870,7 @@ export default function ModalRegistroAtencion({
                         <X className="h-4 w-4" />
                       </button>
                     ) : (
-                      <Scissors className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/40" />
+                      <Scissors className={`pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${lineas.length > 0 ? 'text-blue' : 'text-ink/40'}`} />
                     )}
   
                     {mostrarSugerenciasServicio &&
@@ -823,8 +885,18 @@ export default function ModalRegistroAtencion({
                               className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-surface-3"
                             >
                               <span className="truncate">{servicio.nombre}</span>
-                              <span className="shrink-0 font-mono text-xs text-ink/60">
+                              <span className="flex shrink-0 items-center gap-1.5 font-mono text-xs text-ink/60">
                                 {servicio.precio.toFixed(2)}
+                                {/* Asistente/encargada: check = este servicio ya tiene % asignado (comisión resuelta).
+                                    El administrador no lo ve: siempre se queda con el 100 %. */}
+                                {!esAdminDueno && mapaPorcentajes[servicio.id] != null && (
+                                  <Check
+                                    className="h-3.5 w-3.5 text-green"
+                                    strokeWidth={3}
+                                    role="img"
+                                    aria-label="Tiene porcentaje asignado"
+                                  />
+                                )}
                               </span>
                             </button>
                           ))}
@@ -873,54 +945,58 @@ export default function ModalRegistroAtencion({
                         </div>
                       )}
                   </div>
-                  <BotonVoz onTexto={(texto) => {
- setBusquedaServicio(texto)
- setMostrarSugerenciasServicio(true)
- }} />
                 </div>
               </div>
               )}
 
-              <div className="rounded-lg border border-border">
+              <div className="rounded-lg border border-border bg-bg">
                 <div
-                  className={`${esTactil || esCompletarCita ? 'grid-cols-[1fr_6.5rem]' : 'grid-cols-[1fr_6.5rem_1.5rem]'} grid gap-2 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink/60`}
+                  className={`${esTactil || esCompletarCita ? 'grid-cols-[1fr_3.5rem]' : 'grid-cols-[1fr_3.5rem_1.5rem]'} grid gap-2 border-b border-border px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-ink/60`}
                 >
                   <span>Servicio</span>
                   <span className="text-right">Precio</span>
                   {!esTactil && !esCompletarCita && <span />}
                 </div>
 
-                <div className="h-[140px] divide-y divide-border overflow-y-auto">
-                  {lineas.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
-                      <p className="text-sm text-ink/40">Sin servicios</p>
-                    </div>
-                  ) : (
-                    lineas.map((linea) => (
-                      <FilaLineaServicio
-                        key={linea.id}
-                        linea={linea}
-                        nombre={linea.nombre}
-                        porcentaje={porcentajeParaServicio(linea.servicioId)}
-                        esTactil={esTactil}
-                        permitirQuitar={!esCompletarCita}
-                        estricto
-                        onCambiarPrecio={(precio) => actualizarPrecioLinea(linea.id, precio)}
-                        onQuitar={() => quitarLinea(linea.id)}
-                      />
-                    ))
-                  )}
+                {/* Alto animado: por defecto hay espacio para 1 servicio; con cada uno más se expande hacia abajo con suavidad
+                    (sin scroll: todos se ven completos) y al quitarlo vuelve a cerrarse igual. */}
+                <div
+                  style={{ height: altoCarrito }}
+                  className="overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none"
+                >
+                  <div ref={listaCarritoRef} className="divide-y divide-border">
+                    {lineas.length === 0 ? (
+                      <div className="flex items-center justify-center" style={{ height: ALTO_MIN_CARRITO }}>
+                        <p className="text-sm text-ink/40">Sin servicios</p>
+                      </div>
+                    ) : (
+                      lineas.map((linea) => (
+                        <FilaLineaServicio
+                          key={linea.id}
+                          linea={linea}
+                          nombre={linea.nombre}
+                          porcentaje={porcentajeParaServicio(linea.servicioId)}
+                          esTactil={esTactil}
+                          permitirQuitar={!esCompletarCita}
+                          resaltada={linea.id === lineaFlash}
+                          estricto
+                          onCambiarPrecio={(precio) => actualizarPrecioLinea(linea.id, precio)}
+                          onQuitar={() => quitarLinea(linea.id)}
+                        />
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div>
                 <Etiqueta obligatorio htmlFor={`${idBase}-fecha-multi`}>Fecha y hora</Etiqueta>
-                <input
+                <InputFechaHora
+                  resaltado
+                  bloquearDiasPasados={false}
                   id={`${idBase}-fecha-multi`}
-                  type="datetime-local"
                   value={fechaMultiple}
                   onChange={(evento) => setFechaMultiple(evento.target.value)}
-                  className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
                 />
               </div>
 
@@ -947,6 +1023,14 @@ export default function ModalRegistroAtencion({
             </p>
           )}
 
+          {sinClienteRegistrado && (
+            <p className="mt-3 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-ink/80">
+              «{nombreReferenciaCita}» no está registrada como clienta. Puedes completar la cita igual: la atención quedará
+              como nota pendiente en Mis atenciones hasta que la administradora la registre (o elijas aquí una clienta ya
+              registrada).
+            </p>
+          )}
+
           {error && (
             <p className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-xs text-red">
               {error}
@@ -969,7 +1053,8 @@ export default function ModalRegistroAtencion({
                 cargandoListas ||
                 cargandoAsistenteDueno ||
                 lineas.length === 0 ||
-                hayLineaSinComision
+                !clienteIdMultiple ||
+                hayPendiente
               }
               className="flex-1 rounded-lg bg-purple-300 py-2 text-sm font-semibold text-bg disabled:opacity-40"
             >
@@ -981,18 +1066,25 @@ export default function ModalRegistroAtencion({
             </button>
           </div>
 
-          {/* Solo para registro nuevo (no completar cita, que no admite
-              esta salida): sin % en alguna línea, se puede anotar igual
-              — no cuenta en los totales hasta que se confirme desde Mi
-              Panel con el % ya asignado. */}
-          {esMultiple && hayLineaSinComision && (
+          {/* Sin % en alguna línea, se puede anotar igual (registro nuevo o completar una cita): esa línea queda como
+              nota pendiente y no cuenta en los totales hasta que la administradora asigne el % y se confirme desde Mi
+              Panel. Así una cita ya atendida no queda «incompleta» en el calendario por falta de comisión. */}
+          {usaCarrito && hayPendiente && (
             <button
               type="button"
               onClick={(evento) => guardarMultiple(evento, { comoNota: true })}
               disabled={guardando || cargandoListas || cargandoAsistenteDueno || lineas.length === 0}
               className="mt-2 w-full rounded-lg border border-orange-400/50 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-orange-400/10 disabled:opacity-40"
             >
-              Anotar como pendiente (sin comisión por ahora)
+              {esCompletarCita
+                ? `Completar y anotar como pendiente (${
+                    sinClienteRegistrado && hayLineaSinComision
+                      ? 'sin clienta registrada ni comisión por ahora'
+                      : sinClienteRegistrado
+                        ? 'sin clienta registrada por ahora'
+                        : 'sin comisión por ahora'
+                  })`
+                : 'Anotar como pendiente (sin comisión por ahora)'}
             </button>
           )}
         </form>
@@ -1094,12 +1186,11 @@ export default function ModalRegistroAtencion({
 
             <div>
               <Etiqueta obligatorio htmlFor={`${idBase}-fecha`}>Fecha y hora</Etiqueta>
-              <input
+              <InputFechaHora
+                bloquearDiasPasados={false}
                 id={`${idBase}-fecha`}
-                type="datetime-local"
                 value={formulario.fecha}
                 onChange={(evento) => actualizarCampo('fecha', evento.target.value)}
-                className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-purple-300"
               />
             </div>
 

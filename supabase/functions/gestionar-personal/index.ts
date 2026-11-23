@@ -29,7 +29,7 @@ const CORS = {
 
 const ROLES = ['ADMINISTRADOR', 'CAJERA', 'ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO'] as const
 type Rol = (typeof ROLES)[number]
-// Roles que atienden servicios y por eso llevan ficha en `asistentes` (comisión, citas, Mi Panel). La ficha del
+// Roles que atienden servicios y por eso llevan ficha en `asistentes` (comisión, citas, Mis atenciones). La ficha del
 // PERSONAL_APOYO sirve para su comisión; no sale como profesional en citas (migración rol_personal_apoyo).
 const ROLES_CON_FICHA: Rol[] = ['ASISTENTE', 'ENCARGADA', 'PERSONAL_APOYO']
 // ~100 años: el baneo de Auth es una duración, no un booleano.
