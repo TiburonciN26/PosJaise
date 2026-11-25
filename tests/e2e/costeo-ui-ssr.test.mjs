@@ -16,6 +16,10 @@ let FilaCosteoProducto;
 let Rentabilidad;
 
 before(async () => {
+  // Los componentes importan el cliente de Supabase (src/lib/supabase.js), que exige estas dos variables al cargarse. Este test no se
+  // conecta a nada (solo pinta HTML), pero en la CI no hay .env: se les da un valor de relleno si faltan. Vite lee las VITE_* de process.env.
+  process.env.VITE_SUPABASE_URL ||= 'http://127.0.0.1:54321';
+  process.env.VITE_SUPABASE_ANON_KEY ||= 'clave-de-relleno-solo-para-el-test';
   vite = await createServer({
     configFile: 'vite.config.js',
     server: { middlewareMode: true, hmr: false, watch: null },

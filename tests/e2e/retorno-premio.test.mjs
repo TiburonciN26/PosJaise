@@ -86,6 +86,10 @@ describe('RetornoEfectivo: lo que ve la administradora en el formulario', () => 
   let renderToStaticMarkup;
   let RetornoEfectivo;
   before(async () => {
+    // RetornoEfectivo importa el cliente de Supabase, que exige estas variables al cargarse; en la CI no hay .env. Este test solo pinta
+    // HTML (no se conecta a nada), así que basta un valor de relleno si faltan.
+    process.env.VITE_SUPABASE_URL ||= 'http://127.0.0.1:54321';
+    process.env.VITE_SUPABASE_ANON_KEY ||= 'clave-de-relleno-solo-para-el-test';
     vite = await createServer({
       configFile: 'vite.config.js', server: { middlewareMode: true, hmr: false, watch: null }, appType: 'custom', logLevel: 'error',
       optimizeDeps: { noDiscovery: true, include: [] },
