@@ -168,7 +168,7 @@ export default function TicketImprimible({ detalle, items }) {
         {adelanto > 0 && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Adelanto de la cita</span>
+              <span>Adelanto de la cita{detalle.adelanto_metodo ? ` (${detalle.adelanto_metodo})` : ''}</span>
               <span>-{formatearMonto(adelanto)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>

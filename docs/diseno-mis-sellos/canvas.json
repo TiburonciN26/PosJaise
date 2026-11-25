@@ -1,0 +1,24 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-25T12:00:00Z" },
+  "title": "Tarjeta de fidelización — 12 sellos (Mis sellos)",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "designSystems": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1640, "title": "Mis sellos · escritorio", "expand": "fill", "is_interactive": true },
+    "Movil.dc.html": { "x": 1520, "y": 0, "w": 390, "h": 2480, "title": "Mis sellos · móvil", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "Movil.dc.html"],
+  "notes": {
+    "titulo": { "kind": "title1", "text": "Tarjeta de 12 sellos — Mis sellos (prototipo)", "x": 0, "y": -300, "maxW": 1910, "w": 240 },
+    "como": {
+      "x": 1960, "y": 0, "w": 420, "fill": "green", "size": 24,
+      "text": "CÓMO PROBARLO\n\nPulsa Play (o abre en pantalla completa).\n\n• Arrastra la tarjeta para girarla 360° y ver el dorso.\n• «Sumar sello» estampa el siguiente sello con animación.\n• Cuando llegas al sello 4, 8 o 12 su disco se enciende: tócalo para reclamar el cupón y mira cómo cambia de estado.\n• Los botones de escenario de arriba saltan a cada situación.\n• En Tweaks puedes cambiar el acabado de la tarjeta (Diamante verde / Ónix / Plata / Diamante)."
+    },
+    "estados": {
+      "x": 1960, "y": 640, "w": 420, "fill": "blue", "size": 24,
+      "text": "REGALO MISTERIOSO (sellos 3, 7 y 11)\n\nMismo tamaño que un sello común: icono de regalo, aro del metal de su fila y latido cuando está listo. Al tocarlo se abre la ruleta sobre la tarjeta; siempre se gana algo y la casilla «Otra vez» no gasta el regalo. Los premios cambian por fila y son de ejemplo.\n\nESTADOS DEL SELLO DE META\n\n1 · Bloqueado: disco punteado con candado.\n2 · Disponible: disco metálico que late, con ondas y destello. Se puede tocar.\n3 · Reclamado: disco oscuro con aro de metal que gira, check y la etiqueta «Cupón activo».\n\nColor por fila: Plata (10 %), Oro (15 %), Diamante (20 %): los mismos metales de la tarjeta de puntos."
+    }
+  }
+}

@@ -25,7 +25,11 @@ const cupon = (c, o) => h.nuevoCupon(c.clienteId, o);
 
 async function servicioConAtencion(c, precioCatalogo, prot, precioAtencion = precioCatalogo) {
   const serv = await h.nuevoServicio(precioCatalogo, prot);
-  const at = await h.nuevaAtencion(c.clienteId, serv, precioAtencion);
+  // La mano de obra que protege un cupón es la comisión REAL de quien atendió: con un % > 0 la atención la hace una asistente con ese %
+  // (precio de la atención x %); sin %, la hace la dueña (sin pago en efectivo).
+  const at = prot?.asistentePct > 0
+    ? await h.nuevaAtencionConComision(c.clienteId, serv, precioAtencion, prot.asistentePct)
+    : await h.nuevaAtencion(c.clienteId, serv, precioAtencion);
   return { serv, at };
 }
 
@@ -277,7 +281,7 @@ describe('Servicios: porcentaje protegido de asistente', () => {
     await caso(100, 0.01, false); // 4 + 40 = 44 > precio: ningún cupón
   });
 
-  test('redondeo conservador al centavo: S33,33 al 45 % = 14,9985 → 15,00 (máximo S18,33)', async () => {
+  test('redondeo al centavo: S33,33 al 45 % = 14,9985 → 15,00 (máximo S18,33)', async () => {
     const c = await h.nuevaClienta();
     const { at } = await servicioConAtencion(c, 33.33, { asistentePct: 45 });
     const ok = await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(at)], cupon: (await cupon(c, { valor: 18.33 })).codigo });
@@ -307,12 +311,13 @@ describe('Servicios: porcentaje protegido de asistente', () => {
     assert.ok((await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(vieja.at)], cupon: (await cupon(c, { valor: 20 })).codigo })).ok);
     const v2 = await servicioConAtencion(c, 30, { materiales: 5, asistente: 5 });
     assert.equal((await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(v2.at)], cupon: (await cupon(c, { valor: 20.01 })).codigo })).ok, false);
-    // el importe antiguo NO se convierte en porcentaje (S/5 sobre S30 no es 5 %): al actualizar a 45 % sí cambia
-    await h.admin(`update public.servicios_proteccion set asistente_pct = 45 where servicio_id='${v2.serv}';`);
-    const v3 = await h.nuevaAtencion(c.clienteId, v2.serv, 30);
-    // protección 5 + 13,50 = 18,50 → máximo 11,50
-    assert.equal((await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(v3)], cupon: (await cupon(c, { valor: 11.51 })).codigo })).ok, false);
+    // el importe antiguo se conserva intacto en la base (no se borra ni se convierte en porcentaje)...
     assert.equal(await h.json(`select to_json(asistente) from public.servicios_proteccion where servicio_id='${v2.serv}'`), 5, 'el importe antiguo se conserva');
+    // ...pero ya NO manda en las ventas: la mano de obra es la comisión REAL de quien atendió. Materiales 5 + una asistente al 45 %
+    // sobre S30 (comisión 13,50) → protección 18,50 → máximo 11,50.
+    const v3s = await h.nuevoServicio(30, { materiales: 5 });
+    const v3 = await h.nuevaAtencionConComision(c.clienteId, v3s, 30, 45);
+    assert.equal((await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(v3)], cupon: (await cupon(c, { valor: 11.51 })).codigo })).ok, false);
     assert.ok((await h.vender({ clienteId: c.clienteId, items: [h.itemServicio(v3)], cupon: (await cupon(c, { valor: 11.5 })).codigo })).ok);
     // ausente: 50 % (S10 → máximo 5), incluso en la suma global
     const aus = await servicioConAtencion(c, 10);

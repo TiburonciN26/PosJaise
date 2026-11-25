@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Coins, Plus, Stamp, ShieldCheck, ShoppingBag, Settings2 } from 'lucide-react'
+import { Coins, Plus, Stamp, ShieldCheck, ShoppingBag, Settings2, TrendingUp } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { confirmarGuardado, envioDe } from '../lib/formulariosProtegidos.js'
 import { buscarServicios, servicioPorId } from '../lib/buscarServicios.js'
@@ -17,6 +17,13 @@ import { useListaPaginada } from '../hooks/useListaPaginada.js'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import Etiqueta from '../components/Etiqueta.jsx'
 import PaginadorLista from '../components/PaginadorLista.jsx'
+import FilaCosteoServicio from './recompensas/CosteoServicio.jsx'
+import FilaCosteoProducto from './recompensas/CosteoProducto.jsx'
+import { valoresDeCosteoProducto, valoresDeCosteoServicio } from '../lib/costeoRecompensas.js'
+import Rentabilidad from './recompensas/Rentabilidad.jsx'
+import RetornoEfectivo from './recompensas/RetornoEfectivo.jsx'
+import { AvisoError, Campo } from './recompensas/ui.jsx'
+import { CLASE_INPUT, soles } from './recompensas/formato.js'
 
 // Administración de Recompensas (Fase 2) — cuelga de /web, solo ADMINISTRADOR.
 // Las escrituras las limita el backend (RLS es_admin() en recompensas_catalogo,
@@ -31,8 +38,9 @@ import PaginadorLista from '../components/PaginadorLista.jsx'
 const PESTANAS = [
   { id: 'monedas', label: 'Catálogo de monedas', icono: Coins },
   { id: 'sellos', label: 'Premios de sellos', icono: Stamp },
-  { id: 'proteccion', label: 'Protección de servicios', icono: ShieldCheck },
-  { id: 'proteccion-productos', label: 'Protección de productos', icono: ShoppingBag },
+  { id: 'proteccion', label: 'Costeo de servicios', icono: ShieldCheck },
+  { id: 'proteccion-productos', label: 'Costeo de productos', icono: ShoppingBag },
+  { id: 'rentabilidad', label: 'Rentabilidad', icono: TrendingUp },
   { id: 'programa', label: 'Programa', icono: Settings2 },
 ]
 
@@ -42,10 +50,6 @@ const NIVELES = [
   { id: 'VIP', label: 'VIP' },
 ]
 
-const CLASE_INPUT =
-  'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none focus:border-azul-metal'
-
-const soles = (n) => `S/ ${Number(n).toFixed(2)}`
 const vacioANulo = (v) => (v === '' || v === null || v === undefined ? null : v)
 const aNumero = (v) => (vacioANulo(v) === null ? null : Number(v))
 // <input type="datetime-local"> <-> timestamptz ISO
@@ -152,31 +156,6 @@ function formularioAFila(f) {
   }
 }
 
-function Campo({ id, etiqueta, obligatorio, ayuda, children }) {
-  return (
-    <div>
-      <Etiqueta htmlFor={id} obligatorio={obligatorio}>
-        {etiqueta}
-      </Etiqueta>
-      {children}
-      {ayuda && <p className="mt-1 text-xs text-ink/50">{ayuda}</p>}
-    </div>
-  )
-}
-
-function AvisoError({ mensaje, onReintentar }) {
-  return (
-    <div role="alert" className="mt-3 rounded-lg border border-red/40 bg-red/10 px-3 py-2 text-sm text-red">
-      {mensaje}{' '}
-      {onReintentar && (
-        <button type="button" onClick={onReintentar} className="underline">
-          Reintentar
-        </button>
-      )}
-    </div>
-  )
-}
-
 // Selector del servicio del premio (Fase 5): busca en el servidor y muestra como máximo 40 opciones (más la elegida). Antes el
 // modal montaba un <option> por cada servicio de la tabla (miles) con solo abrirlo.
 function CampoServicioPremio({ id, valor, onCambiar }) {
@@ -235,7 +214,7 @@ function CampoServicioPremio({ id, valor, onCambiar }) {
 // ---------------------------------------------------------------------------
 // Modal de premio
 // ---------------------------------------------------------------------------
-function ModalPremio({ premio, origen, sellosPorPremio, onCerrar, onGuardado }) {
+function ModalPremio({ premio, origen, sellosPorPremio, tasas, onCerrar, onGuardado }) {
   const { mostrarToast } = useToast()
   const [f, setF] = useState(() => (premio ? premioAFormulario(premio) : premioVacio(origen)))
   const [guardando, setGuardando] = useState(false)
@@ -380,6 +359,8 @@ function ModalPremio({ premio, origen, sellosPorPremio, onCerrar, onGuardado }) 
             </p>
           )}
 
+          <RetornoEfectivo f={f} tasas={tasas} sellosPorPremio={sellosPorPremio} />
+
           <fieldset className="rounded-lg border border-border p-3">
             <legend className="px-1 text-xs text-ink/60">Período para reclamar</legend>
             <div className="grid grid-cols-2 gap-2">
@@ -513,7 +494,7 @@ function DetallePremio({ premio: p, origen, sellosPorPremio, canje, pedirCanje, 
 
 // Fase 5: el catálogo se lee paginado (hasta 40 premios por página) y SOLO al entrar a esta subpestaña; el detalle de cada premio
 // se monta y se consulta al expandirlo.
-function Catalogo({ origen, activo, sellosPorPremio }) {
+function Catalogo({ origen, activo, sellosPorPremio, tasas }) {
   const [editando, setEditando] = useState(null) // null | 'nuevo' | premio
   const [abiertos, setAbiertos] = useState(() => new Set())
   const [canjes, setCanjes] = useState({}) // id → { estado: 'cargando' | 'ok' | 'error', n }
@@ -606,6 +587,7 @@ function Catalogo({ origen, activo, sellosPorPremio }) {
           premio={editando === 'nuevo' ? null : editando}
           origen={origen}
           sellosPorPremio={sellosPorPremio}
+          tasas={tasas}
           onCerrar={() => setEditando(null)}
           onGuardado={() => {
             const id = editando === 'nuevo' ? null : editando.id
@@ -616,252 +598,6 @@ function Catalogo({ origen, activo, sellosPorPremio }) {
         />
       )}
     </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Protección por servicio
-// ---------------------------------------------------------------------------
-// Fase 5: los servicios se leen paginados (hasta 40 por página) con búsqueda en el servidor, y solo al entrar a esta subpestaña.
-// Los BORRADORES de cada fila (lo que la administradora escribió y aún no guardó) viven en el padre, por id de servicio: así
-// sobreviven a plegar la fila, cambiar de página y buscar, aunque el detalle de las filas cerradas ya no esté en el DOM.
-const valoresDeProteccion = (prot) => {
-  const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
-  return {
-    materiales: prot ? String(prot.materiales) : '',
-    pct: prot && !pendiente ? String(prot.asistente_pct) : '',
-    otros: prot ? String(prot.otros) : '',
-  }
-}
-
-function FilaProteccion({ servicio, prot, valores, abierto, destacado, onAlternar, onCambiar, onGuardado, onLimpiarBorrador }) {
-  const { mostrarToast } = useToast()
-  // Porcentaje protegido de asistente (estimación). Una protección ANTIGUA (importe fijo en S/) tiene asistente_pct nulo:
-  // conserva su importe y se muestra como pendiente de actualización; nunca se convierte sola en porcentaje.
-  const pendiente = Boolean(prot) && (prot.asistente_pct === null || prot.asistente_pct === undefined)
-  const v = valores
-  const [guardando, setGuardando] = useState(false)
-  const ref = useRef(null)
-  const idBase = useRef(`pt-${servicio.id.slice(0, 8)}`).current
-
-  useEffect(() => {
-    if (destacado) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [destacado])
-
-  const n = (x) => (x === '' ? 0 : Number(x))
-  const precio = Number(servicio.precio)
-  // Con el porcentaje vacío en una fila antigua se sigue usando su importe fijo; en una fila nueva vacío = 0 %.
-  const usaImporteAntiguo = pendiente && v.pct === ''
-  const asistenteImporte = usaImporteAntiguo ? Number(prot.asistente) : Math.ceil(precio * n(v.pct) - 1e-9) / 100
-  const total = n(v.materiales) + asistenteImporte + n(v.otros)
-  const pctInvalido = v.pct !== '' && !(Number(v.pct) >= 0 && Number(v.pct) <= 100)
-  const invalido = pctInvalido || [v.materiales, v.otros].some((x) => x !== '' && !(Number(x) >= 0))
-
-  async function guardar() {
-    if (invalido) return
-    setGuardando(true)
-    // No se escribe `asistente` (S/): el importe antiguo se conserva intacto para el histórico.
-    const { error } = await supabase.from('servicios_proteccion').upsert({
-      servicio_id: servicio.id,
-      materiales: n(v.materiales),
-      asistente_pct: v.pct === '' ? (pendiente ? null : 0) : Number(v.pct),
-      otros: n(v.otros),
-      actualizado_en: new Date().toISOString(),
-    })
-    setGuardando(false)
-    if (error) {
-      mostrarToast('No se pudo guardar la protección.', 'error')
-      return
-    }
-    mostrarToast('Protección guardada.', 'exito')
-    onLimpiarBorrador(servicio.id)
-    onGuardado()
-  }
-
-  async function quitar() {
-    setGuardando(true)
-    const { error } = await supabase.from('servicios_proteccion').delete().eq('servicio_id', servicio.id)
-    setGuardando(false)
-    if (error) {
-      mostrarToast('No se pudo quitar la configuración.', 'error')
-      return
-    }
-    mostrarToast('Servicio sin configurar.', 'exito')
-    onLimpiarBorrador(servicio.id)
-    onGuardado()
-  }
-
-  return (
-    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
-      <button type="button" aria-expanded={abierto} onClick={() => onAlternar(servicio.id)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-medium text-ink">{servicio.nombre}</span>
-          <span className="block font-mono text-xs text-ink/60">Precio {soles(servicio.precio)}</span>
-        </span>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${prot ? 'bg-green/15 text-green' : 'bg-surface-2 text-ink/60'}`}>
-          {prot ? (pendiente ? `Pendiente de actualizar · ${soles(prot.total)}` : 'Protegido') : 'Sin configurar'}
-        </span>
-      </button>
-      {abierto && (
-        <div className="border-t border-border p-3">
-          <div className="grid grid-cols-3 gap-2">
-            <Campo id={`${idBase}-m`} etiqueta="Materiales protegidos (S/)">
-              <input id={`${idBase}-m`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.materiales} onChange={(e) => onCambiar(servicio.id, { ...v, materiales: e.target.value })} />
-            </Campo>
-            <Campo id={`${idBase}-a`} etiqueta="Porcentaje protegido de asistente (%)">
-              <input id={`${idBase}-a`} type="number" min="0" max="100" step="0.01" className={CLASE_INPUT} value={v.pct} placeholder={pendiente ? 'Sin actualizar' : ''} onChange={(e) => onCambiar(servicio.id, { ...v, pct: e.target.value })} />
-            </Campo>
-            <Campo id={`${idBase}-o`} etiqueta="Otros costos directos (S/)">
-              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => onCambiar(servicio.id, { ...v, otros: e.target.value })} />
-            </Campo>
-          </div>
-          {pendiente && (
-            <p className="mt-2 rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-ink/80">
-              Esta protección todavía usa el importe fijo antiguo de {soles(prot.asistente)} para la asistente. Escribe un
-              porcentaje y guarda para actualizarla; mientras tanto se conserva ese importe.
-            </p>
-          )}
-          <p className="mt-2 font-mono text-xs text-ink/70">
-            Protección del servicio: {soles(total)} (precio {soles(precio)}; asistente {soles(asistenteImporte)}) · si fuera el único artículo del carrito, descuento máximo de un cupón: {soles(Math.max(precio - total, 0))}
-          </p>
-          <p className="mt-1 text-xs text-ink/50">
-            El porcentaje de asistente es una ESTIMACIÓN que tú defines sobre el precio realmente cobrado en la atención:
-            no consulta las comisiones reales y puede no cubrir una comisión real mayor. La protección total de un cupón es la
-            suma de todo el carrito. Guardar con todo en 0 es una decisión explícita (el servicio admite neto 0).
-            «Sin configurar» no es cero: los cupones descuentan hasta el 50 % del precio. Esto no cambia las comisiones
-            ni los pagos reales.
-          </p>
-          <div className="mt-3 flex gap-2">
-            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">
-              {guardando ? 'Guardando...' : 'Guardar protección'}
-            </button>
-            {prot && (
-              <button type="button" onClick={quitar} disabled={guardando} className="rounded-lg border border-border-strong px-3 py-2 text-sm text-ink disabled:opacity-40">
-                Dejar sin configurar
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </li>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Protección por producto (por unidad: costo de compra registrado + transporte de abastecimiento + otros)
-// ---------------------------------------------------------------------------
-// El costo de compra NO se copia ni se edita aquí: se lee de Inventario (productos.costo, visible solo para el
-// administrador mediante productos_vista). El transporte de abastecimiento es distinto del envío cobrado a la clienta.
-// Un costo 0 sin confirmar es DESCONOCIDO: bloquea el uso de cupones hasta que el administrador lo confirme.
-const valoresDeProteccionProducto = (prot) => ({
-  transporte: prot ? String(prot.transporte) : '',
-  otros: prot ? String(prot.otros) : '',
-  confirmado: Boolean(prot?.costo_confirmado),
-})
-
-function FilaProteccionProducto({ producto, prot, valores, abierto, destacado, onAlternar, onCambiar, onGuardado, onLimpiarBorrador }) {
-  const { mostrarToast } = useToast()
-  const v = valores
-  const [guardando, setGuardando] = useState(false)
-  const ref = useRef(null)
-  const idBase = useRef(`pp-${producto.id.slice(0, 8)}`).current
-
-  useEffect(() => {
-    if (destacado) ref.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-  }, [destacado])
-
-  const n = (x) => (x === '' ? 0 : Number(x))
-  const costo = Number(producto.costo ?? 0)
-  const conocido = costo > 0 || v.confirmado
-  const unitaria = costo + n(v.transporte) + n(v.otros)
-  const invalido = [v.transporte, v.otros].some((x) => x !== '' && !(Number(x) >= 0))
-  const guardadoConocido = costo > 0 || Boolean(prot?.costo_confirmado)
-
-  async function guardar() {
-    if (invalido) return
-    setGuardando(true)
-    const { error } = await supabase.from('productos_proteccion').upsert({
-      producto_id: producto.id,
-      transporte: n(v.transporte),
-      otros: n(v.otros),
-      costo_confirmado: v.confirmado,
-      actualizado_en: new Date().toISOString(),
-    })
-    setGuardando(false)
-    if (error) {
-      mostrarToast('No se pudo guardar la protección del producto.', 'error')
-      return
-    }
-    mostrarToast('Protección del producto guardada.', 'exito')
-    onLimpiarBorrador(producto.id)
-    onGuardado()
-  }
-
-  async function quitar() {
-    setGuardando(true)
-    const { error } = await supabase.from('productos_proteccion').delete().eq('producto_id', producto.id)
-    setGuardando(false)
-    if (error) {
-      mostrarToast('No se pudo quitar la configuración.', 'error')
-      return
-    }
-    mostrarToast('Producto sin importes adicionales.', 'exito')
-    onLimpiarBorrador(producto.id)
-    onGuardado()
-  }
-
-  return (
-    <li ref={ref} className={`rounded-lg border bg-surface ${destacado ? 'border-azul-metal' : 'border-border'}`}>
-      <button type="button" aria-expanded={abierto} onClick={() => onAlternar(producto.id)} className="flex w-full items-center justify-between gap-2 p-3 text-left">
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-medium text-ink">{producto.nombre}</span>
-          <span className="block font-mono text-xs text-ink/60">Precio {soles(producto.precio)} · Costo registrado {soles(costo)}</span>
-        </span>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${guardadoConocido ? 'bg-green/15 text-green' : 'bg-red/15 text-red'}`}>
-          {guardadoConocido ? 'Protegido' : 'Costo por revisar'}
-        </span>
-      </button>
-      {abierto && (
-        <div className="border-t border-border p-3">
-          <p className="font-mono text-xs text-ink/70">
-            Costo de compra registrado: {soles(costo)} (se edita en Inventario; aquí no se copia).
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <Campo id={`${idBase}-t`} etiqueta="Transporte de abastecimiento por unidad (S/)">
-              <input id={`${idBase}-t`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.transporte} onChange={(e) => onCambiar(producto.id, { ...v, transporte: e.target.value })} />
-            </Campo>
-            <Campo id={`${idBase}-o`} etiqueta="Otros importes protegidos por unidad (S/)">
-              <input id={`${idBase}-o`} type="number" min="0" step="0.01" className={CLASE_INPUT} value={v.otros} onChange={(e) => onCambiar(producto.id, { ...v, otros: e.target.value })} />
-            </Campo>
-          </div>
-          {costo === 0 && (
-            <label className="mt-3 flex items-start gap-2 text-sm text-ink">
-              <input type="checkbox" className="mt-1" checked={v.confirmado} onChange={(e) => onCambiar(producto.id, { ...v, confirmado: e.target.checked })} />
-              <span>Confirmo que el costo de compra de este producto es realmente S/ 0,00. Sin esta confirmación el costo se considera desconocido y los cupones no se podrán usar en compras que lo incluyan.</span>
-            </label>
-          )}
-          <p className="mt-2 font-mono text-xs text-ink/70">
-            {conocido
-              ? `Protección por unidad: ${soles(unitaria)} · descuento máximo de un cupón si fuera el único artículo (1 unidad): ${soles(Math.max(Number(producto.precio) - unitaria, 0))}`
-              : 'Costo desconocido: los cupones quedan bloqueados para compras con este producto.'}
-          </p>
-          <p className="mt-1 text-xs text-ink/50">
-            El transporte de abastecimiento no es el envío que paga la clienta. No se suman reserva, diezmo ni gastos generales
-            salvo que los escribas en «otros». Esto limita cupones: las ventas sin cupón no cambian.
-          </p>
-          <div className="mt-3 flex gap-2">
-            <button type="button" onClick={guardar} disabled={guardando || invalido} className="flex-1 rounded-lg bg-azul-metal py-2 text-sm font-semibold text-bg disabled:opacity-40">
-              {guardando ? 'Guardando...' : 'Guardar protección'}
-            </button>
-            {prot && (
-              <button type="button" onClick={quitar} disabled={guardando} className="rounded-lg border border-border-strong px-3 py-2 text-sm text-ink disabled:opacity-40">
-                Quitar importes adicionales
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </li>
   )
 }
 
@@ -904,7 +640,7 @@ function useBorradoresPorId(valoresDe, tipo, almacen) {
 function ProteccionProductos({ productoFoco, activo, almacen }) {
   const [filtro, setFiltro] = useState('')
   const termino = useDebounce(filtro.trim(), 250)
-  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeProteccionProducto, 'producto', almacen)
+  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeCosteoProducto, 'producto', almacen)
 
   // Búsqueda, orden y límite en el SERVIDOR (el catálogo supera las 1000 filas de max_rows); hasta 40 por página con total exacto.
   const lista = useListaPaginada({
@@ -921,12 +657,18 @@ function ProteccionProductos({ productoFoco, activo, almacen }) {
       const res = await consulta.range(desde, hasta)
       if (res.error) return res
       const ids = res.data.map((p) => p.id)
-      const pr = ids.length
-        ? await supabase.from('productos_proteccion').select('producto_id, transporte, otros, costo_confirmado, actualizado_en').in('producto_id', ids)
-        : { data: [], error: null }
-      if (pr.error) return { data: null, count: null, error: pr.error }
+      const [pr, ln] = ids.length
+        ? await Promise.all([
+            supabase.from('productos_proteccion').select('producto_id, transporte, otros, costo_confirmado, actualizado_en').in('producto_id', ids),
+            supabase.from('productos_costos_detalle').select('id, producto_id, categoria, descripcion, monto, orden').in('producto_id', ids),
+          ])
+        : [{ data: [], error: null }, { data: [], error: null }]
+      const falla = pr.error ?? ln.error
+      if (falla) return { data: null, count: null, error: falla }
       const mapa = Object.fromEntries(pr.data.map((p) => [p.producto_id, p]))
-      return { ...res, data: res.data.map((p) => ({ ...p, prot: mapa[p.id] ?? null })) }
+      const lineas = {}
+      for (const l of ln.data) (lineas[l.producto_id] ??= []).push(l)
+      return { ...res, data: res.data.map((p) => ({ ...p, prot: mapa[p.id] ? { ...mapa[p.id], lineas: lineas[p.id] ?? [] } : null })) }
     },
   })
 
@@ -953,7 +695,7 @@ function ProteccionProductos({ productoFoco, activo, almacen }) {
       {!lista.cargando && !lista.error && (
         <ul className={`mt-3 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
           {lista.filas.map((p) => (
-            <FilaProteccionProducto
+            <FilaCosteoProducto
               key={p.id}
               producto={p}
               prot={p.prot}
@@ -979,7 +721,18 @@ function ProteccionProductos({ productoFoco, activo, almacen }) {
 function Proteccion({ servicioFoco, activo, almacen }) {
   const [filtro, setFiltro] = useState('')
   const termino = useDebounce(filtro.trim(), 250)
-  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeProteccion, 'servicio', almacen)
+  const { abiertas, alternar, abrir, cambiar, limpiar, valoresDeFila } = useBorradoresPorId(valoresDeCosteoServicio, 'servicio', almacen)
+  // Sugerencias de costo del almacén (solo lectura, solo administradora): si no cargan, simplemente no se ofrece el selector.
+  const [sugeridos, setSugeridos] = useState([])
+  useEffect(() => {
+    let vivo = true
+    supabase.rpc('almacen_costos_sugeridos').then(({ data, error }) => {
+      if (vivo && !error && Array.isArray(data)) setSugeridos(data)
+    })
+    return () => {
+      vivo = false
+    }
+  }, [])
 
   const lista = useListaPaginada({
     activo,
@@ -995,12 +748,35 @@ function Proteccion({ servicioFoco, activo, almacen }) {
       const res = await consulta.range(desde, hasta)
       if (res.error) return res
       const ids = res.data.map((s) => s.id)
-      const pr = ids.length
-        ? await supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en').in('servicio_id', ids)
-        : { data: [], error: null }
-      if (pr.error) return { data: null, count: null, error: pr.error }
+      const [pr, ln, pc] = ids.length
+        ? await Promise.all([
+            supabase.from('servicios_proteccion').select('servicio_id, materiales, asistente, asistente_pct, otros, total, actualizado_en').in('servicio_id', ids),
+            supabase.from('servicios_costos_detalle').select('id, servicio_id, categoria, descripcion, almacen_articulo_id, cantidad, unidad, costo_unitario, costo_compra, rinde, orden').in('servicio_id', ids),
+            supabase.from('porcentajes').select('servicio_id, porcentaje, asistentes(nombres_completos, activo, usuarios(rol))').in('servicio_id', ids),
+          ])
+        : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }]
+      const falla = pr.error ?? ln.error ?? pc.error
+      if (falla) return { data: null, count: null, error: falla }
       const mapa = Object.fromEntries(pr.data.map((p) => [p.servicio_id, p]))
-      return { ...res, data: res.data.map((s) => ({ ...s, prot: mapa[s.id] ?? null })) }
+      const lineas = {}
+      for (const l of ln.data) (lineas[l.servicio_id] ??= []).push(l)
+      // Solo asistentes ACTIVAS que no son administradoras (la dueña se queda con el 100 %: no es un pago en efectivo).
+      const asistentes = {}
+      for (const p of pc.data) {
+        const a = p.asistentes
+        if (!a?.activo || a.usuarios?.rol === 'ADMINISTRADOR' || p.porcentaje === null) continue
+        ;(asistentes[p.servicio_id] ??= []).push({ nombre: a.nombres_completos, porcentaje: Number(p.porcentaje) })
+      }
+      for (const lista of Object.values(asistentes)) lista.sort((x, y) => x.nombre.localeCompare(y.nombre, 'es'))
+      // Los costos pueden quedar sin fila de protección (nunca: la función de guardado crea ambas), pero la asistente sí existe aparte.
+      return {
+        ...res,
+        data: res.data.map((s) => ({
+          ...s,
+          prot: mapa[s.id] ? { ...mapa[s.id], lineas: lineas[s.id] ?? [], asistentes: asistentes[s.id] ?? [] } : null,
+          asistentes: asistentes[s.id] ?? [],
+        })),
+      }
     },
   })
 
@@ -1026,10 +802,12 @@ function Proteccion({ servicioFoco, activo, almacen }) {
       {!lista.cargando && !lista.error && (
         <ul className={`mt-3 space-y-2 transition-opacity ${lista.ocupado ? 'opacity-60' : ''}`}>
           {lista.filas.map((s) => (
-            <FilaProteccion
+            <FilaCosteoServicio
               key={s.id}
               servicio={s}
               prot={s.prot}
+              asistentes={s.asistentes}
+              sugeridos={sugeridos}
               valores={valoresDeFila(s.id, s.prot)}
               abierto={abiertas.has(s.id)}
               destacado={servicioFoco === s.id}
@@ -1278,10 +1056,15 @@ export default function RecompensasWeb({ activo = true }) {
               origen={pestana === 'monedas' ? 'MONEDAS' : 'SELLOS'}
               activo={activo}
               sellosPorPremio={config.sellos_por_premio}
+              tasas={{
+                serv: { monedas: Number(config.tasa_serv_monedas), soles: Number(config.tasa_serv_soles) },
+                prod: { monedas: Number(config.tasa_prod_monedas), soles: Number(config.tasa_prod_soles) },
+              }}
             />
           )}
           {pestana === 'proteccion' && <Proteccion servicioFoco={servicioFoco} activo={activo} almacen={almacen} />}
           {pestana === 'proteccion-productos' && <ProteccionProductos productoFoco={productoFoco} activo={activo} almacen={almacen} />}
+          {pestana === 'rentabilidad' && <Rentabilidad activo={activo} />}
           {pestana === 'programa' && <Programa key={`${usuario?.id ?? 'sin-cuenta'}-${config.actualizado_en}`} config={config} recargar={cargar} almacen={almacen} />}
         </div>
       )}

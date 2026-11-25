@@ -42,7 +42,7 @@ test('0. Entorno: el frontend sirve la URL del ensayo y Auth/REST/SQL usan la mi
   const bases = await verificarEntorno(request);
   expect(bases).toEqual({ auth: 'postgres', rest: 'postgres', sql: 'postgres' });
   nota('migraciones_registradas_en_la_base', await sql(`select count(*) from supabase_migrations.schema_migrations`));
-  nota('guardar_cita_pos_existe', await sql(`select to_regprocedure('public.guardar_cita_pos(uuid,uuid,text,uuid,timestamptz,text,numeric,jsonb)') is not null`));
+  nota('guardar_cita_pos_existe', await sql(`select to_regprocedure('public.guardar_cita_pos(uuid,uuid,text,uuid,timestamptz,text,numeric,jsonb,numeric,text,jsonb)') is not null`));
   nota('programa_recompensas', await estadoPrograma());
 });
 
@@ -156,7 +156,7 @@ test('6. Citas: guardado en 3 pasos del frontend de main y completar la cita', a
 });
 
 test('7. Citas: guardar_cita_pos (frontend nuevo) existe y es atómica', async ({ request }) => {
-  const existe = (await sql(`select to_regprocedure('public.guardar_cita_pos(uuid,uuid,text,uuid,timestamptz,text,numeric,jsonb)') is not null`)) === 't';
+  const existe = (await sql(`select to_regprocedure('public.guardar_cita_pos(uuid,uuid,text,uuid,timestamptz,text,numeric,jsonb,numeric,text,jsonb)') is not null`)) === 't';
   nota('guardar_cita_pos_disponible', existe);
   test.skip(!existe, 'guardar_cita_pos no existe en este momento del backend (esperado ANTES de la actualización)');
   const adm = await sesion(request, R.cuentas.ADMINISTRADOR);

@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle, Check, Percent } from 'lucide-react'
+import { X, User, UserPlus, Scissors, UserRoundPlus, PlusCircle, Check, Percent, CalendarClock } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useAvisoDescarte } from '../hooks/useAvisoDescarte.jsx'
@@ -15,6 +15,7 @@ import { SIN_SUGERENCIAS } from '../lib/sinSugerencias.js'
 import InputFechaHora from './InputFechaHora.jsx'
 import AyudaCampo from './AyudaCampo.jsx'
 import ModalCliente from './ModalCliente.jsx'
+import { puedeRegistrarClientes } from '../lib/permisosClientes.js'
 import ModalServicio from './ModalServicio.jsx'
 import { categoriasDeServicios, LIMITE_SERVICIOS } from '../lib/buscarServicios.js'
 import { useBusquedaServicios } from '../hooks/useBusquedaServicios.js'
@@ -22,12 +23,16 @@ import { useServiciosConComision } from '../hooks/useServiciosConComision.js'
 import { useInasistenciasClienta } from '../hooks/useInasistenciasClienta.js'
 import { useHorarioAtencionSemana } from '../hooks/useHorarioAtencionSemana.js'
 import { textoInasistencias } from '../lib/inasistencias.js'
-import { adelantoSuperaTotal, totalServiciosCita } from '../lib/adelantoCita.js'
+import { adelantoSuperaTotal, descuentoSuperaTotal, totalServiciosCita } from '../lib/adelantoCita.js'
+import BotonesMetodoPago from './BotonesMetodoPago.jsx'
+import { sesionesSiguientes, validarSesiones } from '../lib/sesionesCita.js'
+import CampoColapsable from './CampoColapsable.jsx'
 import { formatearSoles } from '../lib/moneda.js'
 import { avisoHorarioCita } from '../lib/avisoHorarioCita.js'
 import { horaSugeridaCita } from '../lib/horaSugeridaCita.js'
 import { citasQueChocan, textoChoques } from '../lib/choquesCita.js'
 import { useCitasDeAsistenteEnElDia } from '../hooks/useCitasDeAsistenteEnElDia.js'
+import { useCitasDeAsistenteEnDias } from '../hooks/useCitasDeAsistenteEnDias.js'
 import SelectorDesplegable from './SelectorDesplegable.jsx'
 
 // Asistente y Adelanto o abono: etiqueta a la izquierda y campo a la derecha, en una sola línea (7rem + hueco de 0.5rem
@@ -178,6 +183,8 @@ function formularioVacio(fechaSugerida) {
     fechaHora: aInputDatetimeLima(fechaSugerida ?? new Date()),
     nota: '',
     adelanto: '',
+    adelantoMetodo: '',
+    descuento: '',
   }
 }
 
@@ -188,11 +195,13 @@ function formularioDesdeCita(cita) {
     fechaHora: aInputDatetimeLima(new Date(cita.fecha_hora)),
     nota: cita.nota ?? '',
     adelanto: cita.adelanto != null ? String(cita.adelanto) : '',
+    adelantoMetodo: cita.adelanto_metodo ?? '',
+    descuento: cita.descuento != null ? String(cita.descuento) : '',
   }
 }
 
 // «Agendar otra igual» (desde una cita completada): misma clienta, asistente y servicios, y la misma hora 4 semanas después (el día de
-// la semana no cambia). Sin nota ni adelanto: eran de la cita anterior. Todo se puede cambiar antes de guardar.
+// la semana no cambia). Sin nota, adelanto ni descuento: eran de la cita anterior. Todo se puede cambiar antes de guardar.
 const MS_CUATRO_SEMANAS = 28 * 24 * 60 * 60 * 1000
 function formularioDesdePlantilla(cita) {
   return {
@@ -200,6 +209,8 @@ function formularioDesdePlantilla(cita) {
     fechaHora: aInputDatetimeLima(new Date(new Date(cita.fecha_hora).getTime() + MS_CUATRO_SEMANAS)),
     nota: '',
     adelanto: '',
+    adelantoMetodo: '',
+    descuento: '',
   }
 }
 
@@ -239,6 +250,14 @@ function validar(formulario, lineas, puedeElegirAsistente, clienteReferencia) {
     }
   }
 
+  if (formulario.descuento.trim()) {
+    const descuento = parseFloat(formulario.descuento)
+    if (Number.isNaN(descuento) || descuento < 0) return 'El descuento no es válido.'
+    if (descuentoSuperaTotal(formulario.descuento, formulario.adelanto, totalServiciosCita(lineas))) {
+      return 'El adelanto y el descuento no pueden superar el total de los servicios.'
+    }
+  }
+
   return null
 }
 
@@ -252,10 +271,9 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
   // QA-001: la RLS de servicios solo deja insertar al ADMINISTRADOR; no se
   // ofrece una acción que el servidor va a rechazar.
   const puedeCrearServicio = usuario.rol === 'ADMINISTRADOR'
-  // Igual con los clientes: la RLS de clientes solo deja INSERTAR a la ADMINISTRADORA (clientes_insert_admin). A asistente,
-  // encargada y cajera no se les ofrece «Registrar como cliente nuevo» (fallaba al guardar); pueden elegir una clienta ya
-  // registrada o usar un nombre de referencia sin guardar.
-  const puedeCrearCliente = usuario.rol === 'ADMINISTRADOR'
+  // Registrar una clienta nueva desde aquí: administradora, cajera, encargada y asistente (crear_cliente_personal, migración
+  // 20261124000006). El nombre de referencia sin guardar sigue disponible para quien no pueda registrar (p. ej. personal de apoyo).
+  const puedeCrearCliente = puedeRegistrarClientes(usuario.rol)
   // Solo la administradora asigna comisiones: desde el aviso «Sin comisión» del carrito va a la pestaña Comisiones, que abre
   // ese servicio y destraba el campo del % de esta asistente. El modal sigue abierto (la pantalla de Citas queda montada y
   // oculta, con la cita a medias intacta); al volver, el aviso se apaga solo si el % ya se asignó.
@@ -282,6 +300,8 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
   )
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
+  // Fechas de las sesiones siguientes que se editaron a mano ({ [número de sesión]: 'AAAA-MM-DDTHH:mm' }); el resto se propone sola.
+  const [cambiosSesiones, setCambiosSesiones] = useState({})
   // Igual que el carrito de Ventas/Mis atenciones: en táctil se elimina
   // deslizando la fila, en mouse/trackpad se conserva el botón ✕.
   const [esTactil] = useState(
@@ -483,6 +503,9 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
         nombre: servicio.nombre,
         duracionMin: servicio.duracion_min ? String(servicio.duracion_min) : '30',
         precio: servicio.precio != null ? String(servicio.precio) : '',
+        // Tratamiento por sesiones (Servicios): con él, Nueva cita propone las sesiones siguientes.
+        sesionesTotal: servicio.sesiones_total ?? 1,
+        sesionesIntervaloDias: servicio.sesiones_intervalo_dias ?? null,
       },
       ...anterior,
     ])
@@ -521,7 +544,8 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
   async function guardar(evento) {
     evento.preventDefault()
 
-    const mensajeError = validar(formulario, lineas, puedeElegirAsistente, clienteReferencia)
+    const mensajeError =
+      validar(formulario, lineas, puedeElegirAsistente, clienteReferencia) ?? validarSesiones(formulario.fechaHora, sesiones)
     if (mensajeError) {
       setError(mensajeError)
       return
@@ -547,6 +571,21 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
         duracion_min: parseInt(linea.duracionMin, 10),
         precio: parseFloat(linea.precio),
       })),
+      // Descuento acordado (Ventas lo aplica solo al cobrar) y cómo se pagó el adelanto (informativo): migración 20261124000007.
+      p_descuento: formulario.descuento.trim() ? parseFloat(formulario.descuento) : null,
+      p_adelanto_metodo: formulario.adelanto.trim() && parseFloat(formulario.adelanto) > 0 ? formulario.adelantoMetodo || null : null,
+      // Sesiones siguientes de un tratamiento (solo al crear): se crean en la misma transacción, con la misma clienta y asistente,
+      // y SIN adelanto ni descuento (son solo de la primera sesión). Migración 20261125000001.
+      p_sesiones: sesiones.length
+        ? sesiones.map((sesion) => ({
+            fecha_hora: deInputDatetimeLima(sesion.fechaHora).toISOString(),
+            servicios: sesion.lineas.map((linea) => ({
+              servicio_id: linea.servicioId,
+              duracion_min: parseInt(linea.duracionMin, 10),
+              precio: parseFloat(linea.precio),
+            })),
+          }))
+        : null,
     })
 
     setGuardando(false)
@@ -568,6 +607,18 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
   const totalServicios = totalServiciosCita(lineas)
   const adelantoLleno = formulario.adelanto.trim() !== ''
   const adelantoExcedido = adelantoSuperaTotal(formulario.adelanto, totalServicios)
+  const adelantoConMonto = parseFloat(formulario.adelanto) > 0
+  const descuentoLleno = formulario.descuento.trim() !== ''
+  // El descuento comparte tope con el adelanto: entre los dos no pueden pasar del total de los servicios.
+  const descuentoExcedido = descuentoSuperaTotal(formulario.descuento, formulario.adelanto, totalServicios)
+
+  // Sesiones siguientes de un tratamiento: solo al CREAR (editar una cita no toca a las demás sesiones).
+  const sesiones = esEdicion ? [] : sesionesSiguientes({ fechaHora: formulario.fechaHora, lineas, cambios: cambiosSesiones })
+  // Choque de la asistente en cada sesión siguiente (solo avisa, igual que en la primera).
+  const citasAsistenteSesiones = useCitasDeAsistenteEnDias(
+    formulario.asistenteId || null,
+    sesiones.map((sesion) => sesion.fechaHora.split('T')[0]),
+  )
 
   const duracionTotalMin = lineas.reduce((total, linea) => total + (parseInt(linea.duracionMin, 10) || 0), 0)
   const avisoHorario = avisoHorarioCita({ fechaHora: formulario.fechaHora, duracionTotalMin, semana: semanaAtencion })
@@ -589,13 +640,16 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
     fechaHora: formulario.fechaHora,
     servicios: lineas,
     adelanto: formulario.adelanto,
+    adelantoMetodo: formulario.adelantoMetodo,
+    descuento: formulario.descuento,
+    sesiones: Object.keys(cambiosSesiones).length ? JSON.stringify(cambiosSesiones) : '',
     nota: formulario.nota,
   }
   const valoresBase = useRef(valoresFormulario)
   const cambios = listarCambios(
     valoresBase.current,
     valoresFormulario,
-    { cliente: 'Cliente', asistenteId: 'Asistente', fechaHora: 'Fecha y hora', servicios: 'Servicios', adelanto: 'Adelanto', nota: 'Nota' },
+    { cliente: 'Cliente', asistenteId: 'Asistente', fechaHora: 'Fecha y hora', servicios: 'Servicios', adelanto: 'Adelanto', adelantoMetodo: 'Método del adelanto', descuento: 'Descuento', sesiones: 'Fechas de las sesiones siguientes', nota: 'Nota' },
     { sinValor: ['asistenteId'] },
   )
   const { intentarCerrar, aviso } = useAvisoDescarte({ cambios, onCerrar, bloqueado: guardando })
@@ -960,6 +1014,51 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
               {avisoChoque && <p className="mt-1 text-[11px] text-orange-400">{avisoChoque}</p>}
             </div>
 
+            {/* Tratamiento por sesiones: al elegir un servicio configurado así en Servicios, las sesiones siguientes se proponen solas
+                (misma asistente, fecha y hora editables). El adelanto y el descuento de abajo son solo de la sesión 1. */}
+            <CampoColapsable abierto={sesiones.length > 0}>
+              <div className="space-y-2 rounded-lg border border-pink-400/30 bg-pink-400/5 p-2.5">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-pink-400">
+                  <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                  Tratamiento de {sesiones.length + 1} sesiones: se agendan solas
+                </p>
+                {sesiones.map((sesion) => {
+                  const duracionSesion = sesion.lineas.reduce((total, linea) => total + (parseInt(linea.duracionMin, 10) || 0), 0)
+                  const avisoSesion = avisoHorarioCita({ fechaHora: sesion.fechaHora, duracionTotalMin: duracionSesion, semana: semanaAtencion })
+                  const avisoChoqueSesion = textoChoques(
+                    asistentes.find((a) => a.id === formulario.asistenteId)?.nombres_completos,
+                    citasQueChocan({
+                      fechaHora: sesion.fechaHora,
+                      duracionTotalMin: duracionSesion,
+                      citas: citasAsistenteSesiones[sesion.fechaHora.split('T')[0]] ?? [],
+                    }),
+                  )
+                  return (
+                    <div key={sesion.numero}>
+                      <Etiqueta obligatorio htmlFor={`${idBase}-sesion-${sesion.numero}`}>
+                        Sesión {sesion.numero} de {sesiones.length + 1}
+                      </Etiqueta>
+                      <InputFechaHora
+                        id={`${idBase}-sesion-${sesion.numero}`}
+                        bloquearDiasPasados
+                        resaltado={Boolean(sesion.fechaHora)}
+                        value={sesion.fechaHora}
+                        onChange={(evento) =>
+                          setCambiosSesiones((anterior) => ({ ...anterior, [sesion.numero]: evento.target.value }))
+                        }
+                      />
+                      {avisoSesion && <p className="mt-1 text-[11px] text-orange-400">{avisoSesion}</p>}
+                      {avisoChoqueSesion && <p className="mt-1 text-[11px] text-orange-400">{avisoChoqueSesion}</p>}
+                    </div>
+                  )
+                })}
+                <p className="text-[11px] text-ink/60">
+                  Misma clienta y misma asistente. El adelanto y el descuento son solo de la sesión 1. Si cancelas la sesión 1, se
+                  cancelan las demás.
+                </p>
+              </div>
+            </CampoColapsable>
+
             <div>
             <div className={FILA_CAMPO}>
               <div className="flex items-center gap-1">
@@ -1002,6 +1101,62 @@ export default function ModalCita({ cita, plantilla = null, fechaSugerida, onCer
                 {lineas.length === 0
                   ? 'Primero agrega los servicios.'
                   : `El adelanto no puede superar ${formatearSoles(totalServicios)}.`}
+              </p>
+            )}
+            </div>
+
+            {/* ¿Cómo se pagó el adelanto? Solo informativo (no mueve caja): se guarda en la cita y aparece junto al adelanto en el detalle
+                de la venta. Se despliega al escribir un adelanto. */}
+            <CampoColapsable abierto={adelantoConMonto}>
+              <div className="pb-0.5">
+                <p className="mb-1.5 text-xs text-ink">¿Cómo se pagó el adelanto?</p>
+                <BotonesMetodoPago
+                  valor={formulario.adelantoMetodo}
+                  onElegir={(metodo) => actualizarCampo('adelantoMetodo', metodo)}
+                  etiquetaGrupo="Método con el que se pagó el adelanto"
+                />
+              </div>
+            </CampoColapsable>
+
+            <div>
+            <div className={FILA_CAMPO}>
+              <div className="flex items-center gap-1">
+                <Etiqueta htmlFor={`${idBase}-descuento`} className="block">Descuento</Etiqueta>
+                <AyudaCampo etiqueta="Ayuda sobre el descuento">
+                  Descuento acordado con la clienta (en soles). A diferencia del adelanto, este dinero NO entra a caja: al cobrar la
+                  atención de esta cita en Ventas el descuento se aplica solo y cuenta como descuento en el Dashboard.
+                </AyudaCampo>
+              </div>
+              <div
+                className={`flex items-center gap-1 rounded-lg border px-3 py-2 transition-colors ${
+                  descuentoExcedido
+                    ? 'border-red bg-red/10'
+                    : descuentoLleno
+                      ? 'border-red/60 bg-red/5 focus-within:border-purple-300'
+                      : 'border-border bg-surface-2 focus-within:border-purple-300'
+                }`}
+              >
+                <span className={`text-sm ${descuentoLleno ? 'text-red' : 'text-ink/50'}`}>S/</span>
+                <input
+                  id={`${idBase}-descuento`}
+                  type="search"
+                  inputMode="decimal"
+                  {...SIN_SUGERENCIAS}
+                  value={formulario.descuento}
+                  onChange={(evento) => actualizarCampo('descuento', evento.target.value)}
+                  aria-invalid={descuentoExcedido}
+                  placeholder="Opcional"
+                  className={`w-full bg-transparent text-sm outline-none placeholder:text-ink/60 ${
+                    descuentoLleno ? 'text-red' : 'text-ink'
+                  }`}
+                />
+              </div>
+            </div>
+            {descuentoExcedido && (
+              <p role="alert" className="mt-1 text-[11px] text-red">
+                {lineas.length === 0
+                  ? 'Primero agrega los servicios.'
+                  : `Entre adelanto y descuento no pueden superar ${formatearSoles(totalServicios)}.`}
               </p>
             )}
             </div>

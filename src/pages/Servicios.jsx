@@ -268,6 +268,11 @@ export default function Servicios({ activo = true }) {
                           <Clock className="h-3.5 w-3.5" />
                           {formatearDuracion(servicio.duracion_min)}
                         </span>
+                        {servicio.sesiones_total > 1 && (
+                          <span className="rounded-full bg-pink-400/15 px-2 py-0.5 text-[11px] font-medium text-pink-400">
+                            {servicio.sesiones_total} sesiones · cada {servicio.sesiones_intervalo_dias} días
+                          </span>
+                        )}
                         {servicio.creado_en && (
                           <span className="flex items-center gap-1 text-xs text-ink/60">
                             <CalendarPlus className="h-3.5 w-3.5" aria-hidden="true" />

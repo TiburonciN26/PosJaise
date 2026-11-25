@@ -14,9 +14,9 @@ import FotosLogin from '../components/FotosLogin.jsx'
 import { useMetaPagina } from '../hooks/useMetaPagina.js'
 import './Login.css'
 
-function MarcaLogin({ className = '' }) {
+function MarcaLogin() {
   return (
-    <div className={`lgn-marca ${className}`}>
+    <div className="lgn-marca">
       <span className="lgn-marca__nombre">JAISE<span className="lgn-marca__grado">˚</span></span>
       <span className="lgn-marca__academia">BEAUTY ACADEMY</span>
     </div>
@@ -156,9 +156,6 @@ export default function Login() {
 
   return (
     <main className="lgn" data-tema-login={tema}>
-      <div className="lgn-intro" aria-hidden="true">
-        <MarcaLogin className="lgn-marca--intro" />
-      </div>
       <div className="lgn-distribucion" data-fotos-pausadas={fotosPausadas}>
         <FotosLogin fotos={fotos} pausadas={fotosPausadas}>
           {redes.length > 0 && (

@@ -13,6 +13,7 @@ import { MENSAJE_NEGOCIO_CERRADO } from '../lib/estadoNegocio.js'
 import Etiqueta from './Etiqueta.jsx'
 import InputFechaHora from './InputFechaHora.jsx'
 import ModalCliente from './ModalCliente.jsx'
+import { puedeRegistrarClientes } from '../lib/permisosClientes.js'
 import ModalServicio from './ModalServicio.jsx'
 import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
 import { categoriasDeServicios, LIMITE_SERVICIOS } from '../lib/buscarServicios.js'
@@ -191,8 +192,8 @@ export default function ModalRegistroAtencion({
   // QA-001: la RLS de servicios solo deja insertar al ADMINISTRADOR; no se
   // ofrece una acción que el servidor va a rechazar.
   const puedeCrearServicio = usuario.rol === 'ADMINISTRADOR'
-  // Lo mismo con los clientes: la RLS (clientes_insert_admin) solo deja insertar al administrador.
-  const puedeCrearCliente = usuario.rol === 'ADMINISTRADOR'
+  // Registrar una clienta nueva: administradora, cajera, encargada y asistente (crear_cliente_personal, migración 20261124000006).
+  const puedeCrearCliente = puedeRegistrarClientes(usuario.rol)
   const esEdicion = Boolean(registro)
   const esCompletarCita = !esEdicion && Boolean(citaId)
   // El carrito de varios servicios aplica tanto al registro nuevo "de cero"

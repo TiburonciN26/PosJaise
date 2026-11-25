@@ -9,7 +9,8 @@
 //   · acciones que requieren cuenta (agregar al carrito) piden login;
 //   · cliente: se registra, vuelve a su destino, recarga, cierra sesión y vuelve al inicio público;
 //   · personal (ADMINISTRADOR, CAJERA, ASISTENTE): entra a su panel según su rol, respeta el destino
-//     permitido, puede abrir «Mi perfil de clienta», volver al POS y cerrar sesión hacia el inicio público.
+//     permitido, el ADMIN puede abrir la vista previa de la web (sin cuenta) y volver al POS (cajera/asistente no
+//   tienen esa opción) y cerrar sesión hacia el inicio público.
 // Datos: solo cuentas FICTICIAS «TEST VIS …» con @test.local en la base local (nunca producción). La
 // contraseña es aleatoria por ejecución y no se imprime. Toda solicitud a otro origen distinto de Vite,
 // Supabase Local y Google Fonts (tipos de letra, bloqueados) se aborta.
@@ -315,14 +316,26 @@ try {
       await p.getByRole('button', { name: 'Menú de usuario' }).waitFor();
     });
 
-    await paso(`${rol}: puede abrir «Mi perfil de clienta» y volver al POS`, async () => {
-      await p.getByRole('button', { name: 'Menú de usuario' }).click();
-      await p.getByRole('button', { name: /Mi perfil de clienta/ }).click();
-      await p.getByRole('button', { name: 'Menú de cuenta' }).waitFor({ timeout: 20000 });
-      await p.getByRole('button', { name: 'Menú de cuenta' }).click();
-      await p.getByRole('button', { name: /Volver al POS/ }).click();
-      await p.getByRole('button', { name: 'Menú de usuario' }).waitFor();
-    });
+    if (rol === 'ADMINISTRADOR') {
+      await paso(`${rol}: abre la vista previa de la web SIN cuenta (como visitante) y vuelve al POS`, async () => {
+        await p.getByRole('button', { name: 'Menú de usuario' }).click();
+        await p.getByRole('button', { name: /Ver web de clientas/ }).click();
+        // Sin cuenta: ve «Iniciar sesión» (visitante), no el menú de una clienta.
+        await p.getByRole('link', { name: 'Iniciar sesión' }).first().waitFor({ timeout: 20000 });
+        esperar((await p.getByRole('button', { name: 'Menú de cuenta' }).count()) === 0, 'la vista previa no debe mostrar un menú de cuenta de clienta');
+        // Recargar conserva la vista previa.
+        await p.reload();
+        await p.getByRole('button', { name: /Volver al POS/ }).waitFor({ timeout: 20000 });
+        await p.getByRole('button', { name: /Volver al POS/ }).click();
+        await p.getByRole('button', { name: 'Menú de usuario' }).waitFor();
+      });
+    } else {
+      await paso(`${rol}: no tiene la opción de ver la web de clientas`, async () => {
+        await p.getByRole('button', { name: 'Menú de usuario' }).click();
+        esperar((await p.getByRole('button', { name: /Ver web de clientas|Mi perfil de clienta/ }).count()) === 0, `${rol} no debe ver el botón de la web de clientas`);
+        await p.keyboard.press('Escape');
+      });
+    }
 
     await paso(`${rol}: cerrar sesión desde el POS vuelve al inicio público`, async () => {
       await p.getByRole('button', { name: 'Menú de usuario' }).click();

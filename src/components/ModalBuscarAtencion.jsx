@@ -68,14 +68,23 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
   // aún no se descontó). Es un aviso: si la consulta falla simplemente no se muestra y la lista funciona igual.
   const claveIdsListados = filtradas.map((atencion) => atencion.id).join(',')
   const [adelantos, setAdelantos] = useState([])
+  // Descuento acordado en la cita (aún sin aplicar): se aplica solo en el cobro; aquí se avisa igual que el adelanto.
+  const [descuentos, setDescuentos] = useState([])
   useEffect(() => {
     if (!claveIdsListados) {
       setAdelantos([])
+      setDescuentos([])
       return undefined
     }
     let vigente = true
-    supabase.rpc('adelantos_pendientes_de_atenciones', { p_registro_ids: claveIdsListados.split(',') }).then(({ data, error }) => {
-      if (vigente) setAdelantos(error || !Array.isArray(data) ? [] : data)
+    const ids = { p_registro_ids: claveIdsListados.split(',') }
+    Promise.all([
+      supabase.rpc('adelantos_pendientes_de_atenciones', ids),
+      supabase.rpc('descuentos_cita_de_atenciones', ids),
+    ]).then(([respuestaAdelantos, respuestaDescuentos]) => {
+      if (!vigente) return
+      setAdelantos(respuestaAdelantos.error || !Array.isArray(respuestaAdelantos.data) ? [] : respuestaAdelantos.data)
+      setDescuentos(respuestaDescuentos.error || !Array.isArray(respuestaDescuentos.data) ? [] : respuestaDescuentos.data)
     })
     return () => {
       vigente = false
@@ -98,7 +107,7 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
     // Dentro de cada clienta, las atenciones de una misma cita con adelanto forman un bloque (ver agruparAtencionesPorCita).
     return Array.from(mapa.values()).map((grupo) => ({
       ...grupo,
-      elementos: agruparAtencionesPorCita(grupo.atenciones, adelantos),
+      elementos: agruparAtencionesPorCita(grupo.atenciones, adelantos, descuentos),
     }))
   })()
   // Índice plano (un elemento = una atención suelta o un bloque de cita) en el MISMO orden en que se dibuja, para que las
@@ -268,6 +277,7 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
                           <p className="mb-1 font-mono text-[10px] text-green">
                             Misma cita · se cobran juntas
                             {elemento.adelanto ? ` · Adelanto ${formatearSoles(elemento.adelanto)}` : ''}
+                            {elemento.descuento ? ` · Descuento ${formatearSoles(elemento.descuento)}` : ''}
                           </p>
                         )}
                         <div className="space-y-1.5">
@@ -284,6 +294,11 @@ export default function ModalBuscarAtencion({ excluirIds = [], onSeleccionar, on
                                 {!esBloque && elemento.adelanto && (
                                   <p className="font-mono text-[10px] text-green">
                                     Adelanto {formatearSoles(elemento.adelanto)}
+                                  </p>
+                                )}
+                                {!esBloque && elemento.descuento && (
+                                  <p className="font-mono text-[10px] text-red">
+                                    Descuento {formatearSoles(elemento.descuento)}
                                   </p>
                                 )}
                               </div>

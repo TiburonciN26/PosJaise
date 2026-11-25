@@ -53,7 +53,7 @@ const SELECT_VENTAS =
   'id, codigo, fecha, estado, total, metodo_pago, comprobante_tipo, comprobante_numero, comprobante_estado, clientes(nombre), venta_items(tipo, cantidad)'
 
 const SELECT_DETALLE_VENTA =
-  'id, codigo, fecha, estado, total, descuento_pct, descuento_monto, adelanto_monto, metodo_pago, monto_recibido, vendedor_id, comprobante_tipo, comprobante_numero, comprobante_tipo_doc, comprobante_documento, comprobante_nombre, comprobante_direccion, comprobante_celular, comprobante_pdf, comprobante_estado, comprobante_legal, clientes(nombre, telefono)'
+  'id, codigo, fecha, estado, total, descuento_pct, descuento_monto, adelanto_monto, adelanto_metodo, metodo_pago, monto_recibido, vendedor_id, comprobante_tipo, comprobante_numero, comprobante_tipo_doc, comprobante_documento, comprobante_nombre, comprobante_direccion, comprobante_celular, comprobante_pdf, comprobante_estado, comprobante_legal, clientes(nombre, telefono)'
 
 // Para la lista que se le pasa a la contadora: una fila por venta con boleta/factura.
 // `pedidos_web` trae lo que la clienta eligió en la web (tipo, RUC, razón social).
@@ -559,6 +559,10 @@ function DetalleVenta({
             <div className="flex items-center justify-end gap-3 text-sm">
               <span className="text-ink/60">Adelanto de la cita</span>
               <span className="font-mono font-medium text-blue">-{formatearSoles(detalle.adelanto_monto)}</span>
+              {/* Con qué se pagó el adelanto (lo anotó quien agendó la cita; es solo informativo). */}
+              {detalle.adelanto_metodo && (
+                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink/70">{detalle.adelanto_metodo}</span>
+              )}
             </div>
           )}
           {detalle.descuento_pct > 0 && (

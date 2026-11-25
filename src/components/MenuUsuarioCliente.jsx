@@ -9,10 +9,8 @@ import {
   ShieldCheck,
   ShoppingBag,
   Star,
-  Store,
   UserCircle,
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext.jsx'
 import { usePerfilCliente } from '../context/PerfilClienteContext.jsx'
 import { useNotificacionesCliente } from '../context/NotificacionesClienteContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -54,13 +52,8 @@ function iniciales(nombre) {
 
 export default function MenuUsuarioCliente() {
   const { perfil } = usePerfilCliente()
-  const { rol, volverAlPos } = useAuth()
   const salir = useSalir()
   const { mostrarToast } = useToast()
-  // Personal (asistente/cajera/admin) mirando su propio perfil de clienta
-  // con la misma sesión (ver AuthContext.jsx, "entrarComoClienta") — un
-  // cliente puro tiene rol 'CLIENTE', nunca ve este botón.
-  const esPersonalEnModoCliente = Boolean(rol) && rol !== 'CLIENTE'
   const { noLeidas } = useNotificacionesCliente()
   const { tema, alternarTema } = useTemaWeb()
   const navigate = useNavigate()
@@ -166,29 +159,13 @@ export default function MenuUsuarioCliente() {
             <SwitchTema tema={tema} alternarTema={alternarTema} />
           </div>
 
-          {esPersonalEnModoCliente && (
-            <button
-              type="button"
-              onClick={() => {
-                setAbierto(false)
-                volverAlPos()
-              }}
-              className="mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-white/10 px-3 py-2 pt-3 text-left text-sm text-[var(--lw-gold)] transition-colors hover:bg-white/5"
-            >
-              <Store className="h-4 w-4 shrink-0" />
-              Volver al POS
-            </button>
-          )}
-
           <button
             type="button"
             onClick={() => {
               setAbierto(false)
               setConfirmandoSalir(true)
             }}
-            className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-red transition-colors hover:bg-white/5 ${
-              esPersonalEnModoCliente ? 'mt-1' : 'mt-1 border-t border-white/10 pt-3'
-            }`}
+            className="mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-white/10 px-3 py-2 pt-3 text-left text-sm text-red transition-colors hover:bg-white/5"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             Cerrar sesión

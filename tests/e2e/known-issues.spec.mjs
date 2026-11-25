@@ -119,16 +119,16 @@ test('QA-010: historial de atención debe tener un día válido', async ({ page,
   expect(text).not.toContain('NaN');
 });
 
-test('QA-011: modo clienta de cajera no debe incluir atención del CLIENTE aislado', async ({ page, data }, info) => {
+// Resolución de QA-011 por diseño: el personal ya no tiene «Mi perfil de clienta» (la cuenta de trabajo no se mezcla con una
+// de clienta). Solo el admin conserva una vista previa de la web, sin cuenta. Así la cajera no puede ver el historial ajeno.
+test('QA-011: la cajera no tiene modo clienta; el historial del CLIENTE no es alcanzable desde su cuenta', async ({ page, data }, info) => {
   knownIssue(info, 'QA-011');
   await login(page, 'CAJERA', data);
   await page.getByRole('button', { name: 'Menú de usuario', exact: true }).click();
-  await page.getByRole('button', { name: 'Mi perfil de clienta', exact: true }).click();
-  await expect(page).toHaveURL(/\/inicio$/);
+  await expect(page.getByRole('button', { name: /Ver web de clientas|Mi perfil de clienta/ })).toHaveCount(0);
+  await page.keyboard.press('Escape');
   await page.goto('/historial');
-  await page.getByRole('button', { name: 'Menú de cuenta', exact: true }).waitFor();
-  await expect(page.getByText('Cargando...', { exact: true })).toHaveCount(0);
-  expectKnownFailure('QA-011');
+  // Sin modo clienta, /historial no existe para ella: nunca ve el servicio del CLIENTE aislado.
   await expect(page.getByText(data.serviceName, { exact: true })).toHaveCount(0);
 });
 

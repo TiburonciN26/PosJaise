@@ -12,7 +12,8 @@ import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { formatearSoles } from '../lib/moneda.js'
 import { calcularMontoPosTarjeta, calcularTotalesVenta, desglosarMontoTarjeta, limpiarCodigoCupon, normalizarDescuentoTecleado } from '../lib/cobro.js'
 import { interpretarCuponCaja } from '../lib/cupones.js'
-import { calcularAdelantoSugerido } from '../lib/adelantoCita.js'
+import { calcularAdelantoSugerido, calcularDescuentoCitaSugerido, metodoAdelantoDe } from '../lib/adelantoCita.js'
+import { METODOS_PAGO } from '../lib/metodosPago.js'
 import { manejarActivacionTeclado } from '../lib/teclado.js'
 import IconoBuscar from '../components/IconoBuscar.jsx'
 import InputBusqueda from '../components/InputBusqueda.jsx'
@@ -22,6 +23,7 @@ import { contarAtenciones } from '../lib/buscarAtenciones.js'
 import { useBusquedaProductosVenta } from '../hooks/useBusquedaProductosVenta.js'
 import { buscarProductosVenta, productoPorCodigo, productosPorIds } from '../lib/buscarProductosVenta.js'
 import ModalCliente from '../components/ModalCliente.jsx'
+import { puedeRegistrarClientes } from '../lib/permisosClientes.js'
 import TicketImprimible from '../components/TicketImprimible.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import ModalDatosComprobante from '../components/ModalDatosComprobante.jsx'
@@ -85,38 +87,8 @@ const AYUDA_FACTURA = (
 // Debe coincidir con la duración de transición usada en FilaTicket (duration-300)
 const DURACION_SALIDA = 300
 
-// Rutas con BASE_URL (no "/icons/..." a secas): Vite no reescribe strings dentro de JSX, y cuando la app vivía bajo un
-// prefijo (GitHub Pages, ya retirado) la ruta absoluta daba 404 (A1 de la 3ª auditoría). Se conserva por si la base cambia.
-const metodosPago = [
-  {
-    nombre: 'Efectivo',
-    nombreCorto: 'Efect.',
-    icono: `${import.meta.env.BASE_URL}icons/efectivo.svg`,
-    clasesActivo: 'border-green bg-green/10 text-green',
-    clasesHover: 'hover:border-green',
-  },
-  {
-    nombre: 'Tarjeta',
-    nombreCorto: 'Tarjeta',
-    icono: `${import.meta.env.BASE_URL}icons/targueta.svg`,
-    clasesActivo: 'border-blue bg-blue/10 text-blue',
-    clasesHover: 'hover:border-blue',
-  },
-  {
-    nombre: 'Transferencia',
-    nombreCorto: 'Transf.',
-    icono: `${import.meta.env.BASE_URL}icons/transferencia.svg`,
-    clasesActivo: 'border-gray-300 bg-gray-300/10 text-gray-300',
-    clasesHover: 'hover:border-gray-300',
-  },
-  {
-    nombre: 'Yape',
-    nombreCorto: 'Yape',
-    icono: `${import.meta.env.BASE_URL}icons/yape.svg`,
-    clasesActivo: 'border-purple-300 bg-purple-300/10 text-purple-300',
-    clasesHover: 'hover:border-purple-300',
-  },
-]
+// Los métodos de pago (nombre, ícono y colores) viven en lib/metodosPago.js: los comparte con «¿Cómo se pagó el adelanto?» de Citas.
+const metodosPago = METODOS_PAGO
 
 // Billetes más comunes en efectivo — cada botón FIJA el campo Recibido a
 // ese valor (no lo suma), para el caso típico: el cliente paga con un
@@ -368,23 +340,48 @@ export default function Ventas({ activo = true }) {
   // descuento (es dinero que la clienta ya entregó), así que no toca el campo de descuento —que queda para descuentos reales o
   // cupones, que conviven con él— ni cuenta como «Descuentos» en el Dashboard. Ver migración 20261121000007.
   const [adelantosCarrito, setAdelantosCarrito] = useState([])
+  // DESCUENTO de la cita (migración 20261124000007): a diferencia del adelanto, este sí es dinero que no entra. Se detecta igual
+  // (por la cita de cada atención del carrito) y se aplica solo en el campo de descuento, que queda bloqueado: en una venta solo
+  // cabe un descuento (el servidor no deja combinarlo con cupón ni con porcentaje).
+  const [descuentosCitaCarrito, setDescuentosCitaCarrito] = useState([])
   useEffect(() => {
     if (!activo || !claveServiciosCarrito) {
       setAdelantosCarrito([])
+      setDescuentosCitaCarrito([])
       return undefined
     }
     let vigente = true
-    supabase
-      .rpc('adelantos_pendientes_de_atenciones', { p_registro_ids: claveServiciosCarrito.split(',') })
-      .then(({ data, error }) => {
-        // Si falla la consulta no se resta nada: cobrar sigue funcionando como siempre (el adelanto es una ayuda).
-        if (vigente) setAdelantosCarrito(error || !Array.isArray(data) ? [] : data)
-      })
+    const ids = { p_registro_ids: claveServiciosCarrito.split(',') }
+    Promise.all([
+      supabase.rpc('adelantos_pendientes_de_atenciones', ids),
+      supabase.rpc('descuentos_cita_de_atenciones', ids),
+    ]).then(([adelantos, descuentos]) => {
+      if (!vigente) return
+      // Si falla una consulta no se aplica nada de eso: cobrar sigue funcionando como siempre (son ayudas de la cita).
+      setAdelantosCarrito(adelantos.error || !Array.isArray(adelantos.data) ? [] : adelantos.data)
+      setDescuentosCitaCarrito(descuentos.error || !Array.isArray(descuentos.data) ? [] : descuentos.data)
+    })
     return () => {
       vigente = false
     }
   }, [activo, claveServiciosCarrito])
   const adelantoSugerido = calcularAdelantoSugerido(carrito, adelantosCarrito)
+  const metodoAdelanto = metodoAdelantoDe(adelantosCarrito)
+  const descuentoCitaSugerido = calcularDescuentoCitaSugerido(carrito, descuentosCitaCarrito)
+  const descuentoDeCitaActivo = descuentoCitaSugerido > 0
+  // Pone (y al quitar las atenciones, retira) el descuento de la cita en el campo de descuento del carrito.
+  const descuentoAutomaticoPuesto = useRef(false)
+  useEffect(() => {
+    if (descuentoDeCitaActivo) {
+      descuentoAutomaticoPuesto.current = true
+      setTipoDescuento('monto')
+      setCodigoCupon('')
+      setValorDescuento(String(descuentoCitaSugerido))
+    } else if (descuentoAutomaticoPuesto.current) {
+      descuentoAutomaticoPuesto.current = false
+      setValorDescuento('')
+    }
+  }, [descuentoDeCitaActivo, descuentoCitaSugerido, setTipoDescuento, setCodigoCupon, setValorDescuento])
 
   // Totales (subtotal, descuento manual o de cupón, adelanto, total y vuelto): lib/cobro.js, probado en tests/e2e/cobro.test.mjs.
   const { subtotal, esDescuentoPorcentaje, esCupon, descuentoPctAplicado, montoDescuento, adelantoAplicado, total, aCobrar, recibidoNumerico, vuelto } =
@@ -797,6 +794,7 @@ export default function Ventas({ activo = true }) {
         descuento_pct: esDescuentoPorcentaje ? descuentoPctAplicado : 0,
         descuento_monto: esDescuentoPorcentaje ? 0 : montoDescuento,
         adelanto_monto: adelantoAplicado,
+        adelanto_metodo: adelantoAplicado > 0 ? metodoAdelanto || null : null,
         metodo_pago: metodoPago,
         monto_recibido: metodoPago === 'Efectivo' ? recibidoNumerico : null,
         monto_pos_tarjeta: metodoPago === 'Tarjeta' ? montoPosTarjetaNumerico : null,
@@ -1064,6 +1062,7 @@ export default function Ventas({ activo = true }) {
             <button
               type="button"
               onClick={alternarTipoDescuento}
+              disabled={descuentoDeCitaActivo}
               aria-label={
                 esDescuentoPorcentaje
                   ? 'Descuento porcentual — cambiar a monto fijo'
@@ -1071,8 +1070,8 @@ export default function Ventas({ activo = true }) {
                     ? 'Cupón — cambiar a porcentaje'
                     : 'Descuento por monto fijo — cambiar a cupón'
               }
-              title="Cambiar tipo de descuento"
-              className={`flex shrink-0 items-center justify-center gap-1 rounded-lg border p-1.5 transition-colors lg:px-2 ${
+              title={descuentoDeCitaActivo ? 'Descuento acordado en la cita' : 'Cambiar tipo de descuento'}
+              className={`flex shrink-0 items-center justify-center gap-1 rounded-lg border p-1.5 transition-colors disabled:cursor-not-allowed lg:px-2 ${
                 valorDescuento || codigoCupon
                   ? 'border-red/50 text-red'
                   : 'border-border-strong text-ink/70 hover:border-red'
@@ -1121,6 +1120,7 @@ export default function Ventas({ activo = true }) {
                 autoComplete="new-password"
                 value={valorDescuento}
                 onChange={(evento) => actualizarDescuento(evento.target.value)}
+                readOnly={descuentoDeCitaActivo}
                 placeholder="0"
                 aria-label={esDescuentoPorcentaje ? 'Porcentaje de descuento' : 'Monto de descuento'}
                 className={`w-full rounded-lg border px-1.5 py-1.5 text-center font-mono text-xs outline-none ${
@@ -1133,6 +1133,12 @@ export default function Ventas({ activo = true }) {
             </div>
           </div>
         </CampoColapsable>
+
+        {descuentoDeCitaActivo && (
+          <p className="mt-1.5 text-xs text-red">
+            Descuento acordado en la cita: -{formatearSoles(descuentoCitaSugerido)}. Se aplicó solo; en una venta cabe un solo descuento.
+          </p>
+        )}
 
         {esCupon && codigoCupon.length === 6 && (
           <p
@@ -1522,10 +1528,10 @@ export default function Ventas({ activo = true }) {
             setCliente(clienteElegido)
             setModalClienteAbierto(false)
           }}
-          // Crear fichas es solo de la administradora (cajera y encargada fallarían al guardar): sin este callback el modal
-          // no ofrece «Registrar … como cliente nuevo». La «venta rápida» (sin guardar) sigue disponible para todas.
+          // Administradora, cajera y encargada registran la ficha desde aquí (crear_cliente_personal, migración 20261124000006).
+          // La «venta rápida» (sin guardar) sigue disponible para todas.
           onRegistrarNuevo={
-            esAdmin
+            puedeRegistrarClientes(rol)
               ? (nombre) => {
                   setModalClienteAbierto(false)
                   setNombreClienteNuevo(nombre)

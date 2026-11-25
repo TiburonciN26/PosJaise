@@ -3,7 +3,7 @@
 // viven aquí para poder probarlos sin la interfaz (tests/e2e/catalogo-pos-web.test.mjs).
 import { leerImporte } from './moneda.js'
 
-export const COLUMNAS_POS_SERVICIO = ['nombre', 'categoria', 'precio', 'duracion_min', 'activo']
+export const COLUMNAS_POS_SERVICIO = ['nombre', 'categoria', 'precio', 'duracion_min', 'activo', 'sesiones_total', 'sesiones_intervalo_dias']
 export const COLUMNAS_WEB_SERVICIO = [
   'descripcion', 'en_tendencia', 'a_domicilio', 'costo_domicilio', 'precio_variable', 'nota_precio', 'duracion_resultado',
   'combo_con', 'foto_url', 'pasos', 'especificaciones', 'herramientas', 'materiales', 'cuidados_antes', 'cuidados_despues',
@@ -26,6 +26,17 @@ export function datosPosServicio({ formulario, categoriaFinal }) {
     precio: parseFloat(formulario.precio),
     duracion_min: formulario.duracionMin.trim() ? parseInt(formulario.duracionMin, 10) : null,
     activo: formulario.activo,
+    // Tratamiento por sesiones (migración 20261125000001): 1 = servicio normal. Sin dato (formularios viejos) cuenta como normal.
+    ...sesionesDelServicio(formulario),
+  }
+}
+
+// «Por sesiones»: apagado guarda 1 sesión y sin intervalo; encendido guarda cuántas y cada cuántos días se propone la siguiente.
+export function sesionesDelServicio(formulario) {
+  if (!formulario.porSesiones) return { sesiones_total: 1, sesiones_intervalo_dias: null }
+  return {
+    sesiones_total: parseInt(formulario.sesionesTotal, 10),
+    sesiones_intervalo_dias: parseInt(formulario.sesionesIntervaloDias, 10),
   }
 }
 

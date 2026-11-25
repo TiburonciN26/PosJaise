@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Clock, ImagePlus, KeyRound, LogOut, User } from 'lucide-react'
+import { Camera, Clock, Globe, ImagePlus, KeyRound, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useEstadoNegocio } from '../context/EstadoNegocioContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -37,7 +37,7 @@ function iniciales(nombre) {
 // tema claro/oscuro salió al Header, junto a la campana). Reemplaza al logo+MenuEstadoNegocio: el logo pasa acá,
 // abajo del todo, como firma de marca en vez de disparador de un menú.
 export default function MenuUsuario() {
-  const { usuario, rol, actualizarFotoPerfil, entrarComoClienta } = useAuth()
+  const { usuario, rol, actualizarFotoPerfil, verPortalWeb } = useAuth()
   const salir = useSalir()
   const { abierto: negocioAbierto, cambiarEstado } = useEstadoNegocio()
   const { mostrarToast } = useToast()
@@ -54,7 +54,6 @@ export default function MenuUsuario() {
   const [cambiandoEstado, setCambiandoEstado] = useState(false)
   const [mostrarCamara, setMostrarCamara] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
-  const [entrandoComoClienta, setEntrandoComoClienta] = useState(false)
 
   useCerrarConEscape(() => setMenuAbierto(false), menuAbierto, { trabajoPendiente: false })
   useCerrarConEscape(() => setConfirmando(false), confirmando)
@@ -94,19 +93,12 @@ export default function MenuUsuario() {
   // Al cambiar a mano, cuándo lo revierte el horario: si cierro, la próxima apertura; si abro, el próximo cierre.
   const textoTrasCambioManual = textoProximoEvento(proximoEventoPos(configPos, new Date(), { soloAbrir: negocioAbierto }))
 
-  // Personal que a veces también es clienta del salón (ver
-  // AuthContext.jsx, "entrarComoClienta") — misma sesión, misma cuenta,
-  // solo cambia qué árbol de rutas ve.
-  async function irAModoCliente() {
-    setEntrandoComoClienta(true)
-    try {
-      await entrarComoClienta()
-      setMenuAbierto(false)
-    } catch {
-      mostrarToast('No se pudo abrir tu perfil de clienta. Intenta de nuevo.', 'error')
-    } finally {
-      setEntrandoComoClienta(false)
-    }
+  // Solo el admin: mira el portal como lo ve el público (visitante, sin cuenta
+  // de clienta ni nada vinculado a su cuenta de trabajo). Ver
+  // AuthContext.jsx, "verPortalWeb".
+  function irAVistaPreviaPortal() {
+    setMenuAbierto(false)
+    verPortalWeb()
   }
 
   async function confirmarCambioEstado() {
@@ -311,20 +303,21 @@ export default function MenuUsuario() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={irAModoCliente}
-            disabled={entrandoComoClienta}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber disabled:opacity-40"
-          >
-            <User className="h-3.5 w-3.5" />
-            {entrandoComoClienta ? 'Abriendo...' : 'Mi perfil de clienta'}
-          </button>
+          {esAdmin && (
+            <button
+              type="button"
+              onClick={irAVistaPreviaPortal}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber"
+            >
+              <Globe className="h-3.5 w-3.5" />
+              Ver web de clientas
+            </button>
+          )}
 
           <button
             type="button"
             onClick={() => setCambiandoClave(true)}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber"
+            className={`${esAdmin ? 'mt-2' : 'mt-3'} flex w-full items-center justify-center gap-1.5 rounded-lg border border-border-strong bg-bg py-2 text-sm text-ink transition-colors hover:border-amber`}
           >
             <KeyRound className="h-3.5 w-3.5" />
             Cambiar contraseña

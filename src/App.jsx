@@ -29,8 +29,8 @@ function CargandoPantalla() {
   )
 }
 
-// Ruta que no existe en la web de clientas. Con sesión de cliente o personal en
-// «modo clienta» vuelve al inicio, como siempre. Un VISITANTE que abre una pantalla
+// Ruta que no existe en la web de clientas. Con sesión de cliente vuelve al
+// inicio, como siempre. Un VISITANTE que abre una pantalla
 // del POS (/ventas, /dashboard…) recibe el login con esa ruta guardada: si es
 // personal, entra directo a ella; si no, cae en su pantalla de siempre.
 function RutaDesconocida() {
@@ -43,15 +43,15 @@ function RutaDesconocida() {
 }
 
 function App() {
-  const { cargando, session, usuario, rol, modoVista, errorPerfil, reintentarPerfil } = useAuth()
+  const { cargando, session, usuario, rol, errorPerfil, reintentarPerfil } = useAuth()
   // La web de clientas es la entrada por defecto: la ve quien NO tiene sesión
-  // (visitante: explora lo público y se le pide login solo en lo privado), un
-  // cliente (rol === 'CLIENTE', sin fila en "usuarios") y el personal
-  // (asistente/cajera/admin) que activó su perfil de clienta (MenuUsuario.jsx →
-  // "Mi perfil de clienta") y eligió mirarlo: misma sesión, sin dejar de ser
-  // personal (rol sigue siendo el suyo real — ver AuthContext.jsx). Solo el
-  // personal con sesión en modo POS monta el árbol de rutas del POS.
-  const vistaCliente = !usuario || rol === 'CLIENTE' || modoVista === 'CLIENTE'
+  // (visitante: explora lo público y se le pide login solo en lo privado) y un
+  // cliente (rol === 'CLIENTE', sin fila en "usuarios"). El ADMINISTRADOR que
+  // abre la vista previa del portal (MenuUsuario.jsx → «Ver web de clientas»)
+  // también cae aquí, pero sin cuenta: AuthContext le expone `usuario` null, es
+  // decir, lo ve como un visitante. Solo el personal con sesión monta el árbol
+  // de rutas del POS.
+  const vistaCliente = !usuario || rol === 'CLIENTE'
 
   // El portal (y la página de la URL actual) se descargan ANTES de montarlo, con
   // el mismo "Cargando..." de siempre: así React no muestra ni estrangula un
@@ -130,11 +130,11 @@ function App() {
         />
 
         {vistaCliente ? (
-          // Visitante, cliente y personal en «modo clienta» comparten ESTE árbol
+          // Visitante, cliente y admin en vista previa comparten ESTE árbol
           // (mismo PortalCliente y mismas páginas). Primero lo público; lo
           // privado va detrás de RutaPrivada. Un cliente nunca monta
-          // Layout/MenuLateral (eso es del POS) — MenuUsuarioCliente le suma al
-          // personal un botón para volver.
+          // Layout/MenuLateral (eso es del POS) — al admin en vista previa
+          // BarraVistaPreviaPortal le da el botón para volver al POS.
           <Route
             element={
               portalListo ? (

@@ -36,20 +36,20 @@ export function AuthProvider({ children }) {
   const [cargando, setCargando] = useState(true)
   const [errorPerfil, setErrorPerfil] = useState(false)
   const [bloqueoLogin, setBloqueoLogin] = useState(null)
-  // Una asistente/cajera/admin a veces también es clienta del salón — con
-  // el mismo correo, no uno nuevo (Supabase Auth no permite dos cuentas
-  // con el mismo correo, así que "Crear cuenta" en el login de clientes
-  // no es una opción para ella). "modoVista" deja que la MISMA sesión de
-  // personal entre al portal Web sin dejar de ser personal: cargarPerfil
-  // sigue resolviendo "usuario"/"rol" como personal siempre (ver arriba,
-  // corta camino ANTES de mirar clientes_web) — modoVista es un flag
-  // aparte que App.jsx usa para decidir qué árbol de rutas montar. Se
-  // reinicia a 'STAFF' en cada cierre de sesión para que la próxima nunca
-  // arranque directo en modo cliente por accidente. Bug reportado: sin
-  // persistir esto, un F5 estando en modo cliente perdía el estado (React
-  // vuelve a montar todo desde cero) y la app regresaba sola al POS —
-  // por eso el valor inicial se lee de sessionStorage, y un efecto lo
-  // mantiene sincronizado ahí en cada cambio.
+  // VISTA PREVIA DEL PORTAL (solo ADMINISTRADOR). La cuenta de personal es
+  // exclusiva de trabajo y NO tiene nada que ver con una cuenta de clienta:
+  // quien quiera ser clienta web se registra con su propio correo, como
+  // cualquier visitante. Lo único que hace el admin es MIRAR el portal tal
+  // como lo ve el público, en tiempo real: en este modo el contexto se
+  // expone como el de un VISITANTE (sin session/usuario/rol, ver `value`),
+  // no se crea ninguna fila en clientes_web y no se vincula nada a su
+  // cuenta. "modoVista" es solo el flag de esa vista; App.jsx lo usa para
+  // decidir qué árbol de rutas montar. Se reinicia a 'STAFF' en cada cierre
+  // de sesión. Se persiste en sessionStorage porque un F5 estando en la
+  // vista previa perdía el estado y la app regresaba sola al POS; el valor
+  // inicial se lee de ahí y un efecto lo mantiene sincronizado. Un valor
+  // guardado que no sea de un admin (sesión distinta en la misma pestaña) se
+  // ignora: ver `vistaPreviaPortal` más abajo.
   const [modoVista, setModoVista] = useState(leerModoVistaGuardado)
 
   useEffect(() => {
@@ -279,27 +279,10 @@ export function AuthProvider({ children }) {
     setModoVista('STAFF')
   }, [])
 
-  // Para personal (asistente/cajera/admin) que también es clienta: crea
-  // su fila en clientes_web con el MISMO auth.uid() si todavía no la
-  // tiene (nunca pasa por auth.signUp — ya está autenticada, y de todos
-  // modos Supabase Auth rechazaría un segundo registro con ese correo) y
-  // cambia el modo de vista. Es idempotente: si ya tenía perfil de
-  // clienta, el insert choca con la PK (23505) y se ignora sin problema —
-  // el botón que llama a esto puede usarse cualquier cantidad de veces.
-  // El resto (vincular su perfil de negocio, historial, etc.) lo resuelve
-  // el flujo normal de Mi Perfil, igual que cualquier clienta nueva.
-  const entrarComoClienta = useCallback(async () => {
-    const {
-      data: { user: usuarioAuth },
-    } = await supabase.auth.getUser()
-    if (!usuarioAuth) return
-
-    const { error } = await supabase
-      .from('clientes_web')
-      .insert({ id: usuarioAuth.id, email: usuarioAuth.email ?? '' })
-
-    if (error && error.code !== '23505') throw error
-
+  // Abre la vista previa del portal (solo la ofrece el menú del admin). No
+  // toca la base de datos: no crea clientes_web ni vincula la cuenta de
+  // trabajo con ninguna clienta.
+  const verPortalWeb = useCallback(() => {
     setModoVista('CLIENTE')
   }, [])
 
@@ -332,21 +315,25 @@ export function AuthProvider({ children }) {
 
   // Memoizado (M5): el value solo cambia cuando cambia sesión/usuario/estado,
   // no en cada render — las funciones ya son estables por useCallback.
+  // Vista previa activa solo para un admin con perfil ya resuelto (cualquier otro rol con el flag guardado queda en el POS).
+  const vistaPreviaPortal = modoVista === 'CLIENTE' && usuario?.rol === 'ADMINISTRADOR'
+
   const value = useMemo(
     () => ({
-      session,
-      usuario,
-      rol: usuario?.rol ?? null,
+      // En la vista previa todo el portal ve a un visitante: sin sesión, sin perfil y sin rol.
+      session: vistaPreviaPortal ? null : session,
+      usuario: vistaPreviaPortal ? null : usuario,
+      rol: vistaPreviaPortal ? null : (usuario?.rol ?? null),
       cargando,
       errorPerfil,
       bloqueoLogin,
-      modoVista,
+      vistaPreviaPortal,
       reintentarPerfil,
       iniciarSesion,
       cerrarSesion,
       registrarCliente,
       actualizarFotoPerfil,
-      entrarComoClienta,
+      verPortalWeb,
       volverAlPos,
     }),
     [
@@ -355,13 +342,13 @@ export function AuthProvider({ children }) {
       cargando,
       errorPerfil,
       bloqueoLogin,
-      modoVista,
+      vistaPreviaPortal,
       reintentarPerfil,
       iniciarSesion,
       cerrarSesion,
       registrarCliente,
       actualizarFotoPerfil,
-      entrarComoClienta,
+      verPortalWeb,
       volverAlPos,
     ],
   )

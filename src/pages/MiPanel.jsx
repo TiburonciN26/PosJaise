@@ -37,10 +37,12 @@ import FiltrosFecha from '../components/FiltrosFecha.jsx'
 import CampoColapsable from '../components/CampoColapsable.jsx'
 import BotonAccion from '../components/BotonAccion.jsx'
 import BotonAcuerdo from '../components/BotonAcuerdo.jsx'
+import ModalMotivoDiscrepancia from '../components/ModalMotivoDiscrepancia.jsx'
 import BotonFlotanteAgregar from '../components/BotonFlotanteAgregar.jsx'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 import ModalBuscarCliente from '../components/ModalBuscarCliente.jsx'
 import ModalCliente from '../components/ModalCliente.jsx'
+import { puedeRegistrarClientes } from '../lib/permisosClientes.js'
 import { EsqueletoGrupos } from '../components/Esqueleto.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
@@ -50,7 +52,7 @@ import TextoDeslizante from '../components/TextoDeslizante.jsx'
 const OPCION_TODOS = 'todos'
 const TAMANO_PAGINA = 50
 const SELECT_REGISTROS =
-  'id, usuario_id, servicio_id, cliente_id, precio, fecha, nota, estado, porcentaje_aplicado, pago_asistente, cliente_nombre_referencia, servicios(nombre), clientes(nombre), usuarios(nombre_completo), registro_discrepancias(id, creada_en, admin_acuerdo_en, duena_acuerdo_en, resuelta_en, retirada_en)'
+  'id, usuario_id, servicio_id, cliente_id, precio, fecha, nota, estado, porcentaje_aplicado, pago_asistente, cliente_nombre_referencia, servicios(nombre), clientes(nombre), usuarios(nombre_completo), registro_discrepancias(id, creada_en, motivo, admin_acuerdo_en, duena_acuerdo_en, resuelta_en, retirada_en)'
 const RESUMEN_VACIO = { cantidad: 0, total: 0 }
 
 function formatearHora(fechaIso) {
@@ -189,6 +191,8 @@ export default function MiPanel({ activo = true }) {
   // cada persona, las de sus atenciones (la RLS ya lo limita). Cada una lleva {id, fecha, usuario_id} de su atención.
   const [discrepancias, setDiscrepancias] = useState([])
   const [acuerdoEnCurso, setAcuerdoEnCurso] = useState(null)
+  // Atención sobre la que la administradora está escribiendo el motivo de una discrepancia nueva (modal «Iniciar discrepancia»).
+  const [registroADiscrepar, setRegistroADiscrepar] = useState(null)
   const [resumen, setResumen] = useState(RESUMEN_VACIO)
   const [hayMas, setHayMas] = useState(false)
   const [cargandoMas, setCargandoMas] = useState(false)
@@ -216,7 +220,7 @@ export default function MiPanel({ activo = true }) {
   const [registroACancelar, setRegistroACancelar] = useState(null)
   const [cancelando, setCancelando] = useState(false)
   const [confirmandoId, setConfirmandoId] = useState(null)
-  // Atención (nota pendiente de clienta) a la que se está eligiendo clienta + el modal de «Registrar cliente nuevo» (solo admin).
+  // Atención (nota pendiente de clienta) a la que se está eligiendo clienta + el modal de «Registrar cliente nuevo».
   const [registroAAsignar, setRegistroAAsignar] = useState(null)
   const [nombreClienteNuevo, setNombreClienteNuevo] = useState('')
   const [modalClienteNuevoAbierto, setModalClienteNuevoAbierto] = useState(false)
@@ -567,24 +571,28 @@ export default function MiPanel({ activo = true }) {
 
   // Discrepancias: todo pasa por RPC (el servidor decide quién puede qué). Mientras una está en curso se bloquean las demás
   // acciones de esa atención para no mandar dos veces el mismo clic.
-  async function ejecutarDiscrepancia(registro, nombreRpc, alExito) {
-    if (acuerdoEnCurso) return
+  // Devuelve true si el servidor aceptó la acción (el modal del motivo lo usa para saber si cerrarse).
+  async function ejecutarDiscrepancia(registro, nombreRpc, alExito, parametros = {}) {
+    if (acuerdoEnCurso) return false
     setAcuerdoEnCurso(registro.id)
-    const { data, error: errorRpc } = await supabase.rpc(nombreRpc, { p_registro_id: registro.id })
+    const { data, error: errorRpc } = await supabase.rpc(nombreRpc, { p_registro_id: registro.id, ...parametros })
     setAcuerdoEnCurso(null)
     if (errorRpc) {
       mostrarToast(errorRpc.message || 'No se pudo completar la acción.', 'error')
-      return
+      return false
     }
     mostrarToast(alExito(data), 'exito')
     cargarRegistros(vigenteRef.current, true)
+    return true
   }
 
-  const marcarDiscrepancia = (registro) =>
+  // La discrepancia se abre con un MOTIVO (nota que verá quien atendió): marcarDiscrepancia lo recibe del modal.
+  const marcarDiscrepancia = (registro, motivo) =>
     ejecutarDiscrepancia(
       registro,
       'marcar_discrepancia_atencion',
-      () => `Discrepancia marcada: ${nombreUsuarioDe(registro) ?? 'la persona'} verá el aviso en su panel.`,
+      () => `Discrepancia marcada: ${nombreUsuarioDe(registro) ?? 'la persona'} verá el aviso y tu nota en su panel.`,
+      { p_motivo: motivo },
     )
   const retirarDiscrepancia = (registro) =>
     ejecutarDiscrepancia(registro, 'retirar_discrepancia_atencion', () => 'Discrepancia retirada.')
@@ -1074,7 +1082,7 @@ export default function MiPanel({ activo = true }) {
                                       texto="Marcar discrepancia (hay que conversarla)"
                                       etiquetaPc="Iniciar discrepancia"
                                       color="celeste"
-                                      onClick={() => marcarDiscrepancia(registro)}
+                                      onClick={() => setRegistroADiscrepar(registro)}
                                     />
                                   )}
                                   {puedeEditar && (
@@ -1246,6 +1254,13 @@ export default function MiPanel({ activo = true }) {
                                             : `Atención en discrepancia: conversen con ${nombreDuena} y, al llegar a un acuerdo, confirmen con la manito.`}
                                         </span>
                                       </p>
+                                      {/* Nota de la administradora: por qué se inició. Las abiertas antes de existir la nota no la traen. */}
+                                      {discrepancia.motivo && (
+                                        <p className="whitespace-pre-line break-words rounded-md bg-blue/10 px-2 py-1 text-ink">
+                                          <span className="font-medium text-blue">Motivo: </span>
+                                          {discrepancia.motivo}
+                                        </p>
+                                      )}
                                       <p className={miAcuerdo ? 'text-green' : 'text-ink/70'}>
                                         {miAcuerdo
                                           ? `Acuerdo enviado. Esperando ${esPropio ? 'al administrador' : `a ${nombreDuena}`}.`
@@ -1348,7 +1363,7 @@ export default function MiPanel({ activo = true }) {
           ventaRapida={false}
           onSeleccionar={(clienteElegido) => asignarClienta(registroAAsignar, clienteElegido)}
           onRegistrarNuevo={
-            esAdmin
+            puedeRegistrarClientes(usuario?.rol)
               ? (nombre) => {
                   setNombreClienteNuevo(nombre)
                   setModalClienteNuevoAbierto(true)
@@ -1366,6 +1381,18 @@ export default function MiPanel({ activo = true }) {
           onGuardado={(clienteCreado) => {
             if (clienteCreado) asignarClienta(registroAAsignar, clienteCreado)
             else setModalClienteNuevoAbierto(false)
+          }}
+        />
+      )}
+
+      {registroADiscrepar && (
+        <ModalMotivoDiscrepancia
+          nombreDuena={nombreUsuarioDe(registroADiscrepar)}
+          onCerrar={() => setRegistroADiscrepar(null)}
+          onConfirmar={async (motivo) => {
+            const guardado = await marcarDiscrepancia(registroADiscrepar, motivo)
+            if (guardado) setRegistroADiscrepar(null)
+            return guardado
           }}
         />
       )}

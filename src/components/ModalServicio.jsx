@@ -9,6 +9,8 @@ import Etiqueta from './Etiqueta.jsx'
 import BotonCerrarModal from './BotonCerrarModal.jsx'
 import EditorListaJson from './EditorListaJson.jsx'
 import SelectorServicioBuscable from './SelectorServicioBuscable.jsx'
+import Interruptor from './Interruptor.jsx'
+import CampoColapsable from './CampoColapsable.jsx'
 import { datosPosServicio, datosWebServicio } from '../lib/catalogoCampos.js'
 import {
   eliminarFoto,
@@ -36,6 +38,9 @@ const CAMPOS_POS = {
   duracionHoras: 'Duración (horas)',
   duracionMinutos: 'Duración (minutos)',
   activo: 'Activo',
+  porSesiones: 'Tratamiento por sesiones',
+  sesionesTotal: 'Número de sesiones',
+  sesionesIntervaloDias: 'Días entre sesiones',
 }
 const CAMPOS_WEB = {
   precioVariable: 'Precio variable',
@@ -65,6 +70,9 @@ const formularioVacio = {
   duracionMinutos: '',
   descripcion: '',
   activo: true,
+  porSesiones: false,
+  sesionesTotal: '3',
+  sesionesIntervaloDias: '30',
   enTendencia: false,
   aDomicilio: false,
   costoDomicilio: '',
@@ -103,6 +111,9 @@ function formularioDesdeServicio(servicio) {
     ...duracionEnPartes(servicio.duracion_min),
     descripcion: servicio.descripcion ?? '',
     activo: servicio.activo ?? true,
+    porSesiones: (servicio.sesiones_total ?? 1) > 1,
+    sesionesTotal: (servicio.sesiones_total ?? 1) > 1 ? String(servicio.sesiones_total) : '3',
+    sesionesIntervaloDias: servicio.sesiones_intervalo_dias != null ? String(servicio.sesiones_intervalo_dias) : '30',
     enTendencia: servicio.en_tendencia ?? false,
     aDomicilio: servicio.a_domicilio ?? false,
     costoDomicilio: servicio.costo_domicilio != null ? String(servicio.costo_domicilio) : '',
@@ -135,6 +146,17 @@ function validar(formulario, modo) {
   const duracion = duracionTotal(formulario)
   if (duracion === null) return 'Las horas y los minutos de la duración deben ser números enteros.'
   if (duracion === 0) return 'La duración debe ser mayor a 0 (o deja ambos campos vacíos).'
+
+  if (formulario.porSesiones) {
+    const sesiones = formulario.sesionesTotal.trim()
+    if (!ENTERO_NO_NEGATIVO.test(sesiones) || parseInt(sesiones, 10) < 2 || parseInt(sesiones, 10) > 12) {
+      return 'El número de sesiones va de 2 a 12.'
+    }
+    const dias = formulario.sesionesIntervaloDias.trim()
+    if (!ENTERO_NO_NEGATIVO.test(dias) || parseInt(dias, 10) < 1 || parseInt(dias, 10) > 365) {
+      return 'Los días entre sesiones van de 1 a 365.'
+    }
+  }
 
   return null
 }
@@ -846,6 +868,60 @@ export default function ModalServicio({
           />
 
           </>
+          )}
+
+          {!esWeb && (
+          <div>
+            {/* Tratamiento por sesiones: en Nueva cita, al elegir este servicio se proponen solas las sesiones siguientes. */}
+            <button
+              type="button"
+              onClick={() => actualizarCampo('porSesiones', !formulario.porSesiones)}
+              aria-pressed={formulario.porSesiones}
+              className="flex w-full items-center justify-between gap-3 rounded-lg border border-border-strong bg-bg px-3 py-2 text-left text-sm text-ink transition-colors hover:border-amber"
+            >
+              <span>
+                <span className="block font-medium">Tratamiento por sesiones</span>
+                <span className="block text-xs text-ink/60">
+                  {formulario.porSesiones
+                    ? 'Al agendarlo en Citas se proponen solas las sesiones siguientes.'
+                    : 'Apagado: es un servicio de una sola visita.'}
+                </span>
+              </span>
+              <Interruptor activado={formulario.porSesiones} colorActivado="bg-green" />
+            </button>
+            <CampoColapsable abierto={formulario.porSesiones} margen>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Etiqueta obligatorio htmlFor={`${idBase}-sesiones`}>Sesiones</Etiqueta>
+                  <input
+                    id={`${idBase}-sesiones`}
+                    type="search"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    maxLength={2}
+                    value={formulario.sesionesTotal}
+                    onChange={(evento) => actualizarCampo('sesionesTotal', evento.target.value.replace(/\D/g, '').slice(0, 2))}
+                    placeholder="Ej. 3"
+                    className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+                  />
+                </div>
+                <div>
+                  <Etiqueta obligatorio htmlFor={`${idBase}-intervalo`}>Cada cuántos días</Etiqueta>
+                  <input
+                    id={`${idBase}-intervalo`}
+                    type="search"
+                    inputMode="numeric"
+                    autoComplete="new-password"
+                    maxLength={3}
+                    value={formulario.sesionesIntervaloDias}
+                    onChange={(evento) => actualizarCampo('sesionesIntervaloDias', evento.target.value.replace(/\D/g, '').slice(0, 3))}
+                    placeholder="Ej. 30"
+                    className="w-full rounded-lg border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-ink outline-none placeholder:text-ink/40 focus:border-amber"
+                  />
+                </div>
+              </div>
+            </CampoColapsable>
+          </div>
           )}
 
           {!esWeb && (

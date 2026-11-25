@@ -90,9 +90,19 @@ export default function ModalCliente({ cliente, nombreInicial, notaGuia, onCerra
     // DNI, dirección y notas se pueden escribir pero no leer de la tabla (solo por la vista clientes_admin,
     // migración 20261120000004): un `.select()` sin columnas pediría `*` y daría 403. Se devuelven las columnas
     // permitidas y lo enviado completa el resto.
+    // Crear pasa por crear_cliente_personal (migración 20261124000006): cajera, encargada y asistente también registran
+    // clientas, pero sin poder escribir columnas que no son suyas (puntos, referidos…). Editar sigue siendo solo de la admin.
     const { data: filaGuardada, error: errorGuardado } = esEdicion
       ? await supabase.from('clientes').update(datos).eq('id', cliente.id).select(COLUMNAS_DEVUELTAS).single()
-      : await supabase.from('clientes').insert(datos).select(COLUMNAS_DEVUELTAS).single()
+      : await supabase.rpc('crear_cliente_personal', {
+          p_nombre: datos.nombre,
+          p_telefono: datos.telefono,
+          p_dni: datos.dni ?? null,
+          p_sexo: datos.sexo,
+          p_direccion: datos.direccion,
+          p_cumpleanos: datos.cumpleanos,
+          p_notas: datos.notas,
+        })
 
     setGuardando(false)
 
@@ -102,7 +112,9 @@ export default function ModalCliente({ cliente, nombreInicial, notaGuia, onCerra
           ? 'Ya existe un cliente con ese teléfono.'
           : errorGuardado.code === '23514'
             ? 'El DNI debe tener 8 dígitos.'
-            : 'No se pudo guardar el cliente. Intenta de nuevo.',
+            : errorGuardado.code === 'P0001'
+              ? errorGuardado.message
+              : 'No se pudo guardar el cliente. Intenta de nuevo.',
       )
       return
     }

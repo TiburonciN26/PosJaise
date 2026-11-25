@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ChevronRight, MapPin, MessageCircle, Users } from 'lucide-react'
 import { supabase } from '../../lib/supabase.js'
@@ -20,6 +20,7 @@ import TarjetaServicioCliente from '../../components/TarjetaServicioCliente.jsx'
 import MapaDiferido from '../../components/MapaDiferido.jsx'
 import ShinyText from '../../components/ShinyText.jsx'
 import CuponFlotanteInicio from '../../components/CuponFlotanteInicio.jsx'
+import IntroLogoInicio, { DESFASE_HERO_INTRO_MS } from '../../components/IntroLogoInicio.jsx'
 import PieClienteWeb from './PieClienteWeb.jsx'
 import { useMetaPagina } from '../../hooks/useMetaPagina.js'
 import { useDatosEstructuradosSalon } from '../../hooks/useDatosEstructuradosSalon.js'
@@ -211,6 +212,10 @@ function PuntosAvance({ puntos }) {
 // Fase 5: Inicio pide SOLO lo que muestra, cada cosa por su cuenta (useLectura): ya no se descarga el catálogo completo de servicios
 // para escoger cuatro, ni todas las reseñas y la galería para mostrar tres. Límites de diseño explícitos:
 const DESTACADOS_INICIO = 4 // «Lo más pedido»
+
+// El intro del logo se muestra una sola vez por carga de la página: este valor vive en el módulo, así que volver a Inicio
+// navegando (el portal desmonta y remonta la pantalla) no lo repite; un F5 sí.
+let introInicioMostrada = false
 const CANDIDATOS_DESTACADOS = 12 // del ranking se consideran los primeros; basta para saltar los inactivos
 const GALERIA_INICIO = 3 // parejas antes/después
 const TARJETAS_RESENAS_INICIO = 3 // tarjetas de reseñas
@@ -275,6 +280,14 @@ export default function InicioCliente() {
   useDatosEstructuradosSalon() // ficha del negocio para Google (dirección, teléfono, horario, redes)
   const { mostrarToast } = useToast()
   const { reducirMovimiento, esDesktop } = useEntornoAnimacion()
+  // Intro del logo: solo la primera vez que se monta Inicio en esta carga de la página (no al volver navegando) y nunca con
+  // «reducir movimiento». `conIntro` se fija al montar (el hero lo usa para desfasar su entrada); `introVisible` baja al terminar.
+  const [conIntro] = useState(() => !reducirMovimiento && !introInicioMostrada)
+  const [introVisible, setIntroVisible] = useState(conIntro)
+  const terminarIntro = useCallback(() => setIntroVisible(false), [])
+  useEffect(() => {
+    if (conIntro) introInicioMostrada = true
+  }, [conIntro])
   const { tema } = useTemaWeb()
   const esClaro = tema === 'claro'
 
@@ -327,9 +340,12 @@ export default function InicioCliente() {
   const contacto = contactoRes.datos
   const horario = horarioRes.datos
 
-  const ENTRADA_FIJA = esDesktop
+  // Si esta carga trae el intro del logo, el hero espera a que el fondo del intro se esté abriendo para armarse.
+  const BASE_ENTRADA = esDesktop
     ? { foto: 200, eyebrow: 150, titulo: 300, subtitulo: 420, botones: 540, promo: 950 }
     : { foto: 100, eyebrow: 350, titulo: 480, subtitulo: 560, botones: 650, promo: 1000 }
+  const desfaseIntro = conIntro ? DESFASE_HERO_INTRO_MS : 0
+  const ENTRADA_FIJA = Object.fromEntries(Object.entries(BASE_ENTRADA).map(([clave, ms]) => [clave, ms + desfaseIntro]))
 
   const { primeraFotoRef, filaRef, estadoFoto, claseSacudida, enCurso, puntos } = useSecuenciaScroll({
     activo: galeriaLista && galeria.length > 0,
@@ -380,6 +396,7 @@ export default function InicioCliente() {
 
   return (
     <div ref={contenedorRef} className="landing-web flex-1 overflow-y-auto lw-margen-pagina">
+      {introVisible && <IntroLogoInicio onTermino={terminarIntro} />}
       {/* 1. HERO — una sola pieza: la foto (con el efecto antes/después
           existente) es el FONDO COMPLETO de la sección, no una caja
           separada; el texto flota encima, sobre la franja negra que ya

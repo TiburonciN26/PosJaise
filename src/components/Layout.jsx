@@ -14,7 +14,7 @@ export default function Layout({ children }) {
   const { usuario } = useAuth()
 
   // index.html trae el título PÚBLICO del portal (SEO). En el POS la pestaña del navegador dice POS, y al volver al
-  // portal («Mi perfil de clienta») se restaura el público.
+  // portal (vista previa del admin) se restaura el público.
   useEffect(() => {
     const anterior = document.title
     document.title = 'POS · Jaise Beauty Academy'
@@ -24,7 +24,7 @@ export default function Layout({ children }) {
   }, [])
 
   // Presencia en tiempo real (pestaña Personal → «En línea»): mientras haya una sesión del POS abierta, esta cuenta se
-  // anuncia en el canal. Al cerrar sesión, pasar a «modo cliente» o cerrar la pestaña, deja de estarlo.
+  // anuncia en el canal. Al cerrar sesión, abrir la vista previa del portal o cerrar la pestaña, deja de estarlo.
   const usuarioId = usuario?.id
   useEffect(() => {
     if (!usuarioId) return undefined

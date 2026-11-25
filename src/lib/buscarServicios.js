@@ -10,7 +10,8 @@ import { leerPaginado } from './leerPaginado.js'
 
 export const LIMITE_SERVICIOS = 20
 export const TAMANO_PAGINA_SERVICIOS = 50
-export const COLUMNAS_SELECTOR_SERVICIO = 'id, nombre, precio, duracion_min, categoria'
+// sesiones_*: tratamiento por sesiones (Nueva cita propone las sesiones siguientes, migración 20261125000001).
+export const COLUMNAS_SELECTOR_SERVICIO = 'id, nombre, precio, duracion_min, categoria, sesiones_total, sesiones_intervalo_dias'
 
 // Orden de la pantalla Servicios → columnas del servidor. Desempate por nombre y id para que las páginas no
 // repitan ni salten filas. Una duración vacía se ordenaba como 0 (primero en ascendente).

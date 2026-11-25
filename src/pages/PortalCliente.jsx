@@ -12,6 +12,7 @@ import { precargarPestanasPrincipales, reintentarPaginasFallidas } from '../conf
 import LimiteCargaDiferida from '../components/LimiteCargaDiferida.jsx'
 import MenuUsuarioCliente from '../components/MenuUsuarioCliente.jsx'
 import AccionesVisitante from '../components/AccionesVisitante.jsx'
+import BarraVistaPreviaPortal from '../components/BarraVistaPreviaPortal.jsx'
 import MenuLateralCliente from '../components/MenuLateralCliente.jsx'
 import IconoCampana from '../components/IconoCampana.jsx'
 import MenuSeccionesRecompensas from '../components/MenuSeccionesRecompensas.jsx'
@@ -467,6 +468,8 @@ export default function PortalCliente() {
               </main>
               <MenuLateralCliente abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} />
             </div>
+
+            <BarraVistaPreviaPortal />
           </div>
         </NotificacionesClienteProvider>
       </CarritoClienteProvider>

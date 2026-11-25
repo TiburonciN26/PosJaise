@@ -6,7 +6,6 @@ import {
   Eye,
   EyeOff,
   Search,
-  CalendarClock,
   CheckCheck,
   X,
   UserX,
@@ -28,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarPlus,
+  CalendarClock,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -52,6 +52,8 @@ import CampoColapsable from '../components/CampoColapsable.jsx'
 import EstadoVacio from '../components/EstadoVacio.jsx'
 import ModalCita from '../components/ModalCita.jsx'
 import ModalCliente from '../components/ModalCliente.jsx'
+import { mensajeCumpleanos } from '../lib/saludoCumpleanos.js'
+import { arrastraSesiones, etiquetaSesion, sesionesFuturasPendientes } from '../lib/sesionesCita.js'
 import ModalRegistroAtencion from '../components/ModalRegistroAtencion.jsx'
 import ModalColoresCitas from '../components/ModalColoresCitas.jsx'
 import { useEstadoVista } from '../lib/estadoVista.js'
@@ -136,9 +138,7 @@ function TarjetaCumpleanos({ cliente }) {
         <div className="flex flex-wrap gap-2 pt-1">
           {cliente.telefono ? (
             <a
-              href={`https://wa.me/${numeroWhatsapp(cliente.telefono)}?text=${encodeURIComponent(
-                `¡Feliz cumpleaños, ${cliente.nombre.split(' ')[0]}! 🎉 De parte de Jaise Beauty Academy, tenés un 30% de descuento en el servicio que quieras, válido por 7 días. ¡Te esperamos!`,
-              )}`}
+              href={`https://wa.me/${numeroWhatsapp(cliente.telefono)}?text=${encodeURIComponent(mensajeCumpleanos(cliente.nombre))}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(evento) => evento.stopPropagation()}
@@ -186,7 +186,7 @@ function formatearFechaCorta(fechaIso) {
 
 const SELECT_CITAS =
   'id, cliente_id, cliente_nombre_referencia, asistente_id, creado_por, creado_por_cliente_web_id, ' +
-  'fecha_hora, estado, nota, adelanto, estado_cambiado_por, estado_cambiado_web, ' +
+  'fecha_hora, estado, nota, adelanto, adelanto_metodo, descuento, serie_id, sesion_numero, sesiones_total, estado_cambiado_por, estado_cambiado_web, ' +
   // telefono: botón de WhatsApp junto al nombre en el detalle de la cita (solo si la clienta tiene número).
   'clientes(nombre, telefono), asistentes(nombres_completos, usuario_id), ' +
   // registro_servicio_id: la atención de Mis atenciones nacida al completar la cita (para asignarle la clienta desde el detalle).
@@ -289,6 +289,32 @@ function CapsulaSinComision() {
 
 // Diferencia a simple vista las citas con adelanto/abono ya dejado por el
 // cliente — misma forma de cápsula que CapsulaClienteWeb, en verde.
+// Cita que es una sesión de un tratamiento (migración 20261125000001): rosada, con «Sesión 2 de 3».
+function CapsulaSesion({ cita }) {
+  const etiqueta = etiquetaSesion(cita)
+  if (!etiqueta) return null
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-pink-400/15 px-1.5 py-0.5 text-[10px] font-medium text-pink-400">
+      <CalendarClock className="h-2.5 w-2.5" />
+      {etiqueta}
+    </span>
+  )
+}
+
+// Cita con descuento acordado (plata que no va a entrar; Ventas lo aplica solo al cobrar): cápsula roja, como el adelanto pero en rojo.
+function tieneDescuento(cita) {
+  return cita.descuento != null && Number(cita.descuento) > 0
+}
+
+function CapsulaDescuento() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red/15 px-1.5 py-0.5 text-[10px] font-medium text-red">
+      <Percent className="h-2.5 w-2.5" />
+      Descuento
+    </span>
+  )
+}
+
 function CapsulaAdelanto() {
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-green/15 px-1.5 py-0.5 text-[10px] font-medium text-green">
@@ -326,6 +352,9 @@ export default function Citas({ activo = true }) {
   const [eliminando, setEliminando] = useState(false)
   const [citaAReactivar, setCitaAReactivar] = useState(null)
   const [citaACancelar, setCitaACancelar] = useState(null)
+  // «No asistió» sobre la sesión 1 de un tratamiento: pide confirmar porque cancela las sesiones siguientes.
+  const [citaANoAsistio, setCitaANoAsistio] = useState(null)
+  const listaDiaRef = useRef(null)
   // Cita completada sin clienta registrada a la que la administradora está creando la ficha desde el detalle.
   const [citaAAsignarCliente, setCitaAAsignarCliente] = useState(null)
   const navigate = useNavigate()
@@ -352,6 +381,7 @@ export default function Citas({ activo = true }) {
   const panelEliminarRef = useRef(null)
   const panelReactivarRef = useRef(null)
   const panelCancelarRef = useRef(null)
+  const panelNoAsistioRef = useRef(null)
   const inputBusquedaRef = useRef(null)
   useCerrarConEscape(() => setCitaSeleccionada(null), Boolean(citaSeleccionada))
   useModalA11y(panelDetalleRef, Boolean(citaSeleccionada))
@@ -361,6 +391,8 @@ export default function Citas({ activo = true }) {
   useModalA11y(panelReactivarRef, Boolean(citaAReactivar))
   useCerrarConEscape(() => setCitaACancelar(null), Boolean(citaACancelar))
   useModalA11y(panelCancelarRef, Boolean(citaACancelar))
+  useCerrarConEscape(() => setCitaANoAsistio(null), Boolean(citaANoAsistio))
+  useModalA11y(panelNoAsistioRef, Boolean(citaANoAsistio))
   useCerrarConEscape(() => setMesAbierto(false), mesAbierto, { trabajoPendiente: false })
   useCerrarConEscape(() => setFiltroAbierto(false), filtroAbierto, { trabajoPendiente: false })
 
@@ -689,12 +721,23 @@ export default function Citas({ activo = true }) {
       )
     setCitas(aplicarEstado)
     setCitasBusqueda((anteriores) => (anteriores ? aplicarEstado(anteriores) : anteriores))
+    // Cancelar, marcar «no asistió» o reactivar la 1.ª sesión de un tratamiento arrastra a las demás en el servidor: se recarga para verlas igual.
+    if (arrastraSesiones(cita)) {
+      cargarCitas(vigenteRef.current, true)
+      refrescarBusquedaRef.current()
+    }
   }
 
   async function confirmarReactivar() {
     if (!citaAReactivar) return
     setCitaAReactivar(null)
     await cambiarEstado(citaAReactivar, 'PENDIENTE')
+  }
+
+  async function confirmarNoAsistio() {
+    if (!citaANoAsistio) return
+    setCitaANoAsistio(null)
+    await cambiarEstado(citaANoAsistio, 'NO_ASISTIO')
   }
 
   async function confirmarCancelar() {
@@ -750,6 +793,17 @@ export default function Citas({ activo = true }) {
   const citasDelDiaSeleccionado = diaSeleccionado
     ? (citasPorDia.get(claveDia(diaSeleccionado)) ?? [])
     : []
+
+  // Sesiones de tratamientos del mes visible (franja rosada) y «Ver cita»: selecciona el día de esa sesión.
+  const sesionesDelMes = useMemo(() => sesionesFuturasPendientes(citasVisibles), [citasVisibles])
+  function verDiaDeCita(cita) {
+    const clave = claveDia(new Date(cita.fecha_hora))
+    const dia = diasGrilla.find((d) => claveDia(d) === clave)
+    if (!dia) return
+    setDiaSeleccionado(dia)
+    // En móvil la lista del día queda debajo del calendario: se baja hasta ella.
+    requestAnimationFrame(() => listaDiaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+  }
 
   const cumpleanosDelDiaSeleccionado = diaSeleccionado
     ? (cumpleanosPorDia.get(claveMesDia(aLima(diaSeleccionado).getUTCMonth(), aLima(diaSeleccionado).getUTCDate())) ?? [])
@@ -1150,7 +1204,9 @@ export default function Citas({ activo = true }) {
                       {l.getUTCDate()} de {MESES[l.getUTCMonth()]} · {formatearHora(cita.fecha_hora)}
                       {esCitaWeb(cita) && <CapsulaClienteWeb />}
                       {tieneAsistentePendiente(cita) && <CapsulaSinAsistente />}
+                      <CapsulaSesion cita={cita} />
                       {tieneAdelanto(cita) && <CapsulaAdelanto />}
+                      {tieneDescuento(cita) && <CapsulaDescuento />}
                       {tieneClientaPendiente(cita) && <CapsulaSinCliente />}
                       {citaSinComision(cita) && <CapsulaSinComision />}
                     </p>
@@ -1161,6 +1217,35 @@ export default function Citas({ activo = true }) {
         </div>
       ) : (
         <>
+          {/* Sesiones de tratamientos (la 1 incluida) que caen en este mes: una línea por sesión, para no tener que ir día por día. «Ver cita» abre el
+              día (no se pueden abrir dos días a la vez, por eso cada sesión tiene su propia línea). */}
+          {sesionesDelMes.length > 0 && (
+            <div className="mt-3 space-y-1.5">
+              {sesionesDelMes.map((cita) => {
+                const l = aLima(new Date(cita.fecha_hora))
+                return (
+                  <button
+                    key={cita.id}
+                    type="button"
+                    onClick={() => verDiaDeCita(cita)}
+                    className="flex w-full items-center gap-2 rounded-lg border border-pink-400/30 bg-pink-400/10 px-3 py-2 text-left text-xs text-ink/80 transition-colors hover:border-pink-400"
+                  >
+                    <CalendarClock className="h-4 w-4 shrink-0 text-pink-400" />
+                    <span className="min-w-0 flex-1">
+                      <span className="font-medium text-pink-400">{etiquetaSesion(cita)}</span>
+                      {' · '}
+                      {nombreClienteDe(cita)} · {resumenServiciosDe(cita)}
+                      <span className="block font-mono text-[11px] text-ink/60">
+                        {l.getUTCDate()} de {MESES[l.getUTCMonth()]} · {formatearHora(cita.fecha_hora)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-medium text-pink-400 underline-offset-2">Ver cita</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           {/* lg: calendario y lista del día lado a lado (patrón de agenda de
               escritorio) — en móvil sigue apilado, sin cambios. */}
           <div className="lg:flex lg:items-start lg:gap-4">
@@ -1234,7 +1319,7 @@ export default function Citas({ activo = true }) {
           </div>
 
           {/* Citas del día seleccionado */}
-          <div className="mt-4 lg:min-w-0 lg:flex-1">
+          <div ref={listaDiaRef} className="mt-4 lg:min-w-0 lg:flex-1">
             {!diaSeleccionado ? (
               <p className="py-8 text-center font-mono text-sm text-ink/60">
                 Selecciona un día para ver sus citas.
@@ -1285,7 +1370,9 @@ export default function Citas({ activo = true }) {
                               {formatearHora(cita.fecha_hora)}
                               {esCitaWeb(cita) && <CapsulaClienteWeb />}
                               {tieneAsistentePendiente(cita) && <CapsulaSinAsistente />}
+                              <CapsulaSesion cita={cita} />
                               {tieneAdelanto(cita) && <CapsulaAdelanto />}
+                              {tieneDescuento(cita) && <CapsulaDescuento />}
                               {tieneClientaPendiente(cita) && <CapsulaSinCliente />}
                               {citaSinComision(cita) && <CapsulaSinComision />}
                             </p>
@@ -1383,7 +1470,7 @@ export default function Citas({ activo = true }) {
         />
       )}
 
-      {citaSeleccionada && !citaACompletar && !modalCita && !citaPlantilla && !citaAEliminar && !citaAReactivar && !citaACancelar && !citaAAsignarCliente && (
+      {citaSeleccionada && !citaACompletar && !modalCita && !citaPlantilla && !citaAEliminar && !citaAReactivar && !citaACancelar && !citaANoAsistio && !citaAAsignarCliente && (
         <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-30 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
           <div
             ref={panelDetalleRef}
@@ -1477,11 +1564,22 @@ export default function Citas({ activo = true }) {
                   {citaSeleccionada.estado === 'CANCELADA' ? 'Cancelada' : 'Marcada como no asistió'} por: {quienCambioEstado}
                 </p>
               )}
+              {etiquetaSesion(citaSeleccionada) && (
+                <p className="flex items-center gap-1 text-xs text-pink-400">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Tratamiento por sesiones · {etiquetaSesion(citaSeleccionada)}
+                </p>
+              )}
               {tieneAdelanto(citaSeleccionada) && (
                 <p className="flex items-center gap-1 text-xs text-green">
                   <Coins className="h-3.5 w-3.5" />
                   Adelanto: {formatearSoles(citaSeleccionada.adelanto)}
+                  {citaSeleccionada.adelanto_metodo ? ` · ${citaSeleccionada.adelanto_metodo}` : ''}
                 </p>
+              )}
+              {/* Descuento acordado al agendar: plata que NO va a entrar (Ventas lo aplica solo al cobrar la atención). */}
+              {Number(citaSeleccionada.descuento) > 0 && (
+                <p className="text-xs text-red">Descuento: -{formatearSoles(citaSeleccionada.descuento)}</p>
               )}
               {citaSeleccionada.nota && (
                 <p className="rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-xs">
@@ -1506,7 +1604,9 @@ export default function Citas({ activo = true }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => cambiarEstado(citaSeleccionada, 'NO_ASISTIO')}
+                    onClick={() =>
+                      arrastraSesiones(citaSeleccionada) ? setCitaANoAsistio(citaSeleccionada) : cambiarEstado(citaSeleccionada, 'NO_ASISTIO')
+                    }
                     className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-red/50 px-2 py-1.5 text-xs font-medium text-red hover:bg-red/10"
                   >
                     <UserX className="h-3.5 w-3.5 shrink-0" />
@@ -1628,6 +1728,13 @@ export default function Citas({ activo = true }) {
           <div ref={panelCancelarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Cancelar esta cita?</h2>
             <p className="mt-1 text-sm text-ink/60">Podrás reactivarla después si cambia el plan.</p>
+            {arrastraSesiones(citaACancelar) && (
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-pink-400/30 bg-pink-400/5 px-2.5 py-2 text-xs text-pink-400">
+                <CalendarClock className="mt-px h-3.5 w-3.5 shrink-0" />
+                Es la sesión 1 de {citaACancelar.sesiones_total}: también se cancelarán las demás sesiones del tratamiento que sigan
+                pendientes.
+              </p>
+            )}
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
@@ -1648,11 +1755,46 @@ export default function Citas({ activo = true }) {
         </div>
       )}
 
+      {citaANoAsistio && (
+        <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
+          <div ref={panelNoAsistioRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
+            <h2 className="text-base font-semibold text-ink">¿Marcar como «no asistió»?</h2>
+            <p className="mt-1 text-sm text-ink/60">Podrás reactivarla después si fue un error.</p>
+            <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-pink-400/30 bg-pink-400/5 px-2.5 py-2 text-xs text-pink-400">
+              <CalendarClock className="mt-px h-3.5 w-3.5 shrink-0" />
+              Es la sesión 1 de {citaANoAsistio.sesiones_total}: se cancelarán las demás sesiones del tratamiento que sigan pendientes.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCitaANoAsistio(null)}
+                className="flex-1 rounded-lg border border-border-strong py-2 text-sm text-ink transition-colors hover:border-purple-300 hover:text-purple-300"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={confirmarNoAsistio}
+                className="flex-1 rounded-lg border border-red bg-transparent py-2 text-sm font-semibold text-red transition-colors hover:bg-red/10"
+              >
+                Sí, no asistió
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {citaAReactivar && (
         <div className="fixed inset-x-0 bottom-0 top-[59px] sm:top-0 z-40 flex items-start justify-center sm:items-center bg-black/60 px-4 pb-4 pt-3 sm:pt-4">
           <div ref={panelReactivarRef} className="w-full max-w-sm rounded-lg border border-border bg-surface px-(--separador-vertical-secundario) py-(--separador-horizontal-secundario)">
             <h2 className="text-base font-semibold text-ink">¿Reactivar esta cita?</h2>
             <p className="mt-1 text-sm text-ink/60">Va a volver a quedar pendiente.</p>
+            {arrastraSesiones(citaAReactivar) && (
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-pink-400/30 bg-pink-400/5 px-2.5 py-2 text-xs text-pink-400">
+                <CalendarClock className="mt-px h-3.5 w-3.5 shrink-0" />
+                También volverán las sesiones siguientes que se cancelaron junto con esta.
+              </p>
+            )}
             <div className="mt-4 flex gap-2">
               <button
                 type="button"

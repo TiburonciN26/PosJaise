@@ -148,9 +148,14 @@ export async function nuevoServicio(precio, proteccion, extra = {}) {
   const duracion = extra.duracion_min == null ? 'null' : Number(extra.duracion_min);
   let sql = `insert into public.servicios (id, nombre, precio, duracion_min) values ('${id}', '${nombre}', ${precio}, ${duracion});`;
   if (proteccion) {
-    // `asistentePct` = porcentaje protegido (nuevo); `asistente` = importe fijo antiguo (S/). Sin ninguno, queda como antes.
+    // `asistentePct` = porcentaje protegido (estimación antigua); `asistente` = importe fijo antiguo (S/). Sin ninguno, queda como antes.
+    // Desde 20261124000001 la mano de obra que protege un cupón es la comisión REAL de quien atendió (0 si atendió la dueña):
+    // ni el importe fijo ni el % estimado entran ya en las ventas. Los escenarios que definen su piso con `asistente` (S/) lo
+    // conservan sumando ese importe a `materiales` (la columna `asistente` se sigue guardando por compatibilidad). Para probar una
+    // comisión de asistente se usa nuevaAtencionConComision().
+    const materiales = Number(proteccion.materiales ?? 0) + Number(proteccion.asistente ?? 0);
     sql += `insert into public.servicios_proteccion (servicio_id, materiales, asistente, otros, asistente_pct)
-            values ('${id}', ${proteccion.materiales ?? 0}, ${proteccion.asistente ?? 0}, ${proteccion.otros ?? 0},
+            values ('${id}', ${materiales}, ${proteccion.asistente ?? 0}, ${proteccion.otros ?? 0},
                     ${proteccion.asistentePct ?? 'null'});`;
   }
   const r = await ejecutar(sql);
@@ -180,6 +185,18 @@ export async function nuevoProducto(precio, stock = 10, extra = {}) {
 
 // La atención se atribuye al ADMINISTRADOR (dueño: 100 %): no hace falta configurar
 // porcentajes ni se toca ninguna regla de comisión.
+// Atención hecha por la asistente QA con un % REAL en ese servicio: el disparador de la base guarda su comisión (precio x % / 100) y
+// esa es la mano de obra que protege el cupón. Una promoción o cupón del salón NO la reduce.
+export async function nuevaAtencionConComision(clienteId, servicioId, precio, porcentaje, fecha = 'now()') {
+  const id = randomUUID();
+  const r = await ejecutar(`insert into public.porcentajes (servicio_id, asistente_id, porcentaje)
+    select '${servicioId}', a.id, ${porcentaje} from public.asistentes a where a.usuario_id = '${ASISTENTE}';
+    insert into public.registro_servicios (id, usuario_id, servicio_id, cliente_id, precio, fecha, estado)
+    values ('${id}', '${ASISTENTE}', '${servicioId}', '${clienteId}', ${precio}, ${fecha}, 'ACTIVO');`);
+  if (!r.ok) throw new Error(r.err);
+  return id;
+}
+
 export async function nuevaAtencion(clienteId, servicioId, precio, fecha = 'now()') {
   const id = randomUUID();
   const r = await ejecutar(`insert into public.registro_servicios

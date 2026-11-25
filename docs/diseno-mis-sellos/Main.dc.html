@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mis sellos · Tarjeta de 12 sellos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+@font-face{font-family:'Heavitas';src:url('/_blob/be35f82857567a1e4123f1ae22bc3d4f') format('woff2');font-display:swap}
+@font-face{font-family:'Kunaroh';src:url('/_blob/b643ce4be9ab003e552c885cedfdbf7f') format('woff2');font-display:swap}
+body{margin:0;background:#0b0b0c;font-family:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer}
+button:disabled{cursor:default}
+:focus-visible{outline:2px solid #a9c6ec;outline-offset:2px}
+
+/* ---------- Metales por fila (los mismos de la tarjeta de puntos: Básico plata, Premium oro, VIP diamante) ---------- */
+.t0{--m:linear-gradient(135deg,#6f757b 0%,#b9bec4 18%,#f4f6f8 34%,#8e949a 50%,#dde1e5 66%,#747a80 84%,#c8cdd2 100%);--mi:#25292d;--mg:rgba(210,216,222,.38);--mr:#c8cdd2}
+.t1{--m:linear-gradient(135deg,#6e5214 0%,#c9a24a 18%,#f6e1a1 34%,#b48a2e 50%,#e9c874 66%,#8c6a1c 84%,#d9b660 100%);--mi:#3b2a06;--mg:rgba(233,200,116,.42);--mr:#d9b660}
+.t2{--m:linear-gradient(135deg,#8ea6bd 0%,#cfe2f3 18%,#ffffff 34%,#a9c3da 50%,#eaf4ff 66%,#93adc6 84%,#d8e8f7 100%);--mi:#1b2a3b;--mg:rgba(190,225,255,.46);--mr:#cfe2f3}
+
+/* ---------- Acabado de la tarjeta (Tweak): ónix, plata o diamante ---------- */
+.th-onix{--g:linear-gradient(135deg,#0c0e11 0%,#171b21 20%,#262c35 34%,#12151a 50%,#1e232b 66%,#0d0f13 84%,#181c22 100%);--ink:#eef2f6;--muted:rgba(238,242,246,.66);--line:rgba(238,242,246,.3);--well:rgba(255,255,255,.04);--bar:rgba(255,255,255,.14);--glow:rgba(169,198,236,.18);--ts:0 1px 0 rgba(0,0,0,.6);--franja:linear-gradient(180deg,#05070a,#1c222b 50%,#05070a)}
+.th-onix .t0{--cap:#c8cdd2}
+.th-onix .t1{--cap:#d9b660}
+.th-onix .t2{--cap:#cfe2f3}
+.th-plata{--g:linear-gradient(135deg,#6f757b 0%,#b9bec4 18%,#f4f6f8 34%,#8e949a 50%,#dde1e5 66%,#747a80 84%,#c8cdd2 100%);--ink:#25292d;--muted:rgba(37,41,45,.82);--line:rgba(37,41,45,.5);--well:rgba(0,0,0,.1);--bar:rgba(0,0,0,.2);--glow:rgba(210,216,222,.18);--ts:0 1px 0 rgba(255,255,255,.6);--franja:linear-gradient(180deg,#1c1f22,#3a3f44 50%,#1c1f22)}
+.th-diamante{--g:linear-gradient(135deg,#8ea6bd 0%,#cfe2f3 18%,#ffffff 34%,#a9c3da 50%,#eaf4ff 66%,#93adc6 84%,#d8e8f7 100%);--ink:#1b2a3b;--muted:rgba(27,42,59,.84);--line:rgba(27,42,59,.5);--well:rgba(0,0,0,.08);--bar:rgba(27,42,59,.2);--glow:rgba(190,225,255,.24);--ts:0 1px 0 rgba(255,255,255,.7);--franja:linear-gradient(180deg,#132030,#2c4560 50%,#132030)}
+/* Diamante verde: paleta de "Niveles de Tarjeta Rewards" (GREEN DIAMOND) aplicada solo al cuerpo de la tarjeta; los sellos conservan sus metales */
+.th-verde{--g:linear-gradient(135deg,#03321f 0%,#0b7a4c 18%,#7ff0bd 34%,#06573a 50%,#22b77a 66%,#044029 84%,#16996a 100%);--ink:#e8fff4;--muted:rgba(232,255,244,.82);--line:rgba(232,255,244,.45);--well:rgba(0,30,18,.3);--bar:rgba(0,30,18,.38);--glow:rgba(40,220,140,.26);--ts:0 1px 0 rgba(0,30,18,.55);--franja:linear-gradient(180deg,#011209,#05341f 50%,#011209)}
+/* Rubí élite: paleta RUBY de la misma referencia */
+.th-rubi{--g:linear-gradient(135deg,#3f0510 0%,#9a1226 18%,#ef6a7c 34%,#7a0b1c 50%,#cf2c44 66%,#4f0713 84%,#b51d35 100%);--ink:#ffe4e8;--muted:rgba(255,228,232,.82);--line:rgba(255,228,232,.45);--well:rgba(40,0,8,.3);--bar:rgba(40,0,8,.4);--glow:rgba(230,50,80,.28);--ts:0 1px 0 rgba(40,0,8,.55);--franja:linear-gradient(180deg,#140104,#3a0610 50%,#140104)}
+.th-plata .celda,.th-diamante .celda,.th-verde .celda,.th-rubi .celda{--cap:var(--ink)}
+.th-rubi .iri{opacity:.18}
+.th-rubi .lineas{display:block}
+.iri{position:absolute;inset:0;opacity:0;mix-blend-mode:soft-light;pointer-events:none;background:linear-gradient(120deg,#ffb3d9,#b3e5ff 25%,#d4ffb3 45%,#fff0b3 60%,#d9b3ff 80%,#b3fff6)}
+.th-verde .iri{opacity:.4}
+.lineas{position:absolute;inset:0;display:none;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,245,210,.05) 0 .1cqw,transparent .1cqw .4cqw)}
+.th-verde .lineas{display:block}
+
+/* ---------- Página ---------- */
+.pagina{background:#0b0b0c;color:#fff;min-height:100%;position:relative}
+.contenedor{max-width:1100px;margin:0 auto;padding:0 24px}
+.proto{border-bottom:1px dashed #3a3a3f;background:#111113}
+.proto-in{max-width:1100px;margin:0 auto;padding:12px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.proto-lbl{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#a6a6a6;margin-right:6px}
+.chip-esc{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid #3a3a3f;background:transparent;color:#e6e6e6;font-size:13px;font-weight:600}
+.chip-esc:hover{border-color:#a9c6ec;color:#a9c6ec}
+.chip-esc.activo{background:#a9c6ec;border-color:#a9c6ec;color:#0b0b0c}
+.btn-proto{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid #a9c6ec;background:transparent;color:#a9c6ec;font-size:13px;font-weight:600}
+.btn-proto:hover:not(:disabled){background:#a9c6ec;color:#0b0b0c}
+.btn-proto:disabled{opacity:.4}
+.titulo{margin:0;font-family:'Heavitas','Inter',sans-serif;font-weight:400;font-size:44px;line-height:1.1;color:#fff;text-transform:uppercase;letter-spacing:.01em}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px}
+.tab{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid #2a2a2e;background:transparent;color:#d0d0d0;font-size:14px;font-weight:600;white-space:nowrap}
+.tab.on{border-color:transparent;color:#0b0b0c;background:linear-gradient(90deg,#86a9d8 0%,#a9c6ec 40%,#d3e4f8 50%,#a9c6ec 60%,#86a9d8 100%)}
+.intro{margin:0;max-width:640px;font-size:15px;line-height:1.6;color:#b4b4b4}
+
+/* ---------- Tarjeta 3D ---------- */
+.stage{container-type:inline-size;width:100%;max-width:880px;margin:0 auto;position:relative;user-select:none;-webkit-user-select:none;touch-action:pan-y;cursor:grab}
+.stage.arrastrando{cursor:grabbing}
+.persp{width:100%;aspect-ratio:1000/630;margin:4cqw 0;perspective:220cqw;animation:entra 1s cubic-bezier(.2,.8,.2,1) both}
+.flota{position:relative;width:100%;height:100%;transform-style:preserve-3d;animation:flota 7s ease-in-out infinite}
+.gira{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.1s cubic-bezier(.2,.8,.2,1)}
+.gira.arr{transition:none}
+.cara{position:absolute;inset:0;border-radius:4.4cqw;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--g);color:var(--ink);transition:filter .8s ease;box-shadow:0 0 8cqw var(--glow),inset 0 0 0 .2cqw rgba(255,255,255,.3),inset 0 -.8cqw 3cqw rgba(0,0,0,.35)}
+.cara.dorso{transform:rotateY(180deg)}
+.flash .cara.frente{filter:brightness(1.5);transition:none}
+.glare{position:absolute;inset:0;overflow:hidden;mix-blend-mode:soft-light;pointer-events:none}
+.glare i{position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 50% 50%,rgba(255,248,220,.75),rgba(255,248,220,0) 24%);transition:transform 1.1s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.arr .glare i{transition:none}
+.sheen{position:absolute;top:-40%;left:-60%;width:60%;height:180%;background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.9) 50%,rgba(255,255,255,0) 100%);transform:translateX(-80%) rotate(18deg);mix-blend-mode:overlay;pointer-events:none;animation:barrido 5.7s linear infinite}
+.th-onix .sheen{mix-blend-mode:screen;opacity:.2}
+.tinta{color:var(--ink);text-shadow:var(--ts)}
+
+/* Cara frontal */
+.panel-izq{position:absolute;left:5.6cqw;top:5.6cqw;bottom:5.6cqw;width:26cqw;display:flex;flex-direction:column}
+.marca{font-family:'Kunaroh','Orbitron',sans-serif;font-size:4cqw;line-height:1;letter-spacing:1cqw;color:var(--ink);text-shadow:var(--ts)}
+.insignia{margin-top:1.8cqw;width:fit-content;font-size:1.7cqw;font-weight:700;letter-spacing:.22cqw;padding:.8cqw 1.6cqw;border:.2cqw solid currentColor;border-radius:99cqw;opacity:.88;white-space:nowrap}
+.espacio{flex:1}
+.lbl-sellos{font-size:2cqw;font-weight:600;letter-spacing:.4cqw;color:var(--muted)}
+.num{display:flex;align-items:baseline;gap:1.2cqw;font-variant-numeric:tabular-nums;line-height:1;margin-top:.8cqw}
+.num b{display:inline-block;font-size:13cqw;font-weight:800;transition:transform .7s cubic-bezier(.2,1.5,.3,1);transform-origin:left bottom}
+.flash .num b{transform:scale(1.14);transition:none}
+.num span{font-size:4.2cqw;font-weight:700;color:var(--muted)}
+.barra{position:relative;margin-top:1.8cqw;height:1.1cqw;border-radius:9cqw;background:var(--bar);overflow:hidden}
+.barra i.relleno{position:absolute;left:0;top:0;bottom:0;border-radius:9cqw;background:var(--ink);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.barra i.tick{position:absolute;top:0;bottom:0;width:.3cqw;background:rgba(127,127,127,.8)}
+.siguiente{margin-top:2cqw;font-size:2.1cqw;line-height:1.38;font-weight:600;color:var(--ink);text-shadow:var(--ts)}
+.nombre{margin-top:2.6cqw;font-size:2.3cqw;font-weight:700;letter-spacing:.2cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);text-shadow:var(--ts)}
+
+/* Cuadrícula de sellos: 4 por fila, 3 filas */
+.rejilla{position:absolute;left:35cqw;right:5.6cqw;top:5.6cqw;bottom:5.6cqw;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
+.celda{position:relative;display:grid;place-items:center}
+.seg{position:absolute;top:50%;left:calc(50% + 5.3cqw);width:4.25cqw;height:.5cqw;margin-top:-.25cqw;border-radius:9cqw;background:var(--bar);overflow:hidden;z-index:0}
+.seg.corto{width:2.75cqw}
+.seg::after{content:'';position:absolute;inset:0;background:var(--m);transform:scaleX(0);transform-origin:left;transition:transform .8s ease .25s}
+.seg.on::after{transform:scaleX(1)}
+
+/* Sello común */
+.sello{position:relative;z-index:1;width:9.4cqw;height:9.4cqw;border-radius:50%;display:grid;place-items:center;transition:background .5s,box-shadow .5s}
+.sello .n{font-size:2.4cqw;font-weight:700;color:var(--muted)}
+.sello svg{width:4.4cqw;height:4.4cqw;display:none}
+.sello.vacio{border:.3cqw dashed var(--line);background:var(--well)}
+.sello.ganado{background:var(--m);color:var(--mi);box-shadow:inset 0 0 0 .25cqw rgba(255,255,255,.35),inset 0 -.8cqw 1.4cqw rgba(0,0,0,.28),0 .5cqw 1.6cqw rgba(0,0,0,.45),0 0 2.6cqw var(--mg)}
+.sello.ganado .n{display:none}
+.sello.ganado svg{display:block}
+.sello.nuevo,.entrada .sello.ganado{animation:thud .95s cubic-bezier(.2,.9,.25,1.1) both}
+.sello.nuevo::after{content:'';position:absolute;inset:0;border-radius:50%;border:.3cqw solid var(--mr);animation:onda 1s ease-out both}
+
+/* Sello de meta (4, 8, 12) */
+.hito{position:relative;z-index:1;appearance:none;-webkit-appearance:none;border:0;background:none;padding:0;margin:0;color:inherit;width:12.4cqw;height:12.4cqw;border-radius:50%;display:block}
+.hito:focus-visible{outline:none}
+.hito:focus-visible .disco{outline:.35cqw solid #a9c6ec;outline-offset:.5cqw}
+.disco{position:relative;width:100%;height:100%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2cqw;transition:transform .35s cubic-bezier(.2,1.4,.3,1),background .5s,box-shadow .5s}
+.pct{font-family:'Inter',sans-serif;font-size:3.5cqw;font-weight:800;letter-spacing:-.1cqw;line-height:1}
+.lock{width:2.7cqw;height:2.7cqw;display:none}
+.check{position:absolute;right:-.5cqw;top:-.3cqw;width:4.2cqw;height:4.2cqw;border-radius:50%;background:var(--m);color:var(--mi);display:none;place-items:center;box-shadow:0 .3cqw .9cqw rgba(0,0,0,.55)}
+.check svg{width:2.6cqw;height:2.6cqw}
+.cap{position:absolute;top:calc(100% + .9cqw);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:1.7cqw;font-weight:700;letter-spacing:.2cqw;line-height:1;color:var(--muted)}
+.brillo{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:none;pointer-events:none}
+.brillo::after{content:'';position:absolute;top:-30%;left:-70%;width:50%;height:160%;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.85),rgba(255,255,255,0));transform:rotate(18deg);animation:barrido-d 3.2s ease-in-out infinite}
+.chispas{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+.chispas i{position:absolute;left:-.45cqw;top:-.45cqw;width:.9cqw;height:.9cqw;border-radius:50%;background:var(--mr);box-shadow:0 0 1.2cqw var(--mr);opacity:0}
+.chispas i:nth-child(1){--a:0deg}
+.chispas i:nth-child(2){--a:45deg}
+.chispas i:nth-child(3){--a:90deg}
+.chispas i:nth-child(4){--a:135deg}
+.chispas i:nth-child(5){--a:180deg}
+.chispas i:nth-child(6){--a:225deg}
+.chispas i:nth-child(7){--a:270deg}
+.chispas i:nth-child(8){--a:315deg}
+
+/* 1 · bloqueado */
+.hito.bloq .disco{border:.35cqw dashed var(--line);background:var(--well);color:var(--muted)}
+.hito.bloq .lock{display:block}
+/* 2 · disponible: late, ondas y destello */
+.hito.disp{cursor:pointer}
+.hito.disp .disco{background:var(--m);color:var(--mi);box-shadow:inset 0 0 0 .3cqw rgba(255,255,255,.5),inset 0 -1cqw 1.8cqw rgba(0,0,0,.3),0 0 3.4cqw var(--mg),0 .8cqw 2cqw rgba(0,0,0,.5);animation:latido 2.2s ease-in-out infinite}
+.hito.disp:hover .disco{transform:scale(1.08)}
+.hito.disp:active .disco{transform:scale(.95)}
+.hito.disp .disco::before,.hito.disp .disco::after{content:'';position:absolute;inset:0;border-radius:50%;border:.35cqw solid var(--mr);opacity:0;animation:onda 2.4s ease-out infinite}
+.hito.disp .disco::after{animation-delay:1.2s}
+.hito.disp .brillo{display:block}
+.hito.disp .cap{color:var(--cap)}
+/* 3 · reclamado: otro estado y otro color (oscuro, con aro de metal que gira) */
+.hito.recl .disco{background:radial-gradient(circle at 50% 38%,#262b33,#0a0c0f 72%);border:.4cqw solid var(--mr);box-shadow:inset 0 0 1.6cqw rgba(0,0,0,.7),0 0 2.2cqw var(--mg)}
+.hito.recl .pct{background:var(--m);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hito.recl .check{display:grid}
+.hito.recl .cap{color:var(--cap)}
+.hito.recl .disco::before{content:'';position:absolute;inset:-1.1cqw;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,255,255,0) 0 55%,var(--mr) 85%,rgba(255,255,255,0) 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - .5cqw),#000 calc(100% - .45cqw));mask:radial-gradient(farthest-side,transparent calc(100% - .5cqw),#000 calc(100% - .45cqw));animation:gira-aro 5s linear infinite}
+.hito.recl .brillo{display:block;opacity:.22}
+/* estampado de un sello de meta recién alcanzado y explosión al reclamar */
+.hito.nuevo .disco{animation:thud .95s cubic-bezier(.2,.9,.25,1.1) both}
+.hito.disp.nuevo .disco{animation:thud .95s cubic-bezier(.2,.9,.25,1.1) backwards,latido 2.2s ease-in-out .95s infinite}
+.hito.burst .disco{animation:sellar .9s cubic-bezier(.2,.9,.25,1.2) both}
+.hito.burst .chispas i{animation:chispa .95s ease-out both}
+.hito.burst .check{animation:thud .8s cubic-bezier(.2,.9,.25,1.1) .25s both}
+
+/* Dorso */
+.franja{position:absolute;left:0;right:0;top:6cqw;height:9cqw;background:var(--franja)}
+.d-tit{position:absolute;left:5.6cqw;top:19cqw;font-size:2cqw;font-weight:700;letter-spacing:.4cqw;color:var(--muted)}
+.d-txt{position:absolute;left:5.6cqw;top:22.6cqw;width:54cqw;font-size:2.7cqw;line-height:1.35;font-weight:600;color:var(--ink);text-shadow:var(--ts)}
+.d-ley{position:absolute;left:5.6cqw;top:37cqw;display:flex;flex-direction:column;gap:1.5cqw}
+.d-fila{display:flex;align-items:center;gap:2cqw;font-size:2.5cqw;font-weight:700;color:var(--ink);text-shadow:var(--ts)}
+.d-mini{width:4.2cqw;height:4.2cqw;border-radius:50%;background:var(--m);box-shadow:inset 0 0 0 .2cqw rgba(255,255,255,.4),0 .3cqw .8cqw rgba(0,0,0,.4)}
+.d-pie{position:absolute;left:5.6cqw;top:55.5cqw;width:62cqw;font-size:2cqw;line-height:1.4;font-weight:600;color:var(--muted)}
+.d-estrella{position:absolute;right:5.6cqw;bottom:5.6cqw;width:17cqw;height:17cqw;opacity:.5}
+
+/* Pista y control de giro */
+.pista{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#a6a6a6}
+.btn-giro{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid #3a3a3f;background:transparent;color:#fff;font-size:13px;font-weight:600}
+.btn-giro:hover{border-color:#a9c6ec;color:#a9c6ec}
+
+/* Aviso al reclamar (toast: aparece y se desvanece, sin mover nada) */
+.toast{position:absolute;left:50%;bottom:1.2cqw;transform:translate(-50%,12px);max-width:92%;padding:12px 20px;border-radius:999px;background:#fff;color:#0b0b0c;font-size:14px;font-weight:600;text-align:center;opacity:0;pointer-events:none;transition:opacity .4s ease,transform .4s ease;z-index:5;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- Lista de descuentos y reglas ---------- */
+.bloque{background:#111113;border:1px solid #1f1f22;border-radius:10px;box-shadow:inset 0 1px 1px rgba(255,255,255,.06)}
+.sub{margin:0;font-size:20px;font-weight:600;color:#fff}
+.resumen{margin:4px 0 0;font-size:14px;color:#b4b4b4}
+.fila{display:flex;align-items:center;gap:14px;padding:14px 20px;border-top:1px solid #1f1f22}
+.mini{flex:none;width:44px;height:44px;border-radius:50%;background:var(--m);color:var(--mi);display:grid;place-items:center;font-size:13px;font-weight:800;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35),0 0 14px var(--mg)}
+.fila.bloq .mini{background:transparent;border:2px dashed #4a4a50;color:#a6a6a6;box-shadow:none}
+.fila-txt{flex:1;min-width:0}
+.fila-tit{margin:0;font-size:15px;font-weight:600;color:#fff}
+.fila-det{margin:2px 0 0;font-size:13px;color:#a6a6a6}
+.chip{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid #3a3a3f;color:#a6a6a6;font-size:12px;font-weight:600;white-space:nowrap}
+.chip.ok{border-color:var(--mr);color:var(--mr)}
+.btn-recl{min-height:44px;padding:0 20px;border-radius:999px;border:1px solid #a9c6ec;background:transparent;color:#a9c6ec;font-size:14px;font-weight:600;white-space:nowrap}
+.btn-recl:hover{background:#a9c6ec;color:#0b0b0c}
+.btn-nueva{min-height:44px;padding:0 22px;border-radius:999px;border:1px solid #3a3a3f;background:transparent;color:#fff;font-size:14px;font-weight:600}
+.btn-nueva:hover{border-color:#a9c6ec;color:#a9c6ec}
+.desp{border:1px solid #1f1f22;border-radius:10px;background:#111113;transition:border-color .4s,background .4s}
+.desp.abierto{border-color:#a9c6ec}
+.desp-h{width:100%;min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px;border:0;border-radius:10px;background:transparent;color:#fff;font-size:15px;font-weight:600;text-align:left;transition:background .4s,color .4s}
+.desp.abierto .desp-h{background:rgba(169,198,236,.14);color:#a9c6ec}
+.caret{flex:none;width:12px;height:12px;transition:transform .45s ease}
+.desp.abierto .caret{transform:rotate(180deg)}
+.desp-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s ease}
+.desp.abierto .desp-b{grid-template-rows:1fr}
+.desp-in{overflow:hidden;min-height:0}
+.desp-lista{margin:0;padding:14px 20px 18px 38px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.55;color:#cfcfcf}
+
+/* Sello de regalo misterioso (3, 7 y 11): mismo tamaño que un sello común */
+.regalo{position:relative;z-index:1;appearance:none;-webkit-appearance:none;border:0;background:none;padding:0;margin:0;width:9.4cqw;height:9.4cqw;border-radius:50%;display:block;color:#fff}
+.regalo:focus-visible{outline:none}
+.regalo:focus-visible .rg-d{outline:.35cqw solid #a9c6ec;outline-offset:.5cqw}
+.rg-d{position:relative;width:100%;height:100%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:filter .3s,background .5s,box-shadow .5s}
+.rg-d svg{width:4.2cqw;height:4.2cqw}
+.rg-t{display:none;font-size:1.8cqw;font-weight:800;line-height:1.1;text-align:center;white-space:nowrap;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.regalo.bloq .rg-d{border:.3cqw dashed var(--line);background:var(--well);color:#fff}
+.regalo.disp{cursor:pointer}
+.regalo.disp .rg-d{background:var(--m);color:var(--mi);box-shadow:inset 0 0 0 .25cqw rgba(255,255,255,.45),inset 0 -.8cqw 1.4cqw rgba(0,0,0,.28),0 0 3cqw var(--mg),0 .6cqw 1.6cqw rgba(0,0,0,.45);animation:latido 2.2s ease-in-out infinite}
+.regalo.disp:hover .rg-d{filter:brightness(1.15)}
+.regalo.disp .rg-d::before,.regalo.disp .rg-d::after{content:'';position:absolute;inset:0;border-radius:50%;border:.3cqw solid var(--mr);opacity:0;animation:onda 2.4s ease-out infinite}
+.regalo.disp .rg-d::after{animation-delay:1.2s}
+.regalo.abierto .rg-d{background:radial-gradient(circle at 50% 38%,#262b33,#0a0c0f 72%);border:.35cqw solid var(--mr);box-shadow:inset 0 0 1.4cqw rgba(0,0,0,.7),0 0 2cqw var(--mg)}
+.regalo.abierto .rg-d::before{content:'';position:absolute;inset:-.9cqw;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,255,255,0) 0 55%,var(--mr) 85%,rgba(255,255,255,0) 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - .45cqw),#000 calc(100% - .4cqw));mask:radial-gradient(farthest-side,transparent calc(100% - .45cqw),#000 calc(100% - .4cqw));animation:gira-aro 5s linear infinite}
+.regalo.abierto svg{display:none}
+.regalo.abierto .rg-t{display:block}
+.regalo.nuevo .rg-d{animation:thud .95s cubic-bezier(.2,.9,.25,1.1) both}
+.regalo.disp.nuevo .rg-d{animation:thud .95s cubic-bezier(.2,.9,.25,1.1) backwards,latido 2.2s ease-in-out .95s infinite}
+.regalo.burst .rg-d{animation:sellar .9s cubic-bezier(.2,.9,.25,1.2) both}
+.regalo.burst .chispas i{animation:chispa .95s ease-out both}
+
+/* Ruleta del regalo misterioso: panel que cubre la tarjeta */
+.ov{position:absolute;left:0;right:0;top:0;min-height:100%;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px 12px;border-radius:24px;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.07),rgba(8,9,11,.97) 70%),rgba(8,9,11,.97);opacity:0;visibility:hidden;transition:opacity .35s ease,visibility .35s;cursor:default;user-select:none;-webkit-user-select:none;touch-action:auto}
+.ov.on{opacity:1;visibility:visible}
+.ov-in{position:relative;width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:#fff}
+.ov-x{position:absolute;right:0;top:-4px;width:44px;height:44px;border-radius:50%;border:1px solid #3a3a3f;background:transparent;color:#fff;display:grid;place-items:center}
+.ov-x:hover{border-color:#a9c6ec;color:#a9c6ec}
+.ov-eb{margin:0;font-size:11px;letter-spacing:.2em;font-weight:600;color:#fff;padding:0 48px}
+.ov-tit{margin:0;font-family:'Heavitas','Inter',sans-serif;font-weight:400;font-size:clamp(20px,5cqw,30px);line-height:1.1;text-transform:uppercase;color:#fff}
+.rueda-wrap{position:relative;width:min(340px,80cqw);aspect-ratio:1;margin:10px 0 4px}
+.puntero{position:absolute;left:50%;top:-12px;width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:28px solid var(--mr);transform:translateX(-50%);transform-origin:50% 0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.7));z-index:3}
+.gir-on .puntero{animation:tic .22s ease-in-out infinite}
+.aro{position:absolute;inset:0;border-radius:50%;padding:10px;background:var(--m);box-shadow:0 0 40px var(--mg),0 10px 30px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,255,255,.4)}
+.rueda{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(0,0,0,.5),inset 0 0 30px rgba(0,0,0,.6)}
+.rueda.gir{transition:transform 5s cubic-bezier(.12,.62,.08,1)}
+.gan-capa{position:absolute;inset:0;pointer-events:none}
+.etq{position:absolute;inset:0}
+.etq::before{content:'';position:absolute;left:50%;top:0;width:1px;height:50%;background:rgba(255,255,255,.22);transform-origin:50% 100%;transform:rotate(-22.5deg)}
+.etq-t{position:absolute;left:50%;top:9%;transform:translateX(-50%);font-size:clamp(11px,3.6cqw,15px);font-weight:700;color:#fff;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.etq.gan .etq-t{font-weight:900;text-shadow:0 0 10px var(--mr),0 1px 2px rgba(0,0,0,.7)}
+.eje{position:absolute;left:50%;top:50%;width:17%;height:17%;transform:translate(-50%,-50%);border-radius:50%;background:var(--m);box-shadow:inset 0 0 0 2px rgba(255,255,255,.45),0 2px 10px rgba(0,0,0,.6)}
+.ov-premio{margin:0;min-height:26px;font-size:20px;font-weight:800;color:#fff}
+.ov-txt{margin:0;min-height:20px;font-size:14px;line-height:1.5;color:#fff}
+.btn-w{min-height:48px;padding:0 30px;border-radius:999px;border:0;background:#fff;color:#0b0b0c;font-size:15px;font-weight:700}
+.btn-w:hover:not(:disabled){background:#a9c6ec}
+.btn-w:disabled{background:#2a2a2e;color:#fff}
+@keyframes tic{0%,100%{transform:translateX(-50%) rotate(0deg)}50%{transform:translateX(-50%) rotate(-9deg)}}
+
+.regalo.usado .rg-d{border-style:dashed}
+.regalo.usado .rg-d::before{display:none}
+
+/* Premio ganado: foto, para qué sirve y cupón */
+.premio-card{width:100%;display:flex;flex-wrap:wrap;gap:16px;text-align:left;padding:16px;border-radius:14px;border:1px solid var(--mr);background:rgba(255,255,255,.04);box-shadow:0 0 30px var(--mg);animation:aparece .6s cubic-bezier(.2,.9,.25,1.1) both}
+.foto{flex:none;width:150px;height:150px;border-radius:12px;border:2px dashed var(--mr);background:repeating-linear-gradient(135deg,rgba(255,255,255,.07) 0 10px,rgba(255,255,255,.02) 10px 20px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#fff;text-align:center;padding:8px}
+.foto svg{width:44px;height:44px;display:none}
+.foto.k-producto .i-producto,.foto.k-servicio .i-servicio,.foto.k-descuento .i-descuento{display:block}
+.foto-t{font-size:12px;font-weight:600;line-height:1.3;color:#fff}
+.foto.k-descuento .foto-t{font-size:34px;font-weight:800}
+.premio-info{flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.premio-n{margin:0;font-size:19px;line-height:1.2;font-weight:800;color:#fff}
+.premio-l{display:block;margin:6px 0 0;font-size:10px;letter-spacing:.18em;font-weight:700;color:#fff}
+.premio-p{margin:0;font-size:14px;line-height:1.5;color:#fff}
+.premio-det{margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:#fff}
+.ticket{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:12px 14px;border:2px dashed var(--mr);border-radius:10px;background:rgba(0,0,0,.35)}
+.ticket p{margin:0;flex:1 1 200px;font-size:13px;line-height:1.4;color:#fff}
+.ticket-cod{display:block;margin-top:4px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:20px;letter-spacing:.14em;color:#fff}
+@keyframes aparece{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+
+/* Cupón del regalo mostrado en caja (acordeón animado dentro de la lista) */
+.g-item.abierto .fila{background:rgba(169,198,236,.1)}
+.caja{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s ease}
+.caja.abierto{grid-template-rows:1fr}
+.caja-in{overflow:hidden;min-height:0}
+.caja-c{padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;border-top:1px solid #1f1f22;background:rgba(169,198,236,.06)}
+.caja-c .ticket-cod{font-size:28px;color:#fff;padding:8px 18px;border:2px dashed var(--mr);border-radius:10px}
+.caja-n{margin:6px 0 0;font-size:15px;font-weight:700;color:#fff}
+.caja-t{margin:0 0 8px;max-width:460px;font-size:13px;line-height:1.5;color:#cfcfcf}
+
+/* Todos los textos dentro de la tarjeta: blanco puro, sin opacidad ni grises (sombra fina solo para que se lean sobre las zonas claras) */
+.cara{--ink:#ffffff;--muted:#ffffff;--ts:0 1px 2px rgba(0,0,0,.5)}
+.cara .celda{--cap:#ffffff}
+.cara .insignia{opacity:1}
+.cara .cap{color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.cara .hito .pct{color:#ffffff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.cara .hito.recl .pct{background:none;-webkit-text-fill-color:#ffffff;color:#ffffff}
+.cara .sello .n{text-shadow:0 1px 2px rgba(0,0,0,.5)}
+@keyframes entra{from{opacity:0;transform:translateY(4cqw) scale(.96)}to{opacity:1;transform:none}}
+@keyframes flota{0%,100%{transform:translateY(0) rotateX(4deg) rotateY(-5deg) rotateZ(0deg)}50%{transform:translateY(-2.2cqw) rotateX(1deg) rotateY(5deg) rotateZ(.8deg)}}
+@keyframes barrido{from{transform:translateX(-80%) rotate(18deg)}to{transform:translateX(347%) rotate(18deg)}}
+@keyframes barrido-d{0%{transform:translateX(0) rotate(18deg)}60%,100%{transform:translateX(420%) rotate(18deg)}}
+@keyframes thud{0%{transform:scale(2.1) rotate(-14deg);opacity:0;filter:brightness(2)}45%{transform:scale(.84) rotate(2deg);opacity:1;filter:brightness(1.4)}70%{transform:scale(1.06)}100%{transform:none;filter:none}}
+@keyframes onda{0%{transform:scale(1);opacity:.85}100%{transform:scale(1.9);opacity:0}}
+@keyframes latido{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes gira-aro{to{transform:rotate(360deg)}}
+@keyframes sellar{0%{transform:scale(1.3);filter:brightness(2.2)}40%{transform:scale(.9)}70%{transform:scale(1.05)}100%{transform:none;filter:none}}
+@keyframes chispa{0%{opacity:1;transform:rotate(var(--a)) translateY(-6.4cqw) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(-14cqw) scale(.2)}}
+@media (prefers-reduced-motion:reduce){
+  .persp,.flota,.sheen,.brillo::after,.sello,.hito .disco,.hito .disco::before,.hito .disco::after,.regalo .rg-d,.regalo .rg-d::before,.regalo .rg-d::after,.puntero,.chispas i,.check{animation:none !important}
+  .rueda.gir{transition-duration:.01s !important}
+  .premio-card{animation:none !important}
+  .gira,.glare i,.barra i.relleno,.seg::after,.desp-b,.caret{transition:none !important}
+}
+</style>
+</helmet>
+
+<div class="pagina">
+  <div class="proto">
+    <div class="proto-in">
+      <span class="proto-lbl">Solo prototipo</span>
+      <sc-for list="{{ escenarios }}" as="e" hint-placeholder-count="6">
+        <button class="{{ e.cls }}" onClick="{{ e.click }}">{{ e.t }}</button>
+      </sc-for>
+      <button class="btn-proto" disabled="{{ noSumar }}" onClick="{{ sumar }}">+ Sumar sello</button>
+      <button class="btn-proto" disabled="{{ noQuitar }}" onClick="{{ quitar }}">− Quitar sello</button>
+    </div>
+  </div>
+
+  <div class="contenedor" style="padding-top:36px;padding-bottom:72px;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <h1 class="titulo">Recompensas</h1>
+      <div class="tabs">
+        <button class="tab">Mi tarjeta</button>
+        <button class="tab">Canjear puntos</button>
+        <button class="tab on" aria-current="page">Mis sellos</button>
+        <button class="tab">Mis cupones</button>
+        <button class="tab">Movimientos</button>
+        <button class="tab">Cómo funciona</button>
+      </div>
+      <p class="intro">Un sello por cada día que compras servicios. En los sellos 3, 7 y 11 se abre un regalo misterioso con ruleta, y en el 4, 8 y 12 desbloqueas un descuento. Tócalos en la tarjeta para reclamarlos.</p>
+    </div>
+
+    <div id="tarjeta-sellos" class="{{ stageCls }}" onPointerDown="{{ alPresionar }}" onPointerMove="{{ alMover }}" onPointerUp="{{ alSoltar }}" onPointerLeave="{{ alSoltar }}" onPointerCancel="{{ alSoltar }}">
+      <div class="persp">
+        <div class="flota">
+          <div class="{{ giraCls }}" style="will-change: transform; {{ giraStyle }}">
+
+            <div class="cara frente">
+              <div class="iri"></div><div class="lineas"></div>
+              <div class="glare"><i style="{{ glareStyle }}"></i></div>
+              <div class="sheen"></div>
+
+              <div class="panel-izq">
+                <div class="marca">JAISE</div>
+                <div class="insignia tinta">TARJETA DE SELLOS</div>
+                <div class="espacio"></div>
+                <div class="lbl-sellos">TUS SELLOS</div>
+                <div class="num"><b>{{ mostrado }}</b><span>/ 12</span></div>
+                <div class="barra">
+                  <i class="relleno" style="width: {{ barra }}%"></i>
+                  <i class="tick" style="left: 33.33%"></i>
+                  <i class="tick" style="left: 66.66%"></i>
+                </div>
+                <div class="siguiente">{{ siguiente }}</div>
+                <div class="nombre">CAMILA TORRES</div>
+              </div>
+
+              <div class="rejilla">
+                <sc-for list="{{ celdas }}" as="c" hint-placeholder-count="12">
+                  <div class="celda {{ c.t }}">
+                    <sc-if value="{{ c.conSeg }}" hint-placeholder-val="{{ true }}">
+                      <i class="{{ c.segCls }}"></i>
+                    </sc-if>
+                    <sc-if value="{{ c.esHito }}" hint-placeholder-val="{{ false }}">
+                      <button class="{{ c.cls }}" disabled="{{ c.off }}" aria-label="{{ c.aria }}" onClick="{{ c.click }}">
+                        <span class="disco">
+                          <span class="brillo"></span>
+                          <span class="chispas"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                          <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+                          <span class="pct">{{ c.pct }}</span>
+                          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                        </span>
+                        <span class="cap">{{ c.cap }}</span>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ c.esRegalo }}" hint-placeholder-val="{{ false }}">
+                      <button class="{{ c.cls }}" disabled="{{ c.off }}" aria-label="{{ c.aria }}" onClick="{{ c.click }}">
+                        <span class="rg-d">
+                          <span class="chispas"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>
+                          <span class="rg-t">{{ c.corto }}</span>
+                        </span>
+                        <span class="cap">{{ c.cap }}</span>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ c.esSello }}" hint-placeholder-val="{{ true }}">
+                      <div class="{{ c.cls }}" style="animation-delay: {{ c.delay }}">
+                        <span class="n">{{ c.num }}</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14"></path><path d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z"></path><path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13"></path></svg>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div class="cara dorso">
+              <div class="iri"></div><div class="lineas"></div>
+              <div class="glare"><i style="{{ glareStyle }}"></i></div>
+              <div class="sheen"></div>
+              <div class="franja"></div>
+              <div class="d-tit">CÓMO FUNCIONA</div>
+              <div class="d-txt">Un sello por cada día que compras servicios. Junta 12: en el camino hay 3 regalos misteriosos y 3 descuentos.</div>
+              <div class="d-ley">
+                <div class="d-fila t0"><span class="d-mini"></span>Sellos 3 y 4 · regalo y 10 % de descuento</div>
+                <div class="d-fila t1"><span class="d-mini"></span>Sellos 7 y 8 · regalo y 15 % de descuento</div>
+                <div class="d-fila t2"><span class="d-mini"></span>Sellos 11 y 12 · regalo y 20 % de descuento</div>
+              </div>
+              <div class="d-pie">Toca un sello que brille: el descuento se guarda como cupón y el regalo abre una ruleta.</div>
+              <svg class="d-estrella" viewBox="0 0 100 100" aria-hidden="true">
+                <g fill="none" style="stroke: var(--ink)" stroke-width="1.4">
+                  <circle cx="50" cy="50" r="46"></circle>
+                  <path d="M50 14 L58 42 L86 50 L58 58 L50 86 L42 58 L14 50 L42 42 Z" fill="rgba(0,0,0,.12)"></path>
+                </g>
+              </svg>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="{{ toastCls }}" role="status">{{ toastTxt }}</div>
+
+      <div class="{{ ovCls }}" role="dialog" aria-label="Regalo misterioso" aria-hidden="{{ ovOculto }}" onPointerDown="{{ parar }}">
+        <div class="ov-in {{ ovTier }}">
+          <button class="ov-x" aria-label="Cerrar el regalo" onClick="{{ cerrar }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"></path></svg></button>
+          <p class="ov-eb">{{ ovEyebrow }}</p>
+          <h3 class="ov-tit">{{ ovTitulo }}</h3>
+          <sc-if value="{{ fRueda }}" hint-placeholder-val="{{ true }}">
+          <div class="{{ ruedaWrapCls }}">
+            <div class="puntero"></div>
+            <div class="aro">
+              <div class="{{ ruedaCls }}" style="background: {{ conic }}; {{ ruedaStyle }}">
+                <div class="gan-capa" style="background: {{ conicGan }}"></div>
+                <sc-for list="{{ etiquetas }}" as="l" hint-placeholder-count="8">
+                  <div class="{{ l.cls }}" style="transform: rotate({{ l.ang }}deg)"><span class="etq-t">{{ l.t }}</span></div>
+                </sc-for>
+                <div class="eje"></div>
+              </div>
+            </div>
+          </div>
+          <p class="ov-premio">{{ ovPremio }}</p>
+          <p class="ov-txt">{{ ovTexto }}</p>
+          </sc-if>
+          <sc-if value="{{ fRes }}" hint-placeholder-val="{{ false }}">
+            <div class="premio-card">
+              <div class="{{ pFotoCls }}">
+                <svg class="i-producto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 9.4 7.5 4.21"></path><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+                <svg class="i-servicio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"></circle><path d="M8.12 8.12 12 12"></path><path d="M20 4 8.12 15.88"></path><circle cx="6" cy="18" r="3"></circle><path d="M14.8 14.8 20 20"></path></svg>
+                <svg class="i-descuento" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path><path d="M13 5v2"></path><path d="M13 17v2"></path><path d="M13 11v2"></path></svg>
+                <span class="foto-t">{{ pFotoTxt }}</span>
+              </div>
+              <div class="premio-info">
+                <span class="chip ok">{{ pTipo }}</span>
+                <h4 class="premio-n">{{ pNombre }}</h4>
+                <p class="premio-l">PARA QUÉ SIRVE</p>
+                <p class="premio-p">{{ pUso }}</p>
+                <ul class="premio-det">
+                  <sc-for list="{{ pDet }}" as="d" hint-placeholder-count="2">
+                    <li>{{ d.t }}</li>
+                  </sc-for>
+                </ul>
+              </div>
+              <div class="ticket">
+                <div>
+                  <span class="premio-l">TU CUPÓN · GUARDADO EN MIS CUPONES</span>
+                  <strong class="ticket-cod">{{ pCodigo }}</strong>
+                </div>
+                <p>{{ pRetiro }}</p>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ fListo }}" hint-placeholder-val="{{ true }}">
+            <button class="btn-w" onClick="{{ girar }}">Girar</button>
+          </sc-if>
+          <sc-if value="{{ fGirando }}" hint-placeholder-val="{{ false }}">
+            <button class="btn-w" disabled="{{ siempre }}">Girando…</button>
+          </sc-if>
+          <sc-if value="{{ fOtra }}" hint-placeholder-val="{{ false }}">
+            <button class="btn-w" onClick="{{ girar }}">Girar otra vez</button>
+          </sc-if>
+          <sc-if value="{{ fRes }}" hint-placeholder-val="{{ false }}">
+            <button class="btn-w" onClick="{{ cerrar }}">Listo</button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div class="pista">
+      <span>Arrastra para girar 360°</span>
+      <button class="btn-giro" onClick="{{ voltear }}">{{ voltearTxt }}</button>
+    </div>
+
+    <div style="max-width:880px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+      <div class="bloque">
+        <div style="padding:20px 20px 16px">
+          <h2 class="sub">Descuentos de tu tarjeta</h2>
+          <p class="resumen">{{ resumen }}</p>
+        </div>
+        <sc-for list="{{ filas }}" as="f" hint-placeholder-count="3">
+          <div class="fila {{ f.t }} {{ f.estado }}">
+            <span class="mini">{{ f.pct }}</span>
+            <div class="fila-txt">
+              <p class="fila-tit">{{ f.titulo }}</p>
+              <p class="fila-det">{{ f.detalle }}</p>
+            </div>
+            <sc-if value="{{ f.puede }}" hint-placeholder-val="{{ false }}">
+              <button class="btn-recl" onClick="{{ f.click }}">Reclamar</button>
+            </sc-if>
+            <sc-if value="{{ f.hecho }}" hint-placeholder-val="{{ false }}">
+              <span class="chip ok">Reclamado</span>
+            </sc-if>
+            <sc-if value="{{ f.cerrado }}" hint-placeholder-val="{{ true }}">
+              <span class="chip">Bloqueado</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div class="bloque">
+        <div style="padding:20px 20px 16px">
+          <h2 class="sub">Regalos misteriosos</h2>
+          <p class="resumen">{{ resumenRegalo }}</p>
+        </div>
+        <sc-for list="{{ filasRegalo }}" as="g" hint-placeholder-count="3">
+          <div class="{{ g.itemCls }}">
+          <div class="fila {{ g.t }} {{ g.estado }}">
+            <span class="mini"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"></rect><path d="M12 8v13"></path><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg></span>
+            <div class="fila-txt">
+              <p class="fila-tit">{{ g.titulo }}</p>
+              <p class="fila-det">{{ g.detalle }}</p>
+            </div>
+            <sc-if value="{{ g.puede }}" hint-placeholder-val="{{ false }}">
+              <button class="btn-recl" onClick="{{ g.click }}">Abrir regalo</button>
+            </sc-if>
+            <sc-if value="{{ g.retirar }}" hint-placeholder-val="{{ false }}">
+              <span class="chip ok">Por retirar</span>
+              <button class="btn-recl" onClick="{{ g.mostrar }}">Mostrar en caja</button>
+            </sc-if>
+            <sc-if value="{{ g.usado }}" hint-placeholder-val="{{ false }}">
+              <span class="chip">Usado</span>
+            </sc-if>
+            <sc-if value="{{ g.cerrado }}" hint-placeholder-val="{{ true }}">
+              <span class="chip">Bloqueado</span>
+            </sc-if>
+          </div>
+          <div class="{{ g.cajaCls }}">
+            <div class="caja-in">
+              <div class="caja-c {{ g.t }}">
+                <span class="premio-l">MUÉSTRALO EN CAJA</span>
+                <strong class="ticket-cod">{{ g.codigo }}</strong>
+                <p class="caja-n">{{ g.premioTipo }} · {{ g.premioNombre }}</p>
+                <p class="caja-t">{{ g.premioRetiro }}</p>
+                <button class="btn-proto" onClick="{{ g.simular }}">Solo prototipo: caja lo marca como usado</button>
+              </div>
+            </div>
+          </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ nueva }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;justify-content:center">
+          <button class="btn-nueva" onClick="{{ nuevaClick }}">Empezar una tarjeta nueva</button>
+        </div>
+      </sc-if>
+
+      <div class="{{ despCls }}">
+        <button class="desp-h" aria-expanded="{{ abierto }}" onClick="{{ alternar }}">
+          <span>Cómo se ganan los sellos</span>
+          <svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 3.5h9L6 9.5z" fill="currentColor"></path></svg>
+        </button>
+        <div class="desp-b">
+          <div class="desp-in">
+            <ul class="desp-lista">
+              <li>Un sello por día de Perú cuando una compra confirmada incluye servicios, venga o no de una cita web.</li>
+              <li>Varias compras o varios servicios el mismo día dan un solo sello.</li>
+              <li>Los productos solos no dan sello.</li>
+              <li>En los sellos 4, 8 y 12 se desbloquea un descuento de 10 %, 15 % y 20 %. Tócalo en la tarjeta para reclamar tu cupón.</li>
+              <li>En los sellos 3, 7 y 11 se desbloquea un regalo misterioso: abre una ruleta con premios que dependen de tu fila: descuentos, productos o servicios. Siempre ganas algo; si sale «Otra vez», giras de nuevo y tu regalo sigue cerrado.</li>
+              <li>Todo premio se guarda como cupón con sus condiciones. Para un producto o servicio, pasa por caja y muestra el cupón: caja lo marca como usado al entregártelo.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"acabado":{"editor":"enum","default":"onix","options":["onix","verde","rubi","plata","diamante"],"section":"Tarjeta"},"$preview":{"width":1440,"height":1640}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      sellos: 9, recl: [true, false, false], regalos: [0, null, null], usados: [false, false, false], caja: -1, rFila: -1, rFase: 'listo', rDeg: 0, rSeg: -1, rTr: false,
+      mostrado: 0, ultimo: -1, burst: -1,
+      flash: false, entrada: true, toast: '', toastOn: false, abierto: false,
+      volteada: false, yaw: 0, pitch: 0, arr: false
+    };
+    this.drag = null;
+    this.movido = false;
+    this.timers = [];
+    this.intervalo = null;
+  }
+
+  componentDidMount() {
+    let n = 0;
+    this.intervalo = setInterval(() => {
+      n += 1;
+      this.setState({ mostrado: Math.min(n, this.state.sellos) });
+      if (n >= this.state.sellos) { clearInterval(this.intervalo); this.intervalo = null; }
+    }, 130);
+    this.later(() => this.setState({ entrada: false }), 3400);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalo);
+    this.timers.forEach(clearTimeout);
+  }
+
+  later(fn, ms) { this.timers.push(setTimeout(fn, ms)); }
+
+  fijar(sellos, recl, ultimo, regalos, usados) {
+    clearInterval(this.intervalo);
+    this.setState({ sellos: sellos, recl: recl, regalos: regalos ?? this.state.regalos, usados: usados ?? this.state.usados, caja: -1, mostrado: sellos, ultimo: ultimo, burst: -1, entrada: false, flash: true, rFila: -1 });
+    this.later(() => this.setState({ flash: false }), 90);
+  }
+
+  reclamar(k) {
+    if (this.movido) { this.movido = false; return; }
+    const s = this.state;
+    if (s.recl[k] || s.sellos < (k + 1) * 4) return;
+    const PCT = [10, 15, 20];
+    const COD = ['SELLO-10-K7Q2', 'SELLO-15-M4X9', 'SELLO-20-R8T5'];
+    const recl = s.recl.slice();
+    recl[k] = true;
+    this.setState({ recl: recl, burst: (k + 1) * 4 - 1, ultimo: -1, entrada: false, flash: true,
+      toast: 'Cupón del ' + PCT[k] + ' % generado · ' + COD[k], toastOn: true });
+    this.later(() => this.setState({ flash: false }), 90);
+    this.later(() => this.setState({ toastOn: false }), 3400);
+  }
+
+  // Premios de la ruleta por fila (1 = plata, 2 = oro, 3 = diamante). Son ejemplos: en la web los configura la admin.
+  // `w` es el peso (probabilidad relativa) de cada casilla; la casilla `otra` no gasta el regalo.
+  premios(k) {
+    // Todo premio (descuento, producto o servicio) se entrega como CUPÓN que se muestra en caja. Nombres, fotos y detalles son de ejemplo.
+    const cs = [3, 5, 10][k], cg = [5, 10, 20][k], pc = [5, 10, 15][k];
+    const RET = 'Retíralo en caja mostrando este cupón. Caja lo marca como usado al entregártelo.';
+    const desc = (t, n, uso, w) => ({ t: t, n: n, tipo: 'Descuento', uso: uso, det: ['Se guarda como cupón en Mis cupones', 'Se aplica al pagar en caja'], retiro: 'Muéstralo en caja al pagar para que lo apliquen.', w: w });
+    const prod = (t, n, uso, det, w) => ({ t: t, n: n, tipo: 'Producto', uso: uso, det: det, retiro: RET, w: w });
+    const serv = (t, n, uso, det, w) => ({ t: t, n: n, tipo: 'Servicio', uso: uso, det: det, retiro: 'Reserva tu cita y muestra este cupón en caja.', w: w });
+    const shampoo = [
+      ['Shampoo', 'Mini shampoo de muestra'], ['Shampoo', 'Shampoo tamaño viaje'], ['Set', 'Shampoo y acondicionador']
+    ][k];
+    const masc = [
+      ['Mascarilla', 'Mascarilla en sobre'], ['Mascarilla', 'Mascarilla de tratamiento'], ['Kit', 'Kit de tratamiento para casa']
+    ][k];
+    const sv = [
+      ['Secado', 'Secado gratis', 'Un secado básico sin costo en tu próxima visita.'],
+      ['Tratamiento', 'Tratamiento express', 'Un tratamiento express sin costo con tu próximo servicio.'],
+      ['Corte', 'Corte o peinado gratis', 'Un corte o peinado sin costo en tu próxima visita.']
+    ][k];
+    const ultimo = k === 2 ? ['Regalo', 'Producto a elegir', 'Elige un producto del salón como regalo.'] : ['Aceite', 'Aceite capilar de regalo', 'Aporta brillo y suavidad a tu cabello entre visitas.'];
+    return [
+      desc('S/ ' + cs, 'Cupón de S/ ' + cs, 'Se descuenta del total de tu próxima compra o servicio.', 20),
+      prod(shampoo[0], shampoo[1], 'Para probar en casa el cuidado que usamos en el salón: limpia suave y mantiene tu cabello entre visitas.', ['Producto del salón', 'Presentación: [TAMAÑO A DEFINIR]'], 25),
+      { t: 'Otra vez', n: '¡Gira otra vez!', g: 'Esta no cuenta: tu regalo sigue cerrado', w: 10, otra: true },
+      prod(masc[0], masc[1], 'Para hidratar y reparar tu cabello en casa entre una visita y otra.', ['Producto del salón', 'Uso: [INSTRUCCIONES A DEFINIR]'], 15),
+      desc('S/ ' + cg, 'Cupón de S/ ' + cg, 'Se descuenta del total de tu próxima compra o servicio.', 5),
+      serv(sv[0], sv[1], sv[2], ['Se agenda con tu próxima cita', 'Sujeto a disponibilidad'], 10),
+      desc(pc + ' %', pc + ' % extra', 'Descuento adicional en tu siguiente servicio.', 10),
+      prod(ultimo[0], ultimo[1], ultimo[2], ['Producto del salón', 'Presentación: [A DEFINIR]'], 5)
+    ];
+  }
+
+  usarCupon(k) {
+    // PROTOTIPO: simula que caja lee el cupón y lo marca como usado. En la web lo hace el POS.
+    const u = this.state.usados.slice();
+    u[k] = true;
+    this.setState({ usados: u, caja: -1, ultimo: -1, burst: -1 });
+  }
+
+  abrirRegalo(k) {
+    if (this.movido) { this.movido = false; return; }
+    const s = this.state;
+    if (s.regalos[k] != null || s.sellos < k * 4 + 3 || s.rFila >= 0) return;
+    this.setState({ rFila: k, rFase: 'listo', rDeg: 0, rSeg: -1, rTr: false });
+    try {
+      const el = document.getElementById('tarjeta-sellos');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) { /* sin scroll */ }
+  }
+
+  girar() {
+    const s = this.state;
+    if (s.rFila < 0 || (s.rFase !== 'listo' && s.rFase !== 'otra')) return;
+    const tabla = this.premios(s.rFila);
+    // En la web el SERVIDOR decide el premio antes de la animación; la ruleta solo lo revela. Aquí se simula con el peso de cada casilla.
+    const total = tabla.reduce((a, p) => a + p.w, 0);
+    let r = Math.random() * total;
+    let seg = 0;
+    for (let i = 0; i < tabla.length; i++) { r -= tabla[i].w; if (r <= 0) { seg = i; break; } }
+    const centro = seg * 45 + 22.5;
+    const jitter = (Math.random() - 0.5) * 24;
+    const actual = ((s.rDeg % 360) + 360) % 360;
+    const delta = ((((-centro + jitter) - actual) % 360) + 360) % 360;
+    this.setState({ rFase: 'girando', rDeg: s.rDeg + 360 * 5 + delta, rSeg: -1, rTr: true });
+    this.later(() => {
+      if (tabla[seg].otra) { this.setState({ rFase: 'otra', rSeg: seg }); return; }
+      const rg = this.state.regalos.slice();
+      rg[this.state.rFila] = seg;
+      this.setState({ rFase: 'resultado', rSeg: seg, regalos: rg });
+    }, 5400);
+  }
+
+  cerrar() {
+    const s = this.state;
+    if (s.rFase === 'girando' || s.rFila < 0) return;
+    if (s.rFase === 'resultado') {
+      const p = this.premios(s.rFila)[s.rSeg];
+      this.setState({ rFila: -1, burst: s.rFila * 4 + 2, ultimo: -1, flash: true, toast: 'Regalo guardado como cupón: ' + p.n, toastOn: true });
+      this.later(() => this.setState({ flash: false }), 90);
+      this.later(() => this.setState({ toastOn: false }), 3600);
+    } else {
+      this.setState({ rFila: -1 });
+    }
+  }
+
+  renderVals() {
+    const s = this.state;
+    const face = this.props.acabado ?? 'onix';
+    const PCT = [10, 15, 20];
+    const META = [4, 8, 12];
+    const COD = ['SELLO-10-K7Q2', 'SELLO-15-M4X9', 'SELLO-20-R8T5'];
+    const sellos = s.sellos;
+    const recl = s.recl;
+    const estadoHito = (k) => (recl[k] ? 'recl' : sellos >= META[k] ? 'disp' : 'bloq');
+
+    // celdas de la tarjeta: 12 sellos, el 4.º de cada fila es la meta
+    const celdas = [];
+    for (let i = 0; i < 12; i++) {
+      const fila = Math.floor(i / 4);
+      const col = i % 4;
+      const esHito = col === 3;
+      const esRegalo = col === 2;
+      const c = { t: 't' + fila, esHito: esHito, esRegalo: esRegalo, esSello: !esHito && !esRegalo, conSeg: col < 3, segCls: 'seg' + (col === 2 ? ' corto' : '') + (sellos > i + 1 ? ' on' : '') };
+      if (esHito) {
+        const est = estadoHito(fila);
+        c.cls = 'hito ' + est + (s.ultimo === i ? ' nuevo' : '') + (s.burst === i ? ' burst' : '');
+        c.pct = PCT[fila] + '%';
+        c.cap = est === 'bloq' ? 'SELLO ' + META[fila] : est === 'disp' ? 'RECLAMAR' : 'CUPÓN ACTIVO';
+        c.off = est !== 'disp';
+        c.aria = 'Sello ' + META[fila] + ': ' + PCT[fila] + ' % de descuento, ' + (est === 'bloq' ? 'bloqueado, te faltan ' + (META[fila] - sellos) + ' sellos' : est === 'disp' ? 'listo para reclamar' : 'cupón ya reclamado');
+        c.click = () => this.reclamar(fila);
+      } else if (esRegalo) {
+        const ab = s.regalos[fila] != null;
+        const est = ab ? 'abierto' : sellos >= i + 1 ? 'disp' : 'bloq';
+        const us = ab && s.usados[fila];
+        c.cls = 'regalo ' + est + (us ? ' usado' : '') + (s.ultimo === i ? ' nuevo' : '') + (s.burst === i ? ' burst' : '');
+        c.corto = ab ? this.premios(fila)[s.regalos[fila]].t : '';
+        c.cap = est === 'bloq' ? 'REGALO' : est === 'disp' ? 'ABRIR' : us ? 'USADO' : 'RETIRAR';
+        c.off = est !== 'disp';
+        c.aria = 'Sello ' + (i + 1) + ': regalo misterioso, ' + (est === 'bloq' ? 'bloqueado, te faltan ' + (i + 1 - sellos) + ' sellos' : est === 'disp' ? 'listo para abrir' : 'ya abierto: ' + this.premios(fila)[s.regalos[fila]].n);
+        c.click = () => this.abrirRegalo(fila);
+      } else {
+        c.cls = 'sello ' + (sellos > i ? 'ganado' : 'vacio') + (s.ultimo === i ? ' nuevo' : '');
+        c.num = i + 1;
+        c.delay = s.entrada ? (i * 0.09).toFixed(2) + 's' : '0s';
+      }
+      celdas.push(c);
+    }
+
+    // texto de "siguiente meta"
+    const regalos = s.regalos;
+    const usados = s.usados;
+    const CODR = ['REG-P7K2', 'REG-O4M9', 'REG-D8R5'];
+    const disp = [0, 1, 2].filter((k) => !recl[k] && sellos >= META[k]).length;
+    const gd = [0, 1, 2].filter((k) => regalos[k] == null && sellos >= k * 4 + 3).length;
+    const todo = sellos >= 12 && recl.every(Boolean) && regalos.every((v) => v != null);
+    let siguiente;
+    if (todo) siguiente = 'Tarjeta completa. Ya reclamaste todos tus regalos y descuentos.';
+    else if (disp + gd > 0) {
+      const partes = [];
+      if (gd > 0) partes.push(gd === 1 ? '1 regalo' : gd + ' regalos');
+      if (disp > 0) partes.push(disp === 1 ? '1 descuento' : disp + ' descuentos');
+      siguiente = 'Tienes ' + partes.join(' y ') + ' ' + (disp + gd === 1 ? 'listo' : 'listos') + ' para reclamar.';
+    } else {
+      const prox = [3, 4, 7, 8, 11, 12].filter((m) => sellos < m)[0];
+      const falta = prox - sellos;
+      const que = prox % 4 === 3 ? 'tu regalo misterioso' : 'tu ' + PCT[prox / 4 - 1] + ' % de descuento';
+      siguiente = (falta === 1 ? 'Te falta 1 sello' : 'Te faltan ' + falta + ' sellos') + ' para ' + que + '.';
+    }
+
+    // lista de descuentos
+    const filas = [0, 1, 2].map((k) => {
+      const est = estadoHito(k);
+      const falta = META[k] - sellos;
+      return {
+        t: 't' + k, estado: est, pct: PCT[k] + '%',
+        titulo: PCT[k] + ' % de descuento',
+        detalle: est === 'bloq'
+          ? 'Sello ' + META[k] + ' · ' + (falta === 1 ? 'te falta 1 sello' : 'te faltan ' + falta + ' sellos')
+          : est === 'disp' ? 'Sello ' + META[k] + ' alcanzado · listo para reclamar'
+          : 'Cupón ' + COD[k] + ' · guardado en Mis cupones',
+        puede: est === 'disp', hecho: est === 'recl', cerrado: est === 'bloq',
+        click: () => this.reclamar(k)
+      };
+    });
+
+    const resumen = sellos + ' de 12 sellos · ' + (disp > 0 ? (disp === 1 ? '1 descuento por reclamar' : disp + ' descuentos por reclamar') : todo ? 'todos reclamados' : 'sigue sumando');
+
+    // escenarios de la barra "Solo prototipo"
+    const F = false, T = true, N = null;
+    const base = [
+      { t: 'Tarjeta nueva · 0', n: 0, r: [F, F, F], g: [N, N, N] },
+      { t: 'Regalo 1 listo · 3', n: 3, r: [F, F, F], g: [N, N, N] },
+      { t: 'Regalo y 10 % listos · 4', n: 4, r: [F, F, F], g: [N, N, N] },
+      { t: '9 · mezcla de estados', n: 9, r: [T, F, F], g: [0, N, N] },
+      { t: '11 · último regalo listo', n: 11, r: [T, T, F], g: [0, 3, N] },
+      { t: '12 · última meta lista', n: 12, r: [T, T, F], g: [0, 3, 5] },
+      { t: 'Todo reclamado', n: 12, r: [T, T, T], g: [0, 3, 5], u: [T, F, F] }
+    ];
+    const escenarios = base.map((e) => {
+      const activo = sellos === e.n && recl.every((v, i) => v === e.r[i]) && regalos.every((v, i) => v === e.g[i]) && usados.every((v, i) => v === (e.u ?? [F, F, F])[i]);
+      return { t: e.t, cls: 'chip-esc' + (activo ? ' activo' : ''), click: () => this.fijar(e.n, e.r, -1, e.g, e.u ?? [F, F, F]) };
+    });
+
+    // lista de regalos misteriosos
+    const filasRegalo = [0, 1, 2].map((k) => {
+      const ab = regalos[k] != null;
+      const est = ab ? 'abierto' : sellos >= k * 4 + 3 ? 'disp' : 'bloq';
+      const falta = k * 4 + 3 - sellos;
+      return {
+        t: 't' + k, estado: est, titulo: 'Regalo misterioso ' + (k + 1),
+        detalle: est === 'bloq'
+          ? 'Sello ' + (k * 4 + 3) + ' · ' + (falta === 1 ? 'te falta 1 sello' : 'te faltan ' + falta + ' sellos')
+          : est === 'disp' ? 'Sello ' + (k * 4 + 3) + ' alcanzado · listo para abrir'
+          : (usados[k] ? 'Entregado en caja: ' : 'Ganaste: ') + this.premios(k)[regalos[k]].n + ' · cupón ' + CODR[k],
+        puede: est === 'disp', retirar: est === 'abierto' && !usados[k], usado: est === 'abierto' && usados[k], cerrado: est === 'bloq',
+        itemCls: 'g-item' + (s.caja === k && est === 'abierto' && !usados[k] ? ' abierto' : ''),
+        cajaCls: 'caja' + (s.caja === k && est === 'abierto' && !usados[k] ? ' abierto' : ''),
+        codigo: CODR[k],
+        premioNombre: est === 'abierto' ? this.premios(k)[regalos[k]].n : '',
+        premioTipo: est === 'abierto' ? this.premios(k)[regalos[k]].tipo : '',
+        premioRetiro: est === 'abierto' ? this.premios(k)[regalos[k]].retiro : '',
+        mostrar: () => this.setState({ caja: s.caja === k ? -1 : k }),
+        simular: () => this.usarCupon(k),
+        click: () => this.abrirRegalo(k)
+      };
+    });
+    const resumenRegalo = gd > 0 ? (gd === 1 ? '1 regalo por abrir' : gd + ' regalos por abrir') : regalos.every((v) => v != null) ? 'todos abiertos' : 'sigue sumando';
+
+    // ruleta (panel sobre la tarjeta)
+    const rk = s.rFila;
+    const tier = rk >= 0 ? rk : 0;
+    const tabla = this.premios(tier);
+    const COL = [['#11151a', '#1c2229', '200,205,210'], ['#18130a', '#251d0d', '217,182,96'], ['#0e1620', '#182430', '207,226,243']][tier];
+    const conic = 'conic-gradient(from 0deg, ' + tabla.map((p, i) => (i % 2 ? COL[1] : COL[0]) + ' ' + i * 45 + 'deg ' + (i + 1) * 45 + 'deg').join(', ') + ')';
+    const conicGan = s.rSeg >= 0
+      ? 'conic-gradient(from 0deg, rgba(0,0,0,0) 0deg ' + s.rSeg * 45 + 'deg, rgba(' + COL[2] + ',.42) ' + s.rSeg * 45 + 'deg ' + (s.rSeg + 1) * 45 + 'deg, rgba(0,0,0,0) ' + (s.rSeg + 1) * 45 + 'deg 360deg)'
+      : 'none';
+    const etiquetas = tabla.map((p, i) => ({ ang: i * 45 + 22.5, t: p.t, cls: 'etq' + (s.rSeg === i ? ' gan' : '') }));
+    const ph = s.rSeg >= 0 ? tabla[s.rSeg] : null;
+    const fase = s.rFase;
+    const ovTitulo = fase === 'listo' ? '¡Gira y gana!' : fase === 'girando' ? '¡Suerte!' : fase === 'otra' ? '¡Otra oportunidad!' : '¡Ganaste!';
+    const ovTexto = fase === 'listo' ? 'Siempre ganas algo. Toca «Girar» para descubrir tu premio.' : fase === 'girando' ? 'Girando…' : ph ? ph.g : '';
+    const ovPremio = ph && (fase === 'resultado' || fase === 'otra') ? ph.n : '';
+    const pp = fase === 'resultado' && ph ? ph : null;
+
+    // giro 3D
+    const yaw = s.yaw + (s.volteada ? 180 : 0);
+    const k = Math.sin((yaw * Math.PI) / 180);
+    const gx = (k * 40).toFixed(1);
+    const gy = (-6.9 + s.pitch * 1.38).toFixed(1);
+
+    return {
+      escenarios: escenarios,
+      sumar: () => { if (sellos < 12) this.fijar(sellos + 1, recl, sellos); },
+      quitar: () => { if (sellos > 0) this.fijar(sellos - 1, recl, -1); },
+      noSumar: sellos >= 12,
+      noQuitar: sellos <= 0,
+      stageCls: 'stage th-' + face + (s.arr ? ' arrastrando arr' : '') + (s.flash ? ' flash' : '') + (s.entrada ? ' entrada' : ''),
+      giraCls: 'gira' + (s.arr ? ' arr' : ''),
+      giraStyle: 'transform: rotateX(' + s.pitch.toFixed(1) + 'deg) rotateY(' + yaw.toFixed(1) + 'deg);',
+      glareStyle: 'transform: translate(' + gx + 'cqw, ' + gy + 'cqw);',
+      mostrado: s.mostrado,
+      barra: ((s.mostrado / 12) * 100).toFixed(1),
+      siguiente: siguiente,
+      celdas: celdas,
+      filas: filas,
+      resumen: resumen,
+      filasRegalo: filasRegalo,
+      resumenRegalo: resumenRegalo,
+      ovCls: 'ov' + (rk >= 0 ? ' on' : ''),
+      ovOculto: rk < 0,
+      ovTier: 't' + tier,
+      ovEyebrow: 'REGALO MISTERIOSO · SELLO ' + (tier * 4 + 3),
+      ovTitulo: ovTitulo,
+      ovTexto: ovTexto,
+      ovPremio: ovPremio,
+      conic: conic,
+      conicGan: conicGan,
+      etiquetas: etiquetas,
+      ruedaWrapCls: 'rueda-wrap' + (fase === 'girando' ? ' gir-on' : ''),
+      ruedaCls: 'rueda' + (s.rTr ? ' gir' : ''),
+      ruedaStyle: 'transform: rotate(' + s.rDeg.toFixed(1) + 'deg);',
+      fListo: fase === 'listo',
+      fGirando: fase === 'girando',
+      fOtra: fase === 'otra',
+      fRes: fase === 'resultado',
+      fRueda: fase !== 'resultado',
+      pTipo: pp ? pp.tipo : '',
+      pNombre: pp ? pp.n : '',
+      pUso: pp ? pp.uso : '',
+      pDet: pp ? pp.det.map((t) => ({ t: t })) : [],
+      pRetiro: pp ? pp.retiro : '',
+      pCodigo: CODR[tier],
+      pFotoCls: 'foto k-' + (pp ? pp.tipo.toLowerCase() : 'producto'),
+      pFotoTxt: pp ? (pp.tipo === 'Descuento' ? pp.t : 'Foto del ' + (pp.tipo === 'Servicio' ? 'servicio' : 'producto')) : '',
+      siempre: true,
+      girar: () => this.girar(),
+      cerrar: () => this.cerrar(),
+      parar: (e) => e.stopPropagation(),
+      nueva: todo,
+      nuevaClick: () => this.fijar(0, [false, false, false], -1, [null, null, null], [false, false, false]),
+      voltearTxt: s.volteada ? 'Ver frente' : 'Ver dorso',
+      voltear: () => this.setState({ volteada: !s.volteada }),
+      despCls: 'desp' + (s.abierto ? ' abierto' : ''),
+      abierto: s.abierto,
+      alternar: () => this.setState({ abierto: !s.abierto }),
+      toastCls: 'toast' + (s.toastOn ? ' on' : ''),
+      toastTxt: s.toast,
+      alPresionar: (e) => { this.drag = { x: e.clientX, y: e.clientY }; this.movido = false; this.setState({ arr: true }); },
+      alMover: (e) => {
+        if (!this.drag) return;
+        const dx = e.clientX - this.drag.x;
+        const dy = e.clientY - this.drag.y;
+        if (Math.abs(dx) + Math.abs(dy) > 5) this.movido = true;
+        this.drag.x = e.clientX;
+        this.drag.y = e.clientY;
+        this.setState((st) => ({ yaw: st.yaw + dx * 0.32, pitch: Math.max(-35, Math.min(35, st.pitch - dy * 0.2)) }));
+      },
+      alSoltar: () => {
+        if (!this.drag) return;
+        this.drag = null;
+        this.setState((st) => ({ arr: false, yaw: 360 * Math.round(st.yaw / 360), pitch: 0 }));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
